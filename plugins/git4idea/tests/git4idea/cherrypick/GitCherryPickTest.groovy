@@ -37,6 +37,7 @@ import static git4idea.test.MockGit.OperationName.CHERRY_PICK
 import static git4idea.test.MockGit.commitMessageForCherryPick
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
+import git4idea.test.TestNotificator
 
 /**
  * Common parent for all tests on cherry-pick
@@ -60,6 +61,7 @@ hint: and commit the result with 'git commit'
   GitCherryPicker myCherryPicker
   GitLightRepository myRepository
   GitLightRepository.Commit myInitialCommit
+  TestNotificator myTestNotificator
 
   static final LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK =
     """
@@ -83,6 +85,7 @@ hint: and commit the result with 'git commit'
     myRepository = new GitLightRepository()
     myRepositoryManager.add(myRepository)
     myInitialCommit = myRepository.commit("initial")
+    myTestNotificator = myPlatformFacade.getNotificator(myProject) as TestNotificator;
   }
 
   GitCommit commit(String commitMessage = "plain commit") {

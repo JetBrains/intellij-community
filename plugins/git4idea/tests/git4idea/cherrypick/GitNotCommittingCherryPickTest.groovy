@@ -18,6 +18,7 @@ package git4idea.cherrypick
 import com.intellij.notification.NotificationType
 import git4idea.history.browser.GitCherryPicker
 import git4idea.history.browser.GitCommit
+import git4idea.test.GitLightRepository
 import git4idea.test.MockGit
 import git4idea.test.MockVcsHelper
 import org.junit.Before
@@ -25,7 +26,6 @@ import org.junit.Test
 
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
 import static junit.framework.Assert.*
-import git4idea.test.GitLightRepository
 
 /**
  * Tests for {@link GitCherryPicker}, when the "auto-commit on cherry-pick" option is deselected.
@@ -55,6 +55,50 @@ class GitNotCommittingCherryPickTest extends GitCherryPickTest {
     assertOnlyDefaultChangelist()
     assertTrue "Commit dialog was not shown", handler.wasCommitDialogShown()
     // notification is shown from the successful commit, can't check from here
+  }
+
+  @Test
+  void "cancel in commit dialog shouldn't show a notification"() {
+    GitCommit commit = commit()
+
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit))
+    CancelCommitDialogHandler handler = new CancelCommitDialogHandler()
+    myVcsHelper.registerHandler(handler)
+
+    invokeCherryPick(commit)
+
+    assertTrue "Commit dialog was not shown", handler.wasCommitDialogShown()
+    assertNull "Notification should not be shown when cancelling a single commit", myTestNotificator.lastNotification
+  }
+
+  @Test
+  void "cancel in 2nd commit dialog after successful commit should shown a notification"() {
+    GitCommit commit1 = commit()
+    GitCommit commit2 = commit()
+
+    myGit.registerOperationExecutors(new MockGit.SimpleSuccessOperationExecutor(CHERRY_PICK, ""),
+                                     new MockGit.SimpleSuccessOperationExecutor(CHERRY_PICK, ""))
+
+    int dialogNumber = 0;
+    MockVcsHelper.CommitHandler handler = new MockVcsHelper.CommitHandler() {
+      boolean commit(String commitMessage) {
+        dialogNumber++;
+        // answer OK in the first dialog, Cancel - in the second.
+        return dialogNumber == 1;
+      }
+    }
+    myVcsHelper.registerHandler(handler)
+
+    invokeCherryPick([commit1, commit2])
+
+    assertEquals "Commit dialog shown wrong number of times", 2, dialogNumber
+    assertNotificationShown("Cherry-pick cancelled",
+                            """
+                            ${commitDetails(commit2)}
+                            <hr/>
+                            However cherry-pick succeeded for the following commit:<br/>
+                            ${commitDetails(commit1)}
+                            """, NotificationType.WARNING)
   }
 
   @Test

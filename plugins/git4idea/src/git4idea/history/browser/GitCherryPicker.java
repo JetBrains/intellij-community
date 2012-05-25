@@ -187,6 +187,10 @@ public class GitCherryPicker {
   }
 
   private void notifyCommitCancelled(@NotNull GitCommit commit, @NotNull List<GitCommit> successfulCommits) {
+    if (successfulCommits.isEmpty()) {
+      // don't notify about cancelled commit. Notify just in the case when there were already successful commits in the queue.
+      return;
+    }
     String description = commitDetails(commit);
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifyWeakWarning("Cherry-pick cancelled", description, null);
