@@ -19,12 +19,12 @@ import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.impl.CompileServerClasspathManager;
+import com.intellij.execution.ExecutionAdapter;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -114,8 +114,10 @@ public class BuildManager implements ApplicationComponent{
     }
   };
   private final SequentialTaskExecutor myEventsProcessor = new SequentialTaskExecutor(myPooledThreadExecutor);
-
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
+
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final AtomicBoolean myAutoMakeInProgress = new AtomicBoolean(false);
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("build-manager");
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
@@ -137,8 +139,6 @@ public class BuildManager implements ApplicationComponent{
     projectManager.addProjectManagerListener(new ProjectWatcher());
     final MessageBusConnection conn = ApplicationManager.getApplication().getMessageBus().connect();
     conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-      private final AtomicBoolean myAutoMakeInProgress = new AtomicBoolean(false);
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
       }
@@ -146,44 +146,11 @@ public class BuildManager implements ApplicationComponent{
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (shouldTriggerMake(events)) {
-          scheduleMake(new Runnable() {
-            @Override
-            public void run() {
-              if (!myAutoMakeInProgress.getAndSet(true)) {
-                try {
-                  ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                    @Override
-                    public void run() {
-                      try {
-                        runAutoMake();
-                      }
-                      finally {
-                        myAutoMakeInProgress.set(false);
-                      }
-                    }
-                  });
-                }
-                catch (RejectedExecutionException ignored) {
-                  // we were shut down
-                }
-              }
-              else {
-                scheduleMake(this);
-              }
-            }
-          });
+          scheduleAutoMake();
         }
-      }
-
-      private void scheduleMake(Runnable runnable) {
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(runnable, MAKE_TRIGGER_DELAY);
       }
 
       private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
-        if (!CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
-          return false;
-        }
         for (VFileEvent event : events) {
           if (event.isFromRefresh() || event.getRequestor() instanceof SavingRequestor) {
             return true;
@@ -265,10 +232,46 @@ public class BuildManager implements ApplicationComponent{
     return vFile != null ? vFile.getPath() : null;
   }
 
-  private void runAutoMake() {
+  private void scheduleAutoMake() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
+    if (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
+      addMakeRequest(new Runnable() {
+        @Override
+        public void run() {
+          if (!myAutoMakeInProgress.getAndSet(true)) {
+            try {
+              ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    runAutoMake();
+                  }
+                  finally {
+                    myAutoMakeInProgress.set(false);
+                  }
+                }
+              });
+            }
+            catch (RejectedExecutionException ignored) {
+              // we were shut down
+            }
+          }
+          else {
+            addMakeRequest(this);
+          }
+        }
+      });
+    }
+  }
+
+  private void addMakeRequest(Runnable runnable) {
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(runnable, MAKE_TRIGGER_DELAY);
+  }
+
+  private void runAutoMake() {
     final Project[] openProjects = myProjectManager.getOpenProjects();
     if (openProjects.length > 0) {
       final List<RequestFuture> futures = new ArrayList<RequestFuture>();
@@ -817,6 +820,12 @@ public class BuildManager implements ApplicationComponent{
           if (source instanceof Project) {
             clearState((Project)source);
           }
+        }
+      });
+      conn.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter() {
+        @Override
+        public void processTerminated(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler) {
+          scheduleAutoMake();
         }
       });
     }
