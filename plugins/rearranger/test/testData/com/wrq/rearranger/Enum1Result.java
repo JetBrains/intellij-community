@@ -23,8 +23,9 @@ import java.util.List;
 public class Enum1Test implements Cloneable {
 // ------------------------------ FIELDS ------------------------------
 
-  private static final String    STEREOTYPE_PREFIX = "STEREOTYPE_";
-  private              Enum1Test parent            = null;
+  private static final String STEREOTYPE_PREFIX = "STEREOTYPE_";
+
+  private Enum1Test parent = null;
   private SuiteModel suiteModel;
   private SuiteItem  storage;
   private List<Enum1Test> childNodes = new ArrayList<Enum1Test>(10);
@@ -298,14 +299,16 @@ public class Enum1Test implements Cloneable {
     return this.getPassed() + " / " + this.getFailed() + " of " + this.getTotalInstructions();
   }
 
-  public int getTotalInstructions() {
+  public int getPassed() {
     int count = 0;
     if (getStereotype().equals(Stereotype.STEREOTYPE_INSTRUCTION)) {
-      count++;
+      if (getState().equals(ExecutionState.PASSED)) {
+        count++;
+      }
     }
-    for (Enum1Test t : childNodes) {
-      if (!getStereotype().equals(Stereotype.STEREOTYPE_INSTRUCTION)) {
-        count += t.getTotalInstructions();
+    else {
+      for (Enum1Test t : childNodes) {
+        count += t.getPassed();
       }
     }
     return count;
@@ -326,16 +329,14 @@ public class Enum1Test implements Cloneable {
     return count;
   }
 
-  public int getPassed() {
+  public int getTotalInstructions() {
     int count = 0;
     if (getStereotype().equals(Stereotype.STEREOTYPE_INSTRUCTION)) {
-      if (getState().equals(ExecutionState.PASSED)) {
-        count++;
-      }
+      count++;
     }
-    else {
-      for (Enum1Test t : childNodes) {
-        count += t.getPassed();
+    for (Enum1Test t : childNodes) {
+      if (!getStereotype().equals(Stereotype.STEREOTYPE_INSTRUCTION)) {
+        count += t.getTotalInstructions();
       }
     }
     return count;

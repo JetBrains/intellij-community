@@ -144,9 +144,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
       return new Inject(InjectedLanguageManager.getInstance(((PsiFile)element).getProject()).getInjectionHost(((PsiFile)element)),
                         (PsiElement)element);
     }
-    return element instanceof Inject
-           ? ((Inject)element).getParent()
-           : InjectedLanguageManager.getInstance(((PsiElement)element).getProject()).getInjectionHost(((PsiElement)element));
+    return element instanceof Inject ? ((Inject)element).getParent() : ((PsiElement)element).getContext();
   }
 
   @Override

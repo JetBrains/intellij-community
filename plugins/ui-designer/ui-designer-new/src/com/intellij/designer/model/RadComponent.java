@@ -111,6 +111,8 @@ public abstract class RadComponent {
     if (myLayout != null) {
       myLayout.removeComponentFromContainer(component);
     }
+
+    component.setParent(null);
   }
 
   public void removeFromParent() {

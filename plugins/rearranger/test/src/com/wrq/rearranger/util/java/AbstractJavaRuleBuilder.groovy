@@ -19,9 +19,11 @@ abstract class AbstractJavaRuleBuilder<T> extends AbstractRuleBuilder<T> {{
   
   // Sort
   def sortOptions = [
-    (SortOption.BY_NAME)               : 'byName',
-    (SortOption.BY_TYPE)               : 'byType',
+    (SortOption.NAME)               : 'byName',
+    (SortOption.TYPE)               : 'byType',
     (SortOption.TYPE_CASE_INSENSITIVE) : 'typeCaseInsensitive',
+    (SortOption.NAME_CASE_INSENSITIVE) : 'nameCaseInsensitive',
+    (SortOption.MODIFIER)              : 'byModifiers'
   ]
   registerHandler(RearrangerTestDsl.SORT, { data, attributes, rule ->
     rule.sortOptions."${sortOptions[data]}" = true

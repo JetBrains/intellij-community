@@ -8,8 +8,8 @@ public class RearrangementTest46 {
   protected       boolean isInvalid;
   protected       boolean isMandatory;
   protected List<Integer> validator = new Vector<Integer>();
-  protected Object value;
-  protected String invalidText;
+  protected       Object  value;
+  protected       String  invalidText;
 
   RearrangementTest46() {
     dbColumnName = "column";

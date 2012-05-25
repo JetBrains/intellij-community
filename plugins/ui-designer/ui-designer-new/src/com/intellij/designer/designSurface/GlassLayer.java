@@ -17,7 +17,6 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.designSurface.tools.ToolProvider;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.ui.popup.PopupOwner;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -28,7 +27,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author Alexander Lobas
  */
-public final class GlassLayer extends JComponent implements PopupOwner, DataProvider {
+public final class GlassLayer extends JComponent implements DataProvider {
   private static final long EVENT_FLAGS = AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK;
 
   private final ToolProvider myToolProvider;
@@ -75,12 +74,7 @@ public final class GlassLayer extends JComponent implements PopupOwner, DataProv
   }
 
   @Override
-  public Point getBestPopupPosition() {
-    return null;  // TODO: Auto-generated method stub
-  }
-
-  @Override
   public Object getData(@NonNls String dataId) {
-    return null;  // TODO: Auto-generated method stub
+    return EditableArea.DATA_KEY.is(dataId) ? myArea : null;
   }
 }

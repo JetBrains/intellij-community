@@ -23,6 +23,9 @@ package com.wrq.rearranger;
 
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -136,7 +139,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest', 'RearrangementResult9') {
       methodRule.create {
         target([ MethodType.GETTER_OR_SETTER, MethodType.OTHER ])
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
   } } }
 
   public final void testSimpleComment() throws Exception {
@@ -197,11 +200,11 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       fieldRule.create {
         modifier([ PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL ])
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       fieldRule.create {
         modifier([ PsiModifier.PUBLIC, PsiModifier.STATIC ])
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       commentRule.create {
         comment('//**************************************        PUBLIC FIELDS          *****************************************',
@@ -210,7 +213,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       fieldRule.create {
         modifier( PsiModifier.PUBLIC )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       commentRule.create {
         comment('//***********************************       PROTECTED/PACKAGE FIELDS        **************************************',
@@ -219,15 +222,15 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       fieldRule.create {
         modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.STATIC, PsiModifier.FINAL ])
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       fieldRule.create {
         modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.STATIC ])
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       fieldRule.create {
         modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL ])
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       commentRule.create {
         comment('//**************************************        PRIVATE FIELDS          *****************************************',
@@ -236,7 +239,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       fieldRule.create {
         modifier( PsiModifier.PRIVATE )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       commentRule.create {
         comment('//**************************************        CONSTRUCTORS              ************************************* ',
@@ -256,11 +259,11 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       methodRule.create {
         modifier( PsiModifier.PUBLIC )
         target( MethodType.GETTER_OR_SETTER )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       def text = '//**************************************        PUBLIC METHODS              ************************************* '
       if (doublePublicMethods) {
@@ -272,7 +275,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       methodRule.create {
         modifier( PsiModifier.PUBLIC )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       commentRule.create {
         comment('//*********************************     PACKAGE/PROTECTED METHODS              ******************************** ',
@@ -281,7 +284,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       methodRule.create {
         modifier([ PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL ])
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       commentRule.create {
         comment('//**************************************        PRIVATE METHODS              *************************************',
@@ -290,14 +293,14 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       }
       methodRule.create {
         modifier( PsiModifier.PRIVATE )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       commentRule.create {
         comment('//**************************************        INNER CLASSES              ************************************* ',
                 condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'all subsequent': true, 'all preceding': true,
                 'subsequent rules to match': 1, 'preceding rules to match': 1)
       }
-      innerClassRule.create { 'sort by'(SortOption.BY_NAME ) }
+      innerClassRule.create { 'sort by'(SortOption.NAME ) }
       
       mySettings.extractedMethodsSettings.moveExtractedMethods = false
       if (doGlobalPattern) {
@@ -463,7 +466,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       methodRule.create { target( MethodType.CONSTRUCTOR ) }
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
   } } }
 
   public final void testKeepGSWithProperty() throws Exception {
@@ -476,7 +479,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       methodRule.create { target(MethodType.CONSTRUCTOR) }
       methodRule.create {
         target( MethodType.GETTER_OR_SETTER )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
   } } }
 
   public final void testKeepGSWithPropertyElseTogether() throws Exception {
@@ -499,10 +502,10 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
                 name: GetterSetterDefinition.SETTER_NAME_CORRECT_PREFIX,
                 body: GetterSetterDefinition.SETTER_BODY_IMMATERIAL
         )
-        'sort by'( SortOption.BY_NAME )
+        'sort by'( SortOption.NAME )
       }
       commentRule.create { comment('// Other Methods', condition: CommentRule.EMIT_ALWAYS) }
-      methodRule.create { 'sort by'( SortOption.BY_NAME ) }
+      methodRule.create { 'sort by'( SortOption.NAME ) }
   } }
 
   public final void testKeepOverloadsTogetherOriginalOrder() throws Exception {
@@ -527,7 +530,7 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
 
   public final void testMultipleFieldDecl() throws Exception {
     doTest('RearrangementTest21', 'RearrangementResult21') {
-      fieldRule.create { 'sort by'( SortOption.BY_NAME ) }
+      fieldRule.create { 'sort by'( SortOption.NAME ) }
   } }
 
   public final void testRemoveBlankLines() throws Exception {
@@ -853,14 +856,14 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
     doTest('RearrangementTest34', 'RearrangementResult34') {
       setupSettings(InteractiveTest.DEFAULT_CONFIGURATION)
       spacingRule.spacing(anchor: SpacingAnchor.EOF, lines: 1)
-      settings.configure( 'rearranger inner classes': true, 'class comment': '// ----- OUTER CLASS -----\n' )
+      settings.configure( 'rearrange inner classes': true, 'class comment': '// ----- OUTER CLASS -----\n' )
   } }
 
   public void testInnerClassCommentsNoRearrangement() throws Exception {
     doTest('RearrangementTest34', 'RearrangementResult34B') {
       setupSettings(InteractiveTest.DEFAULT_CONFIGURATION)
       spacingRule.spacing(anchor: SpacingAnchor.EOF, lines: 1)
-      settings.configure( 'rearranger inner classes': false, 'class comment': '// ----- OUTER CLASS -----\n' )
+      settings.configure( 'rearrange inner classes': false, 'class comment': '// ----- OUTER CLASS -----\n' )
   } }
 
   public void testFirstInsertionOfComment() throws Exception {
@@ -906,28 +909,28 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
   public void testSortFieldsByTypeAndName() throws Exception {
     doTest('RearrangementTest39', 'RearrangementResult39B') {
       fieldRule.create {
-        'sort by'([ SortOption.BY_NAME, SortOption.BY_TYPE ])
+        'sort by'([ SortOption.NAME, SortOption.TYPE ])
   } } }
 
   public void testSortFieldsByType() throws Exception {
     doTest('RearrangementTest39', 'RearrangementResult39C') {
       fieldRule.create {
-        'sort by' SortOption.BY_TYPE
-        'not sort by' SortOption.BY_NAME
+        'sort by' SortOption.TYPE
+        'not sort by' SortOption.NAME
       }
   } }
   
   public void testSortFieldsByTypeICAndName() throws Exception {
     doTest('RearrangementTest39', 'RearrangementResult39') {
       fieldRule.create {
-        'sort by'([ SortOption.BY_NAME, SortOption.BY_TYPE, SortOption.TYPE_CASE_INSENSITIVE ])
+        'sort by'([ SortOption.NAME, SortOption.TYPE, SortOption.TYPE_CASE_INSENSITIVE ])
   } } }
 
   public void testSortFieldsByTypeIC() throws Exception {
     doTest('RearrangementTest39', 'RearrangementResult39A') {
       fieldRule.create {
-        'sort by'([ SortOption.BY_TYPE, SortOption.TYPE_CASE_INSENSITIVE ])
-        'not sort by' SortOption.BY_NAME
+        'sort by'([ SortOption.TYPE, SortOption.TYPE_CASE_INSENSITIVE ])
+        'not sort by' SortOption.NAME
   } } }
 
   /**
@@ -966,296 +969,140 @@ class RearrangerTest extends LightCodeInsightFixtureTestCase {
       methodRule.create { } // match all methods
   } }
 
-//  public void testEnum1() throws Exception {
-//    final Project project = getProject();
-//    final LanguageLevelProjectExtension llpExtension = LanguageLevelProjectExtension.getInstance(project);
-//    LanguageLevel oldLevel = llpExtension.getLanguageLevel();
-//    llpExtension.setLanguageLevel(LanguageLevel.JDK_1_5);
-//    configureByFile("/com/wrq/rearranger/Enum1Test.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    rs.setRearrangeInnerClasses(true);
-//    rs.getExtractedMethodsSettings().setBelowFirstCaller(true);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(project, file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/Enum1Result.java");
-//    llpExtension.setLanguageLevel(oldLevel);
-//  }
-//
-//  public void testEnum2() throws Exception {
-//    final Project project = getProject();
-//    final LanguageLevelProjectExtension llpExtension = LanguageLevelProjectExtension.getInstance(project);
-//    LanguageLevel oldLevel = llpExtension.getLanguageLevel();
-//    llpExtension.setLanguageLevel(LanguageLevel.JDK_1_5);
-//    configureByFile("/com/wrq/rearranger/Enum2Test.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.setRearrangeInnerClasses(true);
-//    rs.getAfterClassRBrace().setForce(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(project, file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/Enum2Result.java");
-//    llpExtension.setLanguageLevel(oldLevel);
-//  }
-//
-//  public void testEnum2A() throws Exception {
-//    final Project project = getProject();
-//    final LanguageLevelProjectExtension llpExtension = LanguageLevelProjectExtension.getInstance(project);
-//    LanguageLevel oldLevel = llpExtension.getLanguageLevel();
-//    llpExtension.setLanguageLevel(LanguageLevel.JDK_1_5);
-//    configureByFile("/com/wrq/rearranger/Enum2Test.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.setRearrangeInnerClasses(false);
-//    rs.getAfterClassRBrace().setForce(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(project, file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/Enum2AResult.java");
-//    llpExtension.setLanguageLevel(oldLevel);
-//  }
-//
-//  public void testRearrangementIncompleteLastLine() throws Exception {
-//    configureByFile("/com/wrq/rearranger/IncompleteLineTest.java");
-//    final PsiFile file = getFile();
-//    Project project = getProject();
-//    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(project, file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/IncompleteLineResult.java");
-//  }
-//
-//  public void testOverloadedMethodCategorization() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest45.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File(InteractiveTest.DEFAULT_CONFIGURATION));
-//    rs.setAskBeforeRearranging(false);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(1);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult45.java");
-//  }
-//
-//  public void testSuperclassAlgorithm() throws Exception {
-//    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(getProject());
-//    final PsiClass aClass =
-//      psiFacade.getElementFactory().
-//        createClassFromText("public String toString() {return null;}", null);
-//    final PsiMethod method = aClass.getMethods()[0];
-//    final PsiMethod[] superMethods = method.findSuperMethods();
-//    assertEquals(1, superMethods.length);
-//    PsiClass psiClass = superMethods[0].getContainingClass();
-//    if (psiClass == null) {
-//      fail("missing containing class");
-//    }
-//    else {
-//      assertEquals("java.lang.Object", psiClass.getQualifiedName());
-//    }
-//  }
-//
-//  public void testSortingOriginalOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest46.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getSortAttr().setByModifiers(false);
-//    fa.getSortAttr().setByType(false);
-//    fa.getSortAttr().setTypeCaseInsensitive(false);
-//    fa.getSortAttr().setByName(false);
-//    fa.getSortAttr().setNameCaseInsensitive(false);
-//    rs.addItem(fa, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult46A.java");
-//  }
-//
-//  public void testSortingModifierOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest46.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getSortAttr().setByModifiers(true);
-//    fa.getSortAttr().setByType(false);
-//    fa.getSortAttr().setTypeCaseInsensitive(false);
-//    fa.getSortAttr().setByName(false);
-//    fa.getSortAttr().setNameCaseInsensitive(false);
-//    rs.addItem(fa, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult46B.java");
-//  }
-//
-//  public void testSortingTypeOrder() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest46.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getSortAttr().setByModifiers(false);
-//    fa.getSortAttr().setByType(true);
-//    fa.getSortAttr().setTypeCaseInsensitive(false);
-//    fa.getSortAttr().setByName(false);
-//    fa.getSortAttr().setNameCaseInsensitive(false);
-//    rs.addItem(fa, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult46C.java");
-//  }
-//
-//  public void testSortingTypeOrderCI() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest46.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getSortAttr().setByModifiers(false);
-//    fa.getSortAttr().setByType(true);
-//    fa.getSortAttr().setTypeCaseInsensitive(true);
-//    fa.getSortAttr().setByName(false);
-//    fa.getSortAttr().setNameCaseInsensitive(false);
-//    rs.addItem(fa, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult46D.java");
-//  }
-//
-//  public void testSortingMTNOrderCI() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest46.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlProtected(true);
-//    fa.getSortAttr().setByModifiers(true);
-//    fa.getSortAttr().setByType(true);
-//    fa.getSortAttr().setTypeCaseInsensitive(true);
-//    fa.getSortAttr().setByName(true);
-//    fa.getSortAttr().setNameCaseInsensitive(true);
-//    rs.addItem(fa, 0);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult46E.java");
-//  }
-//
-//  public void testEnumSelection() throws Exception {
-//    configureByFile("/com/wrq/rearranger/RearrangementTest47.java");
-//    final PsiFile file = getFile();
-//    final Project project = getProject();
-//    final LanguageLevelProjectExtension llpExtension = LanguageLevelProjectExtension.getInstance(project);
-//    LanguageLevel oldLevel = llpExtension.getLanguageLevel();
-//    llpExtension.setLanguageLevel(LanguageLevel.JDK_1_5);
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getStAttr().setValue(true);
-//    rs.addItem(fa, 0);
-//    InnerClassAttributes ica = new InnerClassAttributes();
-//    ica.getEnumAttr().setValue(true);
-//    rs.addItem(ica, 1);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/RearrangementResult47.java");
-//    llpExtension.setLanguageLevel(oldLevel);
-//  }
-//
-//  public void testOverloaded1() throws Exception {
-//    configureByFile("/com/wrq/rearranger/OverloadedTest1.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File("testData/com/wrq/rearranger/OverloadedConfig.xml"));
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/OverloadedResult1.java");
-//  }
-//
-//  public void testGenerics1() throws Exception {
-//    configureByFile("/com/wrq/rearranger/GenericsTest1.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File("testData/com/wrq/rearranger/OverloadedConfig.xml"));
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/GenericsResult1.java");
-//  }
-//
-//  public void testInterface1() throws Exception {
-//    configureByFile("/com/wrq/rearranger/InterfaceTest1.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlPublic(true); // match all public fields; in an interface, all constants are regarded as public
-//    fa.getStAttr().setValue(true); // match all static fields; in an interface, all constants are regarded as public
-//    rs.addItem(fa, 0);
-//    MethodAttributes ma = new MethodAttributes();
-//    ma.getPlAttr().setPlPublic(true); // match all public methods; in an interface, all methods are regarded as public
-//    rs.addItem(ma, 1);
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/InterfaceResult1.java");
-//  }
-//
-//  public void testCorruptRespacing() throws Exception {
-//    configureByFile("/com/wrq/rearranger/CorruptRespacingTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    rs = RearrangerSettings.getSettingsFromFile(new File("testData/com/wrq/rearranger/CorruptionConfig.xml"));
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/CorruptRespacingResult.java");
-//  }
-//
-//  public void testCommentSeparator1() throws Exception {
-//    configureByFile("/com/wrq/rearranger/CommentSeparatorTest1.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final CommentRule c = new CommentRule();
-//    c.setCommentText("\n\t// Fields %FS%\n");
-//    c.setEmitCondition(CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE);
-//    CommentFillString cfs = new CommentFillString();
-//    cfs.setFillString("=");
-//    cfs.setUseProjectWidthForFill(false);
-//    cfs.setFillWidth(80);
-//    c.setCommentFillString(cfs);
-//    rs.addItem(c, 0);
-//    FieldAttributes fa = new FieldAttributes();
-//    fa.getPlAttr().setPlPublic(true);
-//    rs.addItem(fa, 1);
-//    rs.setAskBeforeRearranging(false);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.setTabSize(4);
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/CommentSeparatorResult1.java");
-//  }
-//
-//  public void testEmptySetter() throws Exception {
-//    configureByFile("/com/wrq/rearranger/BitFieldTest.java");
-//    final PsiFile file = getFile();
-//    final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-//    final File physFile = new File(InteractiveTest.DEFAULT_CONFIGURATION);
-//    rs = RearrangerSettings.getSettingsFromFile(physFile);
-//    rs.setAskBeforeRearranging(false);
-//    rs.getAfterClassRBrace().setnBlankLines(2);
-//    rs.getAfterClassRBrace().setForce(true);
-//    rs.getNewlinesAtEOF().setForce(true);
-//    rs.getNewlinesAtEOF().setnBlankLines(3);
-//    final RearrangerActionHandler rah = new RearrangerActionHandler();
-//    rah.rearrangeDocument(getProject(), file, rs, doc);
-//    super.checkResultByFile("/com/wrq/rearranger/BitFieldResult.java");
-//  }
+  public void testEnum1() throws Exception {
+    doTest('Enum1Test', 'Enum1Result') {
+      setupSettings( InteractiveTest.DEFAULT_CONFIGURATION )
+      spacingRule.create {
+        spacing( anchor: SpacingAnchor.EOF, lines: 1 )
+      }
+      settings.configure('rearrange inner classes': true )
+      settings.'extracted methods'( 'below first caller': true )
+  } }
+
+  public void testEnum2() throws Exception {
+    doTest('Enum2Test', 'Enum2Result') {
+      setupSettings( InteractiveTest.DEFAULT_CONFIGURATION )
+      settings.configure('rearrange inner classes': true )
+      mySettings.afterClassRBrace.force = false
+  } }
+
+  public void testEnum2A() throws Exception {
+    doTest('Enum2Test', 'Enum2AResult') {
+      setupSettings( InteractiveTest.DEFAULT_CONFIGURATION )
+      settings.configure('rearrange inner classes': false )
+      mySettings.afterClassRBrace.force = false
+  } }
+
+  public void testRearrangementIncompleteLastLine() throws Exception {
+    doTest('IncompleteLineTest', 'IncompleteLineResult') {
+      setupSettings( InteractiveTest.DEFAULT_CONFIGURATION )
+  } }
+
+  public void testOverloadedMethodCategorization() throws Exception {
+    doTest('RearrangementTest45', 'RearrangementResult45') {
+      setupSettings( InteractiveTest.DEFAULT_CONFIGURATION )
+      spacingRule.create {
+        spacing( anchor: SpacingAnchor.EOF, lines: 1 )
+  } } }
+
+  public void testSuperclassAlgorithm() throws Exception {
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(getProject());
+    final PsiClass aClass =
+      psiFacade.getElementFactory().
+        createClassFromText("public String toString() {return null;}", null);
+    final PsiMethod method = aClass.getMethods()[0];
+    final PsiMethod[] superMethods = method.findSuperMethods();
+    assertEquals(1, superMethods.length);
+    PsiClass psiClass = superMethods[0].getContainingClass();
+    if (psiClass == null) {
+      fail("missing containing class");
+    }
+    else {
+      assertEquals("java.lang.Object", psiClass.getQualifiedName());
+    }
+  }
+
+  public void testSortingOriginalOrder() throws Exception {
+    doTest('RearrangementTest46', 'RearrangementResult46A') {
+      fieldRule.create {
+        modifier( PsiModifier.PROTECTED )
+        'not sort by' ([ SortOption.TYPE, SortOption.NAME, SortOption.TYPE_CASE_INSENSITIVE,
+                         SortOption.NAME_CASE_INSENSITIVE, SortOption.MODIFIER ])
+  } } }
+
+  public void testSortingModifierOrder() throws Exception {
+    doTest('RearrangementTest46', 'RearrangementResult46B') {
+      fieldRule.create {
+        modifier( PsiModifier.PROTECTED )
+        'sort by' ( SortOption.MODIFIER )
+        'not sort by' ([ SortOption.TYPE, SortOption.NAME, SortOption.TYPE_CASE_INSENSITIVE, SortOption.NAME_CASE_INSENSITIVE ])
+  } } }
+
+  public void testSortingTypeOrder() throws Exception {
+    doTest('RearrangementTest46', 'RearrangementResult46C') {
+      fieldRule.create {
+        modifier( PsiModifier.PROTECTED )
+        'sort by' ( SortOption.TYPE )
+        'not sort by' ([ SortOption.MODIFIER, SortOption.NAME, SortOption.TYPE_CASE_INSENSITIVE, SortOption.NAME_CASE_INSENSITIVE ])
+  } } }
+
+  public void testSortingTypeOrderCI() throws Exception {
+    doTest('RearrangementTest46', 'RearrangementResult46D') {
+      fieldRule.create {
+        modifier( PsiModifier.PROTECTED )
+        'sort by' ([ SortOption.TYPE, SortOption.TYPE_CASE_INSENSITIVE ])
+        'not sort by' ([ SortOption.MODIFIER, SortOption.NAME, SortOption.NAME_CASE_INSENSITIVE ])
+  } } }
+
+  public void testSortingMTNOrderCI() throws Exception {
+    doTest('RearrangementTest46', 'RearrangementResult46E') {
+      fieldRule.create {
+        modifier( PsiModifier.PROTECTED )
+        'sort by' ([ SortOption.MODIFIER, SortOption.TYPE, SortOption.TYPE_CASE_INSENSITIVE, SortOption.NAME,
+                     SortOption.NAME_CASE_INSENSITIVE ])
+  } } }
+
+  public void testEnumSelection() throws Exception {
+    doTest('RearrangementTest47', 'RearrangementResult47') {
+      fieldRule.create { modifier( PsiModifier.STATIC ) }
+      innerClassRule.create ( 'enum': true )
+  } }
+
+  public void testOverloaded1() throws Exception {
+    doTest('OverloadedTest1', 'OverloadedResult1') {
+      setupSettings('/test/testData/com/wrq/rearranger/OverloadedConfig.xml')
+  } }
+
+  public void testGenerics1() throws Exception {
+    doTest('GenericsTest1', 'GenericsResult1') {
+      setupSettings('/test/testData/com/wrq/rearranger/OverloadedConfig.xml')
+  } }
+
+  public void testInterface1() throws Exception {
+    doTest('InterfaceTest1', 'InterfaceResult1') {
+      // Match all public fields; in an interface, all constants are regarded as public
+      fieldRule.create { modifier([ PsiModifier.PUBLIC, PsiModifier.STATIC ]) }
+
+      // Match all public methods; in an interface, all methods are regarded as public
+      methodRule.create { modifier( PsiModifier.PUBLIC ) }
+  } }
+  
+  public void testCommentSeparator1() throws Exception {
+    doTest('CommentSeparatorTest1', 'CommentSeparatorResult1') {
+      commentRule.create {
+        comment('\n\t// Fields %FS%\n', condition: CommentRule.EMIT_IF_ITEMS_MATCH_SUBSEQUENT_RULE, 'fill string': '=',
+                'use project width for fill': false, 'fill width': 80)
+      }
+      fieldRule.create { modifier( PsiModifier.PUBLIC ) }
+  } }
+
+  public void testEmptySetter() throws Exception {
+    doTest('BitFieldTest', 'BitFieldResult') {
+      setupSettings(InteractiveTest.DEFAULT_CONFIGURATION)
+        spacingRule.create {
+          spacing( anchor: SpacingAnchor.AFTER_CLASS_RBRACE, lines: 2 )
+          spacing( anchor: SpacingAnchor.EOF, lines: 3 )
+  } } }
 
   private void doTest(@NotNull String srcFileName, @Nullable String expectedResultFileName, @Nullable Closure adjustment = null) {
     doTest(srcFileName, expectedResultFileName, 'java', adjustment)

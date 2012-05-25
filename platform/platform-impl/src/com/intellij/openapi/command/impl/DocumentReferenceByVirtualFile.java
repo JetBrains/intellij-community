@@ -29,12 +29,14 @@ public class DocumentReferenceByVirtualFile implements DocumentReference {
     myFile = file;
   }
 
+  @Override
   @Nullable
   public Document getDocument() {
     assert myFile.isValid() : "should not be called on references to deleted file: " + myFile;
     return FileDocumentManager.getInstance().getDocument(myFile);
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myFile;

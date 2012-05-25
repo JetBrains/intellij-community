@@ -28,7 +28,6 @@ import org.jdom.JDOMException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertElementsEqual;
 
@@ -221,8 +220,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
     context.setExternalProfile(profile);
     context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
-    Map<String,Tools> tools = context.getTools();
-    assertEquals(1, tools.size());
   }
 
   private static LocalInspectionToolWrapper createTool(String s) {

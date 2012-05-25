@@ -53,8 +53,9 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
     myDesigner = designer;
   }
 
-  protected EditableArea getArea() {
-    return myDesigner.getActionsArea();
+  protected EditableArea getArea(DataContext dataContext) {
+    EditableArea area = EditableArea.DATA_KEY.getData(dataContext);
+    return area == null ? myDesigner.getSurfaceArea() : area;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -68,7 +69,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
     if (myDesigner.getInplaceEditingLayer().isEditing()) {
       return false;
     }
-    List<RadComponent> selection = getArea().getSelection();
+    List<RadComponent> selection = getArea(dataContext).getSelection();
     if (selection.isEmpty()) {
       return false;
     }
@@ -81,11 +82,11 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   }
 
   @Override
-  public void deleteElement(@NotNull DataContext dataContext) {
+  public void deleteElement(final @NotNull DataContext dataContext) {
     myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
       @Override
       public void run() throws Exception {
-        EditableArea area = getArea();
+        EditableArea area = getArea(dataContext);
         List<RadComponent> selection = area.getSelection();
 
         if (selection.isEmpty()) {
@@ -145,20 +146,20 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    return !myDesigner.getInplaceEditingLayer().isEditing() && !getArea().getSelection().isEmpty();
+    return !myDesigner.getInplaceEditingLayer().isEditing() && !getArea(dataContext).getSelection().isEmpty();
   }
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    doCopy();
+    doCopy(dataContext);
   }
 
-  private boolean doCopy() {
+  private boolean doCopy(DataContext dataContext) {
     try {
       Element root = new Element("designer");
       root.setAttribute("target", myDesigner.getPlatformTarget());
 
-      List<RadComponent> components = RadComponent.getPureSelection(getArea().getSelection());
+      List<RadComponent> components = RadComponent.getPureSelection(getArea(dataContext).getSelection());
       for (RadComponent component : components) {
         component.copyTo(root);
       }
@@ -243,7 +244,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public void performCut(@NotNull DataContext dataContext) {
-    if (doCopy()) {
+    if (doCopy(dataContext)) {
       deleteElement(dataContext);
     }
   }

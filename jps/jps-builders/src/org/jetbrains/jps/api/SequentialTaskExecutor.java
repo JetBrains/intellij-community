@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Eugene Zhuravlev
  *         Date: 9/24/11
  */
-public class SequentialTaskExecutor {
+public class SequentialTaskExecutor implements Executor {
   private final Executor myExecutor;
   private final Queue<FutureTask> myTaskQueue = new LinkedBlockingQueue<FutureTask>();
   private final AtomicBoolean myInProgress = new AtomicBoolean(false);
@@ -34,6 +34,11 @@ public class SequentialTaskExecutor {
 
   public SequentialTaskExecutor(Executor executor) {
     myExecutor = executor;
+  }
+
+  @Override
+  public void execute(Runnable task) {
+    submit(task);
   }
 
   public RunnableFuture submit(Runnable task) {
