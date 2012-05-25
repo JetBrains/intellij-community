@@ -18,6 +18,7 @@ package com.intellij.ui.popup.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,6 +32,8 @@ import javax.swing.*;
 */
 public interface ItemWrapper {
   void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected);
+
+  void setupRenderer(ColoredTreeCellRenderer renderer);
 
   void updateAccessoryView(JComponent label);
 

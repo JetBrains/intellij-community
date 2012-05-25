@@ -18,9 +18,7 @@ package git4idea.status;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -70,8 +68,9 @@ class GitNewChangesCollector extends GitChangesCollector {
    */
   @NotNull
   static GitNewChangesCollector collect(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
+                                        @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
                                         @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException {
-    return new GitNewChangesCollector(project, git, changeListManager, dirtyScope, vcsRoot);
+    return new GitNewChangesCollector(project, git, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
   }
 
   @Override
@@ -87,9 +86,10 @@ class GitNewChangesCollector extends GitChangesCollector {
   }
 
   private GitNewChangesCollector(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
+                                 @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
                                  @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException
   {
-    super(project, changeListManager, dirtyScope, vcsRoot);
+    super(project, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
     myGit = git;
     myRepository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(vcsRoot);
 

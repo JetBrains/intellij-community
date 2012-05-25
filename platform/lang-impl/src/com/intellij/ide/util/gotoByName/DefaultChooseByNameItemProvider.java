@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.Function;
@@ -147,10 +148,10 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     if (name == null) return false;
 
     final List<String> suspects = split(name, base);
-    final List<Pair<String, NameUtil.MinusculeMatcher>> patternsAndMatchers =
-      ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, NameUtil.MinusculeMatcher>>() {
+    final List<Pair<String, MinusculeMatcher>> patternsAndMatchers =
+      ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
         @Override
-        public Pair<String, NameUtil.MinusculeMatcher> fun(String s) {
+        public Pair<String, MinusculeMatcher> fun(String s) {
           return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s)));
         }
       });
@@ -159,9 +160,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     try {
       patterns:
-      for (Pair<String, NameUtil.MinusculeMatcher> patternAndMatcher : patternsAndMatchers) {
+      for (Pair<String, MinusculeMatcher> patternAndMatcher : patternsAndMatchers) {
         final String pattern = patternAndMatcher.first;
-        final NameUtil.MinusculeMatcher matcher = patternAndMatcher.second;
+        final MinusculeMatcher matcher = patternAndMatcher.second;
         if (!pattern.isEmpty()) {
           for (int j = matchPosition; j < suspects.size() - 1; j++) {
             String suspect = suspects.get(j);
@@ -204,7 +205,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       pattern = pattern.substring(1);
     }
 
-    final NameUtil.MinusculeMatcher matcher = buildPatternMatcher(pattern);
+    final MinusculeMatcher matcher = buildPatternMatcher(pattern);
 
     try {
       for (String name : names) {
@@ -221,7 +222,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  private static boolean matches(ChooseByNameBase base, String pattern, NameUtil.MinusculeMatcher matcher, String name) {
+  private static boolean matches(ChooseByNameBase base, String pattern, MinusculeMatcher matcher, String name) {
     boolean matches = false;
     if (name != null) {
       if (base.getModel() instanceof CustomMatcherModel) {
@@ -236,7 +237,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return matches;
   }
 
-  private static NameUtil.MinusculeMatcher buildPatternMatcher(String pattern) {
+  private static MinusculeMatcher buildPatternMatcher(String pattern) {
     return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 

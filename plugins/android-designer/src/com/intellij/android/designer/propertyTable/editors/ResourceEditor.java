@@ -18,6 +18,7 @@ package com.intellij.android.designer.propertyTable.editors;
 import com.android.resources.ResourceType;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
 import com.intellij.openapi.module.Module;
@@ -26,11 +27,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.Set;
@@ -51,7 +55,12 @@ public class ResourceEditor extends PropertyEditor {
     myTypes = types;
 
     if (formats.contains(AttributeFormat.Enum) || formats.contains(AttributeFormat.Boolean)) {
-      ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton();
+      ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton() {
+        @Override
+        public Dimension getPreferredSize() {
+          return getComponentPreferredSize();
+        }
+      };
 
       final JComboBox comboBox = editor.getComboBox();
       DefaultComboBoxModel model;
@@ -78,18 +87,32 @@ public class ResourceEditor extends PropertyEditor {
       comboBox.setSelectedIndex(0);
     }
     else {
-      myEditor = new TextFieldWithBrowseButton();
+      myEditor = new TextFieldWithBrowseButton() {
+        @Override
+        public Dimension getPreferredSize() {
+          return getComponentPreferredSize();
+        }
+      };
       myEditor.registerKeyboardAction(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      getComboText().addActionListener(new ActionListener() {
+
+      JTextField textField = getComboText();
+      textField.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           fireValueCommitted(true, true);
         }
       });
+      textField.getDocument().addDocumentListener(
+        new DocumentAdapter() {
+          protected void textChanged(final DocumentEvent e) {
+            preferredSizeChanged();
+          }
+        }
+      );
     }
 
     myEditor.addActionListener(new ActionListener() {
@@ -104,6 +127,12 @@ public class ResourceEditor extends PropertyEditor {
         myEditor.getChildComponent().requestFocus();
       }
     });
+  }
+
+  private Dimension getComponentPreferredSize() {
+    Dimension size1 = myEditor.getChildComponent().getPreferredSize();
+    Dimension size2 = myEditor.getButton().getPreferredSize();
+    return new Dimension(size1.width + size2.width + 5, size1.height);
   }
 
   private static ResourceType[] convertTypes(Set<AttributeFormat> formats) {
@@ -141,11 +170,22 @@ public class ResourceEditor extends PropertyEditor {
 
   @NotNull
   @Override
-  public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
+  public JComponent getComponent(@NotNull RadComponent rootComponent,
+                                 @Nullable RadComponent component,
+                                 Object value,
+                                 @Nullable InplaceContext inplaceContext) {
     myRootComponent = rootComponent;
     JTextField text = getComboText();
     text.setText((String)value);
+    if (inplaceContext != null && inplaceContext.isStartChar()) {
+      text.setText(inplaceContext.getText(text.getText()));
+    }
     return myEditor;
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return getComboText();
   }
 
   @Override

@@ -40,6 +40,7 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   protected final AttributeDefinition myDefinition;
   protected final List<Property<RadViewComponent>> myOptions = new ArrayList<Property<RadViewComponent>>();
+  private String myJavadocText;
 
   public FlagProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
     super(null, name);
@@ -163,7 +164,13 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
 
   @Override
   public String getJavadocText() {
-    return myDefinition.getDocValue();
+    if (myJavadocText == null) {
+      String javadocText = myDefinition.getDocValue();
+      if (javadocText != null) {
+        myJavadocText = JavadocParser.build(getName(), javadocText);
+      }
+    }
+    return myJavadocText;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

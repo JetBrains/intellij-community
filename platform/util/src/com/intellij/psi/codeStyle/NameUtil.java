@@ -15,20 +15,15 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
-import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class NameUtil {
@@ -331,24 +326,24 @@ public class NameUtil {
     return suggestion;
   }
 
-  private static boolean isWordStart(String text, int i) {
+  static boolean isWordStart(String text, int i) {
     if (isWordStart(text.charAt(i))) {
       return true;
     }
     if (!Character.isLetterOrDigit(text.charAt(i))) {
       return false;
     }
-    if (i > 0 && (MinusculeMatcher.isWordSeparator(text.charAt(i - 1)) || text.charAt(i - 1) == '.')) {
+    if (i > 0 && (isWordSeparator(text.charAt(i - 1)) || text.charAt(i - 1) == '.')) {
       return true;
     }
     return false;
   }
 
-  private static boolean isWordStart(char p) {
+  static boolean isWordStart(char p) {
     return Character.isUpperCase(p) || Character.isDigit(p);
   }
 
-  private static int nextWord(String text, int start) {
+  static int nextWord(String text, int start) {
     if (!Character.isLetterOrDigit(text.charAt(start))) {
       return start + 1;
     }
@@ -376,6 +371,10 @@ public class NameUtil {
       result.add(text.substring(start, next));
       start = next;
     }
+  }
+
+  static boolean isWordSeparator(char c) {
+    return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':';
   }
 
   /**
@@ -408,277 +407,5 @@ public class NameUtil {
 
   public enum MatchingCaseSensitivity {
     NONE, FIRST_LETTER, ALL
-  }
-
-  public static class MinusculeMatcher implements com.intellij.util.text.Matcher {
-    private final char[] myPattern;
-    private final MatchingCaseSensitivity myOptions;
-
-    public MinusculeMatcher(String pattern, MatchingCaseSensitivity options) {
-      myOptions = options;
-      myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").toCharArray();
-    }
-
-    @Nullable
-    private FList<TextRange> matchName(String name, int patternIndex, int nameIndex) {
-      if (patternIndex == myPattern.length) {
-        return FList.emptyList();
-      }
-      if ('*' == myPattern[patternIndex]) {
-        return skipChars(name, patternIndex, nameIndex, true);
-      }
-      if (nameIndex == name.length()) {
-        return null;
-      }
-
-      if ('.' == myPattern[patternIndex] && name.charAt(nameIndex) != '.') {
-        return skipChars(name, patternIndex, nameIndex, false);
-      }
-
-      if (' ' == myPattern[patternIndex] && patternIndex != myPattern.length - 1) {
-        return skipWords(name, patternIndex, nameIndex);
-      }
-
-      if ((patternIndex == 0 || patternIndex == 1 && myPattern[0] == ' ' && nameIndex == 0) &&
-          myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[patternIndex]) {
-        return null;
-      }
-
-      if (isWordSeparator(name.charAt(nameIndex))) {
-        return skipSeparators(name, patternIndex, nameIndex);
-      }
-
-      if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
-        if (Character.isDigit(name.charAt(nameIndex)) && nameIndex > 0 || (name.charAt(nameIndex) == '.' && name.indexOf('.', nameIndex + 1) > 0)) {
-          return matchName(name, patternIndex, nameIndex + 1);
-        }
-        return null;
-      }
-
-      if (myOptions == MatchingCaseSensitivity.ALL && name.charAt(nameIndex) != myPattern[patternIndex]) {
-        return null;
-      }
-
-      int nextStart = NameUtil.nextWord(name, nameIndex);
-
-      int lastUpper = isWordStart(myPattern[patternIndex]) ? 0 : -1;
-
-      int i = 1;
-      while (true) {
-        if (patternIndex + i == myPattern.length || i + nameIndex == nextStart) {
-          break;
-        }
-        char p = myPattern[patternIndex + i];
-        char w = name.charAt(i + nameIndex);
-        if (lastUpper == i - 1 && isWordStart(p) && myOptions != MatchingCaseSensitivity.ALL) {
-          if (p == w) {
-            lastUpper = i;
-          }
-          p = StringUtil.toLowerCase(p);
-        }
-
-        if (myOptions != MatchingCaseSensitivity.ALL) {
-          w = StringUtil.toLowerCase(w);
-        }
-        if (w != p) {
-          break;
-        }
-        i++;
-      }
-
-      if (isFinalSpaceMatch(name, patternIndex, nameIndex, nextStart, i)) {
-        return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
-      }
-
-      return matchAfterFragment(name, patternIndex, nameIndex, nextStart, lastUpper, i);
-    }
-
-    private boolean isFinalSpaceMatch(String name, int patternIndex, int nameIndex, int nextStart, int i) {
-      return nextStart == name.length() &&
-          patternIndex + i == myPattern.length - 1 &&
-          ' ' == myPattern[patternIndex + i] &&
-          (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length());
-    }
-
-    @Nullable
-    private FList<TextRange> matchAfterFragment(String name, int patternIndex, int nameIndex, int nextStart, int lastUpper, int matchLen) {
-      boolean star = patternIndex + matchLen < myPattern.length && myPattern[patternIndex + matchLen] == '*';
-      if (lastUpper >= 0) {
-        FList<TextRange> ranges = matchName(name, patternIndex + lastUpper + 1, star && matchLen == lastUpper ? nameIndex + lastUpper : nextStart);
-        if (ranges != null) {
-          return prependRange(ranges, nameIndex, lastUpper + 1);
-        }
-      }
-
-      int trial = matchLen;
-      while (trial > 0) {
-        FList<TextRange> ranges = matchName(name, patternIndex + trial, nextStart);
-        if (ranges != null) {
-          return prependRange(ranges, nameIndex, trial);
-        }
-        trial--;
-      }
-
-      FList<TextRange> ranges = matchName(name, patternIndex + matchLen, nameIndex + matchLen);
-      if (ranges != null) {
-        return prependRange(ranges, nameIndex, matchLen);
-      }
-      return null;
-    }
-
-    private static FList<TextRange> prependRange(FList<TextRange> ranges, int from, int length) {
-      TextRange head = ranges.getHead();
-      if (head != null && head.getStartOffset() == from + length) {
-        return ranges.getTail().prepend(new TextRange(from, head.getEndOffset()));
-      }
-      return ranges.prepend(TextRange.from(from, length));
-    }
-
-    private static boolean isWordSeparator(char c) {
-      return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':';
-    }
-
-    @Nullable
-    private FList<TextRange> skipSeparators(String name, int patternIndex, int nameIndex) {
-      int nextStart = NameUtil.nextWord(name, nameIndex);
-      assert nextStart - nameIndex == 1 : "'" + name + "'" + nameIndex + " " + nextStart;
-      char p = myPattern[patternIndex];
-      if (isWordSeparator(p)) {
-        if (myOptions != MatchingCaseSensitivity.NONE &&
-            nameIndex == 0 && name.length() > 1 && patternIndex + 1 < myPattern.length &&
-            isWordSeparator(name.charAt(1)) && !isWordSeparator(myPattern[patternIndex + 1])) {
-          return null;
-        }
-
-        final FList<TextRange> ranges = matchName(name, patternIndex + 1, nextStart);
-        if (ranges != null) {
-          return prependRange(ranges, nameIndex, 1);
-        }
-
-        return null;
-      }
-
-      return matchName(name, patternIndex, nextStart);
-    }
-
-    @Nullable
-    private FList<TextRange> skipChars(String name, int patternIndex, int nameIndex, boolean maySkipNextChar) {
-      while ('*' == myPattern[patternIndex]) {
-        patternIndex++;
-        if (patternIndex == myPattern.length) {
-          return FList.emptyList();
-        }
-      }
-
-      String nextChar = String.valueOf(myPattern[patternIndex]);
-      boolean upper = Character.isUpperCase(myPattern[patternIndex]);
-
-      int fromIndex = nameIndex;
-      while (true) {
-        int next = StringUtil.indexOfIgnoreCase(name, nextChar, fromIndex);
-        if (next < 0) {
-          break;
-        }
-        if (upper && next > 0 && !Character.isUpperCase(name.charAt(next))) {
-          fromIndex = next + 1;
-          continue;
-        }
-
-        FList<TextRange> ranges = matchName(name, patternIndex, next);
-        if (ranges != null) {
-          return ranges;
-        }
-        if (!maySkipNextChar) {
-          return null;
-        }
-        fromIndex = next + 1;
-      }
-      return null;
-    }
-
-    @Nullable
-    private FList<TextRange> skipWords(String name, int patternIndex, int nameIndex) {
-      while (' ' == myPattern[patternIndex]) {
-        patternIndex++;
-        if (patternIndex == myPattern.length) {
-          return null;
-        }
-      }
-
-      if (nameIndex == 0 || isWordStart(name, nameIndex)) {
-        FList<TextRange> ranges = matchName(name, patternIndex, nameIndex);
-        if (ranges != null) {
-          return ranges;
-        }
-      }
-
-      boolean separatorInPattern = isWordSeparator(myPattern[patternIndex]);
-      int fromIndex = nameIndex;
-      while (fromIndex < name.length()) {
-        int next = separatorInPattern ? name.indexOf(myPattern[patternIndex], fromIndex) : nextWord(name, fromIndex);
-        if (next < 0) {
-          break;
-        }
-
-        FList<TextRange> ranges = matchName(name, patternIndex, next);
-        if (ranges != null) {
-          return ranges;
-        }
-        fromIndex = next;
-        if (separatorInPattern) {
-          fromIndex++;
-        }
-      }
-      return null;
-    }
-
-    public int matchingDegree(String name) {
-      Iterable<TextRange> iterable = matchingFragments(name);
-      if (iterable == null) return Integer.MIN_VALUE;
-
-      int fragmentCount = 0;
-      int matchingCase = 0;
-      CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
-      int p = -1;
-      TextRange first = null;
-      for (TextRange range : iterable) {
-        if (first == null) {
-          first = range;
-        }
-        for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
-          char c = name.charAt(i);
-          p = StringUtil.indexOf(seq, c, p + 1, myPattern.length, false);
-          if (p < 0) {
-            break;
-          }
-          matchingCase += c == myPattern[p] ? 1 : 0;
-        }
-        fragmentCount++;
-      }
-
-      int commonStart = 0;
-      while (commonStart < name.length() && commonStart < myPattern.length && name.charAt(commonStart) == myPattern[commonStart]) {
-        commonStart++;
-      }
-
-      boolean prefixMatching = first != null && first.getStartOffset() == 0;
-      boolean middleWordStart = first != null && first.getStartOffset() > 0 && isWordStart(name, first.getStartOffset());
-
-      return -fragmentCount + matchingCase * 10 + commonStart + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
-    }
-
-    @Override
-    public boolean matches(String name) {
-      return matchingFragments(name) != null;
-    }
-
-    @Nullable
-    public Iterable<TextRange> matchingFragments(String name) {
-      if (name.isEmpty()) {
-        return myPattern.length == 0 ? Collections.<TextRange>emptyList() : null;
-      }
-
-      return matchName(name, 0, 0);
-    }
   }
 }

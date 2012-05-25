@@ -19,7 +19,6 @@ import com.intellij.designer.componentTree.ComponentTree;
 import com.intellij.designer.componentTree.ComponentTreeBuilder;
 import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -156,10 +155,6 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     return editors.length > 0 ? getDesigner(editors[0]) : null;
   }
 
-  public PropertyTable getPropertyTable() {
-    return myPropertyTablePanel.getPropertyTable();
-  }
-
   private void bindToDesigner(final DesignerEditorPanel designer) {
     myWindowQueue.cancelAllUpdates();
     myWindowQueue.queue(new Update("update") {
@@ -177,14 +172,12 @@ public final class DesignerToolWindowManager implements ProjectComponent {
         clearTreeBuilder();
         myComponentTree.newModel();
         if (designer == null) {
-          myComponentTree.setDecorator(null);
-          myComponentTree.setActionPanel(null);
+          myComponentTree.setDesignerPanel(null);
           myPropertyTablePanel.getPropertyTable().setArea(null, null);
           myToolWindow.setAvailable(false, null);
         }
         else {
-          myComponentTree.setDecorator(designer.getTreeDecorator());
-          myComponentTree.setActionPanel(designer.getActionPanel());
+          myComponentTree.setDesignerPanel(designer);
           myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
           myPropertyTablePanel.getPropertyTable().setArea(designer, myTreeBuilder.getTreeArea());
           myToolWindow.setAvailable(true, null);

@@ -17,6 +17,7 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -50,6 +51,12 @@ public class DetailViewImpl extends JPanel implements DetailView {
   private JLabel myNothingToShow = new JLabel("Nothing to show");
   private JLabel myNothingToShowInEditor = new JLabel("Nothing to show");
   private RangeHighlighter myHighlighter;
+
+  public void setScheme(EditorColorsScheme scheme) {
+    myScheme = scheme;
+  }
+
+  private EditorColorsScheme myScheme = EditorColorsManager.getInstance().getGlobalScheme();
 
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
@@ -112,10 +119,13 @@ public class DetailViewImpl extends JPanel implements DetailView {
         clearEditor();
         remove(myNothingToShowInEditor);
         setEditor(EditorFactory.getInstance().createViewer(document, project));
-        EditorHighlighter highlighter = EditorHighlighterFactory.getInstance()
-          .createEditorHighlighter(file, EditorColorsManager.getInstance().getGlobalScheme(), project);
-        ((EditorEx)getEditor()).setHighlighter(highlighter);
+
+        final EditorColorsScheme scheme = getScheme();
+
+        EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project);
+
         ((EditorEx)getEditor()).setFile(file);
+        ((EditorEx)getEditor()).setHighlighter(highlighter);
 
         getEditor().getSettings().setAnimatedScrolling(false);
         getEditor().getSettings().setRefrainFromScrolling(false);
@@ -144,6 +154,12 @@ public class DetailViewImpl extends JPanel implements DetailView {
       add(label);
     }
   }
+
+  public EditorColorsScheme getScheme() {
+    return myScheme;
+  }
+
+
 
   private void clearHightlighting() {
     if (myHighlighter != null) {

@@ -16,9 +16,7 @@
 package git4idea.status;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -104,11 +102,10 @@ class GitOldChangesCollector extends GitChangesCollector {
    * This may be lengthy.
    */
   @NotNull
-  static GitOldChangesCollector collect(@NotNull Project project,
-                                        @NotNull ChangeListManager changeListManager,
-                                        @NotNull VcsDirtyScope dirtyScope,
-                                        @NotNull VirtualFile vcsRoot) throws VcsException {
-    return new GitOldChangesCollector(project, changeListManager, dirtyScope, vcsRoot);
+  static GitOldChangesCollector collect(@NotNull Project project, @NotNull ChangeListManager changeListManager,
+                                        @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
+                                        @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException {
+    return new GitOldChangesCollector(project, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
   }
 
   @NotNull
@@ -123,11 +120,10 @@ class GitOldChangesCollector extends GitChangesCollector {
     return myChanges;
   }
 
-  private GitOldChangesCollector(@NotNull Project project,
-                                 @NotNull ChangeListManager changeListManager,
-                                 @NotNull VcsDirtyScope dirtyScope,
+  private GitOldChangesCollector(@NotNull Project project, @NotNull ChangeListManager changeListManager,
+                                 @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs, @NotNull VcsDirtyScope dirtyScope,
                                  @NotNull VirtualFile vcsRoot) throws VcsException {
-    super(project, changeListManager, dirtyScope, vcsRoot);
+    super(project, changeListManager, vcsManager, vcs, dirtyScope, vcsRoot);
     updateIndex();
     collectUnmergedAndUnversioned();
     collectDiffChanges();

@@ -4,6 +4,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +47,7 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
-  public void makeStable(RunConfiguration configuration) {
+  public void makeStable(@NotNull RunConfiguration configuration) {
   }
 
   @Override
@@ -163,5 +164,9 @@ public class MockRunManager extends RunManagerEx {
 
   @Override
   public void removeRunManagerListener(RunManagerListener listener) {
+  }
+
+  @Override
+  public void refreshUsagesList(RunProfile profile) {
   }
 }

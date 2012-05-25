@@ -75,13 +75,19 @@ public class EditorActionUtil {
    * Tries to change given editor's viewport position in vertical dimension by the given number of visual lines.
    * 
    * @param editor     target editor which viewport position should be changed
-   * @param lineShift  defines viewport position's change length
+   * @param lineShift  defines viewport position's vertical change length
+   * @param columnShift  defines viewport position's horizontal change length
    * @param moveCaret  flag that identifies whether caret should be moved if its current position becomes off-screen
    */
-  public static void scrollRelatively(Editor editor, int lineShift, boolean moveCaret) {
+  public static void scrollRelatively(Editor editor, int lineShift, int columnShift, boolean moveCaret) {
     if (lineShift != 0) {
       editor.getScrollingModel().scrollVertically(
         editor.getScrollingModel().getVerticalScrollOffset() + lineShift * editor.getLineHeight()
+      );
+    }
+    if (columnShift != 0) {
+      editor.getScrollingModel().scrollHorizontally(
+        editor.getScrollingModel().getHorizontalScrollOffset() + columnShift * EditorUtil.getSpaceWidth(Font.PLAIN, editor)
       );
     }
 

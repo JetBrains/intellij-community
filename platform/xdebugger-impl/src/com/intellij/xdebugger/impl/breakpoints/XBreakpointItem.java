@@ -18,8 +18,10 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -44,14 +46,24 @@ class XBreakpointItem extends BreakpointItem {
 
   @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-    renderer.setIcon(getIcon());
-    renderer.append(XBreakpointUtil.getShortText(myBreakpoint));
+    setupGenericRenderer(renderer);
+  }
+
+  @Override
+  public void setupRenderer(ColoredTreeCellRenderer renderer) {
+    setupGenericRenderer(renderer);
+  }
+
+  protected void setupGenericRenderer(SimpleColoredComponent renderer) {
+    //renderer.setIcon(getIcon());
+    final SimpleTextAttributes attributes =
+      myBreakpoint.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+    renderer.append(XBreakpointUtil.getShortText(myBreakpoint), attributes);
   }
 
   private Icon getIcon() {
     return ((XBreakpointBase)myBreakpoint).getIcon();
   }
-
 
   @Override
   public String speedSearchText() {

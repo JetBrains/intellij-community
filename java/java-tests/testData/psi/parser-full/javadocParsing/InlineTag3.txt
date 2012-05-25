@@ -15,7 +15,7 @@ PsiJavaFile:InlineTag3.java
           PsiDocToken:DOC_TAG_VALUE_SHARP_TOKEN('#')
           PsiDocToken:DOC_TAG_VALUE_TOKEN('somefunc')
           PsiDocToken:DOC_TAG_VALUE_LPAREN('(')
-          PsiElement(DOC_TAG_VALUE_TOKEN)
+          PsiElement(DOC_TAG_VALUE_ELEMENT)
             PsiElement(DOC_TYPE_HOLDER)
               PsiTypeElement:String
                 PsiJavaCodeReferenceElement:String

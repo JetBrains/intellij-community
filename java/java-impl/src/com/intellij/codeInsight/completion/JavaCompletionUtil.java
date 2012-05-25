@@ -677,18 +677,19 @@ public class JavaCompletionUtil {
     return ret;
   }
 
-  @Nullable
-  static PsiElement getQualifier(final PsiElement element) {
-    return element instanceof PsiJavaCodeReferenceElement ? ((PsiJavaCodeReferenceElement)element).getQualifier() : null;
-  }
-
-  public static boolean containsMethodCalls(@Nullable final PsiElement qualifier) {
-    if (qualifier == null) return false;
-    if (qualifier instanceof PsiMethodCallExpression || qualifier instanceof PsiNewExpression) return true;
-    if (qualifier instanceof PsiArrayAccessExpression) {
-      return containsMethodCalls(((PsiArrayAccessExpression)qualifier).getArrayExpression());
+  public static boolean mayHaveSideEffects(@Nullable final PsiElement element) {
+    if (element == null) return false;
+    if (element instanceof PsiMethodCallExpression || element instanceof PsiNewExpression) return true;
+    if (element instanceof PsiTypeCastExpression) {
+      return mayHaveSideEffects(((PsiTypeCastExpression)element).getOperand());
     }
-    return containsMethodCalls(getQualifier(qualifier));
+    if (element instanceof PsiArrayAccessExpression) {
+      return mayHaveSideEffects(((PsiArrayAccessExpression)element).getArrayExpression());
+    }
+    if (element instanceof PsiJavaCodeReferenceElement) {
+      return mayHaveSideEffects(((PsiJavaCodeReferenceElement)element).getQualifier());
+    }
+    return true;
   }
 
   public static void insertClassReference(@NotNull PsiClass psiClass, @NotNull PsiFile file, int offset) {

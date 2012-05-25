@@ -52,12 +52,12 @@ public class IdeaTextPatchBuilder {
 
     for (VcsRoot root : byRoots.keySet()) {
       final Collection<Change> rootChanges = byRoots.get(root);
-      if (root.vcs == null || root.vcs.getOutgoingChangesProvider() == null) {
+      if (root.getVcs() == null || root.getVcs().getOutgoingChangesProvider() == null) {
         addConvertChanges(rootChanges, result);
         continue;
       }
-      final VcsOutgoingChangesProvider<?> provider = root.vcs.getOutgoingChangesProvider();
-      final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.path);
+      final VcsOutgoingChangesProvider<?> provider = root.getVcs().getOutgoingChangesProvider();
+      final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.getPath());
       rootChanges.removeAll(basedOnLocal);
       addConvertChanges(rootChanges, result);
 

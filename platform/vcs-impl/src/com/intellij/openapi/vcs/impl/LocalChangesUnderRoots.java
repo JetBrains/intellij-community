@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,9 +88,9 @@ public class LocalChangesUnderRoots {
     }
     VirtualFile rootCandidate = null;
     for (VcsRoot root : myRoots) {
-      if (VfsUtil.isAncestor(root.path, vf, false)) {
-        if (rootCandidate == null || VfsUtil.isAncestor(rootCandidate, root.path, true)) { // in the case of nested roots choose the closest root
-          rootCandidate = root.path;
+      if (VfsUtilCore.isAncestor(root.getPath(), vf, false)) {
+        if (rootCandidate == null || VfsUtil.isAncestor(rootCandidate, root.getPath(), true)) { // in the case of nested roots choose the closest root
+          rootCandidate = root.getPath();
         }
       }
     }

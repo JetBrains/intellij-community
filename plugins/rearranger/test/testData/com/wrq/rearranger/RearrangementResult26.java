@@ -7,7 +7,6 @@ class RearrangementTest26 {
   public void setValue(int i) {
     value = i;
   }
-
   int value;
 
   {

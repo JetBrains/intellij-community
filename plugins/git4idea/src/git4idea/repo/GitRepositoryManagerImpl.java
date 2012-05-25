@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitUtil;
@@ -97,9 +98,18 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   @Override
   @Nullable
   public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
-    final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(file);
+    final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) { return null; }
-    return getRepositoryForRoot(vcsRoot);
+    final AbstractVcs vcs = vcsRoot.getVcs();
+    if (!myVcs.equals(vcs)) {
+      if (vcs != null) {
+        // if null, the file is just not under version control, nothing interesting;
+        // otherwise log, because Git method is requested not for a Git-controlled file
+        LOG.info(String.format("getRepositoryForFile returned non-Git (%s) root for file %s", vcs.getDisplayName(), file));
+      }
+      return null;
+    }
+    return getRepositoryForRoot(vcsRoot.getPath());
   }
 
   @Override

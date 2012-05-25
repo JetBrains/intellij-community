@@ -716,7 +716,7 @@ public class Messages {
   }
 
   /**
-   * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
+   * Shows dialog with given message and title, information icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(Component component, String message, String title) {
     if (canShowMacSheetPanel()) {
@@ -728,7 +728,7 @@ public class Messages {
   }
 
   /**
-   * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
+   * Shows dialog with given message and title, information icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(Project project, @Nls String message, @Nls String title) {
     if (canShowMacSheetPanel()) {
@@ -740,7 +740,7 @@ public class Messages {
   }
 
   /**
-   * Shows dialog with given message and title, infomation icon {@link #getInformationIcon()} and OK button
+   * Shows dialog with given message and title, information icon {@link #getInformationIcon()} and OK button
    */
   public static void showInfoMessage(String message, String title) {
     if (canShowMacSheetPanel()) {

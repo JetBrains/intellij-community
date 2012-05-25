@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public abstract class HighlightTestInfo implements Disposable {
     Disposer.register(parentDisposable, this);
     myPlace = parentDisposable.toString();
   }
+
   public HighlightTestInfo checkWarnings() { checkWarnings = true; return this; }
   public HighlightTestInfo checkWeakWarnings() { checkWeakWarnings = true; return this; }
   public HighlightTestInfo checkInfos() { checkInfos = true; return this; }
@@ -43,10 +44,14 @@ public abstract class HighlightTestInfo implements Disposable {
   public HighlightTestInfo projectRoot(@NonNls @NotNull String root) { projectRoot = root; return this; }
 
   public HighlightTestInfo test() throws Exception {
-    doTest();
-    tested = true;
-    Disposer.dispose(this);
-    return this;
+    try {
+      doTest();
+      return this;
+    }
+    finally {
+      tested = true;
+      Disposer.dispose(this);
+    }
   }
 
   @Override

@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -97,15 +96,10 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   }
 
   public void init(@NotNull Module module, @NotNull String baseDirectoryPath) {
-    String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
-    if (moduleDirPath == null) {
+    final String s = AndroidRootUtil.getPathRelativeToModuleDir(module, baseDirectoryPath);
+    if (s == null || s.length() == 0) {
       return;
     }
-    if (moduleDirPath.equals(baseDirectoryPath)) {
-      return;
-    }
-
-    String s = FileUtil.getRelativePath(moduleDirPath, baseDirectoryPath, '/');
 
     GEN_FOLDER_RELATIVE_PATH_APT = '/' + s + GEN_FOLDER_RELATIVE_PATH_APT;
     GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + s + GEN_FOLDER_RELATIVE_PATH_AIDL;

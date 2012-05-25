@@ -18,7 +18,6 @@ package com.intellij.designer.propertyTable.actions;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,11 +27,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.NotLookupOrSearchCondition;
 
 import java.awt.*;
 
@@ -40,7 +41,11 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class ShowJavadoc extends AnAction implements IPropertyTableAction {
-  public ShowJavadoc() {
+  private final PropertyTable myTable;
+
+  public ShowJavadoc(PropertyTable table) {
+    myTable = table;
+
     Presentation presentation = getTemplatePresentation();
     String text = DesignerBundle.message("designer.properties.show.javadoc");
     presentation.setText(text);
@@ -50,13 +55,12 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
 
   @Override
   public void update(AnActionEvent e) {
-    PropertyTable table = DesignerToolWindowManager.getInstance(e.getProject()).getPropertyTable();
-    setEnabled(table, e.getPresentation());
+    setEnabled(myTable, e.getPresentation());
   }
 
   @Override
-  public void update(PropertyTable table) {
-    setEnabled(table, getTemplatePresentation());
+  public void update() {
+    setEnabled(myTable, getTemplatePresentation());
   }
 
   private static void setEnabled(PropertyTable table, Presentation presentation) {
@@ -70,8 +74,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     final DocumentationComponent component = new DocumentationComponent(documentationManager);
 
-    final PropertyTable table = DesignerToolWindowManager.getInstance(project).getPropertyTable();
-    final Property property = table.getSelectionProperty();
+    final Property property = myTable.getSelectionProperty();
     PsiElement javadocElement = property.getJavadocElement();
 
     ActionCallback callback;
@@ -85,17 +88,26 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
 
     callback.doWhenProcessed(new Runnable() {
       public void run() {
-        final JBPopup hint =
+        JBPopup hint =
           JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+            .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
+            .setProject(project)
             .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
             .setResizable(true)
             .setMovable(true)
             .setRequestFocus(true)
             .setTitle(DesignerBundle.message("designer.properties.javadoc.title", property.getName()))
+            .setCancelCallback(new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                Disposer.dispose(component);
+                return Boolean.TRUE;
+              }
+            })
             .createPopup();
         component.setHint(hint);
         Disposer.register(hint, component);
-        hint.show(new RelativePoint(table.getParent(), new Point(0, 0)));
+        hint.show(new RelativePoint(myTable.getParent(), new Point(0, 0)));
       }
     });
 

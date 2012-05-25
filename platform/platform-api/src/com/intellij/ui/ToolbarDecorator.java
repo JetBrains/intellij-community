@@ -105,7 +105,11 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   }
   
   public static ToolbarDecorator createDecorator(@NotNull JTree tree) {
-    return new TreeToolbarDecorator(tree).initPosition();
+    return createDecorator(tree, null);
+  }
+
+  private static ToolbarDecorator createDecorator(@Nullable JTree tree, @Nullable ElementProducer<?> producer) {
+    return new TreeToolbarDecorator(tree, producer).initPosition();
   }
 
   public static ToolbarDecorator createDecorator(@NotNull JList list) {

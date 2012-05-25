@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.breakpoints.ui;
 
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public abstract class XBreakpointGroupingRule<B extends XBreakpoint<?>, G extends XBreakpointGroup> {
+public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
   private final String myId;
   private final String myPresentableName;
 

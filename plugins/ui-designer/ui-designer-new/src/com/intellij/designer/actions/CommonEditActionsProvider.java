@@ -65,7 +65,9 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
-    // TODO: InplaceEditing
+    if (myDesigner.getInplaceEditingLayer().isEditing()) {
+      return false;
+    }
     List<RadComponent> selection = getArea().getSelection();
     if (selection.isEmpty()) {
       return false;
@@ -143,8 +145,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    // TODO: InplaceEditing
-    return !getArea().getSelection().isEmpty();
+    return !myDesigner.getInplaceEditingLayer().isEditing() && !getArea().getSelection().isEmpty();
   }
 
   @Override
@@ -185,8 +186,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public boolean isPasteEnabled(@NotNull DataContext dataContext) {
-    // TODO: InplaceEditing
-    return getSerializedComponentData() != null;
+    return !myDesigner.getInplaceEditingLayer().isEditing() && getSerializedComponentData() != null;
   }
 
   @Nullable

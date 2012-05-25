@@ -90,6 +90,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myProfileAction = new ProfileAction(this, new Runnable() {
       @Override
       public void run() {
+        if (getProject().isDisposed()) {
+          return;
+        }
         myPSIChangeListener.setInitialize();
         myActionPanel.update();
         if (myRootComponent == null) {

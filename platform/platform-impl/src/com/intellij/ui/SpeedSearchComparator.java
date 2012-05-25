@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 * @author Konstantin Bulenkov
 */
 public class SpeedSearchComparator {
-  private NameUtil.MinusculeMatcher myMinusculeMatcher;
+  private MinusculeMatcher myMinusculeMatcher;
   private String myRecentSearchText;
   private boolean myShouldMatchFromTheBeginning;
   private boolean myShouldMatchCamelCase;
@@ -52,7 +53,7 @@ public class SpeedSearchComparator {
       if (!myShouldMatchFromTheBeginning && !pattern.startsWith("*")) {
         pattern = "*" + pattern;
       }
-      myMinusculeMatcher = new NameUtil.MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      myMinusculeMatcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
     }
     return myMinusculeMatcher.matchingFragments(text);
   }

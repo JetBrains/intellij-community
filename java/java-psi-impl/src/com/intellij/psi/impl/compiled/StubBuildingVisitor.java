@@ -58,6 +58,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   public static final String FLOAT_NEGATIVE_INF = "-1.0f / 0.0";
   public static final String FLOAT_NAN = "0.0f / 0.0";
 
+  @NonNls private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
+  @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
+
+  private static final int ACC_DEFENDER = Opcodes.ACC_INTERFACE;  // todo[r.sh] use right constant once ASM gets Java 8 support
 
   private final InnerClassSourceStrategy<T> myInnersStrategy;
   private final StubElement myParent;
@@ -65,8 +69,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final T mySource;
   private PsiModifierListStub myModList;
   private PsiClassStub myResult;
-  @NonNls private static final String SYNTHETIC_CLINIT_METHOD = "<clinit>";
-  @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
   private JavaLexer myLexer;
 
   public StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access) {
@@ -174,20 +176,25 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return convertedSuper;
   }
 
+  // for lexer, so need not to be precise
   private static LanguageLevel convertFromVersion(final int version) {
-    if (version == Opcodes.V1_1 || version == Opcodes.V1_2 || version == Opcodes.V1_3) {
-      return LanguageLevel.JDK_1_3;
-    }
+    switch (version) {
+      case Opcodes.V1_1:
+      case Opcodes.V1_2:
+      case Opcodes.V1_3:
+        return LanguageLevel.JDK_1_3;
 
-    if (version == Opcodes.V1_4) {
-      return LanguageLevel.JDK_1_4;
-    }
+      case Opcodes.V1_4:
+        return LanguageLevel.JDK_1_4;
 
-    if (version == Opcodes.V1_5 || version == Opcodes.V1_6) {
-      return LanguageLevel.JDK_1_5;
-    }
+      case Opcodes.V1_5:
+      case Opcodes.V1_6:
+      case Opcodes.V1_7:
+        return LanguageLevel.JDK_1_5;
 
-    return LanguageLevel.HIGHEST;
+      default:
+        return LanguageLevel.HIGHEST;
+    }
   }
 
   private static int packCommonFlags(final int access) {
@@ -357,16 +364,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     // However Scala compiler erroneously generates ACC_BRIDGE instead of ACC_SYNTHETIC flag for in-trait implementation delegation. See IDEA-78649
     if (isSynthetic) return null;
 
-    if (SYNTHETIC_CLINIT_METHOD.equals(name)) return null;
+    if (SYNTHETIC_CLASS_INIT_METHOD.equals(name)) return null;
 
     boolean isDeprecated = (access & Opcodes.ACC_DEPRECATED) != 0;
     boolean isConstructor = SYNTHETIC_INIT_METHOD.equals(name);
     boolean isVarargs = (access & Opcodes.ACC_VARARGS) != 0;
     boolean isAnnotationMethod = myResult.isAnnotationType();
+    boolean isDefender = (access & ACC_DEFENDER) != 0;
 
     if (!isConstructor && !isCorrectName(name)) return null;
 
-    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false);
+    final byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnnotationMethod, isVarargs, isDeprecated, false, isDefender);
 
     String canonicalMethodName = isConstructor ? myResult.getName() : name;
     final List<String> args = new ArrayList<String>();

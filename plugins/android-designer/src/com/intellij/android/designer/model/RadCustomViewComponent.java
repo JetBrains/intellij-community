@@ -22,6 +22,7 @@ import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,32 +49,6 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
            "class=\"" +
            extractClientProperty(NAME_KEY) +
            "\"/>";
-  }
-
-  @Override
-  public MetaModel getMetaModelForProperties() throws Exception {
-    MetaModel metaModel = getClientProperty(MODEL_KEY);
-
-    if (metaModel == null) {
-      Module module = getRoot().getClientProperty(ModelParser.MODULE_KEY);
-      MetaManager metaManager = ViewsMetaManager.getInstance(module.getProject());
-      PsiClass viewClass = ChooseClassDialog.findClass(module, getViewClass());
-
-      while (viewClass != null) {
-        metaModel = metaManager.getModelByTarget(viewClass.getQualifiedName());
-        if (metaModel != null) {
-          break;
-        }
-        viewClass = viewClass.getSuperClass();
-      }
-      if (metaModel == null) {
-        metaModel = myMetaModel;
-      }
-
-      setClientProperty(MODEL_KEY, metaModel);
-    }
-
-    return metaModel;
   }
 
   @Override
@@ -124,6 +99,52 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
     if (viewClass != null) {
       renderer.append(" - " + viewClass);
     }
+  }
+
+  @Override
+  public MetaModel getMetaModelForProperties() throws Exception {
+    MetaModel metaModel = getClientProperty(MODEL_KEY);
+
+    if (metaModel == null) {
+      Module module = getRoot().getClientProperty(ModelParser.MODULE_KEY);
+      MetaManager metaManager = ViewsMetaManager.getInstance(module.getProject());
+      PsiClass viewClass = ChooseClassDialog.findClass(module, getViewClass());
+
+      while (viewClass != null) {
+        metaModel = metaManager.getModelByTarget(viewClass.getQualifiedName());
+        if (metaModel != null) {
+          break;
+        }
+        viewClass = viewClass.getSuperClass();
+      }
+      if (metaModel == null) {
+        metaModel = myMetaModel;
+      }
+
+      setClientProperty(MODEL_KEY, metaModel);
+    }
+
+    return metaModel;
+  }
+
+  @Override
+  public List<Property> getInplaceProperties() throws Exception {
+    List<Property> properties = new ArrayList<Property>();
+    MetaModel metaModel = getMetaModelForProperties();
+    List<Property> allProperties = getProperties();
+
+    properties.add(CLASS_PROPERTY);
+
+    for (String name : metaModel.getInplaceProperties()) {
+      Property property = PropertyTable.findProperty(allProperties, name);
+      if (property != null) {
+        properties.add(property);
+      }
+    }
+
+    properties.add(PropertyTable.findProperty(allProperties, "id"));
+
+    return properties;
   }
 
   @Override

@@ -186,9 +186,10 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
 
     public void actionPerformed(final AnActionEvent e) {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
-      if (project != null) {
+      RunConfiguration configuration = chooseTempConfiguration(project);
+      if (project != null && configuration != null) {
         final RunManager runManager = RunManager.getInstance(project);
-        runManager.makeStable(chooseTempConfiguration(project));
+        runManager.makeStable(configuration);
       }
     }
 

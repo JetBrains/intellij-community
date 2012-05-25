@@ -17,30 +17,33 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
+import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.ui.CheckBoxListListener;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.util.ItemWrapper;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -50,12 +53,10 @@ import java.util.List;
  * Time: 3:11 AM
  * To change this template use File | Settings | File Templates.
  */
-public class BreakpointsMasterDetailPopupFactory implements CheckBoxListListener {
+public class BreakpointsMasterDetailPopupFactory {
 
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
   private Project myProject;
-  private BreakpointListModel myModel;
-  private MasterDetailPopupBuilder myPopupBuilder;
 
   public BreakpointsMasterDetailPopupFactory(Project project) {
     myProject = project;
@@ -71,36 +72,43 @@ public class BreakpointsMasterDetailPopupFactory implements CheckBoxListListener
     });
   }
 
-  @Override
-  public void checkBoxSelectionChanged(int index, boolean value) {
-    final Object o = myModel.get(index);
-    if (o instanceof BreakpointItem) {
-      ((BreakpointItem)o).setEnabled(value);
-    }
-  }
-
   public static BreakpointsMasterDetailPopupFactory getInstance(Project project) {
     return ServiceManager.getService(project, BreakpointsMasterDetailPopupFactory.class);
   }
 
   public JBPopup createPopup(@Nullable Object initialBreakpoint) {
-    final DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
-    myModel = createBreakpointsItemsList(selectionModel);
 
-    final JBList list = new JBList(myModel);
+    MasterDetailPopupBuilder popupBuilder = new MasterDetailPopupBuilder(myProject);
 
-    list.setSelectionModel(selectionModel);
+    DefaultActionGroup actions = getActions(popupBuilder);
 
-    selectInitial(initialBreakpoint, myModel, list);
+    final Collection<XBreakpointGroupingRule> rules = new ArrayList<XBreakpointGroupingRule>();
 
-    list.getEmptyText().setText("No Breakpoints");
+    for (BreakpointPanelProvider provider : myBreakpointPanelProviders) {
+      provider.provideBreakpointsGroupingRules(rules);
+    }
 
-    DefaultActionGroup actions = getActions(list);
+    final BreakpointItemsTree tree = BreakpointItemsTree.createTree(rules);
 
-    myPopupBuilder = new MasterDetailPopupBuilder(myProject);
-    final JBPopup popup = myPopupBuilder.
+    final ArrayList<BreakpointItem> breakpoints = collectItems();
+    tree.buildTree(breakpoints);
+
+
+
+    final BreakpointPanelProvider.BreakpointsListener listener = new BreakpointPanelProvider.BreakpointsListener() {
+      @Override
+      public void breakpointsChanged() {
+        tree.buildTree(collectItems());
+      }
+    };
+
+    for (BreakpointPanelProvider provider : myBreakpointPanelProviders) {
+      provider.addListener(listener, myProject);
+    }
+
+    final JBPopup popup = popupBuilder.
       setActionsGroup(actions).
-      setList(list).
+      setTree(tree).
       setDelegate(new MasterDetailPopupBuilder.Delegate() {
         @Override
         public String getTitle() {
@@ -115,7 +123,26 @@ public class BreakpointsMasterDetailPopupFactory implements CheckBoxListListener
         public JComponent createAccessoryView(Project project) {
           return new JCheckBox();
         }
+
+        @Override
+        public Object[] getSelectedItemsInTree() {
+          final List<BreakpointItem> res = tree.getSelectedBreakpoints();
+          return res.toArray(new Object[res.size()]);
+        }
       }).setCloseOnEnter(false).createMasterDetailPopup();
+
+    tree.setBorder(IdeBorderFactory.createBorder());
+
+    popupBuilder.getDetailView().setScheme(createScheme());
+
+    tree.setDelegate(new BreakpointItemsTree.BreakpointItemsTreeDelegate() {
+      @Override
+      public void execute(BreakpointItem item) {
+        item.execute(myProject, popup);
+      }
+    });
+
+    initSelection(initialBreakpoint, tree, breakpoints);
 
     popup.addListener(new JBPopupListener() {
       @Override
@@ -125,26 +152,39 @@ public class BreakpointsMasterDetailPopupFactory implements CheckBoxListListener
 
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        myModel.unsubscribe();
+        for (BreakpointPanelProvider provider : myBreakpointPanelProviders) {
+          provider.removeListener(listener);
+        }
       }
     });
 
     return popup;
   }
 
-  private void selectInitial(Object initialBreakpoint, BreakpointListModel model, JBList list) {
-    for (int i = 0, l = model.size(); i < l; ++i) {
-      final ItemWrapper item = (ItemWrapper)model.get(i);
-      if (item instanceof BreakpointItem) {
-        if (((BreakpointItem)item).getBreakpoint() == initialBreakpoint) {
-          list.setSelectedIndex(i);
-          break;
-        }
+  private void initSelection(Object initialBreakpoint, BreakpointItemsTree tree, ArrayList<BreakpointItem> breakpoints) {
+    boolean found = false;
+    for (BreakpointItem breakpoint : breakpoints) {
+      if (breakpoint.getBreakpoint() == initialBreakpoint) {
+        tree.selectBreakpointItem(breakpoint);
+        found = true;
+        break;
       }
+    }
+
+    if (!found && !breakpoints.isEmpty()) {
+      tree.selectBreakpointItem(breakpoints.get(0));
     }
   }
 
-  private DefaultActionGroup getActions(final JBList list) {
+  private EditorColorsScheme createScheme() {
+    final EditorColorsScheme scheme =
+      new EditorColorsSchemeImpl(EditorColorsManager.getInstance().getGlobalScheme(), DefaultColorSchemesManager.getInstance());
+    scheme.setName("abc");
+    scheme.setAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES, new TextAttributes(Color.black, Color.CYAN, null, EffectType.BOXED, Font.BOLD));
+    return scheme;
+  }
+
+  private DefaultActionGroup getActions(final MasterDetailPopupBuilder builder) {
     DefaultActionGroup actions = new DefaultActionGroup();
     final DefaultActionGroup breakpointTypes = new DefaultActionGroup();
     for (BreakpointPanelProvider provider : myBreakpointPanelProviders) {
@@ -156,105 +196,29 @@ public class BreakpointsMasterDetailPopupFactory implements CheckBoxListListener
 
         JBPopupFactory.getInstance()
           .createActionGroupPopup(null, breakpointTypes, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, false)
-          .showUnderneathOf(myPopupBuilder.getActionToolbar().getComponent());
+          .showUnderneathOf(builder.getActionToolbar().getComponent());
       }
     });
     actions.add(new AnAction("Remove Breakpoint", null, PlatformIcons.DELETE_ICON) {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(MasterDetailPopupBuilder.allowedToRemoveSelectedItem(list, myProject));
+        e.getPresentation().setEnabled(MasterDetailPopupBuilder.allowedToRemoveItems(builder.getSelectedItems()));
       }
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        MasterDetailPopupBuilder.removeSelectedItems(list, myProject);
+        builder.removeSelectedItems(myProject);
       }
     });
 
     return actions;
   }
 
-  private BreakpointListModel createBreakpointsItemsList(DefaultListSelectionModel selectionModel) {
-    final BreakpointListModel model = new BreakpointListModel();
-    final ArrayList<ItemWrapper> items = collectItems();
-    for (ItemWrapper item : items) {
-      model.addElement(item);
-    }
-    model.subscribe(selectionModel);
-    return model;
-  }
-
-
-  private ArrayList<ItemWrapper> collectItems() {
-    ArrayList<ItemWrapper> items = new ArrayList<ItemWrapper>();
+  private ArrayList<BreakpointItem> collectItems() {
+    ArrayList<BreakpointItem> items = new ArrayList<BreakpointItem>();
     for (BreakpointPanelProvider panelProvider : myBreakpointPanelProviders) {
       panelProvider.provideBreakpointItems(myProject, items);
     }
     return items;
-  }
-
-  private class BreakpointListModel extends DefaultListModel {
-    List<BreakpointPanelProvider.BreakpointsListener> myListeners = new ArrayList<BreakpointPanelProvider.BreakpointsListener>();
-
-    private void subscribe(DefaultListSelectionModel selectionModel) {
-      for (BreakpointPanelProvider panelProvider : myBreakpointPanelProviders) {
-        final BreakpointPanelProvider.BreakpointsListener listener = new MyBreakpointsListener(this, selectionModel);
-        panelProvider.addListener(listener, myProject);
-        myListeners.add(listener);
-      }
-    }
-
-    public void unsubscribe() {
-      for (int i = 0, size = myListeners.size(); i < size; i++) {
-        BreakpointPanelProvider.BreakpointsListener listener = myListeners.get(i);
-        myBreakpointPanelProviders.get(i).removeListener(listener);
-      }
-    }
-
-    private class MyBreakpointsListener implements BreakpointPanelProvider.BreakpointsListener {
-      private final DefaultListModel myModel;
-      private DefaultListSelectionModel mySelectionModel;
-
-      public MyBreakpointsListener(DefaultListModel model, DefaultListSelectionModel selectionModel) {
-        myModel = model;
-        mySelectionModel = selectionModel;
-      }
-
-      @Override
-      public void breakpointsChanged() {
-        final ArrayList<ItemWrapper> items = collectItems();
-        if (!reallyChanged(items, myModel)) {
-          return;
-        }
-        rebuildModel(items, mySelectionModel, myModel);
-      }
-
-    }
-  }
-
-  private static void rebuildModel(ArrayList<ItemWrapper> items, ListSelectionModel model, DefaultListModel model1) {
-    final int index = model.getLeadSelectionIndex();
-    model1.removeAllElements();
-    for (ItemWrapper item : items) {
-      model1.addElement(item);
-    }
-    model.setLeadSelectionIndex(index);
-  }
-
-  private static boolean reallyChanged(List<ItemWrapper> items, DefaultListModel model) {
-    if (items.size() != model.size()) return true;
-    for (int i = 0; i < model.size(); i++) {
-      final ItemWrapper item1 = items.get(i);
-      final ItemWrapper item2 = (ItemWrapper)model.get(i);
-      if (item1.getClass() != item2.getClass()) {
-        return true;
-      }
-      if (item1 instanceof BreakpointItem) {
-        if (((BreakpointItem)item1).getBreakpoint() != ((BreakpointItem)item2).getBreakpoint()) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }

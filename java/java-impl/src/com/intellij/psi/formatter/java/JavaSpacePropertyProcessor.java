@@ -125,13 +125,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (node == null) {
       return true;
     }
+
     final IElementType type = node.getElementType();
-    if (type == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+    if (type == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) {
       return PsiTreeUtil.getParentOfType(parent, PsiDocMethodOrFieldRef.class) != null;
     }
 
-    return type == JavaDocElementType.DOC_COMMENT || type == JavaDocElementType.DOC_TAG
-      || type == JavaDocElementType.DOC_INLINE_TAG;
+    return type == JavaDocElementType.DOC_COMMENT || type == JavaDocElementType.DOC_TAG || type == JavaDocElementType.DOC_INLINE_TAG;
   }
 
   private void init(final ASTNode child) {
@@ -1096,9 +1096,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.OPERATION_SIGN) {
       createSpaceInCode(mySettings.SPACE_AROUND_UNARY_OPERATOR);
     }
-    else if (myChild1.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN
-             && myChild2.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN)
-    {
+    else if ((myType1 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType1 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) &&
+             (myType2 == JavaDocTokenType.DOC_TAG_VALUE_TOKEN || myType2 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT)) {
       createSpaceInCode(true);
     }
     else if (myRole1 == ChildRole.COMMA) {
@@ -1516,7 +1515,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override public void visitDocTag(PsiDocTag tag) {
-    if (myChild1.getElementType() == JavaDocTokenType.DOC_TAG_NAME && myChild2.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
+    if (myType1 == JavaDocTokenType.DOC_TAG_NAME && myType2 == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) {
       myResult = Spacing.createSpacing(1, 1, 0, false, 0);
     }
   }

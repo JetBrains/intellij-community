@@ -16,6 +16,8 @@
 package com.intellij.designer.componentTree;
 
 import com.intellij.designer.actions.DesignerActionPanel;
+import com.intellij.designer.actions.StartInplaceEditing;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -35,6 +37,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public final class ComponentTree extends Tree implements DataProvider {
+  private final StartInplaceEditing myInplaceEditingAction;
   private TreeComponentDecorator myDecorator;
   private DesignerActionPanel myActionPanel;
   private RadComponent myMarkComponent;
@@ -55,20 +58,24 @@ public final class ComponentTree extends Tree implements DataProvider {
     // Install convenient keyboard navigation
     TreeUtil.installActions(this);
 
-    // TODO: F2 should start inplace editing
+    myInplaceEditingAction = DesignerActionPanel.createInplaceEditingAction(this);
   }
 
   public void newModel() {
     setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
   }
 
-  public void setDecorator(@Nullable TreeComponentDecorator decorator) {
-    myDecorator = decorator;
+  public void setDesignerPanel(@Nullable DesignerEditorPanel designer) {
+    if (designer == null) {
+      myDecorator = null;
+      myActionPanel = null;
+    }
+    else {
+      myDecorator = designer.getTreeDecorator();
+      myActionPanel = designer.getActionPanel();
+    }
     myMarkComponent = null;
-  }
-
-  public void setActionPanel(@Nullable DesignerActionPanel actionPanel) {
-    myActionPanel = actionPanel;
+    myInplaceEditingAction.setDesignerPanel(designer);
   }
 
   public void mark(RadComponent component, int feedback) {
@@ -79,12 +86,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
-    // TODO: support keys
-
-    if (myActionPanel != null) {
-      return myActionPanel.getData(dataId);
-    }
-    return null;
+    return myActionPanel == null ? null : myActionPanel.getData(dataId);
   }
 
   @Nullable

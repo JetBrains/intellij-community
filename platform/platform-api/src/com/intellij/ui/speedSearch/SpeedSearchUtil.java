@@ -18,7 +18,7 @@ package com.intellij.ui.speedSearch;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Processor;
@@ -65,12 +65,12 @@ public final class SpeedSearchUtil {
                                                      final Matcher matcher,
                                                      final Color selectedBg,
                                                      final boolean selected) {
-    if (!(matcher instanceof NameUtil.MinusculeMatcher) || (Registry.is("ide.highlight.match.in.selected.only") && !selected)) {
+    if (!(matcher instanceof MinusculeMatcher) || (Registry.is("ide.highlight.match.in.selected.only") && !selected)) {
       component.append(text, attributes);
       return;
     }
 
-    final Iterable<TextRange> iterable = ((NameUtil.MinusculeMatcher)matcher).matchingFragments(text);
+    final Iterable<TextRange> iterable = ((MinusculeMatcher)matcher).matchingFragments(text);
     if (iterable != null) {
       final Color fg = attributes.getFgColor();
       final int style = attributes.getStyle();

@@ -18,9 +18,9 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 
@@ -43,11 +43,10 @@ class JavaBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-    renderer.setIcon(myBreakpoint.getIcon());
-    renderer.append(myBreakpoint.getShortName());
+  protected void setupGenericRenderer(SimpleColoredComponent renderer) {
+    //renderer.setIcon(myBreakpoint.getIcon());
+    renderer.append(myBreakpoint.getShortName(), isEnabled() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
   }
-
 
   @Override
   public String speedSearchText() {

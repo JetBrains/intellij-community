@@ -103,7 +103,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       commitButtonText = commitButtonText.substring(0, commitButtonText.length()-3);
     }
 
-    final int answer = Messages.showYesNoCancelDialog(
+    final int answer = Messages.showYesNoCancelDialog(myProject,
       VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text", errorCount, warningCount),
       VcsBundle.message("code.smells.error.messages.tab.name"), VcsBundle.message("code.smells.review.button"),
       commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon());

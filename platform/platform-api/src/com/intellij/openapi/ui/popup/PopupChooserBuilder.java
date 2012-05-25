@@ -202,16 +202,9 @@ public class PopupChooserBuilder {
     }
 
 
-    final JList finalList = list;
     (list != null ? list : myChooserComponent).addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
-
-        final Point onScreen = e.getLocationOnScreen();
-        SwingUtilities.convertPointFromScreen(onScreen, finalList);
-
-        final int index = finalList.locationToIndex(onScreen);
-        if (finalList.getSelectedIndex() != index) return;
         if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
           if (myCloseOnEnter) {
             closePopup(true, e, true);

@@ -1075,37 +1075,32 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
 
     DfaValue dfaValue = myFactory.create(expression);
-    if (dfaValue != null) {
-      addInstruction(new PushInstruction(dfaValue, expression));
-    }
-    else {
-      PsiExpression condition = expression.getCondition();
+    PsiExpression condition = expression.getCondition();
 
-      PsiExpression thenExpression = expression.getThenExpression();
-      PsiExpression elseExpression = expression.getElseExpression();
+    PsiExpression thenExpression = expression.getThenExpression();
+    PsiExpression elseExpression = expression.getElseExpression();
 
-      final int elseOffset = elseExpression == null ? getEndOffset(expression) - 1 : getStartOffset(elseExpression);
-      if (thenExpression != null) {
-        condition.accept(this);
-        generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-        PsiType type = expression.getType();
-        addInstruction(new ConditionalGotoInstruction(elseOffset, true, condition));
-        thenExpression.accept(this);
-        generateBoxingUnboxingInstructionFor(thenExpression,type);
+    final int elseOffset = elseExpression == null ? getEndOffset(expression) - 1 : getStartOffset(elseExpression);
+    if (thenExpression != null) {
+      condition.accept(this);
+      generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
+      PsiType type = expression.getType();
+      addInstruction(new ConditionalGotoInstruction(elseOffset, true, condition));
+      thenExpression.accept(this);
+      generateBoxingUnboxingInstructionFor(thenExpression,type);
 
-        addInstruction(new GotoInstruction(getEndOffset(expression)));
+      addInstruction(new GotoInstruction(getEndOffset(expression)));
 
-        if (elseExpression != null) {
-          elseExpression.accept(this);
-          generateBoxingUnboxingInstructionFor(elseExpression,type);
-        }
-        else {
-          pushUnknown();
-        }
+      if (elseExpression != null) {
+        elseExpression.accept(this);
+        generateBoxingUnboxingInstructionFor(elseExpression,type);
       }
       else {
         pushUnknown();
       }
+    }
+    else {
+      pushUnknown();
     }
 
     finishElement(expression);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,12 @@ public class EditorModificationUtil {
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
 
-    editor.getCaretModel().moveToOffset(selectionStart);
+    final CaretModel caretModel = editor.getCaretModel();
+    final VisualPosition position = caretModel.getVisualPosition();
+    caretModel.moveToOffset(selectionStart);
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
+    caretModel.moveToVisualPosition(position); // Try to preserve visual caret position
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 

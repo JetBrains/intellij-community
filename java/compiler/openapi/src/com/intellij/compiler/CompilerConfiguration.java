@@ -33,6 +33,8 @@ public abstract class CompilerConfiguration {
   @Nullable
   public abstract String getBytecodeTargetLevel(Module module);
 
+  public abstract void setBytecodeTargetLevel(Module module, String level);
+
   public static CompilerConfiguration getInstance(Project project) {
     return project.getComponent(CompilerConfiguration.class);
   }
@@ -72,5 +74,4 @@ public abstract class CompilerConfiguration {
   public abstract boolean isAnnotationProcessingEnabled(Module module);
 
   public abstract String getGeneratedSourceDirName(Module module);
-
 }

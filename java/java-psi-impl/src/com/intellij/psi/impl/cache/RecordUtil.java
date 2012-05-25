@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author max
@@ -123,7 +119,7 @@ public class RecordUtil {
       else if (parent instanceof PsiMethodStub) {
         if (grandParent instanceof PsiClassStub && ((PsiClassStub)grandParent).isInterface()) {
           alreadyPublic = true;
-          alreadyAbstract = true;
+          alreadyAbstract = !((PsiMethodStub)parent).isDefender();
         }
       }
       else if (parent instanceof PsiFieldStub) {
@@ -143,27 +139,37 @@ public class RecordUtil {
     for (final LighterASTNode child : tree.getChildren(modList)) {
       final IElementType type = child.getTokenType();
 
-      if(type == JavaTokenType.PUBLIC_KEYWORD) {
+      if (type == JavaTokenType.PUBLIC_KEYWORD) {
         alreadyPublic = true;
-      } else if(type == JavaTokenType.PRIVATE_KEYWORD) {
+      }
+      else if (type == JavaTokenType.PRIVATE_KEYWORD) {
         packed |= ModifierFlags.PRIVATE_MASK;
-      } else if(type == JavaTokenType.PROTECTED_KEYWORD) {
+      }
+      else if (type == JavaTokenType.PROTECTED_KEYWORD) {
         packed |= ModifierFlags.PROTECTED_MASK;
-      } else if(type == JavaTokenType.ABSTRACT_KEYWORD) {
-        alreadyAbstract =true;
-      } else if (type == JavaTokenType.FINAL_KEYWORD) {
+      }
+      else if (type == JavaTokenType.ABSTRACT_KEYWORD) {
+        alreadyAbstract = true;
+      }
+      else if (type == JavaTokenType.FINAL_KEYWORD) {
         alreadyFinal = true;
-      } else if (type == JavaTokenType.STATIC_KEYWORD) {
+      }
+      else if (type == JavaTokenType.STATIC_KEYWORD) {
         alreadyStatic = true;
-      } else if(type == JavaTokenType.NATIVE_KEYWORD) {
+      }
+      else if (type == JavaTokenType.NATIVE_KEYWORD) {
         packed |= ModifierFlags.NATIVE_MASK;
-      } else if (type == JavaTokenType.SYNCHRONIZED_KEYWORD) {
+      }
+      else if (type == JavaTokenType.SYNCHRONIZED_KEYWORD) {
         packed |= ModifierFlags.SYNCHRONIZED_MASK;
-      } else if (type == JavaTokenType.TRANSIENT_KEYWORD) {
+      }
+      else if (type == JavaTokenType.TRANSIENT_KEYWORD) {
         packed |= ModifierFlags.TRANSIENT_MASK;
-      } else if (type == JavaTokenType.VOLATILE_KEYWORD) {
+      }
+      else if (type == JavaTokenType.VOLATILE_KEYWORD) {
         packed |= ModifierFlags.VOLATILE_MASK;
-      } else if (type == JavaTokenType.STRICTFP_KEYWORD) {
+      }
+      else if (type == JavaTokenType.STRICTFP_KEYWORD) {
         packed |= ModifierFlags.STRICTFP_MASK;
       }
     }
@@ -175,8 +181,7 @@ public class RecordUtil {
 
     if ((packed & ModifierFlags.PRIVATE_MASK) == 0 &&
         (packed & ModifierFlags.PROTECTED_MASK) == 0 &&
-        (packed & ModifierFlags.PUBLIC_MASK) == 0
-       ) {
+        (packed & ModifierFlags.PUBLIC_MASK) == 0) {
       packed |= ModifierFlags.PACKAGE_LOCAL_MASK;
     }
 
@@ -215,62 +220,6 @@ public class RecordUtil {
 
   public static boolean hasModifierProperty(String psiModifier, int packed) {
     return (ourModifierNameToFlagMap.get(psiModifier) & packed) != 0;
-  }
-
-  @SuppressWarnings({"unchecked"})
-  private static final Set<String>[] SET_INSTANCES = new Set[8 * 4];
-
-  private static final String[] VISIBILITY_MODIFIERS = {null, PsiModifier.PUBLIC, PsiModifier.PRIVATE, PsiModifier.PROTECTED};
-
-  private static final int[] MODIFIER_MAP = {0, 1, 2, -1, 3, -1, -1, -1, -1};
-
-  static {
-    SET_INSTANCES[0] = Collections.emptySet();
-    for (int i = 1; i < 4; i++) {
-      SET_INSTANCES[i << 3] = Collections.singleton(VISIBILITY_MODIFIERS[i]);
-    }
-
-    for (int i = 1; i < 8; i++) {
-      int attr = i << 3;
-
-      Set<String> set = new LinkedHashSet<String>();
-      if ((attr & ModifierFlags.STATIC_MASK) != 0) set.add(PsiModifier.STATIC);
-      if ((attr & ModifierFlags.FINAL_MASK) != 0) set.add(PsiModifier.FINAL);
-      if ((attr & (4 << 3)) != 0) set.add(PsiModifier.ABSTRACT);
-
-      if (set.size() == 1) set = Collections.singleton(set.iterator().next());
-
-      SET_INSTANCES[i] = set;
-
-      for (int k = 1; k < 4; k++) {
-        Set<String> setWithModifier = new LinkedHashSet<String>();
-        setWithModifier.add(VISIBILITY_MODIFIERS[k]);
-        setWithModifier.addAll(set);
-        assert setWithModifier.size() > 1;
-
-        SET_INSTANCES[(k << 3) + i] = setWithModifier;
-      }
-    }
-  }
-
-  public static Set<String> getModifierSet(int modifiers) {
-    assert (modifiers & ~(ModifierFlags.PUBLIC_MASK | ModifierFlags.PRIVATE_MASK | ModifierFlags.PROTECTED_MASK |
-                          ModifierFlags.FINAL_MASK | ModifierFlags.ABSTRACT_MASK | ModifierFlags.STATIC_MASK)) == 0;
-
-    int visibilityModifierIndex = MODIFIER_MAP[modifiers & 7];
-    int index = ((modifiers >>> 3) & 3) + ((modifiers & ModifierFlags.ABSTRACT_MASK) >>> 8);
-    if (visibilityModifierIndex != -1) {
-      return SET_INSTANCES[index + (visibilityModifierIndex << 3)];
-    }
-
-    Set<String> res = new LinkedHashSet<String>();
-    if ((modifiers & ModifierFlags.PUBLIC_MASK) != 0) res.add(PsiModifier.PUBLIC);
-    if ((modifiers & ModifierFlags.PRIVATE_MASK) != 0) res.add(PsiModifier.PRIVATE);
-    if ((modifiers & ModifierFlags.PROTECTED_MASK) != 0) res.add(PsiModifier.PROTECTED);
-
-    res.addAll(SET_INSTANCES[index]);
-
-    return res;
   }
 
   public static String intern(final CharTable table, final LighterASTNode node) {

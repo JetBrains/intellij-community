@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -51,32 +52,24 @@ public class HighlightUtil {
     final Application application = ApplicationManager.getApplication();
     application.invokeLater(new Runnable() {
       public void run() {
-        final PsiElement[] elements =
-          PsiUtilBase.toPsiElementArray(elementCollection);
+        final PsiElement[] elements = PsiUtilCore.toPsiElementArray(elementCollection);
         final PsiElement firstElement = elements[0];
         if (!firstElement.isValid()) {
           return;
         }
         final Project project = firstElement.getProject();
-        final FileEditorManager editorManager =
-          FileEditorManager.getInstance(project);
-        final EditorColorsManager editorColorsManager =
-          EditorColorsManager.getInstance();
+        final FileEditorManager editorManager = FileEditorManager.getInstance(project);
+        final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
         final Editor editor = editorManager.getSelectedTextEditor();
         if (editor == null) {
           return;
         }
-        final EditorColorsScheme globalScheme =
-          editorColorsManager.getGlobalScheme();
-        final TextAttributes textattributes =
-          globalScheme.getAttributes(
+        final EditorColorsScheme globalScheme = editorColorsManager.getGlobalScheme();
+        final TextAttributes textattributes = globalScheme.getAttributes(
             EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final HighlightManager highlightManager =
-          HighlightManager.getInstance(project);
-        highlightManager.addOccurrenceHighlights(
-          editor, elements, textattributes, true, null);
-        final FindManager findmanager =
-          FindManager.getInstance(project);
+        final HighlightManager highlightManager = HighlightManager.getInstance(project);
+        highlightManager.addOccurrenceHighlights(editor, elements, textattributes, true, null);
+        final FindManager findmanager = FindManager.getInstance(project);
         FindModel findmodel = findmanager.getFindNextModel();
         if (findmodel == null) {
           findmodel = findmanager.getFindInFileModel();
@@ -86,11 +79,11 @@ public class HighlightUtil {
         findmanager.setFindNextModel(findmodel);
         application.invokeLater(new Runnable() {
           public void run() {
-            final WindowManager windowManager =
-              WindowManager.getInstance();
-            final StatusBar statusBar =
-              windowManager.getStatusBar(project);
-            statusBar.setInfo(statusBarText);
+            final WindowManager windowManager = WindowManager.getInstance();
+            final StatusBar statusBar = windowManager.getStatusBar(project);
+            if (statusBar != null) {
+              statusBar.setInfo(statusBarText);
+            }
           }
         });
       }
@@ -101,5 +94,28 @@ public class HighlightUtil {
     @NotNull PsiElement element, @NotNull final String statusBarText) {
     final List<PsiElement> elements = Collections.singletonList(element);
     highlightElements(elements, statusBarText);
+  }
+
+  public static String getPresentableText(PsiElement element) {
+    return getPresentableText(element, new StringBuilder()).toString();
+  }
+
+  private static StringBuilder getPresentableText(PsiElement element, StringBuilder builder) {
+    if (element == null) {
+      return builder;
+    }
+    if (element instanceof PsiWhiteSpace) {
+      return builder.append(' ');
+    }
+    final PsiElement[] children = element.getChildren();
+    if (children.length != 0) {
+      for (PsiElement child : children) {
+        getPresentableText(child, builder);
+      }
+    }
+    else {
+      builder.append(element.getText());
+    }
+    return builder;
   }
 }

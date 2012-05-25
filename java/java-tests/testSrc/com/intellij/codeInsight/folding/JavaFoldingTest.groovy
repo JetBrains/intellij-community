@@ -174,6 +174,7 @@ class Test {
 class Test {
     void test() {
      new Runnable() {
+      static final long serialVersionUID = 42L;
       public void run() {
         System.out.println(<caret>);
       }
@@ -193,6 +194,23 @@ class Test {
     myFixture.doHighlighting()
     closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
     assert closureStartFold
+  }
+
+  public void "test no closure folding when the method throws an unresolved exception"() {
+    def text = """\
+class Test {
+    void test() { new Runnable() {
+      public void run() throws Asadfsdafdfasd {
+        System.out.println(<caret>);
+      }
+    };
+  }
+}
+"""
+
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
   }
 
   public void testFindInFolding() {

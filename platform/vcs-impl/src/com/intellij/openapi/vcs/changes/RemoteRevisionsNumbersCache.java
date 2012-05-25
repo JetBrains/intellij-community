@@ -96,8 +96,8 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     for (Iterator<Map.Entry<VcsRoot, LazyRefreshingSelfQueue>> iterator = copyMap.entrySet().iterator(); iterator.hasNext();) {
       final Map.Entry<VcsRoot, LazyRefreshingSelfQueue> entry = iterator.next();
       final VcsRoot key = entry.getKey();
-      final boolean backgroundOperationsAllowed = key.vcs.isVcsBackgroundOperationsAllowed(key.path);
-      LOG.debug("backgroundOperationsAllowed: " + backgroundOperationsAllowed + " for " + key.vcs.getName() + ", " + key.path.getPath());
+      final boolean backgroundOperationsAllowed = key.getVcs().isVcsBackgroundOperationsAllowed(key.getPath());
+      LOG.debug("backgroundOperationsAllowed: " + backgroundOperationsAllowed + " for " + key.getVcs().getName() + ", " + key.getPath().getPath());
       if (! backgroundOperationsAllowed) {
         iterator.remove();
       }
@@ -232,7 +232,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       //todo check canceled - check VCS's ready for asynchronous queries
       final VirtualFile vf = myLfs.refreshAndFindFileByIoFile(new File(s));
       final ItemLatestState state;
-      final DiffProvider diffProvider = myVcsRoot.vcs.getDiffProvider();
+      final DiffProvider diffProvider = myVcsRoot.getVcs().getDiffProvider();
       if (vf == null) {
         // doesnt matter if directory or not
         state = diffProvider.getLastRevision(FilePathImpl.createForDeletedFile(new File(s), false));
@@ -262,11 +262,11 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
     }
 
     public Boolean compute() {
-      final AbstractVcs vcs = myVcsRoot.vcs;
+      final AbstractVcs vcs = myVcsRoot.getVcs();
       // won't be called in parallel for same vcs -> just synchronized map is ok
       final String vcsName = vcs.getName();
-      LOG.debug("should update for: " + vcsName + " root: " + myVcsRoot.path.getPath());
-      final VcsRevisionNumber latestNew = vcs.getDiffProvider().getLatestCommittedRevision(myVcsRoot.path);
+      LOG.debug("should update for: " + vcsName + " root: " + myVcsRoot.getPath().getPath());
+      final VcsRevisionNumber latestNew = vcs.getDiffProvider().getLatestCommittedRevision(myVcsRoot.getPath());
 
       final VcsRevisionNumber latestKnown = myLatestRevisionsMap.get(vcsName);
       // not known

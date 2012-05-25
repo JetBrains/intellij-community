@@ -34,6 +34,7 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
   private DepthCombo myDepthCombo;
   private JLabel myDepthLabel;
   private JPanel myAdditionalPanel;
+  private JCheckBox myIgnoreExternalsCheckBox;
 
   public SvnUpdatePanel(SvnVcs vcs, Collection<FilePath> roots) {
     super(vcs);
@@ -58,10 +59,17 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
       }
     });
     myForceBox.setSelected(svnConfiguration.FORCE_UPDATE);
+    myIgnoreExternalsCheckBox.setSelected(svnConfiguration.IGNORE_EXTERNALS);
     myForceBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         svnConfiguration.FORCE_UPDATE = myForceBox.isSelected();
+      }
+    });
+    myIgnoreExternalsCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        svnConfiguration.IGNORE_EXTERNALS = myIgnoreExternalsCheckBox.isSelected();
       }
     });
   }

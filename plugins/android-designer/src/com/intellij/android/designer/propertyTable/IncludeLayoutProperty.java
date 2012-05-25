@@ -41,6 +41,7 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> {
   public static ResourceType[] TYPES = new ResourceType[]{ResourceType.LAYOUT};
   private static final Set<AttributeFormat> FORMATS = EnumSet.of(AttributeFormat.Reference);
   public static final Property INSTANCE = new IncludeLayoutProperty();
+  private static final String JAVA_DOC = JavadocParser.build(NAME, "Reference to the layout file you wish to include.");
 
   private final PropertyRenderer myRenderer = new ResourceRenderer(FORMATS);
   private final PropertyEditor myEditor = new ResourceEditor(TYPES, FORMATS, null);
@@ -91,6 +92,6 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> {
 
   @Override
   public String getJavadocText() {
-    return "Reference to the layout file you wish to include.";
+    return JAVA_DOC;
   }
 }

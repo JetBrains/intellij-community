@@ -32,6 +32,7 @@ import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -112,6 +113,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
     final String fileName = className + NewGroovyActionBase.GROOVY_EXTENSION;
     final PsiFile fromTemplate = GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName);
     if (fromTemplate instanceof GroovyFile) {
+      CodeStyleManager.getInstance(fromTemplate.getManager()).reformat(fromTemplate);
       return ((GroovyFile)fromTemplate).getTypeDefinitions()[0];
     }
     final String description = fromTemplate.getFileType().getDescription();

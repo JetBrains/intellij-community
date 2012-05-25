@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,7 +87,8 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
         return;
       }
 
-      if (owner instanceof IdeFrameImpl && IdeFrameImpl.getActiveFrame() != owner) {
+      final Window activeFrame = IdeFrameImpl.getActiveFrame();
+      if (activeFrame != null && owner instanceof IdeFrameImpl && activeFrame != owner) {
         myDoneCallback.setRejected();
         return;
       }
@@ -97,7 +99,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
             // if owner is active window or it has active child window which isn't floating decorator then
             // don't bring owner window to font. If we will make toFront every time then it's possible
             // the following situation:
-            // 1. user prform refactoring
+            // 1. user perform refactoring
             // 2. "Do not show preview" dialog is popping up.
             // 3. At that time "preview" tool window is being activated and modal "don't show..." dialog
             // isn't active.
@@ -124,14 +126,15 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
    * @return first active window from hierarchy with specified roots. Returns <code>null</code>
    * if there is no active window in the hierarchy.
    */
-  private Window getActiveWindow(final Window[] windows){
-    for(int i=0;i<windows.length;i++){
-      Window window=windows[i];
-      if(window.isShowing()&&window.isActive()){
+  @Nullable
+  private static Window getActiveWindow(final Window[] windows) {
+    for (Window window1 : windows) {
+      Window window = window1;
+      if (window.isShowing() && window.isActive()) {
         return window;
       }
-      window=getActiveWindow(window.getOwnedWindows());
-      if(window!=null){
+      window = getActiveWindow(window.getOwnedWindows());
+      if (window != null) {
         return window;
       }
     }
