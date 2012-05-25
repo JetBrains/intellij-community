@@ -41,7 +41,7 @@ setProperty("pluginFilter", [
             "sql",
             "coffeescript",
             "python-remote-interpreter",
-            "diagram",
+            "diagram-api", "uml",
             "python-uml"
             ])
 
