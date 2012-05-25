@@ -221,17 +221,18 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
 
       int offset = editor.getCaretModel().getOffset();
-      int psiOffset = Math.max(0, offset);
+      int psiOffset = Math.max(0, offset - 1);
 
       PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, psiOffset);
       if (elementAt == null) {
         elementAt = psiFile.findElementAt(psiOffset);
       }
+      if (elementAt == null) return;
 
-      Language language = elementAt != null ? PsiUtilBase.findLanguageFromElement(elementAt):psiFile.getLanguage();
+      Language language = PsiUtilBase.findLanguageFromElement(elementAt);
 
       for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-        final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset); // TODO: Peter Lazy API
+        final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
         if (result == ThreeState.YES) return;
         if (result == ThreeState.NO) break;
       }

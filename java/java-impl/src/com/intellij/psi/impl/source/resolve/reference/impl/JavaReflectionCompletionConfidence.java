@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,12 +34,10 @@ public class JavaReflectionCompletionConfidence extends CompletionConfidence {
 
   @NotNull
   @Override
-  public ThreeState shouldSkipAutopopup(@Nullable PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (contextElement != null) {
-      final PsiElement literal = contextElement.getParent();
-      if (literal != null && JavaReflectionReferenceContributor.PATTERN.accepts(literal)) {
-        return ThreeState.NO;
-      }
+  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    final PsiElement literal = contextElement.getParent();
+    if (literal != null && JavaReflectionReferenceContributor.PATTERN.accepts(literal)) {
+      return ThreeState.NO;
     }
     return super.shouldSkipAutopopup(contextElement, psiFile, offset);
   }
