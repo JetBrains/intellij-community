@@ -183,7 +183,9 @@ def varToXML(val, name, doTrim=True):
         except:
             value = 'Unable to get repr for %s' % v.__class__
 
-    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(name), makeValidXmlValue(typeName))
+    print(name)
+    print(quote(name))
+    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(quote(name, '/>_= ')), makeValidXmlValue(typeName))
 
     if value:
         #cannot be too big... communication may not handle it.
@@ -202,9 +204,12 @@ def varToXML(val, name, doTrim=True):
         except TypeError: #in java, unicode is a function
             pass
 
-        xmlValue = ' value="%s"' % (makeValidXmlValue(quote(value, '/>_= \t')))
+        xmlValue = ' value="%s"' % (makeValidXmlValue(quote(value, '/>_= ')))
     else:
         xmlValue = ''
+
+    print(value)
+    print(xmlValue)
 
     if is_exception_on_eval:
         xmlCont = ' isErrorOnEval="True"'

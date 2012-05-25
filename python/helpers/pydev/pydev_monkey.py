@@ -250,7 +250,10 @@ def patch_new_process_functions():
         monkey_patch_os('fork', create_fork)
     else:
         #Windows
-        import _subprocess
+        try:
+            import _subprocess
+        except ImportError:
+            import _winapi as _subprocess
         monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcess)
 
 
@@ -276,5 +279,8 @@ def patch_new_process_functions_with_warning():
         monkey_patch_os('fork', create_warn_multiproc)
     else:
         #Windows
-        import _subprocess
+        try:
+            import _subprocess
+        except ImportError:
+            import _winapi as _subprocess
         monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcessWarnMultiproc)
