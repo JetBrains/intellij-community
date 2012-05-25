@@ -235,7 +235,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                     : item.getResPackagePath();
 
       final String finalPath = unsigned
-                               ? item.getFinalPath() + UNSIGNED_SUFFIX
+                               ? AndroidCommonUtils.addSuffixToFileName(item.getFinalPath(), UNSIGNED_SUFFIX)
                                : item.getFinalPath();
 
       final String[] sourceRoots = AndroidCompileUtil.toOsPaths(item.getSourceRoots());

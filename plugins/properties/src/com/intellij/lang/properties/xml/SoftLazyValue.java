@@ -13,8 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-def x = new Date()
-def y = new Date()
-def <warning descr="Assignment is not used">z</warning> = new Date()
-assert false : "should have thrown exception, but returned $x"
-assert false : "should have thrown exception, but returned ${y}"
+package com.intellij.lang.properties.xml;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.ref.SoftReference;
+
+/**
+ * @author Dmitry Avdeev
+ *         Date: 5/25/12
+ */
+public abstract class SoftLazyValue<T> {
+
+  private SoftReference<T> myReference;
+
+  public T getValue() {
+    T t;
+    if (myReference == null || (t = myReference.get()) == null) {
+      t = compute();
+      myReference = new SoftReference<T>(t);
+    }
+    return t;
+  }
+
+  @NotNull
+  protected abstract T compute();
+}

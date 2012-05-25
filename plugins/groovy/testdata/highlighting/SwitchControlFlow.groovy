@@ -16,7 +16,7 @@
 def testV(def variable) {
   def v = "s"
   def m="10"
-  def x=<warning descr="Assignment is not used">"10"</warning>
+  def <warning descr="Assignment is not used">x</warning>="10"
   try {
     switch (variable) {
       case 1:

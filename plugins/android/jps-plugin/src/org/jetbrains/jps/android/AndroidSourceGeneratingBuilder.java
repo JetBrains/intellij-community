@@ -91,6 +91,12 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
     checkAndroidDependencies(moduleDataMap, context);
 
+    if (context.isProjectRebuild()) {
+      if (!clearAndroidStorages(context, chunk.getModules())) {
+        return ExitCode.ABORT;
+      }
+    }
+
     final Map<File, Module> idlFilesToCompile = new HashMap<File, Module>();
     final Map<File, Module> rsFilesToCompile = new HashMap<File, Module>();
 
@@ -167,6 +173,18 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
 
     return success ? ExitCode.OK : ExitCode.ABORT;
+  }
+
+  private static boolean clearAndroidStorages(@NotNull CompileContext context, @NotNull Collection<Module> modules) {
+    for (Module module : modules) {
+      final File dir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
+      if (dir.exists() && !FileUtil.delete(dir)) {
+        context.processMessage(
+          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.delete", dir.getPath())));
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean checkVersions(@NotNull Map<Module, MyModuleData> dataMap, @NotNull CompileContext context) {
@@ -578,6 +596,13 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           else {
             if (!AndroidCommonUtils.directoriesContainSameContent(tmpOutputDir, aptOutputDirectory, JavaFilesFilter.INSTANCE)) {
               if (!deleteAndMarkRecursively(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
+                success = false;
+                continue;
+              }
+              final File parent = aptOutputDirectory.getParentFile();
+              if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                context.processMessage(new CompilerMessage(ANDROID_APT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle.message(
+                  "android.jps.cannot.create.directory", parent.getPath())));
                 success = false;
                 continue;
               }

@@ -516,4 +516,15 @@ public class AndroidCommonUtils {
     }
     return result.toArray(new File[result.size()]);
   }
+
+  @NotNull
+  public static String addSuffixToFileName(@NotNull String path, @NotNull String suffix) {
+    final int dot = path.lastIndexOf('.');
+    if (dot < 0) {
+      return path + suffix;
+    }
+    final String a = path.substring(0, dot);
+    final String b = path.substring(dot);
+    return a + suffix + b;
+  }
 }

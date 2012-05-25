@@ -40,43 +40,46 @@ public abstract class IndentationParser implements PsiParser {
       // EOL
       if (type == myEolTokenType) {
         // Handle variant with several EOLs
-        if (startLineMarker == null){
+        if (startLineMarker == null) {
           startLineMarker = builder.mark();
         }
         eolSeen = true;
-      } else
-
-      // Indent
-      {
-        if (type == myIndentTokenType){
+      }
+      else {
+        if (type == myIndentTokenType) {
           //noinspection ConstantConditions
           currentIndent = builder.getTokenText().length();
-        } else
-
-        if (eolSeen) {
-          if (startLineMarker != null){
-            startLineMarker.rollbackTo();
-            startLineMarker = null;
+        }
+        else {
+          if (!eolSeen && !stack.isEmpty() && currentIndent > 0 && currentIndent < stack.peek().first) {
+            // sometimes we do not have EOL between indents
+            eolSeen = true;
           }
-          // Close indentation blocks
-          while (!stack.isEmpty() && currentIndent < stack.peek().first){
-            stack.pop().second.done(myBlockElementType);
-          }
-
-          if (!stack.isEmpty()) {
-            final Pair<Integer, PsiBuilder.Marker> pair = stack.peek();
-            if (currentIndent == pair.first) {
+          if (eolSeen) {
+            if (startLineMarker != null) {
+              startLineMarker.rollbackTo();
+              startLineMarker = null;
+            }
+            // Close indentation blocks
+            while (!stack.isEmpty() && currentIndent < stack.peek().first){
               stack.pop().second.done(myBlockElementType);
-              passEOLsAndIndents(builder);
-              stack.push(Pair.create(currentIndent, builder.mark()));
             }
-            if (currentIndent > pair.first) {
-              passEOLsAndIndents(builder);
-              stack.push(Pair.create(currentIndent, builder.mark()));
+
+            if (!stack.isEmpty()) {
+              final Pair<Integer, PsiBuilder.Marker> pair = stack.peek();
+              if (currentIndent == pair.first) {
+                stack.pop().second.done(myBlockElementType);
+                passEOLsAndIndents(builder);
+                stack.push(Pair.create(currentIndent, builder.mark()));
+              }
+              if (currentIndent > pair.first) {
+                passEOLsAndIndents(builder);
+                stack.push(Pair.create(currentIndent, builder.mark()));
+              }
             }
+            eolSeen = false;
+            currentIndent = 0;
           }
-          eolSeen = false;
-          currentIndent = 0;
         }
       }
       advanceLexer(builder);

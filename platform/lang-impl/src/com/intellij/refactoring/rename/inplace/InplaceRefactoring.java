@@ -71,6 +71,8 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Query;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
@@ -220,8 +222,22 @@ public abstract class InplaceRefactoring {
     return new MyLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, shouldSelectAll(), myAdvertisementText);
   }
 
+  protected boolean acceptReference(PsiReference reference) {
+    return true;
+  }
+
   protected Collection<PsiReference> collectRefs(SearchScope referencesSearchScope) {
-    return ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
+    final Query<PsiReference> search = ReferencesSearch.search(myElementToRename, referencesSearchScope, false);
+
+    final CommonProcessors.CollectProcessor<PsiReference> processor = new CommonProcessors.CollectProcessor<PsiReference>() {
+      @Override
+      protected boolean accept(PsiReference reference) {
+        return acceptReference(reference);
+      }
+    };
+
+    search.forEach(processor);
+    return processor.getResults();
   }
 
   protected boolean buildTemplateAndStart(final Collection<PsiReference> refs,
