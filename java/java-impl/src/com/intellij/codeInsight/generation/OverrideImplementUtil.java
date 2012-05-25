@@ -263,7 +263,7 @@ public class OverrideImplementUtil {
     }
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
-
+      
       PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
       if (result instanceof PsiAnnotationMethod) {
@@ -301,6 +301,20 @@ public class OverrideImplementUtil {
       PsiDocComment comment = result.getDocComment();
       if (comment != null){
         comment.delete();
+      }
+    }
+
+    //method type params are not allowed when overriding from raw type
+    final PsiTypeParameterList list = result.getTypeParameterList();
+    if (list != null) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        for (PsiClassType classType : aClass.getSuperTypes()) {
+          if (InheritanceUtil.isInheritorOrSelf(PsiUtil.resolveClassInType(classType), containingClass, true) && classType.isRaw()) {
+            list.replace(JavaPsiFacade.getElementFactory(aClass.getProject()).createTypeParameterList());
+            break;
+          }
+        }
       }
     }
 
