@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -28,7 +29,6 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
-import git4idea.status.GitChangeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +83,8 @@ import java.util.*;
  */
 public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
+  private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHolder.class);
+
   private final Project myProject;
   private final VirtualFile myRoot;
   private final ChangeListManager myChangeListManager;
@@ -104,7 +106,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myGit = ServiceManager.getService(Git.class);
 
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    assert myRepositoryManager != null;
     myRepositoryFiles = GitRepositoryFiles.getInstance(repository.getGitDir());
   }
 
@@ -205,6 +206,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
       Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, suspiciousFiles);
       suspiciousFiles.removeAll(untrackedFiles);
       // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
+      @SuppressWarnings("UnnecessaryLocalVariable")
       Set<VirtualFile> trackedFiles  = suspiciousFiles;
 
       myDefinitelyUntrackedFiles.addAll(untrackedFiles);
@@ -243,7 +245,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     // if index has changed, no need to refresh specific files - we get the full status of all files
     if (allChanged) {
-      GitChangeProvider.debug(String.format("GitUntrackedFilesHolder: Index has changed, marking %s recursively dirty", myRoot));
+      LOG.info(String.format("GitUntrackedFilesHolder: Index has changed, marking %s recursively dirty", myRoot));
       myDirtyScopeManager.dirDirtyRecursively(myRoot);
       synchronized (LOCK) {
         myReady = false;
