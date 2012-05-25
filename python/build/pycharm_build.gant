@@ -40,7 +40,9 @@ setProperty("pluginFilter", [
             "database-impl", "DatabaseSupport",
             "sql",
             "coffeescript",
-            "python-remote-interpreter"
+            "python-remote-interpreter",
+            "diagram",
+            "python-uml"
             ])
 
 private List pycharmImplementationModules() {
@@ -333,6 +335,13 @@ private layoutFull(Map args, String target, Set usedJars) {
         dir("lib") {
           jar("python-remote-interpreter.jar") {
             module("python-remote-interpreter")
+          }
+        }
+      }
+      dir("python-uml") {
+        dir("lib") {
+          jar("python-uml.jar") {
+            module("python-uml")
           }
         }
       }
