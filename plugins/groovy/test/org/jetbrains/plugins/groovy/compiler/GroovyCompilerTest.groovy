@@ -567,6 +567,42 @@ class Main {
     assertEmpty make()
   }
 
+  public void "test module cycle"() {
+    def dep = addDependentModule()
+    PsiTestUtil.addDependency(myModule, dep)
+    addGroovyLibrary(dep)
+
+    myFixture.addFileToProject('Foo.groovy', 'class Foo extends Bar { static void main(String[] args) { println "Hello from Foo" } }')
+    myFixture.addFileToProject('FooX.java', 'class FooX extends Bar { }')
+    myFixture.addFileToProject("dependent/Bar.groovy", "class Bar { Foo f; static void main(String[] args) { println 'Hello from Bar' } }")
+    myFixture.addFileToProject("dependent/BarX.java", "class BarX { Foo f; }")
+
+    def checkClassFiles = {
+      assert findClassFile('Foo', myModule)
+      assert findClassFile('FooX', myModule)
+      assert findClassFile('Bar', dep)
+      assert findClassFile('BarX', dep)
+
+      assert !findClassFile('Bar', myModule)
+      assert !findClassFile('BarX', myModule)
+      assert !findClassFile('Foo', dep)
+      assert !findClassFile('FooX', dep)
+    }
+
+    println '1'
+    assertEmpty make()
+    checkClassFiles()
+
+    println '2'
+    assertEmpty make()
+    checkClassFiles()
+
+    assertOutput('Foo', 'Hello from Foo', myModule)
+    assertOutput('Bar', 'Hello from Bar', dep)
+
+    checkClassFiles()
+  }
+
   public void testCompileTimeConstants() {
     myFixture.addFileToProject 'Gr.groovy', '''
 interface Gr {
