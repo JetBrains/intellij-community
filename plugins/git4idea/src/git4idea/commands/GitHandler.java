@@ -96,6 +96,8 @@ public abstract class GitHandler {
   private Runnable mySuspendAction; // Suspend action used by {@link #suspendWriteLock()}
   private Runnable myResumeAction; // Resume action used by {@link #resumeWriteLock()}
 
+  private long myStartTime; // git execution start timestamp
+
 
   /**
    * A constructor
@@ -387,12 +389,19 @@ public abstract class GitHandler {
     checkNotStarted();
 
     try {
-      // setup environment
+      myStartTime = System.currentTimeMillis();
       if (!myProject.isDefault() && !mySilent && (myVcs != null)) {
         myVcs.showCommandLine("cd " + myWorkingDirectory);
         myVcs.showCommandLine(printableCommandLine());
+        LOG.info("cd " + myWorkingDirectory);
         LOG.info(myCommandLine.getCommandLineString());
       }
+      else {
+        LOG.debug("cd " + myWorkingDirectory);
+        LOG.debug(myCommandLine.getCommandLineString());
+      }
+
+      // setup environment
       if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
@@ -720,6 +729,13 @@ public abstract class GitHandler {
         case WRITE:
           vcs.getCommandLock().writeLock().unlock();
           break;
+      }
+
+      if (myStartTime > 0) {
+        LOG.debug(String.format("git %s took %s ms", myCommand, System.currentTimeMillis() - myStartTime));
+      }
+      else {
+        LOG.debug(String.format("git %s finished.", myCommand));
       }
     }
   }
