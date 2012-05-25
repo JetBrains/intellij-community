@@ -113,6 +113,11 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   @Nullable
+  public PyImportElement getImportElement() {
+    return myImportElement;
+  }
+
+  @Nullable
   public PsiElement resolve() {
     final PsiElement element;
     if (myImportElement != null) {

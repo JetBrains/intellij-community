@@ -202,7 +202,7 @@ public class PyClassRefactoringUtil {
       insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
     }
     else {
-      insertImport(node, target, asName);
+      insertImport(node, target, asName, true);
     }
     node.putCopyableUserData(ENCODED_IMPORT, null);
     node.putCopyableUserData(ENCODED_IMPORT_AS, null);
@@ -294,7 +294,7 @@ public class PyClassRefactoringUtil {
     final PsiElement target = resolveExpression(node);
     if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       final NameDefiner importElement = getImportElement(node);
-      if (!inSameFile(element, target) && importElement == null && !(target instanceof PsiFileSystemItem)) {
+      if (!PyUtil.inSameFile(element, target) && importElement == null && !(target instanceof PsiFileSystemItem)) {
         return;
       }
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
@@ -303,15 +303,6 @@ public class PyClassRefactoringUtil {
       }
       node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, qualifier == null);
     }
-  }
-
-  private static boolean inSameFile(@NotNull PsiElement e1, @NotNull PsiElement e2) {
-    final PsiFile f1 = e1.getContainingFile();
-    final PsiFile f2 = e2.getContainingFile();
-    if (f1 == null || f2 == null) {
-      return false;
-    }
-    return f1 == f2;
   }
 
   @Nullable
