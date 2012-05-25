@@ -19,7 +19,7 @@ class TroubleCase {
   private Foo<Baz> fooBaz;
 
   private void troubleMethod(boolean b) {
-    def icDao = <warning descr="Assignment is not used">(b?fooBaz:fooBar)</warning>;
+    def <warning descr="Assignment is not used">icDao</warning> = (b?fooBaz:fooBar);
         
         for(Object x: new ArrayList()) {
         }
