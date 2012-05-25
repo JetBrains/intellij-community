@@ -1,4 +1,3 @@
-
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
@@ -146,7 +145,11 @@ public class LocalChangeListImpl extends LocalChangeList {
       if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
         || isIgnoredChange(oldBoy, fileIndex)) {
         result.add(oldBoy);
-        removeChange(oldBoy);
+        if (ChangeListManagerImpl.DEBUG) {
+          System.out.println("LocalChangeListImpl.startProcessingChanges, remove old change: this = " + this + ", change = " + oldBoy);
+        }
+        myChanges.remove(oldBoy);
+        myReadChangesCache = null;
       }
     }
     return result;
