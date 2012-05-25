@@ -16,7 +16,6 @@
 package com.intellij.designer.propertyTable.actions;
 
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,7 +27,11 @@ import com.intellij.openapi.util.IconLoader;
  * @author Alexander Lobas
  */
 public class RestoreDefault extends AnAction implements IPropertyTableAction {
-  public RestoreDefault() {
+  private final PropertyTable myTable;
+
+  public RestoreDefault(PropertyTable table) {
+    myTable = table;
+
     Presentation presentation = getTemplatePresentation();
     String text = DesignerBundle.message("designer.properties.restore_default");
     presentation.setText(text);
@@ -38,13 +41,12 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
 
   @Override
   public void update(AnActionEvent e) {
-    PropertyTable table = DesignerToolWindowManager.getInstance(e.getProject()).getPropertyTable();
-    setEnabled(table, e.getPresentation());
+    setEnabled(myTable, e.getPresentation());
   }
 
   @Override
-  public void update(PropertyTable table) {
-    setEnabled(table, getTemplatePresentation());
+  public void update() {
+    setEnabled(myTable, getTemplatePresentation());
   }
 
   private static void setEnabled(PropertyTable table, Presentation presentation) {
@@ -57,10 +59,8 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
     }
   }
 
-
   @Override
   public void actionPerformed(AnActionEvent e) {
-    PropertyTable table = DesignerToolWindowManager.getInstance(e.getProject()).getPropertyTable();
-    table.restoreDefaultValue();
+    myTable.restoreDefaultValue();
   }
 }

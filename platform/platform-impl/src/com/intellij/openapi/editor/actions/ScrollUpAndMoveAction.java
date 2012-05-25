@@ -34,7 +34,7 @@ public class ScrollUpAndMoveAction extends InactiveEditorAction {
   private static class Handler extends EditorActionHandler {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
-      EditorActionUtil.scrollRelatively(editor, -1, true);
+      EditorActionUtil.scrollRelatively(editor, -1, 0, true);
     }
   }
 }

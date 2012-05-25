@@ -34,7 +34,7 @@ public class JavaImplementMethodsHandler implements LanguageCodeInsightActionHan
     }
 
     PsiClass aClass = OverrideImplementUtil.getContextClass(file.getProject(), editor, file, false);
-    return aClass != null;
+    return aClass != null && !OverrideImplementUtil.getMethodSignaturesToImplement(aClass).isEmpty();
   }
 
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {

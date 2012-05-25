@@ -18,7 +18,9 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SyntheticElement;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -56,5 +58,10 @@ public class RenameElementAction extends BaseRefactoringAction {
 
   protected boolean isAvailableForLanguage(Language language) {
     return true;
+  }
+
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+    return getHandler(context) != null;
   }
 }

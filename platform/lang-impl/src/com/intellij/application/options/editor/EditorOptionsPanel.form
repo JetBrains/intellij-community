@@ -30,7 +30,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
                 <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.advanced.mouse.usages"/>
                 <children>
@@ -67,7 +67,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
                 <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.virtual.space"/>
                 <children>
@@ -169,7 +169,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
                 <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.brace.highlighting"/>
                 <children>
@@ -206,7 +206,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
                 <border type="none" title="Scrolling"/>
                 <children>
@@ -244,7 +244,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
                 <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="group.limits"/>
                 <children>
@@ -311,7 +311,7 @@
                 </constraints>
                 <properties/>
                 <clientProperties>
-                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+                  <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
                 <border type="none" title="Other"/>
                 <children>
@@ -368,7 +368,7 @@
                     </constraints>
                     <properties/>
                     <clientProperties>
-                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                     </clientProperties>
                     <border type="none" title="Formatting"/>
                     <children>
@@ -397,7 +397,7 @@
                     </constraints>
                     <properties/>
                     <clientProperties>
-                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+                      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                     </clientProperties>
                     <border type="none" title="Refactorings"/>
                     <children>

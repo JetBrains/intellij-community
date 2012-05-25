@@ -81,7 +81,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testMethodNormal1() { doParserTest("{ void f(); }", false, false); }
   public void testSemicolons() { doParserTest("{ void f() {}; void g() {}; }", false, false); }
   public void testUnclosed0() { doParserTest("{ void f() }", false, false); }
-  public void testExtension() { doParserTest("{ int f() default { return 42; } }", false, false); }
+  public void testExtension() { doParserTest("{ int f() throws E default { return 42; } }", false, false); }
   public void testUnclosed1() { doParserTest("{ void f( }", false, false); }
   public void testUnclosed2() { doParserTest("{ void f()\n void g(); }", false, false); }
   public void testUnclosed3() { doParserTest("{ void f(int a }", false, false); }

@@ -1,0 +1,56 @@
+object path entity ('myObject')
+( ('(')
+WHITE_SPACE_WITH_NEW_LINE ('
+  ')
+multiline value ('some value')
+WHITE_SPACE ('
+')
+) (')')
+WHITE_SPACE_WITH_NEW_LINE ('
+
+')
+object path entity ('myObject')
+. ('.')
+object path entity ('nextProperty')
+WHITE_SPACE (' ')
+( ('(')
+IGNORED_TEXT ('IGNORED_TEXT')
+WHITE_SPACE ('
+  ')
+multiline value ('some other value ))')
+WHITE_SPACE ('
+  ')
+multiline value ('and one more string with provocations{')
+WHITE_SPACE ('
+    ')
+multiline value ('[GLOBAL]')
+WHITE_SPACE ('
+  ')
+multiline value ('}')
+WHITE_SPACE ('
+')
+) (')')
+WHITE_SPACE_WITH_NEW_LINE ('
+
+')
+object path entity ('myObject3')
+WHITE_SPACE (' ')
+( ('(')
+WHITE_SPACE_WITH_NEW_LINE ('
+ ')
+multiline value ('prop{')
+WHITE_SPACE ('
+  ')
+multiline value ('p1 = 2')
+WHITE_SPACE ('
+  ')
+multiline value ('p4 = 5')
+WHITE_SPACE ('
+ ')
+multiline value ('}')
+WHITE_SPACE ('
+')
+) (')')
+IGNORED_TEXT ('also IGNORED_TEXT')
+WHITE_SPACE_WITH_NEW_LINE ('
+')

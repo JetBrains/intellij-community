@@ -25,7 +25,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
               <html.disable class="java.lang.Boolean" value="false"/>
             </clientProperties>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="title.code.completion"/>
@@ -192,7 +192,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
             <border type="none" title-resource-bundle="messages/ApplicationBundle" title-key="title.parameter.info"/>
             <children>

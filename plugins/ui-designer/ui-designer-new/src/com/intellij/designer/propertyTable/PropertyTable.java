@@ -533,7 +533,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     editCellAt(index, convertColumnIndexToView(1));
     LOG.assertTrue(editorComp != null);
 
-    JComponent preferredComponent = editor.getPreferredFocusedComponent((JComponent)editorComp);
+    JComponent preferredComponent = editor.getPreferredFocusedComponent();
     if (preferredComponent == null) {
       preferredComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent((JComponent)editorComp);
     }
@@ -855,7 +855,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       try {
-        JComponent component = myEditor.getComponent(myDesigner.getRootComponent(), getCurrentComponent(), getValue((Property)value));
+        JComponent component = myEditor.getComponent(myDesigner.getRootComponent(), getCurrentComponent(), getValue((Property)value), null);
 
         if (component instanceof JComboBox) {
           component.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);

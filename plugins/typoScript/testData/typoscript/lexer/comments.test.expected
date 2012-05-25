@@ -1,0 +1,26 @@
+C_STYLE_COMMENT ('/*
+a comment */
+*/')
+WHITE_SPACE_WITH_NEW_LINE ('
+
+')
+C_STYLE_COMMENT ('/**
+also comment
+ */')
+WHITE_SPACE_WITH_NEW_LINE ('
+
+ ')
+C_STYLE_COMMENT ('/* */
+comment   */
+  */')
+IGNORED_TEXT (' ignored text')
+WHITE_SPACE_WITH_NEW_LINE ('
+
+')
+object path entity ('assign')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('ment')
+WHITE_SPACE_WITH_NEW_LINE ('
+')

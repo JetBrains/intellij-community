@@ -24,6 +24,7 @@ import com.intellij.designer.designSurface.tools.*;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
+import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
@@ -97,6 +98,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected GlassLayer myGlassLayer;
   private DecorationLayer myDecorationLayer;
   private FeedbackLayer myFeedbackLayer;
+  private InplaceEditingLayer myInplaceEditingLayer;
 
   private ListSelectionListener myPaletteListener;
   protected ToolProvider myToolProvider;
@@ -245,6 +247,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
 
       @Override
+      public void startInplaceEditing(@Nullable InplaceContext inplaceContext) {
+        myInplaceEditingLayer.startEditing(inplaceContext);
+      }
+
+      @Override
       public void showError(@NonNls String message, Throwable e) {
         DesignerEditorPanel.this.showError(message, e);
       }
@@ -258,6 +265,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myFeedbackLayer = new FeedbackLayer();
     myLayeredPane.add(myFeedbackLayer, LAYER_FEEDBACK);
+
+    myInplaceEditingLayer = new InplaceEditingLayer(this);
+    myLayeredPane.add(myInplaceEditingLayer, LAYER_INPLACE_EDITING);
 
     JPanel content = new JPanel(new GridBagLayout());
 
@@ -513,6 +523,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return myActionPanel;
   }
 
+  public InplaceEditingLayer getInplaceEditingLayer() {
+    return myInplaceEditingLayer;
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return myDesignerCard.isVisible() ? myGlassLayer : myErrorPanel;
   }
@@ -681,7 +695,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   @Override
   public Object getData(@NonNls String dataId) {
-    // TODO: support keys
     return myActionPanel.getData(dataId);
   }
 

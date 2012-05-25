@@ -21,12 +21,15 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.xdebugger.ui.DebuggerColors;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -43,16 +46,11 @@ public abstract class BreakpointItem implements ItemWrapper {
   public abstract void setEnabled(boolean state);
 
   protected void showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
-    final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
-      DebuggerColors.BREAKPOINT_ATTRIBUTES).clone();
-    final Color color = attributes.getBackgroundColor();
-    attributes.setBackgroundColor(new Color(color.getRed(), color.getGreen()-100, color.getBlue()-100));
-    panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(line, 0), attributes);
+    panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(line, 0), null);
   }
 
   @Override
   public void execute(Project project, JBPopup popup) {
-    setEnabled(!isEnabled());
   }
 
   @Override
@@ -60,4 +58,17 @@ public abstract class BreakpointItem implements ItemWrapper {
     final JCheckBox checkBox = (JCheckBox)component;
     checkBox.setSelected(isEnabled());
   }
+
+  @Override
+  public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
+    setupGenericRenderer(renderer);
+  }
+
+  @Override
+  public void setupRenderer(ColoredTreeCellRenderer renderer) {
+    setupGenericRenderer(renderer);
+  }
+
+  protected abstract void setupGenericRenderer(SimpleColoredComponent renderer);
+
 }

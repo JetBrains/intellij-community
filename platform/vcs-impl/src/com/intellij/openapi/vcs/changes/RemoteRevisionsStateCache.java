@@ -135,12 +135,12 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     for (VcsRoot vcsRoot : dirty.keySet()) {
       // todo - actually it means nothing since the only known VCS to use this scheme is Git and now it always allow
       // todo - background operations. when it changes, develop more flexible behavior here
-      if (! vcsRoot.vcs.isVcsBackgroundOperationsAllowed(vcsRoot.path)) continue;
-      final TreeDiffProvider provider = vcsRoot.vcs.getTreeDiffProvider();
+      if (! vcsRoot.getVcs().isVcsBackgroundOperationsAllowed(vcsRoot.getPath())) continue;
+      final TreeDiffProvider provider = vcsRoot.getVcs().getTreeDiffProvider();
       if (provider == null) continue;
 
       final Collection<String> paths = dirty.get(vcsRoot);
-      final Collection<String> remotelyChanged = provider.getRemotelyChanged(vcsRoot.path, paths);
+      final Collection<String> remotelyChanged = provider.getRemotelyChanged(vcsRoot.getPath(), paths);
       for (String path : paths) {
         results.put(path, new Pair<Boolean, VcsRoot>(remotelyChanged.contains(path), vcsRoot));
       }

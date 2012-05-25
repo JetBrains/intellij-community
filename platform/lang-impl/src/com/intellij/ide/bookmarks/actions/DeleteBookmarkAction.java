@@ -17,9 +17,9 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
@@ -27,14 +27,7 @@ import com.intellij.ui.ListUtil;
 import javax.swing.*;
 import java.util.List;
 
-/**
-* Created with IntelliJ IDEA.
-* User: zajac
-* Date: 5/6/12
-* Time: 2:09 AM
-* To change this template use File | Settings | File Templates.
-*/
-class DeleteBookmarkAction extends AnAction {
+class DeleteBookmarkAction extends DumbAwareAction {
   private final Project myProject;
   private final JList myList;
 

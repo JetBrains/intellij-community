@@ -28,11 +28,13 @@ public class DocumentReferenceByDocument implements DocumentReference {
     myDocument = document;
   }
 
+  @Override
   @NotNull
   public Document getDocument() {
     return myDocument;
   }
 
+  @Override
   @Nullable
   public VirtualFile getFile() {
     return null;

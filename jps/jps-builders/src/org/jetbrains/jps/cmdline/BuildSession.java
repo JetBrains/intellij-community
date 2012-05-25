@@ -324,32 +324,25 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private static void saveFsState(File dataStorageRoot, BuildFSState state, long lastEventOrdinal) {
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
-
-    BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     try {
+      final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       final DataOutputStream out = new DataOutputStream(bytes);
-      out.writeLong(lastEventOrdinal);
       try {
+        out.writeLong(lastEventOrdinal);
         state.save(out);
       }
       finally {
         out.close();
       }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return;
-    }
 
-    FileOutputStream fos = null;
-    try {
-      fos = new FileOutputStream(file);
-    }
-    catch (FileNotFoundException e) {
-      FileUtil.createIfDoesntExist(file);
-    }
+      FileOutputStream fos = null;
+      try {
+        fos = new FileOutputStream(file);
+      }
+      catch (FileNotFoundException e) {
+        FileUtil.createIfDoesntExist(file);
+      }
 
-    try {
       if (fos == null) {
         fos = new FileOutputStream(file);
       }
@@ -359,8 +352,9 @@ final class BuildSession implements Runnable, CanceledStatus {
       finally {
         fos.close();
       }
+
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.error(e);
       FileUtil.delete(file);
     }
@@ -477,7 +471,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
       IdeaProjectLoader.loadFromPath(project, loadPath, myPathVars, null, new SystemOutErrorReporter(false));
       final String globalEncoding = myGlobalEncoding;
-      if (globalEncoding != null && project.getProjectCharset() == null) {
+      if (!StringUtil.isEmpty(globalEncoding) && project.getProjectCharset() == null) {
         project.setProjectCharset(globalEncoding);
       }
       project.getIgnoredFilePatterns().loadFromString(myIgnorePatterns);

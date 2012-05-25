@@ -18,6 +18,7 @@ package com.intellij.ui.popup.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ColoredTreeCellRenderer;
 
 import javax.swing.*;
 
@@ -42,6 +43,11 @@ public class SplitterItem implements ItemWrapper {
 
   @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void setupRenderer(ColoredTreeCellRenderer renderer) {
     //To change body of implemented methods use File | Settings | File Templates.
   }
 

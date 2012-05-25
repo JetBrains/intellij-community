@@ -79,7 +79,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
   };
-  
+
   public HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {
     myResolveHelper = resolveHelper;
   }
@@ -93,7 +93,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public int order() {
     return 0;
-  }  
+  }
 
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
@@ -324,22 +324,20 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitExpression(PsiExpression expression) {
     ProgressManager.checkCanceled(); // visitLiteralExpression is invoked very often in array initializers
-    
+
     super.visitExpression(expression);
     PsiType type = expression.getType();
     if (myHolder.add(HighlightUtil.checkMustBeBoolean(expression, type))) return;
-    PsiExpression indexExpression;
 
-    if (expression instanceof PsiArrayAccessExpression
-        && (indexExpression = ((PsiArrayAccessExpression)expression).getIndexExpression()) != null) {
-      PsiExpression arrayExpression = ((PsiArrayAccessExpression)expression).getArrayExpression();
-      myHolder.add(HighlightUtil.checkValidArrayAccessExpression(arrayExpression, indexExpression, indexExpression.getType()));
+    if(expression instanceof PsiArrayAccessExpression) {
+      myHolder.add(HighlightUtil.checkValidArrayAccessExpression((PsiArrayAccessExpression)expression));
     }
+
     if (expression.getParent() instanceof PsiNewExpression
              && ((PsiNewExpression)expression.getParent()).getQualifier() != expression
              && ((PsiNewExpression)expression.getParent()).getArrayInitializer() != expression) {
       // like in 'new String["s"]'
-      myHolder.add(HighlightUtil.checkValidArrayAccessExpression(null, expression, type));
+      myHolder.add(HighlightUtil.checkAssignability(PsiType.INT, expression.getType(), expression, expression));
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkVariableExpected(expression));
@@ -698,7 +696,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitNewExpression(PsiNewExpression expression) {
     myHolder.add(HighlightUtil.checkUnhandledExceptions(expression, null));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAnonymousInheritFinal(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNewOfStaticClass(expression));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkQualifiedNew(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
     try {
@@ -900,7 +898,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!(parent instanceof PsiTypeParameter)) {
       myHolder.add(AnnotationsHighlightUtil.checkAnnotationDeclaration(parent, list));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkExtendsAllowed(list));
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkImplementsAllowed(list));      
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkImplementsAllowed(list));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassExtendsOnlyOneClass(list));
       if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkGenericCannotExtendException(list));
     }

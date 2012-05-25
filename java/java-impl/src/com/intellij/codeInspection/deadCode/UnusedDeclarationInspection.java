@@ -30,6 +30,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -266,7 +267,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
   private static boolean isSerializationImplicitlyUsedField(PsiField field) {
     @NonNls final String name = field.getName();
-    if (!"serialVersionUID".equals(name) && !"serialPersistentFields".equals(name)) return false;
+    if (!HighlightUtil.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
     return aClass == null || isSerializable(aClass, null);

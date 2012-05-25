@@ -16,14 +16,12 @@
 
 package org.jetbrains.plugins.groovy.formatter;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +112,8 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
         mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
       }
       catch (RuntimeException e) {
-        LOG.error(myNode.getPsi().getContainingFile().getText(), e);
+        final PsiFile file = myNode.getPsi().getContainingFile();
+        LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), file.getText());
       }
     }
     return  mySubBlocks;

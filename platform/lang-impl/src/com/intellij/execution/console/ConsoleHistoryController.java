@@ -23,8 +23,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -225,16 +225,28 @@ public class ConsoleHistoryController {
     return myBrowseHistory;
   }
 
-  protected void setConsoleText(final String command, final boolean storeUserText, final boolean scrollToEnd) {
+  protected void setConsoleText(final String command, final boolean storeUserText, final boolean regularMode) {
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
-    new WriteCommandAction(myConsole.getProject(), myConsole.getFile()) {
-      protected void run(final Result result) throws Throwable {
+    new WriteCommandAction.Simple(myConsole.getProject()) {
+      @Override
+      public void run() {
         if (storeUserText) {
           myUserValue = document.getText();
         }
-        document.setText(StringUtil.notNullize(command));
-        editor.getCaretModel().moveToOffset(scrollToEnd? document.getTextLength() : 0);
+        if (regularMode) {
+          document.setText(StringUtil.notNullize(command));
+        }
+        else {
+          try {
+            document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+            document.setText(StringUtil.notNullize(command));
+          }
+          finally {
+            document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
+          }
+        }
+        editor.getCaretModel().moveToOffset(regularMode? document.getTextLength() : 0);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }.execute();

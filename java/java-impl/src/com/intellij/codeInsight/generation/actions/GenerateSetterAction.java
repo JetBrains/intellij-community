@@ -22,7 +22,7 @@ import com.intellij.codeInsight.generation.GenerateSetterHandler;
  * Available in the Java code editor context only
  * @author Alexey Kudravtsev
  */ 
-public class GenerateSetterAction extends BaseGenerateAction {
+public class GenerateSetterAction extends GenerateGetterSetterBaseAction {
   public GenerateSetterAction() {
     super(new GenerateSetterHandler());
   }

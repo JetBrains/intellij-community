@@ -41,12 +41,14 @@ import java.util.Set;
  * Git repository change provider
  */
 public class GitChangeProvider implements ChangeProvider {
-  private static final Logger LOG = Logger.getInstance(GitChangeProvider.class);
-  private final Project myProject;
+
+  private static final Logger PROFILE_LOG = Logger.getInstance("#GitStatus");
+
+  @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  private final ChangeListManager myChangeListManager;
-  private FileDocumentManager myFileDocumentManager;
-  private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final ChangeListManager myChangeListManager;
+  @NotNull private final FileDocumentManager myFileDocumentManager;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   public GitChangeProvider(@NotNull Project project, @NotNull Git git, ChangeListManager changeListManager,
                            @NotNull FileDocumentManager fileDocumentManager, @NotNull ProjectLevelVcsManager vcsManager) {
@@ -111,6 +113,14 @@ public class GitChangeProvider implements ChangeProvider {
     }
     final GitVersion version = vcs.getVersion();
     return GitVersionSpecialty.KNOWS_STATUS_PORCELAIN.existsIn(version);
+  }
+
+  /**
+   * Common debug logging method for all Git status related operations.
+   * Primarily used for measuring performance and tracking calls to heavy methods.
+   */
+  public static void debug(String message) {
+    PROFILE_LOG.debug(message);
   }
 
   private static class MyNonChangedHolder {

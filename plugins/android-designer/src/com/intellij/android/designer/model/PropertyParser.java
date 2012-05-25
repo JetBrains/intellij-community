@@ -193,9 +193,13 @@ public class PropertyParser {
       Class<?> superComponentClass = componentClass.getSuperclass();
       if (superComponentClass != null) {
         superComponentClass = configureClass(superComponentClass);
+        MetaModel superModel = myMetaManager.getModelByTarget(superComponentClass.getName());
 
-        List<Property> superProperties = loadWidgetProperties(superComponentClass,
-                                                              myMetaManager.getModelByTarget(superComponentClass.getName()));
+        if (model != null && superModel != null && model.getInplaceProperties().isEmpty()) {
+          model.setInplaceProperties(superModel.getInplaceProperties());
+        }
+
+        List<Property> superProperties = loadWidgetProperties(superComponentClass, superModel);
         for (Property superProperty : superProperties) {
           if (PropertyTable.findProperty(properties, superProperty) == -1) {
             if (model == null) {

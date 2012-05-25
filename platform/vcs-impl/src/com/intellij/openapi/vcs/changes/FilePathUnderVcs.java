@@ -33,8 +33,8 @@ public class FilePathUnderVcs {
   }
 
   FilePathUnderVcs(final VcsRoot root) {
-    myPath = new FilePathImpl(root.path);
-    myVcs = root.vcs;
+    myPath = new FilePathImpl(root.getPath());
+    myVcs = root.getVcs();
   }
 
   public FilePath getPath() {

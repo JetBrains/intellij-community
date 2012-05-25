@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.lang.ASTNode;
@@ -43,7 +44,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -267,7 +267,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
     PsiCodeBlock body = method.getBody();
     if (body == null) return false;
     PsiStatement[] statements = body.getStatements();
-    if (statements.length != 1) return false;
+    if (statements.length == 0) return false;
     PsiStatement statement = statements[0];
     if (PropertyUtil.isSimplePropertyGetter(method)) {
       if (statement instanceof PsiReturnStatement) {
@@ -275,6 +275,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       }
     }
     else if (PropertyUtil.isSimplePropertySetter(method)) {
+      if (statements.length > 1 && !(statements[1] instanceof PsiReturnStatement)) return false;
       if (statement instanceof PsiExpressionStatement) {
         PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
         if (expr instanceof PsiAssignmentExpression) {
@@ -565,9 +566,15 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
     }
   }
 
-  private static boolean hasOnlyOneMethod(@NotNull PsiAnonymousClass anonymousClass) {
-    if (anonymousClass.getFields().length != 0) {
-      return false;
+  private static boolean hasOnlyOneMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
+    PsiField[] fields = anonymousClass.getFields();
+    if (fields.length != 0) {
+      if (fields.length == 1 && HighlightUtil.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) &&
+          fields[0].hasModifierProperty(PsiModifier.STATIC)) {
+        //ok
+      } else {
+        return false;
+      }
     }
     if (anonymousClass.getInitializers().length != 0) {
       return false;
@@ -576,7 +583,20 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       return false;
     }
 
-    return anonymousClass.getMethods().length == 1;
+    if (anonymousClass.getMethods().length != 1) {
+      return false;
+    }
+
+    if (checkResolve) {
+      PsiReferenceList throwsList = anonymousClass.getMethods()[0].getThrowsList();
+      for (PsiClassType type : throwsList.getReferencedTypes()) {
+        if (type.resolve() == null) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,
@@ -594,7 +614,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
         final PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList != null && argumentList.getExpressions().length == 0) {
           final PsiMethod[] methods = anonymousClass.getMethods();
-          if (hasOnlyOneMethod(anonymousClass) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
+          if (hasOnlyOneMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
             final PsiMethod method = methods[0];
             final PsiCodeBlock body = method.getBody();
             if (body != null) {
@@ -626,35 +646,13 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
               if (lastLineEnd > 0 && seq.charAt(lastLineEnd) == '\n') lastLineEnd--;
               if (lastLineEnd < firstLineStart) return false;
 
-              final String baseClassName = quick ?
-                                           anonymousClass.getBaseClassReference().getReferenceName() :
-                                           ObjectUtils.assertNotNull(anonymousClass.getBaseClassType().resolve()).getName();
-              if (lastLineEnd >= seq.length() || firstLineStart >= seq.length() || firstLineStart < 0) {
-                LOG.error("llE=" + lastLineEnd + "; fLS=" + firstLineStart + "; len=" + seq.length() + "rE=" + rangeEnd + "; class=" +
-                          baseClassName);
-              }
-
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
                 @Override
                 public String fun(final PsiParameter psiParameter) {
-                  String typeName;
-                  if (quick) {
-                    PsiTypeElement typeElement = psiParameter.getTypeElement();
-                    assert typeElement != null;
-                    typeName = typeElement.getText();
-                  }
-                  else {
-                    typeName = psiParameter.getType().getPresentableText();
-                  }
-                  int genStart = typeName.indexOf('<');
-                  int genEnd = typeName.lastIndexOf('>');
-                  if (genStart > 0 && genEnd > 0) {
-                    typeName = typeName.substring(0, genStart) + typeName.substring(genEnd + 1);
-                  }
-                  return typeName + " " + psiParameter.getName();
+                  return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = baseClassName + "(" + params + ") {";
+              @NonNls final String lambdas = "{" + params + " =>";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();

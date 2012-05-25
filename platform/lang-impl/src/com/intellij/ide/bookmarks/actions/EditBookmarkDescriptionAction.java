@@ -17,9 +17,9 @@ package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -29,14 +29,7 @@ import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 
-/**
-* Created with IntelliJ IDEA.
-* User: zajac
-* Date: 5/6/12
-* Time: 2:08 AM
-* To change this template use File | Settings | File Templates.
-*/
-class EditBookmarkDescriptionAction extends AnAction {
+class EditBookmarkDescriptionAction extends DumbAwareAction {
   private final JList myList;
   private final Project myProject;
   private JBPopup myPopup;

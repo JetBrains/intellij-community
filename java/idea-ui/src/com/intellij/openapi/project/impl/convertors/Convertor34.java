@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -51,7 +52,7 @@ public class Convertor34 {
   private static final String JAVA_DOC_ROOTS_CANNOT_BE_CONVERTED = ProjectBundle.message("project.convert.javadoc.paths.error");
   private static final String MULTIPLE_OUTPUT_PATHS = ProjectBundle.message("project.convert.multiple.output.paths.error");
 
-  public static void execute(Element root, String filePath, ArrayList<String> conversionProblems) {
+  public static void execute(Element root, String filePath, @Nullable ArrayList<String> conversionProblems) {
     if (filePath == null) return;
 
     if (conversionProblems == null) {

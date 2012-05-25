@@ -7,7 +7,7 @@
     </constraints>
     <properties/>
     <clientProperties>
-      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$BoldSmallWithIndent"/>
+      <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
     <border type="etched" title="Java">
       <size top="0" left="10" bottom="0" right="0"/>

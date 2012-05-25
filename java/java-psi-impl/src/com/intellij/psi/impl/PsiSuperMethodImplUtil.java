@@ -264,13 +264,31 @@ public class PsiSuperMethodImplUtil {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
     PsiClass superClass = superMethod.getContainingClass();
     PsiClass containingClass = hierarchicalMethodSignature.getMethod().getContainingClass();
-    return !superMethod.isConstructor()
-           && !aClass.equals(superClass)
-           && PsiUtil.isAccessible(superMethod, aClass, aClass)
-           && MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature)
-           && superClass != null
-           && (containingClass != null && containingClass.isInterface() == superClass.isInterface() || superClass.isInterface() || "java.lang.Object".equals(superClass.getQualifiedName()))
-      ;
+    if (!superMethod.isConstructor()) {
+      if (!aClass.equals(superClass)) {
+        if (PsiUtil.isAccessible(superMethod, aClass, aClass)) {
+          if (MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature)) {
+            if (superClass != null) {
+              if (superClass.isInterface() ||
+                  "java.lang.Object".equals(superClass.getQualifiedName())) {
+                return true;
+              }
+
+              if (containingClass != null) {
+                if (!containingClass.isInterface()) {
+                  return true;
+                }
+
+                if (!aClass.isInterface() && !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static HierarchicalMethodSignatureImpl copy(HierarchicalMethodSignature hi) {

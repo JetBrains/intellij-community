@@ -17,10 +17,12 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -83,6 +85,13 @@ public class SelectionTool extends InputTool {
     myState = STATE_INIT;
     setTracker(null);
     handleMove(); // hack: update cursor
+  }
+
+  @Override
+  protected void handleDoubleClick(int button) {
+    if (button == MouseEvent.BUTTON1 && myToolProvider != null && !myArea.isTree()) {
+      myToolProvider.startInplaceEditing(null);
+    }
   }
 
   @Override
@@ -189,6 +198,11 @@ public class SelectionTool extends InputTool {
   public void keyTyped(KeyEvent event, EditableArea area) throws Exception {
     if (myTracker != null) {
       myTracker.keyTyped(event, area);
+    }
+    else if (myToolProvider != null && !area.isTree() &&
+             Character.isLetterOrDigit(event.getKeyChar()) &&
+             (event.getModifiers() & (InputEvent.ALT_MASK | InputEvent.CTRL_MASK)) == 0) {
+      myToolProvider.startInplaceEditing(new InplaceContext(event.getKeyChar()));
     }
   }
 

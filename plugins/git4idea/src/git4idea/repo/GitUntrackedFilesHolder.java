@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
+import git4idea.status.GitChangeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -242,6 +243,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
     // if index has changed, no need to refresh specific files - we get the full status of all files
     if (allChanged) {
+      GitChangeProvider.debug(String.format("GitUntrackedFilesHolder: Index has changed, marking %s recursively dirty", myRoot));
       myDirtyScopeManager.dirDirtyRecursively(myRoot);
       synchronized (LOCK) {
         myReady = false;

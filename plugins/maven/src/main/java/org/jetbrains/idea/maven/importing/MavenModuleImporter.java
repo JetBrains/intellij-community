@@ -158,8 +158,6 @@ public class MavenModuleImporter {
 
   private void configLanguageLevel() {
     final LanguageLevel level = LanguageLevel.parse(myMavenProject.getSourceLevel());
-    if (level != null) {
-      myRootModelAdapter.setLanguageLevel(level);
-    }
+    myRootModelAdapter.setLanguageLevel(level);
   }
 }

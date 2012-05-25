@@ -188,4 +188,8 @@ public abstract class ActionGroup extends AnAction {
   public boolean hideIfNoVisibleChildren() {
     return false;
   }
+
+  public boolean disableIfNoVisibleChildren() {
+    return true;
+  }
 }

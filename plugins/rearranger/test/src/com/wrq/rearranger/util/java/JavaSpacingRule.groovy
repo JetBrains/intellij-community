@@ -27,6 +27,9 @@ class JavaSpacingRule extends AbstractRuleBuilder<Void> {
         s.force = true
         s.nBlankLines = attributes[RearrangerTestDsl.BLANK_LINES.value]
       }
+      if (attributes[RearrangerTestDsl.REMOVE_BLANK_LINES.value]) {
+        settings.removeBlanksInsideCodeBlocks = true
+      }
     })
   }
   

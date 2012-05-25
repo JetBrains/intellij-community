@@ -980,6 +980,21 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(text, myEditor.getSelectionModel().getSelectedText());
   }
   
+  public void testCaretPositionAfterLineRemoval() throws IOException {
+    final String text =
+      "123456\n" +
+      "123456\n" +
+      "line towrapbecauseitislong\n" +
+      "923456";
+    init(8, text);
+    final CaretModel caretModel = myEditor.getCaretModel();
+    caretModel.moveToOffset(text.indexOf("e"));
+    final VisualPosition position = caretModel.getVisualPosition();
+    deleteLine();
+    assertEquals(text.substring(0, text.indexOf("line")) + text.substring(text.indexOf('9')), myEditor.getDocument().getText());
+    assertEquals(position, caretModel.getVisualPosition());
+  }
+  
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
     int symbolWidthInPixels = 7;
     init(visibleWidthInColumns * symbolWidthInPixels, fileText, symbolWidthInPixels);

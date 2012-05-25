@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<idea-plugin version="2">
+
+  <id>com.jetbrains.typoscript</id>
+  <name>TypoScript Support</name>
+
+  <description>Typo3 language TypoScript support</description>
+
+  <version>0.1.0</version>
+  <idea-version since-build="107.89"/>
+
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <depends>com.intellij.modules.lang</depends>
+  <resource-bundle>resources.messages.TypoScriptBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="com.jetbrains.typoscript.lang.TypoScriptFileTypeFactory"/>
+    <syntaxHighlighter key="TypoScript" implementationClass="com.jetbrains.typoscript.lang.highlighter.TypoScriptSyntaxHighlighter"/>
+    <colorSettingsPage implementation="com.jetbrains.typoscript.lang.highlighter.TypoScriptColorsAndFontsPage"/>
+
+    <lang.parserDefinition language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptParserDefinition"/>
+    <lang.braceMatcher language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptBraceMatcher"/>
+
+    <lang.foldingBuilder language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptFoldingBuilder"/>
+
+    <lang.psiStructureViewFactory language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptStructureViewFactory"/>
+  </extensions>
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.typoscript.TypoScriptExtensionMappingChecker</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>

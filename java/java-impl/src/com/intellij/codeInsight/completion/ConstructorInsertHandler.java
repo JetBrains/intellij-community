@@ -77,6 +77,19 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
                      psiClass.getTypeParameters().length > 0 &&
                      ((PsiTypeLookupItem)delegate).calcGenerics(position, context).isEmpty() &&
                      context.getCompletionChar() != '(';
+
+      if (context.getDocument().getTextLength() > context.getTailOffset() &&
+          context.getDocument().getCharsSequence().charAt(context.getTailOffset()) == '<') {
+        PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset(), PsiJavaCodeReferenceElement.class, false);
+        if (ref != null) {
+          PsiReferenceParameterList parameterList = ref.getParameterList();
+          if (parameterList != null && context.getTailOffset() == parameterList.getTextRange().getStartOffset()) {
+            context.getDocument().deleteString(parameterList.getTextRange().getStartOffset(), parameterList.getTextRange().getEndOffset());
+            context.commitDocument();
+          }
+        }
+      }
+
       delegate.handleInsert(context);
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
     }
@@ -84,6 +97,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     if (item.getDelegate() instanceof JavaPsiClassReferenceElement) {
       PsiTypeLookupItem.addImportForItem(context, psiClass);
     }
+
 
     insertParentheses(context, delegate, psiClass, !inAnonymous && isAbstract);
 

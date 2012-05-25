@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,47 +19,71 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.Nullable;
 
 class ConstantSubexpressionPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiJavaToken) &&
-        !(element.getPrevSibling() instanceof PsiJavaToken)) {
-      return false;
+    final PsiJavaToken token;
+    if (element instanceof PsiJavaToken) {
+      token = (PsiJavaToken)element;
     }
+    else {
+      final PsiElement prevSibling = element.getPrevSibling();
+      if (prevSibling instanceof PsiJavaToken) {
+        token = (PsiJavaToken)prevSibling;
+      }
+      else {
+        return false;
+      }
+    }
+
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiBinaryExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression)) {
       return false;
     }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)parent;
-    final PsiType type = binaryExpression.getType();
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    final PsiType type = polyadicExpression.getType();
     if (type == null || type.equalsToText("java.lang.String")) {
       // handled by JoinConcatenatedStringLiteralsIntention
       return false;
     }
-    final PsiBinaryExpression subexpression =
-      getSubexpression(binaryExpression);
+    final PsiPolyadicExpression subexpression = getSubexpression(polyadicExpression, token);
     if (subexpression == null) {
       return false;
     }
-    if (binaryExpression.equals(subexpression) &&
-        !isPartOfConstantExpression(binaryExpression)) {
-      // handled by ConstantExpressonIntention
+    if (!isPartOfLargerExpression(polyadicExpression)) {
+      // handled by ConstantExpressionIntention
       return false;
     }
     if (!PsiUtil.isConstantExpression(subexpression)) {
       return false;
     }
-    final Object value =
-      ExpressionUtils.computeConstantExpression(subexpression);
+    final Object value = ExpressionUtils.computeConstantExpression(subexpression);
     return value != null;
   }
 
-  private static boolean isPartOfConstantExpression(
-    PsiBinaryExpression binaryExpression) {
-    final PsiElement containingElement = binaryExpression.getParent();
+  static PsiPolyadicExpression getSubexpression(PsiPolyadicExpression expression, PsiJavaToken token) {
+    final PsiExpression[] operands = expression.getOperands();
+    if (operands.length == 2) {
+      return expression;
+    }
+    for (int i = 1; i < operands.length; i++) {
+      final PsiExpression operand = operands[i];
+      final PsiJavaToken currentToken = expression.getTokenBeforeOperand(operand);
+      if (currentToken == token) {
+        final String binaryExpressionText = operands[i - 1].getText() + ' ' + token.getText() + ' ' + operand.getText();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+        return (PsiPolyadicExpression)factory.createExpressionFromText(binaryExpressionText, expression);
+      }
+    }
+    throw new AssertionError();
+  }
+
+  private static boolean isPartOfLargerExpression(PsiPolyadicExpression expression) {
+    if (expression.getOperands().length > 2) {
+      return true;
+    }
+    final PsiElement containingElement = expression.getParent();
     if (containingElement instanceof PsiExpression) {
       final PsiExpression containingExpression =
         (PsiExpression)containingElement;
@@ -71,39 +95,5 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
       return false;
     }
     return true;
-  }
-
-  /**
-   * Returns the smallest subexpression (if precendence allows it). example:
-   * variable + 2 + 3 normally gets evaluated left to right -> (variable + 2)
-   * + 3 this method returns the right most legal subexpression -> 2 + 3
-   */
-  @Nullable
-  private static PsiBinaryExpression getSubexpression(
-    PsiBinaryExpression expression) {
-    final PsiExpression rhs = expression.getROperand();
-    if (rhs == null) {
-      return null;
-    }
-    final PsiExpression lhs = expression.getLOperand();
-    if (!(lhs instanceof PsiBinaryExpression)) {
-      return expression;
-    }
-    final PsiBinaryExpression lhsBinaryExpression =
-      (PsiBinaryExpression)lhs;
-    final PsiExpression leftSide = lhsBinaryExpression.getROperand();
-    if (leftSide == null) {
-      return null;
-    }
-    try {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression.copy();
-      final PsiExpression lOperand = binaryExpression.getLOperand();
-      lOperand.replace(leftSide);
-      return binaryExpression;
-    }
-    catch (Throwable ignore) {
-      return null;
-    }
   }
 }

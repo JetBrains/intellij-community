@@ -32,7 +32,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<FoldingDescriptor> descriptors) {
     final ASTNode[] children = node.getChildren(myTokenSet);
     if (children.length > 0) {
-      if (node.getTreeParent() !=null && node.getTextLength() > 0) {
+      if (node.getTreeParent() !=null && node.getTextLength() > 1) {
         descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       }
       for (ASTNode child : children) {

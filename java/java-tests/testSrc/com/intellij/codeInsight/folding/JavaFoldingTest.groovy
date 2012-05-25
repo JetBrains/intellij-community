@@ -168,12 +168,34 @@ class Test {
     assertNotNull closureFolds
     assertEquals(2, closureFolds.size())
   }
+  
+  public void "test builder style setter"() {
+    myFoldingSettings.COLLAPSE_ACCESSORS = true
+    def text = """\
+class Foo {
+    private String bar;
+
+    public Foo setBar(String bar) {
+        this.bar = bar;
+        return this;
+    }
+}
+"""
+
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    int indexOfBar = text.indexOf("this.bar")
+    def accessorStartFold = foldingModel.getCollapsedRegionAtOffset(indexOfBar)
+    assertNotNull accessorStartFold
+    assertFalse accessorStartFold.expanded
+  }
 
   public void "test closure folding doesn't expand when editing inside"() {
     def text = """\
 class Test {
     void test() {
      new Runnable() {
+      static final long serialVersionUID = 42L;
       public void run() {
         System.out.println(<caret>);
       }
@@ -193,6 +215,23 @@ class Test {
     myFixture.doHighlighting()
     closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
     assert closureStartFold
+  }
+
+  public void "test no closure folding when the method throws an unresolved exception"() {
+    def text = """\
+class Test {
+    void test() { new Runnable() {
+      public void run() throws Asadfsdafdfasd {
+        System.out.println(<caret>);
+      }
+    };
+  }
+}
+"""
+
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
   }
 
   public void testFindInFolding() {

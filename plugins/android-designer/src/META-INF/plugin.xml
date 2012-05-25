@@ -11,6 +11,8 @@
   <depends>com.intellij.ui-designer-new</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+
     <fileEditorProvider implementation="com.intellij.android.designer.AndroidDesignerEditorProvider"/>
 
     <projectService serviceInterface="com.intellij.android.designer.profile.ProfileList"

@@ -13,8 +13,14 @@ PsiJavaFile:Extension.java
     PsiParameterList:()
       PsiJavaToken:LPARENTH('(')
       PsiJavaToken:RPARENTH(')')
+    PsiWhiteSpace(' ')
     PsiReferenceList
-      <empty list>
+      PsiKeyword:throws('throws')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:E
+        PsiIdentifier:E('E')
+        PsiReferenceParameterList
+          <empty list>
     PsiWhiteSpace(' ')
     PsiKeyword:default('default')
     PsiWhiteSpace(' ')

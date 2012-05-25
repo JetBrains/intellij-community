@@ -38,4 +38,8 @@ class UnsupportedFeatures {
 
     try <error descr="Try-with-resources are not supported at this language level">(Reader r = new FileReader("/dev/null"))</error> { }
   }
+
+  interface I {
+    <error descr="Extension methods are not supported at this language level">void m() default { }</error>
+  }
 }

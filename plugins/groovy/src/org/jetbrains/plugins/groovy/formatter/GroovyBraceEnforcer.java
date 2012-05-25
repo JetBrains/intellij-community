@@ -34,10 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 
 /**
@@ -118,7 +115,7 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
   }
 
   private void processStatement(GrStatement statement, GrStatement blockCandidate, int options) {
-    if (blockCandidate instanceof GrCodeBlock || blockCandidate == null) return;
+    if (blockCandidate instanceof GrCodeBlock || blockCandidate instanceof GrBlockStatement || blockCandidate == null) return;
     if (options == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
         options == CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(statement)) {
       replaceWithBlock(statement, blockCandidate);

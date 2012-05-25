@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.security.SecureRandom;
 
-
 public class JavaStubBuilderTest extends LightIdeaTestCase {
   private static final StubBuilder NEW_BUILDER = new JavaLightStubBuilder();
 
@@ -40,7 +39,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
   public void setUp() throws Exception {
     super.setUp();
     doTest("@interface A { int i() default 42; }\n class C { void m(int p) throws E { } }", null);  // warm up
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   public void testEmpty() {
@@ -112,6 +111,10 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "  public C() throws Exception { }\n" +
            "  public abstract void m(final int i, int[] a1, int a2[], int[] a3[]);\n" +
            "  private static int v2a(int... v) [] { return v; }\n" +
+           "}\n" +
+           "interface I {\n" +
+           "  void m1();\n" +
+           "  void m2() default { }\n" +
            "}",
 
            "PsiJavaFileStub []\n" +
@@ -160,6 +163,21 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      PARAMETER_LIST:PsiParameterListStub\n" +
            "        PARAMETER:PsiParameterStub[v:int...]\n" +
            "          MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
+           "  CLASS:PsiClassStub[interface name=I fqn=I]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[m1:void]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=1025]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n" +
+           "    METHOD:PsiMethodStub[m2:void default {}]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
            "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
@@ -393,7 +411,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     final String lightStr2 = DebugUtil.stubTreeToString(lighterTree2);
     if (tree != null) {
       System.out.println("light=" + t1 + "mks, heavy=" + t2 + "mks");
-      if (!"".equals(tree)) {
+      if (!tree.isEmpty()) {
         assertEquals("light tree differs", tree, lightStr);
         assertEquals("light tree (2nd) differs", tree, lightStr2);
       }

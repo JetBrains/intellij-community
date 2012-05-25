@@ -17,14 +17,13 @@
 package org.jetbrains.plugins.groovy.editor.selection;
 
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
@@ -41,15 +40,9 @@ public class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
   }
 
   private static boolean isLiteral(PsiElement element) {
-    if (element instanceof GrListOrMap) return true;
-
-    if (!(element instanceof GrLiteral)) return false;
-
-    ASTNode node = element.getNode();
-    if (node == null) return false;
-    ASTNode firstNode = node.getFirstChildNode();
-    final IElementType type = firstNode.getElementType();
-    return firstNode == node.getLastChildNode() && TokenSets.STRING_LITERAL_SET.contains(type);
+    return element instanceof GrListOrMap ||
+           element instanceof GrArgumentLabel ||
+           element instanceof GrLiteralImpl && ((GrLiteralImpl)element).isStringLiteral();
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {

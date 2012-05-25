@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,28 +24,34 @@ import com.siyeh.ipp.psiutils.ExpressionUtils;
 class ConstantExpressionPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiBinaryExpression)) {
+    if (!(element instanceof PsiPolyadicExpression)) {
       return false;
     }
-    if (element instanceof PsiLiteralExpression ||
-        element instanceof PsiClassObjectAccessExpression) {
+    if (element instanceof PsiLiteralExpression || element instanceof PsiClassObjectAccessExpression) {
       return false;
     }
-    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-    final PsiExpression rhs = expression.getROperand();
-    if (rhs == null) {
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
+    final PsiType expressionType = expression.getType();
+    if (expressionType == null || expressionType.equalsToText("java.lang.String")) {
+      // intention disabled for string concatenations because of performance issues on
+      // relatively common large string expressions.
       return false;
     }
-    final PsiType type = rhs.getType();
-    if (type == null || type.equalsToText("java.lang.String")) {
-      return false;
+    final PsiExpression[] operands = expression.getOperands();
+    for (PsiExpression operand : operands) {
+      if (operand == null) {
+        return false;
+      }
+      final PsiType type = operand.getType();
+      if (type == null || type.equalsToText("java.lang.String")) {
+        return false;
+      }
     }
     if (!PsiUtil.isConstantExpression(expression)) {
       return false;
     }
     try {
-      final Object value =
-        ExpressionUtils.computeConstantExpression(expression, true);
+      final Object value = ExpressionUtils.computeConstantExpression(expression, true);
       if (value == null) {
         return false;
       }
@@ -54,7 +60,6 @@ class ConstantExpressionPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement parent = element.getParent();
-    return !(parent instanceof PsiExpression &&
-             PsiUtil.isConstantExpression((PsiExpression)parent));
+    return !(parent instanceof PsiExpression) || !PsiUtil.isConstantExpression((PsiExpression)parent);
   }
 }

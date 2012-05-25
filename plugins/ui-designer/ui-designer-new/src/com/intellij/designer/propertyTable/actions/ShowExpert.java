@@ -16,7 +16,6 @@
 package com.intellij.designer.propertyTable.actions;
 
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -27,7 +26,11 @@ import com.intellij.openapi.util.IconLoader;
  * @author Alexander Lobas
  */
 public class ShowExpert extends ToggleAction {
-  public ShowExpert() {
+  private final PropertyTable myTable;
+
+  public ShowExpert(PropertyTable table) {
+    myTable = table;
+
     Presentation presentation = getTemplatePresentation();
     String text = DesignerBundle.message("designer.properties.show.expert");
     presentation.setText(text);
@@ -37,13 +40,11 @@ public class ShowExpert extends ToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    PropertyTable table = DesignerToolWindowManager.getInstance(e.getProject()).getPropertyTable();
-    return table.isShowExpert();
+    return myTable.isShowExpert();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    PropertyTable table = DesignerToolWindowManager.getInstance(e.getProject()).getPropertyTable();
-    table.showExpert(state);
+    myTable.showExpert(state);
   }
 }

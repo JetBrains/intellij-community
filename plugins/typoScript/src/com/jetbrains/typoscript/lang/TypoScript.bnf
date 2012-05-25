@@ -1,0 +1,54 @@
+{
+
+  parserClass="com.jetbrains.typoscript.lang.TypoScriptGeneratedParser"
+  stubParserClass="com.jetbrains.typoscript.lang.TypoScriptParserUtil"
+  generateStubParser = true
+  tokenTypeClass="com.jetbrains.typoscript.lang.TypoScriptTokenType"
+  elementTypeClass="com.jetbrains.typoscript.lang.TypoScriptTokenType"
+  elementTypeHolderClass="com.jetbrains.typoscript.lang.TypoScriptElementTypes"
+  generateTokens=false
+  parserImports="static com.jetbrains.typoscript.lang.TypoScriptTokenTypes.*"
+
+  generatePsi=true
+  implements="com.jetbrains.typoscript.lang.psi.TypoScriptCompositeElement"
+  extends="com.jetbrains.typoscript.lang.psi.TypoScriptCompositeElementImpl"
+
+  psiImplClassSuffix="Impl"
+  psiPackage="com.jetbrains.typoscript.lang.psi"
+  psiImplPackage="com.jetbrains.typoscript.lang.psi.impl"
+
+  CODE_BLOCK_OPERATOR_BEGIN = '{'
+  CODE_BLOCK_OPERATOR_END = '}'
+  MODIFICATION_OPERATOR = ':='
+  ASSIGNMENT_OPERATOR = '='
+  UNSETTING_OPERATOR = '>'
+  COPYING_OPERATOR = '<'
+  OBJECT_PATH_SEPARATOR = '.'
+}
+
+file ::= (expression)*
+private expression ::=  value_modification | multiline_value_assignment | copying | unsetting | code_block | assignment
+| condition_element | include_statement_element {recoverUntil="top_expression_recover"}
+private top_expression_recover ::= ! new_line_white_space
+external new_line_white_space ::= isAfterNewLine
+
+include_statement_element ::= INCLUDE_STATEMENT
+condition_element ::= CONDITION
+
+assignment ::= object_path '=' ASSIGNMENT_VALUE? {pin=1}
+
+value_modification ::= object_path ':=' MODIFICATION_OPERATOR_FUNCTION MODIFICATION_OPERATOR_FUNCTION_PARAM_BEGIN
+  MODIFICATION_OPERATOR_FUNCTION_ARGUMENT MODIFICATION_OPERATOR_FUNCTION_PARAM_END {pin=2}
+
+multiline_value_assignment ::= object_path MULTILINE_VALUE_OPERATOR_BEGIN IGNORED_TEXT? (MULTILINE_VALUE)* MULTILINE_VALUE_OPERATOR_END IGNORED_TEXT? {pin=2}
+
+copying ::= object_path '<' object_path_on_same_line {pin=2}
+external object_path_on_same_line ::= isObjectPathOnSameLine
+
+unsetting ::= object_path '>' IGNORED_TEXT? {pin=2}
+
+code_block ::= object_path '{' IGNORED_TEXT? expression* '}' IGNORED_TEXT? {pin=2}
+
+object_path ::= '.'? (OBJECT_PATH_ENTITY '.')* OBJECT_PATH_ENTITY {pin(".*")=2}
+
+

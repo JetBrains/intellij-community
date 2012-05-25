@@ -37,6 +37,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
@@ -51,11 +52,7 @@ import org.intellij.plugins.testUtil.IdeaCodeInsightTestCase;
 import org.intellij.plugins.testUtil.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
-
-import static com.intellij.openapi.util.io.FileUtil.delete;
 
 /**
  * Created by IntelliJ IDEA.
@@ -63,29 +60,12 @@ import static com.intellij.openapi.util.io.FileUtil.delete;
  * Date: 25.07.2007
  */
 public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
-  private static final File ourTempPath;
-
-  private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
-
-  static {
-    // IDEA leaves bazillions of "ideaXXXX.ipr" files and "unitTestXXXX.tmp" directories in the temp directory
-    ourTempPath = new File(new File(System.getProperty(JAVA_IO_TMPDIR, "/tmp")), "test" + System.identityHashCode(Object.class));
-    ourTempPath.mkdirs();
-
-    try {
-      System.setProperty(JAVA_IO_TMPDIR, ourTempPath.getCanonicalPath());
-      Runtime.getRuntime().addShutdownHook(new Thread("Cleanup Temp") {
-        @Override
-        public void run() {
-          delete(ourTempPath);
-        }
-      });
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   protected CodeInsightTestFixture myTestFixture;
+
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  protected HighlightingTestBase() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   protected void setUp() throws Exception {
     super.setUp();

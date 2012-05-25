@@ -18,7 +18,6 @@ package com.intellij.designer.propertyTable.actions;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -42,7 +41,11 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class ShowJavadoc extends AnAction implements IPropertyTableAction {
-  public ShowJavadoc() {
+  private final PropertyTable myTable;
+
+  public ShowJavadoc(PropertyTable table) {
+    myTable = table;
+
     Presentation presentation = getTemplatePresentation();
     String text = DesignerBundle.message("designer.properties.show.javadoc");
     presentation.setText(text);
@@ -52,13 +55,12 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
 
   @Override
   public void update(AnActionEvent e) {
-    PropertyTable table = DesignerToolWindowManager.getInstance(e.getProject()).getPropertyTable();
-    setEnabled(table, e.getPresentation());
+    setEnabled(myTable, e.getPresentation());
   }
 
   @Override
-  public void update(PropertyTable table) {
-    setEnabled(table, getTemplatePresentation());
+  public void update() {
+    setEnabled(myTable, getTemplatePresentation());
   }
 
   private static void setEnabled(PropertyTable table, Presentation presentation) {
@@ -72,8 +74,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     final DocumentationComponent component = new DocumentationComponent(documentationManager);
 
-    final PropertyTable table = DesignerToolWindowManager.getInstance(project).getPropertyTable();
-    final Property property = table.getSelectionProperty();
+    final Property property = myTable.getSelectionProperty();
     PsiElement javadocElement = property.getJavadocElement();
 
     ActionCallback callback;
@@ -106,7 +107,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
             .createPopup();
         component.setHint(hint);
         Disposer.register(hint, component);
-        hint.show(new RelativePoint(table.getParent(), new Point(0, 0)));
+        hint.show(new RelativePoint(myTable.getParent(), new Point(0, 0)));
       }
     });
 

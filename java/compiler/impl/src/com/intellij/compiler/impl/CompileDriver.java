@@ -2316,9 +2316,6 @@ public class CompileDriver {
 
   private boolean validateCompilerConfiguration(final CompileScope scope, boolean checkOutputAndSourceIntersection) {
     try {
-      if (useOutOfProcessBuild()) {
-        return true;
-      }
       final Module[] scopeModules = scope.getAffectedModules()/*ModuleManager.getInstance(myProject).getModules()*/;
       final List<String> modulesWithoutOutputPathSpecified = new ArrayList<String>();
       boolean isProjectCompilePathSpecified = true;
