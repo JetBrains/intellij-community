@@ -150,7 +150,7 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
 
     myActionsProvider = new CommonEditActionsProvider(designer) {
       @Override
-      protected EditableArea getArea() {
+      protected EditableArea getArea(DataContext dataContext) {
         return myArea;
       }
     };

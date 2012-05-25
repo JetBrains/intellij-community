@@ -18,6 +18,7 @@ package com.intellij.designer.designSurface;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public interface EditableArea {
+  DataKey<EditableArea> DATA_KEY = DataKey.create("EditableArea");
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Selection
