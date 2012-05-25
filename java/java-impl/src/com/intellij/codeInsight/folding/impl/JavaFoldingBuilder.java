@@ -652,7 +652,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
                   return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = "{" + params + " =>";
+              @NonNls final String lambdas = "#{" + params + " ->";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();
