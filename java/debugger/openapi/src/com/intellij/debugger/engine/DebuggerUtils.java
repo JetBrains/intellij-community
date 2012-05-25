@@ -334,19 +334,36 @@ public abstract class DebuggerUtils {
     return getSuperType(subType, superType) != null;
   }
 
-  public static PsiClass findClass(String className, Project project, final GlobalSearchScope scope) {
+  @Nullable
+  public static PsiClass findClass(final String className, Project project, final GlobalSearchScope scope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(project);
+    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
     if (getArrayClass(className) != null) {
-      return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().getArrayClass(LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel());
+      return javaPsiFacade.getElementFactory().getArrayClass(LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel());
     }
     if(project.isDefault()) {
       return null;
     }
     final String _className = className.replace('$', '.');
-    final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(_className, scope);
-    if (aClass == null && scope != GlobalSearchScope.allScope(project)) {
-      return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(_className, GlobalSearchScope.allScope(project));
+    PsiClass aClass = javaPsiFacade.findClass(_className, scope);
+    if (aClass == null) {
+      if (!_className.equals(className)) {
+        // try original name if it differs from the normalized name
+        aClass = javaPsiFacade.findClass(className, scope);
+      }
+    }
+    if (aClass == null) {
+      final GlobalSearchScope globalScope = GlobalSearchScope.allScope(project);
+      if (!globalScope.equals(scope)) {
+        aClass = javaPsiFacade.findClass(_className, globalScope);
+        if (aClass == null) {
+          if (!_className.equals(className)) {
+            // try original name with global scope if the original differs from the normalized name
+            aClass = javaPsiFacade.findClass(className, globalScope);
+          }
+        }
+      }
     }
     return aClass;
   }
