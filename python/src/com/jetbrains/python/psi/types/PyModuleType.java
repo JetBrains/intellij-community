@@ -187,7 +187,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   /**
    * @param directory the module directory
    *
-   * @return a list of submodules of the specified module directory, either files or dirs, for easier naming; may contain filenames
+   * @return a list of submodules of the specified module directory, either files or dirs, for easier naming; may contain file names
    *         not suitable for import.
    */
   @NotNull
@@ -258,7 +258,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
     if (PyNames.INIT_DOT_PY.equals(myModule.getName())) { // our module is a dir, not a single file
       if (point == ResolveImportUtil.PointInImport.AS_MODULE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when imported from somehow, add submodules
-        result.addAll(getSubmoduleVariants(myModule.getContainingDirectory(), location, names_already));
+        result.addAll(getSubModuleVariants(myModule.getContainingDirectory(), location, names_already));
       }
       else {
         addImportedSubmodules(location, names_already, result);
@@ -290,12 +290,12 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
   }
 
-  public static List<LookupElement> getSubmoduleVariants(final PsiDirectory directory,
+  public static List<LookupElement> getSubModuleVariants(final PsiDirectory directory,
                                                          PsiElement location,
                                                          Set<String> names_already) {
     List<LookupElement> result = new ArrayList<LookupElement>();
-    for (PsiFileSystemItem pfsi : getSubmodulesList(directory)) {
-      LookupElement lookupElement = buildFileLookupElement(location, names_already, pfsi);
+    for (PsiFileSystemItem item : getSubmodulesList(directory)) {
+      LookupElement lookupElement = buildFileLookupElement(location, names_already, item);
       if (lookupElement != null) {
         result.add(lookupElement);
       }
@@ -303,11 +303,12 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return result;
   }
 
+  @Nullable
   private static LookupElement buildFileLookupElement(PsiElement location,
                                                       Set<String> names_already,
-                                                      PsiFileSystemItem pfsi) {
-    if (pfsi == location.getContainingFile().getOriginalFile()) return null;
-    String s = pfsi.getName();
+                                                      PsiFileSystemItem item) {
+    if (item == location.getContainingFile().getOriginalFile()) return null;
+    String s = item.getName();
     int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
     if (pos > 0) s = s.substring(0, pos);
     if (!PyNames.isIdentifier(s)) return null;
@@ -315,10 +316,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       if (names_already.contains(s)) return null;
       else names_already.add(s);
     }
-    return LookupElementBuilder.create(pfsi, s)
-      .withTypeText(getPresentablePath((PsiDirectory)pfsi.getParent()))
+    return LookupElementBuilder.create(item, s)
+      .withTypeText(getPresentablePath((PsiDirectory)item.getParent()))
       .withPresentableText(s)
-      .withIcon(pfsi.getIcon(0));
+      .withIcon(item.getIcon(0));
   }
 
   private static String getPresentablePath(PsiDirectory directory) {
@@ -333,13 +334,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   public String getName() {
-    PsiFile mod = getModule();
-    if (mod != null) {
-      return mod.getName();
-    }
-    else {
-      return null;
-    }
+    return myModule.getName();
   }
 
   @Override

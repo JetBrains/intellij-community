@@ -116,8 +116,10 @@ public class PyImportReference extends PyReferenceImpl {
       }
       else if (item instanceof PsiNamedElement) {
         final PsiNamedElement element = (PsiNamedElement)item;
+        final String name = element.getName();
+        assert name != null; // it can't really have null name
         variants[i] = LookupElementBuilder
-          .create(element.getName()) // it can't really have null name
+          .create(name)
           .withIcon(element.getIcon(0))
           .withInsertHandler(insertHandler);
       }
@@ -278,7 +280,7 @@ public class PyImportReference extends PyReferenceImpl {
           myObjects.addAll(Arrays.asList(completionVariants));
         }
         else {
-          myObjects.addAll(PyModuleType.getSubmoduleVariants(target_dir, myElement, myNamesAlready));
+          myObjects.addAll(PyModuleType.getSubModuleVariants(target_dir, myElement, myNamesAlready));
         }
       }
     }
