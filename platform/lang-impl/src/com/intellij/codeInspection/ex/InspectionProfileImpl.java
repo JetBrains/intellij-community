@@ -92,7 +92,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   private boolean myModified = false;
   private volatile boolean myInitialized;
 
-  private InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
+  InspectionProfileImpl(@NotNull InspectionProfileImpl inspectionProfile) {
     super(inspectionProfile.getName());
 
     myRegistrar = inspectionProfile.myRegistrar;

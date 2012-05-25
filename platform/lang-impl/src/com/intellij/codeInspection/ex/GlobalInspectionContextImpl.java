@@ -33,10 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
@@ -271,12 +268,19 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       getContentManager().removeContent(myContent, true);
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    Runnable runnable = new Runnable() {
       public void run() {
         myCurrentScope = scope;
         launchInspections(scope, manager);
       }
-    });
+    };
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
   }
 
 
@@ -483,7 +487,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
   public void performInspectionsWithProgress(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    myProgressIndicator = ApplicationManager.getApplication().isUnitTestMode() ? new EmptyProgressIndicator() : ProgressManager.getInstance().getProgressIndicator();
     //init manager in read action
     RefManagerImpl refManager = (RefManagerImpl)getRefManager();
     try {
@@ -714,7 +718,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   }
 
   protected List<ToolsImpl> getUsedTools() {
-    InspectionProfileImpl profile = (InspectionProfileImpl)getCurrentProfile();
+    InspectionProfileImpl profile = new InspectionProfileImpl((InspectionProfileImpl)getCurrentProfile());
     List<ToolsImpl> tools = profile.getAllEnabledInspectionTools(myProject);
     THashSet<ToolsImpl> set = null;
     for (ToolsImpl tool : tools) {

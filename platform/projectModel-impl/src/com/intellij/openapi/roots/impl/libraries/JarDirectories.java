@@ -33,8 +33,8 @@ import java.util.List;
  * @author nik
  */
 public class JarDirectories implements JDOMExternalizable {
-  private MultiMap<OrderRootType, String> myDirectories = new MultiMap<OrderRootType, String>();
-  private MultiMap<OrderRootType, String> myRecursivelyIncluded = new MultiMap<OrderRootType, String>();
+  private final MultiMap<OrderRootType, String> myDirectories = new MultiMap<OrderRootType, String>();
+  private final MultiMap<OrderRootType, String> myRecursivelyIncluded = new MultiMap<OrderRootType, String>();
 
   @NonNls private static final String JAR_DIRECTORY_ELEMENT = "jarDirectory";
   @NonNls private static final String URL_ATTR = "url";

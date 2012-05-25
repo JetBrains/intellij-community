@@ -41,14 +41,16 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   private static final Key<List<VirtualFile>> DELETED_FILES = Key.create(DocumentReferenceManagerImpl.class.getName() + ".DELETED_FILES");
 
   private final Map<Reference<Document>, DocumentReference> myDocToRef = new WeakValueHashMap<Reference<Document>, DocumentReference>();
-  private final Map<VirtualFile, DocumentReference> myFileToRef = new WeakValueHashMap<VirtualFile, DocumentReference>();
+  private final Map<Reference<VirtualFile>, DocumentReference> myFileToRef = new WeakValueHashMap<Reference<VirtualFile>, DocumentReference>();
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<FilePath, DocumentReference>();
 
+  @Override
   @NotNull
   public String getComponentName() {
     return getClass().getSimpleName();
   }
 
+  @Override
   public void initComponent() {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
@@ -56,7 +58,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
         VirtualFile f = event.getFile();
         DocumentReference ref = myDeletedFilePathToRef.remove(new FilePath(f.getUrl()));
         if (ref != null) {
-          myFileToRef.put(f, ref);
+          myFileToRef.put(new WeakReferenceWithEquals<VirtualFile>(f), ref);
           ((DocumentReferenceByVirtualFile)ref).update(f);
         }
       }
@@ -73,8 +75,10 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
         List<VirtualFile> files = f.getUserData(DELETED_FILES);
         f.putUserData(DELETED_FILES, null);
 
+        assert files != null;
         for (VirtualFile each : files) {
-          DocumentReference ref = myFileToRef.remove(each);
+          Reference<VirtualFile> r = new WeakReferenceWithEquals<VirtualFile>(each);
+          DocumentReference ref = myFileToRef.remove(r);
           if (ref != null) {
             myDeletedFilePathToRef.put(new FilePath(each.getUrl()), ref);
           }
@@ -83,7 +87,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     });
   }
 
-  private List<VirtualFile> collectDeletedFiles(VirtualFile f, List<VirtualFile> files) {
+  private static List<VirtualFile> collectDeletedFiles(VirtualFile f, List<VirtualFile> files) {
     if (!(f instanceof NewVirtualFile)) return files;
 
     if (!f.isDirectory()) {
@@ -97,6 +101,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     return files;
   }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -110,19 +115,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   }
 
   private DocumentReference doCreate(@NotNull final Document document) {
-    final int hashCode = document.hashCode();
-    Reference<Document> reference = new WeakReference<Document>(document) {
-      @Override
-      public int hashCode() {
-        return hashCode;
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-        Document mydoc = get();
-        return mydoc != null && obj instanceof Reference && ((Reference)obj).get() == mydoc;
-      }
-    };
+    Reference<Document> reference = new WeakReferenceWithEquals<Document>(document);
     DocumentReference result = myDocToRef.get(reference);
     if (result == null) {
       result = new DocumentReferenceByDocument(document);
@@ -137,15 +130,36 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     assertInDispatchThread();
     assert file.isValid() : "file is invalid: " + file;
 
-    DocumentReference result = myFileToRef.get(file);
+    WeakReferenceWithEquals<VirtualFile> ref = new WeakReferenceWithEquals<VirtualFile>(file);
+    DocumentReference result = myFileToRef.get(ref);
     if (result == null) {
       result = new DocumentReferenceByVirtualFile(file);
-      myFileToRef.put(file, result);
+      myFileToRef.put(ref, result);
     }
     return result;
   }
 
-  private void assertInDispatchThread() {
+  private static void assertInDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+  }
+
+  private static class WeakReferenceWithEquals<T> extends WeakReference<T> {
+    final int hashCode;
+
+    public WeakReferenceWithEquals(@NotNull T document) {
+      super(document);
+      hashCode = document.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      T doc = get();
+      return doc != null && obj instanceof Reference && ((Reference)obj).get() == doc;
+    }
   }
 }

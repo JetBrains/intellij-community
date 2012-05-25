@@ -1,0 +1,18 @@
+WHITE_SPACE (' ')
+object path entity ('myObject')
+WHITE_SPACE (' ')
+> ('>')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+object path entity ('object')
+WHITE_SPACE (' ')
+> ('>')
+IGNORED_TEXT (' some irrelevant text')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+object path entity ('nextObjext')
+. ('.')
+object path entity ('secondProperty')
+WHITE_SPACE (' ')
+> ('>')
+IGNORED_TEXT (' [GLOBAL] {test=3} (value)')

@@ -1,0 +1,21 @@
+INCLUDE ('<INCLUDE_TYPOSCRIPT : source="FILE: fileadmin/html/mainmenu_typoscript.txt">')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+INCLUDE ('<INCLUDE_TYPOSCRIPT : source="EXT:myext/directory/file.txt">')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+INCLUDE ('<INCLUDE_TYPOSCRIPT : source="FILE: fileadmin/html/mainmenu_typoscript.txt"> t = 8')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+INCLUDE ('<')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+INCLUDE ('< INCLsome strange text>')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+INCLUDE ('< f = 34')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+INCLUDE ('< fff.dsfs')
+WHITE_SPACE_WITH_NEW_LINE ('
+')

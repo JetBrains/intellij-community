@@ -1,0 +1,1358 @@
+object path entity ('mod')
+. ('.')
+object path entity ('wizards')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+	')
+object path entity ('newContentElement')
+. ('.')
+object path entity ('wizardItems')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+		')
+object path entity ('forms')
+. ('.')
+object path entity ('elements')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('mailform')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('tt_content_defValues')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('bodytext')
+WHITE_SPACE (' ')
+( ('(')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+multiline value ('enctype = multipart/form-data')
+WHITE_SPACE ('
+')
+multiline value ('method = post')
+WHITE_SPACE ('
+')
+multiline value ('prefix = tx_form')
+WHITE_SPACE ('
+					')
+) (')')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+		')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+	')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+	')
+object path entity ('form')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+		')
+object path entity ('defaults')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('showTabs')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('elements, options, form')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('tabs')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('elements')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('basic, predefined, content')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('basic')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showButtons')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('checkbox, fieldset, fileupload, hidden, password, radio, reset, select, submit, textarea, textline')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('predefined')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showButtons')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('email, radiogroup, checkboxgroup, name')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('content')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showButtons')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('header, textblock')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('options')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('legend, label, attributes, options, validation, filters, various')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('accept, acceptcharset, accesskey, action, alt, checked, class, cols, dir, disabled, enctype, id, label, lang, maxlength, method, multiple, name, readonly, rows, selected, size, src, style, tabindex, title, type, value')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('label')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('label')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('validation')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showRules')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('alphabetic, alphanumeric, between, date, digit, email, equals, fileallowedtypes, filemaximumsize, fileminimumsize, float, greaterthan, inarray, integer, ip, length, lessthan, regexp, required, uri')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('rules')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('alphabetic')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, allowWhiteSpace')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('alphanumeric')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, allowWhiteSpace')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('between')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, minimum, maximum, inclusive')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('date')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, format')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('digit')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('email')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('equals')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, field')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('fileallowedtypes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, types')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('filemaximumsize')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, maximum')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('fileminimumsize')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, minimum')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('float')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('greaterthan')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, minimum')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('inarray')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, array, strict')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('integer')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('ip')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('length')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, minimum, maximum')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('lessthan')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, maximum')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('regexp')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage, expression')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('required')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('uri')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('message, error, breakOnError, showMessage')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('filtering')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showFilters')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('alphabetic, alphanumeric, currency, digit, integer, lowercase, regexp, removexss, stripnewlines, titlecase, trim, uppercase')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('filters')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('alphabetic')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('allowWhiteSpace')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('alphanumeric')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('allowWhiteSpace')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('currency')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('decimalPoint, thousandSeparator')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('digit')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('integer')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('lowercase')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('regexp')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('expression')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('removexss')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('stripnewlines')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('titlecase')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('trim')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('characterList')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('uppercase')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('form')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('prefix, attributes, postProcessor')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('accept, acceptcharset, action, class, dir, enctype, id, lang, method, name, style, title')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('postProcessor')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('showPostProcessors')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('mail')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+object path entity ('postProcessors')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+object path entity ('mail')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+									')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('recipientEmail, senderEmail')
+WHITE_SPACE_WITH_NEW_LINE ('
+								')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+							')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+		')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+		')
+object path entity ('elements')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('button')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('attributes')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('value')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('checkbox')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('label, attributes')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('name, value')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('fieldset')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('legend')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('fileupload')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('label, attributes, validation')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('name')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('validation')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showRules')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('required, fileallowedtypes, filemaximumsize, fileminimumsize')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('hidden')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('attributes')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('name, value')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('password')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('label, attributes, validation')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('name')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('validation')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showRules')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('required, equals')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('radio')
+WHITE_SPACE (' ')
+< ('<')
+WHITE_SPACE (' ')
+. ('.')
+object path entity ('checkbox')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('reset')
+WHITE_SPACE (' ')
+< ('<')
+WHITE_SPACE (' ')
+. ('.')
+object path entity ('button')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('select')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('label, attributes, options, validation')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('name, multiple')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('validation')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showRules')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('required')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('submit')
+WHITE_SPACE (' ')
+< ('<')
+WHITE_SPACE (' ')
+. ('.')
+object path entity ('button')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('textarea')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('label, attributes, validation, filters')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('name, cols, rows')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('filtering')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showFilters')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('alphabetic, alphanumeric, lowercase, regexp, stripnewlines, titlecase, trim, uppercase')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('validation')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showRules')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('alphabetic, alphanumeric, length, regexp, required')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('textline')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('label, attributes, validation, filters')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('attributes')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showProperties')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('name')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('validation')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showRules')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('alphabetic, alphanumeric, between, date, digit, email, equals, float, greaterthan, inarray, integer, ip, length, lessthan, regexp, required, uri')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('filtering')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showFilters')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('alphabetic, alphanumeric, currency, digit, integer, lowercase, regexp, titlecase, trim, uppercase')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('checkboxgroup')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('legend, options, various, validation')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('accordions')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+object path entity ('validation')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+						')
+object path entity ('showRules')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('required')
+WHITE_SPACE_WITH_NEW_LINE ('
+					')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('email')
+WHITE_SPACE (' ')
+< ('<')
+WHITE_SPACE (' ')
+. ('.')
+object path entity ('textline')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('header')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('various')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('textblock')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('various')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('name')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE_WITH_NEW_LINE ('
+				')
+object path entity ('showAccordions')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('legend, various')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+			')
+object path entity ('radiogroup')
+WHITE_SPACE (' ')
+< ('<')
+WHITE_SPACE (' ')
+. ('.')
+object path entity ('checkboxgroup')
+WHITE_SPACE_WITH_NEW_LINE ('
+		')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+	')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+} ('}')
+WHITE_SPACE_WITH_NEW_LINE ('
+')

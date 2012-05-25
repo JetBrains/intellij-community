@@ -72,25 +72,26 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    String navigateInfo = null;
     if (element instanceof PsiClass) {
-      return generateClassInfo((PsiClass)element);
+      navigateInfo = generateClassInfo((PsiClass)element);
     }
     else if (element instanceof PsiMethod) {
-      return generateMethodInfo((PsiMethod)element, calcSubstitutor(originalElement));
+      navigateInfo = generateMethodInfo((PsiMethod)element, calcSubstitutor(originalElement));
     }
     else if (element instanceof PsiField) {
-      return generateFieldInfo((PsiField)element, calcSubstitutor(originalElement));
+      navigateInfo = generateFieldInfo((PsiField)element, calcSubstitutor(originalElement));
     }
     else if (element instanceof PsiVariable) {
-      return generateVariableInfo((PsiVariable)element);
+      navigateInfo = generateVariableInfo((PsiVariable)element);
     }
     else if (element instanceof PsiPackage) {
-      return generatePackageInfo((PsiPackage)element);
+      navigateInfo = generatePackageInfo((PsiPackage)element);
     }
     else if (element instanceof BeanPropertyElement) {
-      return generateMethodInfo(((BeanPropertyElement) element).getMethod(), PsiSubstitutor.EMPTY);
+      navigateInfo = generateMethodInfo(((BeanPropertyElement) element).getMethod(), PsiSubstitutor.EMPTY);
     }
-    return null;
+    return StringUtil.escapeXml(StringUtil.unescapeXml(navigateInfo));
   }
 
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {

@@ -53,8 +53,10 @@ public class DeleteLineAction extends TextComponentEditorAction {
         document.deleteString(lineStartOffset, nextLineStartOffset);
         return;
       }
+      final VisualPosition position = editor.getCaretModel().getVisualPosition();
       editor.getSelectionModel().selectLineAtCaret();
       EditorModificationUtil.deleteSelectedText(editor);
+      editor.getCaretModel().moveToVisualPosition(position);
     }
   }
 }

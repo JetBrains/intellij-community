@@ -44,16 +44,9 @@ public class EditorModificationUtil {
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
 
-    final CaretModel caretModel = editor.getCaretModel();
-    final int caretOffset = caretModel.getOffset();
-    boolean restorePosition = caretOffset > selectionStart && caretOffset < selectionEnd;
-    final VisualPosition position = caretModel.getVisualPosition();
-    caretModel.moveToOffset(selectionStart);
+    editor.getCaretModel().moveToOffset(selectionStart);
     selectionModel.removeSelection();
     editor.getDocument().deleteString(selectionStart, selectionEnd);
-    if (restorePosition) {
-      caretModel.moveToVisualPosition(position); // Try to preserve visual caret position.
-    }
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 

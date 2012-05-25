@@ -40,11 +40,11 @@ import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;import com.intellij.util.containers.HashMap;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -63,37 +63,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     myTargetClasses = targetClasses;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySuperClass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
-        return true;
+        return !(element instanceof PsiClass) || PsiTreeUtil.isAncestor(mySuperClass, element, true);
       }
     });
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySuperClass);
     for (MemberInfo member : members) {
       member.setChecked(true);
     }
-    members = appendSuperRefs(members);
     myMemberInfos = members.toArray(new MemberInfo[members.size()]);
-  }
-
-  private List<MemberInfo> appendSuperRefs(List<MemberInfo> members) {
-    if (!mySuperClass.isInterface()) {
-      PsiReferenceList extendsList = mySuperClass.getExtendsList();
-      if (extendsList != null && extendsList.getReferenceElements().length > 0) {
-        PsiElement resolve = extendsList.getReferenceElements()[0].resolve();
-        if (resolve instanceof PsiClass) {
-          members = new ArrayList<MemberInfo>(members);
-
-          MemberInfo memberInfo = new MemberInfo((PsiMember)resolve, true, extendsList) {
-            {
-              overrides = false;
-            }
-          };
-
-          memberInfo.setChecked(true);
-          members.add(memberInfo);
-        }
-      }
-    }
-    return members;
   }
 
   @NotNull

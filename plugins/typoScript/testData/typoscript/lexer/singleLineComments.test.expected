@@ -1,0 +1,28 @@
+ONE_LINE_COMMENT ('#CommentText')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+ONE_LINE_COMMENT ('/ another comment')
+WHITE_SPACE_WITH_NEW_LINE ('
+
+')
+ONE_LINE_COMMENT ('/third comment for test')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+ONE_LINE_COMMENT ('#fourth comment')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+ONE_LINE_COMMENT ('# the fifth comment')
+WHITE_SPACE_WITH_NEW_LINE ('
+
+')
+ONE_LINE_COMMENT ('#sixth comment')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+ONE_LINE_COMMENT ('/seventh')
+WHITE_SPACE_WITH_NEW_LINE ('
+')
+ONE_LINE_COMMENT ('/and one more comment')
+WHITE_SPACE_WITH_NEW_LINE ('
+
+')
+ONE_LINE_COMMENT ('// must be single comment')
