@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,8 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -31,23 +27,17 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Constants {
-
-  private static final TokenSet VALUE_BIT_SET = TokenSet.create(new IElementType[]{
-    JAVA_CODE_REFERENCE,
-    DOC_TAG_VALUE_TOKEN,
-    DOC_METHOD_OR_FIELD_REF,
-    DOC_PARAMETER_REF,
-    DOC_COMMENT_DATA,
-    DOC_INLINE_TAG,
-    DOC_REFERENCE_HOLDER
-  });
+  private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(
+    DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF);
+  private static final TokenSet VALUE_BIT_SET = TokenSet.orSet(TAG_VALUE_BIT_SET, TokenSet.create(
+    DOC_TAG_VALUE_TOKEN, JAVA_CODE_REFERENCE, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER));
 
   public PsiDocTagImpl() {
     super(DOC_TAG);
@@ -55,17 +45,17 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
 
   @Override
   public PsiDocComment getContainingComment() {
-    return (PsiDocComment)SourceTreeToPsiMap.treeElementToPsi(getTreeParent());
+    return (PsiDocComment)getParent();
   }
 
   @Override
   public PsiElement getNameElement() {
-    return findChildByRoleAsPsiElement(ChildRole.DOC_TAG_NAME);
+    return findPsiChildByType(DOC_TAG_NAME);
   }
 
   @Override
   public PsiDocTagValue getValueElement() {
-    return (PsiDocTagValue)findChildByRoleAsPsiElement(ChildRole.DOC_TAG_VALUE);
+    return (PsiDocTagValue)findPsiChildByType(TAG_VALUE_BIT_SET);
   }
 
   @Override
@@ -73,6 +63,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
+  @NotNull
   @Override
   public String getName() {
     if (getNameElement() == null) return "";
@@ -87,7 +78,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
 
   @Override
   public int getChildRole(ASTNode child) {
-    assert (child.getTreeParent() == this);
+    assert child.getTreeParent() == this : child.getTreeParent();
     IElementType i = child.getElementType();
     if (i == DOC_TAG_NAME) {
       return ChildRole.DOC_TAG_NAME;
@@ -98,10 +89,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
     else if (i == DOC_COMMENT_LEADING_ASTERISKS) {
       return ChildRole.DOC_COMMENT_ASTERISKS;
     }
-    else if (i == DOC_TAG_VALUE_TOKEN) {
-      return ChildRole.DOC_TAG_VALUE;
-    }
-    else if (i == DOC_METHOD_OR_FIELD_REF || i == DOC_PARAMETER_REF) {
+    else if (TAG_VALUE_BIT_SET.contains(i)) {
       return ChildRole.DOC_TAG_VALUE;
     }
     else {
@@ -112,7 +100,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiDocTag.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
   }
 
   @Override

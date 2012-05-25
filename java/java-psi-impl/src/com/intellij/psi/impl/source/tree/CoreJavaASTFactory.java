@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class CoreJavaASTFactory extends ASTFactory implements Constants {
       return new PsiJavaTokenImpl(type, text);
     }
     else if (type instanceof IJavaDocElementType) {
+      assert type != DOC_TAG_VALUE_ELEMENT;
       return new PsiDocTokenImpl(type, text);
     }
 
@@ -57,7 +58,7 @@ public class CoreJavaASTFactory extends ASTFactory implements Constants {
 
   @Override
   public CompositeElement createComposite(IElementType type) {
-    if (type == DOC_TAG_VALUE_TOKEN) {
+    if (type == DOC_TAG_VALUE_ELEMENT) {
       return new CorePsiDocTagValueImpl();
     }
     return null;
