@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.*;
@@ -76,10 +75,6 @@ public class CoreProjectEnvironment {
   public  <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
                                                  final Class<? extends T> aClass) {
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
-  }
-
-  public void addLibraryRoot(VirtualFile file) {
-    myFileIndexFacade.addLibraryRoot(file);
   }
 
   public  <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
