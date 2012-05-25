@@ -372,6 +372,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFile.class, "m1.py");
   }
 
+  public void testImportSubmodule() {
+    assertResolvesTo(PyFile.class, "m1.py");
+  }
+
   // PY-6575
   public void testRelativeFromSubmodule() {
     assertResolvesTo(PyFile.class, "m2.py");
