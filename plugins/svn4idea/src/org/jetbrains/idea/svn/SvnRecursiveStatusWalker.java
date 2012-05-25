@@ -81,18 +81,8 @@ public class SvnRecursiveStatusWalker {
           }
         }
       } else {
-        if (item.isIsInnerCopyRoot()) {
-          // this means that the status of parent directory had already been checked and is unversioned;
-          // to avoid SVN exception on status query to unversioned directory; and since we already know then that the file
-          // status is "unversioned" -> just register the unversioned file
-          if (path.getVirtualFile() != null) {
-            myReceiver.processUnversioned(path.getVirtualFile());
-          }
-        } else {
-          // just file
-          final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
-          myReceiver.process(path, status);
-        }
+        final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
+        myReceiver.process(path, status);
       }
     }
   }
