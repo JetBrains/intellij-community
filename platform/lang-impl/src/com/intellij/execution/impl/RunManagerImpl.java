@@ -771,7 +771,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       invalidateConfigurationIcon(settings);
       settings.setTemporary(false);
       myRecentlyUsedTemporaries.remove(configuration);
-      setOrdered(false);
+      if (!myOrder.isEmpty()) {
+        setOrdered(false);
+      }
       fireRunConfigurationChanged(settings);
     }
   }
