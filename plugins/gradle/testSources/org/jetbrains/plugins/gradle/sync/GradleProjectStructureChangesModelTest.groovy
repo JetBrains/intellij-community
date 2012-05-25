@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.sync;
 
-
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
 import org.junit.Test
@@ -14,7 +13,6 @@ import org.jetbrains.plugins.gradle.config.GradleTextAttributes
  * @author Denis Zhdanov
  * @since 01/25/2012
  */
-@SkipInHeadlessEnvironment
 public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
 
   @Test
