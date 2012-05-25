@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.testFramework.vcs.MockContentRevision
-import git4idea.history.browser.CherryPicker
+import git4idea.history.browser.GitCherryPicker
 import git4idea.history.browser.GitCommit
 import git4idea.history.browser.SHAHash
 import git4idea.history.wholeTree.AbstractHash
@@ -57,7 +57,7 @@ hint: after resolving the conflicts, mark the corrected paths
 hint: with 'git add <paths>' or 'git rm <paths>'
 hint: and commit the result with 'git commit'
 """
-  CherryPicker myCherryPicker
+  GitCherryPicker myCherryPicker
   GitLightRepository myRepository
   GitLightRepository.Commit myInitialCommit
 

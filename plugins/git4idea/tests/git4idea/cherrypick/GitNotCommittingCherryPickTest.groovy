@@ -16,7 +16,7 @@
 package git4idea.cherrypick
 
 import com.intellij.notification.NotificationType
-import git4idea.history.browser.CherryPicker
+import git4idea.history.browser.GitCherryPicker
 import git4idea.history.browser.GitCommit
 import git4idea.test.MockGit
 import git4idea.test.MockVcsHelper
@@ -28,7 +28,7 @@ import static junit.framework.Assert.*
 import git4idea.test.GitLightRepository
 
 /**
- * Tests for {@link CherryPicker}, when the "auto-commit on cherry-pick" option is deselected.
+ * Tests for {@link GitCherryPicker}, when the "auto-commit on cherry-pick" option is deselected.
  * Most situations are equal or similar, so the majority of cherry pick tests are located in {@link GitAutoCommittingCherryPickTest}.
  *
  * @author Kirill Likhodedov
@@ -38,7 +38,7 @@ class GitNotCommittingCherryPickTest extends GitCherryPickTest {
   @Before
   void setUp() {
     super.setUp()
-    myCherryPicker = new CherryPicker(myProject, myGit, myPlatformFacade, false)
+    myCherryPicker = new GitCherryPicker(myProject, myGit, myPlatformFacade, false)
   }
 
   @Test

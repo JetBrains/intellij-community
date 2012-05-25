@@ -58,7 +58,7 @@ import static git4idea.commands.GitMessageWithFilesDetector.Event.UNTRACKED_FILE
 import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT;
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
-public class CherryPicker {
+public class GitCherryPicker {
 
   /**
    * Name of the {@code .git/CHERRY_PICK_HEAD} file which is stored under {@code .git} when cherry-pick is in progress,
@@ -66,7 +66,7 @@ public class CherryPicker {
    */
   private static final String CHERRY_PICK_HEAD_FILE = "CHERRY_PICK_HEAD";
 
-  private static final Logger LOG = Logger.getInstance(CherryPicker.class);
+  private static final Logger LOG = Logger.getInstance(GitCherryPicker.class);
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -74,7 +74,7 @@ public class CherryPicker {
   @NotNull private final ChangeListManager myChangeListManager;
   private final boolean myAutoCommit;
 
-  public CherryPicker(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade platformFacade, boolean autoCommit) {
+  public GitCherryPicker(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade platformFacade, boolean autoCommit) {
     myProject = project;
     myGit = git;
     myPlatformFacade = platformFacade;

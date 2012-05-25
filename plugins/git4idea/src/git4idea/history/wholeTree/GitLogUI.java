@@ -1618,7 +1618,7 @@ public class GitLogUI implements Disposable {
         public void run(@NotNull ProgressIndicator indicator) {
           boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
           Map<GitRepository, List<GitCommit>> commitsInRoots = prepareCommitsForCherryPick(commits);
-          new CherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class), autoCommit)
+          new GitCherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class), autoCommit)
             .cherryPick(commitsInRoots);
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
