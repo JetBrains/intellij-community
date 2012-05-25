@@ -56,17 +56,6 @@ public class TypeEvalContext {
   }
 
   /**
-   * Creates a TypeEvalContext for performing analysis operations on the specified file which is currently open in the editor.
-   * For such a file, additional slow operations are allowed.
-   * 
-   * @param origin the file open in the editor
-   * @return the type eval context for the file.
-   */
-  public static TypeEvalContext fast(@NotNull PsiFile origin) {
-    return new TypeEvalContext(false, true, origin);
-  }
-
-  /**
    * Creates a TypeEvalContext for performing analysis operations on the specified file which is currently open in the editor,
    * without accessing stubs. For such a file, additional slow operations are allowed.
    *
