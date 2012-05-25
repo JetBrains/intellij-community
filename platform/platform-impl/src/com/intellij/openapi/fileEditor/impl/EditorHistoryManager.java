@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,10 +105,17 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     return "editorHistoryManager";
   }
 
+  private void fileOpenedImpl(@NotNull final VirtualFile file) {
+    fileOpenedImpl(file, null, null);
+  }
+  
   /**
    * Makes file most recent one
    */
-  private void fileOpenedImpl(@NotNull final VirtualFile file){
+  private void fileOpenedImpl(@NotNull final VirtualFile file,
+                              @Nullable final FileEditor fallbackEditor,
+                              @Nullable FileEditorProvider fallbackProvider)
+  {
     ApplicationManager.getApplication().assertIsDispatchThread();
     // don't add files that cannot be found via VFM (light & etc.)
     if (VirtualFileManager.getInstance().findFileByUrl(file.getUrl()) == null) return;
@@ -116,12 +123,21 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
 
     final Pair<FileEditor[], FileEditorProvider[]> editorsWithProviders = editorManager.getEditorsWithProviders(file);
-    final FileEditor[] editors = editorsWithProviders.getFirst();
-    final FileEditorProvider[] oldProviders = editorsWithProviders.getSecond();
+    FileEditor[] editors = editorsWithProviders.getFirst();
+    FileEditorProvider[] oldProviders = editorsWithProviders.getSecond();
+    if (editors.length <= 0 && fallbackEditor != null) {
+      editors = new FileEditor[] { fallbackEditor };
+    }
+    if (oldProviders.length <= 0 && fallbackProvider != null) {
+      oldProviders = new FileEditorProvider[] { fallbackProvider };
+    }
     if (editors.length <= 0) {
       LOG.error("No editors for file " + file.getPresentableUrl());
     }
-    final FileEditor selectedEditor = editorManager.getSelectedEditor(file);
+    FileEditor selectedEditor = editorManager.getSelectedEditor(file);
+    if (selectedEditor == null) {
+      selectedEditor = fallbackEditor;
+    }
     LOG.assertTrue(selectedEditor != null);
     final int selectedProviderIndex = ArrayUtil.find(editors, selectedEditor);
     LOG.assertTrue(selectedProviderIndex != -1);
@@ -131,7 +147,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       myEntriesList.remove(entry);
       myEntriesList.add(entry);
     }
-    else{
+    else {
       final FileEditorState[] states=new FileEditorState[editors.length];
       final FileEditorProvider[] providers=new FileEditorProvider[editors.length];
       for (int i = states.length - 1; i >= 0; i--) {
@@ -176,7 +192,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       // Size of entry list can be less than number of opened editors (some entries can be removed)
       if (file.isValid()) {
         // the file could have been deleted, so the isValid() check is essential
-        fileOpenedImpl(file);
+        fileOpenedImpl(file, fallbackEditor, fallbackProvider);
       }
       return;
     }
