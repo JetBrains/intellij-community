@@ -590,11 +590,11 @@ class Main {
     }
 
     println '1'
-    assertEmpty make()
+    println make().join('\n')
     checkClassFiles()
 
     println '2'
-    assertEmpty make()
+    println make().join('\n')
     checkClassFiles()
 
     assertOutput('Foo', 'Hello from Foo', myModule)
@@ -675,7 +675,7 @@ class Zoo {
 }
 
 '''
-    def bar = myFixture.addFileToProject 'Bar.groovy', 'class Bar { def foo = new Zoo.Inner() {}  }'
+    def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar { def foo = new Zoo.Inner() {}  }')
 
     assertEmpty make()
     assertEmpty compileFiles(bar.virtualFile)
