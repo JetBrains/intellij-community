@@ -132,7 +132,7 @@ public class ResourceEditor extends PropertyEditor {
   private Dimension getComponentPreferredSize() {
     Dimension size1 = myEditor.getChildComponent().getPreferredSize();
     Dimension size2 = myEditor.getButton().getPreferredSize();
-    return new Dimension(size1.width + size2.width + 5, size1.height);
+    return new Dimension(Math.max(size1.width, 25) + 5 + size2.width, size1.height);
   }
 
   private static ResourceType[] convertTypes(Set<AttributeFormat> formats) {
@@ -177,8 +177,12 @@ public class ResourceEditor extends PropertyEditor {
     myRootComponent = rootComponent;
     JTextField text = getComboText();
     text.setText((String)value);
-    if (inplaceContext != null && inplaceContext.isStartChar()) {
-      text.setText(inplaceContext.getText(text.getText()));
+    if (inplaceContext != null) {
+      text.setColumns(0);
+
+      if (inplaceContext.isStartChar()) {
+        text.setText(inplaceContext.getText(text.getText()));
+      }
     }
     return myEditor;
   }
