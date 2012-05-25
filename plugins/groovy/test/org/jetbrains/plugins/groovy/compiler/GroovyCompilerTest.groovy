@@ -665,6 +665,22 @@ public class Main {
     assert findClassFile("Client")
   }
 
+  public void "test ignore groovy internal non-existent interface helper inner class"() {
+    myFixture.addFileToProject 'Foo.groovy', '''
+interface Foo {}
+
+class Zoo {
+  Foo foo() {}
+  static class Inner implements Foo {}
+}
+
+'''
+    def bar = myFixture.addFileToProject 'Bar.groovy', 'class Bar { def foo = new Zoo.Inner() {}  }'
+
+    assertEmpty make()
+    assertEmpty compileFiles(bar.virtualFile)
+  }
+
   public void "test multiline strings"() {
     myFixture.addFileToProject 'Foo.groovy', '''class Foo {
   public static final String s = """

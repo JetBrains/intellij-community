@@ -544,10 +544,6 @@ public class GroovycRunner {
                   ensureWellFormed(field.getGenericType(), visited);
                 }
 
-                for (Class inner : aClass.getDeclaredClasses()) {
-                  ensureWellFormed(inner, visited);
-                }
-
                 Type superclass = aClass.getGenericSuperclass();
                 if (superclass != null) {
                   ensureWellFormed(aClass, visited);
