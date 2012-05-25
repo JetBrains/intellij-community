@@ -188,7 +188,7 @@ public abstract class ContentRootPanel extends JPanel {
 
     final JLabel titleLabel = new JLabel(title);
     final Font labelFont = UIUtil.getLabelFont();
-    titleLabel.setFont(labelFont.deriveFont(Font.BOLD).deriveFont((float)labelFont.getSize() - 0.5f ));
+    titleLabel.setFont(labelFont.deriveFont(Font.BOLD));
     titleLabel.setOpaque(false);
     titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
     registerTextComponent(titleLabel, foregroundColor);
