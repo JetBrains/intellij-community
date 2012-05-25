@@ -645,7 +645,7 @@ public class PyUtil {
   }
 
   public static boolean isPackage(@NotNull PsiFile file) {
-    return turnInitIntoDir(file) != null;
+    return PyNames.INIT_DOT_PY.equals(file.getName());
   }
 
   @Nullable
