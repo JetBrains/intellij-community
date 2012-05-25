@@ -665,6 +665,19 @@ public class Main {
     assert findClassFile("Client")
   }
 
+  public void "test multiline strings"() {
+    myFixture.addFileToProject 'Foo.groovy', '''class Foo {
+  public static final String s = """
+multi
+line
+string
+"""
+ } '''
+    myFixture.addFileToProject 'Bar.java', 'class Bar extends Foo {} '
+
+    assertEmpty make()
+  }
+
   public static class IdeaModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }
