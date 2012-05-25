@@ -568,6 +568,15 @@ public class PyUtil {
     return null;
   }
 
+  public static boolean inSameFile(@NotNull PsiElement e1, @NotNull PsiElement e2) {
+    final PsiFile f1 = e1.getContainingFile();
+    final PsiFile f2 = e2.getContainingFile();
+    if (f1 == null || f2 == null) {
+      return false;
+    }
+    return f1 == f2;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
