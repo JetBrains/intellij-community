@@ -49,7 +49,7 @@ import java.util.Set;
  */
 public class MavenResumeAction extends AnAction {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.execution.MavenResumeAction");
+  private static final Logger LOG = Logger.getInstance(MavenResumeAction.class);
 
   private static final Set<String> PARAMS_DISABLING_RESUME = CollectionFactory.newSet("-rf", "-resume-from", "-pl", "-projects", "-am",
                                                                                       "-also-make", "-amd", "-also-make-dependents");
