@@ -319,6 +319,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    if (orientation == SwingConstants.VERTICAL) {
+      return super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+    }
+    else { // if orientation == SwingConstants.HORIZONTAL
+      // use smooth editor-like scrolling
+      return SwingUtilities.computeStringWidth(getFontMetrics(getFont()), " ");
+    }
+  }
+
+  @Override
   public void doLayout() {
     super.doLayout();
     if (myBusyIcon != null) {
