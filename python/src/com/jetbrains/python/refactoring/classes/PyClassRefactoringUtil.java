@@ -202,7 +202,7 @@ public class PyClassRefactoringUtil {
       insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
     }
     else {
-      insertImport(node, target, asName);
+      insertImport(node, target, asName, true);
     }
     node.putCopyableUserData(ENCODED_IMPORT, null);
     node.putCopyableUserData(ENCODED_IMPORT_AS, null);
