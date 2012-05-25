@@ -33,8 +33,25 @@ public class XmlPropertiesFile implements PropertiesFile {
 
   private static final Key<CachedValue<PropertiesFile>> KEY = Key.create("xml properties file");
   private final XmlFile myFile;
-  private final List<IProperty> myProperties = new ArrayList<IProperty>();
-  private final MultiMap<String, IProperty> myPropertiesMap = new MultiMap<String, IProperty>();
+  private final SoftLazyValue<MultiMap<String, IProperty>> myPropertiesMap = new SoftLazyValue<MultiMap<String, IProperty>>() {
+    @NotNull
+    @Override
+    protected MultiMap<String, IProperty> compute() {
+      XmlTag rootTag = myFile.getRootTag();
+      if (rootTag == null) {
+        return MultiMap.emptyInstance();
+      }
+
+      XmlTag[] entries = rootTag.findSubTags("entry");
+      MultiMap<String, IProperty> map = new MultiMap<String, IProperty>();
+
+      for (XmlTag entry : entries) {
+        XmlProperty property = new XmlProperty(entry, XmlPropertiesFile.this);
+        map.putValue(property.getKey(), property);
+      }
+      return map;
+    }
+  };
 
   @Nullable
   public static PropertiesFile getPropertiesFile(final PsiFile file) {
@@ -55,15 +72,6 @@ public class XmlPropertiesFile implements PropertiesFile {
 
   private XmlPropertiesFile(XmlFile file) {
     myFile = file;
-    XmlTag rootTag = file.getRootTag();
-    if (rootTag != null) {
-      XmlTag[] entries = rootTag.findSubTags("entry");
-      for (XmlTag entry : entries) {
-        XmlProperty property = new XmlProperty(entry, this);
-        myProperties.add(property);
-        myPropertiesMap.putValue(property.getKey(), property);
-      }
-    }
   }
 
   @NotNull
@@ -75,19 +83,19 @@ public class XmlPropertiesFile implements PropertiesFile {
   @NotNull
   @Override
   public List<IProperty> getProperties() {
-    return myProperties;
+    return new ArrayList<IProperty>(myPropertiesMap.getValue().values());
   }
 
   @Override
   public IProperty findPropertyByKey(@NotNull @NonNls String key) {
-    Collection<IProperty> properties = myPropertiesMap.get(key);
+    Collection<IProperty> properties = myPropertiesMap.getValue().get(key);
     return properties.isEmpty() ? null : properties.iterator().next();
   }
 
   @NotNull
   @Override
   public List<IProperty> findPropertiesByKey(@NotNull @NonNls String key) {
-    return new ArrayList<IProperty>(myPropertiesMap.get(key));
+    return new ArrayList<IProperty>(myPropertiesMap.getValue().get(key));
   }
 
   @NotNull
