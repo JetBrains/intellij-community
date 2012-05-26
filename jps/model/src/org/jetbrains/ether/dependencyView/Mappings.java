@@ -846,7 +846,7 @@ public class Mappings {
   }
 
   private class Differential {
-    final int DESPERATE_MASK = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+    static final int DESPERATE_MASK = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
     final Mappings myDelta;
     final Collection<String> myRemoved;
