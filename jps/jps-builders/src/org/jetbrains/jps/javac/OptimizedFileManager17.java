@@ -164,7 +164,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private boolean isFile(File root) {
     Boolean cachedIsFile = myIsFile.get(root);
     if (cachedIsFile == null) {
-      cachedIsFile = root.isFile();
+      cachedIsFile = Boolean.valueOf(root.isFile());
       myIsFile.put(root, cachedIsFile);
     }
     return cachedIsFile.booleanValue();
