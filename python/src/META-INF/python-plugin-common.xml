@@ -872,6 +872,31 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
+    <group id="Mdd.DefaultGraphPopup">
+      <reference ref="RefactoringMenu" />
+      <separator />
+      <separator/>
+      <reference ref="EditSource"/>
+      <reference ref="FindUsages"/>
+      <separator />
+      <reference ref="VcsGroup" />
+      <separator/>
+      <reference ref="Graph.ZoomIn"/>
+      <reference ref="Graph.ZoomOut"/>
+      <reference ref="Graph.ActualZoom"/>
+      <reference ref="Graph.FitContent"/>
+      <reference ref="Graph.ExportToFile"/>
+      <separator/>
+      <reference ref="Graph.Print"/>
+      <reference ref="Graph.Print.Preview"/>
+      <separator/>
+      <reference ref="Graph.CommonLayoutGroup"/>
+      <reference ref="Graph.Layout.Fit.Content"/>
+      <separator/>
+      <reference ref="Graph.Show.Edge.Labels"/>
+      <reference ref="Graph.Current.Node.Dependencies.Filter"/>
+    </group>
+
     <group text="Google App Engine" popup="true">
       <action id="PythonAppEngine.UploadAppAction" class="com.jetbrains.appengine.action.UpdateAppAction"
               text="Upload App Engine app..."

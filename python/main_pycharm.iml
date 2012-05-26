@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="htmltools" />
     <orderEntry type="module" module-name="github" />
     <orderEntry type="module" module-name="jira-connector" />
+    <orderEntry type="module" module-name="uml" />
     <orderEntry type="module" module-name="python-uml" />
   </component>
 </module>
