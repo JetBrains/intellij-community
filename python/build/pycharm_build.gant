@@ -45,8 +45,13 @@ setProperty("pluginFilter", [
             "python-uml"
             ])
 
+private List<String> pycharmPlatformApiModules() {
+  return [platformUltimateApiModules, "graph-openapi"].flatten()
+}
+
+
 private List pycharmImplementationModules() {
-  return ["yaml", "coverage-common", "python", "python-ide"]
+  return ["yaml", "graph", "coverage-common", "python", "python-ide"]
 }
 
 class Paths {
@@ -78,7 +83,7 @@ setProperty("buildName", "PY-$buildNumber")
 
 target('default': "Build artifacts") {
   def modules = [
-          "python-pydev", "colorSchemes", platformUltimateApiModules, platformUltimateImplementationModules, pycharmImplementationModules(), pluginFilter
+          "python-pydev", "colorSchemes", pycharmPlatformApiModules(), platformUltimateImplementationModules, pycharmImplementationModules(), pluginFilter
   ].flatten()
 
   loadProject()
@@ -221,7 +226,7 @@ private String appInfoFile() {
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
-  def openapiModules = platformUltimateApiModules
+  def openapiModules = pycharmPlatformApiModules()
   def implementationModules = [platformUltimateImplementationModules, pycharmImplementationModules()].flatten()
 
   def result = layout(target) {
