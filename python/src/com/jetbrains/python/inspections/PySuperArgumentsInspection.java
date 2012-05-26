@@ -12,7 +12,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +70,7 @@ public class PySuperArgumentsInspection extends PyInspection {
       PyClass firstClass = null;
       if (firstElement instanceof PyClass) firstClass = (PyClass)firstElement;
       else if (firstElement instanceof PyExpression) {
-        PyType first_type = ((PyExpression)firstElement).getType(TypeEvalContext.fast());
+        PyType first_type = ((PyExpression)firstElement).getType(myTypeEvalContext);
         if (first_type instanceof PyClassType) {
           firstClass = ((PyClassType)first_type).getPyClass();
         }
