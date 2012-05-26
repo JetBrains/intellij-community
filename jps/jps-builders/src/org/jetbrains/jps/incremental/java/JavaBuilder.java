@@ -287,8 +287,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final String chunkName = getChunkPresentableName(chunk);
         context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
 
-        final boolean compiledOk =
-          files.isEmpty() || compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
+        final int filesCount = files.size();
+        boolean compiledOk = true;
+        if (filesCount > 0) {
+          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName);
+          compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
+        }
 
         context.checkCanceled();
 
@@ -394,7 +398,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               CompileContext context,
                               DiagnosticOutputConsumer diagnosticSink,
                               final OutputFileConsumer outputSink) throws Exception {
-    LOG.info("Compiling " + files.size() + " java files");
     final List<String> options = getCompilationOptions(context, chunk);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
