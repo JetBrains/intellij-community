@@ -16,6 +16,7 @@
 package com.intellij.android.designer;
 
 import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
+import com.intellij.android.designer.inspection.AndroidBackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.designer.DesignerEditor;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexander Lobas
  */
 public final class AndroidDesignerEditor extends DesignerEditor {
+  private BackgroundEditorHighlighter myHighlighter;
+
   public AndroidDesignerEditor(Project project, VirtualFile file) {
     super(project, file);
   }
@@ -46,6 +49,9 @@ public final class AndroidDesignerEditor extends DesignerEditor {
 
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;  // TODO: Auto-generated method stub
+    if (myHighlighter == null) {
+      myHighlighter = new AndroidBackgroundEditorHighlighter((AndroidDesignerEditorPanel)getDesignerPanel());
+    }
+    return myHighlighter;
   }
 }

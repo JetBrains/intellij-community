@@ -11,7 +11,7 @@ import java.util.List;
 /**
 * @author Eugene.Kudelevsky
 */
-class State {
+public class State {
   private final Module myModule;
   private final VirtualFile myMainFile;
 

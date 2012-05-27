@@ -45,6 +45,9 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator;
+import org.jetbrains.android.inspections.lint.ProblemData;
+import org.jetbrains.android.inspections.lint.State;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
@@ -110,6 +113,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }
       }
     });
+  }
+
+  public void loadInspections() {
+    AndroidLintExternalAnnotator annotator = new AndroidLintExternalAnnotator();
+    State state = annotator.collectionInformation(myXmlFile);
+    if (state == null) {
+      System.out.println("No inspections");
+    }
+    else {
+      state = annotator.doAnnotate(state);
+      System.out.println("==== Problems ====");
+      for (ProblemData problem : state.getProblems()) {
+        System.out.println(problem.getIssue() + " | " + problem.getMessage() + " | " + problem.getTextRange());
+      }
+    }
   }
 
   private void reparseFile() {
