@@ -22,6 +22,10 @@
   <dependencies>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
+      <artifactId>boot</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>platform-api</artifactId>
     </dependency>
     <dependency>
@@ -32,21 +36,13 @@
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>core-impl</artifactId>
     </dependency>
-
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>boot</artifactId>
-      <scope>provided</scope>
-    </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>bootstrap</artifactId>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>lang-api</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>

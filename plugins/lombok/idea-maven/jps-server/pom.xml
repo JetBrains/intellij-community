@@ -154,7 +154,6 @@
 							<goal>generateStubs</goal>
 						</goals>
 						<configuration>
-							<providerSelection>1.8</providerSelection>
 							<sources>
 								<fileset>
 									<directory>${idea.home}/jps/model/src</directory>
@@ -166,13 +165,6 @@
 						</configuration>
 					</execution>
 				</executions>
-				<dependencies>
-					<dependency>
-						<groupId>org.codehaus.groovy</groupId>
-						<artifactId>groovy-all</artifactId>
-						<version>1.8.6</version>
-					</dependency>
-				</dependencies>
 			</plugin>
 		</plugins>
 	</build>

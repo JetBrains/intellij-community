@@ -6,6 +6,7 @@
     <groupId>org.jetbrains.idea</groupId>
     <artifactId>parent</artifactId>
     <version>1</version>
+    <relativePath>../../pom.xml</relativePath>
   </parent>
 
   <artifactId>util</artifactId>

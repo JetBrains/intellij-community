@@ -35,17 +35,17 @@
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>lvcs-impl</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>tests_bootstrap</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
-      <artifactId>resources_en</artifactId>
-      <scope>provided</scope>
+      <artifactId>resources-en</artifactId>
+
     </dependency>
 
 

@@ -1,0 +1,90 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.jetbrains.idea</groupId>
+    <artifactId>parent</artifactId>
+    <version>1</version>
+  </parent>
+
+  <artifactId>idea-openapi</artifactId>
+  <version>${idea.version}</version>
+  <packaging>pom</packaging>
+
+  <name>Maven Integration of all IntelliJ openapi modulls</name>
+  <description>Maven modul for all IntelliJ openapi jar</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>core-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>platform-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>lvcs-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>lang-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>vcs-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>usageView</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>xdebugger-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>xml-openapi</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>java-psi-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>testFramework-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>debugger-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>compiler-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>dom-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>execution-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>jsp-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>jsp-base-openapi</artifactId>
+    </dependency>
+
+  </dependencies>
+</project>

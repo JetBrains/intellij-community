@@ -23,7 +23,7 @@
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>lang-impl</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
@@ -32,22 +32,22 @@
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>xdebugger-api</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>platform-impl</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>annotations</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>testFramework</artifactId>
-      <scope>provided</scope>
+
     </dependency>
 
     <dependency>

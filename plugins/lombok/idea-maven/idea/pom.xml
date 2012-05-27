@@ -10,324 +10,112 @@
 
   <artifactId>idea</artifactId>
   <version>${idea.version}</version>
+  <packaging>pom</packaging>
 
-  <name>Maven Integration of idea modul</name>
+  <name>Maven Integration of all IntelliJ Idea Impl modulls</name>
   <description>Maven modul for idea jar</description>
 
   <dependencies>
-
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
-      <artifactId>openapi</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>annotations</artifactId>
+      <artifactId>core-impl</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
-      <artifactId>util</artifactId>
+      <artifactId>platform-impl</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
-      <artifactId>extensions</artifactId>
+      <artifactId>lvcs-impl</artifactId>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
-      <artifactId>forms_rt</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jetbrains.thirdparthy</groupId>
-      <artifactId>trove4j</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>dk.brics.automaton</groupId>
-      <artifactId>automaton</artifactId>
+      <artifactId>lang-impl</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.picocontainer</groupId>
-      <artifactId>picocontainer</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>testRunner</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>smRunner</artifactId>
     </dependency>
     <dependency>
-      <groupId>oro</groupId>
-      <artifactId>oro</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>xdebugger-impl</artifactId>
     </dependency>
     <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>jna</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>testFramework</artifactId>
     </dependency>
     <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>platform</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jdom</groupId>
-      <artifactId>jdom</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-    </dependency>
-
-    <!--- -->
-    <dependency>
-      <groupId>org.jetbrains.thirdparthy</groupId>
-      <artifactId>eawtstub</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>tests_bootstrap</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jetbrains.thirdparthy</groupId>
-      <artifactId>microba</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>xml</artifactId>
+    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.jetbrains.idea</groupId>-->
+      <!--<artifactId>relaxng</artifactId>-->
+    <!--</dependency>-->
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>lvcs-impl</artifactId>
+    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.jetbrains.idea</groupId>-->
+      <!--<artifactId>spellchecker</artifactId>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+      <!--<groupId>org.jetbrains.idea</groupId>-->
+      <!--<artifactId>images</artifactId>-->
+    <!--</dependency>-->
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>notNull</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jetbrains.thirdparthy</groupId>
-      <artifactId>serviceMessages</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jetbrains.thirdparthy</groupId>
-      <artifactId>jing</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>platform-main</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jetbrains.thirdparthy</groupId>
-      <artifactId>trang</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>java-psi-impl</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jetbrains.thirdparthy</groupId>
-      <artifactId>rngom</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.swinglabs</groupId>
-      <artifactId>swingx-core</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>java-impl</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-codec</groupId>
-      <artifactId>commons-codec</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>compiler-impl</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-httpclient</groupId>
-      <artifactId>commons-httpclient</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>debugger-impl</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.velocity</groupId>
-      <artifactId>velocity</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>dom-impl</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.ant</groupId>
-      <artifactId>ant</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>execution-impl</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax.help</groupId>
-      <artifactId>javahelp</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>jsp-spi</artifactId>
     </dependency>
     <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>idea-ui</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-net</groupId>
-      <artifactId>commons-net</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jvnet.winp</groupId>
-      <artifactId>winp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.github.spullara.cli-parser</groupId>
-      <artifactId>cli-parser</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.ws.xmlrpc</groupId>
-      <artifactId>xmlrpc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>be.cyberelf.nanoxml</groupId>
-      <artifactId>nanoxml</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>xpp3</groupId>
-      <artifactId>xpp3</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.xmlbeans</groupId>
-      <artifactId>xmlbeans</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.codehaus.groovy</groupId>
-      <artifactId>groovy-all</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.sonatype.tycho</groupId>
-      <artifactId>org.eclipse.jdt.core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.protobuf</groupId>
-      <artifactId>protobuf-java</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.sanselan</groupId>
-      <artifactId>sanselan</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.wutka</groupId>
-      <artifactId>dtdparser</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>net.jcip</groupId>
-      <artifactId>jcip-annotations</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>RegExpSupport</artifactId>
     </dependency>
 
   </dependencies>
-
-  <profiles>
-    <profile>
-      <id>default-tools_sun</id>
-      <activation>
-        <property>
-          <name>java.vendor</name>
-          <value>Sun Microsystems Inc.</value>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>com.sun</groupId>
-          <artifactId>tools</artifactId>
-          <version>1.6.0</version>
-          <scope>system</scope>
-          <systemPath>${java.home}/../lib/tools.jar</systemPath>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>default-tools_oracle</id>
-      <activation>
-        <property>
-          <name>java.vendor</name>
-          <value>Oracle Corporation</value>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>com.sun</groupId>
-          <artifactId>tools</artifactId>
-          <version>1.7.0</version>
-          <scope>system</scope>
-          <systemPath>${java.home}/../lib/tools.jar</systemPath>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
-
-  <build>
-    <!--<sourceDirectory>${idea.home}/java/openapi/src</sourceDirectory>-->
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>**/*OptimizedFileManager.java</exclude>
-            <exclude>**/*OptimizedFileManager17.java</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.gmaven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generateStubs</goal>
-            </goals>
-            <configuration>
-              <providerSelection>1.8</providerSelection>
-              <sources>
-                <fileset>
-                  <directory>${idea.home}/jps/model/src</directory>
-                  <includes>
-                    <include>**/*.groovy</include>
-                  </includes>
-                </fileset>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
-            <version>1.8.6</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>add-source</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>${idea.home}/platform/core-impl/src</source>
-                <source>${idea.home}/platform/platform-impl/src</source>
-                <source>${idea.home}/platform/vcs-impl/src</source>
-                <source>${idea.home}/platform/lang-impl/src</source>
-                <source>${idea.home}/platform/testRunner/src</source>
-                <source>${idea.home}/platform/smRunner/src</source>
-                <source>${idea.home}/platform/xdebugger-impl/src</source>
-                <source>${idea.home}/platform/testFramework/src</source>
-                <source>${idea.home}/platform/testFramework/bootstrap/src</source>
-                <source>${idea.home}/xml/impl/src</source>
-                <source>${idea.home}/xml/relaxng/src</source>
-                <source>${idea.home}/platform/lvcs-impl/src</source>
-                <source>${idea.home}/plugins/spellchecker/src</source>
-                <source>${idea.home}/images/src</source>
-
-                <source>${idea.home}/java/compiler/notNull/src</source>
-                <source>${idea.home}/platform/platform-main/src</source>
-                <source>${idea.home}/java/java-psi-impl/src</source>
-                <source>${idea.home}/java/java-impl/src</source>
-                <source>${idea.home}/java/compiler/impl/src</source>
-                <source>${idea.home}/java/debugger/impl/src</source>
-                <source>${idea.home}/xml/dom-impl/src</source>
-                <source>${idea.home}/java/execution/impl/src</source>
-                <source>${idea.home}/java/jsp-spi/src</source>
-                <source>${idea.home}/java/idea-ui/src</source>
-                <source>${idea.home}/RegExpSupport/src</source>
-                <source>${idea.home}/java/testFramework/src</source>
-                <source>${idea.home}/jps/jps-builders/src</source>
-                <source>${idea.home}/jps/model/src</source>
-
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 </project>

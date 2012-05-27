@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>parent</artifactId>
+    <groupId>org.jetbrains.idea</groupId>
+    <version>1</version>
+  </parent>
+  <groupId>org.jetbrains.idea</groupId>
+  <artifactId>jps</artifactId>
+  <version>${idea.version}</version>
+  <name>Maven module for jps</name>
+  <description>Maven integration for module jps</description>
+  <build>
+    <sourceDirectory>${idea.home}/jps/src</sourceDirectory>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.gmaven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generateStubs</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <fileset>
+                  <directory>${idea.home}/jps/src</directory>
+                  <includes>
+                    <include>**/*.groovy</include>
+                  </includes>
+                </fileset>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*OptimizedFileManager.java</exclude>
+            <exclude>**/*OptimizedFileManager17.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>jps-model</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>util</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>javac2</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>antlayout</artifactId>
+
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>forms-compiler</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
+    </dependency>
+    <dependency>
+      <artifactId>ant</artifactId>
+      <groupId>org.apache.ant</groupId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.gant</groupId>
+      <artifactId>gant_groovy1.8</artifactId>
+    </dependency>
+  </dependencies>
+</project>

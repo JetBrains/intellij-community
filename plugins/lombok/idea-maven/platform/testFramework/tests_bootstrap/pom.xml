@@ -6,26 +6,25 @@
     <groupId>org.jetbrains.idea</groupId>
     <artifactId>parent</artifactId>
     <version>1</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>usageView</artifactId>
+  <artifactId>tests_bootstrap</artifactId>
   <version>${idea.version}</version>
 
-  <name>Maven Integration of usageView modul</name>
-  <description>Maven modul for usageView jar</description>
-
-  <build>
-    <sourceDirectory>${idea.home}/platform/usageView/src</sourceDirectory>
-  </build>
+  <name>Maven Integration of tests_bootstrap modul</name>
+  <description>Maven modul for tests_bootstrap jar</description>
 
   <dependencies>
-    <dependency>
-      <groupId>org.jetbrains.idea</groupId>
-      <artifactId>lang-api</artifactId>
 
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
     </dependency>
+
   </dependencies>
 
-
+  <build>
+    <sourceDirectory>${idea.home}/platform/testFramework/bootstrap/src</sourceDirectory>
+  </build>
 </project>

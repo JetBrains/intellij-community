@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>parent</artifactId>
+    <groupId>org.jetbrains.idea</groupId>
+    <version>1</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+  <groupId>org.jetbrains.idea</groupId>
+  <artifactId>java-tests</artifactId>
+  <version>${idea.version}</version>
+  <name>Maven module for java-tests</name>
+  <description>Maven integration for module java-tests</description>
+  <build />
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>testFramework-java</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>java-impl</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>idea-ui</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>platform-api</artifactId>
+
+    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.jetbrains.idea</groupId>-->
+      <!--<artifactId>java-i18n</artifactId>-->
+      <!---->
+    <!--</dependency>-->
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>compiler-impl</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>notNull</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>execution-openapi</artifactId>
+
+    </dependency>
+  </dependencies>
+</project>

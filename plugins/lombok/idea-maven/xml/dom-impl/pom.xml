@@ -1,0 +1,81 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.jetbrains.idea</groupId>
+		<artifactId>parent</artifactId>
+		<version>1</version>
+    <relativePath>../../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>dom-impl</artifactId>
+  <version>${idea.version}</version>
+
+	<name>Maven Integration of dom-impl modul</name>
+	<description>Maven modul for dom-impl jar</description>
+
+	<dependencies>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>dom-openapi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>resources</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>xml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>util</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>platform-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>platform-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>lang-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>lang-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>xml-openapi</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm-commons</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>cglib</groupId>
+      <artifactId>cglib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>xerces</groupId>
+      <artifactId>xercesImpl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.wutka</groupId>
+      <artifactId>dtdparser</artifactId>
+    </dependency>
+	</dependencies>
+
+	<build>
+		<sourceDirectory>${idea.home}/xml/dom-impl/src</sourceDirectory>
+	</build>
+</project>

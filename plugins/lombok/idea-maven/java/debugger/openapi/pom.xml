@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>parent</artifactId>
+    <groupId>org.jetbrains.idea</groupId>
+    <version>1</version>
+    <relativePath>../../../pom.xml</relativePath>
+  </parent>
+  <groupId>org.jetbrains.idea</groupId>
+  <artifactId>debugger-openapi</artifactId>
+  <version>${idea.version}</version>
+  <name>Maven module for debugger-openapi</name>
+  <description>Maven integration for module debugger-openapi</description>
+  <build>
+    <sourceDirectory>${idea.home}/java/debugger/openapi/src</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>${idea.home}/java/debugger/openapi/src</directory>
+        <excludes>
+          <exclude>*.java</exclude>
+          <exclude>*.groovy</exclude>
+        </excludes>
+      </resource>
+    </resources>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>execution-openapi</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>jsp-openapi</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>java-psi-api</artifactId>
+
+    </dependency>
+  </dependencies>
+
+  <profiles>
+    <profile>
+      <id>default-tools_sun</id>
+      <activation>
+        <property>
+          <name>java.vendor</name>
+          <value>Sun Microsystems Inc.</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+          <version>1.6.0</version>
+          <scope>system</scope>
+          <systemPath>${java.home}/../lib/tools.jar</systemPath>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>default-tools_oracle</id>
+      <activation>
+        <property>
+          <name>java.vendor</name>
+          <value>Oracle Corporation</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+          <version>1.7.0</version>
+          <scope>system</scope>
+          <systemPath>${java.home}/../lib/tools.jar</systemPath>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+</project>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>parent</artifactId>
+    <groupId>org.jetbrains.idea</groupId>
+    <version>1</version>
+    <relativePath>../../../pom.xml</relativePath>
+  </parent>
+  <groupId>org.jetbrains.idea</groupId>
+  <artifactId>jps-appLauncher</artifactId>
+  <version>${idea.version}</version>
+  <name>Maven module for jps-appLauncher</name>
+  <description>Maven integration for module jps-appLauncher</description>
+  <build>
+    <sourceDirectory>${idea.home}/jps/plugins/appLauncher/src</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>${idea.home}/jps/plugins/appLauncher/src</directory>
+        <excludes>
+          <exclude>*.java</exclude>
+          <exclude>*.groovy</exclude>
+        </excludes>
+      </resource>
+    </resources>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>jps</artifactId>
+
+    </dependency>
+  </dependencies>
+</project>

@@ -9,23 +9,20 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
-  <artifactId>usageView</artifactId>
+  <artifactId>xml-openapi</artifactId>
   <version>${idea.version}</version>
 
-  <name>Maven Integration of usageView modul</name>
-  <description>Maven modul for usageView jar</description>
-
-  <build>
-    <sourceDirectory>${idea.home}/platform/usageView/src</sourceDirectory>
-  </build>
+  <name>Maven Integration of xml-openapi modul</name>
+  <description>Maven modul for xml-openapi jar</description>
 
   <dependencies>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>lang-api</artifactId>
-
     </dependency>
   </dependencies>
 
-
+  <build>
+    <sourceDirectory>${idea.home}/xml/openapi/src</sourceDirectory>
+  </build>
 </project>

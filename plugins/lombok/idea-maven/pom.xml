@@ -101,6 +101,35 @@
   </profiles>
 
   <modules>
+    <module>java/compiler/impl</module>
+    <module>java/compiler/openapi</module>
+    <module>java/debugger/impl</module>
+    <module>java/debugger/openapi</module>
+    <module>java/execution/impl</module>
+    <module>java/execution/openapi</module>
+    <module>java/compiler/forms-compiler</module>
+    <module>java/idea-ui</module>
+    <module>java/java-impl</module>
+    <module>java/java-psi-api</module>
+    <module>java/java-psi-impl</module>
+    <module>java/java-runtime</module>
+    <module>java/java-tests</module>
+    <module>java/compiler/javac2</module>
+    <module>java/jsp-base-openapi</module>
+    <module>java/jsp-openapi</module>
+    <module>java/jsp-spi</module>
+    <module>java/compiler/notNull</module>
+    <module>java/openapi</module>
+    <module>java/testFramework</module>
+
+    <module>jps</module>
+    <module>jps/plugins/appLauncher</module>
+    <module>jps/jps-builders</module>
+    <module>jps/model</module>
+    <module>jps/plugins/scala</module>
+    <module>jps/antLayout</module>
+
+
     <module>platform/annotations</module>
     <module>platform/boot</module>
     <module>platform/bootstrap</module>
@@ -135,14 +164,17 @@
     <module>xml/dom-openapi</module>
     <module>xml/dom-impl</module>
 
-    <module>idea_rt</module>
-    <module>javac2</module>
+    <module>RegExpSupport</module>
     <module>jdkAnnotations</module>
-    <module>jps-server</module>
     <module>resources</module>
-    <module>resources_en</module>
-    <module>openapi</module>
+    <module>resources-en</module>
+
+    <module>idea-openapi</module>
     <module>idea</module>
+
+    <!--<module>idea_rt</module>-->
+    <!--<module>jps-server</module>-->
+    <!--<module>javac2</module>-->
   </modules>
 
   <build>
@@ -150,7 +182,14 @@
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>2.3.2</version>
+          <version>2.4</version>
+          <configuration>
+            <!--<fork>true</fork>-->
+
+            <!--<compilerArguments>-->
+              <!--<XDignore.symbol.file/>-->
+            <!--</compilerArguments>-->
+          </configuration>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -161,6 +200,16 @@
           <groupId>org.codehaus.gmaven</groupId>
           <artifactId>gmaven-plugin</artifactId>
           <version>1.4</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-all</artifactId>
+              <version>1.8.6</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <providerSelection>1.8</providerSelection>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
@@ -187,6 +236,153 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>compiler-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>compiler-openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>debugger-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>debugger-openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>execution-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>execution-openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>forms-compiler</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>idea-ui</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <!--<dependency>-->
+      <!--<groupId>org.jetbrains.idea</groupId>-->
+      <!--<artifactId>java-i18n</artifactId>-->
+      <!--<version>${idea.version}</version>-->
+      <!--</dependency>-->
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>java-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>java-psi-api</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>java-psi-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>java-runtime</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>java-tests</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>javac2</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jsp-base-openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jsp-openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jsp-spi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>notNull</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>javacvs-src</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>tasks-java</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>testFramework-java</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jps-model</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jps-appLauncher</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jps-builders</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jps-scala</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>antlayout</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jps</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>org.jetbrains.idea</groupId>
         <artifactId>annotations</artifactId>
@@ -357,6 +553,12 @@
       </dependency>
       <dependency>
         <groupId>org.jetbrains.idea</groupId>
+        <artifactId>RegExpSupport</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
         <artifactId>openapi</artifactId>
         <version>${idea.version}</version>
       </dependency>
@@ -367,7 +569,7 @@
       </dependency>
       <dependency>
         <groupId>org.jetbrains.idea</groupId>
-        <artifactId>resources_en</artifactId>
+        <artifactId>resources-en</artifactId>
         <version>${idea.version}</version>
       </dependency>
 
@@ -615,7 +817,11 @@
         <artifactId>jcip-annotations</artifactId>
         <version>1.0</version>
       </dependency>
-
+      <dependency>
+        <groupId>org.codehaus.gant</groupId>
+        <artifactId>gant_groovy1.8</artifactId>
+        <version>1.9.5</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

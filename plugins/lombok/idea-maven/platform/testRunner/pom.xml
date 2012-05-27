@@ -23,22 +23,22 @@
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>platform-api</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>platform-impl</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>lang-impl</artifactId>
-      <scope>provided</scope>
+
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>xdebugger-api</artifactId>
-      <scope>provided</scope>
+
     </dependency>
   </dependencies>
 

@@ -22,6 +22,10 @@
   <dependencies>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
+      <artifactId>boot</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>lang-api</artifactId>
     </dependency>
     <dependency>

@@ -8,7 +8,7 @@
 		<version>1</version>
 	</parent>
 
-	<artifactId>resources_en</artifactId>
+	<artifactId>resources-en</artifactId>
   <version>${idea.version}</version>
 
 	<name>Maven Integration of resources_en modul</name>
