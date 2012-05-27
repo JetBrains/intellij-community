@@ -68,6 +68,9 @@
         <idea.version>${idea11.version}</idea.version>
         <idea.home>${idea11.home}</idea.home>
         <cglib.version>2.2.2</cglib.version>
+        <asm.version>3.3</asm.version>
+        <jna.version>3.4.0</jna.version>
+        <groovy-all.version>1.8.6</groovy-all.version>
       </properties>
     </profile>
     <profile>
@@ -82,6 +85,9 @@
         <idea.version>${idea10.version}</idea.version>
         <idea.home>${idea10.home}</idea.home>
         <cglib.version>2.2</cglib.version>
+        <asm.version>3.3</asm.version>
+        <jna.version>3.4.0</jna.version>
+        <groovy-all.version>1.8.6</groovy-all.version>
       </properties>
     </profile>
     <profile>
@@ -96,8 +102,49 @@
         <idea.version>${idea9.version}</idea.version>
         <idea.home>${idea9.home}</idea.home>
         <cglib.version>2.1_3</cglib.version>
+        <asm.version>3.0</asm.version>
+        <jna.version>3.2.3</jna.version>
+        <groovy-all.version>1.6.3</groovy-all.version>
       </properties>
     </profile>
+
+    <profile>
+      <id>default-tools_sun</id>
+      <activation>
+        <property>
+          <name>java.vendor</name>
+          <value>Sun Microsystems Inc.</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+          <version>1.6.0</version>
+          <scope>system</scope>
+          <systemPath>${java.home}/../lib/tools.jar</systemPath>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>default-tools_oracle</id>
+      <activation>
+        <property>
+          <name>java.vendor</name>
+          <value>Oracle Corporation</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+          <version>1.7.0</version>
+          <scope>system</scope>
+          <systemPath>${java.home}/../lib/tools.jar</systemPath>
+        </dependency>
+      </dependencies>
+    </profile>
+
   </profiles>
 
   <modules>
@@ -183,13 +230,10 @@
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>2.4</version>
-          <configuration>
-            <!--<fork>true</fork>-->
-
-            <!--<compilerArguments>-->
-              <!--<XDignore.symbol.file/>-->
-            <!--</compilerArguments>-->
-          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>1.7</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -204,7 +248,7 @@
             <dependency>
               <groupId>org.codehaus.groovy</groupId>
               <artifactId>groovy-all</artifactId>
-              <version>1.8.6</version>
+              <version>${groovy-all.version}</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -601,6 +645,13 @@
         <scope>system</scope>
         <systemPath>${idea.home}\\lib\\microba.jar</systemPath>
       </dependency>
+      <dependency>
+        <groupId>org.jetbrains.thirdparthy</groupId>
+        <artifactId>jna-utils</artifactId>
+        <version>${idea.version}</version>
+        <scope>system</scope>
+        <systemPath>${idea.home}\\lib\\jna-utils.jar</systemPath>
+      </dependency>
 
       <dependency>
         <groupId>org.jetbrains.thirdparthy</groupId>
@@ -644,12 +695,12 @@
       <dependency>
         <groupId>asm</groupId>
         <artifactId>asm</artifactId>
-        <version>3.3</version>
+        <version>${asm.version}</version>
       </dependency>
       <dependency>
         <groupId>asm</groupId>
         <artifactId>asm-commons</artifactId>
-        <version>3.3</version>
+        <version>${asm.version}</version>
       </dependency>
       <dependency>
         <groupId>com.jgoodies</groupId>
@@ -684,7 +735,7 @@
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna</artifactId>
-        <version>3.4.0</version>
+        <version>${jna.version}</version>
       </dependency>
       <dependency>
         <groupId>net.java.dev.jna</groupId>
@@ -724,7 +775,7 @@
       <dependency>
         <groupId>org.codehaus.groovy</groupId>
         <artifactId>groovy-all</artifactId>
-        <version>1.8.6</version>
+        <version>${groovy-all.version}</version>
       </dependency>
       <dependency>
         <groupId>org.swinglabs</groupId>
@@ -759,6 +810,11 @@
       <dependency>
         <groupId>cglib</groupId>
         <artifactId>cglib</artifactId>
+        <version>${cglib.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cglib</groupId>
+        <artifactId>cglib-nodep</artifactId>
         <version>${cglib.version}</version>
       </dependency>
       <dependency>
@@ -824,11 +880,4 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>onejar-maven-plugin.googlecode.com</id>
-      <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
-    </pluginRepository>
-  </pluginRepositories>
 </project>

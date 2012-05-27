@@ -80,5 +80,21 @@
 
   </dependencies>
 
-
+  <profiles>
+    <profile>
+      <id>intellij-9</id>
+      <activation>
+        <property>
+          <name>IntelliJ</name>
+          <value>9</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.codehaus.groovy</groupId>
+          <artifactId>groovy-all</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>

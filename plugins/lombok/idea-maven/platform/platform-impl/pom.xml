@@ -90,18 +90,6 @@
     </dependency>
 
     <dependency>
-      <groupId>asm</groupId>
-      <artifactId>asm</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>asm</groupId>
-      <artifactId>asm-commons</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.ws.xmlrpc</groupId>
       <artifactId>xmlrpc</artifactId>
     </dependency>
@@ -120,5 +108,74 @@
 
   </dependencies>
 
-
+  <profiles>
+    <profile>
+      <id>intellij-last</id>
+      <activation>
+        <property>
+          <name>!IntelliJ</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>cglib</groupId>
+          <artifactId>cglib</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>asm</groupId>
+          <artifactId>asm</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>asm</groupId>
+          <artifactId>asm-commons</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>intellij-10</id>
+      <activation>
+        <property>
+          <name>IntelliJ</name>
+          <value>10</value>
+        </property>
+      </activation>
+     <dependencies>
+       <dependency>
+         <groupId>cglib</groupId>
+         <artifactId>cglib</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>asm</groupId>
+         <artifactId>asm</artifactId>
+       </dependency>
+       <dependency>
+         <groupId>asm</groupId>
+         <artifactId>asm-commons</artifactId>
+       </dependency>
+     </dependencies>
+    </profile>
+    <profile>
+      <id>intellij-9</id>
+      <activation>
+        <property>
+          <name>IntelliJ</name>
+          <value>9</value>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>cglib</groupId>
+          <artifactId>cglib-nodep</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>net.java.dev.jna</groupId>
+          <artifactId>jna</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>org.jetbrains.thirdparthy</groupId>
+          <artifactId>jna-utils</artifactId>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>
