@@ -102,19 +102,45 @@
 
   <modules>
     <module>platform/annotations</module>
-    <module>util</module>
     <module>platform/boot</module>
     <module>platform/bootstrap</module>
+    <module>platform/core-api</module>
+    <module>platform/core-impl</module>
     <module>platform/extensions</module>
     <module>platform/forms_rt</module>
     <module>platform/icons</module>
+    <module>platform/lang-api</module>
+    <module>platform/lang-impl</module>
+    <module>platform/lvcs-api</module>
+    <module>platform/lvcs-impl</module>
+    <module>platform/platform-api</module>
+    <module>platform/platform-impl</module>
+    <module>platform/platform-main</module>
+    <module>platform/platform-resources</module>
+    <module>platform/platform-resources-en</module>
+    <module>platform/platform-tests</module>
+    <module>platform/smRunner</module>
+    <module>platform/testFramework</module>
+    <module>platform/testFramework/tests_bootstrap</module>
+    <module>platform/testRunner</module>
+    <module>platform/usageView</module>
+    <module>platform/util</module>
+    <module>platform/vcs-api</module>
+    <module>platform/vcs-impl</module>
+    <module>platform/xdebugger-api</module>
+    <module>platform/xdebugger-impl</module>
+
+    <module>xml/xml-openapi</module>
+    <module>xml/xml</module>
+    <module>xml/dom-openapi</module>
+    <module>xml/dom-impl</module>
+
     <module>idea_rt</module>
     <module>javac2</module>
     <module>jdkAnnotations</module>
     <module>jps-server</module>
     <module>resources</module>
     <module>resources_en</module>
-    <module>platform/testframework</module>
     <module>openapi</module>
     <module>idea</module>
   </modules>
@@ -168,7 +194,22 @@
       </dependency>
       <dependency>
         <groupId>org.jetbrains.idea</groupId>
-        <artifactId>jdkAnnotations</artifactId>
+        <artifactId>boot</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>bootstrap</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>core-api</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>core-impl</artifactId>
         <version>${idea.version}</version>
       </dependency>
       <dependency>
@@ -178,7 +219,87 @@
       </dependency>
       <dependency>
         <groupId>org.jetbrains.idea</groupId>
-        <artifactId>openapi</artifactId>
+        <artifactId>forms_rt</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>icons</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>lang-api</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>lang-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>lvcs-api</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>lvcs-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>platform-api</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>platform-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>platform-main</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>platform-resources</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>platform-resources-en</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>platform-tests</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>smRunner</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>testFramework</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>testRunner</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>tests_bootstrap</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>usageView</artifactId>
         <version>${idea.version}</version>
       </dependency>
       <dependency>
@@ -188,12 +309,65 @@
       </dependency>
       <dependency>
         <groupId>org.jetbrains.idea</groupId>
-        <artifactId>forms_rt</artifactId>
+        <artifactId>vcs-api</artifactId>
         <version>${idea.version}</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.idea</groupId>
-        <artifactId>testFramework</artifactId>
+        <artifactId>vcs-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>xdebugger-api</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>xdebugger-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>dom-impl</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>dom-openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>xml</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>xml-openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+
+
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>jdkAnnotations</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>openapi</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>resources</artifactId>
+        <version>${idea.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>resources_en</artifactId>
         <version>${idea.version}</version>
       </dependency>
 
@@ -361,6 +535,11 @@
         <version>1.3</version>
       </dependency>
       <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>3.2.1</version>
+      </dependency>
+      <dependency>
         <groupId>commons-httpclient</groupId>
         <artifactId>commons-httpclient</artifactId>
         <version>3.1</version>
@@ -440,4 +619,10 @@
     </dependencies>
   </dependencyManagement>
 
+  <pluginRepositories>
+    <pluginRepository>
+      <id>onejar-maven-plugin.googlecode.com</id>
+      <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>

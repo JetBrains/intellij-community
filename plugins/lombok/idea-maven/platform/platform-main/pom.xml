@@ -1,0 +1,37 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.jetbrains.idea</groupId>
+    <artifactId>parent</artifactId>
+    <version>1</version>
+    <relativePath>../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>platform-main</artifactId>
+  <version>${idea.version}</version>
+
+  <name>Maven Integration of platform-main modul</name>
+  <description>Maven modul for platform-main jar</description>
+
+  <build>
+    <sourceDirectory>${idea.home}/platform/platform-main/src</sourceDirectory>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>platform-impl</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>bootstrap</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+
+
+</project>
