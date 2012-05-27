@@ -38,8 +38,7 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -60,8 +59,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String FORM_EXTENSION = ".form";
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
+  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+    "-target"
+  ));
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+    "-g", "-deprecation", "-nowarn", "-verbose"
+  ));
 
-  public static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
+  private static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
     public boolean accept(File file) {
       return file.getPath().endsWith(JAVA_EXTENSION);
     }
@@ -282,8 +287,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final String chunkName = getChunkPresentableName(chunk);
         context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
 
-        final boolean compiledOk =
-          files.isEmpty() || compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
+        final int filesCount = files.size();
+        boolean compiledOk = true;
+        if (filesCount > 0) {
+          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName);
+          compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
+        }
 
         context.checkCanceled();
 
@@ -389,7 +398,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               CompileContext context,
                               DiagnosticOutputConsumer diagnosticSink,
                               final OutputFileConsumer outputSink) throws Exception {
-    LOG.info("Compiling " + files.size() + " java files");
     final List<String> options = getCompilationOptions(context, chunk);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
@@ -726,17 +734,23 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final String customArgs = javacOpts.get("ADDITIONAL_OPTIONS_STRING");
     if (customArgs != null) {
-      final StringTokenizer tokenizer = new StringTokenizer(customArgs, " \t\r\n");
-      while (tokenizer.hasMoreTokens()) {
-        final String token = tokenizer.nextToken();
-        if ("-g".equals(token) || "-deprecation".equals(token) || "-nowarn".equals(token) || "-verbose".equals(token)) {
+      final StringTokenizer customOptsTokenizer = new StringTokenizer(customArgs, " \t\r\n");
+      boolean skip = false;
+      while (customOptsTokenizer.hasMoreTokens()) {
+        final String userOption = customOptsTokenizer.nextToken();
+        if (FILTERED_OPTIONS.contains(userOption)) {
+          skip = true;
           continue;
         }
-        if (token.startsWith("-J-")) {
-          vmOptions.add(token.substring("-J".length()));
-        }
-        else {
-          options.add(token);
+        if (!skip) {
+          if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
+            if (userOption.startsWith("-J-")) {
+              vmOptions.add(userOption.substring("-J".length()));
+            }
+            else {
+              options.add(userOption);
+            }
+          }
         }
       }
     }
