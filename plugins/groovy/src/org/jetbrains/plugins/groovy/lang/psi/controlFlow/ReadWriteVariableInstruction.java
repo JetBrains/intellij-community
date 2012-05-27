@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
  * @author ven
 */
 public class ReadWriteVariableInstruction extends InstructionImpl {
+  public static final ReadWriteVariableInstruction[] EMPTY_ARRAY = new ReadWriteVariableInstruction[0];
+
   public static final int WRITE = -1;
   public static final int READ = 1;
 
