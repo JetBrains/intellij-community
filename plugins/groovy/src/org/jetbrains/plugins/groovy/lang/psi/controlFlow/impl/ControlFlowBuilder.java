@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
@@ -193,27 +192,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       addNode(new ReadWriteVariableInstruction(parameter.getName(), parameter, myInstructionNumber++, WRITE));
     }
 
-    final Set<String> names = new LinkedHashSet<String>();
-
-    closure.accept(new GroovyRecursiveElementVisitor() {
-      public void visitReferenceExpression(GrReferenceExpression refExpr) {
-        super.visitReferenceExpression(refExpr);
-        if (refExpr.getQualifierExpression() == null && !PsiUtil.isLValue(refExpr)) {
-          if (!(refExpr.getParent() instanceof GrCall)) {
-            final String refName = refExpr.getReferenceName();
-            if (!hasDeclaredVariable(refName, closure, refExpr)) {
-              //names.add(refName);
-            }
-          }
-        }
-      }
-    });
-
-    names.add("owner");
-
-    for (String name : names) {
-      addNode(new ReadWriteVariableInstruction(name, closure.getLBrace(), myInstructionNumber++, WRITE));
-    }
+    addNode(new ReadWriteVariableInstruction("owner", closure.getLBrace(), myInstructionNumber++, WRITE));
 
     PsiElement child = closure.getFirstChild();
     while (child != null) {
@@ -963,31 +942,4 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return null;
   }
 
-  private static boolean hasDeclaredVariable(String name, GrClosableBlock scope, PsiElement place) {
-    PsiElement prev = null;
-    while (place != null) {
-      if (place instanceof GrCodeBlock) {
-        GrStatement[] statements = ((GrCodeBlock)place).getStatements();
-        for (GrStatement statement : statements) {
-          if (statement == prev) break;
-          if (statement instanceof GrVariableDeclaration) {
-            GrVariable[] variables = ((GrVariableDeclaration)statement).getVariables();
-            for (GrVariable variable : variables) {
-              if (name.equals(variable.getName())) return true;
-            }
-          }
-        }
-      }
-
-      if (place == scope) {
-        break;
-      }
-      else {
-        prev = place;
-        place = place.getParent();
-      }
-    }
-
-    return false;
-  }
 }
