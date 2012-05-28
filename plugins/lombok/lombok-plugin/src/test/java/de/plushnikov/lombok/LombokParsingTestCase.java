@@ -277,7 +277,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   private String loadFileContent(String fileName, String subDir) {
-    final String resourceName = "data/" + subDir + fileName;
+    final String resourceName = "src/test/testData/data/" + subDir + fileName;
     final InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(resourceName);
     if (null == resourceAsStream) {
       throw new RuntimeException(String.format("Resource '%s' not available in classpath", resourceName));
