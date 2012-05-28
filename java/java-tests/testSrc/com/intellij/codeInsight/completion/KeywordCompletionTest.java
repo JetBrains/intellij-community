@@ -1,244 +1,109 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NonNls;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 20.02.2003
- * Time: 15:49:56
- * To change this template use Options | File Templates.
+ * @author ik
+ * @since 20.02.2003
  */
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords";
+
+  private static final String[] FILE_SCOPE_KEYWORDS = new String[]{
+    "package", "public", "private", "import", "final", "class", "interface", "abstract", "enum", null};
+  private static final String[] CLASS_SCOPE_KEYWORDS = new String[]{
+    "public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", null};
+  private static final String[] CLASS_SCOPE_KEYWORDS_2 = new String[]{
+    "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface", "abstract"};
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  private static final String[] ourPackageScopeKeywords =
-    new String[]{"package", "public", "private", "import", "final", "class", "interface", "abstract", "enum", null};
+  public void testFileScope1() throws Exception { doTest(8, FILE_SCOPE_KEYWORDS); }
+  public void testFileScope2() throws Exception { doTest(7, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope1() throws Exception { doTest(5, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope2() throws Exception { doTest(4, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope3() throws Exception { doTest(0, CLASS_SCOPE_KEYWORDS); }
+  public void testClassScope4() throws Exception { doTest(10, CLASS_SCOPE_KEYWORDS_2); }
+  public void testAfterAnnotations() throws Exception { doTest(6, "public", "final", "class", "interface", "abstract", "enum", null); }
+  public void testExtends1() throws Exception { doTest(2, "extends", "implements", null); }
+  public void testExtends2() throws Exception { doTest(1, "extends", "implements", "AAA", "BBB", "instanceof"); }
+  public void testExtends3() throws Exception { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
+  public void testExtends4() throws Exception { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
+  public void testExtends5() throws Exception { doTest(1, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
+  public void testExtends6() throws Exception { doTest(1, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
+  public void testExtends7() throws Exception { doTest(false); }
+  public void testExtends8() throws Exception { doTest(false); }
+  public void testExtends9() throws Exception { doTest(false); }
+  public void testExtends10() throws Exception { doTest(false); }
+  public void testExtends11() throws Exception { doTest(false); }
+  public void testExtends12() throws Exception { doTest(false); }
+  public void testSynchronized1() throws Exception { doTest(false); }
 
-  public void testModifiersFileScope_1() throws Exception {
-    configureByFile(BASE_PATH + "/fileScope-1.java");
-    testByCount(8, ourPackageScopeKeywords);
-  }
-
-  private static final String[] ourClassScopeKeywords =
-    new String[]{"public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", null};
-
-  public void testModifiersFileScope_2() throws Exception {
-    configureByFile(BASE_PATH + "/fileScope-2.java");
-    testByCount(7, ourClassScopeKeywords);
-  }
-
-  public void testModifiersClassScope_1() throws Exception {
-    configureByFile(BASE_PATH + "/classScope-1.java");
-    testByCount(5, ourClassScopeKeywords);
-  }
-
-  public void testModifiersClassScope_2() throws Exception {
-    configureByFile(BASE_PATH + "/classScope-2.java");
-    testByCount(4, ourClassScopeKeywords);
-  }
-
-  public void testModifiersClassScope_3() throws Exception {
-    configureByFile(BASE_PATH + "/classScope-3.java");
-    testByCount(0, ourClassScopeKeywords);
-  }
-
-  public void testAfterAnnotations() throws Exception {
-    configureByFile(BASE_PATH + "/afterAnnotations.java");
-    testByCount(6, "public", "final", "class", "interface", "abstract", "enum", null);
-  }
-
-  public void testExtends_1() throws Exception {
-    configureByFile(BASE_PATH + "/extends-1.java");
-    testByCount(2, "extends", "implements", null);
-  }
-
-  public void testExtends_2() throws Exception {
-    configureByFile(BASE_PATH + "/extends-2.java");
-    testByCount(1, "extends", "implements", "AAA", "BBB", "instanceof");
-  }
-
-  public void testExtends_3() throws Exception {
-    configureByFile(BASE_PATH + "/extends-3.java");
-    testByCount(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof");
-  }
-
-  public void testExtends_4() throws Exception {
-    configureByFile(BASE_PATH + "/extends-4.java");
-    testByCount(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof");
-  }
-
-  public void testExtends_5() throws Exception {
-    configureByFile(BASE_PATH + "/extends-5.java");
-    testByCount(1, "extends", "implements", "AAA", "BBB", "CCC", "instanceof");
-  }
-
-  public void testExtends_6() throws Exception {
-    configureByFile(BASE_PATH + "/extends-6.java");
-    testByCount(1, "extends", "implements", "AAA", "BBB", "CCC", "instanceof");
-  }
-
-  public void testExtends_7() throws Exception {
-    configureByFile(BASE_PATH + "/extends-7.java");
-    checkResultByFile(BASE_PATH + "/extends-7-result.java");
-  }
-
-  public void testExtends_8() throws Exception {
-    configureByFile(BASE_PATH + "/extends-8.java");
-    checkResultByFile(BASE_PATH + "/extends-8-result.java");
-  }
-
-  public void testExtends_9() throws Exception {
-    configureByFile(BASE_PATH + "/extends-9.java");
-    checkResultByFile(BASE_PATH + "/extends-9-result.java");
-  }
-
-  public void testExtends_10() throws Exception {
-    configureByFile(BASE_PATH + "/extends-10.java");
-    checkResultByFile(BASE_PATH + "/extends-10-result.java");
-  }
-
-  public void testExtends_11() throws Exception {
-    configureByFile(BASE_PATH + "/extends-11.java");
-    checkResultByFile(BASE_PATH + "/extends-11-result.java");
-  }
-
-  public void testExtends_12() throws Exception {
-    configureByFile(BASE_PATH + "/extends-12.java");
-    checkResultByFile(BASE_PATH + "/extends-12-result.java");
-  }
-
-  public void testSynchronized_1() throws Exception {
-    configureByFile(BASE_PATH + "/synchronized-1.java");
-    checkResultByFile(BASE_PATH + "/synchronized-1-result.java");
-  }
-
-  public void testSynchronized_2() throws Exception {
+  public void testSynchronized2() throws Exception {
     CodeStyleSettingsManager.getSettings(getProject()).SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
-    configureByFile(BASE_PATH + "/synchronized-2.java");
-    checkResultByFile(BASE_PATH + "/synchronized-2-result.java");
+    doTest(false);
   }
 
-  public void testModifiersClassScope() throws Exception{
-    configureByFile(BASE_PATH + "/classScope-4.java");
-    testByCount(10, "package", "public", "private", "protected", "transient", "volatile", "static", "import", "final", "class", "interface",
-                "abstract");
-  }
+  public void testMethodScope1() throws Exception { doTest(1, "throws"); }
+  public void testMethodScope2() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract"); }
+  public void testMethodScope3() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract", "throws", "instanceof"); }
+  public void testMethodScope4() throws Exception { doTest(6, "final", "try", "for", "while", "return", "throw"); }
+  public void testMethodScope5() throws Exception { doTest(false); }
+  public void testExtraBracketAfterFinally1() throws Exception { doTest(true); }
+  public void testExtraBracketAfterFinally2() throws Exception { doTest(true); }
+  public void testExtendsInCastTypeParameters() throws Exception { doTest(false); }
+  public void testExtendsWithRightContextInClassTypeParameters() throws Exception { doTest(false); }
+  public void testTrueInVariableDeclaration() throws Exception { doTest(false); }
+  public void testNullInIf() throws Exception { doTest(false); }
+  public void testNullInReturn() throws Exception { doTest(false); }
+  public void testExtendsInMethodParameters() throws Exception { doTest(false); }
+  public void testInstanceOf1() throws Exception { doTest(false); }
+  public void testInstanceOf2() throws Exception { doTest(false); }
+  public void testInstanceOf3() throws Exception { doTest(false); }
+  public void testCatchFinally() throws Exception { doTest(2, "catch", "finally"); }
+  public void testSuper1() throws Exception { doTest(1, "super"); }
+  public void testSuper2() throws Exception { doTest(0, "super"); }
+  public void testContinue() throws Exception { doTest(false); }
+  public void testThrowsOnSeparateLine() throws Exception { doTest(false); }
+  public void testDefaultInAnno() throws Exception { doTest(false); }
+  public void testNullInMethodCall() throws Exception { doTest(false); }
+  public void testNullInMethodCall2() throws Exception { doTest(false); }
 
-  public void testMethodThrows() throws Exception{
-    configureByFile(BASE_PATH + "/methodScope-1.java");
-    testByCount(1, "throws");
-  }
-
-  public void testModifiersInMethodScope_1() throws Exception{
-    configureByFile(BASE_PATH + "/methodScope-2.java");
-    testByCount(1, "final", "public", "static", "volatile", "abstract");
-  }
-
-  public void testModifiersInMethodScope_2() throws Exception{
-    configureByFile(BASE_PATH + "/methodScope-3.java");
-    testByCount(1, "final", "public", "static", "volatile", "abstract", "throws", "instanceof");
-  }
-
-  public void testModifiersInMethodScope_3() throws Exception{
-    configureByFile(BASE_PATH + "/methodScope-4.java");
-    testByCount(6, "final", "try", "for", "while", "return", "throw");
-  }
-
-  public void testModifiersInMethodScope_5() throws Exception{
-    configureByFile(BASE_PATH + "/methodScope-5.java");
-    checkResultByFile(BASE_PATH + "/methodScope-5-out.java");
-  }
-
-  public void testExtendsInCastTypeParameters() throws Throwable { doTest(); }
-  public void testExtendsWithRightContextInClassTypeParameters() throws Throwable { doTest(); }
-
-  public void testExtraBracketAfterFinally() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    selectItem(myItems[1]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
-  }
-
-  public void testExtraBracketAfterFinally1() throws Throwable {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    selectItem(myItems[1]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
-  }
-
-  public void testTrueInVariableDeclaration() throws Throwable { doTest(); }
-  public void testNullInIf() throws Throwable { doTest(); }
-  public void testNullInReturn() throws Throwable { doTest(); }
-
-  public void testExtendsInMethodParameters() throws Throwable { doTest(); }
-
-  private void doTest() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
-  }
-
-  public void testInstanceOf_1() throws Exception{
-    configureByFile(BASE_PATH + "/instanceof-1.java");
-    checkResultByFile(BASE_PATH + "/instanceof-1-result.java");
-    //testByCount(new String[]{"instanceof"}, 1);
-  }
-
-  public void testInstanceOf_2() throws Exception{
-    configureByFile(BASE_PATH + "/instanceof-2.java");
-    checkResultByFile(BASE_PATH + "/instanceof-2-result.java");
-    //testByCount(new String[]{"instanceof"}, 1);
-  }
-
-  public void testInstanceOf_3() throws Exception{
-    configureByFile(BASE_PATH + "/instanceof-3.java");
-    checkResultByFile(BASE_PATH + "/instanceof-3-result.java");
-    //testByCount(new String[]{"instanceof"}, 1);
-  }
-
-  public void testCatchFinally() throws Exception{
-    configureByFile(BASE_PATH + "/catch-1.java");
-    testByCount(2, "catch", "finally");
-  }
-
-  public void testSuper1() throws Exception{
-    configureByFile(BASE_PATH + "/super-1.java");
-    testByCount(1, "super");
-  }
-
-  public void testSuper2() throws Exception{
-    configureByFile(BASE_PATH + "/super-2.java");
-    testByCount(0, "super");
-  }
-
-  public void testContinue() throws Exception{
-    configureByFile(BASE_PATH + "/continue.java");
-    checkResultByFile(BASE_PATH + "/continue_after.java");
-  }
-
-  public void testThrowsOnSeparateLine() throws Exception{
-    configureByFile(BASE_PATH + "/throwsOnSeparateLine.java");
-    checkResultByFile(BASE_PATH + "/throwsOnSeparateLine_after.java");
-  }
-
-  public void testDefaultInAnno() throws Exception{
-    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
-    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
-  }
-
-  public void testTryInExpression() throws Throwable {
+  public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
     assertStringItems("toString", "this");
   }
 
-  public void testNull() throws Exception{
-    configureByFile(BASE_PATH + "/NullInMethodCall.java");
-    checkResultByFile(BASE_PATH + "/NullInMethodCall_After.java");
-    configureByFile(BASE_PATH + "/NullInMethodCall2.java");
-    checkResultByFile(BASE_PATH + "/NullInMethodCall2_After.java");
+  private void doTest(boolean select) throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
+    if (select) {
+      selectItem(myItems[1]);
+    }
+    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
+  }
+
+  protected void doTest(int finalCount, @NonNls String... values) {
+    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
+    testByCount(finalCount, values);
   }
 }
