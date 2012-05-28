@@ -180,7 +180,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
     myNameSuggestionsManager = new NameSuggestionsManager(myTypeSelector, myNameField,
                                                           createGenerator(myWillBeDeclaredStatic, myLocalVariable, myInitializerExpression, myIsInvokedOnDeclaration, myEnteredName,
-                                                                          myParentClass));
+                                                                          myParentClass, myProject));
     myNameSuggestionsManager.setLabelsFor(type, namePrompt);
 
     return panel;
@@ -203,10 +203,12 @@ class IntroduceFieldDialog extends DialogWrapper {
   static NameSuggestionsGenerator createGenerator(final boolean willBeDeclaredStatic,
                                                   final PsiLocalVariable localVariable,
                                                   final PsiExpression initializerExpression,
-                                                  final boolean isInvokedOnDeclaration, @Nullable final String enteredName, final PsiClass parentClass) {
+                                                  final boolean isInvokedOnDeclaration,
+                                                  @Nullable final String enteredName,
+                                                  final PsiClass parentClass,
+                                                  final Project project) {
     return new NameSuggestionsGenerator() {
-      private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(localVariable != null ? localVariable.getProject()
-                                                                                                                     : initializerExpression.getProject());
+      private final JavaCodeStyleManager myCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         VariableKind variableKind = willBeDeclaredStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
 

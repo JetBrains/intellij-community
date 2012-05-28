@@ -19,7 +19,6 @@ import com.intellij.designer.DesignerEditorState;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
-import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.tools.*;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
@@ -29,10 +28,13 @@ import com.intellij.designer.propertyTable.Property;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.ide.palette.impl.PaletteManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -510,11 +512,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return mySurfaceArea;
   }
 
-  public EditableArea getActionsArea() {
-    TreeEditableArea treeArea = DesignerToolWindowManager.getInstance(getProject()).getTreeArea();
-    return treeArea == null ? mySurfaceArea : treeArea;
-  }
-
   public ToolProvider getToolProvider() {
     return myToolProvider;
   }
@@ -712,6 +709,18 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public abstract TreeComponentDecorator getTreeDecorator();
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Inspection
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public void loadInspections(ProgressIndicator progress) {
+  }
+
+  public void updateInspections() {
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //

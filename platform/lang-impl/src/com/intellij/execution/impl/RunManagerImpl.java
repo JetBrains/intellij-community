@@ -453,9 +453,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       if (each.getType() instanceof UnknownConfigurationType) continue;
       recentList.add(getUniqueName(each));
     }
-    final Element recent = new Element(RECENT);
-    parentNode.addContent(recent);
-    recentList.writeExternal(recent);
+    if (!recentList.isEmpty()) {
+      final Element recent = new Element(RECENT);
+      parentNode.addContent(recent);
+      recentList.writeExternal(recent);
+    }
 
     if (myUnknownElements != null) {
       for (Element unloadedElement : myUnknownElements) {

@@ -232,6 +232,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
                   }
                 });
                 final String includePath = processPrimaryFragment(first, second, targetDirectory, targetfileName, file);
+                editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
 
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   public void run() {

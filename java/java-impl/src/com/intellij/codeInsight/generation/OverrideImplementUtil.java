@@ -537,6 +537,7 @@ public class OverrideImplementUtil {
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
+    LOG.assertTrue(aClass.isValid());
     new WriteCommandAction(project, aClass.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
         overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());

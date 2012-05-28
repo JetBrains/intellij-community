@@ -81,8 +81,8 @@ public class SurroundWithIfFix implements LocalQuickFix {
     return InspectionsBundle.message("inspection.surround.if.family");
   }
 
-  public boolean isAvailable(PsiExpression qualifier) {
-    if (!qualifier.isValid() || myText == null) {
+  public static boolean isAvailable(PsiExpression qualifier) {
+    if (!qualifier.isValid() || qualifier.getText() == null) {
       return false;
     }
     PsiStatement statement = PsiTreeUtil.getParentOfType(qualifier, PsiStatement.class);
