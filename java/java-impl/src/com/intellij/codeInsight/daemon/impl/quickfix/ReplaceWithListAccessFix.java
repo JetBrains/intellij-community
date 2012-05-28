@@ -67,8 +67,6 @@ public class ReplaceWithListAccessFix implements IntentionAction {
     final PsiElementFactory factory = facade.getElementFactory();
     final PsiType listType = factory.createType(listClass);
 
-
-
     return listType.isAssignableFrom(type);
   }
 
