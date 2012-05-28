@@ -108,6 +108,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   protected RadComponent myRootComponent;
 
+  protected QuickFixManager myQuickFixManager;
+
   private List<?> myExpandedComponents;
   private Property mySelectionProperty;
   private int[][] myExpandedState;
@@ -301,6 +303,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myHorizontalCaption.attachToScrollPane(myScrollPane);
     myVerticalCaption.attachToScrollPane(myScrollPane);
+
+    myQuickFixManager = new QuickFixManager(this, myGlassLayer, myScrollPane.getViewport());
 
     myActionPanel = new DesignerActionPanel(this, myGlassLayer);
 
@@ -720,6 +724,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public void updateInspections() {
+    myQuickFixManager.update();
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

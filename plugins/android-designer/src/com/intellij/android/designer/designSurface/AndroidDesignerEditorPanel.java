@@ -516,9 +516,4 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public void loadInspections(ProgressIndicator progress) {
     ErrorAnalyzer.load(myXmlFile, myRootComponent, progress);
   }
-
-  @Override
-  public void updateInspections() {
-    // TODO: Auto-generated method stub
-  }
 }
