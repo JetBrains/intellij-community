@@ -95,13 +95,40 @@ public class BreakpointItemsTree extends CheckboxTree {
   @NotNull
   private CheckedTreeNode getParentNode(final BreakpointItem breakpoint) {
     CheckedTreeNode parent = myRoot;
+    XBreakpointGroup parentGroup = null;
     for (int i = 0; i < myGroupingRules.size(); i++) {
-      XBreakpointGroup group = getGroup(breakpoint.getBreakpoint(), myGroupingRules.get(i));
+      XBreakpointGroup group = getGroup(parentGroup, breakpoint, myGroupingRules.get(i));
       if (group != null) {
         parent = getOrCreateGroupNode(parent, group, i);
+        parentGroup = group;
       }
     }
     return parent;
+  }
+
+  @Nullable
+  private XBreakpointGroup getGroup(XBreakpointGroup parentGroup, final BreakpointItem breakpoint, final XBreakpointGroupingRule groupingRule) {
+    //noinspection unchecked
+    Collection<XBreakpointGroup> groups = myGroups.get(groupingRule);
+    if (groups == null) {
+      groups = Collections.emptyList();
+    }
+
+
+    Collection<XBreakpointGroup> filtered = new ArrayList<XBreakpointGroup>();
+    for (XBreakpointGroup group : groups) {
+      TreeNode parent = myGroupNodes.get(group).getParent();
+      if ((parentGroup == null && parent == myRoot) || ((BreakpointsGroupNode)parent).getGroup() == parentGroup) {
+        filtered.add(group);
+      }
+    }
+
+
+    XBreakpointGroup group = groupingRule.getGroup(breakpoint.getBreakpoint(), filtered);
+    if (group != null) {
+      myGroups.put(groupingRule, group);
+    }
+    return group;
   }
 
   private <G extends XBreakpointGroup> BreakpointsGroupNode<G> getOrCreateGroupNode(CheckedTreeNode parent, final G group,
@@ -123,20 +150,6 @@ public class BreakpointItemsTree extends CheckboxTree {
     }
   }
 
-  @Nullable
-  private XBreakpointGroup getGroup(final Object breakpoint, final XBreakpointGroupingRule groupingRule) {
-    //noinspection unchecked
-    Collection<XBreakpointGroup> groups = myGroups.get(groupingRule);
-    if (groups == null) {
-      groups = Collections.emptyList();
-    }
-    XBreakpointGroup group = groupingRule.getGroup(breakpoint, groups);
-    if (group != null) {
-      myGroups.put(groupingRule, group);
-    }
-    return group;
-  }
-
   @Override
   protected void onNodeStateChanged(final CheckedTreeNode node) {
     if (node instanceof BreakpointItemNode) {
@@ -144,7 +157,7 @@ public class BreakpointItemsTree extends CheckboxTree {
     }
   }
 
-  public void setGroupingRules(List<XBreakpointGroupingRule> groupingRules) {
+  public void setGroupingRules(Collection<XBreakpointGroupingRule> groupingRules) {
     List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints();
     List<BreakpointItem> allBreakpoints = new ArrayList<BreakpointItem>(myNodes.keySet());
 

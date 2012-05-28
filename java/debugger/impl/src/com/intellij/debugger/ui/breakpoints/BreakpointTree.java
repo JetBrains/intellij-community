@@ -679,7 +679,7 @@ public class BreakpointTree extends CheckboxTree {
       if (!(descriptor instanceof BreakpointDescriptor)) {
         return node;
       }
-      
+
       final Breakpoint breakpoint = ((BreakpointDescriptor)descriptor).getBreakpoint();
       final String packageName;
       if (breakpoint instanceof ExceptionBreakpoint) {

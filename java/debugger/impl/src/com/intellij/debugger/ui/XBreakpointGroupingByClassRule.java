@@ -22,29 +22,31 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-class XBreakpointGroupingByCategoryRule<B> extends XBreakpointGroupingRule<B, XBreakpointCategoryGroup> {
-  XBreakpointGroupingByCategoryRule() {
-    super("XBreakpointGroupingByCategoryRule", "Type");
+class XBreakpointGroupingByClassRule<B> extends XBreakpointGroupingRule<B, XBreakpointClassGroup> {
+  XBreakpointGroupingByClassRule() {
+    super("XBreakpointGroupingByClassRule", "Group by Class");
   }
 
   @Override
   public boolean isAlwaysEnabled() {
-    return true;
+    return false;
   }
 
   @Override
-  public XBreakpointCategoryGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointCategoryGroup> groups) {
+  public XBreakpointClassGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointClassGroup> groups) {
     if (b instanceof Breakpoint) {
       final Breakpoint breakpoint = (Breakpoint)b;
-      for (XBreakpointCategoryGroup group : groups) {
-        if (group.getCategory().equals(breakpoint.getCategory())) {
+      String className = breakpoint.getShortClassName();
+      String packageName = breakpoint.getPackageName();
+      if (className == null) {
+        return null;
+      }
+      for (XBreakpointClassGroup group : groups) {
+        if (group.getClassName().equals(className) && group.getPackageName().equals(packageName))  {
           return group;
         }
       }
-      final BreakpointFactory factory = BreakpointFactory.getInstance(breakpoint.getCategory());
-      if (factory != null) {
-        return new XBreakpointCategoryGroup(factory);
-      }
+      return new XBreakpointClassGroup(packageName, className);
     }
     return null;
   }

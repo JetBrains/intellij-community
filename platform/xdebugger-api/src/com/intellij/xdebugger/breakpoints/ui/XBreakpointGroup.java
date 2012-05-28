@@ -37,11 +37,6 @@ public abstract class XBreakpointGroup implements Comparable<XBreakpointGroup> {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    return obj instanceof XBreakpointGroup && compareTo((XBreakpointGroup)obj) == 0;
-  }
-
-  @Override
   public int hashCode() {
     return getName().hashCode();
   }
