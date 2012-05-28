@@ -19,16 +19,16 @@ import com.intellij.facet.impl.ui.libraries.RequiredLibrariesInfo;
 import com.intellij.facet.ui.libraries.LibraryDownloadInfo;
 import com.intellij.facet.ui.libraries.LibraryInfo;
 import com.intellij.framework.library.DownloadableLibraryDescription;
+import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.impl.DownloadableLibraryDescriptionImpl;
+import com.intellij.framework.library.impl.DownloadableLibraryFileDescriptionImpl;
 import com.intellij.framework.library.impl.FrameworkLibraryVersionImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
-import com.intellij.util.download.DownloadableFileDescription;
-import com.intellij.util.download.impl.DownloadableFileDescriptionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,13 +53,12 @@ public class OldCustomLibraryDescription extends CustomLibraryDescriptionBase {
     myVersions = versions;
     final List<FrameworkLibraryVersion> libraryVersions = new ArrayList<FrameworkLibraryVersion>();
     for (FrameworkVersion version : versions) {
-      List<DownloadableFileDescription> downloads = new ArrayList<DownloadableFileDescription>();
+      List<DownloadableLibraryFileDescription> downloads = new ArrayList<DownloadableLibraryFileDescription>();
       for (LibraryInfo info : version.getLibraries()) {
         final LibraryDownloadInfo downloadingInfo = info.getDownloadingInfo();
         if (downloadingInfo != null) {
-          final DownloadableFileDescription
-            element = new DownloadableFileDescriptionImpl(downloadingInfo.getDownloadUrl(), downloadingInfo.getFileNamePrefix(), downloadingInfo.getFileNameSuffix());
-          downloads.add(element);
+          downloads.add(new DownloadableLibraryFileDescriptionImpl(downloadingInfo.getDownloadUrl(), downloadingInfo.getFileNamePrefix(),
+                                                                   downloadingInfo.getFileNameSuffix(), null, null, false));
         }
       }
       libraryVersions.add(new FrameworkLibraryVersionImpl(version.getVersionName(), downloads, version.getLibraryName()));

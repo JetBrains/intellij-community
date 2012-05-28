@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,19 @@
  */
 package com.intellij.framework.library;
 
-import com.intellij.util.download.DownloadableFileSetDescription;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.util.download.DownloadableFileDescription;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public interface FrameworkLibraryVersion extends DownloadableFileSetDescription {
-  @NotNull
-  String getDefaultLibraryName();
+public interface DownloadableLibraryFileDescription extends DownloadableFileDescription {
+  @Nullable
+  DownloadableFileDescription getSourcesDescription();
 
-  @NotNull
-  @Override
-  List<? extends DownloadableLibraryFileDescription> getFiles();
+  @Nullable
+  DownloadableFileDescription getDocumentationDescription();
+
+  boolean isOptional();
+
 }

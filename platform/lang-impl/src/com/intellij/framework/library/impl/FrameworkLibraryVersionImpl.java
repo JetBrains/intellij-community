@@ -15,8 +15,8 @@
  */
 package com.intellij.framework.library.impl;
 
+import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
-import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.impl.DownloadableFileSetDescriptionImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,11 +25,11 @@ import java.util.List;
 /**
  * @author nik
  */
-public class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionImpl implements FrameworkLibraryVersion {
+public class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionImpl<DownloadableLibraryFileDescription> implements FrameworkLibraryVersion {
   private final String myLibraryCategory;
 
   public FrameworkLibraryVersionImpl(String versionString,
-                                     List<DownloadableFileDescription> libraryFiles,
+                                     List<DownloadableLibraryFileDescription> libraryFiles,
                                      String category) {
     super(category, versionString, libraryFiles);
     myLibraryCategory = category;

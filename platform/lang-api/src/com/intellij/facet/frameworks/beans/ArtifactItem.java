@@ -39,8 +39,17 @@ public class ArtifactItem {
   @Attribute("url")
   public String myUrl;
 
+  @Attribute("srcUrl")
+  public String mySourceUrl;
+
+  @Attribute("docUrl")
+  public String myDocUrl;
+
   @Attribute("md5")
   public String myMD5;
+
+  @Attribute("optional")
+  public boolean myOptional;
 
   public String getName() {
     return myName == null ? getNameFromUrl() : myName;
@@ -49,6 +58,18 @@ public class ArtifactItem {
   private String getNameFromUrl() {
     final int index = myUrl.lastIndexOf('/');
     return index == -1 ? myUrl : myUrl.substring(index + 1);
+  }
+
+  public boolean isOptional() {
+    return myOptional;
+  }
+
+  public String getSourceUrl() {
+    return mySourceUrl;
+  }
+
+  public String getDocUrl() {
+    return myDocUrl;
   }
 
   public String getUrl() {
