@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.inspection;
+package com.intellij.designer.inspection;
 
-import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
  */
-public class AndroidBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
+public final class DesignerBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
   private final HighlightingPass[] myHighlightingPasses;
 
-  public AndroidBackgroundEditorHighlighter(AndroidDesignerEditorPanel designer) {
-    myHighlightingPasses = new HighlightingPass[]{new AndroidHighlightingPass(designer)};
+  public DesignerBackgroundEditorHighlighter(DesignerEditorPanel designer) {
+    myHighlightingPasses = new HighlightingPass[]{new DesignerHighlightingPass(designer)};
   }
 
   @NotNull

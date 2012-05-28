@@ -17,7 +17,6 @@ package com.intellij.designer;
 
 import com.intellij.designer.componentTree.ComponentTree;
 import com.intellij.designer.componentTree.ComponentTreeBuilder;
-import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -133,11 +132,6 @@ public final class DesignerToolWindowManager implements ProjectComponent {
         myComponentTree.repaint();
       }
     }
-  }
-
-  @Nullable
-  public TreeEditableArea getTreeArea() {
-    return myTreeBuilder == null ? null : myTreeBuilder.getTreeArea();
   }
 
   @Nullable

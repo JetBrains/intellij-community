@@ -20,7 +20,11 @@ import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
-import com.intellij.android.designer.model.*;
+import com.intellij.android.designer.inspection.ErrorAnalyzer;
+import com.intellij.android.designer.model.IConfigurableComponent;
+import com.intellij.android.designer.model.ModelParser;
+import com.intellij.android.designer.model.PropertyParser;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
@@ -36,6 +40,7 @@ import com.intellij.designer.palette.Item;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,9 +50,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.inspections.lint.AndroidLintExternalAnnotator;
-import org.jetbrains.android.inspections.lint.ProblemData;
-import org.jetbrains.android.inspections.lint.State;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
@@ -113,21 +115,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }
       }
     });
-  }
-
-  public void loadInspections() {
-    AndroidLintExternalAnnotator annotator = new AndroidLintExternalAnnotator();
-    State state = annotator.collectionInformation(myXmlFile);
-    if (state == null) {
-      System.out.println("No inspections");
-    }
-    else {
-      state = annotator.doAnnotate(state);
-      System.out.println("==== Problems ====");
-      for (ProblemData problem : state.getProblems()) {
-        System.out.println(problem.getIssue() + " | " + problem.getMessage() + " | " + problem.getTextRange());
-      }
-    }
   }
 
   private void reparseFile() {
@@ -517,5 +504,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     finally {
       myPSIChangeListener.start();
     }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Inspections
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  public void loadInspections(ProgressIndicator progress) {
+    ErrorAnalyzer.load(myXmlFile, myRootComponent, progress);
+  }
+
+  @Override
+  public void updateInspections() {
+    // TODO: Auto-generated method stub
   }
 }

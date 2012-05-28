@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.inspection;
+package com.intellij.designer.inspection;
 
-import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
 import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 
 /**
  * @author Alexander Lobas
  */
-public class AndroidHighlightingPass implements HighlightingPass {
-  private final AndroidDesignerEditorPanel myDesigner;
+public final class DesignerHighlightingPass implements HighlightingPass {
+  private final DesignerEditorPanel myDesigner;
 
-  public AndroidHighlightingPass(AndroidDesignerEditorPanel designer) {
+  public DesignerHighlightingPass(DesignerEditorPanel designer) {
     myDesigner = designer;
   }
 
   @Override
   public void collectInformation(ProgressIndicator progress) {
-    myDesigner.loadInspections();
-    // TODO: Auto-generated method stub
+    myDesigner.loadInspections(progress);
   }
 
   @Override
   public void applyInformationToEditor() {
-    // TODO: Auto-generated method stub
+    myDesigner.updateInspections();
   }
 }

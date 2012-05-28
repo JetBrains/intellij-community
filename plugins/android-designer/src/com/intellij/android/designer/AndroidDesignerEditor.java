@@ -16,7 +16,7 @@
 package com.intellij.android.designer;
 
 import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
-import com.intellij.android.designer.inspection.AndroidBackgroundEditorHighlighter;
+import com.intellij.designer.inspection.DesignerBackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.designer.DesignerEditor;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -50,7 +50,7 @@ public final class AndroidDesignerEditor extends DesignerEditor {
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     if (myHighlighter == null) {
-      myHighlighter = new AndroidBackgroundEditorHighlighter((AndroidDesignerEditorPanel)getDesignerPanel());
+      myHighlighter = new DesignerBackgroundEditorHighlighter(getDesignerPanel());
     }
     return myHighlighter;
   }
