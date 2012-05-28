@@ -239,10 +239,9 @@ public class InplaceEditingLayer extends JComponent {
   private void adjustInplaceComponentSize() {
     myInplaceComponent.revalidate();
     Dimension size = myInplaceComponent.getPreferredSize();
-    int width = Math.max(size.width, myPreferredWidth);
-    width = Math.min(width, getWidth() - myInplaceComponent.getX());
-    myInplaceComponent.setSize(width, myInplaceComponent.getHeight());
+    myInplaceComponent.setSize(Math.max(size.width, myPreferredWidth), myInplaceComponent.getHeight());
     myInplaceComponent.revalidate();
+    repaint();
   }
 
   private void removeInplaceComponent() {
