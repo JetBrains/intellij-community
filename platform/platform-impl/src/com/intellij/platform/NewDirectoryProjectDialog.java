@@ -15,6 +15,7 @@
  */
 package com.intellij.platform;
 
+import com.google.common.collect.Lists;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
@@ -27,13 +28,16 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
 
 /**
  * @author yole
@@ -53,6 +57,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   private JPanel myPlaceHolder;
 
   private static final Object EMPTY_PROJECT_GENERATOR = new Object();
+  private final DirectoryProjectGenerator myGeneratorBeforeSeparator;
 
   protected NewDirectoryProjectDialog(Project project) {
     super(project, true);
@@ -66,26 +71,38 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     final DirectoryProjectGenerator[] generators = getGenerators();
     if (generators.length == 0) {
       myProjectTypePanel.setVisible(false);
+      myGeneratorBeforeSeparator = null;
     }
     else {
       DefaultComboBoxModel model = new DefaultComboBoxModel();
       model.addElement(getEmptyProjectGenerator());
+      List<DirectoryProjectGenerator> primaryGenerators = Lists.newArrayList();
+      List<DirectoryProjectGenerator> otherGenerators = Lists.newArrayList();
       for (DirectoryProjectGenerator generator : generators) {
+        boolean primary = true;
+        if (generator instanceof WebProjectGenerator) {
+          primary = ((WebProjectGenerator) generator).isPrimaryGenerator();
+        }
+        if (primary) {
+          primaryGenerators.add(generator);
+        } else {
+          otherGenerators.add(generator);
+        }
+      }
+      if (!primaryGenerators.isEmpty() && !otherGenerators.isEmpty()) {
+        myGeneratorBeforeSeparator = primaryGenerators.get(primaryGenerators.size() - 1);
+      }
+      else {
+        myGeneratorBeforeSeparator = null;
+      }
+      for (DirectoryProjectGenerator generator : primaryGenerators) {
+        model.addElement(generator);
+      }
+      for (DirectoryProjectGenerator generator : otherGenerators) {
         model.addElement(generator);
       }
       myProjectTypeComboBox.setModel(model);
-      myProjectTypeComboBox.setRenderer(new ListCellRendererWrapper(myProjectTypeComboBox.getRenderer()) {
-        @Override
-        public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean cellHasFocus) {
-          if (value == null) return;
-          if (value == EMPTY_PROJECT_GENERATOR) {
-            setText("Empty project");
-          }
-          else {
-            setText(((DirectoryProjectGenerator)value).getName());
-          }
-        }
-      });
+      myProjectTypeComboBox.setRenderer(createProjectTypeListCellRenderer(myProjectTypeComboBox.getRenderer()));
     }
 
     registerValidators(new FacetValidatorsManager() {
@@ -96,6 +113,46 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         checkValid();
       }
     });
+  }
+
+  @NotNull
+  private ListCellRenderer createProjectTypeListCellRenderer(@NotNull final ListCellRenderer originalRenderer) {
+    ListCellRenderer intermediate = myGeneratorBeforeSeparator == null ? originalRenderer : new ListCellRenderer() {
+
+      private final JSeparator mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
+      private final JPanel myComponentWithSeparator = new JPanel(new BorderLayout(0, 0));
+
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        Component original = originalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (index != -1 && value == myGeneratorBeforeSeparator
+            && value instanceof DirectoryProjectGenerator && original instanceof JLabel) {
+          myComponentWithSeparator.removeAll();
+
+          JLabel label = (JLabel) original;
+          label.setText(((DirectoryProjectGenerator) value).getName());
+          myComponentWithSeparator.add(label, BorderLayout.CENTER);
+          myComponentWithSeparator.add(mySeparator, BorderLayout.SOUTH);
+
+          myComponentWithSeparator.revalidate();
+          myComponentWithSeparator.repaint();
+          return myComponentWithSeparator;
+        }
+        return original;
+      }
+    };
+    return new ListCellRendererWrapper(intermediate) {
+      @Override
+      public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean cellHasFocus) {
+        if (value == null) return;
+        if (value == EMPTY_PROJECT_GENERATOR) {
+          setText("Empty project");
+        }
+        else {
+          setText(((DirectoryProjectGenerator)value).getName());
+        }
+      }
+    };
   }
 
   protected Object getEmptyProjectGenerator() {
