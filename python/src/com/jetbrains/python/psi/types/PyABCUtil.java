@@ -14,32 +14,36 @@ public class PyABCUtil {
   public static boolean isSubclass(@NotNull PyClass subClass, @NotNull PyClass superClass) {
     final String superName = superClass.getName();
     if (superName != null) {
-      return isSubclass(subClass, superName);
+      return isSubclass(subClass, superName, true);
     }
     return false;
   }
 
   public static boolean isSubclass(@NotNull PyClass subClass, @NotNull String superClassName) {
+    return isSubclass(subClass, superClassName, true);
+  }
+
+  public static boolean isSubclass(@NotNull PyClass subClass, @NotNull String superClassName, boolean inherited) {
     if (PyNames.CALLABLE.equals(superClassName)) {
-      return hasMethod(subClass, PyNames.CALL);
+      return hasMethod(subClass, PyNames.CALL, inherited);
     }
     if (PyNames.HASHABLE.equals(superClassName)) {
-      return hasMethod(subClass, PyNames.HASH);
+      return hasMethod(subClass, PyNames.HASH, inherited);
     }
-    final boolean hasIter = hasMethod(subClass, PyNames.ITER);
-    final boolean hasGetItem = hasMethod(subClass, PyNames.GETITEM);
+    final boolean hasIter = hasMethod(subClass, PyNames.ITER, inherited);
+    final boolean hasGetItem = hasMethod(subClass, PyNames.GETITEM, inherited);
     if (PyNames.ITERABLE.equals(superClassName)) {
       return hasIter || hasGetItem;
     }
     if (PyNames.ITERATOR.equals(superClassName)) {
-      return (hasIter && (hasMethod(subClass, PyNames.NEXT) || hasMethod(subClass,
-                                                                         PyNames.DUNDER_NEXT))) || hasGetItem;
+      return (hasIter && (hasMethod(subClass, PyNames.NEXT, inherited) || hasMethod(subClass,
+                                                                         PyNames.DUNDER_NEXT, inherited))) || hasGetItem;
     }
-    final boolean isSized = hasMethod(subClass, PyNames.LEN);
+    final boolean isSized = hasMethod(subClass, PyNames.LEN, inherited);
     if (PyNames.SIZED.equals(superClassName)) {
       return isSized;
     }
-    final boolean isContainer = hasMethod(subClass, PyNames.CONTAINS);
+    final boolean isContainer = hasMethod(subClass, PyNames.CONTAINS, inherited);
     if (PyNames.CONTAINER.equals(superClassName)) {
       return isContainer;
     }
@@ -47,7 +51,7 @@ public class PyABCUtil {
       return isSized && hasIter && isContainer && hasGetItem;
     }
     if (PyNames.MAPPING.equals(superClassName)) {
-      return isSized && hasIter && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS);
+      return isSized && hasIter && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS, inherited);
     }
     return false;
   }
@@ -55,7 +59,7 @@ public class PyABCUtil {
   public static boolean isSubtype(@NotNull PyType type, @NotNull String superClassName) {
     if (type instanceof PyClassType) {
       final PyClass pyClass = ((PyClassType)type).getPyClass();
-      return pyClass != null && isSubclass(pyClass, superClassName);
+      return pyClass != null && isSubclass(pyClass, superClassName, true);
     }
     if (type instanceof PyUnionType) {
       final PyUnionType unionType = (PyUnionType)type;
@@ -71,7 +75,7 @@ public class PyABCUtil {
     return false;
   }
 
-  private static boolean hasMethod(PyClass cls, String name) {
-    return cls.findMethodByName(name, true) != null;
+  private static boolean hasMethod(PyClass cls, String name, boolean inherited) {
+    return cls.findMethodByName(name, inherited) != null;
   }
 }
