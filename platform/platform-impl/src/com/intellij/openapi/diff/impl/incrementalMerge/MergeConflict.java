@@ -24,13 +24,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a merge conflict, i.e. two {@link ConflictChange conflicting changes}, one from left, another from right.
  */
-class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.RangeInvalidListener {
+class MergeConflict extends ChangeSide implements DiffRangeMarker.RangeInvalidListener {
 
   @NotNull private final MergeList myMergeList;
   @NotNull private final DiffRangeMarker myCommonRange;
   @NotNull private final ConflictChange myLeftChange;
   @NotNull private final ConflictChange myRightChange;
-  @NotNull private final Change.HighlighterHolder myCommonHighlighterHolder = new Change.HighlighterHolder();
+  @NotNull private final ChangeHighlighterHolder myCommonHighlighterHolder = new ChangeHighlighterHolder();
 
   MergeConflict(TextRange commonRange, MergeList mergeList, TextRange leftMarker, TextRange rightMarker) {
     myCommonRange = new DiffRangeMarker((DocumentEx)mergeList.getBaseDocument(),commonRange, this);
@@ -39,7 +39,7 @@ class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.Ran
     myRightChange = new ConflictChange(this, FragmentSide.SIDE2, rightMarker);
   }
 
-  public Change.HighlighterHolder getHighlighterHolder() {
+  public ChangeHighlighterHolder getHighlighterHolder() {
     return myCommonHighlighterHolder;
   }
 

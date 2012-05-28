@@ -15,30 +15,41 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
-import com.intellij.openapi.diff.impl.util.TextDiffType;
+import com.intellij.openapi.diff.impl.util.DocumentUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 
+/**
+ * Represents a change in diff or merge view.
+ * A change has two {@link com.intellij.openapi.diff.impl.incrementalMerge.Change.SimpleChangeSide sides} (left and right), each of them representing the text which has been changed and the original text
+ * shown in the diff/merge.
+ * Change can be applied, then its sides would be equal.
+ */
 public abstract class Change {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.Change");
+
+  public abstract ChangeSide getChangeSide(FragmentSide side);
+
+  public abstract ChangeType getType();
+
+  public abstract ChangeList getChangeList();
+
+  protected abstract void removeFromList();
+
+  public abstract void onRemovedFromList();
+
+  public abstract boolean isValid();
 
   private void apply(@NotNull FragmentSide original) {
     FragmentSide targetSide = original.otherSide();
@@ -46,14 +57,28 @@ public abstract class Change {
     RangeMarker rangeMarker = getRangeMarker(targetSide);
 
     if (originalRangeMarker != null && rangeMarker != null) {
-      ChangeType.apply(getProject(), originalRangeMarker, rangeMarker);
+      apply(getProject(), originalRangeMarker, rangeMarker);
       if (isValid()) {
         removeFromList();
       }
     }
   }
 
-  protected abstract void removeFromList();
+  private static void apply(@NotNull Project project, @NotNull RangeMarker original, @NotNull RangeMarker target) {
+    Document document = target.getDocument();
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, document)) return;
+    if (DocumentUtil.isEmpty(original)) {
+      int offset = target.getStartOffset();
+      document.deleteString(offset, target.getEndOffset());
+    }
+    String text = DocumentUtil.getText(original);
+    int startOffset = target.getStartOffset();
+    if (DocumentUtil.isEmpty(target)) {
+      document.insertString(startOffset, text);
+    } else {
+      document.replaceString(startOffset, target.getEndOffset(), text);
+    }
+  }
 
   public void addMarkup(Editor[] editors) {
     LOG.assertTrue(editors.length == 2);
@@ -71,25 +96,15 @@ public abstract class Change {
 
   private Project getProject() { return getChangeList().getProject(); }
 
-  public abstract ChangeType.ChangeSide getChangeSide(FragmentSide side);
-
-  public abstract ChangeType getType();
-
-  public abstract ChangeList getChangeList();
-
-  private HighlighterHolder getHighlighterHolder(FragmentSide side) {
+  private ChangeHighlighterHolder getHighlighterHolder(FragmentSide side) {
     return getChangeSide(side).getHighlighterHolder();
   }
 
   private RangeMarker getRangeMarker(FragmentSide side) {
-    ChangeType.ChangeSide changeSide = getChangeSide(side);
+    ChangeSide changeSide = getChangeSide(side);
     LOG.assertTrue(changeSide != null);
     return changeSide.getRange();
   }
-
-  public abstract void onRemovedFromList();
-
-  public abstract boolean isValid();
 
   public static void apply(final Change change, final FragmentSide fromSide) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -134,116 +149,12 @@ public abstract class Change {
     }
   }
 
-  protected static class HighlighterHolder implements ChangeType.MarkupHolder {
-    private Editor myEditor;
-    private final ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>(3);
-    private RangeHighlighter myMainHighlighter = null;
-    private AnAction[] myActions;
-    private RangeHighlighter[] myActionHighlighters = RangeHighlighter.EMPTY_ARRAY;
-
-    public void highlight(ChangeType.ChangeSide changeSide, Editor editor, ChangeType type) {
-      LOG.assertTrue(myEditor == null || editor == myEditor);
-      removeHighlighters();
-      myEditor = editor;
-      setHighlighter(changeSide, type);
-    }
-
-    private MarkupModel getMarkupModel() {
-      return myEditor.getMarkupModel();
-    }
-
-    private void highlighterCreated(RangeHighlighter highlighter, TextAttributes attrs) {
-      if (attrs != null) {
-        highlighter.setErrorStripeMarkColor(attrs.getErrorStripeColor());
-      }
-      myHighlighters.add(highlighter);
-    }
-
-    @Nullable
-    public RangeHighlighter addLineHighlighter(int line, int layer, TextDiffType diffType) {
-      if (myEditor.getDocument().getTextLength() == 0) return null;
-      RangeHighlighter highlighter = getMarkupModel().addLineHighlighter(line, layer, null);
-      highlighter.setLineSeparatorColor(diffType.getTextBackground(myEditor));
-      highlighterCreated(highlighter, diffType.getTextAttributes(myEditor));
-      return highlighter;
-    }
-
-    @Nullable
-    public RangeHighlighter addRangeHighlighter(int start, int end, int layer, TextDiffType type, HighlighterTargetArea targetArea) {
-      if (getMarkupModel().getDocument().getTextLength() == 0) return null;
-      TextAttributes attributes = type.getTextAttributes(myEditor);
-      RangeHighlighter highlighter = getMarkupModel().addRangeHighlighter(start, end, layer, attributes, targetArea);
-      highlighterCreated(highlighter, attributes);
-      return highlighter;
-    }
-
-    private void setHighlighter(ChangeType.ChangeSide changeSide, ChangeType type) {
-      myMainHighlighter = type.addMarker(changeSide, this);
-      updateAction();
-    }
-
-    public Editor getEditor() {
-      return myEditor;
-    }
-
-    public void removeHighlighters() {
-      if (myEditor == null) {
-        LOG.assertTrue(myHighlighters.isEmpty());
-        LOG.assertTrue(myMainHighlighter == null);
-        return;
-      }
-      for (RangeHighlighter highlighter : myHighlighters) {
-        highlighter.dispose();
-      }
-      myHighlighters.clear();
-      removeActionHighlighters();
-      myMainHighlighter = null;
-    }
-
-    private void removeActionHighlighters() {
-      for (RangeHighlighter actionHighlighter : myActionHighlighters) {
-        actionHighlighter.dispose();
-      }
-      myActionHighlighters = RangeHighlighter.EMPTY_ARRAY;
-    }
-
-    public void setActions(AnAction[] action) {
-      myActions = action;
-      updateAction();
-    }
-
-    private void updateAction() {
-      removeActionHighlighters();
-      if (myMainHighlighter != null && myActions != null && myActions.length > 0) {
-        myActionHighlighters = new RangeHighlighter[myActions.length];
-        for (int i = 0; i < myActionHighlighters.length; i++) {
-          RangeHighlighter highlighter = cloneMainHighlighter(myMainHighlighter);
-          highlighter.setGutterIconRenderer(new GutterActionRenderer(myActions[i]));
-          myActionHighlighters[i] = highlighter;
-        }
-      }
-    }
-
-    private RangeHighlighter cloneMainHighlighter(@NotNull RangeHighlighter mainHighlighter) {
-      RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(mainHighlighter.getStartOffset(), mainHighlighter.getEndOffset(), mainHighlighter.getLayer(),
-                                                                                   null, mainHighlighter.getTargetArea());
-      // TODO[dyoma] copy greedyToLeft and greedyToRight
-      return highlighter;
-    }
-
-    public void updateHighlighter(ChangeType.ChangeSide changeSide, ChangeType type) {
-      LOG.assertTrue(myEditor != null);
-      removeHighlighters();
-      setHighlighter(changeSide, type);
-    }
-  }
-
-  protected static class Side extends ChangeType.ChangeSide {
+  protected static class SimpleChangeSide extends ChangeSide {
     private final FragmentSide mySide;
     private final DiffRangeMarker myRange;
-    private final HighlighterHolder myHighlighterHolder = new HighlighterHolder();
+    private final ChangeHighlighterHolder myHighlighterHolder = new ChangeHighlighterHolder();
 
-    public Side(FragmentSide side, DiffRangeMarker rangeMarker) {
+    public SimpleChangeSide(FragmentSide side, DiffRangeMarker rangeMarker) {
       mySide = side;
       myRange = rangeMarker;
     }
@@ -256,7 +167,7 @@ public abstract class Change {
       return myRange;
     }
 
-    public HighlighterHolder getHighlighterHolder() {
+    public ChangeHighlighterHolder getHighlighterHolder() {
       return myHighlighterHolder;
     }
   }

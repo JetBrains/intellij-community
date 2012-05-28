@@ -25,12 +25,12 @@ import com.intellij.openapi.util.TextRange;
  */
 class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListener {
 
-  private Side myOriginalSide;
+  private SimpleChangeSide myOriginalSide;
   private MergeConflict myConflict;
 
   public ConflictChange(MergeConflict conflict, FragmentSide mergeSide, TextRange range) {
     myConflict = conflict;
-    myOriginalSide = new Side(mergeSide, new DiffRangeMarker((DocumentEx)conflict.getOriginalDocument(mergeSide), range, this));
+    myOriginalSide = new SimpleChangeSide(mergeSide, new DiffRangeMarker((DocumentEx)conflict.getOriginalDocument(mergeSide), range, this));
   }
 
   protected void removeFromList() {
@@ -38,7 +38,7 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
     myConflict = null;
   }
 
-  public ChangeType.ChangeSide getChangeSide(FragmentSide side) {
+  public ChangeSide getChangeSide(FragmentSide side) {
     return isBranch(side) ? myOriginalSide : myConflict;
   }
 
@@ -46,7 +46,7 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
     return MergeList.BRANCH_SIDE == side;
   }
 
-  public Change.Side getOriginalSide() {
+  public SimpleChangeSide getOriginalSide() {
     return myOriginalSide;
   }
 
