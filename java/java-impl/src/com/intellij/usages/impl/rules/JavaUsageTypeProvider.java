@@ -36,11 +36,11 @@ import java.util.Set;
  */
 public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   public UsageType getUsageType(final PsiElement element) {
-    return getUsageType(element, null);
+    return getUsageType(element, UsageTarget.EMPTY_ARRAY);
   }
 
   @Override
-  public UsageType getUsageType(PsiElement element, @Nullable UsageTarget[] targets) {
+  public UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
     UsageType classUsageType = getClassUsageType(element, targets);
     if (classUsageType != null) return classUsageType;
 
@@ -108,8 +108,10 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   private static boolean haveCommonSuperMethod(@NotNull PsiMethod m1, @NotNull PsiMethod m2) {
-    final Queue<PsiMethod> supers1Q = new ArrayDeque<PsiMethod>(); supers1Q.add(m1);
-    final Queue<PsiMethod> supers2Q = new ArrayDeque<PsiMethod>(); supers2Q.add(m2);
+    final Queue<PsiMethod> supers1Q = new ArrayDeque<PsiMethod>();
+    supers1Q.add(m1);
+    final Queue<PsiMethod> supers2Q = new ArrayDeque<PsiMethod>();
+    supers2Q.add(m2);
     Set<PsiMethod> supers1 = new THashSet<PsiMethod>();
     Set<PsiMethod> supers2 = new THashSet<PsiMethod>();
     while (true) {
@@ -138,7 +140,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
           }
         });
       }
-      if (me1 == null && me2==null) break;
+      if (me1 == null && me2 == null) break;
     }
     return false;
     /*
@@ -154,9 +156,11 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Nullable
-  private static UsageType getClassUsageType(PsiElement element, @Nullable UsageTarget[] targets) {
+  private static UsageType getClassUsageType(@NotNull PsiElement element, @NotNull UsageTarget[] targets) {
     if (element.getParent() instanceof PsiAnnotation &&
-        element == ((PsiAnnotation)element.getParent()).getNameReferenceElement()) return UsageType.ANNOTATION;
+        element == ((PsiAnnotation)element.getParent()).getNameReferenceElement()) {
+      return UsageType.ANNOTATION;
+    }
 
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);

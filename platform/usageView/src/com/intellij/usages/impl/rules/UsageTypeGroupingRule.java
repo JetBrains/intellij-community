@@ -59,7 +59,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
   }
 
   @Nullable
-  private static UsageType getUsageType(PsiElement element, UsageTarget[] targets) {
+  private static UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
     if (element == null) return null;
 
     if (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null) { return UsageType.COMMENT_USAGE; }
