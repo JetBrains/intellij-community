@@ -44,6 +44,7 @@ import java.util.Map;
 public class PyBuiltinCache {
   public static final @NonNls String BUILTIN_FILE = "__builtin__.py";
   @NonNls public static final String BUILTIN_FILE_3K = "builtins.py";
+  public static final String EXCEPTIONS_FILE = "exceptions.py";
 
   private PyType STRING_TYPE_PY2 = null;
 
@@ -99,14 +100,19 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  public static PyFile getBuiltinsForSdk(Project project, Sdk sdk) {
+  public static PyFile getBuiltinsForSdk(@NotNull Project project, @NotNull Sdk sdk) {
+    return getSkeletonFile(project, sdk, PythonSdkType.getBuiltinsFileName(sdk));
+  }
+
+  @Nullable
+  public static PyFile getSkeletonFile(@NotNull Project project, @NotNull Sdk sdk, @NotNull String name) {
     SdkTypeId sdkType = sdk.getSdkType();
     if (sdkType instanceof PythonSdkType) {
       // dig out the builtins file, create an instance based on it
       final String[] urls = sdk.getRootProvider().getUrls(PythonSdkType.BUILTIN_ROOT_TYPE);
       for (String url : urls) {
         if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
-          final String builtins_url = url + "/" + PythonSdkType.getBuiltinsFileName(sdk);
+          final String builtins_url = url + "/" + name;
           File builtins = new File(VfsUtil.urlToPath(builtins_url));
           if (builtins.isFile() && builtins.canRead()) {
             VirtualFile builtins_vfile = LocalFileSystem.getInstance().findFileByIoFile(builtins);
@@ -123,7 +129,7 @@ public class PyBuiltinCache {
     return null;
   }
 
-  private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache((PyFile)null);
+  private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache(null, null);
 
   @Nullable
   static PyType createLiteralCollectionType(final PySequenceExpression sequence, final String name) {
@@ -136,7 +142,9 @@ public class PyBuiltinCache {
   }
 
 
-  private PyFile myBuiltinsFile;
+  @Nullable private PyFile myBuiltinsFile;
+  @Nullable private PyFile myExceptionsFile;
+
 
   public PyBuiltinCache() {
   }
@@ -144,8 +152,9 @@ public class PyBuiltinCache {
 
   public static final Key<String> MARKER_KEY = new Key<String>("python.builtins.skeleton.file");
 
-  public PyBuiltinCache(@Nullable final PyFile builtins) {
+  public PyBuiltinCache(@Nullable final PyFile builtins, @Nullable PyFile exceptions) {
     myBuiltinsFile = builtins;
+    myExceptionsFile = exceptions;
     if (myBuiltinsFile != null) {
       myBuiltinsFile.putUserData(MARKER_KEY, ""); // mark this file as builtins
     }
@@ -336,6 +345,7 @@ public class PyBuiltinCache {
     if (!(the_file instanceof PyFile)) {
       return false;
     }
-    return myBuiltinsFile == the_file; // files are singletons, no need to compare URIs
+    // files are singletons, no need to compare URIs
+    return the_file == myBuiltinsFile || the_file == myExceptionsFile;
   }
 }
