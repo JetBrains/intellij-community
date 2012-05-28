@@ -213,7 +213,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       myKeyReadStream = null;
     }
     else {
-      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), -1, false);
+      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), PagedFileStorage.MB, false);
       myKeyReadStream = new MyDataIS(myKeyStorage);
     }
   }
