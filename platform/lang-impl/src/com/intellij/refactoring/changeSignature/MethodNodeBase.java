@@ -115,4 +115,9 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
   public M getMethod() {
     return myMethod;
   }
+
+  public PsiElement getElementToSearch() {
+    return getMethod();
+  }
+
 }

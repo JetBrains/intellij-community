@@ -148,7 +148,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     });
 
     final M caller = node.getMethod();
-    final M callee = parentNode != null ? parentNode.getMethod() : null;
+    final PsiElement callee = parentNode != null ? parentNode.getElementToSearch() : null;
     if (caller != null && caller.isPhysical() && callee != null) {
       HighlightManager highlighter = HighlightManager.getInstance(myProject);
       EditorColorsManager colorManager = EditorColorsManager.getInstance();
@@ -161,7 +161,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     }
   }
 
-  protected Collection<PsiElement> findElementsToHighlight(M caller, M callee) {
+  protected Collection<PsiElement> findElementsToHighlight(M caller, PsiElement callee) {
     Query<PsiReference> references = ReferencesSearch.search(callee, new LocalSearchScope(caller), false);
     return ContainerUtil.mapNotNull(references, new Function<PsiReference, PsiElement>() {
       @Override
