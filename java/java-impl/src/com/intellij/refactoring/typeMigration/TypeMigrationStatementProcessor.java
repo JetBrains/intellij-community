@@ -59,9 +59,13 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     final TypeView right = new TypeView(rExpression);
 
     final IElementType sign = expression.getOperationTokenType();
+    final PsiType ltype = left.getType();
+    final PsiType rtype = right.getType();
+    if (ltype == null || rtype == null) return;
+
     if (sign != JavaTokenType.EQ) {
       final IElementType binaryOperator = TypeConversionUtil.convertEQtoOperation(sign);
-      if (!TypeConversionUtil.isBinaryOperatorApplicable(binaryOperator, left.getType(), right.getType(), false)) {
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(binaryOperator, ltype, rtype, false)) {
         if (left.isChanged()) {
           findConversionOrFail(expression, lExpression, left.getTypePair());
         }
@@ -77,11 +81,11 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         break;
 
       case TypeInfection.LEFT_INFECTED:
-        myLabeler.migrateExpressionType(rExpression, left.getType(), myStatement, TypeConversionUtil.isAssignable(left.getType(), right.getType()), true);
+        myLabeler.migrateExpressionType(rExpression, ltype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype), true);
         break;
 
       case TypeInfection.RIGHT_INFECTED:
-        myLabeler.migrateExpressionType(lExpression, right.getType(), myStatement, TypeConversionUtil.isAssignable(left.getType(), right.getType()), false);
+        myLabeler.migrateExpressionType(lExpression, rtype, myStatement, TypeConversionUtil.isAssignable(ltype, rtype), false);
         break;
 
       case TypeInfection.BOTH_INFECTED:

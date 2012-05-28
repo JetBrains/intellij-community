@@ -117,6 +117,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       startProcess(target, configuration, key);
       if (ref.isNull()) {
         try {
+          //noinspection SynchronizationOnLocalVariableOrMethodParameter
           synchronized (ref) {
             while (ref.isNull()) {
               ref.wait(1000);
@@ -176,6 +177,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     try {
       final RunProfileState state = getRunProfileState(target, configuration, executor);
       final ExecutionResult result = state.execute(executor, runner);
+      //noinspection ConstantConditions
       processHandler = result.getProcessHandler();
     }
     catch (Exception e) {
@@ -210,6 +212,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
     if (info != null) {
       if (info instanceof Info) {
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (ref) {
           ref.set((Info)info);
           ref.notifyAll();
@@ -239,6 +242,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   private static <T> T narrowImpl(Remote remote, Class<T> to) {
+    //noinspection unchecked
     return (T)(to.isInstance(remote) ? remote : PortableRemoteObject.narrow(remote, to));
   }
 
@@ -282,7 +286,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
             info = (PendingInfo)o;
             if (outputType == ProcessOutputTypes.STDOUT) {
               final String prefix = "Port/ID:";
-              if (text != null && text.startsWith(prefix)) {
+              if (text.startsWith(prefix)) {
                 final String pair = text.substring(prefix.length()).trim();
                 final int idx = pair.indexOf("/");
                 result = new Info(info.handler, Integer.parseInt(pair.substring(0, idx)), pair.substring(idx + 1));
@@ -304,12 +308,18 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
             info.ref.notifyAll();
           }
           fireModificationCountChanged();
+          try {
+            RemoteDeadHand.TwoMinutesTurkish.startCooking("localhost", result.port);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
         }
       }
     };
   }
 
-  private void handleProcessTerminated(Pair<Target, Parameters> key, String errorMessage) {
+  private void handleProcessTerminated(Pair<Target, Parameters> key, @Nullable String errorMessage) {
     Object o;
     final PendingInfo pendingInfo;
     synchronized (myProcMap) {

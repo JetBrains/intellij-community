@@ -318,10 +318,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     List<PsiFile> files = new ArrayList<PsiFile>();
     for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
       final PsiFile psiFile = entry.getKey();
-      if (psiFile instanceof PsiClassOwner) {
+      final PsiClass[] sources = entry.getValue();
+      if (psiFile instanceof PsiClassOwner && sources != null) {
         final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
         if (createdFile == null) return null;
-        final PsiClass[] sources = entry.getValue();
         for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
           if (destination instanceof SyntheticElement) {
             continue;

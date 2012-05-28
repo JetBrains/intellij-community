@@ -567,6 +567,42 @@ class Main {
     assertEmpty make()
   }
 
+  public void "test module cycle"() {
+    def dep = addDependentModule()
+    PsiTestUtil.addDependency(myModule, dep)
+    addGroovyLibrary(dep)
+
+    myFixture.addFileToProject('Foo.groovy', 'class Foo extends Bar { static void main(String[] args) { println "Hello from Foo" } }')
+    myFixture.addFileToProject('FooX.java', 'class FooX extends Bar { }')
+    myFixture.addFileToProject("dependent/Bar.groovy", "class Bar { Foo f; static void main(String[] args) { println 'Hello from Bar' } }")
+    myFixture.addFileToProject("dependent/BarX.java", "class BarX { Foo f; }")
+
+    def checkClassFiles = {
+      assert findClassFile('Foo', myModule)
+      assert findClassFile('FooX', myModule)
+      assert findClassFile('Bar', dep)
+      assert findClassFile('BarX', dep)
+
+      assert !findClassFile('Bar', myModule)
+      assert !findClassFile('BarX', myModule)
+      assert !findClassFile('Foo', dep)
+      assert !findClassFile('FooX', dep)
+    }
+
+    println '1'
+    println make().join('\n')
+    checkClassFiles()
+
+    println '2'
+    println make().join('\n')
+    checkClassFiles()
+
+    assertOutput('Foo', 'Hello from Foo', myModule)
+    assertOutput('Bar', 'Hello from Bar', dep)
+
+    checkClassFiles()
+  }
+
   public void testCompileTimeConstants() {
     myFixture.addFileToProject 'Gr.groovy', '''
 interface Gr {
@@ -627,6 +663,35 @@ public class Main {
 
     assertEmpty(make())
     assert findClassFile("Client")
+  }
+
+  public void "test ignore groovy internal non-existent interface helper inner class"() {
+    myFixture.addFileToProject 'Foo.groovy', '''
+interface Foo {}
+
+class Zoo {
+  Foo foo() {}
+  static class Inner implements Foo {}
+}
+
+'''
+    def bar = myFixture.addFileToProject('Bar.groovy', 'class Bar { def foo = new Zoo.Inner() {}  }')
+
+    assertEmpty make()
+    assertEmpty compileFiles(bar.virtualFile)
+  }
+
+  public void "test multiline strings"() {
+    myFixture.addFileToProject 'Foo.groovy', '''class Foo {
+  public static final String s = """
+multi
+line
+string
+"""
+ } '''
+    myFixture.addFileToProject 'Bar.java', 'class Bar extends Foo {} '
+
+    assertEmpty make()
   }
 
   public static class IdeaModeTest extends GroovyCompilerTest {

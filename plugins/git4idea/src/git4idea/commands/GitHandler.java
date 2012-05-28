@@ -97,6 +97,7 @@ public abstract class GitHandler {
   private Runnable myResumeAction; // Resume action used by {@link #resumeWriteLock()}
 
   private long myStartTime; // git execution start timestamp
+  private static final long LONG_TIME = 10 * 1000;
 
 
   /**
@@ -731,12 +732,22 @@ public abstract class GitHandler {
           break;
       }
 
-      if (myStartTime > 0) {
-        LOG.debug(String.format("git %s took %s ms", myCommand, System.currentTimeMillis() - myStartTime));
+      logTime();
+    }
+  }
+
+  private void logTime() {
+    if (myStartTime > 0) {
+      long time = System.currentTimeMillis() - myStartTime;
+      if (!LOG.isDebugEnabled() && time > LONG_TIME) {
+        LOG.info(String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString()));
       }
       else {
-        LOG.debug(String.format("git %s finished.", myCommand));
+        LOG.debug(String.format("git %s took %s ms", myCommand, time));
       }
+    }
+    else {
+      LOG.debug(String.format("git %s finished.", myCommand));
     }
   }
 

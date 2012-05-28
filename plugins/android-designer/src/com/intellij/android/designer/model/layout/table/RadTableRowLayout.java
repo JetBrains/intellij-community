@@ -83,23 +83,28 @@ public class RadTableRowLayout extends RadLinearLayout {
         mySelectionDecorator = new GridSelectionDecorator(Color.red, 1) {
           @Override
           public Rectangle getCellBounds(Component layer, RadComponent component) {
-            RadTableLayoutComponent tableComponent = (RadTableLayoutComponent)component.getParent().getParent();
-            GridInfo gridInfo = tableComponent.getVirtualGridInfo();
-            int row = tableComponent.getChildren().indexOf(component.getParent());
-            RadComponent[] rowComponents = gridInfo.components[row];
-            int column = ArrayUtil.indexOf(rowComponents, component);
-            int columnSpan = 1;
+            try {
+              RadTableLayoutComponent tableComponent = (RadTableLayoutComponent)component.getParent().getParent();
+              GridInfo gridInfo = tableComponent.getVirtualGridInfo();
+              int row = tableComponent.getChildren().indexOf(component.getParent());
+              RadComponent[] rowComponents = gridInfo.components[row];
+              int column = ArrayUtil.indexOf(rowComponents, component);
+              int columnSpan = 1;
 
-            for (int i = column + 1; i < rowComponents.length; i++) {
-              if (rowComponents[i] == component) {
-                columnSpan++;
+              for (int i = column + 1; i < rowComponents.length; i++) {
+                if (rowComponents[i] == component) {
+                  columnSpan++;
+                }
+                else {
+                  break;
+                }
               }
-              else {
-                break;
-              }
+
+              return calculateBounds(layer, gridInfo, tableComponent, component, row, column, 1, columnSpan);
             }
-
-            return calculateBounds(layer, gridInfo, tableComponent, component, row, column, 1, columnSpan);
+            catch (Throwable e) {
+              return new Rectangle();
+            }
           }
         };
       }

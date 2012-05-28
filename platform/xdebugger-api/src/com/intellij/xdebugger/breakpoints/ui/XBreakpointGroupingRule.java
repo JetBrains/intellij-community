@@ -29,6 +29,10 @@ public abstract class XBreakpointGroupingRule<B, G extends XBreakpointGroup> {
   private final String myId;
   private final String myPresentableName;
 
+  public boolean isAlwaysEnabled() {
+    return false;
+  }
+
   protected XBreakpointGroupingRule(final @NotNull @NonNls String id, final @NonNls @Nls String presentableName) {
     myId = id;
     myPresentableName = presentableName;

@@ -12,13 +12,12 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.api.SharedThreadPool;
 
 import javax.tools.*;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author Eugene Zhuravlev
@@ -32,11 +31,9 @@ public class JavacServer {
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("javac-server");
   private final ChannelFactory myChannelFactory;
   private final ChannelPipelineFactory myPipelineFactory;
-  private ExecutorService myThreadPool;
 
   public JavacServer() {
-    myThreadPool = Executors.newCachedThreadPool();
-    myChannelFactory = new NioServerSocketChannelFactory(myThreadPool, myThreadPool, 1);
+    myChannelFactory = new NioServerSocketChannelFactory(SharedThreadPool.INSTANCE, SharedThreadPool.INSTANCE, 1);
     final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     myPipelineFactory = new ChannelPipelineFactory() {
@@ -198,10 +195,11 @@ public class JavacServer {
 
             final CancelHandler cancelHandler = new CancelHandler();
             myCancelHandlers.add(cancelHandler);
-            myThreadPool.submit(new Runnable() {
+            SharedThreadPool.INSTANCE.submit(new Runnable() {
               public void run() {
                 try {
-                  final JavacRemoteProto.Message exitMsg = compile(ctx, sessionId, options, files, cp, platformCp, srcPath, outs, cancelHandler);
+                  final JavacRemoteProto.Message exitMsg =
+                    compile(ctx, sessionId, options, files, cp, platformCp, srcPath, outs, cancelHandler);
                   Channels.write(ctx.getChannel(), exitMsg);
                 }
                 finally {
@@ -218,10 +216,14 @@ public class JavacServer {
             cancelBuilds();
             new Thread("StopThread") {
               public void run() {
-                JavacServer.this.stop();
+                try {
+                  JavacServer.this.stop();
+                }
+                finally {
+                  System.exit(0);
+                }
               }
             }.start();
-            //System.exit(0);
           }
           else {
             reply = JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createFailure("Unsupported request type: " + requestType.name(), null));

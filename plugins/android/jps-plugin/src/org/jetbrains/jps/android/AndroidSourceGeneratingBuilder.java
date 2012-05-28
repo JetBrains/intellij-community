@@ -606,12 +606,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
                 success = false;
                 continue;
               }
-              if (!FileUtil.moveDirWithContent(tmpOutputDir, aptOutputDirectory)) {
-                context.processMessage(new CompilerMessage(ANDROID_APT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle
-                  .message("android.jps.errors.cannot.move.content", tmpOutputDir.getPath(), aptOutputDirectory.getPath())));
-                success = false;
-                continue;
-              }
+              // we use copyDir instead of moveDirWithContent here, because tmp directory may be located on other disk and
+              // moveDirWithContent doesn't work for such case
+              FileUtil.copyDir(tmpOutputDir, aptOutputDirectory);
               markDirtyRecursively(aptOutputDirectory, context, ANDROID_APT_COMPILER);
             }
             storage.update(module.getName(), newState);

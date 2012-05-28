@@ -15,9 +15,11 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -836,7 +838,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   public void testSettingTargetLevel() throws Exception {
-    JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m";
+    JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -Xms128m -target 1.5";
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -853,31 +855,16 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    assertEquals("-Xmm500m -Xms128m -target 1.3", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING);
+    assertEquals("-Xmm500m -Xms128m", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING.trim());
+
+    Module module = getModule("project");
+
+    String targetLevel = CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(module);
+
+    assertEquals("1.3", targetLevel);
   }
 
-  public void testRewritingTargetLevel() throws Exception {
-    JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -target 1.5 -Xms128m";
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "        <configuration>" +
-                  "          <target>1.3</target>" +
-                  "        </configuration>" +
-                  "     </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertEquals("-Xmm500m -target 1.3 -Xms128m", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING);
-  }
-
-  public void testSettingTargetLevelAtMinimalSpecified() throws Exception {
+  public void testSettingTargetLevelFromParent() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -886,26 +873,31 @@ public class StructureImportingTest extends MavenImportingTestCase {
                      "<modules>" +
                      "  <module>m1</module>" +
                      "  <module>m2</module>" +
-                     "</modules>");
+                     "</modules>" +
+
+                     "<properties>" +
+                     "<maven.compiler.target>1.3</maven.compiler.target>" +
+                     "</properties>");
 
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
                           "<version>1</version>" +
 
-                          "<build>" +
-                          "  <plugins>" +
-                          "    <plugin>" +
-                          "      <artifactId>maven-compiler-plugin</artifactId>" +
-                          "        <configuration>" +
-                          "          <target>1.3</target>" +
-                          "        </configuration>" +
-                          "     </plugin>" +
-                          "  </plugins>" +
-                          "</build>");
+                          "<parent>" +
+                            "<groupId>test</groupId>" +
+                            "<artifactId>project</artifactId>" +
+                            "<version>1</version>" +
+                          "</parent>");
 
     createModulePom("m2", "<groupId>test</groupId>" +
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>" +
+
+                          "<parent>" +
+                            "<groupId>test</groupId>" +
+                            "<artifactId>project</artifactId>" +
+                            "<version>1</version>" +
+                          "</parent>" +
 
                           "<build>" +
                           "  <plugins>" +
@@ -920,76 +912,9 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     importProject();
 
-    assertEquals("-target 1.3", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING);
-  }
-
-  public void testSettingTargetLevelAtMinimalSpecifiedButNoLessThanMaximumSourceLevel() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<build>" +
-                          "  <plugins>" +
-                          "    <plugin>" +
-                          "      <artifactId>maven-compiler-plugin</artifactId>" +
-                          "        <configuration>" +
-                          "          <target>1.3</target>" +
-                          "          <source>1.3</source>" +
-                          "        </configuration>" +
-                          "     </plugin>" +
-                          "  </plugins>" +
-                          "</build>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<build>" +
-                          "  <plugins>" +
-                          "    <plugin>" +
-                          "      <artifactId>maven-compiler-plugin</artifactId>" +
-                          "        <configuration>" +
-                          "          <target>1.5</target>" +
-                          "          <source>1.5</source>" +
-                          "        </configuration>" +
-                          "     </plugin>" +
-                          "  </plugins>" +
-                          "</build>");
-
-    importProject();
-
-    assertEquals("-target 1.5", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING);
-  }
-
-  public void testRewritingIncorrectTargetLevel() throws Exception {
-    JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = "-Xmm500m -target ${undefined.variable} -Xms128m";
-
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "        <configuration>" +
-                  "          <target>1.3</target>" +
-                  "        </configuration>" +
-                  "     </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-
-    assertEquals("-Xmm500m -target 1.3 -Xms128m", JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING);
+    assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("project")));
+    assertEquals("1.3", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+    assertEquals("1.5", CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m2")));
   }
 
   public void testProjectWithBuiltExtension() throws Exception {

@@ -110,7 +110,7 @@ class OptimizedFileManager extends DefaultFileManager {
   private boolean isFile(File root) {
     Boolean cachedIsFile = myIsFile.get(root);
     if (cachedIsFile == null) {
-      cachedIsFile = root.isFile();
+      cachedIsFile = Boolean.valueOf(root.isFile());
       myIsFile.put(root, cachedIsFile);
     }
     return cachedIsFile.booleanValue();

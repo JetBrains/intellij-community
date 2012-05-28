@@ -49,7 +49,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/sqljet_fix.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/sqljet.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

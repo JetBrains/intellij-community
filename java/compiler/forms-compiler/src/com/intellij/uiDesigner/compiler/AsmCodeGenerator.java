@@ -858,7 +858,7 @@ public class AsmCodeGenerator {
         pushBorderProperties(container, generator, borderTitle, componentLocal);
 
         if (Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) {
-          container.getDelegeeClientProperties().put(ourBorderFactoryClientProperty, "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+          container.getDelegeeClientProperties().put(ourBorderFactoryClientProperty, StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"));
         }
 
         Type borderFactoryType = ourBorderFactoryType;

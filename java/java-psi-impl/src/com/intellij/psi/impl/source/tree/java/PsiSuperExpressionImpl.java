@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiSuperExpression, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSuperExpressionImpl");
@@ -38,17 +41,20 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
 
   @Override
   public PsiType getType() {
-    PsiJavaCodeReferenceElement qualifier = getQualifier();
-    if (qualifier != null){
+    final PsiJavaCodeReferenceElement qualifier = getQualifier();
+    if (qualifier != null) {
       final PsiElement aClass = qualifier.resolve();
-      return aClass instanceof PsiClass ? getSuperType((PsiClass)aClass) : null;
+      if (!(aClass instanceof PsiClass)) return null;
+      return getSuperType((PsiClass)aClass, PsiUtil.isLanguageLevel8OrHigher(this));
     }
-    for(PsiElement scope = getContext(); scope != null; scope = scope.getContext()){
-      if (scope instanceof PsiClass){
-        PsiClass aClass = (PsiClass)scope;
-        return getSuperType(aClass);
+
+    for (PsiElement scope = getContext(); scope != null; scope = scope.getContext()) {
+      if (scope instanceof PsiClass) {
+        final PsiClass aClass = (PsiClass)scope;
+        return getSuperType(aClass, false);
       }
-      if (scope instanceof PsiExpressionList && scope.getParent() instanceof PsiAnonymousClass){
+      if (scope instanceof PsiExpressionList && scope.getParent() instanceof PsiAnonymousClass) {
+        //noinspection AssignmentToForLoopParameter
         scope = scope.getParent();
       }
       else if (scope instanceof JavaCodeFragment) {
@@ -56,55 +62,56 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
         if (fragmentSuperType != null) return fragmentSuperType;
       }
     }
+
     return null;
   }
 
-  private PsiType getSuperType(PsiClass aClass) {
+  @Nullable
+  private PsiType getSuperType(PsiClass aClass, boolean checkImmediateSuperInterfaces) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return null;
+
+    final PsiClass containingClass = checkImmediateSuperInterfaces ? PsiTreeUtil.getParentOfType(this, PsiClass.class) : null;
+    if (containingClass != null) {
+      final PsiClassType[] superTypes;
+      if (containingClass.isInterface()) {
+        superTypes = containingClass.getExtendsListTypes();
+      }
+      else if (containingClass instanceof PsiAnonymousClass) {
+        superTypes = new PsiClassType[]{((PsiAnonymousClass)containingClass).getBaseClassType()};
+      }
+      else {
+        superTypes = containingClass.getImplementsListTypes();
+      }
+
+      for (PsiClassType superType : superTypes) {
+        final PsiClass superClass = superType.resolve();
+        if (superClass != null && superClass.isInterface() && aClass.equals(superClass)) return superType;
+      }
+    }
+
     if (aClass.isInterface()) {
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      return facade.getElementFactory().createType(facade.findClass("java.lang.Object", getResolveScope()));
+      return PsiType.getJavaLangObject(getManager(), getResolveScope());
     }
 
     if (aClass instanceof PsiAnonymousClass) {
       final PsiClassType baseClassType = ((PsiAnonymousClass)aClass).getBaseClassType();
       final PsiClass psiClass = baseClassType.resolve();
-      if(psiClass != null && !psiClass.isInterface()){
-        return baseClassType;
-      }
-
-      return PsiType.getJavaLangObject(getManager(), getResolveScope());
+      return psiClass != null && !psiClass.isInterface() ? baseClassType : PsiType.getJavaLangObject(getManager(), getResolveScope());
     }
 
-    if ("java.lang.Object".equals(aClass.getQualifiedName())) return null;
-    PsiClassType[] superTypes = aClass.getExtendsListTypes();
-    if (superTypes.length == 0) {
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      final PsiClass javaLangObject = facade.findClass("java.lang.Object", getResolveScope());
-      if (javaLangObject != null) {
-        return facade.getElementFactory().createType(javaLangObject);
-      }
-      else {
-        return null;
-      }
-    }
-
-    return superTypes[0];
+    final PsiClassType[] superTypes = aClass.getExtendsListTypes();
+    return superTypes.length == 0 ? PsiType.getJavaLangObject(getManager(), getResolveScope()) : superTypes[0];
   }
 
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch(role){
+    switch (role) {
       default:
         return null;
 
       case ChildRole.QUALIFIER:
-        if (getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE){
-          return getFirstChildNode();
-        }
-        else{
-          return null;
-        }
+        return getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE ? getFirstChildNode() : null;
 
       case ChildRole.DOT:
         return findChildByType(DOT);

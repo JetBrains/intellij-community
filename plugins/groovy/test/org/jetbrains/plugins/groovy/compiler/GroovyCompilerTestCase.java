@@ -51,6 +51,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -184,8 +185,10 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         final ContentEntry entry = model.addContentEntry(depRoot);
         entry.addSourceFolder(depRoot, false);
         model.setSdk(ModuleRootManager.getInstance(myModule).getSdk());
-
         model.commit();
+
+        IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel());
+
         result.setResult(dep);
       }
     }.execute().getResultObject();
@@ -208,9 +211,15 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   }
 
   @Nullable protected VirtualFile findClassFile(String className) {
-    final CompilerModuleExtension extension = ModuleRootManager.getInstance(myModule).getModuleExtension(CompilerModuleExtension.class);
+    return findClassFile(className, myModule);
+  }
+  @Nullable protected VirtualFile findClassFile(String className, Module module) {
     //noinspection ConstantConditions
-    return extension.getCompilerOutputPath().findChild(className + ".class");
+    VirtualFile path = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+    path.getChildren();
+    assert path != null;
+    path.refresh(false, true);
+    return path.findChild(className + ".class");
   }
 
   protected static void touch(VirtualFile file) throws IOException {

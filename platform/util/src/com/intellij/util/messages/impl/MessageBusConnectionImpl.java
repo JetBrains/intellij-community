@@ -34,12 +34,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.messages.impl.MessageBusConnectionImpl");
 
   private final MessageBusImpl myBus;
-  private final ThreadLocal<Queue<Message>> myPendingMessages = new ThreadLocal<Queue<Message>>() {
-    @Override
-    protected Queue<Message> initialValue() {
-      return new ConcurrentLinkedQueue<Message>();
-    }
-  };
+  private final ThreadLocal<Queue<Message>> myPendingMessages = new QueueThreadLocal();
   private MessageHandler myDefaultHandler;
   private final Map<Topic, Object> mySubscriptions = new HashMap<Topic, Object>();
 
@@ -128,5 +123,12 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
 
   public String toString() {
     return mySubscriptions.keySet().toString();
+  }
+
+  private static class QueueThreadLocal extends ThreadLocal<Queue<Message>> {
+    @Override
+    protected Queue<Message> initialValue() {
+      return new ConcurrentLinkedQueue<Message>();
+    }
   }
 }

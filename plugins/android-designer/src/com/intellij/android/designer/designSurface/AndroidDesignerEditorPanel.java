@@ -20,7 +20,11 @@ import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
-import com.intellij.android.designer.model.*;
+import com.intellij.android.designer.inspection.ErrorAnalyzer;
+import com.intellij.android.designer.model.IConfigurableComponent;
+import com.intellij.android.designer.model.ModelParser;
+import com.intellij.android.designer.model.PropertyParser;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
@@ -36,6 +40,7 @@ import com.intellij.designer.palette.Item;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -499,5 +504,16 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     finally {
       myPSIChangeListener.start();
     }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Inspections
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  public void loadInspections(ProgressIndicator progress) {
+    ErrorAnalyzer.load(myXmlFile, myRootComponent, progress);
   }
 }

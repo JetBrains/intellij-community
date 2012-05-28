@@ -45,12 +45,39 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   public String getPlaceholderText(@NotNull final ASTNode node) {
     final StringBuilder builder = new StringBuilder();
     ASTNode child = node.getFirstChildNode();
-    String text;
-    while (child != null && (text = child.getText()) != null &&  !text.contains("\n")){
-      builder.append(text);
+    while (child != null) {
+      String text = child.getText();
+      if (text == null) {
+        if (builder.length() > 0) {
+          break;
+        }
+      }
+      else if (!text.contains("\n")) {
+        builder.append(text);
+      }
+      else if (builder.length() > 0) {
+        builder.append(text.substring(0, text.indexOf('\n')));
+        break;
+      }
+      else {
+        builder.append(getFirstNonEmptyLine(text));
+        if (builder.length() > 0) {
+          break;
+        }
+      }
       child = child.getTreeNext();
     }
     return builder.toString();
+  }
+
+  @NotNull
+  private static String getFirstNonEmptyLine(@NotNull final String text) {
+    int start = 0;
+    int end;
+    while ((end = text.indexOf('\n', start)) != -1 && start >= end) {
+      start = end + 1;
+    }
+    return end == -1 ? text.substring(start) : text.substring(start, end);
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {

@@ -16,6 +16,7 @@
 package com.intellij.util.download.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
+import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.download.*;
@@ -40,10 +41,14 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
   @Override
   public DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
                                                                                            @NotNull URL... localUrls) {
-    return new FileSetVersionsFetcherBase<DownloadableFileSetDescription>(groupId, localUrls) {
+    return new FileSetVersionsFetcherBase<DownloadableFileSetDescription, DownloadableFileDescription>(groupId, localUrls) {
       @Override
       protected DownloadableFileSetDescription createVersion(Artifact version, List<DownloadableFileDescription> files) {
-        return new DownloadableFileSetDescriptionImpl(version.getName(), version.getVersion(), files);
+        return new DownloadableFileSetDescriptionImpl<DownloadableFileDescription>(version.getName(), version.getVersion(), files);
+      }
+
+      protected DownloadableFileDescription createFileDescription(ArtifactItem item, String url, String prefix) {
+        return getInstance().createFileDescription(url, item.getName());
       }
     };
   }

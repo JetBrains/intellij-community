@@ -1,1 +1,0 @@
-myObject=[value 1]

@@ -231,7 +231,7 @@ public class MoveClassesOrPackagesUtil {
     if (!moveDestination.equals(file.getContainingDirectory())) {
       LOG.assertTrue(file.getVirtualFile() != null, aClass);
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
-      if (file instanceof PsiClassOwner && newPackage != null) {
+      if (file instanceof PsiClassOwner && newPackage != null && !JspPsiUtil.isInJspFile(file)) {
         ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
       }
     }

@@ -59,11 +59,19 @@ public class RemoteServer {
       final String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
       registry.bind(name, stub);
 
-      System.out.println("Port/ID: " + port + "/" + name);
+      String id = port + "/" + name;
+      System.out.println("Port/ID: " + id);
 
+      long waitTime = 2 * 60 * 1000L;
       Object lock = new Object();
-      synchronized (lock) {
-        lock.wait();
+      //noinspection InfiniteLoopStatement
+      while (true) {
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (lock) {
+          lock.wait(waitTime);
+        }
+        RemoteDeadHand deadHand = (RemoteDeadHand)registry.lookup(RemoteDeadHand.BINDING_NAME);
+        waitTime = deadHand.ping(id);
       }
     }
     catch (Throwable e) {

@@ -21,7 +21,6 @@ import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.download.DownloadableFileDescription;
-import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import com.intellij.util.download.DownloadableFileSetVersions;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class FileSetVersionsFetcherBase<F extends DownloadableFileSetDescription> implements DownloadableFileSetVersions<F> {
+public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetDescription, F extends DownloadableFileDescription> implements DownloadableFileSetVersions<FS> {
   private static final Comparator<DownloadableFileSetDescription> VERSIONS_COMPARATOR = new Comparator<DownloadableFileSetDescription>() {
     @Override
     public int compare(DownloadableFileSetDescription o1, DownloadableFileSetDescription o2) {
@@ -52,7 +51,7 @@ public abstract class FileSetVersionsFetcherBase<F extends DownloadableFileSetDe
   }
 
   @Override
-  public void fetchVersions(@NotNull final FileSetVersionsCallback<F> callback) {
+  public void fetchVersions(@NotNull final FileSetVersionsCallback<FS> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -63,10 +62,10 @@ public abstract class FileSetVersionsFetcherBase<F extends DownloadableFileSetDe
         else {
           versions = LibrariesDownloadAssistant.getVersions(myLocalUrls);
         }
-        final List<F> result = new ArrayList<F>();
+        final List<FS> result = new ArrayList<FS>();
         for (Artifact version : versions) {
           final ArtifactItem[] items = version.getItems();
-          final List<DownloadableFileDescription> files = new ArrayList<DownloadableFileDescription>();
+          final List<F> files = new ArrayList<F>();
           for (ArtifactItem item : items) {
             String url = item.getUrl();
             final String prefix = version.getUrlPrefix();
@@ -75,13 +74,11 @@ public abstract class FileSetVersionsFetcherBase<F extends DownloadableFileSetDe
                 url = prefix + item.getName();
               }
             } else {
-              if (!url.startsWith("http://") && prefix != null) {
-                url = prefix + url;
-              }
+              url = prependPrefix(url, prefix);
             }
             assert url != null;
 
-            files.add(DownloadableFileService.getInstance().createFileDescription(url, item.getName()));
+            files.add(createFileDescription(item, url, prefix));
           }
           result.add(createVersion(version, files));
         }
@@ -91,5 +88,15 @@ public abstract class FileSetVersionsFetcherBase<F extends DownloadableFileSetDe
     });
   }
 
-  protected abstract F createVersion(Artifact version, List<DownloadableFileDescription> files);
+  @NotNull
+  protected static String prependPrefix(@NotNull String url, @Nullable String prefix) {
+    if (!url.startsWith("http://") && prefix != null) {
+      url = prefix + url;
+    }
+    return url;
+  }
+
+  protected abstract F createFileDescription(ArtifactItem item, String url, @Nullable String prefix);
+
+  protected abstract FS createVersion(Artifact version, List<F> files);
 }
