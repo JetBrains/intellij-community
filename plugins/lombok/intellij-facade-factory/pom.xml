@@ -30,20 +30,22 @@
     </dependency>
 
     <dependency>
-      <groupId>com.intellij.idea</groupId>
-      <artifactId>openapi</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>idea-openapi</artifactId>
+      <type>pom</type>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>util</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>idea</artifactId>
+      <type>pom</type>
     </dependency>
   </dependencies>
 

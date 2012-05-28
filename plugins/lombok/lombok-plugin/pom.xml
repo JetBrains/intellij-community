@@ -35,24 +35,31 @@
     </dependency>
 
     <dependency>
-      <groupId>com.intellij.idea</groupId>
-      <artifactId>openapi</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>idea-openapi</artifactId>
+      <type>pom</type>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>util</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>idea</artifactId>
+      <type>pom</type>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>extensions</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.thirdparty</groupId>
+      <artifactId>trove4j</artifactId>
     </dependency>
 
     <dependency>
@@ -62,10 +69,6 @@
     <dependency>
       <groupId>org.jdom</groupId>
       <artifactId>jdom</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>gnu.trove</groupId>
-      <artifactId>trove</artifactId>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>

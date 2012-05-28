@@ -18,40 +18,39 @@
     </dependency>
 
     <dependency>
-      <groupId>com.intellij.idea</groupId>
-      <artifactId>openapi</artifactId>
+      <groupId>org.jetbrains.idea</groupId>
+      <artifactId>idea-openapi</artifactId>
       <version>${idea9.version}</version>
-      <scope>provided</scope>
+      <type>pom</type>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>extensions</artifactId>
       <version>${idea9.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>util</artifactId>
       <version>${idea9.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>annotations</artifactId>
       <version>${idea9.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
+      <groupId>org.jetbrains.idea</groupId>
       <artifactId>idea</artifactId>
       <version>${idea9.version}</version>
-      <scope>provided</scope>
+      <type>pom</type>
     </dependency>
     <dependency>
-      <groupId>com.intellij.idea</groupId>
-      <artifactId>trove</artifactId>
+      <groupId>org.jetbrains.thirdparty</groupId>
+      <artifactId>trove4j</artifactId>
       <version>${idea9.version}</version>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

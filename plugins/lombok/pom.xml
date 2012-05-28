@@ -44,35 +44,6 @@
 
   <profiles>
     <profile>
-      <id>mpl</id>
-      <activation>
-        <property>
-          <name>env.COMPUTERNAME</name>
-          <value>MOSKAU</value>
-        </property>
-      </activation>
-      <properties>
-        <idea9.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea9.version}</idea9.home>
-        <idea10.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea10.version}</idea10.home>
-        <idea11.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea11.version}</idea11.home>
-      </properties>
-    </profile>
-    <profile>
-      <id>mpl2</id>
-      <activation>
-        <property>
-          <name>env.COMPUTERNAME</name>
-          <value>MPL</value>
-        </property>
-      </activation>
-      <properties>
-        <idea9.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea9.version}</idea9.home>
-        <idea10.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea10.version}</idea10.home>
-        <idea11.home>C:/Program Files (x86)/JetBrains/IntelliJ IDEA Community Edition ${idea11.version}</idea11.home>
-      </properties>
-    </profile>
-
-    <profile>
       <id>intellij-last</id>
       <activation>
         <property>
@@ -112,283 +83,6 @@
         <plugin.supported.build.from>93.13</plugin.supported.build.from>
         <plugin.supported.build.to>96.0</plugin.supported.build.to>
       </properties>
-    </profile>
-
-    <profile>
-      <!--
-        Run this profile first to install intellij dependencies into local maven repository
-        Just execute : mvn initialize -Pinit
-      -->
-      <id>init</id>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-install-plugin</artifactId>
-            <inherited>false</inherited>
-            <executions>
-              <!-- Install IntelliJ 9 artifacts-->
-              <execution>
-                <id>install_openapi9</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea9.home}/lib/openapi.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>openapi</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea9.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_extensions9</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea9.home}/lib/extensions.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>extensions</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea9.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_util9</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea9.home}/lib/util.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>util</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea9.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_annotations9</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea9.home}/lib/annotations.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>annotations</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea9.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_idea9</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea9.home}/lib/idea.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>idea</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea9.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_trove9</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea9.home}/lib/trove4j.jar</file>
-                  <sources>${idea9.home}/lib/trove4j_src.jar</sources>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>trove</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea9.version}</version>
-                </configuration>
-              </execution>
-              <!-- Install IntelliJ 10 artifacts-->
-              <execution>
-                <id>install_openapi10</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea10.home}/lib/openapi.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>openapi</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea10.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_extensions10</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea10.home}/lib/extensions.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>extensions</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea10.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_util10</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea10.home}/lib/util.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>util</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea10.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_annotations10</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea10.home}/lib/annotations.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>annotations</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea10.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_idea10</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea10.home}/lib/idea.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>idea</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea10.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_trove10</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea10.home}/lib/trove4j.jar</file>
-                  <sources>${idea10.home}/lib/trove4j_src.jar</sources>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>trove</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea10.version}</version>
-                </configuration>
-              </execution>
-              <!-- Install IntelliJ 11 artifacts-->
-              <execution>
-                <id>install_openapi11</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea11.home}/lib/openapi.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>openapi</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea11.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_extensions11</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea11.home}/lib/extensions.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>extensions</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea11.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_util11</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea11.home}/lib/util.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>util</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea11.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_annotations11</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea11.home}/lib/annotations.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>annotations</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea11.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_idea11</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea11.home}/lib/idea.jar</file>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>idea</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea11.version}</version>
-                </configuration>
-              </execution>
-              <execution>
-                <id>install_trove11</id>
-                <phase>initialize</phase>
-                <goals>
-                  <goal>install-file</goal>
-                </goals>
-                <configuration>
-                  <file>${idea11.home}/lib/trove4j.jar</file>
-                  <sources>${idea11.home}/lib/trove4j_src.jar</sources>
-                  <groupId>com.intellij.idea</groupId>
-                  <artifactId>trove</artifactId>
-                  <packaging>jar</packaging>
-                  <version>${idea11.version}</version>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-
-        </plugins>
-      </build>
     </profile>
 
     <profile>
@@ -448,7 +142,7 @@
   <properties>
     <idea9.version>9.0.4</idea9.version>
     <idea10.version>10.5.4</idea10.version>
-    <idea11.version>117.359</idea11.version>
+    <idea11.version>11.1.2</idea11.version>
 
     <!-- maven.build.timestamp since 2.1.0-M1 -->
     <maven.min.version>2.1.0</maven.min.version>
@@ -544,64 +238,60 @@
 
       <!-- === IntelliJ IDEA === -->
       <dependency>
-        <groupId>com.intellij.idea</groupId>
-        <artifactId>openapi</artifactId>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>idea-openapi</artifactId>
         <version>${idea.version}</version>
-        <scope>provided</scope>
+        <type>pom</type>
       </dependency>
       <dependency>
-        <groupId>com.intellij.idea</groupId>
+        <groupId>org.jetbrains.idea</groupId>
         <artifactId>extensions</artifactId>
         <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>com.intellij.idea</groupId>
+        <groupId>org.jetbrains.idea</groupId>
         <artifactId>util</artifactId>
         <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>com.intellij.idea</groupId>
+        <groupId>org.jetbrains.idea</groupId>
         <artifactId>annotations</artifactId>
         <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>com.intellij.idea</groupId>
+        <groupId>org.jetbrains.idea</groupId>
         <artifactId>idea</artifactId>
         <version>${idea.version}</version>
+        <type>pom</type>
         <scope>provided</scope>
       </dependency>
 
       <!--Experimental dependencies for tests-->
       <dependency>
-        <groupId>com.intellij.idea</groupId>
+        <groupId>org.jetbrains.idea</groupId>
         <artifactId>bootstrap</artifactId>
-        <version>${idea10.version}</version>
-        <scope>system</scope>
-        <systemPath>${idea10.home}/lib/bootstrap.jar</systemPath>
+        <version>${idea.version}</version>
       </dependency>
       <dependency>
-        <groupId>gnu.trove</groupId>
-        <artifactId>trove</artifactId>
-        <version>${idea10.version}</version>
+        <groupId>org.jetbrains.thirdparty</groupId>
+        <artifactId>trove4j</artifactId>
+        <version>${idea.version}</version>
         <scope>system</scope>
-        <systemPath>${idea10.home}/lib/trove4j.jar</systemPath>
+        <systemPath>D:/Projekte/Idea/ideaIC-117.418/lib/trove4j.jar</systemPath>
       </dependency>
+
       <dependency>
         <groupId>org.picocontainer</groupId>
         <artifactId>picocontainer</artifactId>
-        <version>${idea10.version}</version>
-        <scope>system</scope>
-        <systemPath>${idea10.home}/lib/picocontainer.jar</systemPath>
+        <version>1.2</version>
       </dependency>
       <dependency>
         <groupId>org.jdom</groupId>
         <artifactId>jdom</artifactId>
-        <version>${idea10.version}</version>
-        <scope>system</scope>
-        <systemPath>${idea10.home}/lib/jdom.jar</systemPath>
+        <version>1.1</version>
       </dependency>
 
       <!-- general and test dependencies-->
