@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public class PsiJavaPatterns extends StandardPatterns{
     return psiLiteral(null);
   }
 
-  public static PsiJavaElementPattern.Capture<PsiLiteral> psiLiteral(final ElementPattern value) {
+  public static PsiJavaElementPattern.Capture<PsiLiteral> psiLiteral(@Nullable final ElementPattern value) {
     return new PsiJavaElementPattern.Capture<PsiLiteral>(new InitialPatternConditionPlus<PsiLiteral>(PsiLiteral.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o instanceof PsiLiteral && (value == null || value.accepts(((PsiLiteral)o).getValue(), context));
@@ -100,12 +100,10 @@ public class PsiJavaPatterns extends StandardPatterns{
     });
   }
 
-
-  public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(final ElementPattern value) {
+  public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression(@Nullable final ElementPattern value) {
     return new PsiJavaElementPattern.Capture<PsiLiteralExpression>(new InitialPatternConditionPlus<PsiLiteralExpression>(PsiLiteralExpression.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof PsiLiteralExpression
-               && (value == null || value.accepts(((PsiLiteralExpression)o).getValue(), context));
+        return o instanceof PsiLiteralExpression && (value == null || value.accepts(((PsiLiteralExpression)o).getValue(), context));
       }
 
       @Override

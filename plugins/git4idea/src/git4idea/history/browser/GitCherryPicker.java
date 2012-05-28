@@ -497,20 +497,19 @@ public class GitCherryPicker {
         final Collection<Document> committingDocs = markCommittingDocs();
         try {
           CheckinEnvironment ce = myPlatformFacade.getVcs(myProject).getCheckinEnvironment();
-          if (ce != null && ce instanceof GitCheckinEnvironment) {
-            try {
-              ((GitCheckinEnvironment)ce).reset();
-              List<VcsException> exceptions = ce.commit(myChanges, myCommitMessage);
-              VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(myChanges), null);
-              if (exceptions != null && !exceptions.isEmpty()) {
-                VcsException exception = exceptions.get(0);
-                handleError(exception);
-              }
+          LOG.assertTrue(ce != null && ce instanceof GitCheckinEnvironment, "Invalid CheckinEnvironment: " + ce);
+          try {
+            ((GitCheckinEnvironment)ce).reset();
+            List<VcsException> exceptions = ce.commit(myChanges, myCommitMessage);
+            VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(myChanges), null);
+            if (exceptions != null && !exceptions.isEmpty()) {
+              VcsException exception = exceptions.get(0);
+              handleError(exception);
             }
-            catch (Throwable e) {
-              LOG.error(e);
-              handleError(e);
-            }
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+            handleError(e);
           }
         }
         finally {

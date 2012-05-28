@@ -65,6 +65,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
 
   private static void addAllIfNotPresent(Collection<String> collection, String... annotations) {
     for (String annotation : annotations) {
+      LOG.assertTrue(annotation != null);
       if (!collection.contains(annotation)) {
         collection.add(annotation);
       }
