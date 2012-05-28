@@ -16,11 +16,19 @@
 
 class C {
   interface I {
+    int i = 42;
     void m() default { }
   }
 
   interface II extends I {
-    void m() default { I.super.m(); }
+    void m() default {
+      I.super.m();
+      <error descr="Unqualified super reference is not allowed in extension method">super.m</error>();
+
+      System.out.println(I.super.i);
+      System.out.println<error descr="Cannot resolve method 'println(?)'">(<error descr="Unqualified super reference is not allowed in extension method">super.i</error>)</error>;
+    }
+
     void ma();
   }
 

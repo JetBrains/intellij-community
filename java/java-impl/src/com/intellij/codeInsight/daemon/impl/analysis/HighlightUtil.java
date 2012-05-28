@@ -1324,10 +1324,21 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkThisOrSuperExpressionInIllegalContext(PsiExpression expr,
                                                                          @Nullable PsiJavaCodeReferenceElement qualifier) {
-    if (expr instanceof PsiSuperExpression && !(expr.getParent() instanceof PsiReferenceExpression)) {
-      // like in 'Object o = super;'
-      final int o = expr.getTextRange().getEndOffset();
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, o, o + 1, JavaErrorMessages.message("dot.expected.after.super.or.this"));
+    if (expr instanceof PsiSuperExpression) {
+      final PsiElement parent = expr.getParent();
+      if (!(parent instanceof PsiReferenceExpression)) {
+        // like in 'Object o = super;'
+        final int o = expr.getTextRange().getEndOffset();
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, o, o + 1, JavaErrorMessages.message("dot.expected.after.super.or.this"));
+      }
+
+      if (PsiUtil.isLanguageLevel8OrHigher(expr)) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
+        if (PsiUtil.isExtensionMethod(method) && qualifier == null) {
+          //todo[r.sh] "Add qualifier" quick fix
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parent, JavaErrorMessages.message("unqualified.super.disallowed"));
+        }
+      }
     }
 
     final PsiClass aClass;
