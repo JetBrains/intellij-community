@@ -111,7 +111,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                                     final boolean forStatic,
                                                     @NotNull final PsiClass parentClass) {
     return IntroduceFieldDialog.
-      createGenerator(forStatic, localVariable, initializer, localVariable != null, null, parentClass).
+      createGenerator(forStatic, localVariable, initializer, localVariable != null, null, parentClass, parentClass.getProject()).
       getSuggestedNameInfo(defaultType);
   }
 
