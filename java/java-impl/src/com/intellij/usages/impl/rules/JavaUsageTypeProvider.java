@@ -219,8 +219,11 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
 
     final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
     if (psiNewExpression != null) {
-      final PsiJavaCodeReferenceElement classReference = psiNewExpression.getClassReference();
+      final PsiJavaCodeReferenceElement classReference = psiNewExpression.getClassOrAnonymousClassReference();
       if (classReference != null && PsiTreeUtil.isAncestor(classReference, element, false)) {
+        if (isAnonymousClassOf(psiNewExpression.getAnonymousClass(), targets)) {
+          return UsageType.CLASS_ANONYMOUS_NEW_OPERATOR;
+        }
         if (isInnerClassOf(classReference, targets)) {
           return UsageType.CLASS_INNER_NEW_OPERATOR;
         }
@@ -234,20 +237,29 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return null;
   }
 
-  private static boolean isInnerClassOf(PsiJavaCodeReferenceElement classReference, @Nullable UsageTarget[] targets) {
-    if (targets == null) {
+  private static boolean isAnonymousClassOf(@Nullable PsiAnonymousClass anonymousClass, @NotNull UsageTarget[] targets) {
+    if (anonymousClass == null) {
       return false;
     }
-    PsiElement qualifier = classReference.getQualifier();
+
+    return qualifiesToTargetClasses(anonymousClass.getBaseClassReference(), targets);
+  }
+
+  private static boolean isInnerClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
+    final PsiElement qualifier = classReference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
-      for (UsageTarget target : targets) {
-        if (target instanceof PsiElementUsageTarget) {
-          PsiElement element = ((PsiElementUsageTarget)target).getElement();
-          if (element instanceof PsiClass) {
-            String name = target.getName();
-            if (Comparing.equal(((PsiJavaCodeReferenceElement)qualifier).getReferenceName(), name)) {
-              return true;
-            }
+      return qualifiesToTargetClasses((PsiJavaCodeReferenceElement)qualifier, targets);
+    }
+    return false;
+  }
+
+  private static boolean qualifiesToTargetClasses(@NotNull PsiJavaCodeReferenceElement qualifier, @NotNull UsageTarget[] targets) {
+    for (UsageTarget target : targets) {
+      if (target instanceof PsiElementUsageTarget) {
+        PsiElement element = ((PsiElementUsageTarget)target).getElement();
+        if (element instanceof PsiClass) {
+          if (Comparing.equal(qualifier.getReferenceName(), target.getName())) {
+            return true;
           }
         }
       }
