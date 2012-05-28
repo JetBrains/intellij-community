@@ -109,11 +109,16 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
       mySelectionDecorator = new GridSelectionDecorator(Color.red, 1) {
         @Override
         public Rectangle getCellBounds(Component layer, RadComponent component) {
-          RadGridLayoutComponent parent = (RadGridLayoutComponent)component.getParent();
-          GridInfo gridInfo = parent.getGridInfo();
-          Rectangle cellInfo = RadGridLayoutComponent.getCellInfo(component);
+          try {
+            RadGridLayoutComponent parent = (RadGridLayoutComponent)component.getParent();
+            GridInfo gridInfo = parent.getGridInfo();
+            Rectangle cellInfo = RadGridLayoutComponent.getCellInfo(component);
 
-          return calculateBounds(layer, gridInfo, parent, component, cellInfo.y, cellInfo.x, cellInfo.height, cellInfo.width);
+            return calculateBounds(layer, gridInfo, parent, component, cellInfo.y, cellInfo.x, cellInfo.height, cellInfo.width);
+          }
+          catch (Throwable e) {
+            return new Rectangle();
+          }
         }
       };
     }
