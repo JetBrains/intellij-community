@@ -216,8 +216,8 @@
     <module>resources</module>
     <module>resources-en</module>
 
-    <module>idea-openapi</module>
-    <module>idea</module>
+    <module>distribution/idea-openapi/${idea.version}</module>
+    <module>distribution/idea/${idea.version}</module>
 
     <!--<module>idea_rt</module>-->
     <!--<module>jps-server</module>-->
