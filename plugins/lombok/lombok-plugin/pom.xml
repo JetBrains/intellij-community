@@ -38,15 +38,18 @@
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>idea-openapi</artifactId>
       <type>pom</type>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>util</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>idea</artifactId>
       <type>pom</type>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
@@ -55,6 +58,7 @@
     <dependency>
       <groupId>org.jetbrains.idea</groupId>
       <artifactId>extensions</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
