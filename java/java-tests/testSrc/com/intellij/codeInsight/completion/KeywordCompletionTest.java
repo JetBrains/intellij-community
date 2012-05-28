@@ -86,6 +86,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testContinue() throws Exception { doTest(false); }
   public void testThrowsOnSeparateLine() throws Exception { doTest(false); }
   public void testDefaultInAnno() throws Exception { doTest(false); }
+  public void testDefaultInExtMethod() throws Exception { doTest(false); }
   public void testNullInMethodCall() throws Exception { doTest(false); }
   public void testNullInMethodCall2() throws Exception { doTest(false); }
 
