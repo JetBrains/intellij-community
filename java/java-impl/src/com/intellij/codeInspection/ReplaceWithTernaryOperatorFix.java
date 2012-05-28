@@ -89,8 +89,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
     );
 
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformat(conditionalExpression);
-    return (PsiConditionalExpression)expression.replace(conditionalExpression);
+    return (PsiConditionalExpression)expression.replace( codeStyleManager.reformat(conditionalExpression));
   }
 
   public static boolean isAvailable(@NotNull PsiExpression qualifier, @NotNull PsiExpression expression) {
