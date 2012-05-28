@@ -26,20 +26,20 @@ PyFile:MissingParenInCall.py
               PsiElement(Py:COMMA)(',')
               PsiErrorElement:expression expected
                 <empty list>
+          PsiWhiteSpace('\n\n')
           PsiErrorElement:Colon expected
             <empty list>
-          PsiWhiteSpace('\n\n')
           PyStatementList
             <empty list>
-      PyFunction('clean')
-        PsiElement(Py:DEF_KEYWORD)('def')
-        PsiWhiteSpace(' ')
-        PsiElement(Py:IDENTIFIER)('clean')
-        PyParameterList
-          PsiElement(Py:LPAR)('(')
-          PsiElement(Py:RPAR)(')')
-        PsiElement(Py:COLON)(':')
-        PsiWhiteSpace('\n    ')
-        PyStatementList
-          PyPassStatement
-            PsiElement(Py:PASS_KEYWORD)('pass')
+  PyFunction('clean')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('clean')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyPassStatement
+        PsiElement(Py:PASS_KEYWORD)('pass')
