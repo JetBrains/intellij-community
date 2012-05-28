@@ -87,8 +87,8 @@ public class BreakpointItemsTree extends CheckboxTree {
     }
     //TreeUtil.sort(myRoot, myComparator);
     ((DefaultTreeModel)getModel()).nodeStructureChanged(myRoot);
-    expandPath(new TreePath(myRoot));
     state.applyTo(this, myRoot);
+    TreeUtil.expandAll(this);
   }
 
 
@@ -114,21 +114,23 @@ public class BreakpointItemsTree extends CheckboxTree {
       groups = Collections.emptyList();
     }
 
-
-    Collection<XBreakpointGroup> filtered = new ArrayList<XBreakpointGroup>();
-    for (XBreakpointGroup group : groups) {
-      TreeNode parent = myGroupNodes.get(group).getParent();
-      if ((parentGroup == null && parent == myRoot) || ((BreakpointsGroupNode)parent).getGroup() == parentGroup) {
-        filtered.add(group);
-      }
-    }
-
-
-    XBreakpointGroup group = groupingRule.getGroup(breakpoint.getBreakpoint(), filtered);
+    XBreakpointGroup group = groupingRule.getGroup(breakpoint.getBreakpoint(), filterByParent(parentGroup, groups));
     if (group != null) {
       myGroups.put(groupingRule, group);
     }
     return group;
+  }
+
+  private Collection<XBreakpointGroup> filterByParent(XBreakpointGroup parentGroup, Collection<XBreakpointGroup> groups) {
+    Collection<XBreakpointGroup> filtered = new ArrayList<XBreakpointGroup>();
+    for (XBreakpointGroup group : groups) {
+      TreeNode parentNode = myGroupNodes.get(group).getParent();
+      BreakpointsGroupNode parent = parentNode instanceof BreakpointsGroupNode ? (BreakpointsGroupNode)parentNode : null;
+      if ((parentGroup == null && parentNode == myRoot) || (parent != null && parent.getGroup() == parentGroup)) {
+        filtered.add(group);
+      }
+    }
+    return filtered;
   }
 
   private <G extends XBreakpointGroup> BreakpointsGroupNode<G> getOrCreateGroupNode(CheckedTreeNode parent, final G group,
