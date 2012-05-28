@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import jsr166e.SequenceLock;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author max
@@ -42,7 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class PagedFileStorage implements Forceable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagedFileStorage");
 
-  private static final int MB = 1024 * 1024;
+  public static final int MB = 1024 * 1024;
 
   private final static int LOWER_LIMIT;
   private final static int UPPER_LIMIT;
@@ -604,11 +604,11 @@ public class PagedFileStorage implements Forceable {
   }
 
   public static class StorageLockContext {
-    private final ReentrantLock myReentrantLock;
+    private final SequenceLock myReentrantLock;
     private final StorageLock myLock;
 
     public StorageLockContext(StorageLock lock) {
-      myReentrantLock = new ReentrantLock();
+      myReentrantLock = new SequenceLock();
       myLock = lock;
     }
   }
