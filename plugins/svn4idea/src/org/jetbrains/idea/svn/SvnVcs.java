@@ -229,7 +229,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       myEntriesFileListener = new SvnEntriesFileListener(project);
       upgradeIfNeeded(bus);
 
-      myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
+      myChangeListListener = new SvnChangelistListener(myProject, this);
 
       myVcsListener = new VcsListener() {
         public void directoryMappingChanged() {
