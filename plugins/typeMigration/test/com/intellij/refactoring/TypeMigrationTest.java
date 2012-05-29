@@ -182,7 +182,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testT31() throws Exception {
     doTestFieldType("f",
                     myJavaFacade.getElementFactory().createTypeFromText("Test", null),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   //non code usages
@@ -253,7 +253,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   //long l; Object o = l -> long l; Long o = l;
   public void testT43() throws Exception {
     doTestFieldType("o",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Long", null));
   }
 
@@ -274,7 +274,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //o = null -? int o = null
   public void testT47() throws Exception {
-    doTestFieldType("o", myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null), PsiType.INT);
+    doTestFieldType("o", myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null), PsiType.INT);
   }
 
   //co-variant/contra-variant assignments: leave types if possible change generics signature only  48-49
@@ -303,13 +303,13 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testT51() throws Exception {
     doTestFieldType("f",
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null).createArrayType());
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null).createArrayType());
   }
 
   public void testT52() throws Exception {
     doTestFieldType("f",
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null).createArrayType());
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null).createArrayType());
   }
 
   //generic type promotion to array initializer
@@ -345,7 +345,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testT58() throws Exception {
     doTestFieldType("f",
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testT59() throws Exception {
@@ -357,7 +357,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testT60() throws Exception {
     doTestFieldType("p",
                     PsiType.INT.createArrayType(),
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   //change parameter type -> vararg; assignment changed to array
@@ -367,7 +367,8 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //change field type -> change vararg parameter type due to assignment: 62-63
   public void testT62() throws Exception {
-    doTestFieldType("p", PsiType.INT.createArrayType(), myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+    doTestFieldType("p", PsiType.INT.createArrayType(), myJavaFacade.getElementFactory().createTypeFromText(
+      CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testT63() throws Exception {
@@ -387,7 +388,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testT115() throws Exception {
     doTestFirstParamType("foo",
-                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null)),
+                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null)),
                          new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null)));
   }
 
@@ -397,7 +398,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testT67() throws Exception {
     doTestFirstParamType("methMemAcc",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
@@ -446,7 +447,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //+= , etc 77-78
   public void testT77() throws Exception {
-    doTestFirstParamType("meth", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+    doTestFirstParamType("meth", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testT78() throws Exception {
@@ -463,19 +464,19 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   public void testT83() throws Exception {
-    doTestFirstParamType("meth", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+    doTestFirstParamType("meth", PsiType.INT, myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   //instanceofs 81-82
   public void testT81() throws Exception {
     doTestFirstParamType("foo",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                          myJavaFacade.getElementFactory().createTypeFromText("A", null));
   }
 
   public void testT82() throws Exception {
     doTestFirstParamType("foo",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                          myJavaFacade.getElementFactory().createTypeFromText("C", null));
   }
 

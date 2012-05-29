@@ -4,6 +4,8 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.psi.CommonClassNames;
+
 public class WildcardTypeMigrationTest extends TypeMigrationTestBase{
   @Override
   protected String getTestRoot() {
@@ -130,7 +132,7 @@ public class WildcardTypeMigrationTest extends TypeMigrationTestBase{
 
   public void testGetAssignmentExtendsToSuperType() throws Exception {
     doTestFirstParamType("method", myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<? extends java.lang.Number>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null).createArrayType());
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null).createArrayType());
   }
 
   public void testGetAssignmentExtendsToChildType() throws Exception {

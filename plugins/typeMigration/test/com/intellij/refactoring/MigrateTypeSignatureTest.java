@@ -4,6 +4,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiType;
 
@@ -51,7 +52,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprCalcBooleanNumeric() throws Exception {
     doTestFirstParamType("meth", "Expr", PsiType.INT,
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testExprCalcBooleanReference() throws Exception {
@@ -88,7 +89,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprConcatNumeric2Reference() throws Exception {
     doTestFirstParamType("meth", "Expr", PsiType.INT, 
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testExprConcatNumeric2String() throws Exception {
@@ -105,7 +106,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   public void testExprConcatString2Reference() throws Exception {
     doTestFirstParamType("meth", "Expr",
                          myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null));
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null));
   }
 
   public void testExprInstanceofNeg() throws Exception {
@@ -122,97 +123,97 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprLiteralBoolean() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     PsiType.BOOLEAN);
   }
 
   public void testExprLiteralByte() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     PsiType.BYTE);
   }
 
   public void testExprLiteralChar() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     PsiType.CHAR);
   }
 
   public void testExprLiteralClassExtends() throws Exception {
     doTestFieldType("myField", "Expr",
-        myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+        myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<? extends java.util.Collection[]>", null));
   }
 
   public void testExprLiteralClassPrimitive() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<Integer>", null));
   }
 
   public void testExprLiteralClassPrimitiveArray() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<int[]>", null));
   }
 
   public void testExprLiteralClassRaw() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class", null));
   }
 
   public void testExprLiteralClassReference() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<java.util.Set>", null));
   }
 
   public void testExprLiteralClassReferenceArray() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<java.util.Set[]>", null));
   }
 
   public void testExprLiteralClassSuper() throws Exception {
     doTestFieldType("myField", "Expr",
-        myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+        myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Class<? super java.util.AbstractSet[]>", null));
   }
 
   public void testExprLiteralDouble() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     PsiType.DOUBLE);
   }
 
   public void testExprLiteralFloat() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     PsiType.FLOAT);
   }
 
   public void testExprLiteralInt() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     PsiType.INT);
   }
 
   public void testExprLiteralLong() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     PsiType.LONG);
   }
 
   public void testExprLiteralShort() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     PsiType.SHORT);
   }
 
   public void testExprLiteralString() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
@@ -258,19 +259,19 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprNewGen() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
   }
 
   public void testExprNewGenExtends() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends Subject>", null));
   }
 
   public void testExprNewGenSuper() throws Exception {
     doTestFieldType("myField", "Expr",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? super Subject>", null));
   }
 

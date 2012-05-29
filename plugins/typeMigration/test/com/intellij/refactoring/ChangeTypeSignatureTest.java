@@ -52,7 +52,7 @@ public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
   }
 
   private void doTest(boolean success) throws Exception {
-    doTest(success, "java.lang.Object");
+    doTest(success, CommonClassNames.JAVA_LANG_OBJECT);
   }
 
   public void testListTypeArguments() throws Exception {
