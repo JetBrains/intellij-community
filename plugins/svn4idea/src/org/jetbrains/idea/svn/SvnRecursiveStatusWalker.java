@@ -67,23 +67,35 @@ public class SvnRecursiveStatusWalker {
           myHandler.checkIfCopyRootWasReported();
         }
         catch (SVNException e) {
-          if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-            final VirtualFile virtualFile = path.getVirtualFile();
-            if (virtualFile != null) {
-              if (myPartner.isExcluded(virtualFile)) return;
-              // self is unversioned
-              myReceiver.processUnversioned(virtualFile);
-
-              processRecursively(virtualFile, item.getDepth());
-            }
-          } else {
-            throw e;
-          }
+          handleStatusException(item, path, e);
         }
       } else {
-        final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
-        myReceiver.process(path, status);
+        try {
+          final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
+          myReceiver.process(path, status);
+        } catch (SVNException e) {
+          handleStatusException(item, path, e);
+        }
       }
+    }
+  }
+
+  private void handleStatusException(MyItem item, FilePath path, SVNException e) throws SVNException {
+    final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+    if (SVNErrorCode.WC_NOT_DIRECTORY.equals(errorCode) || SVNErrorCode.WC_NOT_FILE.equals(errorCode)) {
+      final VirtualFile virtualFile = path.getVirtualFile();
+      if (virtualFile != null) {
+        if (! myPartner.isExcluded(virtualFile)) {
+          // self is unversioned
+          myReceiver.processUnversioned(virtualFile);
+
+          if (virtualFile.isDirectory()) {
+            processRecursively(virtualFile, item.getDepth());
+          }
+        }
+      }
+    } else {
+      throw e;
     }
   }
 
