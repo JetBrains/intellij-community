@@ -18,7 +18,6 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,10 +54,10 @@ public class MockChangelistBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path, FileStatus fileStatus) {
+  public void removeRegisteredChangeFor(FilePath path) {
     for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext(); ) {
       final Change change = iterator.next();
-      if (path.equals(ChangesUtil.getFilePath(change)) && change.getFileStatus().equals(fileStatus)) {
+      if (path.equals(ChangesUtil.getFilePath(change))) {
         iterator.remove();
         return;
       }
