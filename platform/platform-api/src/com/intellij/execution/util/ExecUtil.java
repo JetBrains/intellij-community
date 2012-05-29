@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -165,6 +166,9 @@ public class ExecUtil {
     if (SystemInfo.isMac) {
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
       return execAndGetOutput(Arrays.asList(getOsascriptPath(), "-e", script), workDir);
+    }
+    else if ("root".equals(System.getenv("USER"))) {
+      return execAndGetOutput(Collections.singletonList(scriptPath), workDir);
     }
     else if (hasKdeSudo.getValue()) {
       return execAndGetOutput(Arrays.asList("kdesudo", "--comment", prompt, scriptPath), workDir);

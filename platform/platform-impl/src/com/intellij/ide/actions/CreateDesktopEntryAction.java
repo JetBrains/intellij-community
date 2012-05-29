@@ -40,7 +40,6 @@ import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.script.ScriptException;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +53,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   private static final int MIN_ICON_SIZE = 32;
 
   public static boolean isAvailable() {
-    return SystemInfo.hasXdgOpen();
+    return SystemInfo.isUnix && SystemInfo.hasXdgOpen();
   }
 
   @Override
@@ -202,19 +201,20 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     return null;
   }
 
-  private static void install(final File entryFile, final boolean globalEntry) throws IOException, ExecutionException, InterruptedException, ScriptException {
+  private static void install(final File entryFile, final boolean globalEntry) throws IOException, ExecutionException, InterruptedException {
     try {
-      final int result;
       if (globalEntry) {
         final String source = "#!/bin/sh\n" +
-                               "xdg-desktop-menu install --mode system \"" + entryFile.getAbsolutePath() + "\"";
+                              "xdg-desktop-menu install --mode system \"" + entryFile.getAbsolutePath() + "\"";
         final File script = ExecUtil.createTempExecutableScript("sudo", ".sh", source);
-        result = ExecUtil.sudoAndGetResult(script.getAbsolutePath(), ApplicationBundle.message("desktop.entry.sudo.prompt"));
+        script.deleteOnExit();
+        final int result = ExecUtil.sudoAndGetResult(script.getAbsolutePath(), ApplicationBundle.message("desktop.entry.sudo.prompt"));
+        if (result != 0) throw new RuntimeException("'" + script.getAbsolutePath() + "' : " + result);
       }
       else {
-        result = ExecUtil.execAndGetResult("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath());
+        final int result = ExecUtil.execAndGetResult("xdg-desktop-menu", "install", "--mode", "user", entryFile.getAbsolutePath());
+        if (result != 0) throw new RuntimeException("'" + entryFile.getAbsolutePath() + "' : " + result);
       }
-      if (result != 0) throw new RuntimeException("'" + entryFile.getAbsolutePath() + "' : " + result);
     }
     finally {
       if (!entryFile.delete()) LOG.error("Failed to delete temp file '" + entryFile + "'");
