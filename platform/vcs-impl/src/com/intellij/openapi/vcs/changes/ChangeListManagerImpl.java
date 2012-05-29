@@ -644,7 +644,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     if (myUpdater.isStopped()) throw new DisposedException();
   }
 
-  static boolean isUnder(final Change change, final VcsDirtyScope scope) {
+  public static boolean isUnder(final Change change, final VcsDirtyScope scope) {
     final ContentRevision before = change.getBeforeRevision();
     final ContentRevision after = change.getAfterRevision();
     return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
