@@ -15,17 +15,15 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
-import com.intellij.psi.scope.BaseScopeProcessor;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 
 import java.util.Iterator;
@@ -49,13 +47,19 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       if (((JavaCodeFragment)file).getVisibilityChecker() != null) place = null;
     }
     myPlace = place;
-    if (place instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression expression = (PsiReferenceExpression)place;
-      final PsiExpression qualifierExpression = expression.getQualifierExpression();
-      if (qualifierExpression != null) {
-        final PsiType type = qualifierExpression.getType();
+    if (place instanceof PsiJavaCodeReferenceElement) {
+      final PsiJavaCodeReferenceElement expression = (PsiJavaCodeReferenceElement)place;
+      final PsiElement qualifierExpression = expression.getQualifier();
+      if (qualifierExpression instanceof PsiExpression) {
+        final PsiType type = ((PsiExpression)qualifierExpression).getType();
         if (type instanceof PsiClassType) {
           myAccessClass = ((PsiClassType)type).resolve();
+        }
+      }
+      else if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
+        final PsiElement resolve = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
+        if (resolve instanceof PsiClass) {
+          myAccessClass = (PsiClass)resolve;
         }
       }
     }
@@ -132,13 +136,23 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
 
     final PsiClass containingClass1 = aClass.getContainingClass();
     final PsiClass containingClass2 = otherClass.getContainingClass();
-    if (containingClass1 != null && containingClass2 != null && containingClass2.isInheritor(containingClass1, true) &&
-        !isImported(myCurrentFileContext)) {
-      // shadowing
-      return Domination.DOMINATED_BY;
+    if (myAccessClass != null && !Comparing.equal(containingClass1, containingClass2)) {
+      if (myAccessClass.equals(containingClass1)) return Domination.DOMINATES;
+      if (myAccessClass.equals(containingClass2)) return Domination.DOMINATED_BY;
     }
 
-    boolean infoAccessible = info.isAccessible();
+    //JLS 8.5:
+    //A class may inherit two or more type declarations with the same name, either from two interfaces or from its superclass and an interface. 
+    //It is a compile-time error to attempt to refer to any ambiguously inherited class or interface by its simple name.
+    if (containingClass1 != null && containingClass2 != null && containingClass2.isInheritor(containingClass1, true) &&
+        !isImported(myCurrentFileContext)) {
+      if (!isAmbiguousInherited(containingClass1)) {
+        // shadowing
+        return Domination.DOMINATED_BY;
+      }
+    }
+
+    boolean infoAccessible = info.isAccessible() && !otherClass.hasModifierProperty(PsiModifier.PRIVATE);
     if (infoAccessible && !accessible) {
       return Domination.DOMINATED_BY;
     }
@@ -169,6 +183,17 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     return Domination.EQUAL;
   }
 
+  private boolean isAmbiguousInherited(PsiClass containingClass1) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class);
+    while (psiClass != null) {
+      if (psiClass.isInheritor(containingClass1, false)) {
+        return true;
+      }
+      psiClass = psiClass.getContainingClass();
+    }
+    return false;
+  }
+
   @Override
   public boolean execute(PsiElement element, ResolveState state) {
     if (!(element instanceof PsiClass)) return true;
@@ -187,7 +212,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
         for (int i = myCandidates.size()-1; i>=0; i--) {
           ClassCandidateInfo info = myCandidates.get(i);
 
-          Domination domination = dominates(aClass, accessible, fqName, info);
+          Domination domination = dominates(aClass, accessible && !aClass.hasModifierProperty(PsiModifier.PRIVATE), fqName, info);
           if (domination == Domination.DOMINATED_BY) {
             return true;
           }
@@ -202,7 +227,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     myHasInaccessibleCandidate |= !accessible;
     myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
     myResult = null;
-    if (!accessible) return true;
+    if (!accessible || aClass.hasModifierProperty(PsiModifier.PRIVATE)) return true;
     return myCurrentFileContext instanceof PsiImportStatementBase;
   }
 
@@ -219,6 +244,23 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       }
     }
 
+    /* if (myPlace instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement element =
+        PsiTreeUtil.skipParentsOfType(myPlace, PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiReferenceParameterList.class);
+      if (element instanceof PsiReferenceList) {
+        final PsiElement pparent = element.getParent();
+        if (pparent instanceof PsiClass) {
+          final PsiClass parentClass = (PsiClass)pparent;
+          if (element.equals(parentClass.getExtendsList()) || element.equals(parentClass.getImplementsList())) {          
+            final PsiClass containingClass = aClass.getContainingClass();
+            if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, parentClass, false)) {
+              final PsiElement qualifier = ((PsiJavaCodeReferenceElement)myPlace).getQualifier();
+              if (qualifier instanceof PsiReference && parentClass == ((PsiReference)qualifier).resolve()) return false;
+            }
+          }
+        }
+      }
+    }*/
     boolean accessible = true;
     if (aClass instanceof PsiTypeParameter) {
       accessible = !myStaticContext;

@@ -194,6 +194,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDefaultPackageClassInStaticImport() throws Exception { doTest(false, false); }
 
   public void testUnusedParamsOfPublicMethod() throws Exception { doTest(true, false); }
+  public void testInnerClassesShadowing() throws Exception { doTest(false, false); }
 
   public void testUnusedParamsOfPublicMethodDisabled() throws Exception {
     myUnusedSymbolLocalInspection.REPORT_PARAMETER_FOR_PUBLIC_METHODS = false;
