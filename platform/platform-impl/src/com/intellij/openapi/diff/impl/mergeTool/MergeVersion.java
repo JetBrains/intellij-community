@@ -101,7 +101,7 @@ public interface MergeVersion {
     }
 
     public static void reportProjectFileChangeIfNeeded(Project project, VirtualFile file) {
-      if (file != null) {
+      if (file != null && ! file.isDirectory()) {
         if (ProjectUtil.isProjectOrWorkspaceFile(file) || isProjectFile(file)) {
           ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
         }
@@ -112,7 +112,7 @@ public interface MergeVersion {
     public static Runnable prepareToReportChangedProjectFiles(final Project project, final Collection<VirtualFile> files) {
       final Set<VirtualFile> vfs = new HashSet<VirtualFile>();
       for (VirtualFile vf : files) {
-        if (vf != null) {
+        if (vf != null && ! vf.isDirectory()) {
           if (ProjectUtil.isProjectOrWorkspaceFile(vf) || isProjectFile(vf)) {
             vfs.add(vf);
           }
