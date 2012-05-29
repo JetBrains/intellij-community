@@ -303,6 +303,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitAssertStatement(GrAssertStatement assertStatement) {
     final GrExpression assertion = assertStatement.getAssertion();
     if (assertion != null) {
+      myConditions.push(addNodeAndCheckPending(new ConditionInstruction(assertion, myInstructionNumber++)));
       assertion.accept(this);
       final InstructionImpl assertInstruction = startNode(assertStatement);
       GrExpression errorMessage = assertStatement.getErrorMessage();
@@ -418,7 +419,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitInstanceofExpression(GrInstanceOfExpression expression) {
     expression.getOperand().accept(this);
     final ConditionInstruction cond = myConditions.peek();
-    addNode(new InstanceOfInstruction(myInstructionNumber++, expression, cond));
+    if (cond != null) {
+      addNode(new InstanceOfInstruction(myInstructionNumber++, expression, cond));
+    }
   }
 
   public void visitReferenceExpression(GrReferenceExpression refExpr) {
@@ -476,7 +479,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final IElementType opType = expression.getOperationTokenType();
 
     final ConditionInstruction cond;
-    if (opType == mLOR /*|| opType == mLAND*/) {
+    if (opType == mLOR || opType == mLAND) {
       cond = addNodeAndCheckPending(new ConditionInstruction(expression, myInstructionNumber++));
       registerCondition(cond);
     }
@@ -493,9 +496,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (right != null) {
       if (cond != null) {
         final InstructionImpl head = myHead;
-        /*if (opType == mLAND) {
+        if (opType == mLAND) {
           first = addNodeAndCheckPending(new NegatingGotoInstruction(expression, myInstructionNumber++, cond));
-        }*/
+        }
         addPendingEdge(expression, myHead);
         myHead = head;
         if (opType == mLOR) {
@@ -546,12 +549,27 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     InstructionImpl thenEnd = null;
     InstructionImpl elseEnd = null;
 
+    List<NegatingGotoInstruction> pendingNegations = new ArrayList<NegatingGotoInstruction>();
     ConditionInstruction conditionStart = null;
     if (condition != null) {
+      final List<Pair<InstructionImpl, GroovyPsiElement>> oldPending = myPending;
+      myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+
       conditionStart = addNodeAndCheckPending(new ConditionInstruction(condition, myInstructionNumber++));
       registerCondition(conditionStart);
       condition.accept(this);
       conditionEnd = myHead;
+
+      List<Pair<InstructionImpl, GroovyPsiElement>> pendingFromCondition = myPending;
+      myPending = oldPending;
+      for (Pair<InstructionImpl, GroovyPsiElement> pair : pendingFromCondition) {
+        if (pair.first instanceof NegatingGotoInstruction) {
+          pendingNegations.add((NegatingGotoInstruction)pair.first);
+        }
+        else {
+          addPendingEdge(pair.second, pair.first);
+        }
+      }
     }
 
     if (thenBranch != null) {
@@ -569,6 +587,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       myHead = head;
     }
 
+    for (NegatingGotoInstruction negation : pendingNegations) {
+      assert condition != null;
+      addPendingEdge(condition, negation);
+    }
     if (elseBranch != null) {
       elseBranch.accept(this);
       handlePossibleReturn(elseBranch);
