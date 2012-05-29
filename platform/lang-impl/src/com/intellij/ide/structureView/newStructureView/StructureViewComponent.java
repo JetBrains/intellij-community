@@ -159,10 +159,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
 
-    JComponent toolbarComponent =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.STRUCTURE_VIEW_TOOLBAR, createActionGroup(), true).getComponent();
-    setToolbar(toolbarComponent);
-
     installTree();
 
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, getTree()) {
@@ -375,7 +371,22 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
   }
 
+  public ActionGroup getGearActions() {
+    return createActionGroup(true);
+  }
+
+  public AnAction[] getTitleActions() {
+    return new AnAction[]{
+      new ExpandAllAction(getTree()),
+      new CollapseAllAction(getTree())
+    };
+  }
+
   protected ActionGroup createActionGroup() {
+    return createActionGroup(false);
+  }
+
+  protected ActionGroup createActionGroup(boolean togglesOnly) {
     DefaultActionGroup result = new DefaultActionGroup();
     Sorter[] sorters = myTreeModel.getSorters();
     for (final Sorter sorter : sorters) {
@@ -387,10 +398,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       result.addSeparator();
     }
 
-    Grouper[] groupers = myTreeModel.getGroupers();
-    for (Grouper grouper : groupers) {
-      result.add(new TreeActionWrapper(grouper, this));
-    }
+    addGroupByActions(result);
+
     Filter[] filters = myTreeModel.getFilters();
     for (Filter filter : filters) {
       result.add(new TreeActionWrapper(filter, this));
@@ -402,8 +411,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
     }
 
-    result.add(new ExpandAllAction(getTree()));
-    result.add(new CollapseAllAction(getTree()));
+    if (!togglesOnly) {
+      result.add(new ExpandAllAction(getTree()));
+      result.add(new CollapseAllAction(getTree()));
+    }
+
     if (showScrollToFromSourceActions()) {
       result.addSeparator();
 
@@ -411,6 +423,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       result.add(myAutoScrollFromSourceHandler.createToggleAction());
     }
     return result;
+  }
+
+  protected void addGroupByActions(DefaultActionGroup result) {
+    Grouper[] groupers = myTreeModel.getGroupers();
+    for (Grouper grouper : groupers) {
+      result.add(new TreeActionWrapper(grouper, this));
+    }
   }
 
   protected boolean showScrollToFromSourceActions() {

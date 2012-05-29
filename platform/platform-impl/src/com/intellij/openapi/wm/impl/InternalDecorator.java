@@ -39,6 +39,7 @@ import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -856,7 +857,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
   }
   
-  public void setAdditionalGearActions(ActionGroup additionalGearActions) {
+  public void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions) {
     myAdditionalGearActions = additionalGearActions;
   }
 }

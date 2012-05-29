@@ -23,6 +23,7 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -46,10 +47,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -67,7 +67,7 @@ import java.util.List;
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
   private final Project myProject;
-  private final ToolWindow myToolWindow;
+  private final ToolWindowEx myToolWindow;
 
   private VirtualFile myFile;
 
@@ -85,7 +85,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private Runnable myPendingSelection;
   private boolean myFirstRun = true;
 
-  public StructureViewWrapperImpl(Project project, ToolWindow toolWindow) {
+  public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
     
@@ -113,6 +113,20 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       public void hierarchyChanged(HierarchyEvent e) {
         if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
           scheduleRebuild();
+        }
+      }
+    });
+    myToolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void selectionChanged(ContentManagerEvent event) {
+        if (myStructureView instanceof StructureViewComposite) {
+          StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureView).getStructureViews();
+          for (StructureViewComposite.StructureViewDescriptor view : views) {
+            if (view.title.equals(event.getContent().getTabName())) {
+              updateHeaderActions(view.structureView);
+              break;
+            }
+          }
         }
       }
     });
@@ -261,6 +275,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
           final StructureViewBuilder structureViewBuilder = editor.getStructureViewBuilder();
           if (structureViewBuilder != null) {
             myStructureView = structureViewBuilder.createStructureView(editor, myProject);
+
+            updateHeaderActions(myStructureView);
+
             if (myStructureView instanceof StructureView.Scrollable) {
               ((StructureView.Scrollable)myStructureView).setReferenceSizeWhileInitializing(referenceSize);
             }
@@ -310,6 +327,17 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       myPendingSelection = null;
       selection.run();
     }
+  }
+
+  private void updateHeaderActions(StructureView structureView) {
+    ActionGroup gearActions = null;
+    AnAction[] titleActions = AnAction.EMPTY_ARRAY;
+    if (structureView instanceof StructureViewComponent) {
+      gearActions = ((StructureViewComponent)structureView).getGearActions();
+      titleActions = ((StructureViewComponent)structureView).getTitleActions();
+    }
+    myToolWindow.setAdditionalGearActions(gearActions);
+    myToolWindow.setTitleActions(titleActions);
   }
 
   private void createSinglePanel(final JComponent component) {

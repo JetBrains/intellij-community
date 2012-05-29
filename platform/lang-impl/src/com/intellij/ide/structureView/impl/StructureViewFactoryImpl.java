@@ -29,7 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +93,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     myState = state;
   }
 
-  public void initToolWindow(ToolWindow toolWindow) {
+  public void initToolWindow(ToolWindowEx toolWindow) {
     myStructureViewWrapperImpl = new StructureViewWrapperImpl(myProject, toolWindow);
     if (myRunWhenInitialized != null) {
       myRunWhenInitialized.run();
