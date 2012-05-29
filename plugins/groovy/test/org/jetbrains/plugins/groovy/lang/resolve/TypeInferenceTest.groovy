@@ -478,10 +478,66 @@ use(Cat){
 ''', "$JAVA_UTIL_ARRAY_LIST<$JAVA_UTIL_ARRAY_LIST<$JAVA_LANG_INTEGER>>")
   }
 
+  void testInstanceOfInferring1() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo instanceof String || oo != null
+  o<caret>o
+}
+''', null)
+  }
+
+  void testInstanceOfInferring2() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo instanceof String || o<caret>o != null
+  oo
+}
+''', null)
+  }
+
+  void testInstanceOfInferring3() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo instanceof String && o<caret>o != null
+  oo
+}
+''', String.canonicalName)
+  }
+
+  void testInstanceOfInferring4() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo instanceof String && oo != null
+  o<caret>o
+}
+''', null)
+  }
+
+  void testInstanceOfInferring5() {
+    doTest('''\
+def foo(def oo) {
+  if (oo instanceof String && oo instanceof CharSequence) {
+    oo
+  }
+  else {
+    o<caret>o
+  }
+
+}
+''', null)
+  }
+
   private void doTest(String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
     def actual = ref.type
+    if (type == null) {
+      assertNull(actual)
+      return
+    }
+
+    assertNotNull(actual)
     if (actual instanceof PsiIntersectionType) {
       assertEquals(type, genIntersectionTypeText(actual))
     }

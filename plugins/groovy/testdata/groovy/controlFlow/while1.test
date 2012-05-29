@@ -7,9 +7,11 @@ while (true) {
 0(1) element: null
 1(2) WRITE i
 2(3) element: WHILE statement
-3(4,5) element: IF statement
-4(8) READ i
-5(6) element: IF statement
-6(7) READ i
-7(2) WRITE i
-8() element: null
+3(4) element: IF statement
+4(5) Condition
+5(6,10) READ i
+6(7)  Negating goto instruction, condition=4
+7(8) element: IF statement
+8(9) READ i
+9(2) WRITE i
+10() element: null

@@ -3,22 +3,24 @@ else if (!(o instanceof Integer)) b = 2
 else b = 3
 -----
 0(1) element: null
-1(2,6) element: IF statement
-2(3) READ o
-3(4) instanceof: o instanceof String
-4(5) WRITE b
-5(18) element: Assignment expression MAYBE_RETURN
-6(7) READ o
-7(8) instanceof: ! o instanceof String
-8(9,13) element: IF statement
-9(10) READ o
-10(11) instanceof: ! o instanceof Integer
-11(12) WRITE b
-12(17) element: Assignment expression MAYBE_RETURN
-13(14) READ o
-14(15) instanceof: o instanceof Integer
-15(16) WRITE b
-16(17) element: Assignment expression MAYBE_RETURN
-17(18) element: IF statement
-18(19) element: IF statement
-19() element: null
+1(2) element: IF statement
+2(3) Condition
+3(4) READ o
+4(5,7) instanceof: o instanceof String
+5(6) WRITE b
+6(20) element: Assignment expression MAYBE_RETURN
+7(8)  Negating goto instruction, condition=2
+8(9) element: IF statement
+9(10) Condition
+10(11) Condition
+11(12) READ o
+12(13) instanceof: o instanceof Integer
+13(14,16)  Negating goto instruction, condition=10
+14(15) WRITE b
+15(19) element: Assignment expression MAYBE_RETURN
+16(17)  Negating goto instruction, condition=9
+17(18) WRITE b
+18(19) element: Assignment expression MAYBE_RETURN
+19(20) element: IF statement
+20(21) element: IF statement
+21() element: null

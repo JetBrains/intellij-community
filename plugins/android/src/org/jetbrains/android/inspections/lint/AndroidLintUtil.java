@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene.Kudelevsky
  */
-class AndroidLintUtil {
+public class AndroidLintUtil {
   @NonNls static final String ATTR_VALUE_VERTICAL = "vertical";
   @NonNls static final String ATTR_VALUE_WRAP_CONTENT = "wrap_content";
   @NonNls static final String ATTR_LAYOUT_HEIGHT = "layout_height";
@@ -25,7 +25,7 @@ class AndroidLintUtil {
   }
 
   @Nullable
-  static Pair<AndroidLintInspectionBase, HighlightDisplayLevel> getHighlighLevelAndInspection(@NotNull Issue issue,
+  public static Pair<AndroidLintInspectionBase, HighlightDisplayLevel> getHighlighLevelAndInspection(@NotNull Issue issue,
                                                                                               @NotNull PsiElement context) {
     final String inspectionShortName = AndroidLintInspectionBase.getInspectionShortNameByIssue(issue);
     if (inspectionShortName == null) {

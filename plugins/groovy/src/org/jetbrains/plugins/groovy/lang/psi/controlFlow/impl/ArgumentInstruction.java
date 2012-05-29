@@ -101,6 +101,11 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
   }
 
   @Override
+  public ConditionInstruction getConditionInstruction() {
+    return null;
+  }
+
+  @Override
   protected String getElementPresentation() {
     return "ARGUMENT " + super.getElementPresentation();
   }

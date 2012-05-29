@@ -15,23 +15,30 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 /**
  * @author Max Medvedev
  */
-public interface MixinTypeInstruction extends Instruction {
-  @Nullable
-  ReadWriteVariableInstruction getInstructionToMixin(Instruction[] flow);
+public class NegatingGotoInstruction extends InstructionImpl {
+  @NotNull private final ConditionInstruction myCondition;
 
-  @Nullable
-  PsiType inferMixinType();
+  public NegatingGotoInstruction(@Nullable PsiElement element, int num, @NotNull ConditionInstruction condition) {
+    super(element, num);
+    myCondition = condition;
+  }
 
-  @Nullable
-  String getVariableName();
+  @NotNull
+  public ConditionInstruction getCondition() {
+    return myCondition;
+  }
 
-  @Nullable
-  ConditionInstruction getConditionInstruction();
+  @Override
+  protected String getElementPresentation() {
+    return " Negating goto instruction, condition=" + myCondition.num();
+  }
 }

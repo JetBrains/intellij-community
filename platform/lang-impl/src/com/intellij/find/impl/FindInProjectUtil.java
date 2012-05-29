@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,9 +163,13 @@ public class FindInProjectUtil {
 
   @NotNull
   public static List<UsageInfo> findUsages(@NotNull final FindModel findModel, final PsiDirectory psiDirectory, @NotNull final Project project) {
+    return findUsages(findModel, psiDirectory, project, true);
+  }
 
+  @NotNull
+  public static List<UsageInfo> findUsages(@NotNull final FindModel findModel, final PsiDirectory psiDirectory, @NotNull final Project project, boolean showWarnings) {
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>();
-    findUsages(findModel, psiDirectory, project, collector);
+    findUsages(findModel, psiDirectory, project, collector, showWarnings);
 
     return new ArrayList<UsageInfo>(collector.getResults());
   }
@@ -202,6 +206,15 @@ public class FindInProjectUtil {
                                 final PsiDirectory psiDirectory,
                                 @NotNull final Project project,
                                 @NotNull final Processor<UsageInfo> consumer) {
+    findUsages(findModel, psiDirectory, project, consumer, true);
+  }
+
+
+  public static void findUsages(@NotNull final FindModel findModel,
+                                final PsiDirectory psiDirectory,
+                                @NotNull final Project project,
+                                @NotNull final Processor<UsageInfo> consumer,
+                                boolean showWarnings) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
@@ -252,7 +265,7 @@ public class FindInProjectUtil {
         }
       }
 
-      if (!largeFiles.isEmpty()) {
+      if (showWarnings && !largeFiles.isEmpty()) {
         @Language("HTML")
         String message = "<html><body>";
         if (largeFiles.size() == 1) {

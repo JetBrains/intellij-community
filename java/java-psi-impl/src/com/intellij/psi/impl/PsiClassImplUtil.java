@@ -628,6 +628,7 @@ public class PsiClassImplUtil {
                                            PsiElement place,
                                            ResolveState state,
                                            boolean isRaw, PsiElementFactory factory) {
+    boolean resolved = false;
     for (final PsiClassType superType : aClass.getSuperTypes()) {
       final PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
@@ -635,10 +636,10 @@ public class PsiClassImplUtil {
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, state.get(PsiSubstitutor.KEY),
                                                                place, factory);
       if (!processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited, last, place, isRaw)) {
-        return false;
+        resolved = true;
       }
     }
-    return true;
+    return !resolved;
   }
 
   @Nullable

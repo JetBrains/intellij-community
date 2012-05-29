@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene.Kudelevsky
  */
-interface AndroidLintQuickFix {
+public interface AndroidLintQuickFix {
   AndroidLintQuickFix[] EMPTY_ARRAY = new AndroidLintQuickFix[0];
   
   void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @Nullable Editor editor);

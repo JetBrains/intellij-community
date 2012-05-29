@@ -17,8 +17,12 @@ package org.jetbrains.ether.dependencyView;
 
 import gnu.trove.TIntObjectProcedure;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -62,8 +66,21 @@ abstract class IntObjectMultiMaplet<V extends Streamable> implements Streamable 
         stream.println(context.getValue(a));
         stream.println("  Values:");
 
+        final List<String> list = new LinkedList<String> ();
+
         for (final V value : b) {
-          value.toStream(context, stream);
+          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+          final PrintStream s = new PrintStream(baos);
+
+          value.toStream(context, s);
+
+          list.add(baos.toString());
+        }
+
+        Collections.sort(list);
+
+        for (final String l : list) {
+          stream.print(l);
         }
 
         stream.println("  End Of Values");

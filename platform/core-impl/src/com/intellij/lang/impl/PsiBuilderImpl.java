@@ -809,24 +809,17 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
 
   @Override
   public final boolean eof() {
-    if (!markTokenTypeChecked()) {
+    if (!myTokenTypeChecked) {
+      myTokenTypeChecked = true;
       skipWhitespace();
     }
     return myCurrentLexeme >= myLexemeCount;
   }
 
-  public boolean markTokenTypeChecked() {
-    if (!myTokenTypeChecked) {
-      myTokenTypeChecked = true;
-      return false;
-    }
-    return true;
-  }
-
   @SuppressWarnings({"SuspiciousMethodCalls"})
   private void rollbackTo(Marker marker) {
     myCurrentLexeme = ((StartMarker)marker).myLexemeIndex;
-    markTokenTypeChecked();
+    myTokenTypeChecked = true;
     int idx = myProduction.lastIndexOf(marker);
     if (idx < 0) {
       LOG.error("The marker must be added before rolled back to.");
@@ -1072,7 +1065,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
 
   @NotNull
   private StartMarker prepareLightTree() {
-    markTokenTypeChecked();
+    myTokenTypeChecked = true;
     balanceWhiteSpaces();
 
     if (myProduction.isEmpty()) {

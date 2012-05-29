@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -60,6 +61,21 @@ public class FileReferenceUtil {
       if (ref instanceof FileReference) {
         final PsiElement file = references[i].resolve();
         return file instanceof PsiFile ? (PsiFile)file : null;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static FileReference findFileReference(@NotNull PsiElement element) {
+    final PsiReference[] references = element.getReferences();
+    for (int i = references.length - 1; i >= 0; i--) {
+      PsiReference ref = references[i];
+      if (ref instanceof PsiDynaReference) {
+        ref = ((PsiDynaReference)ref).getLastFileReference();
+      }
+      if (ref instanceof FileReference) {
+        return (FileReference)references[i];
       }
     }
     return null;

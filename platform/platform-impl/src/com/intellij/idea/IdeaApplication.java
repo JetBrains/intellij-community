@@ -138,6 +138,16 @@ public class IdeaApplication {
           setWM(xwm, "METACITY_WM");  // Mutter support absent - mimic Metacity
         }
       }
+      else if ("Muffin".equals(wmName)) {
+        // Muffin is completely unsupported at the moment - so mimic Mutter if possible, Metacity otherwise
+        try {
+          xwmClass.getDeclaredField("MUTTER_WM");
+          setWM(xwm, "MUTTER_WM");
+        }
+        catch (NoSuchFieldException e) {
+          setWM(xwm, "METACITY_WM");
+        }
+      }
       else if ("awesome".equals(wmName)) {
         try {
           xwmClass.getDeclaredField("OTHER_NONREPARENTING_WM");

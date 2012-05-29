@@ -460,7 +460,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       updateListHeight(listModel);
 
       myList.setSelectedIndex(toSelect);
-      return Arrays.equals(oldModel, items.toArray());
+      return !Arrays.equals(oldModel, items.toArray());
     }
 
   }
@@ -1260,7 +1260,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
       Rectangle rectangle = calculatePosition();
       myMaximumHeight = rectangle.height;
-      
+
       if (myResizePending || itemsChanged) {
         myResizePending = false;
         pack();

@@ -181,6 +181,7 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
     if (myContentAsText == null) {
       if (myContent != null) {
         myContentAsText = LoadTextUtil.getTextByBinaryPresentation(myContent, myCharset);
+        myContent = null; // help gc, indices are expected to use bytes or chars but not both
       }
     }
     return myContentAsText;

@@ -640,6 +640,22 @@ public class Main {
     CompileServerManager.instance.shutdownServer()
   }
 
+  public void "_test make stub-level error and correct it"() {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo { }')
+    myFixture.addFileToProject('Bar.java', 'class Bar extends Foo {}')
+
+    assertEmpty make()
+
+    setFileText(foo, 'class Foo implements Runnabl {}')
+
+    shouldFail { make() }
+
+    setFileText(foo, 'class Foo {}')
+
+    assertEmpty make()
+  }
+
+  //todo jeka: when recompiling module, delete all class files including those with excluded source
   public void "_test reporting module compile errors caused by missing files excluded from compilation"() {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
     myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo {}')

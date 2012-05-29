@@ -45,6 +45,9 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected static final int DATA_START = META_DATA_OFFSET + 16;
 
   protected final ResizeableMappedFile myStorage;
+  private final byte[] myKeyStoreFileBuffer;
+  private volatile int myKeyStoreFileLength;
+  private volatile int myKeyStoreBufferPosition;
   private final ResizeableMappedFile myKeyStorage;
 
   private boolean myClosed = false;
@@ -211,10 +214,13 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     if (myDataDescriptor instanceof InlineKeyDescriptor) {
       myKeyStorage = null;
       myKeyReadStream = null;
+      myKeyStoreFileBuffer = null;
     }
     else {
-      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), -1, false);
+      myKeyStorage = new ResizeableMappedFile(keystreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), PagedFileStorage.MB, false);
       myKeyReadStream = new MyDataIS(myKeyStorage);
+      myKeyStoreFileLength = (int)myKeyStorage.length();
+      myKeyStoreFileBuffer = new byte[initialSize];
     }
   }
 
@@ -367,19 +373,41 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     try {
       markDirty(true);
 
-      final int dataOff = myKeyStorage != null ? (int)myKeyStorage.length() : ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
+      final int dataOff = myKeyStorage != null ? myKeyStoreBufferPosition + myKeyStoreFileLength : ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
 
       if (myKeyStorage != null) {
         final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
         DataOutput out = new DataOutputStream(bos);
         myDataDescriptor.save(out, value);
-        myKeyStorage.put(dataOff, bos.getInternalBuffer(), 0, bos.size());
+        final int size = bos.size();
+        final byte[] buffer = bos.getInternalBuffer();
+
+        if (size > myKeyStoreFileBuffer.length) {
+          flushKeyStoreBuffer();
+          myKeyStorage.put(dataOff, buffer, 0, size);
+          myKeyStoreFileLength += size;
+        } else {
+          if (size > myKeyStoreFileBuffer.length - myKeyStoreBufferPosition) {
+            flushKeyStoreBuffer();
+          }
+          // myKeyStoreFileBuffer will contain complete records
+          System.arraycopy(buffer, 0, myKeyStoreFileBuffer, myKeyStoreBufferPosition, size);
+          myKeyStoreBufferPosition += size;
+        }
       }
 
       return setupValueId(hashCode, dataOff);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private void flushKeyStoreBuffer() throws IOException {
+    if (myKeyStoreBufferPosition > 0) {
+      myKeyStorage.put(myKeyStoreFileLength, myKeyStoreFileBuffer, 0, myKeyStoreBufferPosition);
+      myKeyStoreFileLength += myKeyStoreBufferPosition;
+      myKeyStoreBufferPosition = 0;
     }
   }
 
@@ -399,10 +427,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
         throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
       }
 
+      flushKeyStoreBuffer();
       myKeyStorage.force();
 
       DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(keystreamFile()),
-                                                                                                      (int)myKeyStorage.length())));
+                                                                                                      myKeyStoreFileLength)));
       try {
         try {
           while (true) {
@@ -435,7 +464,11 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
       if (myKeyReadStream == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
 
-      myKeyReadStream.setup(addr, myKeyStorage.length());
+      if (myKeyStoreFileLength <= addr) {
+        return myDataDescriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myKeyStoreFileBuffer, addr - myKeyStoreFileLength, myKeyStoreBufferPosition)));
+      }
+      // we do not need to flushKeyBuffer since we store complete records
+      myKeyReadStream.setup(addr, myKeyStoreFileLength);
       return myDataDescriptor.read(myKeyReadStream);
     }
     catch (IOException io) {
@@ -501,6 +534,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected void doClose() throws IOException {
     try {
       if (myKeyStorage != null) {
+        flushKeyStoreBuffer();
         myKeyStorage.close();
       }
       flush();
@@ -542,6 +576,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
     try {
       if (myKeyStorage != null) {
+        flushKeyStoreBuffer();
         myKeyStorage.force();
       }
       flush();

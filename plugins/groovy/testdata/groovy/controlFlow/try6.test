@@ -9,16 +9,18 @@ if (url == null) {
 return url
 -----
 0(1) element: null
-1(2,10) element: IF statement
-2(3) READ url
-3(4) element: Open block
-4(11) WRITE url
-5(6) element: Catch clause
-6(7) WRITE e
-7(8) READ e
-8(9) ARGUMENT element: Reference expression
-9(13) THROW. element: THROW statement
-10(11) element: IF statement
-11(12) READ url
-12(13) element: RETURN statement
-13() element: null
+1(2) element: IF statement
+2(3) Condition
+3(4,11) READ url
+4(5) element: Open block
+5(13) WRITE url
+6(7) element: Catch clause
+7(8) WRITE e
+8(9) READ e
+9(10) ARGUMENT element: Reference expression
+10(15) THROW. element: THROW statement
+11(12)  Negating goto instruction, condition=2
+12(13) element: IF statement
+13(14) READ url
+14(15) element: RETURN statement
+15() element: null

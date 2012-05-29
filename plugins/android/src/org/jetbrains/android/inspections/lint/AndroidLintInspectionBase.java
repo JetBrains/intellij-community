@@ -70,7 +70,12 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
   }
 
   @NotNull
-  protected IntentionAction[] getIntentions(@NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+  public AndroidLintQuickFix[] public_getQuickFixes(@NotNull String message) {
+    return getQuickFixes(message);
+  }
+
+  @NotNull
+  public IntentionAction[] getIntentions(@NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     return IntentionAction.EMPTY_ARRAY;
   }
   

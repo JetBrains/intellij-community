@@ -15,8 +15,27 @@
  */
 package com.intellij.designer.inspection;
 
+import javax.swing.*;
+
 /**
  * @author Alexander Lobas
  */
-public final class ErrorAnalyzerManager {
+public abstract class QuickFix {
+  private final String myName;
+  private final Icon myIcon;
+
+  public QuickFix(String name, Icon icon) {
+    myName = name;
+    myIcon = icon;
+  }
+
+  public final String getName() {
+    return myName;
+  }
+
+  public final Icon getIcon() {
+    return myIcon;
+  }
+
+  public abstract void run() throws Exception;
 }

@@ -31,6 +31,9 @@ public interface Instruction {
   int num();
 
   @Nullable
+  NegatingGotoInstruction getNegatingGotoInstruction();
+
+  @Nullable
   PsiElement getElement();
 
 }
