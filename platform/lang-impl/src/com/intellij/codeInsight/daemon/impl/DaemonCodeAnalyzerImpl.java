@@ -26,7 +26,6 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.concurrency.Job;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -54,7 +53,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -234,7 +232,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           if (callbackWhileWaiting != null) {
             callbackWhileWaiting.run();
           }
-          progress.waitFor(100);
+          progress.waitFor(50);
           UIUtil.dispatchAllInvocationEvents();
           Throwable savedException = PassExecutorService.getSavedException(progress);
           if (savedException != null) throw savedException;

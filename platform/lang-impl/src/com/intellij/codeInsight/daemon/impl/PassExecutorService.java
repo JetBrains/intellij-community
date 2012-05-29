@@ -384,7 +384,7 @@ public abstract class PassExecutorService implements Disposable {
       log(myUpdateProgress, myPass, "Finished. ");
 
       if (!myUpdateProgress.isCanceled()) {
-        applyInformationToEditors(myFileEditors, myPass, myUpdateProgress, myThreadsToStartCountdown);
+        applyInformationToEditorsLater(myFileEditors, myPass, myUpdateProgress, myThreadsToStartCountdown);
         for (ScheduledPass successor : mySuccessorsOnCompletion) {
           int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
           if (predecessorsToRun == 0) {
@@ -401,10 +401,10 @@ public abstract class PassExecutorService implements Disposable {
     }
   }
 
-  private void applyInformationToEditors(@NotNull final List<FileEditor> fileEditors,
-                                         @NotNull final TextEditorHighlightingPass pass,
-                                         @NotNull final DaemonProgressIndicator updateProgress,
-                                         @NotNull final AtomicInteger threadsToStartCountdown) {
+  private void applyInformationToEditorsLater(@NotNull final List<FileEditor> fileEditors,
+                                              @NotNull final TextEditorHighlightingPass pass,
+                                              @NotNull final DaemonProgressIndicator updateProgress,
+                                              @NotNull final AtomicInteger threadsToStartCountdown) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
       @Override
