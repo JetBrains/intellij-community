@@ -689,8 +689,15 @@ public class HighlightClassUtil {
       return null;
     }
     final PsiClass aClass = (PsiClass)grand;
+    final PsiClass containerClass;
     if (aClass instanceof PsiTypeParameter) {
-      return null;
+      final PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
+      if (!(owner instanceof PsiClass)) {
+        return null;
+      }
+      containerClass = (PsiClass)owner;
+    } else {
+      containerClass = aClass;
     }
     if (aClass.getExtendsList() != parent && aClass.getImplementsList() != parent) {
       return null;
@@ -713,7 +720,7 @@ public class HighlightClassUtil {
         if (resolve instanceof PsiClass) {
           final PsiClass base = (PsiClass)resolve;
           final PsiClass baseClass = base.getContainingClass();
-          if (baseClass != null && base.hasModifierProperty(PsiModifier.PRIVATE) && !PsiTreeUtil.isAncestor(baseClass, aClass, true)) {
+          if (baseClass != null && base.hasModifierProperty(PsiModifier.PRIVATE) && baseClass == containerClass) {
             String description = JavaErrorMessages.message("private.symbol",
                                                            HighlightUtil.formatClass(base),
                                                            HighlightUtil.formatClass(baseClass));
