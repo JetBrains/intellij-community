@@ -706,7 +706,7 @@ public class Messages {
                                                 @Nullable Icon icon,
                                                 String[] values,
                                                 String initialValue,
-                                                InputValidator validator) {
+                                                @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
