@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,7 +51,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   public void go(final FilePath rootPath, final SVNDepth depth) throws SVNException {
-    final MyItem root = new MyItem(myProject, rootPath, depth, myPartner.createStatusClient(), true);
+    final MyItem root = new MyItem(myProject, rootPath, depth, myPartner.createStatusClient(), false);
     myQueue.add(root);
 
     while (! myQueue.isEmpty()) {
@@ -177,7 +178,7 @@ public class SvnRecursiveStatusWalker {
     }
 
     public void checkIfCopyRootWasReported() {
-      if (! myMetCurrentItem && myCurrentItem.isIsInnerCopyRoot()) {
+      if (! myMetCurrentItem) {
         myMetCurrentItem = true;
         final SVNStatus statusInner = SvnUtil.getStatus(SvnVcs.getInstance(myProject), myCurrentItem.getPath().getIOFile());
         if (statusInner == null)  return;
@@ -200,7 +201,7 @@ public class SvnRecursiveStatusWalker {
         if (SVNStatusType.OBSTRUCTED.equals(status) || SVNStatusType.STATUS_NONE.equals(status)) {
           return;
         }
-        if (vf != null) {
+        if (vf != null && myCurrentItem.isIsInnerCopyRoot()) {
           myReceiver.processCopyRoot(vf, statusInner.getURL(),
                                      WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
         }
@@ -217,7 +218,7 @@ public class SvnRecursiveStatusWalker {
 
       if ((vFile != null) && (SvnVcs.svnStatusIsUnversioned(status))) {
         if (vFile.isDirectory()) {
-          if (myCurrentItem.getPath().getIOFile().equals(ioFile)) {
+          if (FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
             myReceiver.processUnversioned(vFile);
             processRecursively(vFile, myCurrentItem.getDepth());
           } else {
