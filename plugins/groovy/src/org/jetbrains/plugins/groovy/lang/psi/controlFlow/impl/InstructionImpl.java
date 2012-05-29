@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction;
 
 import java.util.Deque;
 import java.util.LinkedHashSet;
@@ -33,6 +34,7 @@ public class InstructionImpl implements Instruction {
 
   PsiElement myPsiElement;
   private final int myNumber;
+  private NegatingGotoInstruction myNegating;
 
   @Nullable
   public PsiElement getElement() {
@@ -91,11 +93,20 @@ public class InstructionImpl implements Instruction {
     return myNumber;
   }
 
+  @Override
+  public NegatingGotoInstruction getNegatingGotoInstruction() {
+    return myNegating;
+  }
+
   public void addSuccessor(InstructionImpl instruction) {
     mySuccessors.add(instruction);
   }
 
   public void addPredecessor(InstructionImpl instruction) {
     myPredecessors.add(instruction);
+  }
+
+  void setNegating(NegatingGotoInstruction negating) {
+    myNegating = negating;
   }
 }

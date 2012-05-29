@@ -7,19 +7,21 @@ print e
 -----
 0(1) element: null
 1(2) element: Open block
-2(3,5) element: IF statement
-3(4) READ c
-4(7) element: RETURN statement
-5(9) element: IF statement
-6(11) element: Finally clause
-7(6,8)  CALL 6
-8(17) AFTER CALL 7
-9(6,10)  CALL 6
-10(13) AFTER CALL 9
-11(12) READ e
-12(8,10)  RETURN
-13(14) READ print
-14(15) READ e
-15(16) ARGUMENT element: Reference expression
-16(17) element: Call expression MAYBE_RETURN
-17() element: null
+2(3) element: IF statement
+3(4) Condition
+4(5,6) READ c
+5(9) element: RETURN statement
+6(7)  Negating goto instruction, condition=3
+7(11) element: IF statement
+8(13) element: Finally clause
+9(8,10)  CALL 8
+10(19) AFTER CALL 9
+11(8,12)  CALL 8
+12(15) AFTER CALL 11
+13(14) READ e
+14(10,12)  RETURN
+15(16) READ print
+16(17) READ e
+17(18) ARGUMENT element: Reference expression
+18(19) element: Call expression MAYBE_RETURN
+19() element: null

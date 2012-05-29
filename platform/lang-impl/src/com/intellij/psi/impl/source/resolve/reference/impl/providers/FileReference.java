@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,20 +107,25 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   @NotNull
   protected Collection<PsiFileSystemItem> getContexts() {
     final FileReference contextRef = getContextReference();
+    ArrayList<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
+
     if (contextRef == null) {
       Collection<PsiFileSystemItem> defaultContexts = myFileReferenceSet.getDefaultContexts();
       for (PsiFileSystemItem context : defaultContexts) {
         LOG.assertTrue(context != null, myFileReferenceSet.getClass() + " provided a null context");
       }
-      return defaultContexts;
-    }
-    ResolveResult[] resolveResults = contextRef.multiResolve(false);
-    ArrayList<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
-    for (ResolveResult resolveResult : resolveResults) {
-      if (resolveResult.getElement() != null) {
-        result.add((PsiFileSystemItem)resolveResult.getElement());
+      result.addAll(defaultContexts);
+    } else {
+      ResolveResult[] resolveResults = contextRef.multiResolve(false);
+      for (ResolveResult resolveResult : resolveResults) {
+        if (resolveResult.getElement() != null) {
+          result.add((PsiFileSystemItem)resolveResult.getElement());
+        }
       }
     }
+
+    result.addAll(myFileReferenceSet.getExtraContexts());
+
     return result;
   }
 

@@ -66,7 +66,7 @@ public class ControlFlowBuilderUtil {
     int[] invpostorder = invPostorder(postorder);
 
     findReadsBeforeWrites(flow, definitelyAssigned, result, namesIndex, postorder, invpostorder);
-
+    if (result.size() == 0) return ReadWriteVariableInstruction.EMPTY_ARRAY;
     return result.toArray(new ReadWriteVariableInstruction[result.size()]);
   }
 

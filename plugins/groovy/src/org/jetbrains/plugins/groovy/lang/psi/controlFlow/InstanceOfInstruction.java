@@ -23,31 +23,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 /**
  * @author peter
  */
 public class InstanceOfInstruction extends InstructionImpl implements MixinTypeInstruction {
-  private final boolean myNegate;
+  private final ConditionInstruction myCondition;
 
-  public InstanceOfInstruction(int num, GrExpression assertion, boolean negate) {
+  public InstanceOfInstruction(int num, GrExpression assertion, ConditionInstruction cond) {
     super(assertion, num);
-    myNegate = negate;
-  }
-
-  public boolean isNegate() {
-    return myNegate;
+    myCondition = cond;
   }
 
   protected String getElementPresentation() {
-    return "instanceof: " + (myNegate ? "! " : "") + getElement().getText();
+    return "instanceof: " + getElement().getText();
   }
 
   @Nullable
   private GrInstanceOfExpression getApplicableInstanceof() {
     final PsiElement element = getElement();
-    if (element instanceof GrInstanceOfExpression && !isNegate()) {
+    if (element instanceof GrInstanceOfExpression) {
       GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
       final GrTypeElement typeElement = ((GrInstanceOfExpression)element).getTypeElement();
       if (operand instanceof GrReferenceExpression && ((GrReferenceExpression)operand).getQualifier() == null && typeElement != null) {
@@ -84,5 +81,10 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     if (instanceOf == null) return null;
 
     return instanceOf.getOperand().getText();
+  }
+
+  @Override
+  public ConditionInstruction getConditionInstruction() {
+    return myCondition;
   }
 }

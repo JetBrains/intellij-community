@@ -128,7 +128,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private Map<Module, String> getGenerationOutputs(ModuleChunk chunk, Map<Module, String> finalOutputs) throws IOException {
     Map<Module, String> generationOutputs = new HashMap<Module, String>();
     for (Module module : chunk.getModules()) {
-      generationOutputs.put(module, myForStubs ? FileUtil.createTempDirectory("groovyStubs", module.getName()).getPath() : finalOutputs.get(module));
+      generationOutputs.put(module, myForStubs ? FileUtil.createTempDirectory("groovyStubs", "__" + module.getName()).getPath() : finalOutputs.get(module));
     }
     return generationOutputs;
   }

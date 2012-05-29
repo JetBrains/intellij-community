@@ -22,4 +22,14 @@ public final class RootDescriptor {
     this.isTestRoot = isTestRoot;
     this.isGeneratedSources = isGenerated;
   }
+
+  @Override
+  public String toString() {
+    return "RootDescriptor{" +
+           "module='" + module + '\'' +
+           ", root=" + root +
+           ", test=" + isTestRoot +
+           ", generated=" + isGeneratedSources +
+           '}';
+  }
 }

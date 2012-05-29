@@ -79,7 +79,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     myVersionComboBox.setRenderer(new ListCellRendererWrapper<FrameworkLibraryVersion>(myVersionComboBox) {
       @Override
       public void customize(JList list, FrameworkLibraryVersion value, int index, boolean selected, boolean hasFocus) {
-        setText(value.getVersionString());
+        setText(value.getName() + value.getVersionString());
       }
     });
     myVersionComboBox.setSelectedItem(settings.getVersion());

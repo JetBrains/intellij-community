@@ -527,6 +527,7 @@
       <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI Inspector"/>
       <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
       <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
+      <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction" text="Find Image Duplicates"/>
       <action id="TreeExpandAll" internal="true" class="com.intellij.internal.tree.ExpandAll" text="Expand Tree" />
       <separator/>
       <reference ref="MaintenanceGroup"/>
