@@ -47,20 +47,40 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     myIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Set<Sdk> processedSdk = new THashSet<Sdk>();
     final Set<Library> processedLibraries = new THashSet<Library>();
-    final Set<Module> processedModules = new THashSet<Module>();
-    final Condition<OrderEntry> condition = new Condition<OrderEntry>() {
-      @Override
-      public boolean value(OrderEntry orderEntry) {
-        if (orderEntry instanceof ModuleOrderEntry) {
-          final Module module = ((ModuleOrderEntry)orderEntry).getModule();
-          return module != null && processedModules.add(module);
-        }
-        return true;
-      }
-    };
-    for (Module module : modules) {
-      buildEntries(module, processedModules, processedLibraries, processedSdk, condition);
-    }
+
+    ProjectRootManager.getInstance(project).orderEntries(modules).recursively().process(new RootPolicy<LinkedHashSet<VirtualFile>>() {
+          public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
+                                                                   final LinkedHashSet<VirtualFile> value) {
+            final Library library = libraryOrderEntry.getLibrary();
+            if (library != null && processedLibraries.add(library)) {
+              ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
+            }
+            return value;
+          }
+
+          public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
+                                                                        final LinkedHashSet<VirtualFile> value) {
+            ContainerUtil.addAll(value, moduleSourceOrderEntry.getFiles(OrderRootType.SOURCES));
+            return value;
+          }
+
+          @Override
+          public LinkedHashSet<VirtualFile> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, LinkedHashSet<VirtualFile> value) {
+            final Module depModule = moduleOrderEntry.getModule();
+            if (depModule != null) {
+              ContainerUtil.addAll(value, ModuleRootManager.getInstance(depModule).getSourceRoots());
+            }
+            return value;
+          }
+
+          public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
+            final Sdk jdk = jdkOrderEntry.getJdk();
+            if (jdk != null && processedSdk.add(jdk)) {
+              ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
+            }
+            return value;
+          }
+        }, myEntries);
   }
 
   public int hashCode() {
@@ -73,48 +93,6 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
     final LibraryRuntimeClasspathScope that = (LibraryRuntimeClasspathScope)object;
     return that.myModules.equals(myModules);
-  }
-
-  private void buildEntries(@NotNull final Module module,
-                            @NotNull final Set<Module> processedModules,
-                            @NotNull final Set<Library> processedLibraries,
-                            @NotNull final Set<Sdk> processedSdk,
-                            Condition<OrderEntry> condition) {
-    if (!processedModules.add(module)) return;
-
-    ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<LinkedHashSet<VirtualFile>>() {
-      public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
-                                                               final LinkedHashSet<VirtualFile> value) {
-        final Library library = libraryOrderEntry.getLibrary();
-        if (library != null && processedLibraries.add(library)) {
-          ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
-        }
-        return value;
-      }
-
-      public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
-                                                                    final LinkedHashSet<VirtualFile> value) {
-        ContainerUtil.addAll(value, moduleSourceOrderEntry.getFiles(OrderRootType.SOURCES));
-        return value;
-      }
-
-      @Override
-      public LinkedHashSet<VirtualFile> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, LinkedHashSet<VirtualFile> value) {
-        final Module depModule = moduleOrderEntry.getModule();
-        if (depModule != null) {
-          ContainerUtil.addAll(value, ModuleRootManager.getInstance(depModule).getSourceRoots());
-        }
-        return value;
-      }
-
-      public LinkedHashSet<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final LinkedHashSet<VirtualFile> value) {
-        final Sdk jdk = jdkOrderEntry.getJdk();
-        if (jdk != null && processedSdk.add(jdk)) {
-          ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));
-        }
-        return value;
-      }
-    }, myEntries);
   }
 
   public boolean contains(VirtualFile file) {
