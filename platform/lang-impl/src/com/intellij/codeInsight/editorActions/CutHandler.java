@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -55,8 +56,10 @@ public class CutHandler extends EditorWriteActionHandler {
       return;
     }
 
+    VisualPosition positionToRestore = null;
     SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+      positionToRestore = editor.getCaretModel().getVisualPosition();
       selectionModel.selectLineAtCaret();
       if (!selectionModel.hasSelection()) return;
     }
@@ -64,5 +67,8 @@ public class CutHandler extends EditorWriteActionHandler {
     EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_COPY).execute(editor, dataContext);
 
     EditorModificationUtil.deleteSelectedText(editor);
+    if (positionToRestore != null) {
+      editor.getCaretModel().moveToVisualPosition(positionToRestore);
+    }
   }
 }

@@ -18,10 +18,16 @@ package com.intellij.framework.library;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author nik
  */
 public interface FrameworkLibraryVersion extends DownloadableFileSetDescription {
   @NotNull
   String getDefaultLibraryName();
+
+  @NotNull
+  @Override
+  List<? extends DownloadableLibraryFileDescription> getFiles();
 }

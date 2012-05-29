@@ -321,8 +321,7 @@ public class CompleteReferenceExpression {
 
   private static Set<String> addAllRestrictedProperties(GrReferenceExpression place) {
     Set<String> propertyNames = new HashSet<String>();
-    final PsiElement qualifier = place.getQualifier();
-    if (qualifier == null) {
+    if (place.getQualifier()==null) {
       for (GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class);
            containingClass != null;
            containingClass = PsiTreeUtil.getParentOfType(containingClass, GrTypeDefinition.class)) {
@@ -332,6 +331,11 @@ public class CompleteReferenceExpression {
       }
     }
     return propertyNames;
+  }
+
+  private static boolean isMap(GrReferenceExpression place) {
+    final PsiType qType = GrReferenceResolveUtil.getQualifierType(place);
+    return InheritanceUtil.isInheritor(qType, CommonClassNames.JAVA_UTIL_MAP);
   }
 
   private static class CompleteReferenceProcessor extends ResolverProcessor implements Consumer<Object> {
@@ -346,6 +350,7 @@ public class CompleteReferenceExpression {
     private final Set<GrMethod> myProcessedMethodWithOptionalParams = new HashSet<GrMethod>();
     private final boolean myFieldPointerOperator;
     private final boolean myMethodPointerOperator;
+    private final boolean myIsMap;
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
@@ -355,10 +360,11 @@ public class CompleteReferenceExpression {
       myPreferredFieldNames = addAllRestrictedProperties(place);
       mySkipPackages = shouldSkipPackages(place);
       myEventListener = JavaPsiFacade.getInstance(place.getProject()).findClass("java.util.EventListener", place.getResolveScope());
-      myPropertyNames.addAll(addAllRestrictedProperties(place));
+      myPropertyNames.addAll(myPreferredFieldNames);
 
       myFieldPointerOperator = place.hasAt();
       myMethodPointerOperator = place.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
+      myIsMap = isMap(place);
     }
 
     private static boolean shouldSkipPackages(GrReferenceExpression place) {
@@ -438,12 +444,13 @@ public class CompleteReferenceExpression {
     }
 
     private void processPropertyFromField(GrField field, GroovyResolveResult resolveResult) {
-      if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName())) return;
+      if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName()) || myIsMap) return;
 
       myConsumer.consume(((LookupElementBuilder)GroovyCompletionUtil.createCompletionVariant(resolveResult)).withIcon(GroovyIcons.PROPERTY));
     }
 
     private void processProperty(PsiMethod method, GroovyResolveResult resolveResult) {
+      if (myIsMap) return;
       final LookupElementBuilder lookup = createPropertyLookupElement(method, resolveResult, myMatcher);
       if (lookup != null) {
         if (myPropertyNames.add(lookup.getLookupString())) {

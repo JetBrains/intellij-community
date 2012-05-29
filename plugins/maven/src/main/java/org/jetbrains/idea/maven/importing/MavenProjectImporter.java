@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.*;
@@ -102,7 +104,6 @@ public class MavenProjectImporter {
       hasChanges = true;
       importModules(postTasks);
       scheduleRefreshResolvedArtifacts(postTasks);
-      configSettings();
     }
 
     if (projectsHaveChanges || myImportModuleGroupsRequired) {
@@ -118,6 +119,10 @@ public class MavenProjectImporter {
 
     if (hasChanges) {
       myModelsProvider.commit();
+
+      if (projectsHaveChanges) {
+        configSettings();
+      }
     }
     else {
       myModelsProvider.dispose();
@@ -368,49 +373,26 @@ public class MavenProjectImporter {
   private void configSettings() {
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
-        String level = calcTargetLevel();
-        if (level == null) return;
+        CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
 
-        String options = JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING;
-        Pattern pattern = Pattern.compile("(-target (\\S+))");
-        Matcher matcher = pattern.matcher(options);
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
 
-        if (matcher.find()) {
-          String currentValue = MavenProject.normalizeCompilerLevel(matcher.group(2));
+        for (MavenProject project : myAllProjects) {
+          String targetLevel = project.getTargetLevel();
 
-          if (currentValue == null || compareCompilerLevel(level, currentValue) < 0) {
-            StringBuffer buffer = new StringBuffer();
-            matcher.appendReplacement(buffer, "-target " + level);
-            matcher.appendTail(buffer);
-            options = buffer.toString();
+          if (targetLevel != null) {
+            Module module = projectsManager.findModule(project);
+            if (module != null) {
+              configuration.setBytecodeTargetLevel(module, targetLevel);
+            }
           }
         }
-        else {
-          if (!StringUtil.isEmptyOrSpaces(options)) options += " ";
-          options += "-target " + level;
-        }
+
+        String options = JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING;
+        options = options.replaceFirst("(-target (\\S+))", ""); // Old IDEAs saved
         JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = options;
       }
     });
-  }
-
-  private String calcTargetLevel() {
-    String maxSource = null;
-    String minTarget = null;
-    for (MavenProject each : myAllProjects) {
-      String source = each.getSourceLevel();
-      String target = each.getTargetLevel();
-      if (source != null && (maxSource == null || compareCompilerLevel(maxSource, source) < 0)) maxSource = source;
-      if (target != null && (minTarget == null || compareCompilerLevel(minTarget, target) > 0)) minTarget = target;
-    }
-    return (maxSource != null && compareCompilerLevel(minTarget, maxSource) < 0) ? maxSource : minTarget;
-  }
-
-  private int compareCompilerLevel(String left, String right) {
-    if (left == null && right == null) return 0;
-    if (left == null) return -1;
-    if (right == null) return 1;
-    return left.compareTo(right);
   }
 
   private void importModules(final List<MavenProjectsProcessorTask> postTasks) {

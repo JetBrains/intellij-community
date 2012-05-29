@@ -157,6 +157,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   @Override
+  protected int restoreCaretOffset(int offset) {
+    return offset;
+  }
+
+  @Override
   protected boolean shouldSelectAll() {
     if (myEditor.getSettings().isPreselectRename()) return true;
     final Boolean selectAll = myEditor.getUserData(RenameHandlerRegistry.SELECT_ALL);

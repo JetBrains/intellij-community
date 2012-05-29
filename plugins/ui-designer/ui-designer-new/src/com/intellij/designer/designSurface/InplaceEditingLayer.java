@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
@@ -27,11 +28,13 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,6 +90,9 @@ public class InplaceEditingLayer extends JComponent {
       adjustInplaceComponentSize();
     }
   };
+
+  private RadComponent myRadComponent;
+  private List<Property> myProperties;
   private List<PropertyEditor> myEditors;
 
   private final DesignerEditorPanel myDesigner;
@@ -104,13 +110,15 @@ public class InplaceEditingLayer extends JComponent {
         return;
       }
 
-      RadComponent radComponent = selection.get(0);
-      List<Property> inplaceProperties = radComponent.getInplaceProperties();
-      if (inplaceProperties.isEmpty()) {
+      myRadComponent = selection.get(0);
+      myProperties = myRadComponent.getInplaceProperties();
+      if (myProperties.isEmpty()) {
+        myRadComponent = null;
+        myProperties = null;
         return;
       }
 
-      myInplaceComponent = new JPanel(new GridLayoutManager(inplaceProperties.size(), 2));
+      myInplaceComponent = new JPanel(new GridLayoutManager(myProperties.size(), 2));
       myInplaceComponent.setBorder(new LineMarginBorder(5, 5, 5, 5));
       new AnAction() {
         @Override
@@ -118,8 +126,6 @@ public class InplaceEditingLayer extends JComponent {
           finishEditing(false);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)), myInplaceComponent);
-
-      int row = 0;
 
       myEditors = new ArrayList<PropertyEditor>();
 
@@ -130,7 +136,8 @@ public class InplaceEditingLayer extends JComponent {
         inplaceContext = new InplaceContext();
       }
 
-      for (Property property : inplaceProperties) {
+      int row = 0;
+      for (Property property : myProperties) {
         JLabel label = new JLabel(property.getName() + ":");
         if (font == null) {
           font = label.getFont().deriveFont(Font.BOLD);
@@ -144,11 +151,12 @@ public class InplaceEditingLayer extends JComponent {
         PropertyEditor editor = property.getEditor();
         myEditors.add(editor);
 
-        JComponent component = editor.getComponent(radComponent.getRoot(), radComponent, property.getValue(radComponent), inplaceContext);
+        JComponent component =
+          editor.getComponent(myRadComponent.getRoot(), myRadComponent, property.getValue(myRadComponent), inplaceContext);
 
         myInplaceComponent.add(component,
-                               new GridConstraints(row++, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, 0, 0,
-                                                   null, null, null));
+                               new GridConstraints(row++, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
+                                                   GridConstraints.SIZEPOLICY_CAN_GROW, 0, null, null, null));
 
         if (componentToFocus == null) {
           componentToFocus = editor.getPreferredFocusedComponent();
@@ -159,10 +167,10 @@ public class InplaceEditingLayer extends JComponent {
         editor.addPropertyEditorListener(myEditorListener);
       }
 
-      Rectangle bounds = radComponent.getBounds(this);
+      Rectangle bounds = myRadComponent.getBounds(this);
       Dimension size = myInplaceComponent.getPreferredSize();
-      myPreferredWidth = size.width;
-      myInplaceComponent.setBounds(bounds.x, bounds.y, size.width, size.height);
+      myPreferredWidth = Math.max(size.width, bounds.width);
+      myInplaceComponent.setBounds(bounds.x, bounds.y, myPreferredWidth, size.height);
       add(myInplaceComponent);
 
       if (componentToFocus == null) {
@@ -191,7 +199,22 @@ public class InplaceEditingLayer extends JComponent {
 
     if (myInplaceComponent != null) {
       if (commit) {
-        // TODO: Auto-generated method stub
+        myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+          @Override
+          public void run() throws Exception {
+            int size = myProperties.size();
+
+            for (int i = 0; i < size; i++) {
+              Property property = myProperties.get(i);
+              Object oldValue = property.getValue(myRadComponent);
+              Object newValue = myEditors.get(i).getValue();
+
+              if (!Comparing.equal(oldValue, newValue)) {
+                property.setValue(myRadComponent, newValue);
+              }
+            }
+          }
+        }, DesignerBundle.message("command.set.property.value"), true);
       }
 
       for (PropertyEditor editor : myEditors) {
@@ -203,6 +226,8 @@ public class InplaceEditingLayer extends JComponent {
       myInplaceComponent = null;
     }
 
+    myRadComponent = null;
+    myProperties = null;
     myEditors = null;
 
     myDesigner.getPreferredFocusedComponent().requestFocusInWindow();
@@ -214,11 +239,9 @@ public class InplaceEditingLayer extends JComponent {
   private void adjustInplaceComponentSize() {
     myInplaceComponent.revalidate();
     Dimension size = myInplaceComponent.getPreferredSize();
-    int width = Math.max(size.width, myPreferredWidth);
-    width = Math.min(width, getWidth() - myInplaceComponent.getX());
-    myInplaceComponent.setSize(width, myInplaceComponent.getHeight());
+    myInplaceComponent.setSize(Math.max(size.width, myPreferredWidth), myInplaceComponent.getHeight());
     myInplaceComponent.revalidate();
-    System.out.println("size: " + width);
+    repaint();
   }
 
   private void removeInplaceComponent() {

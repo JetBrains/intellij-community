@@ -33,10 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.UrlConnectionUtil;
@@ -87,6 +84,18 @@ public class FileDownloaderImpl implements FileDownloader {
 
   @Override
   public VirtualFile[] download() {
+    final List<Pair<VirtualFile, DownloadableFileDescription>> pairs = downloadAndReturnWithDescriptions();
+    if (pairs == null) return null;
+
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (Pair<VirtualFile, DownloadableFileDescription> pair : pairs) {
+      files.add(pair.getFirst());
+    }
+    return VfsUtilCore.toVirtualFileArray(files);
+  }
+
+  @Override
+  public List<Pair<VirtualFile, DownloadableFileDescription>> downloadAndReturnWithDescriptions() {
     VirtualFile dir = null;
     if (myDirectoryForDownloadedFilesPath != null) {
       File ioDir = new File(FileUtil.toSystemDependentName(myDirectoryForDownloadedFilesPath));
@@ -105,13 +114,13 @@ public class FileDownloaderImpl implements FileDownloader {
   }
 
   @Nullable
-  private VirtualFile[] doDownload(final VirtualFile dir) {
+  private List<Pair<VirtualFile,DownloadableFileDescription>> doDownload(final VirtualFile dir) {
     HttpConfigurable.getInstance().setAuthenticator();
-    final List<Pair<DownloadableFileDescription, File>> downloadedFiles = new ArrayList<Pair<DownloadableFileDescription, File>>();
-    final List<File> existingFiles = new ArrayList<File>();
+    final List<Pair<File, DownloadableFileDescription>> downloadedFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
+    final List<Pair<File, DownloadableFileDescription>> existingFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
     final Ref<Exception> exceptionRef = Ref.create(null);
     final Ref<DownloadableFileDescription> currentFile = new Ref<DownloadableFileDescription>();
-    final File ioDir = VfsUtil.virtualToIoFile(dir);
+    final File ioDir = VfsUtilCore.virtualToIoFile(dir);
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
@@ -130,7 +139,7 @@ public class FileDownloaderImpl implements FileDownloader {
             long size = existing.exists() ? existing.length() : -1;
 
             if (!download(description, size, downloadedFiles)) {
-              existingFiles.add(existing);
+              existingFiles.add(Pair.create(existing, description));
             }
           }
         }
@@ -182,16 +191,16 @@ public class FileDownloaderImpl implements FileDownloader {
   }
 
   @NotNull
-  private static VirtualFile[] moveToDir(final List<File> existingFiles, final List<Pair<DownloadableFileDescription, File>> downloadedFiles, final VirtualFile dir) throws IOException {
-    List<VirtualFile> files = new ArrayList<VirtualFile>();
+  private static List<Pair<VirtualFile,DownloadableFileDescription>> moveToDir(final List<Pair<File, DownloadableFileDescription>> existingFiles, final List<Pair<File, DownloadableFileDescription>> downloadedFiles, final VirtualFile dir) throws IOException {
+    List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<Pair<VirtualFile, DownloadableFileDescription>>();
 
-    final File ioDir = VfsUtil.virtualToIoFile(dir);
-    for (Pair<DownloadableFileDescription, File> pair : downloadedFiles) {
-      final DownloadableFileDescription description = pair.getFirst();
+    final File ioDir = VfsUtilCore.virtualToIoFile(dir);
+    for (Pair<File, DownloadableFileDescription> pair : downloadedFiles) {
+      final DownloadableFileDescription description = pair.getSecond();
       final boolean dontTouch = description.getDownloadUrl().startsWith(LIB_SCHEMA) || description.getDownloadUrl().startsWith(LocalFileSystem.PROTOCOL_PREFIX);
-      final File toFile = dontTouch? pair.getSecond() : generateName(description, ioDir);
+      final File toFile = dontTouch? pair.getFirst() : generateName(description, ioDir);
       if (!dontTouch) {
-        FileUtil.rename(pair.getSecond(), toFile);
+        FileUtil.rename(pair.getFirst(), toFile);
       }
       VirtualFile file = new WriteAction<VirtualFile>() {
         @Override
@@ -202,24 +211,24 @@ public class FileDownloaderImpl implements FileDownloader {
         }
       }.execute().getResultObject();
       if (file != null) {
-        files.add(file);
+        result.add(Pair.create(file, description));
       }
     }
 
-    for (final File file : existingFiles) {
+    for (final Pair<File, DownloadableFileDescription> pair : existingFiles) {
       VirtualFile libraryRootFile = new WriteAction<VirtualFile>() {
         @Override
         protected void run(final Result<VirtualFile> result) {
-          final String url = VfsUtil.getUrlForLibraryRoot(file);
+          final String url = VfsUtil.getUrlForLibraryRoot(pair.getFirst());
           result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
         }
 
       }.execute().getResultObject();
       if (libraryRootFile != null) {
-        files.add(libraryRootFile);
+        result.add(Pair.create(libraryRootFile, pair.getSecond()));
       }
     }
-    return VfsUtil.toVirtualFileArray(files);
+    return result;
   }
 
   private static File generateName(DownloadableFileDescription info, final File dir) {
@@ -232,16 +241,16 @@ public class FileDownloaderImpl implements FileDownloader {
     return new File(dir, fileName);
   }
 
-  private static void deleteFiles(final List<Pair<DownloadableFileDescription, File>> pairs) {
-    for (Pair<DownloadableFileDescription, File> pair : pairs) {
-      FileUtil.delete(pair.getSecond());
+  private static void deleteFiles(final List<Pair<File, DownloadableFileDescription>> pairs) {
+    for (Pair<File, DownloadableFileDescription> pair : pairs) {
+      FileUtil.delete(pair.getFirst());
     }
     pairs.clear();
   }
 
   private static boolean download(final DownloadableFileDescription fileDescription,
                                   final long existingFileSize,
-                                  final List<Pair<DownloadableFileDescription, File>> downloadedFiles) throws IOException {
+                                  final List<Pair<File,DownloadableFileDescription>> downloadedFiles) throws IOException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final String presentableUrl = fileDescription.getPresentableDownloadUrl();
     final String url = fileDescription.getDownloadUrl();
@@ -249,13 +258,13 @@ public class FileDownloaderImpl implements FileDownloader {
       indicator.setText2(IdeBundle.message("progress.locate.file.text", fileDescription.getPresentableFileName()));
       final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
       final File file = PathManager.findFileInLibDirectory(path);
-      downloadedFiles.add(Pair.create(fileDescription, file));
+      downloadedFiles.add(Pair.create(file, fileDescription));
     }
     else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
       String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
       File file = new File(path);
       if (file.exists()) {
-        downloadedFiles.add(Pair.create(fileDescription, file));
+        downloadedFiles.add(Pair.create(file, fileDescription));
       }
     }
     else {
@@ -290,7 +299,7 @@ public class FileDownloaderImpl implements FileDownloader {
         NetUtils.copyStreamContent(indicator, input, output, size);
 
         deleteFile = false;
-        downloadedFiles.add(Pair.create(fileDescription, tempFile));
+        downloadedFiles.add(Pair.create(tempFile, fileDescription));
       }
       finally {
         if (input != null) {

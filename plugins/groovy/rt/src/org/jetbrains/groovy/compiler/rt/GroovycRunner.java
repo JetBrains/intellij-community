@@ -17,10 +17,11 @@ package org.jetbrains.groovy.compiler.rt;
 
 import groovy.lang.GroovyClassLoader;
 import groovyjarjarasm.asm.Opcodes;
-import org.codehaus.groovy.ast.AnnotatedNode;
-import org.codehaus.groovy.ast.AnnotationNode;
-import org.codehaus.groovy.ast.ClassCodeVisitorSupport;
-import org.codehaus.groovy.ast.ClassNode;
+import org.codehaus.groovy.ast.*;
+import org.codehaus.groovy.ast.expr.ConstantExpression;
+import org.codehaus.groovy.ast.expr.Expression;
+import org.codehaus.groovy.ast.expr.ListExpression;
+import org.codehaus.groovy.ast.expr.MethodCallExpression;
 import org.codehaus.groovy.classgen.GeneratorContext;
 import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.WarningMessage;
@@ -430,6 +431,15 @@ public class GroovycRunner {
                 }
 
                 @Override
+                public void visitField(FieldNode fieldNode) {
+                  Expression valueExpr = fieldNode.getInitialValueExpression();
+                  if (valueExpr instanceof ConstantExpression && ClassHelper.STRING_TYPE.equals(valueExpr.getType())) {
+                    fieldNode.setInitialValueExpression(new MethodCallExpression(valueExpr, "toString", new ListExpression()));
+                  }
+                  super.visitField(fieldNode);
+                }
+
+                @Override
                 public void visitAnnotations(AnnotatedNode node) {
                   List<AnnotationNode> annotations = node.getAnnotations();
                   if (!annotations.isEmpty()) {
@@ -532,10 +542,6 @@ public class GroovycRunner {
 
                 for (Field field : aClass.getDeclaredFields()) {
                   ensureWellFormed(field.getGenericType(), visited);
-                }
-
-                for (Class inner : aClass.getDeclaredClasses()) {
-                  ensureWellFormed(inner, visited);
                 }
 
                 Type superclass = aClass.getGenericSuperclass();

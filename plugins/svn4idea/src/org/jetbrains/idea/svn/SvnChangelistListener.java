@@ -41,11 +41,13 @@ public class SvnChangelistListener implements ChangeListListener {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangelistListener");
 
   private final Project myProject;
-  private final SVNChangelistClient myClient;
+  private final SvnVcs myVcs;
+  //private final SVNChangelistClient myClient;
 
-  public SvnChangelistListener(final Project project, final SVNChangelistClient client) {
+  public SvnChangelistListener(final Project project, final SvnVcs vcs) {
     myProject = project;
-    myClient = client;
+    myVcs = vcs;
+    //myClient = client;
   }
 
   public void changeListAdded(final ChangeList list) {
@@ -59,7 +61,7 @@ public class SvnChangelistListener implements ChangeListListener {
     final List<String> paths = getPathsFromChanges(changes);
     for (String path : paths) {
       try {
-        myClient.doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
+        myVcs.createChangelistClient().doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
       }
       catch (SVNException e) {
         LOG.info(e);
@@ -75,7 +77,7 @@ public class SvnChangelistListener implements ChangeListListener {
     final List<String> paths = getPathsFromChanges(changes);
     for (String path : paths) {
       try {
-        myClient.doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, toList.getName(), null);
+        myVcs.createChangelistClient().doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, toList.getName(), null);
       }
       catch (SVNException e) {
         LOG.info(e);
@@ -87,7 +89,7 @@ public class SvnChangelistListener implements ChangeListListener {
     final List<String> paths = getPathsFromChanges(list.getChanges());
     for (String path : paths) {
       try {
-        myClient.doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
+        myVcs.createChangelistClient().doRemoveFromChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, null);
       }
       catch (SVNException e) {
         LOG.info(e);
@@ -133,7 +135,7 @@ public class SvnChangelistListener implements ChangeListListener {
     final List<String> paths = getPathsFromChanges(list.getChanges());
     for (String path : paths) {
       try {
-        myClient.doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, list.getName(), null);
+        myVcs.createChangelistClient().doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, list.getName(), null);
       }
       catch (SVNException e) {
         LOG.info(e);
@@ -156,7 +158,7 @@ public class SvnChangelistListener implements ChangeListListener {
     final List<String> paths = getPathsFromChanges(changes);
     for (final String path : paths) {
       try {
-        myClient.doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, toList.getName(), fromLists);
+        myVcs.createChangelistClient().doAddToChangelist(new File[]{new File(path)}, SVNDepth.EMPTY, toList.getName(), fromLists);
       }
       catch (SVNException e) {
         LOG.info(e);

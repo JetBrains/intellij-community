@@ -117,11 +117,14 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                 context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete directory " + genRootPath, null, -1, -1);
                 continue;
               }
-              if (!FileUtil.moveDirWithContent(tmpOutputDir, genRootDir)) {
-                final String message = "Cannot move content from " + tmpOutputDir.getPath() + " to " + genRootPath;
-                context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+              final File parent = genRootDir.getParentFile();
+              if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + parent.getPath(), null, -1, -1);
                 continue;
               }
+              // we use copyDir instead of moveDirWithContent here, because tmp directory may be located on other disk and
+              // moveDirWithContent doesn't work for such case
+              FileUtil.copyDir(tmpOutputDir, genRootDir);
             }
             results.add(aptItem);
           }

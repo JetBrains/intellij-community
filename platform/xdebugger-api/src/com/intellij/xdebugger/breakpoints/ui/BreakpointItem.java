@@ -15,8 +15,12 @@
  */
 package com.intellij.xdebugger.breakpoints.ui;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -46,7 +50,28 @@ public abstract class BreakpointItem implements ItemWrapper {
   public abstract void setEnabled(boolean state);
 
   protected void showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
-    panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(line, 0), null);
+    TextAttributes attributes =
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
+
+    panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(line, 0), attributes);
+
+    TextAttributes softerAttributes = attributes.clone();
+    softerAttributes.setBackgroundColor(ColorUtil.softer(softerAttributes.getBackgroundColor()));
+
+    final Editor editor = panel.getEditor();
+    final MarkupModel editorModel = editor.getMarkupModel();
+    final MarkupModel documentModel =
+      DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), false);
+
+    for (RangeHighlighter highlighter : documentModel.getAllHighlighters()) {
+      if (highlighter.getUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY) == Boolean.TRUE) {
+        final int line1 = editor.offsetToLogicalPosition(highlighter.getStartOffset()).line;
+        if (line1 != line) {
+          editorModel.addLineHighlighter(line1,
+                                         DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER + 1, softerAttributes);
+        }
+      }
+    }
   }
 
   @Override

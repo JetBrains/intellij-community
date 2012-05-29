@@ -41,7 +41,7 @@ import java.net.URL;
 import java.util.Map;
 
 public class MavenDomElementDescriptorHolder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder");
+  private static final Logger LOG = Logger.getInstance(MavenDomElementDescriptorHolder.class);
 
   private enum FileKind {
     PROJECT_FILE {

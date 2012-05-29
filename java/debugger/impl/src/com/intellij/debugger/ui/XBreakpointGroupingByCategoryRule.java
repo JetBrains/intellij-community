@@ -22,16 +22,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
-* Created with IntelliJ IDEA.
-* User: zajac
-* Date: 23.05.12
-* Time: 16:24
-* To change this template use File | Settings | File Templates.
-*/
 class XBreakpointGroupingByCategoryRule<B> extends XBreakpointGroupingRule<B, XBreakpointCategoryGroup> {
   XBreakpointGroupingByCategoryRule() {
     super("XBreakpointGroupingByCategoryRule", "Type");
+  }
+
+  @Override
+  public boolean isAlwaysEnabled() {
+    return true;
   }
 
   @Override

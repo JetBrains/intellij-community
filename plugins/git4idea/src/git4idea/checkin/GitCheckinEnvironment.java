@@ -142,6 +142,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
+    log.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
     if (GitFileSeparatorConverter.convertSeparatorsIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
       for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
         Set<FilePath> files = new HashSet<FilePath>();

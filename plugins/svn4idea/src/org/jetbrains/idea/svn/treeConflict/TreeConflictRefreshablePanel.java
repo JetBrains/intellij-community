@@ -325,7 +325,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
         additionalPath = myChange.getAfterRevision().getFile();
       }
     } else {
-      if (myChange.getBeforeDescription() != null) {
+      if (myChange.getBeforeRevision() != null) {
         mainPath = myChange.getBeforeRevision().getFile();
       } else {
         mainPath = myChange.getAfterRevision().getFile();

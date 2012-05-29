@@ -15,9 +15,12 @@
  */
 package com.intellij.util.download;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Use {@link DownloadableFileService} to create instances of this interface
@@ -39,4 +42,11 @@ public interface FileDownloader {
    */
   @Nullable
   VirtualFile[] download();
+
+  /**
+   * Download files with modal progress dialog.
+   * @return downloaded files with corresponding descriptions
+   */
+  @Nullable
+  List<Pair<VirtualFile, DownloadableFileDescription>> downloadAndReturnWithDescriptions();
 }

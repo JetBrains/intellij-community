@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 def m = [a: 1, b: 2]
-def m1 = <warning descr="Assignment is not used">[a: 1, b: 2]</warning>
+def <warning descr="Assignment is not used">m1</warning> = [a: 1, b: 2]
 def val = 'a'
 
 switch (val) {

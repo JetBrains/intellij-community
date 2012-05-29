@@ -16,10 +16,31 @@
 
 class C {
   interface I {
+    int i = 42;
     void m() default { }
+  }
+
+  interface II extends I {
+    void m() default {
+      I.super.m();
+      <error descr="Unqualified super reference is not allowed in extension method">super.m</error>();
+
+      System.out.println(I.super.i);
+      System.out.println<error descr="Cannot resolve method 'println(?)'">(<error descr="Unqualified super reference is not allowed in extension method">super.i</error>)</error>;
+    }
+
+    void ma();
   }
 
   void test() {
     new I(){}.m();
+
+    new II() {
+      public void ma() {
+        <error descr="'C.I' is not an enclosing class">I.super</error>.m();
+        II.super.m();
+        <error descr="Abstract method 'ma()' cannot be accessed directly">II.super.ma()</error>;
+      }
+    }.m();
   }
 }

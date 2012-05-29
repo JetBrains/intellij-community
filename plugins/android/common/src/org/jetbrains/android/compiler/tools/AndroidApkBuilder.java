@@ -139,7 +139,7 @@ public class AndroidApkBuilder {
       }
       final String zipAlignPath = sdkPath + File.separator + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN);
       boolean withAlignment = new File(zipAlignPath).exists();
-      String unalignedApk = finalApk + UNALIGNED_SUFFIX;
+      String unalignedApk = AndroidCommonUtils.addSuffixToFileName(finalApk, UNALIGNED_SUFFIX);
 
       Map<AndroidCompilerMessageKind, List<String>> map2 = filterUsingKeystoreMessages(
         finalPackage(dexPath, sourceRoots, externalJars, nativeLibsFolders, withAlignment ? unalignedApk : finalApk, resPackagePath,

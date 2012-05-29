@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -311,7 +311,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
   }
 
-  private void initVariantsInMethodScope() {
+  protected void initVariantsInMethodScope() {
 // Completion for classes in method throws section
 // position
     {
@@ -363,7 +363,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       registerVariant(variant);
     }
 
-// Catch/Finnaly completion
+// Catch/Finally completion
     {
       final ElementFilter position = new LeftNeighbour(new AndFilter(
         new TextFilter("}"),

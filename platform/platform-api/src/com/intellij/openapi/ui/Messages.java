@@ -169,6 +169,12 @@ public class Messages {
     }
   }
 
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @see #showDialog(Project, String, String, String[], int, Icon, DialogWrapper.DoNotAskOption)
+   * @see #showDialog(Component, String, String, String[], int, Icon)
+   */
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon, @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
@@ -195,6 +201,12 @@ public class Messages {
     return showDialog(message, title, options, defaultOptionIndex, defaultOptionIndex, icon, doNotAskOption);
   }
 
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @see #showDialog(Project, String, String, String[], int, Icon)
+   * @see #showDialog(Component, String, String, String[], int, Icon)
+   */
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
     return showDialog(message, title, options, defaultOptionIndex, icon, null);
   }
@@ -269,6 +281,12 @@ public class Messages {
   }
 
 
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @see #showYesNoDialog(Project, ...)
+   * @see #showYesNoDialog(Component, ...)
+   */
   public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon,
                                     @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (canShowMacSheetPanel()) {
@@ -282,8 +300,8 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
-   * @see #showYesNoDialog(Project, String, String, Icon)
-   * @see #showYesNoDialog(Component, String, String, Icon)
+   * @see #showYesNoDialog(Project, String, String, String, String, Icon)
+   * @see #showYesNoDialog(Component, ...)
    */
   public static int showYesNoDialog(String message, String title, String yesText, String noText, @Nullable Icon icon) {
     return showYesNoDialog(message, title, yesText, noText, icon, null);
@@ -349,10 +367,22 @@ public class Messages {
     return showOkCancelDialog(message, title, OK_BUTTON, CANCEL_BUTTON, icon, null);
   }
 
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @see #showOkCancelDialog(Project, String, String, String, String, Icon)
+   * @see #showOkCancelDialog(Component, String, String, String, String, Icon)
+   */
   public static int showOkCancelDialog(String message, String title, String okText, String cancelText, Icon icon) {
     return showOkCancelDialog(message, title, okText, cancelText, icon, null);
   }
 
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @see #showOkCancelDialog(Project, String, String, String, String, Icon, DialogWrapper.DoNotAskOption)
+   * @see #showOkCancelDialog(Component, String, String, String, String, Icon)
+   */
   public static int showOkCancelDialog(String message, String title, String okText, String cancelText, Icon icon, @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, okText, cancelText, null, doNotAskOption);
@@ -495,6 +525,12 @@ public class Messages {
   }
 
 
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @see #showYesNoCancelDialog(Project, String, String, String, String, String, Icon)
+   * @see #showYesNoCancelDialog(Component, String, String, String, String, String, Icon)
+   */
   public static int showYesNoCancelDialog(String message, String title, String yes, String no, String cancel, Icon icon,
                                           DialogWrapper.DoNotAskOption doNotAskOption) {
     if (canShowMacSheetPanel()) {
@@ -504,6 +540,12 @@ public class Messages {
     return showDialog(message, title, new String[]{yes, no, cancel}, 0, icon, doNotAskOption);
   }
 
+  /**
+   * Use this method only if you do not know project or component
+   *
+   * @see #showYesNoCancelDialog(Project, String, String, String, String, String, Icon)
+   * @see #showYesNoCancelDialog(Component, String, String, String, String, String, Icon)
+   */
   public static int showYesNoCancelDialog(String message, String title, String yes, String no, String cancel, Icon icon) {
     return showYesNoCancelDialog(message, title, yes, no, cancel, icon, null);
   }
@@ -741,6 +783,11 @@ public class Messages {
 
   /**
    * Shows dialog with given message and title, information icon {@link #getInformationIcon()} and OK button
+   *
+   * Use this method only if you do not know project or component
+   *
+   * @see #showInputDialog(Project, String, String, Icon, String, InputValidator)
+   * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
   public static void showInfoMessage(String message, String title) {
     if (canShowMacSheetPanel()) {

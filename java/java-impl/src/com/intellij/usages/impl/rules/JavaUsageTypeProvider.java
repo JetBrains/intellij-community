@@ -36,11 +36,11 @@ import java.util.Set;
  */
 public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   public UsageType getUsageType(final PsiElement element) {
-    return getUsageType(element, null);
+    return getUsageType(element, UsageTarget.EMPTY_ARRAY);
   }
 
   @Override
-  public UsageType getUsageType(PsiElement element, @Nullable UsageTarget[] targets) {
+  public UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
     UsageType classUsageType = getClassUsageType(element, targets);
     if (classUsageType != null) return classUsageType;
 
@@ -108,8 +108,10 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   private static boolean haveCommonSuperMethod(@NotNull PsiMethod m1, @NotNull PsiMethod m2) {
-    final Queue<PsiMethod> supers1Q = new ArrayDeque<PsiMethod>(); supers1Q.add(m1);
-    final Queue<PsiMethod> supers2Q = new ArrayDeque<PsiMethod>(); supers2Q.add(m2);
+    final Queue<PsiMethod> supers1Q = new ArrayDeque<PsiMethod>();
+    supers1Q.add(m1);
+    final Queue<PsiMethod> supers2Q = new ArrayDeque<PsiMethod>();
+    supers2Q.add(m2);
     Set<PsiMethod> supers1 = new THashSet<PsiMethod>();
     Set<PsiMethod> supers2 = new THashSet<PsiMethod>();
     while (true) {
@@ -138,7 +140,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
           }
         });
       }
-      if (me1 == null && me2==null) break;
+      if (me1 == null && me2 == null) break;
     }
     return false;
     /*
@@ -154,9 +156,11 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Nullable
-  private static UsageType getClassUsageType(PsiElement element, @Nullable UsageTarget[] targets) {
+  private static UsageType getClassUsageType(@NotNull PsiElement element, @NotNull UsageTarget[] targets) {
     if (element.getParent() instanceof PsiAnnotation &&
-        element == ((PsiAnnotation)element.getParent()).getNameReferenceElement()) return UsageType.ANNOTATION;
+        element == ((PsiAnnotation)element.getParent()).getNameReferenceElement()) {
+      return UsageType.ANNOTATION;
+    }
 
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
@@ -215,12 +219,15 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
 
     final PsiNewExpression psiNewExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
     if (psiNewExpression != null) {
-      final PsiJavaCodeReferenceElement classReference = psiNewExpression.getClassReference();
+      final PsiJavaCodeReferenceElement classReference = psiNewExpression.getClassOrAnonymousClassReference();
       if (classReference != null && PsiTreeUtil.isAncestor(classReference, element, false)) {
+        if (isAnonymousClassOf(psiNewExpression.getAnonymousClass(), targets)) {
+          return UsageType.CLASS_ANONYMOUS_NEW_OPERATOR;
+        }
         if (isInnerClassOf(classReference, targets)) {
           return UsageType.CLASS_INNER_NEW_OPERATOR;
         }
-        if (psiNewExpression.getArrayDimensions().length > 0) {
+        if (isNewArrayCreation(psiNewExpression)) {
           return UsageType.CLASS_NEW_ARRAY;
         }
         return UsageType.CLASS_NEW_OPERATOR;
@@ -230,20 +237,33 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return null;
   }
 
-  private static boolean isInnerClassOf(PsiJavaCodeReferenceElement classReference, @Nullable UsageTarget[] targets) {
-    if (targets == null) {
+  private static boolean isNewArrayCreation(@NotNull PsiNewExpression expression){
+    return expression.getArrayDimensions().length > 0 || expression.getArrayInitializer() != null;
+  }
+
+  private static boolean isAnonymousClassOf(@Nullable PsiAnonymousClass anonymousClass, @NotNull UsageTarget[] targets) {
+    if (anonymousClass == null) {
       return false;
     }
-    PsiElement qualifier = classReference.getQualifier();
+
+    return qualifiesToTargetClasses(anonymousClass.getBaseClassReference(), targets);
+  }
+
+  private static boolean isInnerClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
+    final PsiElement qualifier = classReference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
-      for (UsageTarget target : targets) {
-        if (target instanceof PsiElementUsageTarget) {
-          PsiElement element = ((PsiElementUsageTarget)target).getElement();
-          if (element instanceof PsiClass) {
-            String name = target.getName();
-            if (Comparing.equal(((PsiJavaCodeReferenceElement)qualifier).getReferenceName(), name)) {
-              return true;
-            }
+      return qualifiesToTargetClasses((PsiJavaCodeReferenceElement)qualifier, targets);
+    }
+    return false;
+  }
+
+  private static boolean qualifiesToTargetClasses(@NotNull PsiJavaCodeReferenceElement qualifier, @NotNull UsageTarget[] targets) {
+    for (UsageTarget target : targets) {
+      if (target instanceof PsiElementUsageTarget) {
+        PsiElement element = ((PsiElementUsageTarget)target).getElement();
+        if (element instanceof PsiClass) {
+          if (Comparing.equal(qualifier.getReferenceName(), target.getName())) {
+            return true;
           }
         }
       }

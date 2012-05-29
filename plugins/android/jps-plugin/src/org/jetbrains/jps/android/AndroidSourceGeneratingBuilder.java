@@ -91,6 +91,12 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
     checkAndroidDependencies(moduleDataMap, context);
 
+    if (context.isProjectRebuild()) {
+      if (!clearAndroidStorages(context, chunk.getModules())) {
+        return ExitCode.ABORT;
+      }
+    }
+
     final Map<File, Module> idlFilesToCompile = new HashMap<File, Module>();
     final Map<File, Module> rsFilesToCompile = new HashMap<File, Module>();
 
@@ -167,6 +173,18 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
 
     return success ? ExitCode.OK : ExitCode.ABORT;
+  }
+
+  private static boolean clearAndroidStorages(@NotNull CompileContext context, @NotNull Collection<Module> modules) {
+    for (Module module : modules) {
+      final File dir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
+      if (dir.exists() && !FileUtil.delete(dir)) {
+        context.processMessage(
+          new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.cannot.delete", dir.getPath())));
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean checkVersions(@NotNull Map<Module, MyModuleData> dataMap, @NotNull CompileContext context) {
@@ -581,12 +599,16 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
                 success = false;
                 continue;
               }
-              if (!FileUtil.moveDirWithContent(tmpOutputDir, aptOutputDirectory)) {
-                context.processMessage(new CompilerMessage(ANDROID_APT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle
-                  .message("android.jps.errors.cannot.move.content", tmpOutputDir.getPath(), aptOutputDirectory.getPath())));
+              final File parent = aptOutputDirectory.getParentFile();
+              if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                context.processMessage(new CompilerMessage(ANDROID_APT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle.message(
+                  "android.jps.cannot.create.directory", parent.getPath())));
                 success = false;
                 continue;
               }
+              // we use copyDir instead of moveDirWithContent here, because tmp directory may be located on other disk and
+              // moveDirWithContent doesn't work for such case
+              FileUtil.copyDir(tmpOutputDir, aptOutputDirectory);
               markDirtyRecursively(aptOutputDirectory, context, ANDROID_APT_COMPILER);
             }
             storage.update(module.getName(), newState);

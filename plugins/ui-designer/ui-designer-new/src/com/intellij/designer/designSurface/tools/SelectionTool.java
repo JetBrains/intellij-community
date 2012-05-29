@@ -89,7 +89,7 @@ public class SelectionTool extends InputTool {
 
   @Override
   protected void handleDoubleClick(int button) {
-    if (button == MouseEvent.BUTTON1 && myToolProvider != null) {
+    if (button == MouseEvent.BUTTON1 && myToolProvider != null && !myArea.isTree()) {
       myToolProvider.startInplaceEditing(null);
     }
   }
@@ -199,7 +199,7 @@ public class SelectionTool extends InputTool {
     if (myTracker != null) {
       myTracker.keyTyped(event, area);
     }
-    else if (myToolProvider != null &&
+    else if (myToolProvider != null && !area.isTree() &&
              Character.isLetterOrDigit(event.getKeyChar()) &&
              (event.getModifiers() & (InputEvent.ALT_MASK | InputEvent.CTRL_MASK)) == 0) {
       myToolProvider.startInplaceEditing(new InplaceContext(event.getKeyChar()));

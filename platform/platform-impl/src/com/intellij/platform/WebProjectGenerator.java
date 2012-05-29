@@ -68,6 +68,10 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
   @NotNull
   public abstract GeneratorPeer<T> createPeer();
 
+  public boolean isPrimaryGenerator() {
+    return true;
+  }
+
   public interface GeneratorPeer<T> {
     @NotNull
     JComponent getComponent();

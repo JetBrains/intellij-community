@@ -1,1 +1,0 @@
-interface AAAA extends <caret>

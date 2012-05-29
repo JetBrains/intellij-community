@@ -18,6 +18,7 @@ package com.intellij.designer.componentTree;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.actions.StartInplaceEditing;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -40,6 +41,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final StartInplaceEditing myInplaceEditingAction;
   private TreeComponentDecorator myDecorator;
   private DesignerActionPanel myActionPanel;
+  private EditableArea myArea;
   private RadComponent myMarkComponent;
   private int myMarkFeedback;
 
@@ -75,7 +77,12 @@ public final class ComponentTree extends Tree implements DataProvider {
       myActionPanel = designer.getActionPanel();
     }
     myMarkComponent = null;
+    myArea = null;
     myInplaceEditingAction.setDesignerPanel(designer);
+  }
+
+  public void setArea(@Nullable EditableArea area) {
+    myArea = area;
   }
 
   public void mark(RadComponent component, int feedback) {
@@ -86,7 +93,13 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
-    return myActionPanel == null ? null : myActionPanel.getData(dataId);
+    if (EditableArea.DATA_KEY.is(dataId)) {
+      return myArea;
+    }
+    if (myActionPanel != null) {
+      return myActionPanel.getData(dataId);
+    }
+    return null;
   }
 
   @Nullable

@@ -22,6 +22,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -236,8 +237,8 @@ public class GrReferenceResolveUtil {
     final GrMember member = PsiTreeUtil.getParentOfType(ref, GrMember.class);
     if (member == null) {
       final PsiFile file = ref.getContainingFile();
-      assert file instanceof GroovyFile && ((GroovyFile)file).isScript();
-      containingClass = ((GroovyFile)file).getScriptClass();
+      assert file instanceof GroovyFileBase && ((GroovyFileBase)file).isScript();
+      containingClass = ((GroovyFileBase)file).getScriptClass();
     }
     else if (member instanceof GrMethod) {
       if (!member.hasModifierProperty(PsiModifier.STATIC)) {

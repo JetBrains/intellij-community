@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.formatting.Alignment;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,6 @@ import java.util.Set;
  * @author Max Medvedev
  */
 class AlignmentProvider {
-  private final static Logger LOG = Logger.getInstance(AlignmentProvider.class);
-
   private final Map<PsiElement, Set<PsiElement>> myTree = new HashMap<PsiElement, Set<PsiElement>>();
   private final Map<Set<PsiElement>, Alignment> myAlignments = new HashMap<Set<PsiElement>, Alignment>();
   private final Map<Set<PsiElement>, Boolean> myAllowBackwardShift = new HashMap<Set<PsiElement>, Boolean>();
@@ -44,20 +41,20 @@ class AlignmentProvider {
   }
 
   public void addPair(PsiElement e1, PsiElement e2, @Nullable Boolean allowBackwardShift, @Nullable Alignment.Anchor anchor) {
-    LOG.assertTrue(e1 != e2);
+    assert e1 != e2;
 
     final Set<PsiElement> set1 = myTree.get(e1);
     final Set<PsiElement> set2 = myTree.get(e2);
 
     if (set1 != null && set2 != null) {
-      LOG.assertTrue(!myAlignments.containsKey(set1) || !myAlignments.containsKey(set2));
-      LOG.assertTrue(myAllowBackwardShift.get(set1).booleanValue() == myAllowBackwardShift.get(set2).booleanValue());
-      LOG.assertTrue(myAnchor.get(set1) == myAnchor.get(set2));
+      assert (!myAlignments.containsKey(set1) || !myAlignments.containsKey(set2));
+      assert(myAllowBackwardShift.get(set1).booleanValue() == myAllowBackwardShift.get(set2).booleanValue());
+      assert(myAnchor.get(set1) == myAnchor.get(set2));
       if (allowBackwardShift != null) {
-        LOG.assertTrue(myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue());
+        assert(myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue());
       }
       if (anchor != null) {
-        LOG.assertTrue(myAnchor.get(set1) == anchor);
+        assert(myAnchor.get(set1) == anchor);
       }
 
       if (myAlignments.containsKey(set2)) {
@@ -80,19 +77,19 @@ class AlignmentProvider {
     }
     else if (set1 != null) {
       if (allowBackwardShift != null) {
-        LOG.assertTrue(myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue());
+        assert myAllowBackwardShift.get(set1).booleanValue() == allowBackwardShift.booleanValue();
       }
       if (anchor != null) {
-        LOG.assertTrue(myAnchor.get(set1) == anchor);
+        assert myAnchor.get(set1) == anchor;
       }
       addInternal(set1, e2);
     }
     else if (set2 != null) {
       if (allowBackwardShift != null) {
-        LOG.assertTrue(myAllowBackwardShift.get(set2).booleanValue() == allowBackwardShift.booleanValue());
+        assert(myAllowBackwardShift.get(set2).booleanValue() == allowBackwardShift.booleanValue());
       }
       if (anchor != null) {
-        LOG.assertTrue(myAnchor.get(set2) == anchor);
+        assert(myAnchor.get(set2) == anchor);
       }
       addInternal(set2, e1);
     }
