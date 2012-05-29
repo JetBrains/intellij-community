@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -140,7 +141,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
           task.finish();
         }
 
-        SwingUtilities.invokeLater(new Runnable() {
+        final Runnable notificationRunnable = new Runnable() {
           public void run() {
             final Project project = config.getProject();
             if (project.isDisposed()) return;
@@ -150,15 +151,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
             final String testRunDebugId = consoleProperties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
             final TestNGResults resultsView = console.getResultsView();
             final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-            final GlobalSearchScope librariesScope = config.getPersistantData().getScope().getSourceScope(config).getLibrariesScope();
-
-            final String incompatibilityMessage = TestNGVersionChecker.getVersionIncompatibilityMessage(project, librariesScope,
-                                                                                                        PathUtil.getJarPathForClass(AfterClass.class));
-            if (incompatibilityMessage != null) {
-              toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.ERROR, incompatibilityMessage, null, new TestNGVersionChecker.MyCopyJarListener(librariesScope, project));
-              TestsUIUtil.NOTIFICATION_GROUP.createNotification(incompatibilityMessage, MessageType.ERROR).notify(project);
-            }
-
             if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
               final MessageType type = resultsView == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
                                        ? MessageType.WARNING
@@ -170,7 +162,8 @@ public class TestNGRunnableState extends JavaCommandLineState {
               TestsUIUtil.NOTIFICATION_GROUP.createNotification(message, type).notify(project);
             }
           }
-        });
+        };
+        SwingUtilities.invokeLater(notificationRunnable);
       }
 
       @Override
@@ -246,13 +239,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
     LOG.info("Language level is " + effectiveLanguageLevel.toString());
     LOG.info("is15 is " + is15);
     final String pathToBundledJar = PathUtil.getJarPathForClass(AfterClass.class);
-    final SourceScope sourceScope = config.getPersistantData().getScope().getSourceScope(config);
-    final String incompatibilityMessage = sourceScope != null ? 
-                                          TestNGVersionChecker.getVersionIncompatibilityMessage(project, sourceScope.getLibrariesScope(), pathToBundledJar) :
-                                          null;
-    if (incompatibilityMessage != null) {
-      javaParameters.getClassPath().add(pathToBundledJar);
-    }
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
@@ -281,9 +267,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
                                          config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
     }
 
-    if (incompatibilityMessage == null) {
-      javaParameters.getClassPath().add(pathToBundledJar);
-    }
+    javaParameters.getClassPath().add(pathToBundledJar);
 
     try {
       port = NetUtils.findAvailableSocketPort();
@@ -401,6 +385,6 @@ public class TestNGRunnableState extends JavaCommandLineState {
         return false;
       }
     }
-    return true;
+    return Registry.is("testng.serialized.protocol.enabled") && !TestNGVersionChecker.isVersionIncompatible(project, scopeToDetermineTestngIn);
   }
 }
