@@ -54,6 +54,8 @@ public interface ChangelistBuilder {
    */
   void processChangeInList(Change change, String changeListName, VcsKey vcsKey);
 
+  void removeRegisteredChangeFor(final FilePath path);
+
   /**
    * Process a file that is not under version control.
    *

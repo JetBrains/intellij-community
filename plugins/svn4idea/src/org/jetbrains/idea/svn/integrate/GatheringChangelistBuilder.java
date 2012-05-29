@@ -33,10 +33,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GatheringChangelistBuilder implements ChangelistBuilder {
   private final Set<VirtualFile> myCheckSet;
@@ -63,6 +60,22 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
 
   public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {
     addChange(change);
+  }
+
+  @Override
+  public void removeRegisteredChangeFor(FilePath path) {
+    // not sure
+    for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext(); ) {
+      final Change change = iterator.next();
+      if (path.equals(ChangesUtil.getFilePath(change))) {
+        final VirtualFile vf = path.getVirtualFile();
+        if (vf != null) {
+          myCheckSet.remove(vf);
+          iterator.remove();
+          return;
+        }
+      }
+    }
   }
 
   private void addChange(final Change change) {

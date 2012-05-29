@@ -113,6 +113,11 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     processChangeInList(change, list, vcsKey);
   }
 
+  @Override
+  public void removeRegisteredChangeFor(FilePath path) {
+    myChangeListWorker.removeRegisteredChangeFor(path);
+  }
+
   private boolean isExcluded(final VirtualFile file) {
     return myIndex.isExcludedFile(file);
   }
