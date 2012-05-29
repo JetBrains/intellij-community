@@ -308,7 +308,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testT52() throws Exception {
     doTestFieldType("f",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null).createArrayType(),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null).createArrayType(),
                     myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null).createArrayType());
   }
 
@@ -482,7 +482,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   public void testT84() throws Exception {
     doTestFirstParamType("meth",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends java.util.Set>", null));
   }
 

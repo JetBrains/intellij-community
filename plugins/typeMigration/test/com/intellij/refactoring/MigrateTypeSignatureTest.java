@@ -111,7 +111,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprInstanceofNeg() throws Exception {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.List", null));
   }
 
@@ -231,7 +231,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprNewArrayGen2Rvalue() throws Exception {
     doTestFieldType("myField", "Expr",
-        myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null).createArrayType(),
+        myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null).createArrayType(),
         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<java.lang.Integer>", null).createArrayType());
   }
 
@@ -306,7 +306,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testSpecJavadoc() throws Exception {
     doTestFirstParamType("meth", "Spec", PsiType.DOUBLE,
-                 myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null));
+                 myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
   }
 
   public void testSpecNotUsed() throws Exception {
@@ -431,38 +431,38 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testTypeGenAncestor2Lvalue() throws Exception {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
   }
 
   public void testTypeGenAncestorWildcard2Lvalue() throws Exception {
     doTestFirstParamType("meth", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? extends Subject>", null));
   }
 
   public void testTypeGenDescendant2Rvalue() throws Exception {
     doTestFieldType("myField", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<Subject>", null));
   }
 
   public void testTypeGenDescendantWildcard2Rvalue() throws Exception {
     doTestFieldType("myField", "Type",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<? super Subject>", null));
   }
 
   public void testTypeGenRaw2Lvalue() throws Exception {
     doTestFirstParamType("meth", "Type",
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<Any>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null));
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
   }
 
   public void testTypeGenRaw2Rvalue() throws Exception {
     doTestFieldType("myField", "Type",
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.Set<Any>", null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Set", null));
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
   }
 
   public void testTypePrimsubBoolean2Lvalue() throws Exception {
