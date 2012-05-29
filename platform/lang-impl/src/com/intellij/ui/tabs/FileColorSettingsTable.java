@@ -30,6 +30,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
@@ -83,16 +84,12 @@ public abstract class FileColorSettingsTable extends JBTable {
 
   @Override
   public boolean editCellAt(int row, int column, EventObject e) {
+    if (e instanceof MouseEvent && ((MouseEvent)e).getClickCount() == 1) return false;
     final Object at = getModel().getValueAt(row, column);
     final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog(myManager, ((FileColorConfiguration)at));
     dialog.getScopeComboBox().setEnabled(false);
     dialog.show();
     return false;
-  }
-
-  @Override
-  public boolean isCellEditable(int row, int column) {
-    return column == 1;
   }
 
   public boolean isModified() {
