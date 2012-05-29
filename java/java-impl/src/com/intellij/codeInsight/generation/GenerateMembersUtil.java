@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,16 +252,13 @@ public class GenerateMembersUtil {
         final PsiType parameterType = parameter.getType();
         PsiType substituted = substituteType(substitutor, parameterType);
         @NonNls String paramName = parameter.getName();
-        final String[] baseSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names;
-        boolean isBaseNameGenerated = false;
-        for (String s : baseSuggestions) {
-          if (s.equals(paramName)) {
-            isBaseNameGenerated = true;
-            break;
-          }
+        boolean isBaseNameGenerated = true;
+        final boolean isSubstituted = substituted.equals(parameterType);
+        if (!isSubstituted && isBaseNameGenerated(codeStyleManager, TypeConversionUtil.erasure(parameterType), paramName)) {
+          isBaseNameGenerated = false;
         }
-        
-        if (paramName == null || isBaseNameGenerated && !substituted.equals(parameterType)) {
+
+        if (paramName == null || isBaseNameGenerated && !isSubstituted && isBaseNameGenerated(codeStyleManager, parameterType, paramName)) {
           Pair<String, Integer> pair = m.get(substituted);
           if (pair != null) {
             paramName = pair.first + pair.second;
@@ -314,6 +311,18 @@ public class GenerateMembersUtil {
       LOG.error(e);
       return method;
     }
+  }
+
+  private static boolean isBaseNameGenerated(JavaCodeStyleManager codeStyleManager, PsiType parameterType, String paramName) {
+    final String[] baseSuggestions = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, parameterType).names;
+    boolean isBaseNameGenerated = false;
+    for (String s : baseSuggestions) {
+      if (s.equals(paramName)) {
+        isBaseNameGenerated = true;
+        break;
+      }
+    }
+    return isBaseNameGenerated;
   }
 
   private static void processAnnotations(Project project, PsiModifierList modifierList) {
