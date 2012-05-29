@@ -47,6 +47,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     myExclusionManager = ProjectFileExclusionManager.SERVICE.getInstance(module.getProject());
   }
 
+  @Override
   public boolean iterateContent(@NotNull ContentIterator iterator) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(myModule).getContentRoots();
     for (VirtualFile contentRoot : contentRoots) {
@@ -63,16 +64,19 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     return true;
   }
 
+  @Override
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
     return FileIndexImplUtil.iterateRecursively(dir, myContentFilter, iterator);
   }
 
+  @Override
   public boolean isContentSourceFile(@NotNull VirtualFile file) {
     return !file.isDirectory()
            && !myFileTypeRegistry.isFileIgnored(file)
            && isInSourceContent(file);
   }
 
+  @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
@@ -84,6 +88,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
   }
 
+  @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
@@ -95,6 +100,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     }
   }
 
+  @Override
   @NotNull
   public List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
     VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
@@ -122,6 +128,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     return answer == null ? Collections.<OrderEntry>emptyList() : answer;
   }
 
+  @Override
   public OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir) {
     VirtualFile dir = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent();
     if (dir == null) return null;
@@ -136,6 +143,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
     return null;
   }
 
+  @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(fileOrDir);
@@ -148,6 +156,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   }
 
   private class ContentFilter implements VirtualFileFilter {
+    @Override
     public boolean accept(@NotNull VirtualFile file) {
       if (file.isDirectory()) {
         DirectoryInfo info = myDirectoryIndex.getInfoForDirectory(file);
