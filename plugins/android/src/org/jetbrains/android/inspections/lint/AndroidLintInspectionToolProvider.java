@@ -405,7 +405,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected IntentionAction[] getIntentions(@NotNull final PsiElement startElement, @NotNull PsiElement endElement) {
+    public IntentionAction[] getIntentions(@NotNull final PsiElement startElement, @NotNull PsiElement endElement) {
       return new IntentionAction[]{new AndroidAddStringResourceQuickFix(startElement)};
     }
   }

@@ -40,6 +40,7 @@ import com.intellij.designer.palette.Item;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -163,6 +164,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
         removeNativeRoot();
         myRootComponent = newRootComponent;
+        loadInspections(new EmptyProgressIndicator());
+        updateInspections();
         myLayeredPane.add(rootPanel, LAYER_COMPONENT);
 
         myParseTime = false;
@@ -514,6 +517,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   public void loadInspections(ProgressIndicator progress) {
-    ErrorAnalyzer.load(myXmlFile, myRootComponent, progress);
+    if (myRootComponent != null) {
+      ErrorAnalyzer.load(myXmlFile, myRootComponent, progress);
+    }
   }
 }

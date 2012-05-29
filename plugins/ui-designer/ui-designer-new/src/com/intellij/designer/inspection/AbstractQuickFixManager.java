@@ -19,6 +19,10 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.ui.HintHint;
@@ -26,6 +30,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +44,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -131,18 +137,12 @@ public abstract class AbstractQuickFixManager {
       updateHintVisibility();
     }
     else {
-      ErrorInfo[] errorInfos = getErrorInfos();
       Rectangle bounds = getErrorBounds();
-      if (!haveFixes(errorInfos) || bounds == null || !bounds.equals(myLastHintBounds)) {
+      if (!ErrorInfo.haveFixes(getErrorInfos()) || bounds == null || !bounds.equals(myLastHintBounds)) {
         hideHint();
         updateHintVisibility();
       }
     }
-  }
-
-  private static boolean haveFixes(ErrorInfo[] errorInfos) {
-    // XXX
-    return true;
   }
 
   private void showHint() {
@@ -155,8 +155,7 @@ public abstract class AbstractQuickFixManager {
     hideHint();
 
     // 2. Found error (if any)
-    ErrorInfo[] errorInfos = getErrorInfos();
-    if (!haveFixes(errorInfos)) {
+    if (!ErrorInfo.haveFixes(getErrorInfos())) {
       hideHint();
       return;
     }
@@ -174,10 +173,20 @@ public abstract class AbstractQuickFixManager {
   }
 
   private void showPopup() {
-    // TODO: Auto-generated method stub
+    if (myHint == null || !myHint.isVisible()) {
+      return;
+    }
+
+    List<ErrorInfo> errorInfos = getErrorInfos();
+    if (!ErrorInfo.haveFixes(errorInfos)) {
+      return;
+    }
+
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new FirstStep(errorInfos));
+    popup.showUnderneathOf(myHint.getComponent());
   }
 
-  protected void hideHint() {
+  public final void hideHint() {
     myAlarm.cancelAllRequests();
     if (myHint != null && myHint.isVisible()) {
       myHint.hide();
@@ -186,7 +195,7 @@ public abstract class AbstractQuickFixManager {
     }
   }
 
-  protected void updateHintVisibility() {
+  protected final void updateHintVisibility() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(myShowHintRequest, 500);
   }
@@ -215,7 +224,7 @@ public abstract class AbstractQuickFixManager {
    * @return error info for the current {@link #myComponent} state.
    */
   @NotNull
-  protected abstract ErrorInfo[] getErrorInfos();
+  protected abstract List<ErrorInfo> getErrorInfos();
 
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
@@ -226,11 +235,85 @@ public abstract class AbstractQuickFixManager {
   @Nullable
   protected abstract Rectangle getErrorBounds();
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  private class FirstStep extends BaseListPopupStep<ErrorInfo> {
+    public FirstStep(List<ErrorInfo> errorInfos) {
+      super(null, errorInfos);
+    }
+
+    @Override
+    public Icon getIconFor(ErrorInfo value) {
+      return INTENTION_ICON;
+    }
+
+    @NotNull
+    @Override
+    public String getTextFor(ErrorInfo value) {
+      return value.getName();
+    }
+
+    @Override
+    public PopupStep onChosen(ErrorInfo value, boolean finalChoice) {
+      List<QuickFix> quickFixes = value.getQuickFixes();
+      if (finalChoice) {
+        return doFinalStep(getQuickFixRunnable(quickFixes.get(0)));
+      }
+      return new SecondStep(quickFixes);
+    }
+
+    @Override
+    public boolean hasSubstep(ErrorInfo selectedValue) {
+      return true;
+    }
+  }
+
+  private class SecondStep extends BaseListPopupStep<QuickFix> {
+    public SecondStep(List<QuickFix> fixList) {
+      super(null, fixList);
+    }
+
+    @Override
+    public Icon getIconFor(QuickFix value) {
+      return value.getIcon();
+    }
+
+    @NotNull
+    @Override
+    public String getTextFor(QuickFix value) {
+      return value.getName();
+    }
+
+    @Override
+    public PopupStep onChosen(QuickFix value, boolean finalChoice) {
+      return doFinalStep(getQuickFixRunnable(value));
+    }
+  }
+
+  private Runnable getQuickFixRunnable(final QuickFix value) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+          @Override
+          public void run() throws Exception {
+            value.run();
+          }
+        }, "Run '" + value.getName() + "' QuickFix", true);
+      }
+    };
+  }
+
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(4, 4, 4, 4);
   private static final Border ACTIVE_BORDER =
     BorderFactory
       .createCompoundBorder(BorderFactory.createLineBorder(Color.orange, 2), BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
+  private static final Icon INTENTION_ICON = IconLoader.getIcon("/actions/realIntentionBulb.png");
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/arrowDown.png");
   private static final Icon INACTIVE_ARROW_ICON = new EmptyIcon(ARROW_ICON.getIconWidth(), ARROW_ICON.getIconHeight());
   private static final Icon ICON = IconLoader.findIcon("/actions/intentionBulb.png");

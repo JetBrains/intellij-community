@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,8 +42,12 @@ public class QuickFixManager extends AbstractQuickFixManager implements Componen
 
   @NotNull
   @Override
-  protected ErrorInfo[] getErrorInfos() {
-    return new ErrorInfo[0];  // TODO: Auto-generated method stub
+  protected List<ErrorInfo> getErrorInfos() {
+    List<RadComponent> selection = myDesigner.getSurfaceArea().getSelection();
+    if (selection.size() == 1) {
+      return ErrorInfo.get(selection.get(0));
+    }
+    return Collections.emptyList();
   }
 
   @Override
