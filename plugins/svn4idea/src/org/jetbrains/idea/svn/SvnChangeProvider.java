@@ -232,9 +232,6 @@ public class SvnChangeProvider implements ChangeProvider {
                                                               CurrentContentRevision.create(newFilePath),
                                                               context.getTreeConflictStatus(newPath), childStatus);
               applyMovedChange(newFilePath, builder, dirtyScope, deletedToDelete, deletedChild, clName, movedChange);
-              builder.processChangeInList(movedChange, clName, SvnVcs.getKey());
-              builder.removeRegisteredChangeFor(newFilePath);
-              deletedToDelete.add(deletedChild);
             }
           }
         }
