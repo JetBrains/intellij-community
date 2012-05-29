@@ -117,7 +117,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
 
   public void testExprInstanceofPos() throws Exception {
     doTestFirstParamType("meth", "Expr",
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.Map", null),
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_MAP, null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.AbstractMap", null));
   }
 
