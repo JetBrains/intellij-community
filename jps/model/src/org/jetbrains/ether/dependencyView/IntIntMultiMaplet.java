@@ -20,6 +20,9 @@ import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TIntProcedure;
 
 import java.io.PrintStream;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -63,15 +66,23 @@ abstract class IntIntMultiMaplet implements Streamable {
         stream.println(context.getValue(a));
         stream.println("  Values:");
 
+        final List<String> list = new LinkedList<String>();
+
         b.forEach(new TIntProcedure() {
           @Override
           public boolean execute(final int value) {
-            stream.print("    ");
-            stream.println(context.getValue(value));
-
+            list.add(context.getValue(value));
             return true;
           }
         });
+
+        Collections.sort(list);
+
+        for (final String l : list) {
+          stream.print("    ");
+          stream.println(l);
+        }
+
         stream.println("  End Of Values");
         return true;
       }
