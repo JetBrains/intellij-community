@@ -39,6 +39,7 @@ import java.awt.*;
  */
 public final class ComponentTree extends Tree implements DataProvider {
   private final StartInplaceEditing myInplaceEditingAction;
+  private QuickFixManager myQuickFixManager;
   private TreeComponentDecorator myDecorator;
   private DesignerActionPanel myActionPanel;
   private EditableArea myArea;
@@ -67,6 +68,14 @@ public final class ComponentTree extends Tree implements DataProvider {
     setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
   }
 
+  public void initQuickFixManager(JViewport viewPort) {
+    myQuickFixManager = new QuickFixManager(this, viewPort);
+  }
+
+  public void updateInspections() {
+    myQuickFixManager.update();
+  }
+
   public void setDesignerPanel(@Nullable DesignerEditorPanel designer) {
     if (designer == null) {
       myDecorator = null;
@@ -79,10 +88,12 @@ public final class ComponentTree extends Tree implements DataProvider {
     myMarkComponent = null;
     myArea = null;
     myInplaceEditingAction.setDesignerPanel(designer);
+    myQuickFixManager.setDesigner(designer);
   }
 
   public void setArea(@Nullable EditableArea area) {
     myArea = area;
+    myQuickFixManager.setEditableArea(area);
   }
 
   public void mark(RadComponent component, int feedback) {

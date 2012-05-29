@@ -24,6 +24,7 @@ import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class FragmentProperty extends Property<RadViewComponent> {
+public class FragmentProperty extends Property<RadViewComponent> implements IXmlAttributeLocator {
   private final String myAttribute;
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   private final PropertyEditor myEditor;
@@ -103,5 +104,10 @@ public class FragmentProperty extends Property<RadViewComponent> {
   @Override
   public String getJavadocText() {
     return myJavadocText;
+  }
+
+  @Override
+  public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
+    return component.getTag().getAttribute(myAttribute) == attribute;
   }
 }

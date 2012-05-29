@@ -17,6 +17,7 @@ package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadCustomViewComponent;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
@@ -25,6 +26,7 @@ import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +38,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class CustomViewProperty extends Property<RadCustomViewComponent> {
+public class CustomViewProperty extends Property<RadCustomViewComponent> implements IXmlAttributeLocator {
   private static final String JAVA_DOC = JavadocParser.build("view:class", "The fully qualified name of the class.");
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   private final PropertyEditor myEditor = new ResourceEditor(null, Collections.<AttributeFormat>emptySet(), null) {
@@ -124,5 +126,10 @@ public class CustomViewProperty extends Property<RadCustomViewComponent> {
   @Override
   public String getJavadocText() {
     return JAVA_DOC;
+  }
+
+  @Override
+  public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
+    return component.getTag().getAttribute("class") == attribute;
   }
 }

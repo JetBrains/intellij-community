@@ -80,6 +80,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myPropertyTable);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    myPropertyTable.initQuickFixManager(scrollPane.getViewport());
     add(scrollPane, new GridBagConstraints(0, 1, myActions.length + 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(0, 0, 0, 0), 0, 0));
   }

@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * @author Alexander Lobas
  */
-public class AttributeProperty extends Property<RadViewComponent> {
+public class AttributeProperty extends Property<RadViewComponent> implements IXmlAttributeLocator {
   protected final AttributeDefinition myDefinition;
   private final PropertyRenderer myRenderer;
   private final PropertyEditor myEditor;
@@ -123,6 +123,11 @@ public class AttributeProperty extends Property<RadViewComponent> {
   @Nullable
   private XmlAttribute getAttribute(RadViewComponent component) {
     return component.getTag().getAttribute("android:" + myDefinition.getName());
+  }
+
+  @Override
+  public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
+    return getAttribute(component) == attribute;
   }
 
   @NotNull

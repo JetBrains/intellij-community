@@ -36,7 +36,7 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
-public class FlagProperty extends Property<RadViewComponent> implements IPropertyDecorator {
+public class FlagProperty extends Property<RadViewComponent> implements IPropertyDecorator, IXmlAttributeLocator {
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   protected final AttributeDefinition myDefinition;
   protected final List<Property<RadViewComponent>> myOptions = new ArrayList<Property<RadViewComponent>>();
@@ -117,6 +117,11 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
   @Nullable
   protected XmlAttribute getAttribute(RadViewComponent component) {
     return component.getTag().getAttribute("android:" + myDefinition.getName());
+  }
+
+  @Override
+  public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
+    return getAttribute(component) == attribute;
   }
 
   protected Set<String> getOptions(RadViewComponent component) throws Exception {

@@ -60,7 +60,7 @@ public abstract class AbstractQuickFixManager {
   private LightweightHint myHint;
   private Rectangle myLastHintBounds;
 
-  public AbstractQuickFixManager(DesignerEditorPanel designer, JComponent component, JViewport viewPort) {
+  public AbstractQuickFixManager(@Nullable DesignerEditorPanel designer, JComponent component, JViewport viewPort) {
     myDesigner = designer;
     myComponent = component;
     myViewPort = viewPort;
@@ -125,7 +125,7 @@ public abstract class AbstractQuickFixManager {
     });
   }
 
-  public void setDesigner(DesignerEditorPanel designer) {
+  public void setDesigner(@Nullable DesignerEditorPanel designer) {
     myDesigner = designer;
   }
 

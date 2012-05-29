@@ -19,6 +19,7 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.inspection.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -73,6 +74,8 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
   private boolean myShowExpert;
 
+  private QuickFixManager myQuickFixManager;
+
   public PropertyTable() {
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -88,6 +91,10 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     });
 
     // TODO: Updates UI after LAF updated
+  }
+
+  public void initQuickFixManager(JViewport viewPort) {
+    myQuickFixManager = new QuickFixManager(this, viewPort);
   }
 
   public void setUI(TableUI ui) {
@@ -139,6 +146,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   public void setArea(@Nullable DesignerEditorPanel designer, @Nullable EditableArea area) {
     myDesigner = designer;
     myInitialSelection = designer == null ? null : designer.getSelectionProperty();
+    myQuickFixManager.setDesigner(designer);
 
     finishEditing();
 
@@ -153,6 +161,10 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
 
     updateProperties();
+  }
+
+  public void updateInspections() {
+    myQuickFixManager.update();
   }
 
   @Override
@@ -189,6 +201,21 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
       repaint();
     }
+  }
+
+  @Nullable
+  public ErrorInfo getErrorInfoForRow(int row) {
+    if (myComponents.size() != 1) {
+      return null;
+    }
+
+    Property property = myProperties.get(row);
+    for (ErrorInfo errorInfo : ErrorInfo.get(myComponents.get(0))) {
+      if (property.getName().equals(errorInfo.getPropertyName())) {
+        return errorInfo;
+      }
+    }
+    return null;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

@@ -25,6 +25,7 @@ import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ import java.util.Set;
 /**
  * @author Alexander Lobas
  */
-public class IncludeLayoutProperty extends Property<RadViewComponent> {
+public class IncludeLayoutProperty extends Property<RadViewComponent> implements IXmlAttributeLocator {
   public static final String NAME = "layout:xml";
   public static ResourceType[] TYPES = new ResourceType[]{ResourceType.LAYOUT};
   private static final Set<AttributeFormat> FORMATS = EnumSet.of(AttributeFormat.Reference);
@@ -93,5 +94,10 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> {
   @Override
   public String getJavadocText() {
     return JAVA_DOC;
+  }
+
+  @Override
+  public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
+    return component.getTag().getAttribute("layout") == attribute;
   }
 }

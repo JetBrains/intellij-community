@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.designSurface;
+package com.intellij.designer.componentTree;
 
+import com.intellij.designer.designSurface.ComponentSelectionListener;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.inspection.AbstractQuickFixManager;
 import com.intellij.designer.inspection.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
@@ -29,9 +31,15 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public final class QuickFixManager extends AbstractQuickFixManager implements ComponentSelectionListener {
-  public QuickFixManager(DesignerEditorPanel designer, JComponent component, JViewport viewPort) {
-    super(designer, component, viewPort);
-    designer.getSurfaceArea().addSelectionListener(this);
+  private EditableArea myArea;
+
+  public QuickFixManager(JComponent component, JViewport viewPort) {
+    super(null, component, viewPort);
+  }
+
+  public void setEditableArea(EditableArea area) {
+    myArea = area;
+    area.addSelectionListener(this);
   }
 
   @Override
@@ -43,7 +51,7 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Co
   @NotNull
   @Override
   protected List<ErrorInfo> getErrorInfos() {
-    List<RadComponent> selection = myDesigner.getSurfaceArea().getSelection();
+    List<RadComponent> selection = myArea.getSelection();
     if (selection.size() == 1) {
       return ErrorInfo.get(selection.get(0));
     }
@@ -52,18 +60,7 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Co
 
   @Override
   protected Rectangle getErrorBounds() {
-    List<RadComponent> selection = myDesigner.getSurfaceArea().getSelection();
-    if (selection.size() == 1) {
-      return selection.get(0).getBounds(myComponent);
-    }
-
-    return null;
-  }
-
-  @Override
-  protected Rectangle getHintClipRect() {
-    Rectangle clipRect = super.getHintClipRect();
-    clipRect.grow(4, 4);
-    return clipRect;
+    ComponentTree component = (ComponentTree)myComponent;
+    return component.getPathBounds(component.getSelectionPath());
   }
 }
