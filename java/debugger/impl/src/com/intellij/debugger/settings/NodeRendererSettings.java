@@ -76,7 +76,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   // alternate collections
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
     createCompoundReferenceRenderer(
-      "Map", "java.util.Map",
+      "Map", CommonClassNames.JAVA_UTIL_MAP,
       createLabelRenderer(" size = ", "size()", null),
       createExpressionChildrenRenderer("entrySet().toArray()", "!isEmpty()")
     ),

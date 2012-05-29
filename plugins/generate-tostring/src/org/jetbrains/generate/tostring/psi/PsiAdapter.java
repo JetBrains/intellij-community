@@ -137,7 +137,7 @@ public class PsiAdapter {
      * @return true if it's a Map type.
      */
     public boolean isMapType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, "java.util.Map");
+        return isTypeOf(factory, type, CommonClassNames.JAVA_UTIL_MAP);
     }
 
     /**

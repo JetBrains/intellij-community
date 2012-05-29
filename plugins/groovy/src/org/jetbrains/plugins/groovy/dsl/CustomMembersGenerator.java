@@ -197,7 +197,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   private static String stringifyType(Object type) {
     if (type == null) return CommonClassNames.JAVA_LANG_OBJECT;
     if (type instanceof Closure) return GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
-    if (type instanceof Map) return "java.util.Map";
+    if (type instanceof Map) return CommonClassNames.JAVA_UTIL_MAP;
     if (type instanceof Class) return ((Class)type).getName();
 
     String s = type.toString();

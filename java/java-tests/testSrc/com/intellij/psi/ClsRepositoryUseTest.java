@@ -579,7 +579,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
   public void testGenericReturnType() throws Exception {
     disableJdk();
 
-    final PsiClass map = myJavaFacade.findClass("java.util.Map", RESOLVE_SCOPE);
+    final PsiClass map = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP, RESOLVE_SCOPE);
     assert map != null;
     final PsiElementFactory factory = myJavaFacade.getElementFactory();
     final PsiClassType typeMapStringToInteger =
@@ -619,7 +619,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
 
   public void testSimplerGenericInheritance() throws Exception {
     PsiElementFactory factory = myJavaFacade.getElementFactory();
-    PsiClass map = myJavaFacade.findClass("java.util.Map", RESOLVE_SCOPE);
+    PsiClass map = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP, RESOLVE_SCOPE);
     PsiClass hashMap = myJavaFacade.findClass("java.util.HashMap", RESOLVE_SCOPE);
     assert map != null && hashMap != null;
     assertTrue(factory.createType(map).isAssignableFrom(factory.createType(hashMap)));
