@@ -148,7 +148,8 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       not(
         or(psiElement(PsiTypeCastExpression.class),
            psiElement(PsiSwitchLabelStatement.class),
-           psiElement(PsiExpressionStatement.class)
+           psiElement(PsiExpressionStatement.class),
+           psiElement(PsiPrefixExpression.class)
         )
       )
     )),

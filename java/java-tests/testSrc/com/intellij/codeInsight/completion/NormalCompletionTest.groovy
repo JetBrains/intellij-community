@@ -539,6 +539,7 @@ public class ListUtils {
   }
 
   public void testNoThisInComment() throws Throwable { doAntiTest() }
+  public void testIncNull() throws Throwable { doAntiTest() }
 
   public void testLastExpressionInFor() throws Throwable { doTest(); }
 
