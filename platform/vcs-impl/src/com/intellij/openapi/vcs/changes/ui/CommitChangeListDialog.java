@@ -110,6 +110,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String myOkActionText;
   private final ZipperUpdater myZipperUpdater;
   private final Runnable myRefreshDetails;
+  private CommitAction myCommitAction;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -590,15 +591,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   protected Action[] createActions() {
     final List<Action> actions = new ArrayList<Action>();
 
-    CommitAction commitAction = null;
+    myCommitAction = null;
     if (myShowVcsCommit) {
-      commitAction = new CommitAction();
-      actions.add(commitAction);
+      myCommitAction = new CommitAction();
+      actions.add(myCommitAction);
       myHelpId = outCommitHelpId;
     }
     if (myExecutors != null) {
-      if (commitAction != null) {
-        commitAction.setOptions(myExecutorActions);        
+      if (myCommitAction != null) {
+        myCommitAction.setOptions(myExecutorActions);
       } else {
         actions.addAll(Arrays.asList(myExecutorActions));
       }
@@ -1165,10 +1166,14 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void updateButtons() {
     if (myDisposed) return;
-    setOKActionEnabled(hasDiffs());
+    final boolean enabled = hasDiffs();
+    setOKActionEnabled(enabled);
+    if (myCommitAction != null) {
+      myCommitAction.setEnabled(enabled);
+    }
     if (myExecutorActions != null) {
       for (Action executorAction : myExecutorActions) {
-        executorAction.setEnabled(hasDiffs());
+        executorAction.setEnabled(enabled);
       }
     }
     myOKButtonUpdateAlarm.cancelAllRequests();
