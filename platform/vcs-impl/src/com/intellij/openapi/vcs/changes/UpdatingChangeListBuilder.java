@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -115,8 +116,8 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path) {
-    myChangeListWorker.removeRegisteredChangeFor(path);
+  public void removeRegisteredChangeFor(FilePath path, FileStatus fileStatus) {
+    myChangeListWorker.removeRegisteredChangeFor(path, fileStatus);
   }
 
   private boolean isExcluded(final VirtualFile file) {

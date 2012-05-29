@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.update.UpdatedFilesReverseSide;
@@ -63,11 +64,11 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void removeRegisteredChangeFor(FilePath path) {
+  public void removeRegisteredChangeFor(FilePath path, FileStatus fileStatus) {
     // not sure
     for (Iterator<Change> iterator = myChanges.iterator(); iterator.hasNext(); ) {
       final Change change = iterator.next();
-      if (path.equals(ChangesUtil.getFilePath(change))) {
+      if (path.equals(ChangesUtil.getFilePath(change)) && change.getFileStatus().equals(fileStatus)) {
         final VirtualFile vf = path.getVirtualFile();
         if (vf != null) {
           myCheckSet.remove(vf);

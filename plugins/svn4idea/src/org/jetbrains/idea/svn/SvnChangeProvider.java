@@ -284,7 +284,7 @@ public class SvnChangeProvider implements ChangeProvider {
       }
     });
     if (isUnder) {
-      builder.removeRegisteredChangeFor(oldPath);
+      builder.removeRegisteredChangeFor(oldPath, FileStatus.ADDED);
       builder.processChangeInList(newChange, clName, SvnVcs.getKey());
       deletedToDelete.add(deletedFile);
     }

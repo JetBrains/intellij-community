@@ -775,19 +775,19 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
   }
 
-  public void removeRegisteredChangeFor(FilePath path) {
+  public void removeRegisteredChangeFor(FilePath path, FileStatus fileStatus) {
     myIdx.remove(path);
 
     for (LocalChangeList list : myMap.values()) {
       for (Iterator<Change> iterator = list.getChanges().iterator(); iterator.hasNext(); ) {
         final Change change = iterator.next();
         final ContentRevision afterRevision = change.getAfterRevision();
-        if (afterRevision != null && afterRevision.getFile().equals(path)) {
+        if (afterRevision != null && afterRevision.getFile().equals(path) && change.getFileStatus().equals(fileStatus)) {
           ((LocalChangeListImpl) list).removeChange(change);
           return;
         }
         final ContentRevision beforeRevision = change.getBeforeRevision();
-        if (beforeRevision != null && beforeRevision.getFile().equals(path)) {
+        if (beforeRevision != null && beforeRevision.getFile().equals(path) && change.getFileStatus().equals(fileStatus)) {
           ((LocalChangeListImpl) list).removeChange(change);
           return;
         }
