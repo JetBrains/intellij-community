@@ -223,7 +223,7 @@ public class GitUnstashDialog extends DialogWrapper {
           GitUIUtil.showOperationError(myProject, ex, "resolving revision");
           return;
         }
-        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, resolvedStash, root);
+        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, resolvedStash, root, true);
       }
     });
     init();

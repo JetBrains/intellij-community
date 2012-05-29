@@ -122,7 +122,7 @@ public class GitChangeUtils {
   public static void parseChanges(Project project,
                                   VirtualFile vcsRoot,
                                   @Nullable GitRevisionNumber thisRevision,
-                                  GitRevisionNumber parentRevision,
+                                  @Nullable GitRevisionNumber parentRevision,
                                   StringScanner s,
                                   Collection<Change> changes,
                                   final Set<String> ignoreNames) throws VcsException {
@@ -230,14 +230,20 @@ public class GitChangeUtils {
    * of the merge, so changes are reported as difference with the first revision
    * listed on the the merge that has at least some changes.
    *
+   *
    * @param project      the project file
    * @param root         the git root
    * @param revisionName the name of revision (might be tag)
    * @param skipDiffsForMerge
+   * @param local
    * @return change list for the respective revision
    * @throws VcsException in case of problem with running git
    */
-  public static GitCommittedChangeList getRevisionChanges(Project project, VirtualFile root, String revisionName, boolean skipDiffsForMerge) throws VcsException {
+  public static GitCommittedChangeList getRevisionChanges(Project project,
+                                                          VirtualFile root,
+                                                          String revisionName,
+                                                          boolean skipDiffsForMerge,
+                                                          boolean local) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     h.setNoSSH(true);
     h.setSilent(true);
@@ -245,7 +251,7 @@ public class GitChangeUtils {
                     revisionName, "--");
     String output = h.run();
     StringScanner s = new StringScanner(output);
-    return parseChangeList(project, root, s, skipDiffsForMerge, h);
+    return parseChangeList(project, root, s, skipDiffsForMerge, h, local);
   }
 
   @Nullable
@@ -328,15 +334,24 @@ public class GitChangeUtils {
   /**
    * Parse changelist
    *
+   *
    * @param project the project
    * @param root    the git root
    * @param s       the scanner for log or show command output
    * @param skipDiffsForMerge
    * @param handler the handler that produced the output to parse. - for debugging purposes.
+   * @param local   pass {@code true} to indicate that this revision should be an editable
+   *                {@link com.intellij.openapi.vcs.changes.CurrentContentRevision}.
+   *                Pass {@code false} for
    * @return the parsed changelist
    * @throws VcsException if there is a problem with running git
    */
-  public static GitCommittedChangeList parseChangeList(Project project, VirtualFile root, StringScanner s, boolean skipDiffsForMerge, GitHandler handler) throws VcsException {
+  public static GitCommittedChangeList parseChangeList(Project project,
+                                                       VirtualFile root,
+                                                       StringScanner s,
+                                                       boolean skipDiffsForMerge,
+                                                       GitHandler handler,
+                                                       boolean local) throws VcsException {
     ArrayList<Change> changes = new ArrayList<Change>();
     // parse commit information
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
@@ -367,7 +382,7 @@ public class GitChangeUtils {
       final GitRevisionNumber parentRevision = parents.length > 0 ? loadRevision(project, root, parents[0]) : null;
       // This is the first or normal commit with the single parent.
       // Just parse changes in this commit as returned by the show command.
-      parseChanges(project, root, thisRevision, parentRevision, s, changes, null);
+      parseChanges(project, root, thisRevision, local ? null : parentRevision, s, changes, null);
     }
     else {
       // This is the merge commit. It has multiple parent commits.
@@ -376,10 +391,6 @@ public class GitChangeUtils {
 
       for (String parent : parents) {
         final GitRevisionNumber parentRevision = loadRevision(project, root, parent);
-        if (parentRevision == null) {
-          // the repository was cloned with --depth parameter
-          continue;
-        }
         GitSimpleHandler diffHandler = new GitSimpleHandler(project, root, GitCommand.DIFF);
         diffHandler.setNoSSH(true);
         diffHandler.setSilent(true);

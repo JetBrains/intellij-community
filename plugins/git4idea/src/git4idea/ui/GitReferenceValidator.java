@@ -94,7 +94,7 @@ public class GitReferenceValidator {
         myLastResult = false;
         try {
           GitRevisionNumber revision = GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
-          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, revision.asString(), gitRoot());
+          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, revision.asString(), gitRoot(), false);
           myLastResult = true;
         }
         catch (VcsException ex) {
