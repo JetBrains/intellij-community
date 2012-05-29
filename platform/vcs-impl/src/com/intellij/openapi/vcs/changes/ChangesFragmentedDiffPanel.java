@@ -17,6 +17,8 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ShiftedSimpleContent;
 import com.intellij.openapi.diff.SimpleContent;
@@ -45,7 +47,10 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -150,8 +155,6 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     myCurrentHorizontal = myConfiguration.SHORT_DIFF_HORISONTALLY;
     myHorizontal = createPanel(true);
     myVertical = createPanel(false);
-    myNavigateAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myHorizontal.getComponent());
-    myNavigateAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myVertical.getComponent());
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(getCurrentPanel().getComponent(), BorderLayout.CENTER);
@@ -222,7 +225,26 @@ public class ChangesFragmentedDiffPanel implements Disposable {
             }
           }
           if (descriptor == null) return;
-          FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+          final OpenFileDescriptor finalDescriptor = descriptor;
+          final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+              FileEditorManager.getInstance(myProject).openTextEditor(finalDescriptor, true);
+            }
+          };
+          if (! ModalityState.NON_MODAL.equals(ModalityState.current())) {
+            final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            if (window instanceof DialogWrapperDialog) {
+              final DialogWrapper wrapper = ((DialogWrapperDialog)window).getDialogWrapper();
+              if (wrapper != null) {
+                Disposer.dispose(wrapper.getDisposable());
+                wrapper.close(0);
+                ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
+                return;
+              }
+            }
+          }
+          runnable.run();
         }
       }
 
@@ -260,6 +282,14 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
     adjustPanelData((DiffPanelImpl)myHorizontal);
     adjustPanelData((DiffPanelImpl)myVertical);
+    if (((DiffPanelImpl) myHorizontal).getEditor1() != null) {
+      myNavigateAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), ((DiffPanelImpl) myHorizontal).getEditor1().getComponent());
+      myNavigateAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), ((DiffPanelImpl) myVertical).getEditor1().getComponent());
+    }
+    if (((DiffPanelImpl) myHorizontal).getEditor2() != null) {
+      myNavigateAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), ((DiffPanelImpl) myHorizontal).getEditor2().getComponent());
+      myNavigateAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), ((DiffPanelImpl) myVertical).getEditor2().getComponent());
+    }
 
     DiffPanel currentPanel = getCurrentPanel();
     FragmentedDiffPanelState state = (FragmentedDiffPanelState)((DiffPanelImpl)currentPanel).getDiffPanelState();
