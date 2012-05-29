@@ -50,16 +50,16 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   private class ChangeGroupSeparatorAction extends ComboBoxAction {
     private DefaultActionGroup myActionGroup;
     // separator -> presentable text
-    private final Map<String,String> myPredefindedSeparators = new LinkedHashMap<String, String>();
+    private final Map<String,String> myPredefinedSeparators = new LinkedHashMap<String, String>();
     private JPanel myPanel;
 
     public ChangeGroupSeparatorAction() {
-      myPredefindedSeparators.put(".",".");
-      myPredefindedSeparators.put("_","__");
-      myPredefindedSeparators.put("/","/");
+      myPredefinedSeparators.put(".", ".");
+      myPredefinedSeparators.put("_", "__");
+      myPredefinedSeparators.put("/", "/");
       String currentSeparator = getCurrentSeparator();
-      if (!myPredefindedSeparators.containsKey(currentSeparator)) {
-        myPredefindedSeparators.put(currentSeparator, currentSeparator);
+      if (!myPredefinedSeparators.containsKey(currentSeparator)) {
+        myPredefinedSeparators.put(currentSeparator, currentSeparator);
       }
     }
 
@@ -85,8 +85,8 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
 
     private void refillActionGroup() {
       myActionGroup.removeAll();
-      for (String separator : myPredefindedSeparators.keySet()) {
-        String presentableText = myPredefindedSeparators.get(separator);
+      for (String separator : myPredefinedSeparators.keySet()) {
+        String presentableText = myPredefinedSeparators.get(separator);
         myActionGroup.add(new SelectSeparatorAction(separator, presentableText));
       }
       myActionGroup.add(new SelectSeparatorAction(null, null));
@@ -114,7 +114,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       public final void actionPerformed(AnActionEvent e) {
         String separator;
         if (myActionSeparator == null) {
-          String[] strings = myPredefindedSeparators.keySet().toArray(new String[myPredefindedSeparators.size()]);
+          String[] strings = myPredefinedSeparators.keySet().toArray(new String[myPredefinedSeparators.size()]);
           String current = getCurrentSeparator();
           separator = Messages.showEditableChooseDialog(PropertiesBundle.message("select.property.separator.dialog.text"),
                                                         PropertiesBundle.message("select.property.separator.dialog.title"), Messages.getQuestionIcon(),
@@ -122,7 +122,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
           if (separator == null) {
             return;
           }
-          myPredefindedSeparators.put(separator,separator);
+          myPredefinedSeparators.put(separator, separator);
           refillActionGroup();
         }
         else {
