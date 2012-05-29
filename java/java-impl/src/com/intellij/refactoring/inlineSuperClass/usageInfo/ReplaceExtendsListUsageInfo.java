@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,22 +21,22 @@
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteExtendsClassUsageInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceExtendsListUsageInfo extends FixableUsageInfo {
+  private final SafeDeleteExtendsClassUsageInfo mySafeDeleteUsageInfo;
 
   public ReplaceExtendsListUsageInfo(PsiJavaCodeReferenceElement element, final PsiClass superClass, final PsiClass targetClass) {
     super(element);
-
+    mySafeDeleteUsageInfo = new SafeDeleteExtendsClassUsageInfo(element, superClass, targetClass);
   }
 
   public void fixUsage() throws IncorrectOperationException {
-    final PsiElement element = getElement();
-    if (element != null) {
-      element.delete();
+    if (mySafeDeleteUsageInfo.isSafeDelete()) {
+      mySafeDeleteUsageInfo.deleteElement();
     }
   }
 }
