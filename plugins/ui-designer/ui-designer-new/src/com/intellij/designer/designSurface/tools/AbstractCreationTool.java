@@ -78,7 +78,9 @@ public abstract class AbstractCreationTool extends TargetingTool {
   }
 
   private void selectAddedObjects() {
-    myArea.setSelection(myContext.getComponents());
+    if (myExecuteEnabled) {
+      myArea.setSelection(myContext.getComponents());
+    }
   }
 
   @Override
