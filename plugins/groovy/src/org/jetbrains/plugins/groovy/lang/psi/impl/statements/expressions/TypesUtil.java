@@ -717,7 +717,7 @@ public class TypesUtil {
     if (InheritanceUtil.isInheritor(collection, "java.util.LinkedHashSet")) {
       return createCollection(project, "java.util.LinkedHashSet", itemType);
     }
-    if (InheritanceUtil.isInheritor(collection, "java.util.Set")) {
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_SET)) {
       return createCollection(project, "java.util.HashSet", itemType);
     }
     if (InheritanceUtil.isInheritor(collection, "java.util.LinkedList")) {

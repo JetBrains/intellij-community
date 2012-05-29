@@ -91,7 +91,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection {
         if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression, "java.util.SortedSet")) {
           return new ReturnOfCollectionFieldFix("java.util.Collections.unmodifiableSortedSet(" + text + ')', "java.util.SortedSet");
         }
-        return new ReturnOfCollectionFieldFix("java.util.Collections.unmodifiableSet(" + text + ')', "java.util.Set");
+        return new ReturnOfCollectionFieldFix("java.util.Collections.unmodifiableSet(" + text + ')', CommonClassNames.JAVA_UTIL_SET);
       }
       else if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression, CommonClassNames.JAVA_UTIL_LIST)) {
         return new ReturnOfCollectionFieldFix("java.util.Collections.unmodifiableList(" + text + ')', "java.util.List");

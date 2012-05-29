@@ -148,7 +148,7 @@ public class PsiAdapter {
      * @return true if it's a Map type.
      */
     public boolean isSetType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, "java.util.Set");
+        return isTypeOf(factory, type, CommonClassNames.JAVA_UTIL_SET);
     }
 
     /**

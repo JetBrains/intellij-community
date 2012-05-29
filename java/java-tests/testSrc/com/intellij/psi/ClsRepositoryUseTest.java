@@ -540,7 +540,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     final PsiClassType.ClassResolveResult setResolveResult = ret.resolveGenerics();
     final PsiClass setResolveResultElement = setResolveResult.getElement();
     assert setResolveResultElement != null : setResolveResult;
-    assertEquals("java.util.Set", setResolveResultElement.getQualifiedName());
+    assertEquals(CommonClassNames.JAVA_UTIL_SET, setResolveResultElement.getQualifiedName());
     final PsiTypeParameter typeParameter = setResolveResultElement.getTypeParameters()[0];
 
     final PsiType substitutedResult = setResolveResult.getSubstitutor().substitute(typeParameter);
