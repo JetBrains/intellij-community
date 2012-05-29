@@ -72,4 +72,5 @@ public interface SvnUpdateClientI {
 
   void setExportExpandsKeywords(boolean expand);
   void setEventHandler(ISVNEventHandler dispatcher);
+  void setIgnoreExternals(boolean ignoreExternals);
 }
