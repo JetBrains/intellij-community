@@ -39,6 +39,7 @@ import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.JBDefaultTreeCellRenderer;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.NotNullFunction;
@@ -63,10 +64,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -78,12 +76,14 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.actions.AndroidProcessChooserDialog");
 
   @NonNls private static final String DEBUGGABLE_PROCESS_PROPERTY = "DEBUGGABLE_PROCESS";
+  @NonNls private static final String SHOW_ALL_PROCESSES_PROPERTY = "SHOW_ALL_PROCESSES";
   @NonNls private static final String DEBUGGABLE_DEVICE_PROPERTY = "DEBUGGABLE_DEVICE";
   @NonNls private static final String RUN_CONFIGURATION_NAME_PATTERN = "Android Debugger (%s)";
 
   private final Project myProject;
   private JPanel myContentPanel;
   private Tree myProcessTree;
+  private JBCheckBox myShowAllProcessesCheckBox;
 
   private final MergingUpdateQueue myUpdatesQueue;
   private final AndroidDebugBridge.IClientChangeListener myClientChangeListener;
@@ -97,7 +97,11 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
     myUpdatesQueue =
       new MergingUpdateQueue("AndroidProcessChooserDialogUpdatingQueue", 500, true, MergingUpdateQueue.ANY_COMPONENT, myProject);
 
-    doUpdateTree();
+    final String showAllProcessesStr = PropertiesComponent.getInstance(project).getValue(SHOW_ALL_PROCESSES_PROPERTY);
+    final boolean showAllProcesses = Boolean.parseBoolean(showAllProcessesStr);
+    myShowAllProcessesCheckBox.setSelected(showAllProcesses);
+
+    doUpdateTree(showAllProcesses);
 
     myClientChangeListener = new AndroidDebugBridge.IClientChangeListener() {
       @Override
@@ -124,6 +128,13 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
       }
     };
     AndroidDebugBridge.addDeviceChangeListener(myDeviceChangeListener);
+
+    myShowAllProcessesCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateTree();
+      }
+    });
 
     myProcessTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
@@ -219,6 +230,8 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
   }
 
   private void updateTree() {
+    final boolean showAllProcesses = myShowAllProcessesCheckBox.isSelected();
+
     myUpdatesQueue.queue(new Update(AndroidProcessChooserDialog.this) {
       @Override
       public void run() {
@@ -234,7 +247,7 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
           return;
         }
 
-        doUpdateTree();
+        doUpdateTree(showAllProcesses);
       }
 
       @Override
@@ -244,7 +257,7 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
     });
   }
 
-  private void doUpdateTree() {
+  private void doUpdateTree(boolean showAllProcesses) {
     final AndroidDebugBridge debugBridge = AndroidSdkUtils.getDebugBridge(myProject);
 
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
@@ -275,7 +288,8 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
       for (Client client : device.getClients()) {
         final String clientDescription = getClientDescription(client);
 
-        if (clientDescription != null && processNames.contains(clientDescription)) {
+        if (clientDescription != null &&
+            (showAllProcesses || isRelatedProcess(processNames, clientDescription))) {
           final DefaultMutableTreeNode clientNode = new DefaultMutableTreeNode(client);
           deviceNode.add(clientNode);
 
@@ -314,6 +328,17 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
     });
   }
 
+  private boolean isRelatedProcess(Set<String> processNames, String clientDescription) {
+    final String lc = clientDescription.toLowerCase();
+
+    for (String processName : processNames) {
+      if (lc.startsWith(processName)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @NotNull
   private static Set<String> collectAllProcessNames(Project project) {
     final List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
@@ -325,7 +350,7 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
 
         final String packageName = manifest.getPackage().getValue();
         if (packageName != null) {
-          result.add(packageName);
+          result.add(packageName.toLowerCase());
         }
 
         final XmlElement xmlElement = manifest.getXmlElement();
@@ -352,7 +377,7 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
           final String value = attribute.getValue();
 
           if (value != null) {
-            result.add(value);
+            result.add(value.toLowerCase());
           }
         }
       }
@@ -382,6 +407,7 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
 
     properties.setValue(DEBUGGABLE_DEVICE_PROPERTY, getPresentableName(selectedDevice));
     properties.setValue(DEBUGGABLE_PROCESS_PROPERTY, selectedClient.getClientData().getClientDescription());
+    properties.setValue(SHOW_ALL_PROCESSES_PROPERTY, Boolean.toString(myShowAllProcessesCheckBox.isSelected()));
 
     final String debugPort = Integer.toString(selectedClient.getDebuggerListenPort());
 
