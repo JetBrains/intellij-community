@@ -102,7 +102,7 @@ public class ModelGen {
       final String replacement = e.getAttributeValue("replace-with");
       model.name2replaceMap.put(name, replacement);
     }
-    NamespaceDesc def = new NamespaceDesc("", "generated", "java.lang.Object", "", null, null, null, null);
+    NamespaceDesc def = new NamespaceDesc("", "generated", com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT, "", null, null, null, null);
     for (Element nsElement : (List<Element>) namespaceEl.getChildren("namespace")) {
       final String name = nsElement.getAttributeValue("name");
       final NamespaceDesc nsDesc = new NamespaceDesc(name, def);

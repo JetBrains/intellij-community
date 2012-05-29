@@ -405,7 +405,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     LOG.assertTrue(type instanceof PsiArrayType);
     PsiType componentType = ((PsiArrayType) type).getComponentType();
 
-    assertTrue(componentType.equalsToText("java.lang.Object"));
+    assertTrue(componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
     assertEquals("Object", componentType.getPresentableText());
     assertFalse(componentType instanceof PsiPrimitiveType);
     assertFalse(componentType instanceof PsiArrayType);
@@ -424,7 +424,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     PsiType type2 = ((PsiArrayType) field2.getType()).getComponentType();
     assertTrue(type2 instanceof PsiClassType);
 
-    assertTrue(type2.equalsToText("java.lang.Object"));
+    assertTrue(type2.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
     assertEquals("Object", type2.getPresentableText());
   }
 
@@ -436,7 +436,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     PsiType type1 = aClass.getFields()[1].getType();
     PsiElement target1 = PsiUtil.resolveClassInType(type1);
     assertNotNull(target1);
-    PsiClass objectClass = myJavaFacade.findClasses("java.lang.Object", RESOLVE_SCOPE)[1];
+    PsiClass objectClass = myJavaFacade.findClasses(CommonClassNames.JAVA_LANG_OBJECT, RESOLVE_SCOPE)[1];
     assertEquals(objectClass, target1);
   }
 
@@ -518,12 +518,12 @@ public class ClsRepositoryUseTest extends PsiTestCase{
 
     PsiType type2 = parameters[1].getType();
     assertEquals("Object", type2.getPresentableText());
-    assertTrue(type2.equalsToText("java.lang.Object"));
+    assertTrue(type2.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
     assertFalse(type2 instanceof PsiArrayType);
     assertFalse(type2 instanceof PsiPrimitiveType);
     PsiClass target2 = PsiUtil.resolveClassInType(type2);
     assertNotNull(target2);
-    PsiClass objectClass = myJavaFacade.findClasses("java.lang.Object", RESOLVE_SCOPE)[1];
+    PsiClass objectClass = myJavaFacade.findClasses(CommonClassNames.JAVA_LANG_OBJECT, RESOLVE_SCOPE)[1];
     assertEquals(objectClass, target2);
 
     parameters[0].getModifierList();

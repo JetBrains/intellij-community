@@ -355,7 +355,7 @@ public class BindingFactory {
                 try {
                   final PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
                   final PsiType cloneable = f.createTypeFromText("java.lang.Cloneable", null);
-                  final PsiType object = f.createTypeFromText("java.lang.Object", null);
+                  final PsiType object = f.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null);
                   final PsiType serializable = f.createTypeFromText("java.io.Serializable", null);
 
                   PsiType type;
@@ -680,7 +680,7 @@ public class BindingFactory {
                 }
                 else {
                   /* ? super T1, T2 */
-                  if (xType != null && !"java.lang.Object".equals(xType.getCanonicalText())) {
+                  if (xType != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(xType.getCanonicalText())) {
                     return null;
                   }
                   return create();
@@ -1061,7 +1061,7 @@ public class BindingFactory {
               final PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
               final PsiType keyType = x instanceof PsiClassType ? x : y;
 
-              final PsiType object = f.createTypeFromText("java.lang.Object", null);
+              final PsiType object = f.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null);
               final PsiType cloneable = f.createTypeFromText("java.lang.Cloneable", null);
               final PsiType serializable = f.createTypeFromText("java.io.Serializable", null);
 
@@ -1108,7 +1108,7 @@ public class BindingFactory {
             final PsiClass[] ancestors = GenericsUtil.getLeastUpperClasses(xClass, yClass);
 
             for (final PsiClass ancestor : ancestors) {
-              if ("java.lang.Object".equals(ancestor.getQualifiedName()) && ancestors.length > 1) {
+              if (CommonClassNames.JAVA_LANG_OBJECT.equals(ancestor.getQualifiedName()) && ancestors.length > 1) {
                 continue;
               }
 

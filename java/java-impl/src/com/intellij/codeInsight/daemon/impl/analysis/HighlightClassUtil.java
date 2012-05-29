@@ -549,7 +549,7 @@ public class HighlightClassUtil {
       PsiClass[] superTypes = aClass.getSupers();
       for (PsiElement superType : superTypes) {
         while (superType instanceof PsiClass) {
-          if (!"java.lang.Object".equals(((PsiClass)superType).getQualifiedName())) {
+          if (!CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)superType).getQualifiedName())) {
             PsiClass circularClass = getCircularClass((PsiClass)superType, usedClasses);
             if (circularClass != null) return circularClass;
           }

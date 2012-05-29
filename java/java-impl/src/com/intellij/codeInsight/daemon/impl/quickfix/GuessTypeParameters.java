@@ -176,7 +176,7 @@ public class GuessTypeParameters {
     if (!types.isEmpty()) {
       Project project = typeElement.getProject();
       PsiType substituted = rawingSubstitutor.substitute(type);
-      if (!"java.lang.Object".equals(substituted.getCanonicalText()) && (toplevel || substituted.equals(type))) {
+      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(substituted.getCanonicalText()) && (toplevel || substituted.equals(type))) {
         types.add(substituted);
       }
       

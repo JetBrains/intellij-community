@@ -48,7 +48,7 @@ public class NamespaceDesc {
   }
 
   public NamespaceDesc(String name) {
-    this(name, "generated", "java.lang.Object", "", null, null, null, null);
+    this(name, "generated", com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT, "", null, null, null, null);
     skip = true;
   }
 

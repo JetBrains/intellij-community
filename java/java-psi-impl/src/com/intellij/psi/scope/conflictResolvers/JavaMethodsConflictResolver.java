@@ -172,7 +172,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiMethod existingMethod = (PsiMethod)existing.getElement();
       assert existingMethod != null;
       PsiClass existingClass = existingMethod.getContainingClass();
-      if (class1.isInterface() && "java.lang.Object".equals(existingClass.getQualifiedName())) { //prefer interface methods to methods from Object
+      if (class1.isInterface() && CommonClassNames.JAVA_LANG_OBJECT.equals(existingClass.getQualifiedName())) { //prefer interface methods to methods from Object
         signatures.put(signature, info);
         continue;
       }

@@ -287,10 +287,10 @@ public class JavaDocInfoGenerator {
 
     String qName = aClass.getQualifiedName();
 
-    if (refs.length > 0 || !aClass.isInterface() && (qName == null || !qName.equals("java.lang.Object"))) {
+    if (refs.length > 0 || !aClass.isInterface() && (qName == null || !qName.equals(CommonClassNames.JAVA_LANG_OBJECT))) {
       buffer.append("extends ");
       if (refs.length == 0) {
-        generateLink(buffer, "java.lang.Object", null, aClass, false);
+        generateLink(buffer, CommonClassNames.JAVA_LANG_OBJECT, null, aClass, false);
       }
       else {
         for (int i = 0; i < refs.length; i++) {

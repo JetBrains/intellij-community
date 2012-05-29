@@ -18,6 +18,7 @@ package com.intellij.psi.impl.cache;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
@@ -73,7 +74,7 @@ public class TypeInfo {
     registerFrequentType("short");
     registerFrequentType("void");
     registerFrequentType("Object");
-    registerFrequentType("java.lang.Object");
+    registerFrequentType(CommonClassNames.JAVA_LANG_OBJECT);
     registerFrequentType("String");
     registerFrequentType("java.lang.String");
   }

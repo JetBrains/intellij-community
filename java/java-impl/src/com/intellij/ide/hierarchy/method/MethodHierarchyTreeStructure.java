@@ -114,7 +114,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   }
 
   private static boolean isJavaLangObject(final PsiClass aClass) {
-    return "java.lang.Object".equals(aClass.getQualifiedName());
+    return CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
   }
 
   private static PsiClass findSuitableBaseClass(final PsiMethod method) {

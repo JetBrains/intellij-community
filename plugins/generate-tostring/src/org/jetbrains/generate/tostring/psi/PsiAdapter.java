@@ -181,7 +181,7 @@ public class PsiAdapter {
      * @return true if it's an Object type.
      */
     public boolean isObjectType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, "java.lang.Object");
+        return isTypeOf(factory, type, CommonClassNames.JAVA_LANG_OBJECT);
     }
 
     /**
@@ -588,7 +588,7 @@ public class PsiAdapter {
             }
 
             // parameter must be Object
-            if (!(parameters[0].getType().getCanonicalText().equals("java.lang.Object"))) {
+            if (!(parameters[0].getType().getCanonicalText().equals(CommonClassNames.JAVA_LANG_OBJECT))) {
                 continue;
             }
 

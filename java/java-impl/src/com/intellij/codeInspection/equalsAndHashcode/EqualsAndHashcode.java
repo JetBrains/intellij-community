@@ -50,7 +50,7 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
             new Computable<PsiClass>() {
               @Nullable
               public PsiClass compute() {
-                return psiFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(project));
+                return psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
               }
             }
         );
