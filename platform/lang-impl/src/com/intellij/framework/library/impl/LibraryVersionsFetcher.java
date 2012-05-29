@@ -16,9 +16,11 @@
 package com.intellij.framework.library.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
-import com.intellij.util.download.DownloadableFileDescription;
+import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.framework.library.DownloadableLibraryDescription;
+import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.download.impl.FileSetVersionsFetcherBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,14 +30,27 @@ import java.util.List;
 /**
  * @author nik
  */
-public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<FrameworkLibraryVersion> implements DownloadableLibraryDescription {
+public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<FrameworkLibraryVersion, DownloadableLibraryFileDescription> implements DownloadableLibraryDescription {
 
   public LibraryVersionsFetcher(@NotNull String groupId, @NotNull URL[] localUrls) {
     super(groupId, localUrls);
   }
 
   @Override
-  protected FrameworkLibraryVersion createVersion(Artifact version, List<DownloadableFileDescription> files) {
+  protected FrameworkLibraryVersion createVersion(Artifact version, List<DownloadableLibraryFileDescription> files) {
     return new FrameworkLibraryVersionImpl(version.getVersion(), files, myGroupId);
+  }
+
+  protected DownloadableLibraryFileDescription createFileDescription(ArtifactItem item, String url, String prefix) {
+    String sourceUrl = item.getSourceUrl();
+    if (sourceUrl != null) {
+      sourceUrl = prependPrefix(sourceUrl, prefix);
+    }
+    String docUrl = item.getDocUrl();
+    if (docUrl != null) {
+      docUrl = prependPrefix(docUrl, prefix);
+    }
+    final String name = item.getName();
+    return new DownloadableLibraryFileDescriptionImpl(url, FileUtil.getNameWithoutExtension(name), FileUtil.getExtension(name), sourceUrl, docUrl, item.isOptional());
   }
 }

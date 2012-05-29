@@ -32,7 +32,7 @@ import java.util.Collection;
  */
 public abstract class BreakpointPanelProvider<B> {
 
-  public abstract void provideBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules);
+  public abstract void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules);
 
   public interface BreakpointsListener {
     void breakpointsChanged();

@@ -52,7 +52,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   }
 
   public Object getValue() {
-    return !myElement.isValid() ? null : myElement.getXmlElement();
+    return myElement.getXmlElement();
   }
 
   public ItemPresentation getPresentation() {

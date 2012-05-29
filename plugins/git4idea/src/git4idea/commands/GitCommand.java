@@ -136,4 +136,8 @@ public class GitCommand {
     return new GitCommand(this, LockingPolicy.READ);
   }
 
+  @Override
+  public String toString() {
+    return myName;
+  }
 }

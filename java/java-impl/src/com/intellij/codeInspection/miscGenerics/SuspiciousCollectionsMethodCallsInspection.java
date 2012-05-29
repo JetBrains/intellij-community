@@ -44,10 +44,10 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
   }
 
   private static void setupPatternMethods(PsiManager manager,
-                                   GlobalSearchScope searchScope,
-                                   List<PsiMethod> patternMethods,
-                                   IntArrayList indices) {
-    final PsiClass collectionClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.Collection", searchScope);
+                                          GlobalSearchScope searchScope,
+                                          List<PsiMethod> patternMethods,
+                                          IntArrayList indices) {
+    final PsiClass collectionClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, searchScope);
     PsiType[] javaLangObject = {PsiType.getJavaLangObject(manager, searchScope)};
     MethodSignature removeSignature = MethodSignatureUtil.createMethodSignature("remove", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
     if (collectionClass != null) {
@@ -58,7 +58,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
       addMethod(contains, 0, patternMethods, indices);
     }
 
-    final PsiClass listClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.List", searchScope);
+    final PsiClass listClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, searchScope);
     if (listClass != null) {
       MethodSignature indexofSignature = MethodSignatureUtil.createMethodSignature("indexOf", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod indexof = MethodSignatureUtil.findMethodBySignature(listClass, indexofSignature, false);
@@ -68,7 +68,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
       addMethod(lastindexof, 0, patternMethods, indices);
     }
 
-    final PsiClass mapClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.Map", searchScope);
+    final PsiClass mapClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, searchScope);
     if (mapClass != null) {
       PsiMethod remove = MethodSignatureUtil.findMethodBySignature(mapClass, removeSignature, false);
       addMethod(remove, 0, patternMethods, indices);
@@ -96,11 +96,13 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
     final List<PsiMethod> patternMethods = new ArrayList<PsiMethod>();
     final IntArrayList indices = new IntArrayList();
     return new JavaElementVisitor() {
-      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override
+      public void visitReferenceExpression(final PsiReferenceExpression expression) {
         visitExpression(expression);
       }
 
-      @Override public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
         super.visitMethodCallExpression(methodCall);
         final String message = getSuspiciousMethodCallMessage(methodCall, REPORT_CONVERTIBLE_METHOD_CALLS, patternMethods, indices
         );

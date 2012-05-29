@@ -41,6 +41,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -56,44 +57,55 @@ public class RepositoryHelper {
   @NonNls public static final String extPluginsFile = "availables.xml";
 
   public static ArrayList<IdeaPluginDescriptor> process(@Nullable ProgressIndicator indicator) throws IOException, ParserConfigurationException, SAXException {
-    ArrayList<IdeaPluginDescriptor> plugins = null;
-    try {
-      BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
-      @NonNls String url = getListUrl() + "?build=" + buildNumber.asString();
+    BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
+    @NonNls String url = getListUrl() + "?build=" + buildNumber.asString();
 
+    if (indicator != null) {
+      indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", getRepositoryHost()));
+    }
+
+    HttpConfigurable.getInstance().setAuthenticator();
+
+    HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
+    connection.setRequestProperty("Accept-Encoding", "gzip");
+
+    if (indicator != null) {
+      indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", getRepositoryHost()));
+    }
+
+    connection.connect();
+
+    try {
       if (indicator != null) {
-        indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", getRepositoryHost()));
+        indicator.checkCanceled();
       }
-      HttpConfigurable.getInstance().prepareURL(getRepositoryHost());
-//      if( !pi.isCanceled() )
-      {
-        RepositoryContentHandler handler = new RepositoryContentHandler();
-        HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
+
+      String encoding = connection.getContentEncoding();
+
+      InputStream is = connection.getInputStream();
+
+      try {
+        if ("gzip".equalsIgnoreCase(encoding)) {
+          is = new GZIPInputStream(is);
+        }
 
         if (indicator != null) {
-          indicator.setText2(IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", getRepositoryHost()));
+          indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins"));
         }
 
-        InputStream is = getConnectionInputStream(connection);
-        if (is != null) {
-          if (indicator != null) {
-            indicator.setText2(IdeBundle.message("progress.downloading.list.of.plugins"));
-          }
-          readPluginsStream( is, handler, indicator, extPluginsFile);
+        RepositoryContentHandler handler = new RepositoryContentHandler();
 
-          plugins = handler.getPluginsList();
-        }
+        readPluginsStream( is, handler, indicator, extPluginsFile);
+
+        return handler.getPluginsList();
+      }
+      finally {
+        is.close();
       }
     }
-    catch (ProcessCanceledException e) {
-      throw e;
+    finally {
+      connection.disconnect();
     }
-    catch (RuntimeException e) {
-      e.printStackTrace();
-      if (e.getCause() == null || !(e.getCause() instanceof InterruptedException)) {
-      }
-    }
-    return plugins;
   }
 
   private static void setLabelText(@Nullable final JLabel label, final String message) {
@@ -103,16 +115,6 @@ public class RepositoryHelper {
         label.setText(message);
       }
     });
-  }
-
-
-  public static InputStream getConnectionInputStream(URLConnection connection) {
-    try {
-      return connection.getInputStream();
-    }
-    catch (IOException e) {
-      return null;
-    }
   }
 
   private static File createLocalPluginsDescriptions(final String file) throws IOException {

@@ -147,7 +147,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       }
     }
     else if (element instanceof GrVariable) {
-      toHighlight = ((GrVariable)element).getInitializerGroovy();
+      toHighlight = ((GrVariable)element).getNameIdentifierGroovy();
     }
     if (toHighlight == null) toHighlight = element;
     return toHighlight;

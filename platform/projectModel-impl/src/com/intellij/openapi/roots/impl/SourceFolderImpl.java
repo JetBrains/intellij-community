@@ -100,7 +100,9 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
 
   @Override
   public ContentFolder cloneFolder(ContentEntry contentEntry) {
-    return new SourceFolderImpl(this, (ContentEntryImpl) contentEntry);
+    assert !((ContentEntryImpl)contentEntry).isDisposed() : "target entry already disposed: " + contentEntry;
+    assert !isDisposed() : "Already disposed: " + this;
+    return new SourceFolderImpl(this, (ContentEntryImpl)contentEntry);
   }
 
   @Override

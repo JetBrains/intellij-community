@@ -114,8 +114,7 @@ public class MavenRootModelAdapter {
     Url url = toUrl(path);
     ContentEntry e = getContentRootFor(url);
     if (e == null) return;
-    unregisterAll(path, true, true
-    );
+    unregisterAll(path, true, true);
     unregisterAll(path, false, true);
     e.addSourceFolder(url.getUrl(), testSource);
   }

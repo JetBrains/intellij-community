@@ -50,7 +50,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
   private List<MyXBreakpointListener> myListeners = new CopyOnWriteArrayList<MyXBreakpointListener>();
 
   @Override
-  public void provideBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
+  public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
     rules.add(new XBreakpointGroupingByTypeRule());
     rules.add(new XBreakpointFileGroupingRule());
   }

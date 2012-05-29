@@ -267,7 +267,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
     PsiCodeBlock body = method.getBody();
     if (body == null) return false;
     PsiStatement[] statements = body.getStatements();
-    if (statements.length != 1) return false;
+    if (statements.length == 0) return false;
     PsiStatement statement = statements[0];
     if (PropertyUtil.isSimplePropertyGetter(method)) {
       if (statement instanceof PsiReturnStatement) {
@@ -275,6 +275,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       }
     }
     else if (PropertyUtil.isSimplePropertySetter(method)) {
+      if (statements.length > 1 && !(statements[1] instanceof PsiReturnStatement)) return false;
       if (statement instanceof PsiExpressionStatement) {
         PsiExpression expr = ((PsiExpressionStatement)statement).getExpression();
         if (expr instanceof PsiAssignmentExpression) {
@@ -651,7 +652,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
                   return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = "{" + params + " =>";
+              @NonNls final String lambdas = "#{" + params + " ->";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();

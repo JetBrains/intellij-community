@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-class ProblemData {
+public class ProblemData {
   private final Issue myIssue;
   private final String myMessage;
   private final TextRange myTextRange;

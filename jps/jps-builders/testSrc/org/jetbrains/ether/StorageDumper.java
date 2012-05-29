@@ -134,6 +134,7 @@ public class StorageDumper {
         final PrintStream p = new PrintStream(outputPath);
 
         mappings.toStream(p);
+        mappings.close();
 
         p.close();
       }

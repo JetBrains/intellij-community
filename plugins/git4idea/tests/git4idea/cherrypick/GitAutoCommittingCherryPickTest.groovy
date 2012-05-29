@@ -16,7 +16,7 @@
 package git4idea.cherrypick
 
 import com.intellij.notification.NotificationType
-import git4idea.history.browser.CherryPicker
+
 import git4idea.history.browser.GitCommit
 import org.junit.Before
 import org.junit.Test
@@ -25,6 +25,7 @@ import static git4idea.test.MockGit.*
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
 import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
 import static junit.framework.Assert.assertTrue
+import git4idea.history.browser.GitCherryPicker
 
 /**
  * Cherry-pick of one or multiple commits with "commit at once" option enabled.
@@ -55,7 +56,7 @@ Otherwise, please use 'git reset'
   @Before
   void setUp() {
     super.setUp()
-    myCherryPicker = new CherryPicker(myProject, myGit, myPlatformFacade, true)
+    myCherryPicker = new GitCherryPicker(myProject, myGit, myPlatformFacade, true)
   }
 
   @Test

@@ -1317,4 +1317,13 @@ def foo(List<? <caret>> list)''');
     myFixture.complete(CompletionType.BASIC);
     assertOrderedEquals(myFixture.lookupElementStrings, "extends", "super");
   }
+
+  void testMapDontCompleteProperties() {
+    myFixture.configureByText("_.groovy", '''\
+def map = [1:2]
+print map.metc<caret>
+''');
+    myFixture.complete(CompletionType.BASIC);
+    assertEmpty myFixture.getLookupElements()
+  }
 }

@@ -24,14 +24,14 @@ import java.util.List;
 /**
  * @author nik
  */
-public class DownloadableFileSetDescriptionImpl implements DownloadableFileSetDescription {
-  protected final List<DownloadableFileDescription> myFiles;
+public class DownloadableFileSetDescriptionImpl<F extends DownloadableFileDescription> implements DownloadableFileSetDescription {
+  protected final List<F> myFiles;
   protected final String myVersionString;
   private final String myName;
 
   public DownloadableFileSetDescriptionImpl(@NotNull String name,
                                             @NotNull String versionString,
-                                            @NotNull List<DownloadableFileDescription> files) {
+                                            @NotNull List<F> files) {
     myName = name;
     myVersionString = versionString;
     myFiles = files;
@@ -51,7 +51,7 @@ public class DownloadableFileSetDescriptionImpl implements DownloadableFileSetDe
 
   @NotNull
   @Override
-  public List<? extends DownloadableFileDescription> getFiles() {
+  public List<F> getFiles() {
     return myFiles;
   }
 }

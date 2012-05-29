@@ -67,33 +67,35 @@ public class SvnRecursiveStatusWalker {
           myHandler.checkIfCopyRootWasReported();
         }
         catch (SVNException e) {
-          if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
-            final VirtualFile virtualFile = path.getVirtualFile();
-            if (virtualFile != null) {
-              if (myPartner.isExcluded(virtualFile)) return;
-              // self is unversioned
-              myReceiver.processUnversioned(virtualFile);
-
-              processRecursively(virtualFile, item.getDepth());
-            }
-          } else {
-            throw e;
-          }
+          handleStatusException(item, path, e);
         }
       } else {
-        if (item.isIsInnerCopyRoot()) {
-          // this means that the status of parent directory had already been checked and is unversioned;
-          // to avoid SVN exception on status query to unversioned directory; and since we already know then that the file
-          // status is "unversioned" -> just register the unversioned file
-          if (path.getVirtualFile() != null) {
-            myReceiver.processUnversioned(path.getVirtualFile());
-          }
-        } else {
-          // just file
+        try {
           final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
           myReceiver.process(path, status);
+        } catch (SVNException e) {
+          handleStatusException(item, path, e);
         }
       }
+    }
+  }
+
+  private void handleStatusException(MyItem item, FilePath path, SVNException e) throws SVNException {
+    final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+    if (SVNErrorCode.WC_NOT_DIRECTORY.equals(errorCode) || SVNErrorCode.WC_NOT_FILE.equals(errorCode)) {
+      final VirtualFile virtualFile = path.getVirtualFile();
+      if (virtualFile != null) {
+        if (! myPartner.isExcluded(virtualFile)) {
+          // self is unversioned
+          myReceiver.processUnversioned(virtualFile);
+
+          if (virtualFile.isDirectory()) {
+            processRecursively(virtualFile, item.getDepth());
+          }
+        }
+      }
+    } else {
+      throw e;
     }
   }
 

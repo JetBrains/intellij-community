@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -39,19 +38,12 @@ public class SkipAutopopupInStrings extends CompletionConfidence {
 
   @NotNull
   @Override
-  public ThreeState shouldSkipAutopopup(@Nullable PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (contextElement != null) {
-      ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(psiFile, offset));
-      if (definition != null) {
-        if (isStringLiteral(contextElement, definition) || isStringLiteral(contextElement.getParent(), definition)) {
-          return ThreeState.YES;
-        }
-        if (offset > 0) {
-          PsiElement prev = psiFile.findElementAt(offset - 1);
-          if (prev != null && (isStringLiteralWithError(prev, definition) || isStringLiteralWithError(prev.getParent(), definition))) {
-            return ThreeState.YES;
-          }
-        }
+  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(psiFile, offset));
+    if (definition != null) {
+      if (isStringLiteral(contextElement, definition) || isStringLiteral(contextElement.getParent(), definition) ||
+          isStringLiteralWithError(contextElement, definition) || isStringLiteralWithError(contextElement.getParent(), definition)) {
+        return ThreeState.YES;
       }
     }
 

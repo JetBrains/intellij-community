@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenMergingUpdateQueue extends MergingUpdateQueue {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue");
+  private static final Logger LOG = Logger.getInstance(MavenMergingUpdateQueue.class);
 
   private final AtomicInteger mySuspendCounter = new AtomicInteger(0);
 

@@ -40,7 +40,7 @@ import java.util.List;
 @State(name = "MavenRunner", storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)})
 public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings> {
 
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.execution.MavenRunner");
+  private static final Logger LOG = Logger.getInstance(MavenRunner.class);
 
   private MavenRunnerSettings mySettings = new MavenRunnerSettings();
   private final Project myProject;

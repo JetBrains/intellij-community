@@ -19,7 +19,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.console.GroovyShellAction;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -78,7 +77,7 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
 
   @NotNull
   @Override
-  public ThreeState shouldSkipAutopopup(@Nullable PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     if (PsiUtil.isLeafElementOfType(contextElement, TokenSets.STRING_LITERALS)) {
       @SuppressWarnings("ConstantConditions")
       PsiElement parent = contextElement.getParent();

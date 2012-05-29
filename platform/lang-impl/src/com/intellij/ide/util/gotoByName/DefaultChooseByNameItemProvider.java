@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -32,10 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameIdea");
@@ -53,21 +51,41 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                              Processor<Object> consumer) {
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
+    String modifiedNamePattern = null;
 
     if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
-      namePattern = "*" + namePattern + "*";
+      modifiedNamePattern = "*" + namePattern + "*";
     }
 
     boolean empty = namePattern.isEmpty() || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
     if (empty && !base.canShowListForEmptyPattern()) return;
 
     List<String> namesList = new ArrayList<String>();
-    getNamesByPattern(base, base.getNames(everywhere), cancelled, namesList, namePattern);
+    String[] names = base.getNames(everywhere);
+    getNamesByPattern(base, names, cancelled, namesList, namePattern);
     if (cancelled.compute()) {
       throw new ProcessCanceledException();
     }
     sortNamesList(namePattern, namesList);
 
+    if (modifiedNamePattern != null) {
+      final Set<String> matched = new HashSet<String>(namesList);
+      List<String> additionalNamesList = new ArrayList<String>();
+      namePattern = modifiedNamePattern;
+      getNamesByPattern(base, names, cancelled, additionalNamesList, namePattern);
+      additionalNamesList = ContainerUtil.filter(additionalNamesList, new Condition<String>() {
+        @Override
+        public boolean value(String name) {
+          return !matched.contains(name);
+        }
+      });
+      sortNamesList(namePattern, additionalNamesList);
+      namesList.addAll(additionalNamesList);
+    }
+
+    if (cancelled.compute()) {
+      throw new ProcessCanceledException();
+    }
 
     List<Object> sameNameElements = new SmartList<Object>();
 

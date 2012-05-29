@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiNameValuePairPattern;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -66,8 +67,22 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
 public class JavaCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionContributor");
 
-  private static final Java15CompletionData ourJava15CompletionData = new Java15CompletionData();
-  private static final JavaCompletionData ourJavaCompletionData = new JavaCompletionData();
+  private static final Map<LanguageLevel, JavaCompletionData> ourCompletionData;
+
+  static {
+    ourCompletionData = new LinkedHashMap<LanguageLevel, JavaCompletionData>();
+    ourCompletionData.put(LanguageLevel.JDK_1_8, new Java18CompletionData());
+    ourCompletionData.put(LanguageLevel.JDK_1_3, new Java15CompletionData());
+    ourCompletionData.put(LanguageLevel.JDK_1_3, new JavaCompletionData());
+  }
+
+  private static JavaCompletionData getCompletionData(LanguageLevel level) {
+    final Set<Map.Entry<LanguageLevel, JavaCompletionData>> entries = ourCompletionData.entrySet();
+    for (Map.Entry<LanguageLevel, JavaCompletionData> entry : entries) {
+      if (entry.getKey().isAtLeast(level)) return entry.getValue();
+    }
+    return ourCompletionData.get(LanguageLevel.JDK_1_3);
+  }
 
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
@@ -338,7 +353,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     PsiElement position = parameters.getPosition();
     final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-    final JavaCompletionData completionData = PsiUtil.isLanguageLevel5OrHigher(position) ? ourJava15CompletionData : ourJavaCompletionData;
+    final JavaCompletionData completionData = getCompletionData(PsiUtil.getLanguageLevel(position));
     completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
     completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
     completionData.fillCompletions(parameters, result);

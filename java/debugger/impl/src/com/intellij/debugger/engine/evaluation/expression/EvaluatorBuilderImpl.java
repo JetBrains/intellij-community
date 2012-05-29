@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
@@ -160,7 +161,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       final PsiType unboxedLType = PsiPrimitiveType.getUnboxedType(lType);
 
       if (unboxedLType != null) {
-        if (rType instanceof PsiPrimitiveType && !PsiPrimitiveType.NULL.equals(rType)) {
+        if (rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(rType)) {
           if (!rType.equals(unboxedLType)) {
             rEvaluator = new TypeCastEvaluator(rEvaluator, unboxedLType.getCanonicalText(), true);
           }
@@ -175,7 +176,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           final PsiPrimitiveType unboxedRType = PsiPrimitiveType.getUnboxedType(rType);
           final PsiType _rType = unboxedRType != null? unboxedRType : rType;
-          if (_rType instanceof PsiPrimitiveType && !PsiPrimitiveType.NULL.equals(_rType)) {
+          if (_rType instanceof PsiPrimitiveType && !PsiType.NULL.equals(_rType)) {
             if (!lType.equals(_rType)) {
               rEvaluator = new TypeCastEvaluator(rEvaluator, lType.getCanonicalText(), true);
             }
@@ -988,9 +989,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
-      final String parsingError = HighlightUtil.getLiteralExpressionParsingError(expression);
+      final HighlightInfo parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression);
       if (parsingError != null) {
-        throwEvaluateException(parsingError);
+        throwEvaluateException(parsingError.description);
         return;
       }
 
@@ -1219,9 +1220,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = new ArrayInitializerEvaluator(evaluators);
     }
 
+    @Nullable
     private static PsiClass getOuterClass(PsiClass aClass) {
-      if(aClass == null) return null;
-      return PsiTreeUtil.getContextOfType(aClass, PsiClass.class, true);
+      return aClass == null ? null : PsiTreeUtil.getContextOfType(aClass, PsiClass.class, true);
     }
 
     private PsiClass getContainingClass(PsiVariable variable) {

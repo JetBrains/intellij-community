@@ -43,6 +43,9 @@ public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
   public void testSWInGString4() throws Exception {doTestForSelectWord(4);}
   public void testSWInGString5() throws Exception {doTestForSelectWord(5);}
   public void testSWInParameterList() throws Exception {doTestForSelectWord(3);}
+  public void testSWInArgLabel1() {doTestForSelectWord(2)}
+  public void testSWInArgLabel2() {doTestForSelectWord(2)}
+  public void testSWInArgLabel3() {doTestForSelectWord(2)}
 
   public void testSWListLiteralArgument() throws Exception {
     doTestForSelectWord 2,

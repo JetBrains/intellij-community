@@ -34,6 +34,11 @@ public class XBreakpointGroupingByTypeRule<B> extends XBreakpointGroupingRule<B,
   }
 
   @Override
+  public boolean isAlwaysEnabled() {
+    return true;
+  }
+
+  @Override
   public XBreakpointTypeGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointTypeGroup> groups) {
     if (b instanceof XBreakpoint) {
       final XBreakpoint breakpoint = (XBreakpoint)b;

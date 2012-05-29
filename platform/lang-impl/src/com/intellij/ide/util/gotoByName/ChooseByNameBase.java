@@ -61,6 +61,7 @@ import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -195,7 +196,7 @@ public abstract class ChooseByNameBase {
   }
 
   public boolean isSearchInAnyPlace() {
-    return mySearchInAnyPlace;
+    return PlatformUtils.isCidr() || mySearchInAnyPlace;
   }
 
   public void setSearchInAnyPlace(boolean searchInAnyPlace) {

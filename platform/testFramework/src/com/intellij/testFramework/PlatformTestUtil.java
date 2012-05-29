@@ -43,7 +43,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.*;
@@ -72,10 +72,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarFile;
 
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author yole
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
   public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
@@ -616,11 +618,15 @@ public class PlatformTestUtil {
 
   public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
+
+    dirAfter.getChildren();
+    dirAfter.refresh(false, false);
     VirtualFile[] childrenAfter = dirAfter.getChildren();
     if (dirAfter.isInLocalFileSystem()) {
       File[] ioAfter = new File(dirAfter.getPath()).listFiles();
       shallowCompare(childrenAfter, ioAfter);
     }
+
     VirtualFile[] childrenBefore = dirBefore.getChildren();
     if (dirBefore.isInLocalFileSystem()) {
       File[] ioBefore = new File(dirBefore.getPath()).listFiles();
@@ -672,16 +678,27 @@ public class PlatformTestUtil {
 
   public static void assertFilesEqual(VirtualFile fileAfter, VirtualFile fileBefore) throws IOException {
     try {
-      assertJarFilesEqual(VfsUtil.virtualToIoFile(fileAfter), VfsUtil.virtualToIoFile(fileBefore));
+      assertJarFilesEqual(VfsUtilCore.virtualToIoFile(fileAfter), VfsUtilCore.virtualToIoFile(fileBefore));
     }
     catch (IOException e) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
+
       Document docBefore = manager.getDocument(fileBefore);
       boolean canLoadBeforeText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
-      String textB = docBefore == null ? !canLoadBeforeText ? null : LoadTextUtil.getTextByBinaryPresentation(fileBefore.contentsToByteArray(false), fileBefore).toString() : docBefore.getText();
+      String textB = docBefore != null
+                     ? docBefore.getText()
+                     : !canLoadBeforeText
+                       ? null
+                       : LoadTextUtil.getTextByBinaryPresentation(fileBefore.contentsToByteArray(false), fileBefore).toString();
+
       Document docAfter = manager.getDocument(fileAfter);
       boolean canLoadAfterText = !fileBefore.getFileType().isBinary() || fileBefore.getFileType() == FileTypes.UNKNOWN;
-      String textA = docAfter == null ? !canLoadAfterText ? null : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString() : docAfter.getText();
+      String textA = docAfter != null
+                     ? docAfter.getText()
+                     : !canLoadAfterText
+                       ? null
+                       : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString();
+
       if (textA != null && textB != null) {
         Assert.assertEquals(fileAfter.getPath(), textA, textB);
       }
@@ -692,28 +709,30 @@ public class PlatformTestUtil {
   }
 
   public static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    JarFile jarFile1 = null;
-    JarFile jarFile2 = null;
     final File tempDirectory1;
     final File tempDirectory2;
+
+    final JarFile jarFile1 = new JarFile(file1);
     try {
-      jarFile2 = new JarFile(file2);
-      jarFile1 = new JarFile(file1);
-      tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
-      tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
-      ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
-      ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
-    }
-    finally {
-      if (jarFile1 != null) {
-        jarFile1.close();
+      final JarFile jarFile2 = new JarFile(file2);
+      try {
+        tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
+        tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
+        ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
+        ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
       }
-      if (jarFile2 != null) {
+      finally {
         jarFile2.close();
       }
     }
+    finally {
+      jarFile1.close();
+    }
+
     final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
+    assertNotNull(tempDirectory1.toString(), dirAfter);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
+    assertNotNull(tempDirectory2.toString(), dirBefore);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

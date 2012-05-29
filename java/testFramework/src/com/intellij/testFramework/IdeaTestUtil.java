@@ -32,23 +32,22 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   public static void withLevel(final Module module, final LanguageLevel level, final Runnable r) {
     final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(module.getProject());
-    final LanguageLevelModuleExtension moduleExt = LanguageLevelModuleExtension.getInstance(module);
 
     final LanguageLevel projectLevel = projectExt.getLanguageLevel();
-    final LanguageLevel moduleLevel = moduleExt.getLanguageLevel();
+    final LanguageLevel moduleLevel = LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
     try {
       projectExt.setLanguageLevel(level);
-      setModuleLanguageLevel(level, moduleExt);
+      setModuleLanguageLevel(module, level);
       r.run();
     }
     finally {
-      setModuleLanguageLevel(moduleLevel, moduleExt);
+      setModuleLanguageLevel(module, moduleLevel);
       projectExt.setLanguageLevel(projectLevel);
     }
   }
 
-  private static void setModuleLanguageLevel(final LanguageLevel level, final LanguageLevelModuleExtension moduleExt) {
-    final LanguageLevelModuleExtension modifiable = (LanguageLevelModuleExtension)moduleExt.getModifiableModel(true);
+  public static void setModuleLanguageLevel(Module module, final LanguageLevel level) {
+    final LanguageLevelModuleExtension modifiable = (LanguageLevelModuleExtension)LanguageLevelModuleExtension.getInstance(module).getModifiableModel(true);
     modifiable.setLanguageLevel(level);
     modifiable.commit();
   }
