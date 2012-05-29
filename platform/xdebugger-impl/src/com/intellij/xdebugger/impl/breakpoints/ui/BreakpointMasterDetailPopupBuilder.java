@@ -18,7 +18,6 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -32,7 +31,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListUtil;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
@@ -130,8 +128,6 @@ public class BreakpointMasterDetailPopupBuilder {
       }).setCloseOnEnter(false).createMasterDetailPopup();
 
     myTree.setBorder(IdeBorderFactory.createBorder());
-
-    myPopupBuilder.getDetailView().setScheme(createScheme());
 
     myTree.setDelegate(new BreakpointItemsTree.BreakpointItemsTreeDelegate() {
       @Override

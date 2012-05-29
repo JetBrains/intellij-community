@@ -52,12 +52,6 @@ public class DetailViewImpl extends JPanel implements DetailView {
   private JLabel myNothingToShowInEditor = new JLabel("Nothing to show");
   private RangeHighlighter myHighlighter;
 
-  public void setScheme(EditorColorsScheme scheme) {
-    myScheme = scheme;
-  }
-
-  private EditorColorsScheme myScheme = EditorColorsManager.getInstance().getGlobalScheme();
-
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
@@ -120,7 +114,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
         remove(myNothingToShowInEditor);
         setEditor(EditorFactory.getInstance().createViewer(document, project));
 
-        final EditorColorsScheme scheme = getScheme();
+        final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
         EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project);
 
@@ -154,11 +148,6 @@ public class DetailViewImpl extends JPanel implements DetailView {
       add(label);
     }
   }
-
-  public EditorColorsScheme getScheme() {
-    return myScheme;
-  }
-
 
 
   private void clearHightlighting() {

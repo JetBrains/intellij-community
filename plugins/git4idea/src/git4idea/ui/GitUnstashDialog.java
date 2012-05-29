@@ -124,6 +124,7 @@ public class GitUnstashDialog extends DialogWrapper {
    */
   public GitUnstashDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
+    setModal(false);
     myProject = project;
     myVcs = GitVcs.getInstance(project);
     setTitle(GitBundle.getString("unstash.title"));
@@ -223,7 +224,7 @@ public class GitUnstashDialog extends DialogWrapper {
           GitUIUtil.showOperationError(myProject, ex, "resolving revision");
           return;
         }
-        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, resolvedStash, root);
+        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, resolvedStash, root, true);
       }
     });
     init();

@@ -15,23 +15,25 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
-import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class BreakpointsMasterDetailPopupFactory {
 
   private final List<BreakpointPanelProvider> myBreakpointPanelProviders;
   private Project myProject;
+  private Balloon myBalloonToHide;
 
   public BreakpointsMasterDetailPopupFactory(Project project) {
     myProject = project;
@@ -47,6 +49,10 @@ public class BreakpointsMasterDetailPopupFactory {
     });
   }
 
+  public void setBalloonToHide(Balloon balloonToHide) {
+    myBalloonToHide = balloonToHide;
+  }
+
   public static BreakpointsMasterDetailPopupFactory getInstance(Project project) {
     return ServiceManager.getService(project, BreakpointsMasterDetailPopupFactory.class);
   }
@@ -55,6 +61,18 @@ public class BreakpointsMasterDetailPopupFactory {
     BreakpointMasterDetailPopupBuilder builder = new BreakpointMasterDetailPopupBuilder(myProject);
     builder.setInitialBreakpoint(initialBreakpoint);
     builder.setBreakpointsPanelProviders(myBreakpointPanelProviders);
-    return builder.createPopup();
+    final JBPopup popup = builder.createPopup();
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(LightweightWindowEvent event) {
+        myBalloonToHide.hide();
+      }
+
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+    });
+    return popup;
   }
 }

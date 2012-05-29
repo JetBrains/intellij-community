@@ -87,6 +87,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     if (highlighter != null) {
       updateIcon();
       highlighter.setGutterIconRenderer(createGutterIconRenderer());
+      highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
     }
     myHighlighter = highlighter;
   }
