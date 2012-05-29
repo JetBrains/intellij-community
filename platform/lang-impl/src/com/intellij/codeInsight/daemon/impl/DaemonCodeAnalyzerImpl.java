@@ -757,25 +757,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           runnable.run();
         }
         else {
-          final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
-          final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(activeEditor.getDocument());
-          if (psiFile != null && profile != null && !profile.areToolsInstantiated()) {
-            // optimization: do expensive classloading outside readaction
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  if (!psiFile.getManager().isDisposed() && !profile.areToolsInstantiated()) {
-                    profile.preInstantiateTools(psiFile);
-                  }
-                }
-                catch (Exception e) {
-                  throw new RuntimeException(e);
-                }
-              }
-            });
-          }
-
           ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).cancelAndRunWhenAllCommitted(
             "start daemon when all committed", runnable);
         }
