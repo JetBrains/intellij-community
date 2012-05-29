@@ -760,24 +760,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
-    final Map<File, Set<File>> map = new HashMap<File, Set<File>>();
+    final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
     final boolean compilingTests = context.isCompilingTests();
     for (Module module : chunk.getModules()) {
-      final String outputPath;
-      final Collection<String> srcPaths;
-      if (compilingTests) {
-        outputPath = module.getTestOutputPath();
-        srcPaths = module.getTestRoots();
+      final Set<File> roots = new LinkedHashSet<File>();
+      for (RootDescriptor descriptor : context.getModuleRoots(module)) {
+        if (descriptor.isTestRoot == compilingTests) {
+          roots.add(descriptor.root);
+        }
       }
-      else {
-        outputPath = module.getOutputPath();
-        srcPaths = module.getSourceRoots();
-      }
-      final Set<File> roots = new HashSet<File>();
-      for (String path : srcPaths) {
-        roots.add(new File(path));
-      }
-      map.put(new File(outputPath), roots);
+      map.put(new File(compilingTests ? module.getTestOutputPath() : module.getOutputPath()), roots);
     }
     return map;
   }
