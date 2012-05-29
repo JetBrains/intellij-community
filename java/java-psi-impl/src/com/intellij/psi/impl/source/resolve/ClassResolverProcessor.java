@@ -244,23 +244,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       }
     }
 
-    /* if (myPlace instanceof PsiJavaCodeReferenceElement) {
-      final PsiElement element =
-        PsiTreeUtil.skipParentsOfType(myPlace, PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiReferenceParameterList.class);
-      if (element instanceof PsiReferenceList) {
-        final PsiElement pparent = element.getParent();
-        if (pparent instanceof PsiClass) {
-          final PsiClass parentClass = (PsiClass)pparent;
-          if (element.equals(parentClass.getExtendsList()) || element.equals(parentClass.getImplementsList())) {          
-            final PsiClass containingClass = aClass.getContainingClass();
-            if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, parentClass, false)) {
-              final PsiElement qualifier = ((PsiJavaCodeReferenceElement)myPlace).getQualifier();
-              if (qualifier instanceof PsiReference && parentClass == ((PsiReference)qualifier).resolve()) return false;
-            }
-          }
-        }
-      }
-    }*/
     boolean accessible = true;
     if (aClass instanceof PsiTypeParameter) {
       accessible = !myStaticContext;
