@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,7 +31,7 @@ import java.awt.*;
  */
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private final ListCellRenderer myOriginalRenderer;
-
+  private boolean mySeparator;
   private Icon myIcon;
   private String myText;
   private String myToolTipText;
@@ -61,6 +62,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
                                                       final int index,
                                                       final boolean isSelected,
                                                       final boolean cellHasFocus) {
+    mySeparator = false;
     myIcon = null;
     myText = null;
     myForeground = null;
@@ -70,6 +72,18 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
     @SuppressWarnings("unchecked") final T t = (T)value;
     customize(list, t, index, isSelected, cellHasFocus);
+
+    if (mySeparator) {
+      final TitledSeparator separator = new TitledSeparator(myText);
+      separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+      if (!UIUtil.isUnderGTKLookAndFeel()) {
+        separator.setOpaque(false);
+        separator.setBackground(UIUtil.TRANSPARENT_COLOR);
+        separator.getLabel().setOpaque(false);
+        separator.getLabel().setBackground(UIUtil.TRANSPARENT_COLOR);
+      }
+      return separator;
+    }
 
     final Component component = myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (component instanceof JLabel) {
@@ -95,6 +109,10 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
    * @param hasFocus True if the specified cell has the focus.
    */
   public abstract void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
+
+  public final void setSeparator() {
+    mySeparator = true;
+  }
 
   public final void setIcon(@Nullable final Icon icon) {
     myIcon = icon;

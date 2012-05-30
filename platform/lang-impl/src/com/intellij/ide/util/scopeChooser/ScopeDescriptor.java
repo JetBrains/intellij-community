@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 16-Jan-2008
- */
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.psi.search.SearchScope;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author anna
+ * @since 16-Jan-2008
+ */
 public class ScopeDescriptor {
   private final SearchScope myScope;
 
-  public ScopeDescriptor(SearchScope scope) {
+  public ScopeDescriptor(@Nullable SearchScope scope) {
     myScope = scope;
   }
 
