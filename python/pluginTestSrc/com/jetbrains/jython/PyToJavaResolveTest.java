@@ -37,7 +37,7 @@ public class PyToJavaResolveTest extends ResolveTestCase {
   public void testReturnValue() throws Exception {
     PsiElement target = resolve();
     Assert.assertTrue(target instanceof PsiMethod);
-    Assert.assertEquals("java.util.List", ((PsiMethod) target).getContainingClass().getQualifiedName());
+    Assert.assertEquals(CommonClassNames.JAVA_UTIL_LIST, ((PsiMethod) target).getContainingClass().getQualifiedName());
   }
 
   public void testPackageType() throws Exception {
