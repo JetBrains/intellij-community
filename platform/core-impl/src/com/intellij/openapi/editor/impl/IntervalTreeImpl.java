@@ -317,6 +317,40 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       return (int)(packedOffsets >> 33);
     }
 
+    // finds previous in the in-order traversal
+    IntervalNode<E> previous() {
+      IntervalNode<E> left = getLeft();
+      if (left != null) {
+        while (left.getRight() != null) {
+          left = left.getRight();
+        }
+        return left;
+      }
+      IntervalNode<E> parent = getParent();
+      while (parent != null) {
+        if (parent.getRight() == this) break;
+        parent = parent.getParent();
+      }
+      return parent;
+    }
+
+    // finds next node in the in-order traversal
+    IntervalNode<E> next() {
+      IntervalNode<E> right = getRight();
+      if (right != null) {
+        while (right.getLeft() != null) {
+          right = right.getLeft();
+        }
+        return right;
+      }
+      IntervalNode<E> parent = getParent();
+      while (parent != null) {
+        if (parent.getLeft() == this) break;
+        parent = parent.getParent();
+      }
+      return parent;
+    }
+
     @NonNls
     @Override
     public String toString() {
@@ -640,24 +674,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     int start = root.intervalStart() + delta;
     int end = root.intervalEnd() + delta;
     return Math.max(start, startOffset) <= Math.min(end, endOffset);
-  }
-
-  // finds previous in the in-order traversal
-  private IntervalNode<T> previous(@NotNull IntervalNode<T> node) {
-    IntervalNode<T> left = node.getLeft();
-    if (left != null) {
-      while (left.getRight() != null) {
-        left = left.getRight();
-      }
-      return left;
-    }
-    IntervalNode<T> parent = node.getParent();
-    while (parent != null) {
-      if (parent.getRight() == node) break;
-      node = parent;
-      parent = parent.getParent();
-    }
-    return parent;
   }
 
   protected IntervalNode<T> findOrInsert(@NotNull IntervalNode<T> node) {

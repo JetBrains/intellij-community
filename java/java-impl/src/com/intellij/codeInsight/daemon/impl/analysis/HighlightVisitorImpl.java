@@ -770,7 +770,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     doVisitReferenceElement(ref);
   }
 
-  private JavaResolveResult doVisitReferenceElement(PsiJavaCodeReferenceElement ref) {
+  private JavaResolveResult doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     JavaResolveResult result;
     try {
       result = ref.advancedResolve(true);

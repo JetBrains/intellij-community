@@ -57,6 +57,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final DumbService myDumbService;
   private HighlightInfoHolder myHolder;
 
+  @SuppressWarnings("UnusedDeclaration")
   public DefaultHighlightVisitor(@NotNull Project project) {
     this(project, true, true);
   }
@@ -166,10 +167,11 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     myHolder.add(info);
   }
 
-  private static HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
+  private static HighlightInfo createErrorElementInfo(@NotNull PsiErrorElement element) {
     TextRange range = element.getTextRange();
+    String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, element.getErrorDescription());
+      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, errorDescription);
       for(ErrorQuickFixProvider provider: Extensions.getExtensions(ErrorQuickFixProvider.EP_NAME)) {
         provider.registerErrorQuickFix(element, highlightInfo);
       }
@@ -183,7 +185,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
     HighlightInfo info;
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
-      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, offset, offset + 1, element.getErrorDescription());
+      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, offset, offset + 1, errorDescription);
     }
     else {
       int start;
@@ -196,7 +198,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         start = offset;
         end = offset < fileLength ? offset + 1 : offset;
       }
-      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, start, end, element.getErrorDescription(),element.getErrorDescription(), true, null);
+      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, start, end, errorDescription, errorDescription, true, null);
     }
     return info;
   }

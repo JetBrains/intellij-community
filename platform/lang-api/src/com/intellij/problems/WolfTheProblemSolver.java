@@ -46,9 +46,9 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems);
   public abstract void clearProblems(@NotNull VirtualFile virtualFile);
 
-  public abstract boolean hasProblemFilesBeneath(Condition<VirtualFile> condition);
+  public abstract boolean hasProblemFilesBeneath(@NotNull Condition<VirtualFile> condition);
 
-  public abstract boolean hasProblemFilesBeneath(Module scope);
+  public abstract boolean hasProblemFilesBeneath(@NotNull Module scope);
 
   @Nullable
   public abstract Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity,
@@ -66,13 +66,13 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
     public void problemsDisappeared(VirtualFile file) {}
   }
 
-  public abstract void addProblemListener(ProblemListener listener);
-  public abstract void addProblemListener(ProblemListener listener, Disposable parentDisposable);
-  public abstract void removeProblemListener(ProblemListener listener);
+  public abstract void addProblemListener(@NotNull ProblemListener listener);
+  public abstract void addProblemListener(@NotNull ProblemListener listener, @NotNull Disposable parentDisposable);
+  public abstract void removeProblemListener(@NotNull ProblemListener listener);
 
   /**
    * @deprecated register extensions to {@link #FILTER_EP_NAME} instead
    */
-  public abstract void registerFileHighlightFilter(Condition<VirtualFile> filter, Disposable parentDisposable);
+  public abstract void registerFileHighlightFilter(@NotNull Condition<VirtualFile> filter, @NotNull Disposable parentDisposable);
   public abstract void queue(VirtualFile suspiciousFile);
 }

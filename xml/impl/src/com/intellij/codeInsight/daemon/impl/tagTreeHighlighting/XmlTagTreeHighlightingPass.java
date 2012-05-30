@@ -220,7 +220,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   @NotNull
   private static HighlightInfo createHighlightInfo(Color color, @NotNull TextRange range) {
-    return new HighlightInfo(new TextAttributes(null, color, null, null, Font.PLAIN), TYPE, range.getStartOffset(),
+    return new HighlightInfo(new TextAttributes(null, color, null, null, Font.PLAIN), null, TYPE, range.getStartOffset(),
                              range.getEndOffset(), null, null, HighlightSeverity.INFORMATION, false, null, false);
   }
 

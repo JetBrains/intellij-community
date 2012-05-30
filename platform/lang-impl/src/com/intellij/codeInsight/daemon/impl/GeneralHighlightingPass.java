@@ -185,10 +185,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     HighlightVisitor[] highlightVisitors = getHighlightVisitors();
-    final HighlightVisitor[] filteredVisitors = filterVisitors(highlightVisitors, myFile);
     final List<PsiElement> inside = new ArrayList<PsiElement>();
     final List<PsiElement> outside = new ArrayList<PsiElement>();
     try {
+      final HighlightVisitor[] filteredVisitors = filterVisitors(highlightVisitors, myFile);
       Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
                                      HighlightLevelUtil.AnalysisLevel.HIGHLIGHT,false);
 
@@ -570,6 +570,26 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
 
+    final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
+    final TransferToEDTQueue<HighlightInfo> myTransferToEDTQueue
+      = new TransferToEDTQueue<HighlightInfo>("Apply highlighting results", new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(HighlightInfo info) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        final EditorColorsScheme colorsScheme = getColorsScheme();
+        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
+                                                                   info, colorsScheme, Pass.UPDATE_ALL, ranges2markersCache);
+
+        return true;
+      }
+    }, new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return myProject.isDisposed() || progress.isCanceled();
+      }
+    }, 200);
+
+
     final Runnable action = new Runnable() {
       @Override
       public void run() {
@@ -630,7 +650,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 }
                 myErrorFound = true;
               }
-              myTransferToEDTQueue.offer(Pair.create(info, progress));
+              myTransferToEDTQueue.offer(info);
             }
           }
           advanceProgress(elements.size() - (nextLimit-chunkSize));
@@ -641,130 +661,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     analyzeByVisitors(progress, visitors, holder, 0, action);
   }
-
-  //private void collectHighlights(@NotNull final List<PsiElement> elements1,
-  //                               @NotNull final Runnable after1,
-  //                               @NotNull final List<PsiElement> elements2,
-  //                               @NotNull final ProgressIndicator progress,
-  //                               @NotNull final HighlightVisitor[] visitors,
-  //                               @NotNull final Set<HighlightInfo> gotHighlights,
-  //                               final boolean forceHighlightParents) {
-  //  final HighlightInfoHolder holder = createInfoHolder(myFile);
-  //
-  //  final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
-  //
-  //  final Runnable action = new Runnable() {
-  //    public void run() {
-  //      //noinspection unchecked
-  //      boolean failed = false;
-  //      PsiNodeTask task = createPsiTask(myFile);
-  //      JobSchedulerImpl.submitTask(task);
-  //
-  //      for (List<PsiElement> elements : new List[]{elements1, elements2}) {
-  //        int nextLimit = chunkSize;
-  //        for (int i = 0; i < elements.size(); i++) {
-  //          PsiElement element = elements.get(i);
-  //          progress.checkCanceled();
-  //
-  //          if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
-  //            skipParentsSet.add(element.getParent());
-  //            continue;
-  //          }
-  //
-  //          if (element instanceof PsiErrorElement) {
-  //            myHasErrorElement = true;
-  //          }
-  //          kjlhkjh
-  //          if (i == nextLimit) {
-  //            advanceProgress(chunkSize);
-  //            nextLimit = i + chunkSize;
-  //          }
-  //
-  //        }
-  //        advanceProgress(elements.size() - (nextLimit-chunkSize));
-  //        if (elements == elements1) after1.run();
-  //      }
-  //    }
-  //
-  //    private PsiNodeTask createPsiTask(@NotNull PsiElement root) {
-  //      return new PsiNodeTask(root) {
-  //        @Override
-  //        public void onEnter(@NotNull PsiElement element) {
-  //          if (element instanceof PsiErrorElement) {
-  //            myHasErrorElement = true;
-  //          }
-  //          super.onEnter(element);
-  //        }
-  //
-  //        @Override
-  //        protected PsiNodeTask forkNode(@NotNull PsiElement child) {
-  //          return createPsiTask(child);
-  //        }
-  //
-  //        @Override
-  //        protected boolean highlight(PsiElement element) {
-  //          holder.clear();
-  //
-  //          for (final HighlightVisitor visitor : visitors) {
-  //            try {
-  //              visitor.visit(element);
-  //            }
-  //            catch (ProcessCanceledException e) {
-  //              throw e;
-  //            }
-  //            catch (IndexNotReadyException e) {
-  //              throw e;
-  //            }
-  //            catch (WolfTheProblemSolverImpl.HaveGotErrorException e) {
-  //              throw e;
-  //            }
-  //            catch (Exception e) {
-  //                LOG.error(e);
-  //            }
-  //          }
-  //
-  //          //noinspection ForLoopReplaceableByForEach
-  //          for (int j = 0; j < holder.size(); j++) {
-  //            final HighlightInfo info = holder.get(j);
-  //            assert info != null;
-  //            // have to filter out already obtained highlights
-  //            if (!gotHighlights.add(info)) continue;
-  //            boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
-  //            if (isError) {
-  //              if (!forceHighlightParents) {
-  //                skipParentsSet.add(element.getParent());
-  //              }
-  //              myErrorFound = true;
-  //            }
-  //            myTransferToEDTQueue.offer(Pair.create(info, progress));
-  //          }
-  //          return true;
-  //        }
-  //      };
-  //    }
-  //  };
-  //
-  //  analyzeByVisitors(progress, visitors, holder, 0, action);
-  //}
-
-  private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
-  private final TransferToEDTQueue<Pair<HighlightInfo,ProgressIndicator>> myTransferToEDTQueue
-    = new TransferToEDTQueue<Pair<HighlightInfo,ProgressIndicator>>("Apply highlighting results", new Processor<Pair<HighlightInfo,ProgressIndicator>>() {
-    @Override
-    public boolean process(Pair<HighlightInfo,ProgressIndicator> pair) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      ProgressIndicator indicator = pair.getSecond();
-      if (indicator.isCanceled()) {
-        return false;
-      }
-      HighlightInfo info = pair.getFirst();
-      final EditorColorsScheme colorsScheme = getColorsScheme();
-      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
-                                                                 info, colorsScheme, Pass.UPDATE_ALL, ranges2markersCache);
-
-      return true;
-    }
-  }, myProject.getDisposed(), 200);
 
   private void analyzeByVisitors(@NotNull final ProgressIndicator progress,
                                  @NotNull final HighlightVisitor[] visitors,
@@ -785,7 +681,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  private static HighlightVisitor[] filterVisitors(HighlightVisitor[] highlightVisitors, final PsiFile file) {
+  @NotNull
+  private static HighlightVisitor[] filterVisitors(@NotNull HighlightVisitor[] highlightVisitors, @NotNull PsiFile file) {
     final List<HighlightVisitor> visitors = new ArrayList<HighlightVisitor>(highlightVisitors.length);
     List<HighlightVisitor> list = Arrays.asList(highlightVisitors);
     for (HighlightVisitor visitor : DumbService.getInstance(file.getProject()).filterByDumbAwareness(list)) {
@@ -798,7 +695,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return visitorArray;
   }
 
-  static Void cancelAndRestartDaemonLater(ProgressIndicator progress, final Project project, TextEditorHighlightingPass pass) {
+  static void cancelAndRestartDaemonLater(ProgressIndicator progress, final Project project, TextEditorHighlightingPass pass) {
     PassExecutorService.log(progress, pass, "Cancel and restart");
     progress.cancel();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -885,8 +782,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return myUpdateAll ? super.getProgress() : -1;
   }
 
-  private static List<Problem> convertToProblems(final Collection<HighlightInfo> infos,
-                                                 final VirtualFile file,
+  private static List<Problem> convertToProblems(@NotNull Collection<HighlightInfo> infos,
+                                                 @NotNull VirtualFile file,
                                                  final boolean hasErrorElement) {
     List<Problem> problems = new SmartList<Problem>();
     for (HighlightInfo info : infos) {

@@ -36,7 +36,7 @@ public interface ModuleFileIndex extends FileIndex {
    * it does not belong to any order entry.
    */
   @Nullable
-  OrderEntry getOrderEntryForFile(VirtualFile fileOrDir);
+  OrderEntry getOrderEntryForFile(@NotNull VirtualFile fileOrDir);
 
   /**
    * Returns the list of all order entries to which the specified file or directory
@@ -45,5 +45,5 @@ public interface ModuleFileIndex extends FileIndex {
    * @param fileOrDir the file or directory to check.
    * @return the list of order entries to which the file or directory belongs.
    */
-  @NotNull List<OrderEntry> getOrderEntriesForFile(VirtualFile fileOrDir);
+  @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir);
 }

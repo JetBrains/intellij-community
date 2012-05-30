@@ -44,7 +44,7 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     if (myDelegate != null) myDelegate.weHaveGotProblems(virtualFile, problems);
   }
 
-  public boolean hasProblemFilesBeneath(final Condition<VirtualFile> condition) {
+  public boolean hasProblemFilesBeneath(@NotNull final Condition<VirtualFile> condition) {
     return false;
   }
 
@@ -52,23 +52,23 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     return myDelegate != null && myDelegate.hasSyntaxErrors(file);
   }
 
-  public boolean hasProblemFilesBeneath(Module scope) {
+  public boolean hasProblemFilesBeneath(@NotNull Module scope) {
     return false;
   }
 
-  public void addProblemListener(ProblemListener listener) {
+  public void addProblemListener(@NotNull ProblemListener listener) {
     if (myDelegate != null) myDelegate.addProblemListener(listener);
   }
 
-  public void addProblemListener(ProblemListener listener, Disposable parentDisposable) {
+  public void addProblemListener(@NotNull ProblemListener listener, @NotNull Disposable parentDisposable) {
     if (myDelegate != null) myDelegate.addProblemListener(listener, parentDisposable);
   }
 
-  public void removeProblemListener(ProblemListener listener) {
+  public void removeProblemListener(@NotNull ProblemListener listener) {
     if (myDelegate != null) myDelegate.removeProblemListener(listener);
   }
 
-  public void registerFileHighlightFilter(Condition<VirtualFile> filter, Disposable parentDisposable) {
+  public void registerFileHighlightFilter(@NotNull Condition<VirtualFile> filter, @NotNull Disposable parentDisposable) {
   }
 
   @Override
