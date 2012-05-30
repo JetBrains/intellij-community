@@ -114,6 +114,11 @@ public class ConsoleExecuteActionHandler {
   public void finishExecution() {
   }
 
+  public final boolean isProcessTerminated() {
+    final ProcessHandler handler = getProcessHandler();
+    return handler == null || handler.isProcessTerminated();
+  }
+
   public String getEmptyExecuteAction() {
     return "Console.Execute";
   }
