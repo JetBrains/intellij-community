@@ -15,6 +15,7 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.RefreshAction;
@@ -26,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -332,7 +332,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     actionGroup.add(new MyRefreshAction(myTree));
     actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     actionGroup.add(new CloseAction());
-    actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", IconLoader.getIcon("/actions/preview.png")) {
+    actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), "preview", AllIcons.Actions.Preview) {
       @Override
       public boolean isSelected(AnActionEvent e) {
         return isPreview();
@@ -379,7 +379,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   private final class MyRefreshAction extends RefreshAction {
     private MyRefreshAction(JComponent tree) {
-      super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), IconLoader.getIcon("/actions/sync.png"));
+      super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), AllIcons.Actions.Sync);
       registerShortcutOn(tree);
     }
 

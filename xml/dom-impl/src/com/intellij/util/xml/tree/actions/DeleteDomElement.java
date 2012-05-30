@@ -16,12 +16,12 @@
 
 package com.intellij.util.xml.tree.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
@@ -93,7 +93,7 @@ public class DeleteDomElement extends BaseDomTreeAction {
       e.getPresentation().setText(ApplicationBundle.message("action.remove"));
     }
 
-    e.getPresentation().setIcon(IconLoader.getIcon("/general/remove.png"));
+    e.getPresentation().setIcon(AllIcons.General.Remove);
   }
 
   private static String getPresentationText(final SimpleNode selectedNode) {

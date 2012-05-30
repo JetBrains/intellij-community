@@ -15,14 +15,14 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class PlainTextFileType extends LanguageFileType {
   public static final PlainTextFileType INSTANCE = new PlainTextFileType();
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/text.png");
+  private static final Icon ICON = AllIcons.FileTypes.Text;
 
   private PlainTextFileType() {
     super(PlainTextLanguage.INSTANCE);

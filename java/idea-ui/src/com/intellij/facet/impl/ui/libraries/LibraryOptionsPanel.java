@@ -19,6 +19,7 @@ import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.openapi.Disposable;
@@ -39,7 +40,6 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -346,7 +346,7 @@ public class LibraryOptionsPanel implements Disposable {
       case USE_LIBRARY:
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item == null) {
-          myMessageLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+          myMessageLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
           message = "<b>Error:</b> library is not specified";
           myConfigureButton.setVisible(false);
         }

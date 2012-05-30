@@ -26,6 +26,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
@@ -1070,7 +1071,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public static class ClearAllAction extends DumbAwareAction {
     public ClearAllAction() {
-      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", IconLoader.findIcon("/actions/gc.png"));
+      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
     }
 
     @Override

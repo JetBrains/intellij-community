@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ShiftedSimpleContent;
-import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
@@ -50,21 +50,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.pom.Navigatable;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -164,7 +160,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   }
 
   private void createNavigateAction() {
-    myNavigateAction = new DumbAwareAction("Edit Source", "Edit Source", IconLoader.getIcon("/actions/editSource.png")) {
+    myNavigateAction = new DumbAwareAction("Edit Source", "Edit Source", AllIcons.Actions.EditSource) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final boolean enabled = getEnabled();
@@ -618,7 +614,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     private final ChangesFragmentedDiffPanel.MyUseSoftWrapsAction mySoftWrapsAction;
 
     private PopupAction() {
-      super("Settings", "Settings", IconLoader.getIcon("/general/secondaryGroup.png"));
+      super("Settings", "Settings", AllIcons.General.SecondaryGroup);
       myUsual = new AnAction("Top | Bottom", "", VcsUtil.ourNotDot) {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -810,7 +806,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
   private class MyChangeContextAction extends DumbAwareAction {
     private MyChangeContextAction() {
-      super("More/Less Lines...", "More/Less Lines...", IconLoader.getIcon("/actions/expandall.png"));
+      super("More/Less Lines...", "More/Less Lines...", AllIcons.Actions.Expandall);
     }
 
     @Override
@@ -866,7 +862,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     private boolean myEnabled;
 
     private MyPreviousDiffAction() {
-      super("Previous Change", "Previous Change", IconLoader.getIcon("/actions/previousOccurence.png"));
+      super("Previous Change", "Previous Change", AllIcons.Actions.PreviousOccurence);
     }
 
     @Override
@@ -895,7 +891,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     private boolean myEnabled;
     
     private MyNextDiffAction() {
-      super("Next Change", "Next Change", IconLoader.getIcon("/actions/nextOccurence.png"));
+      super("Next Change", "Next Change", AllIcons.Actions.NextOccurence);
     }
 
     @Override

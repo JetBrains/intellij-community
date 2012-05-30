@@ -16,11 +16,11 @@
 
 package org.intellij.plugins.relaxNG.compact;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public class RncFileType extends LanguageFileType  {
 
   @Nullable
   public Icon getIcon() {
-    return IconLoader.findIcon("/fileTypes/text.png");
+    return AllIcons.FileTypes.Text;
   }
 
   public static synchronized FileType getInstance() {

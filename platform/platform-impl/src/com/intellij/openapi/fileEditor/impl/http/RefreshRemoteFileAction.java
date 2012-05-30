@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.fileEditor.impl.http;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 
@@ -28,7 +28,7 @@ public class RefreshRemoteFileAction extends AnAction {
   private final HttpVirtualFile myFile;
 
   public RefreshRemoteFileAction(HttpVirtualFile file) {
-    super("Reload File", "", IconLoader.findIcon("/actions/sync.png"));
+    super("Reload File", "", AllIcons.Actions.Sync);
     myFile = file;
   }
 

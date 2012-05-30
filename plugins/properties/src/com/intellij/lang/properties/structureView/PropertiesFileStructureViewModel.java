@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.structureView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
@@ -25,7 +26,6 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
     @NotNull
     public ActionPresentation getPresentation() {
       String name = IdeBundle.message("action.sort.by.type");
-      return new ActionPresentationData(name, name, IconLoader.getIcon("/objectBrowser/sortByType.png"));
+      return new ActionPresentationData(name, name, AllIcons.ObjectBrowser.SortByType);
     }
 
     @NotNull

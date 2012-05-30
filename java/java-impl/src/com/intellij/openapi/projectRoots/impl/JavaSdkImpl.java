@@ -16,13 +16,13 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -33,7 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,9 +48,9 @@ public class JavaSdkImpl extends JavaSdk {
   // do not use javaw.exe for Windows because of issues with encoding
   @NonNls private static final String VM_EXE_NAME = "java";
   @NonNls private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
-  public static final Icon ICON = IconLoader.getIcon("/nodes/ppJdkClosed.png");
-  private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/ppJdkOpen.png");
-  private static final Icon ADD_ICON = IconLoader.getIcon("/general/addJdk.png");
+  public static final Icon ICON = AllIcons.Nodes.PpJdkClosed;
+  private static final Icon JDK_ICON_EXPANDED = AllIcons.Nodes.PpJdkOpen;
+  private static final Icon ADD_ICON = AllIcons.General.AddJdk;
   @NonNls private static final String JAVA_VERSION_PREFIX = "java version ";
   @NonNls private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
   private static final Map<JavaSdkVersion, String[]> VERSION_STRINGS = new EnumMap<JavaSdkVersion, String[]>(JavaSdkVersion.class);

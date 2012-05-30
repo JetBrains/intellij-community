@@ -17,14 +17,14 @@ package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author dyoma
@@ -83,7 +83,7 @@ public class DefaultExecutionResult implements ExecutionResult {
     private final ProcessHandler myProcessHandler;
 
     public StopAction(final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.stop.action.name"), null, IconLoader.getIcon("/actions/suspend.png"));
+      super(ExecutionBundle.message("run.configuration.stop.action.name"), null, AllIcons.Actions.Suspend);
       getTemplatePresentation().setEnabled(false);
       myProcessHandler = processHandler;
     }

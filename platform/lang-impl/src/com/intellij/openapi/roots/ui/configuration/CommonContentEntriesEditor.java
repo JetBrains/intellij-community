@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -35,7 +36,6 @@ import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -64,9 +64,9 @@ import java.util.Map;
 public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");
   public static final String NAME = ProjectBundle.message("module.paths.title");
-  public static final Icon ICON = IconLoader.getIcon("/modules/sources.png");
+  public static final Icon ICON = AllIcons.Modules.Sources;
   private static final Color BACKGROUND_COLOR = UIUtil.getListBackground();
-  private static final Icon ADD_CONTENT_ENTRY_ICON = IconLoader.getIcon("/modules/addContentEntry.png");
+  private static final Icon ADD_CONTENT_ENTRY_ICON = AllIcons.Modules.AddContentEntry;
 
   protected ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;

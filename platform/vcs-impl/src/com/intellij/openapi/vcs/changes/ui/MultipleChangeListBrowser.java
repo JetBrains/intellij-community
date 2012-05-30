@@ -22,13 +22,13 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -322,7 +322,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
 
     public void addToolbarActions(final DialogWrapper dialogWrapper) {
-      final Icon icon = IconLoader.getIcon("/vcs/refresh.png");
+      final Icon icon = AllIcons.Vcs.Refresh;
       if (myBrowser.myChangesToDisplay == null) {
         myBrowser.addToolbarAction(new AnAction("Refresh Changes") {
           @Override

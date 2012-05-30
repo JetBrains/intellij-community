@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -27,7 +28,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +106,7 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
     public AutoScrollFromSourceAction() {
       super(UIBundle.message("autoscroll.from.source.action.name"),
             UIBundle.message("autoscroll.from.source.action.description"),
-            IconLoader.getIcon("/general/autoscrollFromSource.png"));
+            AllIcons.General.AutoscrollFromSource);
     }
 
     public boolean isSelected(final AnActionEvent event) {

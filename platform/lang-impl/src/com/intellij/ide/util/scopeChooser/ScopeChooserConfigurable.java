@@ -18,6 +18,7 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
@@ -56,8 +56,8 @@ import java.util.*;
  * Date: 01-Jul-2006
  */
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements /*NonDefaultProjectConfigurable,*/ SearchableConfigurable {
-  private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
-  private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
+  private static final Icon SCOPES = AllIcons.Ide.ScopeConfigurable;
+  private static final Icon SAVE_ICON = AllIcons.RunConfigurations.SaveTempConfig;
   @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
   private final NamedScopesHolder myLocalScopesManager;
   private final NamedScopesHolder mySharedScopesManager;

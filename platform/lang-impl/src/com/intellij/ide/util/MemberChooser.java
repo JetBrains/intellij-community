@@ -17,13 +17,13 @@
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.generation.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -694,7 +694,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private class SortEmAction extends ToggleAction {
     public SortEmAction() {
       super(IdeBundle.message("action.sort.alphabetically"),
-            IdeBundle.message("action.sort.alphabetically"), IconLoader.getIcon("/objectBrowser/sorted.png"));
+            IdeBundle.message("action.sort.alphabetically"), AllIcons.ObjectBrowser.Sorted);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -733,7 +733,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private class ExpandAllAction extends AnAction {
     public ExpandAllAction() {
       super(IdeBundle.message("action.expand.all"), IdeBundle.message("action.expand.all"),
-            IconLoader.getIcon("/actions/expandall.png"));
+            AllIcons.Actions.Expandall);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -744,7 +744,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private class CollapseAllAction extends AnAction {
     public CollapseAllAction() {
       super(IdeBundle.message("action.collapse.all"), IdeBundle.message("action.collapse.all"),
-            IconLoader.getIcon("/actions/collapseall.png"));
+            AllIcons.Actions.Collapseall);
     }
 
     public void actionPerformed(AnActionEvent e) {

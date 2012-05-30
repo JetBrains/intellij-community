@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.impl.artifacts.InvalidArtifact;
 
 import javax.swing.*;
@@ -68,7 +68,7 @@ public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
     private JLabel myIconLabel;
 
     private InvalidArtifactComponent(String errorMessage) {
-      myIconLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+      myIconLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
       myDescriptionLabel.setText(errorMessage);
     }
   }

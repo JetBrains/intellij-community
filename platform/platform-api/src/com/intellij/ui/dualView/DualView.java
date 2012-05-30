@@ -15,13 +15,13 @@
  */
 package com.intellij.ui.dualView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.BaseTableView;
@@ -379,7 +379,7 @@ public class DualView extends JPanel {
   }
 
   public AnAction getExpandAllAction() {
-    return new AnAction(UIBundle.message("tree.view.expand.all.action.name"), null, IconLoader.getIcon("/actions/expandall.png")) {
+    return new AnAction(UIBundle.message("tree.view.expand.all.action.name"), null, AllIcons.Actions.Expandall) {
       public void update(AnActionEvent e) {
         Presentation presentation = e.getPresentation();
         presentation.setVisible(true);
@@ -393,7 +393,7 @@ public class DualView extends JPanel {
   }
 
   public AnAction getCollapseAllAction() {
-    return new AnAction(UIBundle.message("tree.view.collapse.all.action.name"), null, IconLoader.getIcon("/actions/collapseall.png")) {
+    return new AnAction(UIBundle.message("tree.view.collapse.all.action.name"), null, AllIcons.Actions.Collapseall) {
       public void update(AnActionEvent e) {
         Presentation presentation = e.getPresentation();
         presentation.setVisible(true);

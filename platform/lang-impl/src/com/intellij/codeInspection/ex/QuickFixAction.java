@@ -24,6 +24,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -32,7 +33,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +58,7 @@ public class QuickFixAction extends AnAction {
   }
 
   protected QuickFixAction(String text, InspectionTool tool) {
-    this(text, IconLoader.getIcon("/actions/createFromUsage.png"), null, tool);
+    this(text, AllIcons.Actions.CreateFromUsage, null, tool);
   }
 
   protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, InspectionTool tool) {

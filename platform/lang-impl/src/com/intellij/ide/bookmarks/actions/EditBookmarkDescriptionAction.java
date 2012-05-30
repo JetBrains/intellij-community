@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.bookmarks.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
@@ -35,8 +35,7 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
   private JBPopup myPopup;
 
   EditBookmarkDescriptionAction(Project project, JList list) {
-    super("Edit Description", "Assign short description for the bookmark to be shown along the file name", IconLoader
-      .getIcon("/actions/properties.png"));
+    super("Edit Description", "Assign short description for the bookmark to be shown along the file name", AllIcons.Actions.Properties);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta ENTER" : "control ENTER")), list);

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actionMacro;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -34,7 +35,10 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
@@ -181,11 +185,11 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
     private AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
                                                    new Icon[]{
-                                                     IconLoader.getIcon("/ide/macro/recording_1.png"),
-                                                     IconLoader.getIcon("/ide/macro/recording_2.png"),
-                                                     IconLoader.getIcon("/ide/macro/recording_3.png"),
-                                                     IconLoader.getIcon("/ide/macro/recording_4.png")},
-                                                   IconLoader.getIcon("/ide/macro/recording_1.png"), 1000);
+                                                     AllIcons.Ide.Macro.Recording_1,
+                                                     AllIcons.Ide.Macro.Recording_2,
+                                                     AllIcons.Ide.Macro.Recording_3,
+                                                     AllIcons.Ide.Macro.Recording_4},
+                                                   AllIcons.Ide.Macro.Recording_1, 1000);
     private StatusBar myStatusBar;
     private final WidgetPresentation myPresentation;
 

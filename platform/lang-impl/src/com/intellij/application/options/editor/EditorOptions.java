@@ -16,12 +16,12 @@
 
 package com.intellij.application.options.editor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +49,7 @@ public class EditorOptions implements SearchableConfigurable.Parent {
 
   @Override
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableEditor.png");
+    return AllIcons.General.ConfigurableEditor;
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -22,7 +23,6 @@ import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
@@ -57,7 +57,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
   }
 
   private static class LibraryUsageGroup implements UsageGroup {
-    public static final Icon LIBRARY_ICON = IconLoader.getIcon("/nodes/ppLibOpen.png");
+    public static final Icon LIBRARY_ICON = AllIcons.Nodes.PpLibOpen;
 
     private final OrderEntry myEntry;
 

@@ -20,12 +20,12 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Function;
@@ -97,7 +97,7 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
 
     @Override
     public Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos) {
-      return IconLoader.getIcon("/gutter/colors.png");
+      return AllIcons.Gutter.Colors;
     }
 
     @Override

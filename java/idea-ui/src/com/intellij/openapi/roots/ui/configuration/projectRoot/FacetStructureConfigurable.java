@@ -21,6 +21,7 @@ import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
@@ -35,7 +36,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProje
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -54,7 +54,7 @@ import java.util.List;
  * @author nik
  */
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
-  private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");//todo[nik] use facets icon
+  private static final Icon ICON = AllIcons.Modules.Modules;//todo[nik] use facets icon
   private final ModuleManager myModuleManager;
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<FacetType<?,?>, FacetTypeEditor>();
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;

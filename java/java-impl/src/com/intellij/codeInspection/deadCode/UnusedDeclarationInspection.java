@@ -39,6 +39,7 @@ import com.intellij.codeInspection.ui.EntryPointsNode;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,10 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -735,7 +739,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
   private class PermanentDeleteAction extends QuickFixAction {
     private PermanentDeleteAction() {
-      super(DELETE_QUICK_FIX, IconLoader.getIcon("/actions/cancel.png"), KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), UnusedDeclarationInspection.this);
+      super(DELETE_QUICK_FIX, AllIcons.Actions.Cancel, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), UnusedDeclarationInspection.this);
     }
 
     protected boolean applyFix(final RefElement[] refElements) {

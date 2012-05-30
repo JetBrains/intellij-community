@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo.configurable;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
@@ -24,7 +25,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.*;
@@ -386,7 +386,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableTodo.png");
+    return AllIcons.General.ConfigurableTodo;
   }
 
   public void reset() {

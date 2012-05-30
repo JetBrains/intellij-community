@@ -16,7 +16,7 @@
 
 package org.intellij.plugins.relaxNG.xml.dom.impl;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomMetaData;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -47,7 +47,7 @@ public class RngDefineMetaData extends DomMetaData<RngDefine> {
   }
 
   public Icon getIcon() {
-    return IconLoader.findIcon("/nodes/property.png");
+    return AllIcons.Nodes.Property;
   }
 
   public String getTypeName() {

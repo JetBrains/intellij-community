@@ -19,6 +19,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.lang.Language;
@@ -31,7 +32,6 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
@@ -98,7 +98,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableFileTypes.png");
+    return AllIcons.General.ConfigurableFileTypes;
   }
 
   private static FileType[] getModifiableFileTypes() {

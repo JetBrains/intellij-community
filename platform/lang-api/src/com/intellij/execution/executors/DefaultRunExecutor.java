@@ -19,7 +19,7 @@ package com.intellij.execution.executors;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
@@ -33,9 +33,9 @@ import javax.swing.*;
 public class DefaultRunExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.RUN;
 
-  private static final Icon ICON = IconLoader.getIcon("/actions/execute.png");
-  private static final Icon TOOLWINDOW_ICON = IconLoader.getIcon("/general/toolWindowRun.png");
-  private static final Icon DISABLED_ICON = IconLoader.getIcon("/process/disabledRun.png");
+  private static final Icon ICON = AllIcons.Actions.Execute;
+  private static final Icon TOOLWINDOW_ICON = AllIcons.General.ToolWindowRun;
+  private static final Icon DISABLED_ICON = AllIcons.Process.DisabledRun;
 
   @NotNull
   public String getStartActionText() {

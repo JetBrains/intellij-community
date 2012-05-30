@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.UIBundle;
 
@@ -30,7 +30,7 @@ public class FavoritesAutoScrollToSourceAction extends FavoritesToolbarButtonAct
   public FavoritesAutoScrollToSourceAction(Project project,
                                            AutoScrollToSourceHandler autoScrollToSourceHandler,
                                            FavoritesViewTreeBuilder builder) {
-    super(project, builder, UIBundle.message("autoscroll.to.source.action.name"), IconLoader.getIcon("/general/autoscrollToSource.png"));
+    super(project, builder, UIBundle.message("autoscroll.to.source.action.name"), AllIcons.General.AutoscrollToSource);
     myAutoScrollToSourceHandler = autoScrollToSourceHandler;
   }
 

@@ -20,6 +20,7 @@
  */
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,7 +29,6 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
@@ -46,8 +46,8 @@ public class ProjectPatternProvider extends PatternDialectProvider {
 
   @NonNls public static final String FILE = "file";
 
-  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
-  private static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
+  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = AllIcons.ObjectBrowser.CompactEmptyPackages;
+  private static final Icon ICON = AllIcons.General.ProjectTab;
   private static final Logger LOG = Logger.getInstance("#" + ProjectPatternProvider.class.getName());
 
 

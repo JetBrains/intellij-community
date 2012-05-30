@@ -16,6 +16,7 @@
 package com.intellij.unscramble;
 
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.icons.AllIcons;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -48,20 +48,20 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ThreadDumpPanel extends JPanel {
-  private static final Icon DAEMON = IconLoader.getIcon("/debugger/threadStates/daemon_sign.png");
-  private static final Icon PAUSE_ICON = IconLoader.getIcon("/debugger/threadStates/paused.png");
+  private static final Icon DAEMON = AllIcons.Debugger.ThreadStates.Daemon_sign;
+  private static final Icon PAUSE_ICON = AllIcons.Debugger.ThreadStates.Paused;
   private static final Icon PAUSE_ICON_DAEMON = new LayeredIcon(PAUSE_ICON, DAEMON);
-  private static final Icon LOCKED_ICON = IconLoader.getIcon("/debugger/threadStates/locked.png");
+  private static final Icon LOCKED_ICON = AllIcons.Debugger.ThreadStates.Locked;
   private static final Icon LOCKED_ICON_DAEMON = new LayeredIcon(LOCKED_ICON, DAEMON);
-  private static final Icon RUNNING_ICON = IconLoader.getIcon("/debugger/threadStates/running.png");
+  private static final Icon RUNNING_ICON = AllIcons.Debugger.ThreadStates.Running;
   private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(RUNNING_ICON, DAEMON);
-  private static final Icon SOCKET_ICON = IconLoader.getIcon("/debugger/threadStates/socket.png");
+  private static final Icon SOCKET_ICON = AllIcons.Debugger.ThreadStates.Socket;
   private static final Icon SOCKET_ICON_DAEMON = new LayeredIcon(SOCKET_ICON, DAEMON);
-  private static final Icon IDLE_ICON = IconLoader.getIcon("/debugger/threadStates/idle.png");
+  private static final Icon IDLE_ICON = AllIcons.Debugger.ThreadStates.Idle;
   private static final Icon IDLE_ICON_DAEMON = new LayeredIcon(IDLE_ICON, DAEMON);
-  private static final Icon EDT_BUSY_ICON = IconLoader.getIcon("/debugger/threadStates/edtBusy.png");
+  private static final Icon EDT_BUSY_ICON = AllIcons.Debugger.ThreadStates.EdtBusy;
   private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(EDT_BUSY_ICON, DAEMON);
-  private static final Icon IO_ICON = IconLoader.getIcon("/debugger/threadStates/io.png");
+  private static final Icon IO_ICON = AllIcons.Debugger.ThreadStates.IO;
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(IO_ICON, DAEMON);
   private final JBList myThreadList;
 
@@ -205,8 +205,8 @@ public class ThreadDumpPanel extends JPanel {
       }
     };
     private Comparator<ThreadState> COMPARATOR = BY_TYPE;
-    private final Icon typeIcon = IconLoader.getIcon("/objectBrowser/sortByType.png");
-    private final Icon nameIcon = IconLoader.getIcon("/icons/inspector/sortByName.png");
+    private final Icon typeIcon = AllIcons.ObjectBrowser.SortByType;
+    private final Icon nameIcon = AllIcons.Icons.Inspector.SortByName;
     private static final String TYPE_LABEL = "Sort threads by type";
     private static final String NAME_LABEL = "Sort threads by name";
     public SortThreadsAction() {

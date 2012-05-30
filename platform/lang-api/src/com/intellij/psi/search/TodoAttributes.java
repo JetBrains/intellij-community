@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -31,9 +31,9 @@ import javax.swing.*;
  * @author Vladimir Kondratyev
  */
 public class TodoAttributes implements JDOMExternalizable, Cloneable {
-  public static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/todoDefault.png");
-  public static final Icon QUESTION_ICON = IconLoader.getIcon("/general/todoQuestion.png");
-  public static final Icon IMPORTANT_ICON = IconLoader.getIcon("/general/todoImportant.png");
+  public static final Icon DEFAULT_ICON = AllIcons.General.TodoDefault;
+  public static final Icon QUESTION_ICON = AllIcons.General.TodoQuestion;
+  public static final Icon IMPORTANT_ICON = AllIcons.General.TodoImportant;
 
   private Icon myIcon;
   private TextAttributes myTextAttributes = new TextAttributes();

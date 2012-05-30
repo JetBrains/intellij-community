@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.errorTreeView;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
@@ -26,7 +26,7 @@ import com.intellij.util.ui.MutableErrorTreeView;
 import javax.swing.*;
 
 public class HotfixGroupElement extends GroupingElement {
-  private final static Icon ourIcon = IconLoader.getIcon("/compiler/error.png");
+  private final static Icon ourIcon = AllIcons.Compiler.Error;
 
   private final Consumer<HotfixGate> myHotfix;
   private final String myFixDescription;

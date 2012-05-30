@@ -19,6 +19,7 @@ package com.intellij.moduleDependencies;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -35,7 +36,6 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.ui.*;
@@ -133,7 +133,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
   private JComponent createNorthPanel(){
     DefaultActionGroup group = new DefaultActionGroup();
 
-    group.add(new AnAction(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.modules.dependencies.description"), IconLoader.getIcon("/actions/cancel.png")){
+    group.add(new AnAction(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.modules.dependencies.description"),
+                           AllIcons.Actions.Cancel){
       public void actionPerformed(AnActionEvent e) {
         DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
       }
@@ -141,7 +142,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     appendDependenciesAction(group);
 
-    group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction"), "", isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png")){
+    group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction"), "", isForwardDirection() ? AllIcons.Actions.SortAsc
+                                                                                                                             : AllIcons.Actions.SortDesc){
       public boolean isSelected(AnActionEvent e) {
         return isForwardDirection();
       }
@@ -152,7 +154,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       }
 
       public void update(final AnActionEvent e) {
-        e.getPresentation().setIcon(isForwardDirection() ? IconLoader.getIcon("/actions/sortAsc.png") : IconLoader.getIcon("/actions/sortDesc.png"));
+        e.getPresentation().setIcon(isForwardDirection() ? AllIcons.Actions.SortAsc : AllIcons.Actions.SortDesc);
       }
     });
 
@@ -175,7 +177,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     final AnAction analyzeDepsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES);
     group.add(new AnAction(analyzeDepsAction.getTemplatePresentation().getText(),
                            analyzeDepsAction.getTemplatePresentation().getDescription(),
-                           IconLoader.getIcon("/general/toolWindowInspection.png")){
+                           AllIcons.General.ToolWindowInspection){
 
       public void actionPerformed(AnActionEvent e) {
         analyzeDepsAction.actionPerformed(e);

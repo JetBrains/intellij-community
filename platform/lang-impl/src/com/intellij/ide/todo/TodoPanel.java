@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
@@ -34,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
@@ -72,7 +72,7 @@ import java.util.List;
  */
 abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoPanel");
-  private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
+  private static final Icon PREVIEW_ICON = AllIcons.Actions.Preview;
 
   protected Project myProject;
   private final TodoPanelSettings mySettings;
@@ -577,7 +577,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   private final class MyShowModulesAction extends ToggleAction {
     MyShowModulesAction() {
-      super(IdeBundle.message("action.group.by.modules"), null, IconLoader.getIcon("/objectBrowser/showModules.png"));
+      super(IdeBundle.message("action.group.by.modules"), null, AllIcons.ObjectBrowser.ShowModules);
     }
 
     public boolean isSelected(AnActionEvent e) {

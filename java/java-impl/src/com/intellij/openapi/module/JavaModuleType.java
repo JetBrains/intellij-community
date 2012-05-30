@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
@@ -91,7 +92,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   private static class IconHolder {
-    private static final Icon JAVA_MODULE_ICON = IconLoader.getIcon("/modules/javaModule.png");
+    private static final Icon JAVA_MODULE_ICON = AllIcons.Modules.JavaModule;
   }
 
   private static Icon getJavaModuleIcon() {
@@ -100,7 +101,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   private static class JavaModuleOpenIconHolder {
-    private static final Icon JAVA_MODULE_NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
+    private static final Icon JAVA_MODULE_NODE_ICON_OPEN = AllIcons.Nodes.ModuleOpen;
   }
 
   private static Icon getJavaModuleNodeIconOpen() {
@@ -108,7 +109,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   private static class JavaModuleClosedIconHolder {
-    private static final Icon JAVA_MODULE_NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
+    private static final Icon JAVA_MODULE_NODE_ICON_CLOSED = AllIcons.Nodes.ModuleClosed;
   }
 
   private static Icon getJavaModuleNodeIconClosed() {

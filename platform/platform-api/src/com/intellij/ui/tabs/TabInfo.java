@@ -15,9 +15,9 @@
  */
 package com.intellij.ui.tabs;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -78,7 +78,7 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private Color myDefaultWaveColor;
 
   private SimpleTextAttributes myDefaultAttributes;
-  private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(IconLoader.getIcon("/nodes/tabAlert.png"));
+  private static final AlertIcon DEFAULT_ALERT_ICON = new AlertIcon(AllIcons.Nodes.TabAlert);
 
   private boolean myEnabled = true;
   private Color myTabColor = null;

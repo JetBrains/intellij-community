@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.importProject;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.openapi.actionSystem.*;
@@ -23,7 +24,6 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -52,10 +52,10 @@ import java.util.List;
  *         Date: Jul 16, 2007
  */
 abstract class ProjectLayoutPanel<T> extends JPanel {
-  private static final Icon ICON_MODULE = IconLoader.getIcon("/nodes/ModuleClosed.png");
+  private static final Icon ICON_MODULE = AllIcons.Nodes.ModuleClosed;
   private static final Icon RENAME_ICON = IconUtil.getEditIcon();
-  private static final Icon MERGE_ICON = IconLoader.getIcon("/modules/merge.png");
-  private static final Icon SPLIT_ICON = IconLoader.getIcon("/modules/split.png");
+  private static final Icon MERGE_ICON = AllIcons.Modules.Merge;
+  private static final Icon SPLIT_ICON = AllIcons.Modules.Split;
   
   private final ElementsChooser<T> myEntriesChooser;
   private final JList myDependenciesList;

@@ -27,6 +27,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -34,7 +35,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -154,7 +154,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
   protected static class ControlBreakAction extends LauncherBasedAction {
     public ControlBreakAction(final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, IconLoader.getIcon("/actions/dump.png"),
+      super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump,
             processHandler);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_CANCEL, InputEvent.CTRL_DOWN_MASK)));
     }
@@ -175,7 +175,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
   protected static class SoftExitAction extends LauncherBasedAction {
     public SoftExitAction(final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.exit.action.name"), null, IconLoader.getIcon("/actions/exit.png"), processHandler);
+      super(ExecutionBundle.message("run.configuration.exit.action.name"), null, AllIcons.Actions.Exit, processHandler);
     }
 
     @Override

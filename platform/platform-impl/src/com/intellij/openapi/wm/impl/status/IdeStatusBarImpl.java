@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.impl.IdeNotificationArea;
@@ -25,7 +26,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -608,7 +608,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   private static final class MultipleTextValuesPresentationWrapper extends TextPanel implements StatusBarWrapper {
-    private static final Icon ARROWS_ICON = IconLoader.getIcon("/ide/statusbar_arrows.png");
+    private static final Icon ARROWS_ICON = AllIcons.Ide.Statusbar_arrows;
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
@@ -781,8 +781,8 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget, Disposable,
                                                                    UISettingsListener, PropertyChangeListener {
 
-    private static final Icon HIDDEN = IconLoader.getIcon("/general/tbShown.png");
-    private static final Icon SHOWN = IconLoader.getIcon("/general/tbHidden.png");
+    private static final Icon HIDDEN = AllIcons.General.TbShown;
+    private static final Icon SHOWN = AllIcons.General.TbHidden;
     private StatusBar myStatusBar;
 
     private ToolWindowsWidget() {

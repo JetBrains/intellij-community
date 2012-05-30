@@ -15,9 +15,9 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -36,7 +36,7 @@ import java.util.Set;
 public class JBOptionButton extends JButton implements MouseMotionListener {
 
 
-  private static final Icon myDownIcon = IconLoader.getIcon("/general/arrowDown.png");
+  private static final Icon myDownIcon = AllIcons.General.ArrowDown;
   private static final Insets myDownIconInsets = new Insets(0, 6, 0, 4);
 
   private Rectangle myMoreRec;

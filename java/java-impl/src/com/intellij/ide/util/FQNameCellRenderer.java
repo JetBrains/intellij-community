@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -29,7 +29,7 @@ import java.awt.*;
 public class FQNameCellRenderer extends SimpleColoredComponent implements ListCellRenderer{
   private final Font FONT;
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FQNameCellRenderer");
-  private static final Icon ourStaticThingIcon = IconLoader.getIcon("/nodes/static.png");
+  private static final Icon ourStaticThingIcon = AllIcons.Nodes.Static;
 
   public FQNameCellRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();

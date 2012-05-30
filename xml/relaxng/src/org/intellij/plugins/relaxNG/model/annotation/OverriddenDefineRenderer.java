@@ -16,10 +16,10 @@
 
 package org.intellij.plugins.relaxNG.model.annotation;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlFile;
@@ -36,7 +36,7 @@ import java.util.Collection;
 import java.util.List;
 
 class OverriddenDefineRenderer extends GutterIconRenderer {
-  private static final Icon ICON = IconLoader.getIcon("/gutter/overridenMethod.png");
+  private static final Icon ICON = AllIcons.Gutter.OverridenMethod;
 
   private final Define myDefine;
 

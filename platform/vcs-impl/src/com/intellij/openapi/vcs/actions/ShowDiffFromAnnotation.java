@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -64,7 +64,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
                          final FileAnnotation fileAnnotation, final AbstractVcs vcs, final VirtualFile file) {
     super(ActionsBundle.message("action.Diff.UpdatedFiles.text"),
           ActionsBundle.message("action.Diff.UpdatedFiles.description"),
-          IconLoader.getIcon("/actions/diff.png"));
+          AllIcons.Actions.Diff);
     myLineNumberProvider = lineNumberProvider;
     myFileAnnotation = fileAnnotation;
     myVcs = vcs;

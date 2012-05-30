@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.ui.impl;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
 import org.jdesktop.swingx.graphics.ShadowRenderer;
 
@@ -28,27 +28,27 @@ import java.awt.image.BufferedImage;
  * @author Konstantin Bulenkov
  */
 public class ShadowBorderPainter {
-  private static final Icon TOP = IconLoader.getIcon("/ide/shadow/top.png");
-  private static final Icon TOP_RIGHT = IconLoader.getIcon("/ide/shadow/top-right.png");
-  private static final Icon RIGHT = IconLoader.getIcon("/ide/shadow/right.png");
-  private static final Icon BOTTOM_RIGHT = IconLoader.getIcon("/ide/shadow/bottom-right.png");
-  private static final Icon BOTTOM = IconLoader.getIcon("/ide/shadow/bottom.png");
-  private static final Icon BOTTOM_LEFT = IconLoader.getIcon("/ide/shadow/bottom-left.png");
-  private static final Icon LEFT = IconLoader.getIcon("/ide/shadow/left.png");
-  private static final Icon TOP_LEFT = IconLoader.getIcon("/ide/shadow/top-left.png");
+  private static final Icon TOP = AllIcons.Ide.Shadow.Top;
+  private static final Icon TOP_RIGHT = AllIcons.Ide.Shadow.Top_right;
+  private static final Icon RIGHT = AllIcons.Ide.Shadow.Right;
+  private static final Icon BOTTOM_RIGHT = AllIcons.Ide.Shadow.Bottom_right;
+  private static final Icon BOTTOM = AllIcons.Ide.Shadow.Bottom;
+  private static final Icon BOTTOM_LEFT = AllIcons.Ide.Shadow.Bottom_left;
+  private static final Icon LEFT = AllIcons.Ide.Shadow.Left;
+  private static final Icon TOP_LEFT = AllIcons.Ide.Shadow.Top_left;
 
   public static final int SIDE_SIZE = 35;
   public static final int TOP_SIZE = 20;
   public static final int BOTTOM_SIZE = 49;
 
-  private static final Icon POPUP_TOP = IconLoader.getIcon("/ide/shadow/popup/top.png");
-  private static final Icon POPUP_TOP_RIGHT = IconLoader.getIcon("/ide/shadow/popup/top-right.png");
-  private static final Icon POPUP_RIGHT = IconLoader.getIcon("/ide/shadow/popup/right.png");
-  private static final Icon POPUP_BOTTOM_RIGHT = IconLoader.getIcon("/ide/shadow/popup/bottom-right.png");
-  private static final Icon POPUP_BOTTOM = IconLoader.getIcon("/ide/shadow/popup/bottom.png");
-  private static final Icon POPUP_BOTTOM_LEFT = IconLoader.getIcon("/ide/shadow/popup/bottom-left.png");
-  private static final Icon POPUP_LEFT = IconLoader.getIcon("/ide/shadow/popup/left.png");
-  private static final Icon POPUP_TOP_LEFT = IconLoader.getIcon("/ide/shadow/popup/top-left.png");
+  private static final Icon POPUP_TOP = AllIcons.Ide.Shadow.Popup.Top;
+  private static final Icon POPUP_TOP_RIGHT = AllIcons.Ide.Shadow.Popup.Top_right;
+  private static final Icon POPUP_RIGHT = AllIcons.Ide.Shadow.Popup.Right;
+  private static final Icon POPUP_BOTTOM_RIGHT = AllIcons.Ide.Shadow.Popup.Bottom_right;
+  private static final Icon POPUP_BOTTOM = AllIcons.Ide.Shadow.Popup.Bottom;
+  private static final Icon POPUP_BOTTOM_LEFT = AllIcons.Ide.Shadow.Popup.Bottom_left;
+  private static final Icon POPUP_LEFT = AllIcons.Ide.Shadow.Popup.Left;
+  private static final Icon POPUP_TOP_LEFT = AllIcons.Ide.Shadow.Popup.Top_left;
 
   public static final int POPUP_SIDE_SIZE = 7;
   public static final int POPUP_TOP_SIZE = 4;

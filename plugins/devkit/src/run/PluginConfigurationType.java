@@ -19,10 +19,10 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -60,7 +60,7 @@ public class PluginConfigurationType implements ConfigurationType {
       }
     };
   }
-  private static final Icon ICON = IconLoader.getIcon("/nodes/plugin.png");
+  private static final Icon ICON = AllIcons.Nodes.Plugin;
 
   public String getDisplayName() {
     return DevKitBundle.message("run.configuration.title");

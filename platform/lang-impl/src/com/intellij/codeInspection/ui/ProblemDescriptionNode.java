@@ -24,7 +24,7 @@ import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -38,9 +38,9 @@ import javax.swing.*;
  * @author max
  */
 public class ProblemDescriptionNode extends InspectionTreeNode {
-  private static final Icon INFO = IconLoader.getIcon("/compiler/information.png");
-  private static final Icon ERROR = IconLoader.getIcon("/compiler/error.png");
-  private static final Icon WARNING = IconLoader.getIcon("/compiler/warning.png");
+  private static final Icon INFO = AllIcons.Compiler.Information;
+  private static final Icon ERROR = AllIcons.Compiler.Error;
+  private static final Icon WARNING = AllIcons.Compiler.Warning;
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
   protected final DescriptorProviderInspection myTool;

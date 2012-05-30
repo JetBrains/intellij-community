@@ -16,7 +16,7 @@
 
 package com.intellij.xdebugger.ui;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 
 import javax.swing.*;
 
@@ -25,28 +25,28 @@ import javax.swing.*;
  */
 public interface DebuggerIcons {
 
-  Icon ENABLED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_set_breakpoint.png");
-  Icon MUTED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_muted_breakpoint.png");
-  Icon DISABLED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_disabled_breakpoint.png");
-  Icon MUTED_DISABLED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_muted_disabled_breakpoint.png");
-  Icon INVALID_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_invalid_breakpoint.png");
-  Icon MUTED_INVALID_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_muted_invalid_breakpoint.png");
-  Icon VERIFIED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_verified_breakpoint.png");
-  Icon MUTED_VERIFIED_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_muted_verified_breakpoint.png");
-  Icon DISABLED_DEPENDENT_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_dep_line_breakpoint.png");
-  Icon MUTED_DISABLED_DEPENDENT_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_muted_dep_line_breakpoint.png");
-  Icon VERIFIED_WARNING_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
+  Icon ENABLED_BREAKPOINT_ICON = AllIcons.Debugger.Db_set_breakpoint;
+  Icon MUTED_BREAKPOINT_ICON = AllIcons.Debugger.Db_muted_breakpoint;
+  Icon DISABLED_BREAKPOINT_ICON = AllIcons.Debugger.Db_disabled_breakpoint;
+  Icon MUTED_DISABLED_BREAKPOINT_ICON = AllIcons.Debugger.Db_muted_disabled_breakpoint;
+  Icon INVALID_BREAKPOINT_ICON = AllIcons.Debugger.Db_invalid_breakpoint;
+  Icon MUTED_INVALID_BREAKPOINT_ICON = AllIcons.Debugger.Db_muted_invalid_breakpoint;
+  Icon VERIFIED_BREAKPOINT_ICON = AllIcons.Debugger.Db_verified_breakpoint;
+  Icon MUTED_VERIFIED_BREAKPOINT_ICON = AllIcons.Debugger.Db_muted_verified_breakpoint;
+  Icon DISABLED_DEPENDENT_BREAKPOINT_ICON = AllIcons.Debugger.Db_dep_line_breakpoint;
+  Icon MUTED_DISABLED_DEPENDENT_BREAKPOINT_ICON = AllIcons.Debugger.Db_muted_dep_line_breakpoint;
+  Icon VERIFIED_WARNING_BREAKPOINT_ICON = AllIcons.Debugger.Db_verified_warning_breakpoint;
 
-  Icon ENABLED_EXCEPTION_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_exception_breakpoint.png");
-  Icon DISABLED_EXCEPTION_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_disabled_exception_breakpoint.png");
-  Icon DISABLED_DEPENDENT_EXCEPTION_BREAKPOINT_ICON = IconLoader.getIcon("/debugger/db_dep_exception_breakpoint.png");
+  Icon ENABLED_EXCEPTION_BREAKPOINT_ICON = AllIcons.Debugger.Db_exception_breakpoint;
+  Icon DISABLED_EXCEPTION_BREAKPOINT_ICON = AllIcons.Debugger.Db_disabled_exception_breakpoint;
+  Icon DISABLED_DEPENDENT_EXCEPTION_BREAKPOINT_ICON = AllIcons.Debugger.Db_dep_exception_breakpoint;
 
-  Icon VALUE_ICON = IconLoader.getIcon("/debugger/value.png");
-  Icon ARRAY_VALUE_ICON = IconLoader.getIcon("/debugger/db_array.png");
-  Icon PRIMITIVE_VALUE_ICON = IconLoader.getIcon("/debugger/db_primitive.png");
-  Icon WATCHED_VALUE_ICON = IconLoader.getIcon("/debugger/watch.png");
+  Icon VALUE_ICON = AllIcons.Debugger.Value;
+  Icon ARRAY_VALUE_ICON = AllIcons.Debugger.Db_array;
+  Icon PRIMITIVE_VALUE_ICON = AllIcons.Debugger.Db_primitive;
+  Icon WATCHED_VALUE_ICON = AllIcons.Debugger.Watch;
 
-  Icon STACK_FRAME_ICON = IconLoader.getIcon("/debugger/stackFrame.png");
-  Icon CURRENT_THREAD_ICON = IconLoader.getIcon("/debugger/threadCurrent.png");
-  Icon SUSPENDED_THREAD_ICON = IconLoader.getIcon("/debugger/threadSuspended.png");
+  Icon STACK_FRAME_ICON = AllIcons.Debugger.StackFrame;
+  Icon CURRENT_THREAD_ICON = AllIcons.Debugger.ThreadCurrent;
+  Icon SUSPENDED_THREAD_ICON = AllIcons.Debugger.ThreadSuspended;
 }

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
 import com.intellij.compiler.*;
 import com.intellij.compiler.options.CompilerConfigurable;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
@@ -38,7 +39,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,7 +79,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   }
 
   private static class CompilerPropertiesAction extends AnAction {
-    private static final Icon ICON_OPTIONS = IconLoader.getIcon("/general/ideOptions.png");
+    private static final Icon ICON_OPTIONS = AllIcons.General.IdeOptions;
 
     public CompilerPropertiesAction() {
       super(CompilerBundle.message("action.compiler.properties.text"), null, ICON_OPTIONS);

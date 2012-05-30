@@ -20,10 +20,10 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyUISettings;
 
 public final class ShowFilesAction extends ToggleAction {
@@ -31,7 +31,7 @@ public final class ShowFilesAction extends ToggleAction {
 
   public ShowFilesAction(final Runnable update) {
     super(IdeBundle.message("action.show.files"),
-          IdeBundle.message("action.description.show.files"), IconLoader.getIcon("/fileTypes/any_type.png"));
+          IdeBundle.message("action.description.show.files"), AllIcons.FileTypes.Any_type);
     myUpdate = update;
   }
 

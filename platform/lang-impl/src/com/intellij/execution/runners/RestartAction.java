@@ -20,6 +20,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -36,7 +36,7 @@ import javax.swing.*;
  * @author dyoma
  */
 public class RestartAction extends AnAction implements DumbAware {
-  private static final Icon STOP_AND_START_ICON = IconLoader.getIcon("/actions/restart.png");
+  private static final Icon STOP_AND_START_ICON = AllIcons.Actions.Restart;
 
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;

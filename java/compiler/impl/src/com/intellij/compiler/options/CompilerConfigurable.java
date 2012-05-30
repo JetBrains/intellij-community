@@ -21,6 +21,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerSettingsFactory;
 import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +32,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerConfigurable");
 
   private final Project myProject;
-  private static final Icon ICON = IconLoader.getIcon("/general/configurableCompiler.png");
+  private static final Icon ICON = AllIcons.General.ConfigurableCompiler;
   private final CompilerUIConfigurable myCompilerUIConfigurable;
   private Configurable[] myKids;
 

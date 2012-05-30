@@ -29,11 +29,11 @@ import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -98,7 +98,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     public EditSourceAction() {
       super(ActionsBundle.actionText("EditSource"),
             ActionsBundle.actionDescription("EditSource"),
-            IconLoader.getIcon("/actions/editSource.png"));
+            AllIcons.Actions.EditSource);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -116,7 +116,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class MyCheckoutAction extends AnAction {
     public MyCheckoutAction() {
-      super(CvsBundle.message("operation.name.check.out"), null, IconLoader.getIcon("/actions/checkOut.png"));
+      super(CvsBundle.message("operation.name.check.out"), null, AllIcons.Actions.CheckOut);
     }
 
     public void update(AnActionEvent e) {
@@ -155,7 +155,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class MyAnnotateAction extends AnAction {
     public MyAnnotateAction() {
-      super(CvsBundle.message("operation.name.annotate"), null, IconLoader.getIcon("/actions/annotate.png"));
+      super(CvsBundle.message("operation.name.annotate"), null, AllIcons.Actions.Annotate);
     }
 
     public void update(AnActionEvent e) {
@@ -186,7 +186,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
 
   private class BrowseChangesAction extends AnAction {
     public BrowseChangesAction() {
-      super(VcsBundle.message("browse.changes.action"), "", IconLoader.getIcon("/actions/showChangesOnly.png"));
+      super(VcsBundle.message("browse.changes.action"), "", AllIcons.Actions.ShowChangesOnly);
     }
 
     public void actionPerformed(AnActionEvent e) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -48,7 +49,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -161,9 +161,9 @@ public class MergePanel2 implements DiffViewer {
       toolbar.addAction(PreviousDiffAction.find());
       toolbar.addAction(NextDiffAction.find());
       toolbar.addSeparator();
-      toolbar.addAction(new OpenPartialDiffAction(1, 0, IconLoader.getIcon("/diff/leftDiff.png")));
-      toolbar.addAction(new OpenPartialDiffAction(1, 2, IconLoader.getIcon("/diff/rightDiff.png")));
-      toolbar.addAction(new OpenPartialDiffAction(0, 2, IconLoader.getIcon("/diff/branchDiff.png")));
+      toolbar.addAction(new OpenPartialDiffAction(1, 0, AllIcons.Diff.LeftDiff));
+      toolbar.addAction(new OpenPartialDiffAction(1, 2, AllIcons.Diff.RightDiff));
+      toolbar.addAction(new OpenPartialDiffAction(0, 2, AllIcons.Diff.BranchDiff));
       toolbar.addSeparator();
       toolbar.addAction(new ApplyNonConflicts());
     }

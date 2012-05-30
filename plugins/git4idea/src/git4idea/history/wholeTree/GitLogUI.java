@@ -12,6 +12,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
@@ -869,7 +870,7 @@ public class GitLogUI implements Disposable {
     group.add(myRootsAction);
     group.add(myMyShowTreeAction);
 
-    group.add(new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
+    group.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.ShowSource) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return GitLogSettings.getInstance(myProject).isShowDetails();
@@ -1453,7 +1454,7 @@ public class GitLogUI implements Disposable {
 
   private class MyRefreshAction extends DumbAwareAction {
     private MyRefreshAction() {
-      super("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png"));
+      super("Refresh", "Refresh", AllIcons.Actions.Sync);
     }
 
     @Override
@@ -1826,7 +1827,7 @@ public class GitLogUI implements Disposable {
     private final JComponent myComponent;
 
     private MyRootsAction(final Getter<List<VirtualFile>> rootsGetter, final JComponent component) {
-      super("Show roots", "Show roots", IconLoader.getIcon("/general/balloonInformation.png"));
+      super("Show roots", "Show roots", AllIcons.General.BalloonInformation);
       myRootsGetter = rootsGetter;
       myComponent = component;
       myEnabled = false;
@@ -1913,7 +1914,7 @@ public class GitLogUI implements Disposable {
     private final Icon myMarkIcon;
 
     public MyTreeSettings() {
-      myIcon = IconLoader.getIcon("/general/comboArrow.png");
+      myIcon = AllIcons.General.ComboArrow;
       myMarkIcon = PlatformIcons.CHECK_ICON;
 
       myMultiColorAction = new DumbAwareAction("Multicolour") {
@@ -2451,7 +2452,7 @@ public class GitLogUI implements Disposable {
 
   public class MyGotoCommitAction extends DumbAwareAction {
     public MyGotoCommitAction() {
-      super("Find Commit", "Find commit by hash, reference or description fragment (in loaded part)", IconLoader.getIcon("/actions/menu-find.png"));
+      super("Find Commit", "Find commit by hash, reference or description fragment (in loaded part)", AllIcons.Actions.Menu_find);
     }
 
     @Override

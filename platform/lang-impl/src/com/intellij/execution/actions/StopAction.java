@@ -21,13 +21,13 @@ import com.intellij.execution.KillableProcess;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
-  public static final Icon KILL_PROCESS_ICON = IconLoader.getIcon("/debugger/killProcess.png");
+  public static final Icon KILL_PROCESS_ICON = AllIcons.Debugger.KillProcess;
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();

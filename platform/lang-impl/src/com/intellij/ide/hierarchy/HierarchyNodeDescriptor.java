@@ -16,12 +16,12 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.SmartElementDescriptor;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageTreeColors;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
-  protected static final Icon BASE_POINTER_ICON = IconLoader.getIcon("/hierarchy/base.png");
+  protected static final Icon BASE_POINTER_ICON = AllIcons.Hierarchy.Base;
   protected CompositeAppearance myHighlightedText;
   private Object[] myCachedChildren = null;
   protected final boolean myIsBase;

@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.commander;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ import java.util.Collections;
  *         Date: Jun 23, 2005
  */
 public class TopLevelNode extends AbstractTreeNode {
-  private static final Icon ourUpLevelIcon = IconLoader.getIcon("/nodes/upLevel.png");
+  private static final Icon ourUpLevelIcon = AllIcons.Nodes.UpLevel;
 
   public TopLevelNode(Project project, Object value) {
     super(project, value);

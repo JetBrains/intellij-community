@@ -15,9 +15,9 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 
 /**
@@ -28,7 +28,7 @@ public class CanItBeNullAction  extends AnAction {
   private static final String TEXT = "Can it be null?";
 
   public CanItBeNullAction(SliceTreeBuilder treeBuilder) {
-    super(TEXT, "Determine whether null can flow into this expression", IconLoader.getIcon("/debugger/db_disabled_breakpoint_process.png"));
+    super(TEXT, "Determine whether null can flow into this expression", AllIcons.Debugger.Db_disabled_breakpoint_process);
     myTreeBuilder = treeBuilder;
   }
 

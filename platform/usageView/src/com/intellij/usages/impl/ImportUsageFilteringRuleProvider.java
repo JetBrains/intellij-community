@@ -15,11 +15,11 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.ImportFilteringRule;
@@ -65,7 +65,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
 
   private static class ShowImportsAction extends RuleAction {
     private ShowImportsAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.show.import.statements"), IconLoader.getIcon("/actions/showImportStatements.png"));
+      super(view, UsageViewBundle.message("action.show.import.statements"), AllIcons.Actions.ShowImportStatements);
     }
 
     @Override

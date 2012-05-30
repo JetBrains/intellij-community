@@ -20,6 +20,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -30,7 +31,6 @@ import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
@@ -41,7 +41,7 @@ import com.intellij.util.IconUtil;
 import javax.swing.*;
 
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  private static final Icon ICON = IconLoader.getIcon("/nodes/javaDocFolder.png");
+  private static final Icon ICON = AllIcons.Nodes.JavaDocFolder;
 
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new JavadocPathsEditor(sdk);

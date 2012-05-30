@@ -15,16 +15,16 @@
  */
 package com.intellij.ui.popup;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class PopupIcons {
 
-  public static Icon HAS_NEXT_ICON = IconLoader.getIcon("/icons/ide/nextStep.png");
-  public static Icon HAS_NEXT_ICON_GRAYED = IconLoader.getIcon("/icons/ide/nextStepGrayed.png");
-  public static Icon HAS_NEXT_ICON_INVERTED = IconLoader.getIcon("/icons/ide/nextStepInverted.png");
+  public static Icon HAS_NEXT_ICON = AllIcons.Icons.Ide.NextStep;
+  public static Icon HAS_NEXT_ICON_GRAYED = AllIcons.Icons.Ide.NextStepGrayed;
+  public static Icon HAS_NEXT_ICON_INVERTED = AllIcons.Icons.Ide.NextStepInverted;
   
   public static Icon EMPTY_ICON = new EmptyIcon();
 

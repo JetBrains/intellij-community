@@ -22,6 +22,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -29,7 +30,6 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +95,7 @@ public abstract class CommandLineState implements RunnableState {
     private final ProcessHandler myProcessHandler;
 
     public PauseOutputAction(final ConsoleView console, final ProcessHandler processHandler) {
-      super(ExecutionBundle.message("run.configuration.pause.output.action.name"), null, IconLoader.getIcon("/actions/pause.png"));
+      super(ExecutionBundle.message("run.configuration.pause.output.action.name"), null, AllIcons.Actions.Pause);
       myConsole = console;
       myProcessHandler = processHandler;
     }

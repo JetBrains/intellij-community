@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ui.UIUtil;
 
@@ -89,7 +89,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
 
         myPanel.setBackground(bg);
         myNameLabel.setBackground(bg);
-        myNameLabel.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
+        myNameLabel.setIcon(AllIcons.Nodes.Plugin);
         String category = myPluginDescriptor.getCategory();
         if (category != null) {
           myCategoryLabel.setText(category);
@@ -110,7 +110,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
             if (!isSelected){
               myNameLabel.setForeground(Color.RED);
             }
-            myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
+            myNameLabel.setIcon(AllIcons.Nodes.Pluginobsolete);
           }
           myStatusLabel.setText("v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (" -> " + pluginNode.getVersion()) : ""));
           myStatusLabel.setBorder(BorderFactory.createEmptyBorder(0, LEFT_MARGIN, 0, 0));

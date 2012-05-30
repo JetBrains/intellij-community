@@ -15,10 +15,10 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -34,7 +34,7 @@ import java.util.List;
 * @author nik
 */
 public class FileCopyElementType extends PackagingElementType<FileCopyPackagingElement> {
-  public static final Icon ICON = IconLoader.getIcon("/fileTypes/text.png");
+  public static final Icon ICON = AllIcons.FileTypes.Text;
 
   FileCopyElementType() {
     super("file-copy", "File");

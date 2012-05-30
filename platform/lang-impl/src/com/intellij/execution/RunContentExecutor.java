@@ -10,12 +10,12 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 
@@ -141,7 +141,7 @@ public class RunContentExecutor {
   private class RerunAction extends AnAction implements DumbAware {
     public RerunAction(JComponent consolePanel) {
       super("Rerun", "Rerun",
-            IconLoader.getIcon("/actions/refreshUsages.png"));
+            AllIcons.Actions.RefreshUsages);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
     }
 

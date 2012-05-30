@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -23,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class ShowAllAffectedGenericAction extends AnAction {
   public ShowAllAffectedGenericAction() {
-    super("Show all affected files", null, IconLoader.getIcon("/vcs/allRevisions.png"));
+    super("Show all affected files", null, AllIcons.Vcs.AllRevisions);
   }
 
   @Override

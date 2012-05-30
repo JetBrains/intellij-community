@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +14,10 @@ import javax.swing.*;
 public class GradleIcons {
 
   public static final Icon GRADLE_ICON       = IconLoader.getIcon("/icons/gradle.png");
-  public static final Icon LIB_ICON          = IconLoader.getIcon("/nodes/ppLib.png");
-  public static final Icon MODULE_ICON       = IconLoader.getIcon("/nodes/ModuleOpen.png");
-  public static final Icon CONTENT_ROOT_ICON = IconLoader.getIcon("/modules/addContentEntry.png");
-  public static final Icon JAR_ICON          = IconLoader.getIcon("/nodes/ppJar.png");
+  public static final Icon LIB_ICON          = AllIcons.Nodes.PpLib;
+  public static final Icon MODULE_ICON       = AllIcons.Nodes.ModuleOpen;
+  public static final Icon CONTENT_ROOT_ICON = AllIcons.Modules.AddContentEntry;
+  public static final Icon JAR_ICON          = AllIcons.Nodes.PpJar;
   public static final Icon PROJECT_ICON      = getProjectIcon();
 
   private GradleIcons() {

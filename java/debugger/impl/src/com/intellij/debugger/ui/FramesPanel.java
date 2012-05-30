@@ -41,6 +41,7 @@ import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
@@ -50,7 +51,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -76,7 +76,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FramesPanel extends UpdatableDebuggerView {
-  private static final Icon FILTER_STACK_FRAMES_ICON = IconLoader.getIcon("/debugger/class_filter.png");
+  private static final Icon FILTER_STACK_FRAMES_ICON = AllIcons.Debugger.Class_filter;
 
   private final JComboBox myThreadsCombo;
   private final FramesList myFramesList;

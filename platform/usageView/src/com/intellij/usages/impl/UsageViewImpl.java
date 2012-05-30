@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.Disposable;
@@ -600,7 +601,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private class MergeDupLines extends RuleAction {
     private MergeDupLines() {
-      super(UsageViewImpl.this, UsageViewBundle.message("action.merge.same.line"), IconLoader.getIcon("/toolbar/filterdups.png"));
+      super(UsageViewImpl.this, UsageViewBundle.message("action.merge.same.line"), AllIcons.Toolbar.Filterdups);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)));
     }
 
@@ -617,7 +618,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private class ReRunAction extends AnAction implements DumbAware {
     private ReRunAction() {
-      super(UsageViewBundle.message("action.rerun"), UsageViewBundle.message("action.description.rerun"), IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(UsageViewBundle.message("action.rerun"), UsageViewBundle.message("action.description.rerun"), AllIcons.Actions.RefreshUsages);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), myRootPanel);
     }
 

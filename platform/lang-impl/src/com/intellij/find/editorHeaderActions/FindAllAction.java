@@ -4,13 +4,13 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 
@@ -24,7 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 public class FindAllAction extends EditorHeaderAction implements DumbAware {
   public FindAllAction(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
-    getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/export.png"));
+    getTemplatePresentation().setIcon(AllIcons.Actions.Export);
     getTemplatePresentation().setDescription("Export matches to Find tool window");
     getTemplatePresentation().setText("Find All");
     registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(),

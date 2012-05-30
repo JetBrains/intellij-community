@@ -18,6 +18,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
@@ -43,7 +44,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
@@ -381,7 +381,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
-    group.add(new AnAction("Edit Shortcut", "Edit Shortcut", IconLoader.getIcon("/actions/properties.png")) {
+    group.add(new AnAction("Edit Shortcut", "Edit Shortcut", AllIcons.Actions.Properties) {
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), myActionsTree.getTree());
       }
@@ -427,7 +427,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.add(new AnAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
-                           IconLoader.getIcon("/ant/shortcutFilter.png")) {
+                           AllIcons.Ant.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
         if (myPopup == null || myPopup.getContent() == null){
@@ -441,7 +441,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
-                           KeyMapBundle.message("filter.clear.action.text"), IconLoader.getIcon("/actions/gc.png")) {
+                           KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       public void actionPerformed(AnActionEvent e) {
         myActionsTree.filter(null, getCurrentQuickListIds()); //clear filtering
         TreeUtil.collapseAll(myActionsTree.getTree(), 0);

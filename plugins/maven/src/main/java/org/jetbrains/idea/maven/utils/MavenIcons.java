@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
@@ -33,9 +34,9 @@ public class MavenIcons {
   public static final Icon PLUGIN_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
   public static final Icon REPOSITORY_ICON = IconLoader.getIcon("/images/mavenPlugin.png");
   public static final Icon PLUGIN_GOAL_ICON = IconLoader.getIcon("/images/pluginGoal.png");
-  public static final Icon OPEN_DEPENDENCIES_ICON = IconLoader.getIcon("/nodes/ppLibOpen.png");
-  public static final Icon CLOSED_DEPENDENCIES_ICON = IconLoader.getIcon("/nodes/ppLibClosed.png");
-  public static final Icon DEPENDENCY_ICON = IconLoader.getIcon("/nodes/ppLib.png");
+  public static final Icon OPEN_DEPENDENCIES_ICON = AllIcons.Nodes.PpLibOpen;
+  public static final Icon CLOSED_DEPENDENCIES_ICON = AllIcons.Nodes.PpLibClosed;
+  public static final Icon DEPENDENCY_ICON = AllIcons.Nodes.PpLib;
   public static final Icon OPEN_MODULES_ICON = IconLoader.getIcon("/images/modulesOpen.png");
   public static final Icon CLOSED_MODULES_ICON = IconLoader.getIcon("/images/modulesClosed.png");
 

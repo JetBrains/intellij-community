@@ -16,13 +16,13 @@
 package org.intellij.plugins.xsltDebugger.ui.actions;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 
@@ -36,7 +36,7 @@ public class OpenOutputAction extends AnAction {
   public OpenOutputAction(AdditionalTabComponent console) {
     super("Open in Editor");
     myConsole = console;
-    getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/export.png"));
+    getTemplatePresentation().setIcon(AllIcons.Actions.Export);
   }
 
   public void actionPerformed(AnActionEvent e) {

@@ -15,15 +15,15 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +35,9 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   private final SmartPsiElementPointer mySuperClassPointer;
   private final OwnershipType myOverrides;
   private final Collection<TreeElement> myChildren = new ArrayList<TreeElement>();
-  private static final Icon OVERRIDING_ICON = IconLoader.getIcon("/general/overridingMethod.png");
-  private static final Icon IMPLEMENTING_ICON = IconLoader.getIcon("/general/implementingMethod.png");
-  private static final Icon INHERITED_ICON = IconLoader.getIcon("/general/inheritedMethod.png");
+  private static final Icon OVERRIDING_ICON = AllIcons.General.OverridingMethod;
+  private static final Icon IMPLEMENTING_ICON = AllIcons.General.ImplementingMethod;
+  private static final Icon INHERITED_ICON = AllIcons.General.InheritedMethod;
 
   public static enum OwnershipType {
     IMPLEMENTS,

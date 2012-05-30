@@ -16,11 +16,11 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,10 +55,10 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.caller.methods.hierarchy"),
                                                  IdeBundle.message("action.caller.methods.hierarchy"),
-                                                 IconLoader.getIcon("/hierarchy/caller.png"), CALLER_TYPE));
+                                                 AllIcons.Hierarchy.Caller, CALLER_TYPE));
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.callee.methods.hierarchy"),
                                                  IdeBundle.message("action.callee.methods.hierarchy"),
-                                                 IconLoader.getIcon("/hierarchy/callee.png"), CALLEE_TYPE));
+                                                 AllIcons.Hierarchy.Callee, CALLEE_TYPE));
     actionGroup.add(new AlphaSortAction());
     actionGroup.add(new ChangeScopeAction());
   }

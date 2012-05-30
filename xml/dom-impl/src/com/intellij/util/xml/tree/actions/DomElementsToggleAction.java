@@ -16,12 +16,12 @@
 
 package com.intellij.util.xml.tree.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
 
@@ -45,7 +45,7 @@ public class DomElementsToggleAction extends ToggleAction {
 
     Icon myIcon = ElementPresentationManager.getIcon(myClass);
     if (myIcon == null) {
-      myIcon = IconLoader.getIcon("/nodes/pointcut.png");
+      myIcon = AllIcons.Nodes.Pointcut;
     }
     this.myIcon = myIcon;
 

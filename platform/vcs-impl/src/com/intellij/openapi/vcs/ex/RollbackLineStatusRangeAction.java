@@ -12,11 +12,11 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 */
 public class RollbackLineStatusRangeAction extends BaseLineStatusRangeAction {
   public RollbackLineStatusRangeAction(final LineStatusTracker lineStatusTracker, final Range range, final Editor editor) {
-    super(VcsBundle.message("action.name.rollback"), IconLoader.getIcon("/actions/reset.png"), lineStatusTracker, range);
+    super(VcsBundle.message("action.name.rollback"), AllIcons.Actions.Reset, lineStatusTracker, range);
   }
 
   public boolean isEnabled() {

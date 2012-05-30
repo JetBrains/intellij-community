@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
@@ -25,8 +25,8 @@ import javax.swing.*;
  */
 public interface DirDiffIcons {
   Icon FOLDER = PlatformIcons.FOLDER_ICON;
-  Icon MOVE_RIGHT = IconLoader.getIcon("/vcs/arrow_right.png");
-  Icon MOVE_LEFT = IconLoader.getIcon("/vcs/arrow_left.png");
-  Icon EQUAL = IconLoader.getIcon("/vcs/equal.png");
-  Icon NOT_EQUAL = IconLoader.getIcon("/vcs/not_equal.png");
+  Icon MOVE_RIGHT = AllIcons.Vcs.Arrow_right;
+  Icon MOVE_LEFT = AllIcons.Vcs.Arrow_left;
+  Icon EQUAL = AllIcons.Vcs.Equal;
+  Icon NOT_EQUAL = AllIcons.Vcs.Not_equal;
 }

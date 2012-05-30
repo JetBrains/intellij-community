@@ -21,6 +21,7 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
@@ -41,7 +42,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -60,7 +60,7 @@ import java.util.*;
 
 public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
-  public static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
+  public static final Icon ICON = AllIcons.General.PackagesTab;
   private MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
   public PackageViewPane(Project project) {
@@ -150,7 +150,8 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
 
   private final class ShowLibraryContentsAction extends ToggleAction {
     private ShowLibraryContentsAction() {
-      super(IdeBundle.message("action.show.libraries.contents"), IdeBundle.message("action.show.hide.library.contents"), IconLoader.getIcon("/objectBrowser/showLibraryContents.png"));
+      super(IdeBundle.message("action.show.libraries.contents"), IdeBundle.message("action.show.hide.library.contents"),
+            AllIcons.ObjectBrowser.ShowLibraryContents);
     }
 
     public boolean isSelected(AnActionEvent event) {

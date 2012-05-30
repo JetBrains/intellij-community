@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -32,7 +33,10 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -64,11 +68,11 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   private final EditorsSplitters myOwner;
-  private static final Icon MODIFIED_ICON = IconLoader.getIcon("/general/modified.png");
+  private static final Icon MODIFIED_ICON = AllIcons.General.Modified;
   private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
 
   private boolean myIsDisposed = false;
-  private static final Icon PIN_ICON = IconLoader.getIcon("/nodes/tabPin.png");
+  private static final Icon PIN_ICON = AllIcons.Nodes.TabPin;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
 
   protected EditorWindow(final EditorsSplitters owner) {
@@ -628,7 +632,7 @@ public class EditorWindow {
         }
         
         final VirtualFile file = editor.getFile();
-        final Icon template = IconLoader.getIcon("/fileTypes/text.png");
+        final Icon template = AllIcons.FileTypes.Text;
         myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
         trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
         setSelectedEditor(editor, focusEditor);

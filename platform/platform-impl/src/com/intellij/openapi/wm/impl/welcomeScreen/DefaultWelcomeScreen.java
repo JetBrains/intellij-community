@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
@@ -75,7 +76,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
 
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(66, 66);
   private static final Dimension PLUGIN_LOGO_SIZE = new Dimension(16, 16);
-  private static final Icon DEFAULT_ICON = IconLoader.getIcon("/general/configurableDefault.png");
+  private static final Icon DEFAULT_ICON = AllIcons.General.ConfigurableDefault;
 
   @NonNls private static final String CAPTION_FONT_NAME = "Tahoma";
   private static final Font TEXT_FONT = new Font(CAPTION_FONT_NAME, Font.PLAIN, 11);
@@ -100,7 +101,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   @NonNls private static final String HTML_SUFFIX = "</html>";
   @NonNls private static final String ___HTML_SUFFIX = "...</html>";
   @NonNls private static final String ESC_NEW_LINE = "\\n";
-  public static final Icon ICON = IconLoader.getIcon("/actions/closeNew.png");
+  public static final Icon ICON = AllIcons.Actions.CloseNew;
 
   private final JPanel myWelcomePanel;
   private final JPanel myMainPanel;
@@ -238,7 +239,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
     myRecentProjectsPanel.add(caption, new GridBagConstraints(0, 0, 2, 1, 1, 0, NORTHWEST, HORIZONTAL, new Insets(0, 0, 20, 0), 0, 0));
 
     JLabel iconLabel = new JLabel();
-    iconLabel.setIcon(IconLoader.getIcon("/general/reopenRecentProject.png"));
+    iconLabel.setIcon(AllIcons.General.ReopenRecentProject);
     myRecentProjectsPanel.add(iconLabel, new GridBagConstraints(0, 1, 1, 5, 0, 0, NORTHWEST, NONE, new Insets(5, 0, 15, 20), 0, 0));
 
     int row = 1;

@@ -22,13 +22,13 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +48,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 
 public class BuildElementsEditor extends ModuleElementsEditor {
-  private static final Icon ICON = IconLoader.getIcon("/modules/output.png");
+  private static final Icon ICON = AllIcons.Modules.Output;
   private JRadioButton myInheritCompilerOutput;
   @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myPerModuleCompilerOutput;

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -30,7 +31,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -117,7 +117,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     return "windows-1251";
   }
 
-  private static final Icon ARROWS_ICON = IconLoader.getIcon("/ide/statusbar_arrows.png");
+  private static final Icon ARROWS_ICON = AllIcons.Ide.Statusbar_arrows;
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);

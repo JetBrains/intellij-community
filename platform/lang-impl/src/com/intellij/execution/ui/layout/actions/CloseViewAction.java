@@ -18,15 +18,15 @@ package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 
 import javax.swing.*;
 
 public class CloseViewAction extends BaseViewAction {
-  private static final Icon ICON = IconLoader.getIcon("/actions/closeNew.png");
-  private static final Icon HOVERED_ICON = IconLoader.getIcon("/actions/closeNewHovered.png");
+  private static final Icon ICON = AllIcons.Actions.CloseNew;
+  private static final Icon HOVERED_ICON = AllIcons.Actions.CloseNewHovered;
 
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(content));

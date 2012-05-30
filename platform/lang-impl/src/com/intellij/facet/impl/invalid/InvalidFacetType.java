@@ -20,11 +20,11 @@ import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +35,7 @@ import javax.swing.*;
  */
 public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfiguration> {
   public static final FacetTypeId<InvalidFacet> TYPE_ID = new FacetTypeId<InvalidFacet>("invalid");
-  public static final Icon ICON = IconLoader.getIcon("/fileTypes/unknown.png");
+  public static final Icon ICON = AllIcons.FileTypes.Unknown;
 
   public static InvalidFacetType getInstance() {
     return ServiceManager.getService(InvalidFacetType.class);

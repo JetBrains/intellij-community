@@ -16,9 +16,11 @@
 
 package com.intellij.psi.impl.beanProperties;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ import javax.swing.*;
 @Presentation(icon = "/nodes/property.png")
 public class BeanProperty {
 
-  public static final Icon ICON = IconLoader.getIcon("/nodes/property.png");
+  public static final Icon ICON = AllIcons.Nodes.Property;
 
   private final PsiMethod myMethod;
 

@@ -31,6 +31,7 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -41,7 +42,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
@@ -148,7 +148,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     myPatternTextField.setButtonIcon(IconUtil.getAddIcon());
     panel.add(myPatternTextField, BorderLayout.CENTER);
     final FixedSizeButton editBtn = new FixedSizeButton();
-    editBtn.setIcon(IconLoader.getIcon("/actions/showViewer.png"));
+    editBtn.setIcon(AllIcons.Actions.ShowViewer);
     editBtn.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         Messages.showTextAreaDialog(myPatternTextField.getTextField(), "Configure suite tests", "EditParametersPopupWindow");

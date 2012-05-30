@@ -24,9 +24,9 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ import javax.swing.*;
 
 public class RemoteConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
-  private static final Icon ICON = IconLoader.getIcon("/runConfigurations/remote.png");
+  private static final Icon ICON = AllIcons.RunConfigurations.Remote;
 
   /**reflection*/
   public RemoteConfigurationType() {

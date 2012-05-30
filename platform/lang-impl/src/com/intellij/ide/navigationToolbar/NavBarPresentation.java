@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +33,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -55,7 +55,7 @@ import java.awt.*;
  */
 public class NavBarPresentation {
   private static final SimpleTextAttributes WOLFED = new SimpleTextAttributes(null, null, Color.red, SimpleTextAttributes.STYLE_WAVED);
-  private static final Icon PROJECT_ICON = IconLoader.getIcon("/nodes/project.png");
+  private static final Icon PROJECT_ICON = AllIcons.Nodes.Project;
 
   private final Project myProject;
 
@@ -90,7 +90,7 @@ public class NavBarPresentation {
       final SdkTypeId sdkType = ((JdkOrderEntry)object).getJdk().getSdkType();
       return ((SdkType) sdkType).getIcon();
     }
-    if (object instanceof LibraryOrderEntry) return IconLoader.getIcon("/nodes/ppLibClosed.png");
+    if (object instanceof LibraryOrderEntry) return AllIcons.Nodes.PpLibClosed;
     if (object instanceof ModuleOrderEntry) return ModuleType.get(((ModuleOrderEntry)object).getModule()).getNodeIcon(false);
     return null;
   }

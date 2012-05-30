@@ -16,23 +16,23 @@
 
 package com.intellij.tools;
 
-import com.intellij.openapi.keymap.KeymapExtension;
-import com.intellij.openapi.keymap.KeymapGroup;
-import com.intellij.openapi.keymap.KeyMapBundle;
-import com.intellij.openapi.keymap.impl.ui.Group;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.keymap.KeyMapBundle;
+import com.intellij.openapi.keymap.KeymapExtension;
+import com.intellij.openapi.keymap.KeymapGroup;
+import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
 import java.util.Arrays;
 
 public class ToolKeymapExtension implements KeymapExtension {
-  private static final Icon TOOLS_ICON = IconLoader.getIcon("/nodes/keymapTools.png");
-  private static final Icon TOOLS_OPEN_ICON = IconLoader.getIcon("/nodes/keymapToolsOpen.png");
+  private static final Icon TOOLS_ICON = AllIcons.Nodes.KeymapTools;
+  private static final Icon TOOLS_OPEN_ICON = AllIcons.Nodes.KeymapToolsOpen;
 
   public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();

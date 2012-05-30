@@ -17,13 +17,13 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
@@ -280,7 +280,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableCodeStyle.png");
+    return AllIcons.General.ConfigurableCodeStyle;
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.intellij.find.impl.livePreview.LiveOccurrence;
 import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.impl.livePreview.LivePreviewControllerBase;
 import com.intellij.find.impl.livePreview.SearchResults;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +35,6 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -297,7 +297,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     setSmallerFontAndOpaque(myClickToHighlightLabel);
     myClickToHighlightLabel.setVisible(false);
 
-    JLabel closeLabel = new JLabel(" ", IconLoader.getIcon("/actions/cross.png"), SwingConstants.RIGHT);
+    JLabel closeLabel = new JLabel(" ", AllIcons.Actions.Cross, SwingConstants.RIGHT);
     closeLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(final MouseEvent e) {

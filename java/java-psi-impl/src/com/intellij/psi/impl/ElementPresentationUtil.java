@@ -17,10 +17,10 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,10 +34,10 @@ import gnu.trove.TIntObjectHashMap;
 import javax.swing.*;
 
 public class ElementPresentationUtil implements PlatformIcons {
-  private static final Icon STATIC_MARK_ICON = IconLoader.getIcon("/nodes/staticMark.png");
-  private static final Icon FINAL_MARK_ICON = IconLoader.getIcon("/nodes/finalMark.png");
-  public static final Icon JUNIT_TEST_MARK = IconLoader.getIcon("/nodes/junitTestMark.png");
-  private static final Icon RUNNABLE_MARK = IconLoader.getIcon("/nodes/runnableMark.png");
+  private static final Icon STATIC_MARK_ICON = AllIcons.Nodes.StaticMark;
+  private static final Icon FINAL_MARK_ICON = AllIcons.Nodes.FinalMark;
+  public static final Icon JUNIT_TEST_MARK = AllIcons.Nodes.JunitTestMark;
+  private static final Icon RUNNABLE_MARK = AllIcons.Nodes.RunnableMark;
 
 
   private ElementPresentationUtil() {
@@ -69,7 +69,7 @@ public class ElementPresentationUtil implements PlatformIcons {
     return ElementBase.createLayeredIcon(element, baseIcon, getFlags(element, isLocked));
   }
 
-  private static final Icon ABSTRACT_EXCEPTION_CLASS_ICON = IconLoader.getIcon("/nodes/abstractException.png");
+  private static final Icon ABSTRACT_EXCEPTION_CLASS_ICON = AllIcons.Nodes.AbstractException;
 
   private static final int CLASS_KIND_INTERFACE     = 10;
   private static final int CLASS_KIND_ANNOTATION    = 20;

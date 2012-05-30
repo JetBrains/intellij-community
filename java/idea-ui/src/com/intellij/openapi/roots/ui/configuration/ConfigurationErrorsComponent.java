@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -56,11 +56,11 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
   private static final boolean ONE_LINE = true;
   private static final boolean MULTI_LINE = false;
 
-  private static final Icon EXPAND = IconLoader.getIcon("/actions/expandall.png");
-  private static final Icon COLLAPSE = IconLoader.getIcon("/actions/collapseall.png");
-  private static final Icon FIX = IconLoader.findIcon("/actions/quickfixBulb.png");
-  private static final Icon IGNORE = IconLoader.findIcon("/actions/cancel.png");
-  private static final Icon NAVIGATE = IconLoader.findIcon("/general/autoscrollToSource.png");
+  private static final Icon EXPAND = AllIcons.Actions.Expandall;
+  private static final Icon COLLAPSE = AllIcons.Actions.Collapseall;
+  private static final Icon FIX = AllIcons.Actions.QuickfixBulb;
+  private static final Icon IGNORE = AllIcons.Actions.Cancel;
+  private static final Icon NAVIGATE = AllIcons.General.AutoscrollToSource;
 
   @NonNls private static final String FIX_ACTION_NAME = "FIX";
   @NonNls private static final String NAVIGATE_ACTION_NAME = "NAVIGATE";

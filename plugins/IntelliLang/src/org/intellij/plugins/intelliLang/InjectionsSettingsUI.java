@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.intelliLang;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
@@ -286,14 +287,14 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
       group.add(shareAction);
     }
     group.addSeparator();
-    group.add(new AnAction("Import", "Import", IconLoader.getIcon("/actions/install.png")) {
+    group.add(new AnAction("Import", "Import", AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         doImportAction(e.getDataContext());
         updateCountLabel();
       }
     });
-    group.add(new AnAction("Export", "Export", IconLoader.getIcon("/actions/export.png")) {
+    group.add(new AnAction("Export", "Export", AllIcons.Actions.Export) {
       @Override
       public void actionPerformed(final AnActionEvent e) {
         final List<BaseInjection> injections = getInjectionList(getSelectedInjections());

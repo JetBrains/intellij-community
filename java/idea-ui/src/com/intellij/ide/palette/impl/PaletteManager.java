@@ -16,6 +16,7 @@
 
 package com.intellij.ide.palette.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.palette.PaletteDragEventListener;
 import com.intellij.ide.palette.PaletteItem;
@@ -26,7 +27,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -71,7 +71,7 @@ public class PaletteManager implements ProjectComponent {
                                ToolWindowAnchor.RIGHT,
                                myProject,
                                true);
-          myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
+          myPaletteToolWindow.setIcon(AllIcons.General.ToolWindowPalette);
           setContent();
           final MyFileEditorManagerListener myListener = new MyFileEditorManagerListener();
           myFileEditorManager.addFileEditorManagerListener(myListener, myProject);

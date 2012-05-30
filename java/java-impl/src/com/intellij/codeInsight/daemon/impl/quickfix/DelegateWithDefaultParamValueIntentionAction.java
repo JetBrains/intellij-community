@@ -20,11 +20,11 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -43,7 +43,7 @@ import java.util.HashSet;
  * User: anna
  */
 public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
-   public static final Icon REFACTORING_BULB = IconLoader.getIcon("/actions/refactoringBulb.png");
+   public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);

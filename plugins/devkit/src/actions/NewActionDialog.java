@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -23,7 +24,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -157,7 +157,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     myFirstKeystrokeEdit.getDocument().addDocumentListener(listener);
     myClearFirstKeystroke.setText(null);
 
-    final Icon icon = IconLoader.getIcon("/actions/cancel.png");
+    final Icon icon = AllIcons.Actions.Cancel;
     final Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
     myClearFirstKeystroke.setIcon(icon);
     myClearFirstKeystroke.setPreferredSize(size);

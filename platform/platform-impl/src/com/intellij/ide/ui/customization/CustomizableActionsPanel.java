@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.customization;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -73,7 +74,7 @@ public class CustomizableActionsPanel {
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
+  private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
 
   private JButton myEditIconButton;
   private JButton myRemoveActionButton;
@@ -92,7 +93,7 @@ public class CustomizableActionsPanel {
 
   private JButton myRestoreAllDefaultButton;
   private JButton myRestoreDefaultButton;
-  public static final Icon FULLISH_ICON = IconLoader.getIcon("/toolbar/unknown.png");
+  public static final Icon FULLISH_ICON = AllIcons.Toolbar.Unknown;
 
   public CustomizableActionsPanel() {
 

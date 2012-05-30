@@ -21,11 +21,11 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -42,8 +42,8 @@ import java.util.List;
  * @author max
  */
 public class FileLevelIntentionComponent extends EditorNotificationPanel {
-  private static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/intentionBulb.png");
-  private static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
+  private static final Icon ourIntentionIcon = AllIcons.Actions.IntentionBulb;
+  private static final Icon ourQuickFixIcon = AllIcons.Actions.QuickfixBulb;
 
   private final Project myProject;
 

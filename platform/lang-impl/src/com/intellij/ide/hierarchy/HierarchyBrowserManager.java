@@ -16,11 +16,10 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -50,7 +49,7 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
     final ToolWindowManager toolWindowManager=ToolWindowManager.getInstance(project);
     final ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.HIERARCHY, true, ToolWindowAnchor.RIGHT, project);
     myContentManager = toolWindow.getContentManager();
-    toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowHierarchy.png"));
+    toolWindow.setIcon(AllIcons.General.ToolWindowHierarchy);
     new ContentManagerWatcher(toolWindow,myContentManager);
   }
 

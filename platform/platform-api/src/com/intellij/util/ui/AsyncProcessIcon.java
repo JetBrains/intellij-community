@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +29,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
   public static final int CYCLE_LENGTH = 800;
 
   private static final Icon[] SMALL_ICONS = findIcons("/process/step_", "/process/step_mask.png");
-  private static final Icon SMALL_PASSIVE_ICON = IconLoader.getIcon("/process/step_passive.png");
+  private static final Icon SMALL_PASSIVE_ICON = AllIcons.Process.Step_passive;
   private boolean myUseMask;
 
   public AsyncProcessIcon(@NonNls String name) {
@@ -91,7 +92,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
 
   public static class Big extends AsyncProcessIcon {
     private static final Icon[] BIG_ICONS = findIcons("/process/big/step_", null);
-    private static final Icon BIG_PASSIVE_ICON = IconLoader.getIcon("/process/big/step_passive.png");
+    private static final Icon BIG_PASSIVE_ICON = AllIcons.Process.Big.Step_passive;
 
     public Big(@NonNls final String name) {
       super(name, BIG_ICONS, BIG_PASSIVE_ICON);

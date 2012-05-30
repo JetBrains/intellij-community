@@ -28,6 +28,7 @@ import com.intellij.codeInsight.hint.LineTooltipRenderer;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -42,7 +43,6 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
@@ -70,7 +70,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorMarkupModelImpl");
 
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
-  private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsFound.png");
+  private static final Icon ERRORS_FOUND_ICON = AllIcons.General.ErrorsFound;
   private static final int ERROR_ICON_WIDTH = ERRORS_FOUND_ICON.getIconWidth();
   private static final int ERROR_ICON_HEIGHT = ERRORS_FOUND_ICON.getIconHeight();
   private static final int PREFERRED_WIDTH = ERRORS_FOUND_ICON.getIconWidth() + 3;

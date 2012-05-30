@@ -18,9 +18,9 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,7 +37,7 @@ import java.util.Set;
  * @author Danila Ponomarenko
  */
 public class RecursiveCallLineMarkerProvider implements LineMarkerProvider, DumbAware {
-  private static final Icon RECURSIVE_METHOD_ICON = IconLoader.getIcon("/gutter/recursiveMethod.png");
+  private static final Icon RECURSIVE_METHOD_ICON = AllIcons.Gutter.RecursiveMethod;
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {

@@ -20,12 +20,12 @@ import com.intellij.cvsSupport2.CvsActionPlaces;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.cvsSupport2.ui.Options;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -294,7 +294,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   private class SelectAllAction extends SelectUnselectAllAction {
 
     public SelectAllAction() {
-      super(CvsBundle.message("action.name.select.all"), IconLoader.getIcon("/actions/selectall.png"));
+      super(CvsBundle.message("action.name.select.all"), AllIcons.Actions.Selectall);
     }
 
     protected boolean includedValue() {
@@ -304,7 +304,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private class UnselectAllAction extends SelectUnselectAllAction {
     public UnselectAllAction() {
-      super(CvsBundle.message("action.name.unselect.all"), IconLoader.getIcon("/actions/unselectall.png"));
+      super(CvsBundle.message("action.name.unselect.all"), AllIcons.Actions.Unselectall);
     }
 
     protected boolean includedValue() {

@@ -26,6 +26,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JreVersionDetector;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -324,7 +325,7 @@ public class CreateSnapShotAction extends AnAction {
     @NonNls private static final String SWING_PACKAGE = "javax.swing.";
 
     private final Icon myUnknownComponentIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
-    private final Icon myFormIcon = IconLoader.getIcon("/fileTypes/uiForm.png");
+    private final Icon myFormIcon = AllIcons.FileTypes.UiForm;
 
     private MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
       super(project, true);

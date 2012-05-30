@@ -16,6 +16,7 @@
 
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -29,7 +30,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -43,9 +43,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement> implements NavigatableWithText {
-  private static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
-  private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
-  private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
+  private static final Icon GENERIC_JDK_ICON = AllIcons.General.Jdk;
+  private static final Icon LIB_ICON_OPEN = AllIcons.Nodes.PpLibOpen;
+  private static final Icon LIB_ICON_CLOSED = AllIcons.Nodes.PpLibClosed;
 
   public NamedLibraryElementNode(Project project, NamedLibraryElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);

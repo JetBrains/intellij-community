@@ -16,9 +16,9 @@
 
 package com.intellij.usageView.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -43,7 +43,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM, project, true);
     toolWindow.setToHideOnEmptyContent(true);
-    toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFind.png"));
+    toolWindow.setIcon(AllIcons.General.ToolWindowFind);
     myFindContentManager = toolWindow.getContentManager();
     myFindContentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override

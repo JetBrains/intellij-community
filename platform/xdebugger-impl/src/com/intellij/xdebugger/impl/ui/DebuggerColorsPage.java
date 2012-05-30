@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -22,7 +23,6 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -45,7 +45,7 @@ public class DebuggerColorsPage implements ColorSettingsPage, DisplayPrioritySor
 
   @Nullable
   public Icon getIcon() {
-    return IconLoader.getIcon("/actions/startDebugger.png");
+    return AllIcons.Actions.StartDebugger;
   }
 
   @NotNull

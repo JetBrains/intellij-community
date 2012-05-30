@@ -21,6 +21,7 @@ import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +48,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
@@ -623,7 +623,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   @Override
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableColorsAndFonts.png");
+    return AllIcons.General.ConfigurableColorsAndFonts;
   }
 
   private void revertChanges(){
