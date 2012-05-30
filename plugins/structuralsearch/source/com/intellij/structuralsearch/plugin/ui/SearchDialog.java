@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
