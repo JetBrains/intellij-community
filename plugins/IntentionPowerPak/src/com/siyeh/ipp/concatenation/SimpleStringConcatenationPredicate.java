@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.PsiArrayInitializerMemberValue;
-import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -43,14 +43,10 @@ class SimpleStringConcatenationPredicate
   }
 
   private static boolean isInsideAnnotation(PsiElement element) {
-    for (int i = 0; i < 20 && element instanceof PsiBinaryExpression; i++) {
-      // optimization: don't check deep string concatenations more than 20 levels up.
-      element = element.getParent();
-      if (element instanceof PsiNameValuePair ||
-          element instanceof PsiArrayInitializerMemberValue) {
-        return true;
-      }
+    if (!(element instanceof PsiPolyadicExpression)) {
+      return false;
     }
-    return false;
+    final PsiElement parent = element.getParent();
+    return parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue;
   }
 }
