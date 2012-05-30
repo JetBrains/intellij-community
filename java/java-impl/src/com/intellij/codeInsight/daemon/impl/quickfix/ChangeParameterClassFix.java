@@ -61,11 +61,11 @@ public class ChangeParameterClassFix extends ExtendsListFix {
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return
-        super.isAvailable(project, file, startElement, endElement)
-        && myClassToExtendFrom != null
-        && myClassToExtendFrom.isValid()
-        && myClassToExtendFrom.getQualifiedName() != null
-    ;
+      super.isAvailable(project, file, startElement, endElement)
+      && myClassToExtendFrom != null
+      && myClassToExtendFrom.isValid()
+      && myClassToExtendFrom.getQualifiedName() != null
+      ;
   }
 
   @Override
@@ -115,17 +115,20 @@ public class ChangeParameterClassFix extends ExtendsListFix {
   }
 
   public static void registerQuickFixAction(PsiVariable variable, PsiType returnType, HighlightInfo info) {
-    final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
+    final PsiClass returnClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
     final PsiType variableType = variable.getType();
     final PsiClass variableClass = PsiUtil.resolveClassInClassTypeOnly(variableType);
-    if (psiClass != null && variableClass != null && !psiClass.isInheritor(variableClass, true)) {
-      QuickFixAction.registerQuickFixAction(info, new ChangeParameterClassFix(psiClass, (PsiClassType)variableType));
-    }
+
+    if (returnClass == null || variableClass == null) return;
+    if (returnClass instanceof PsiAnonymousClass) return;
+    if (returnClass.isInheritor(variableClass, true)) return;
+
+    QuickFixAction.registerQuickFixAction(info, new ChangeParameterClassFix(returnClass, (PsiClassType)variableType));
   }
-  
+
   public static void registerQuickFixActions(PsiCall methodCall, PsiExpressionList list, HighlightInfo highlightInfo) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
-    PsiMethod method = (PsiMethod) result.getElement();
+    PsiMethod method = (PsiMethod)result.getElement();
     final PsiSubstitutor substitutor = result.getSubstitutor();
     PsiExpression[] expressions = list.getExpressions();
     if (method == null || method.getParameterList().getParametersCount() != expressions.length) return;
@@ -134,12 +137,13 @@ public class ChangeParameterClassFix extends ExtendsListFix {
       PsiParameter parameter = method.getParameterList().getParameters()[i];
       PsiType expressionType = expression.getType();
       PsiType parameterType = substitutor.substitute(parameter.getType());
-      if (expressionType == null || expressionType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(expressionType) || expressionType instanceof PsiArrayType ) continue;
-      if (parameterType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(parameterType) || parameterType instanceof PsiArrayType ) continue;
+      if (expressionType == null || expressionType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(expressionType) || expressionType instanceof PsiArrayType) continue;
+      if (parameterType instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(parameterType) || parameterType instanceof PsiArrayType) continue;
       if (parameterType.isAssignableFrom(expressionType)) continue;
       PsiClass parameterClass = PsiUtil.resolveClassInType(parameterType);
       PsiClass expressionClass = PsiUtil.resolveClassInType(expressionType);
       if (parameterClass == null || expressionClass == null) continue;
+      if (expressionClass instanceof PsiAnonymousClass) continue;
       if (parameterClass.isInheritor(expressionClass, true)) continue;
       QuickFixAction.registerQuickFixAction(highlightInfo, new ChangeParameterClassFix(expressionClass, (PsiClassType)parameterType));
     }
