@@ -38,30 +38,34 @@ public interface RegExpQuantifier extends RegExpAtom {
     Type getType();
 
     interface Count {
-        int getMin();
-        int getMax();
+        @NotNull
+        String getMin();
+        @NotNull
+        String getMax();
     }
 
     enum SimpleCount implements Count {
         /** ? */
-        ONE_OR_ZERO(0, 1),
+        ONE_OR_ZERO("0", "1"),
         /** * */
-        ZERO_OR_MORE(0, Integer.MAX_VALUE),
+        ZERO_OR_MORE("0", ""),
         /** + */
-        ONE_OR_MORE(1, Integer.MAX_VALUE),;
+        ONE_OR_MORE("1", "");
 
-        private final int myMin;
-        private final int myMax;
+        private final String myMin;
+        private final String myMax;
 
-        SimpleCount(int min, int max) {
+        SimpleCount(String min, String max) {
             myMin = min;
             myMax = max;
         }
 
-        public int getMin() {
+        @NotNull
+        public String getMin() {
             return myMin;
         }
-        public int getMax() {
+        @NotNull
+        public String getMax() {
             return myMax;
         }
     }
