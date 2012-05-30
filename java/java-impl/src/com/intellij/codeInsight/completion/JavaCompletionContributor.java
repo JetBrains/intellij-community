@@ -225,11 +225,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
+    final InheritorsHolder inheritors = new InheritorsHolder(position, result);
     if (JavaSmartCompletionContributor.IN_TYPE_ARGS.accepts(position)) {
-      new TypeArgumentCompletionProvider(false).addCompletions(parameters, new ProcessingContext(), result);
+      new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
 
-    final InheritorsHolder inheritors = new InheritorsHolder(position, result);
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, result.getPrefixMatcher(), inheritors);
     }
