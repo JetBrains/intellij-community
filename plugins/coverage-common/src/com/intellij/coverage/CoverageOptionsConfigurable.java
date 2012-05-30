@@ -45,11 +45,6 @@ public class CoverageOptionsConfigurable implements SearchableConfigurable, Conf
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "reference.project.settings.coverage";
   }
