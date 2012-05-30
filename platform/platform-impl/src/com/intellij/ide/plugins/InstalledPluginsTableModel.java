@@ -128,12 +128,17 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     updatePluginDependencies();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Load custom plugin repositories data...") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        updateRepositoryPlugins();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Load custom plugin repositories data...") {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            updateRepositoryPlugins();
+          }
+        });
       }
-    });
+    };
+    SwingUtilities.invokeLater(runnable);
   }
 
   public void updateRepositoryPlugins() {
