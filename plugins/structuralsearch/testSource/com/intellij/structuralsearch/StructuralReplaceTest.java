@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.LocalSearchScope;
@@ -1822,7 +1823,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s2_2 = "String";
     String s2_3 = "'String:java\\.lang\\.String";
     String s2_4 = "java.lang.String";
-    String replacement = "java.util.List";
+    String replacement = CommonClassNames.JAVA_UTIL_LIST;
     String expected = "@Nullable (a=java.util.List.class) @java.util.List class Test {\n" +
                 "  void aaa(java.util.List t) {\n" +
                 "    java.util.List a = java.util.List.valueOf(' ');" +
