@@ -64,6 +64,7 @@ import com.intellij.util.io.fs.IFile;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -95,7 +96,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private Project[] myOpenProjectsArrayCache = {};
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createEmptyCOWList();
 
-  private Project myCurrentTestProject = null;
+  private final Set<Project> myTestProjects = new THashSet<Project>();
 
   private final Map<VirtualFile, byte[]> mySavedCopies = new HashMap<VirtualFile, byte[]>();
   private final TObjectLongHashMap<VirtualFile> mySavedTimestamps = new TObjectLongHashMap<VirtualFile>();
@@ -382,10 +383,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         LOG.error("Open projects cache corrupted. Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        Project currentTestProject = myCurrentTestProject;
-        if (currentTestProject != null && !currentTestProject.isDisposed()) {
-          return ArrayUtil.append(myOpenProjectsArrayCache, currentTestProject);
-        }
+         return ArrayUtil.mergeArrays(myOpenProjectsArrayCache, myTestProjects.toArray(new Project[myTestProjects.size()]));
       }
       return myOpenProjectsArrayCache;
     }
@@ -393,10 +391,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public boolean isProjectOpened(Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && myCurrentTestProject != null) {
-      return project == myCurrentTestProject || myOpenProjects.contains(project);
-    }
-    return myOpenProjects.contains(project);
+    return ApplicationManager.getApplication().isUnitTestMode() && myTestProjects.contains(project) || myOpenProjects.contains(project);
   }
 
   @Override
@@ -799,16 +794,29 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @Override
-  public void setCurrentTestProject(@Nullable final Project project) {
+  public void openTestProject(@NotNull final Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    myCurrentTestProject = project;
+    myTestProjects.add(project);
   }
 
   @Override
-  @Nullable
-  public Project getCurrentTestProject() {
+  public void closeTestProject(@NotNull Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    return myCurrentTestProject;
+    myTestProjects.remove(project);
+  }
+
+  @TestOnly
+  public void assertTestProjectsClosed() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    if (!myTestProjects.isEmpty()) {
+      try {
+        Project project = myTestProjects.iterator().next();
+        throw new AssertionError("Test project is not disposed: " + project);
+      }
+      finally {
+        myTestProjects.clear();
+      }
+    }
   }
 
   @Override
@@ -993,7 +1001,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
             myOpenProjects.remove(project);
             cacheOpenProjects();
           }
-          myCurrentTestProject = null;
+          myTestProjects.remove(project);
 
           myChangedProjectFiles.remove(project);
 

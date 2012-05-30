@@ -51,12 +51,10 @@ public abstract class ProjectManagerEx extends ProjectManager {
   public abstract void blockReloadingProjectOnExternalChanges();
   public abstract void unblockReloadingProjectOnExternalChanges();
 
-  @Nullable
   @TestOnly
-  public abstract Project getCurrentTestProject();
-
+  public abstract void openTestProject(@NotNull Project project);
   @TestOnly
-  public abstract void setCurrentTestProject(@Nullable Project project);
+  public abstract void closeTestProject(@NotNull Project project);
 
   // returns true on success
   public abstract boolean closeAndDispose(@NotNull Project project);
