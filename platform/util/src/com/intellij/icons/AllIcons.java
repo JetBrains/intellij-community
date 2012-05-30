@@ -411,34 +411,7 @@ public class AllIcons {
     public static final Icon ComboArrowRight = IconLoader.getIcon("/general/comboArrowRight.png"); 
     public static final Icon ComboArrowRightPassive = IconLoader.getIcon("/general/comboArrowRightPassive.png"); 
     public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png"); 
-    public static final Icon ConfigurableAppearance = IconLoader.getIcon("/general/configurableAppearance.png"); 
-    public static final Icon ConfigurableCodeCompletion = IconLoader.getIcon("/general/configurableCodeCompletion.png"); 
-    public static final Icon ConfigurableCodeStyle = IconLoader.getIcon("/general/configurableCodeStyle.png"); 
-    public static final Icon ConfigurableColorsAndFonts = IconLoader.getIcon("/general/configurableColorsAndFonts.png"); 
-    public static final Icon ConfigurableCompiler = IconLoader.getIcon("/general/configurableCompiler.png"); 
-    public static final Icon ConfigurableCustomization = IconLoader.getIcon("/general/configurableCustomization.png"); 
-    public static final Icon ConfigurableDebugger = IconLoader.getIcon("/general/configurableDebugger.png"); 
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); 
-    public static final Icon ConfigurableEditor = IconLoader.getIcon("/general/configurableEditor.png"); 
-    public static final Icon ConfigurableEjb = IconLoader.getIcon("/general/configurableEjb.png"); 
-    public static final Icon ConfigurableErrorHighlighting = IconLoader.getIcon("/general/configurableErrorHighlighting.png"); 
-    public static final Icon ConfigurableExternalResources = IconLoader.getIcon("/general/configurableExternalResources.png"); 
-    public static final Icon ConfigurableFileTypes = IconLoader.getIcon("/general/configurableFileTypes.png"); 
-    public static final Icon ConfigurableGeneral = IconLoader.getIcon("/general/configurableGeneral.png"); 
-    public static final Icon ConfigurableGlobalLibraries = IconLoader.getIcon("/general/configurableGlobalLibraries.png"); 
-    public static final Icon ConfigurableIntentionSettings = IconLoader.getIcon("/general/configurableIntentionSettings.png"); 
-    public static final Icon ConfigurableJavadoc = IconLoader.getIcon("/general/configurableJavadoc.png"); 
-    public static final Icon ConfigurableLocalVCS = IconLoader.getIcon("/general/configurableLocalVCS.png"); 
-    public static final Icon ConfigurableMisc = IconLoader.getIcon("/general/configurableMisc.png"); 
-    public static final Icon ConfigurableProjectLibraries = IconLoader.getIcon("/general/configurableProjectLibraries.png"); 
-    public static final Icon ConfigurableProjectPaths = IconLoader.getIcon("/general/configurableProjectPaths.png"); 
-    public static final Icon ConfigurableRunDebug = IconLoader.getIcon("/general/configurableRunDebug.png"); 
-    public static final Icon ConfigurableTodo = IconLoader.getIcon("/general/configurableTodo.png"); 
-    public static final Icon ConfigurableUpdates = IconLoader.getIcon("/general/configurableUpdates.png"); 
-    public static final Icon ConfigurableValidation = IconLoader.getIcon("/general/configurableValidation.png"); 
-    public static final Icon ConfigurableVcs = IconLoader.getIcon("/general/configurableVcs.png"); 
-    public static final Icon ConfigurableWeb = IconLoader.getIcon("/general/configurableWeb.png"); 
-    public static final Icon ConfigureEncoding = IconLoader.getIcon("/general/configureEncoding.png"); 
     public static final Icon CreateNewProject = IconLoader.getIcon("/general/createNewProject.png"); 
     public static final Icon Debug = IconLoader.getIcon("/general/debug.png"); 
     public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); 
@@ -732,7 +705,6 @@ public class AllIcons {
     public static final Icon Rating4 = IconLoader.getIcon("/ide/rating4.png"); 
     public static final Icon Readonly = IconLoader.getIcon("/ide/readonly.png"); 
     public static final Icon Readwrite = IconLoader.getIcon("/ide/readwrite.png"); 
-    public static final Icon ScopeConfigurable = IconLoader.getIcon("/ide/scopeConfigurable.png"); 
     
     public static class Shadow {
       public static final Icon Bottom_left = IconLoader.getIcon("/ide/shadow/bottom-left.png"); 

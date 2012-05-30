@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -37,7 +36,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract {
-  public static final Icon ICON = AllIcons.General.ConfigurableVcs;
   private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;
   private VcsGeneralConfigurationPanel myGeneralPanel;

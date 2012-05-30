@@ -65,11 +65,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class RunConfigurable extends BaseConfigurable {
-  private static final Icon ICON = AllIcons.General.ConfigurableRunDebug;
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
-  private static final Icon SAVE_ICON = AllIcons.RunConfigurations.SaveTempConfig;
-  private static final Icon EDIT_DEFAULTS_ICON = AllIcons.General.IdeOptions;
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private volatile boolean isDisposed = false;
@@ -144,7 +141,7 @@ class RunConfigurable extends BaseConfigurable {
           }
           else if (userObject instanceof String) {
             append((String) userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            setIcon(EDIT_DEFAULTS_ICON);
+            setIcon(AllIcons.General.IdeOptions);
           }
           else if (userObject instanceof ConfigurationFactory) {
             append(((ConfigurationFactory)userObject).getName());
@@ -443,7 +440,7 @@ class RunConfigurable extends BaseConfigurable {
     group.add(new MyCopyAction());
     group.add(new MySaveAction());
     group.add(new AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
-                           "Edit default settings", EDIT_DEFAULTS_ICON) {
+                           "Edit default settings", AllIcons.General.IdeOptions) {
       public void actionPerformed(final AnActionEvent e) {
         TreeNode defaults = TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot);
         if (defaults != null) {
@@ -1082,7 +1079,7 @@ class RunConfigurable extends BaseConfigurable {
   private class MySaveAction extends AnAction {
 
     public MySaveAction() {
-      super(ExecutionBundle.message("action.name.save.configuration"), null, SAVE_ICON);
+      super(ExecutionBundle.message("action.name.save.configuration"), null, AllIcons.RunConfigurations.SaveTempConfig);
     }
 
     public void actionPerformed(final AnActionEvent e) {
