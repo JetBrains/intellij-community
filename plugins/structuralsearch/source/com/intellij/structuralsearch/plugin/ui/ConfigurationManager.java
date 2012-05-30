@@ -1,10 +1,10 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +153,7 @@ public class ConfigurationManager {
         project,
         SSRBundle.message("overwrite.message"),
         SSRBundle.message("overwrite.title"),
-        IconLoader.getIcon("/general/questionDialog.png")
+        AllIcons.General.QuestionDialog
       );
 
       if (i == 0) {
@@ -171,7 +171,7 @@ public class ConfigurationManager {
       project,
       SSRBundle.message("template.name.button"),
       SSRBundle.message("save.template.description.button"),
-      IconLoader.getIcon("/general/questionDialog.png"),
+      AllIcons.General.QuestionDialog,
       initial,
       null
     );
