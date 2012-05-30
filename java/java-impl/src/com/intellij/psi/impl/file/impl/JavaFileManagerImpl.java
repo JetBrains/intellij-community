@@ -208,7 +208,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     }
     LOG.assertTrue(!myDisposed);
 
-    if ("java.lang.Object".equals(qName)) { // optimization
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) { // optimization
       PsiClass cached = myCachedObjectClassMap.get(scope);
       if (cached == null) {
         cached = findClassInIndex(qName, scope);

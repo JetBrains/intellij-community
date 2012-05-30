@@ -30,6 +30,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.InternalIterator;
 import com.intellij.util.ui.ColorIcon;
@@ -75,7 +76,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   // alternate collections
   private final NodeRenderer[] myAlternateCollectionRenderers = new NodeRenderer[]{
     createCompoundReferenceRenderer(
-      "Map", "java.util.Map",
+      "Map", CommonClassNames.JAVA_UTIL_MAP,
       createLabelRenderer(" size = ", "size()", null),
       createExpressionChildrenRenderer("entrySet().toArray()", "!isEmpty()")
     ),
@@ -331,7 +332,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       return myToStringRenderer;
     }
     else if(rendererId.equals(CompoundNodeRenderer.UNIQUE_ID) || rendererId.equals(REFERENCE_RENDERER)) {
-      return createCompoundReferenceRenderer("unnamed", "java.lang.Object", null, null);
+      return createCompoundReferenceRenderer("unnamed", CommonClassNames.JAVA_LANG_OBJECT, null, null);
     }
     return null;
   }

@@ -65,7 +65,7 @@ public class BreakpointsMasterDetailPopupFactory {
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
-        myBalloonToHide.hide();
+        if (myBalloonToHide != null) myBalloonToHide.hide();
       }
 
       @Override

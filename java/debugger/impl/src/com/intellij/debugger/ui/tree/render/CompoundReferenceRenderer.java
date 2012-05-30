@@ -18,6 +18,7 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.CommonClassNames;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ public class CompoundReferenceRenderer extends CompoundNodeRenderer{
 
   public CompoundReferenceRenderer(final NodeRendererSettings rendererSettings, String name, ValueLabelRenderer labelRenderer, ChildrenRenderer childrenRenderer) {
     super(rendererSettings, name, labelRenderer, childrenRenderer);
-    myProperties.setClassName("java.lang.Object");
+    myProperties.setClassName(CommonClassNames.JAVA_LANG_OBJECT);
     LOG.assertTrue(labelRenderer == null || labelRenderer instanceof ReferenceRenderer);
     LOG.assertTrue(childrenRenderer == null || childrenRenderer instanceof ReferenceRenderer);
   }

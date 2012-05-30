@@ -21,12 +21,14 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.grid.IGridProvider;
+import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -40,7 +42,7 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
   private GridInfo myVirtualGridInfo;
 
   @Override
-  public void decorateTree(SimpleColoredComponent renderer) {
+  public void decorateTree(SimpleColoredComponent renderer, AttributeWrapper wrapper) {
     XmlTag tag = getTag();
     StringBuilder value = new StringBuilder(" (");
 
@@ -52,7 +54,7 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
 
     value.append(isHorizontal() ? "horizontal" : "vertical");
 
-    renderer.append(value.append(")").toString());
+    renderer.append(value.append(")").toString(), wrapper.getAttribute(SimpleTextAttributes.REGULAR_ATTRIBUTES));
   }
 
   public boolean isHorizontal() {

@@ -319,7 +319,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       for (PsiType boundType : boundTypes) {
         PsiType substitutedBoundType = boundType.accept(mySimpleSubstitutionVisitor);
         PsiWildcardType wildcardType = (PsiWildcardType)substituted;
-        if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText("java.lang.Object")) {
+        if (substitutedBoundType != null && !(substitutedBoundType instanceof PsiWildcardType) && !substitutedBoundType.equalsToText(
+          CommonClassNames.JAVA_LANG_OBJECT)) {
           if (originalBound == null ||
               (!TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(TypeConversionUtil.erasure(originalBound)) &&
                !TypeConversionUtil.erasure(substitutedBoundType).isAssignableFrom(originalBound))) { //erasure is essential to avoid infinite recursion

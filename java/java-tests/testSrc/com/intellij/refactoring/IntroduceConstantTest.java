@@ -106,7 +106,7 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
   }
 
   public void testResultedType() throws Exception {
-    checkDefaultType("java.lang.Object");
+    checkDefaultType(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
   public void testResultedTypeWhenNonLocal() throws Exception {

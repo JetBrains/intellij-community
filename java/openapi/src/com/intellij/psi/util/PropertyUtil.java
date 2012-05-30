@@ -355,7 +355,7 @@ public class PropertyUtil {
     }
 
     for (PsiMethod method : methods) {
-      if ("java.lang.Object".equals(method.getContainingClass().getQualifiedName())) continue;
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName())) continue;
 
       if (isSimplePropertyGetter(method)) {
         result.add(getPropertyName(method));
@@ -378,7 +378,7 @@ public class PropertyUtil {
     }
 
     for (PsiMethod method : methods) {
-      if ("java.lang.Object".equals(method.getContainingClass().getQualifiedName())) continue;
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName())) continue;
 
       if (isSimplePropertySetter(method)) {
         result.add(getPropertyName(method));

@@ -36,7 +36,7 @@ public class VictimCollector extends Visitor {
 
   private void testNAdd(final PsiElement element, final PsiType t) {
     if (Util.isRaw(t, mySettings)) {
-      if (element instanceof PsiNewExpression && t.getCanonicalText().equals("java.lang.Object")){
+      if (element instanceof PsiNewExpression && t.getCanonicalText().equals(CommonClassNames.JAVA_LANG_OBJECT)){
         return;  
       }
 

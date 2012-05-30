@@ -17,6 +17,7 @@ package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
     if (aClass.isInterface()) return PsiClass.EMPTY_ARRAY;
 
     final ArrayList<PsiClass> superClasses = new ArrayList<PsiClass>();
-    while (!"java.lang.Object".equals(aClass.getQualifiedName())) {
+    while (!CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
       final PsiClass aClass1 = aClass;
       final PsiClass[] superTypes = aClass1.getSupers();
       PsiClass superType = null;

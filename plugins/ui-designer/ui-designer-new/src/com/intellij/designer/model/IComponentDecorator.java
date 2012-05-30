@@ -15,11 +15,12 @@
  */
 package com.intellij.designer.model;
 
+import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.ui.SimpleColoredComponent;
 
 /**
  * @author Alexander Lobas
  */
 public interface IComponentDecorator {
-  void decorateTree(SimpleColoredComponent renderer);
+  void decorateTree(SimpleColoredComponent renderer, AttributeWrapper wrapper);
 }

@@ -181,7 +181,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       //JLS3 15.8.2
       if (is15OrHigher &&
           GET_CLASS_METHOD.equals(method.getName()) &&
-          "java.lang.Object".equals(method.getContainingClass().getQualifiedName())) {
+          CommonClassNames.JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName())) {
         PsiExpression qualifier = methodExpression.getQualifierExpression();
         PsiType qualifierType = null;
         if (qualifier != null) {

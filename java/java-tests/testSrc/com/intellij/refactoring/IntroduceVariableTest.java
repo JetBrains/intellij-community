@@ -42,7 +42,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testIDEADEV3678() throws Exception {
-    doTest(new MockIntroduceVariableHandler("component", true, true, true, "java.lang.Object"));
+    doTest(new MockIntroduceVariableHandler("component", true, true, true, CommonClassNames.JAVA_LANG_OBJECT));
   }
 
   public void testIDEADEV13369() throws Exception {
@@ -66,7 +66,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testMethodCall() throws Exception {
-    doTest(new MockIntroduceVariableHandler("temp", true, true, true, "java.lang.Object"));
+    doTest(new MockIntroduceVariableHandler("temp", true, true, true, CommonClassNames.JAVA_LANG_OBJECT));
   }
 
   public void testMethodCallInSwitch() throws Exception {
@@ -114,7 +114,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testSCR22718() throws Exception {
-    doTest(new MockIntroduceVariableHandler("object", true, true, false, "java.lang.Object"));
+    doTest(new MockIntroduceVariableHandler("object", true, true, false, CommonClassNames.JAVA_LANG_OBJECT));
   }
 
   public void testSCR26075() throws Exception {
@@ -315,7 +315,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testBeforeVoidStatement() throws Exception {
-    doTest(new MockIntroduceVariableHandler("c", false, false, false, "java.lang.Object"));
+    doTest(new MockIntroduceVariableHandler("c", false, false, false, CommonClassNames.JAVA_LANG_OBJECT));
   }
 
   private void doTest(IntroduceVariableBase testMe) throws Exception {

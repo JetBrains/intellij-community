@@ -1349,13 +1349,13 @@ public class HighlightMethodUtil {
     if ("readResolve".equals(name)) {
       return parameters.length == 0
              && returnType != null
-             && returnType.equalsToText("java.lang.Object")
+             && returnType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
              && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || HighlightUtil.isSerializable(containingClass));
     }
     if ("writeReplace".equals(name)) {
       return parameters.length == 0
              && returnType != null
-             && returnType.equalsToText("java.lang.Object")
+             && returnType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
              && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || HighlightUtil.isSerializable(containingClass));
     }
     if ("writeObject".equals(name)) {

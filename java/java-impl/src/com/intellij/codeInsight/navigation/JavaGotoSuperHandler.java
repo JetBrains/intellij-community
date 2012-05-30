@@ -77,7 +77,7 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
       List<PsiClass> allSupers = new ArrayList<PsiClass>(Arrays.asList(aClass.getSupers()));
       for (Iterator<PsiClass> iterator = allSupers.iterator(); iterator.hasNext();) {
         PsiClass superClass = iterator.next();
-        if ("java.lang.Object".equals(superClass.getQualifiedName())) iterator.remove();
+        if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) iterator.remove();
       }
       return allSupers.toArray(new PsiClass[allSupers.size()]);
     } else if (e instanceof PsiMethod) {

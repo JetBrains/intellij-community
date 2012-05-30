@@ -97,7 +97,7 @@ public class UpdateCacheTest extends PsiTestCase{
     file = (PsiFile)root.add(file);
     assertNotNull(file);
 
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, new String[]{"New.java"});
   }
@@ -111,7 +111,7 @@ public class UpdateCacheTest extends PsiTestCase{
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, new String[]{"New.java"});
   }
@@ -136,7 +136,7 @@ public class UpdateCacheTest extends PsiTestCase{
     VfsUtil.saveText(file, "class A{ Object o;}");
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, new String[]{"1.java"});
   }
@@ -149,7 +149,7 @@ public class UpdateCacheTest extends PsiTestCase{
   public void testExternalFileModificationWhileProjectClosed() throws Exception {
     VirtualFile root = ProjectRootManager.getInstance(myProject).getContentRoots()[0];
 
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, new String[]{});
     FileBasedIndex.getInstance().getContainingFiles(TodoIndex.NAME, new TodoIndexEntry("todo", true), GlobalSearchScope.allScope(getProject()));
@@ -183,7 +183,7 @@ public class UpdateCacheTest extends PsiTestCase{
     myPsiManager = (PsiManagerImpl) PsiManager.getInstance(myProject);
     myJavaFacade = (JavaPsiFacadeImpl) JavaPsiFacade.getInstance(myProject);
 
-    objectClass = myJavaFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+    objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, new String[]{"1.java"});
   }
@@ -198,7 +198,7 @@ public class UpdateCacheTest extends PsiTestCase{
     assertNotNull(file);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
     assertNotNull(objectClass);
     checkUsages(objectClass, new String[]{"New.java"});
   }

@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.CommonClassNames;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import org.jdom.Element;
@@ -29,7 +30,7 @@ public abstract class ReferenceRenderer implements Renderer {
   protected BasicRendererProperties myProperties = new BasicRendererProperties();
 
   protected ReferenceRenderer() {
-    this("java.lang.Object");
+    this(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
   protected ReferenceRenderer(@NotNull String className) {

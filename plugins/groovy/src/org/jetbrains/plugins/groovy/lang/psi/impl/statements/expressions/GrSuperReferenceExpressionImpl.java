@@ -103,7 +103,7 @@ public class GrSuperReferenceExpressionImpl extends GrThisSuperReferenceExpressi
       return PsiType.getJavaLangObject(getManager(), getResolveScope());
     }
 
-    if ("java.lang.Object".equals(aClass.getQualifiedName())) return null;
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return null;
     PsiClassType[] superTypes = aClass.getExtendsListTypes();
     if (superTypes.length == 0) {
       return PsiType.getJavaLangObject(getManager(), getResolveScope());

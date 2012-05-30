@@ -92,7 +92,7 @@ public class PsiSuperMethodImplUtil {
     if (!allowStaticMethod && method.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (checkAccess && method.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     PsiClass parentClass = method.getContainingClass();
-    return parentClass != null && !"java.lang.Object".equals(parentClass.getQualifiedName());
+    return parentClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(parentClass.getQualifiedName());
   }
 
   @Nullable
@@ -270,7 +270,7 @@ public class PsiSuperMethodImplUtil {
           if (MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature)) {
             if (superClass != null) {
               if (superClass.isInterface() ||
-                  "java.lang.Object".equals(superClass.getQualifiedName())) {
+                  CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
                 return true;
               }
 

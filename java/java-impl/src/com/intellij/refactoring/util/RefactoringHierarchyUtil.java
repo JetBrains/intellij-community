@@ -118,7 +118,7 @@ public class RefactoringHierarchyUtil {
 
     if (!subClass.isInterface()) {
       final PsiManager manager = subClass.getManager();
-      PsiClass javaLangObject = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", subClass.getResolveScope());
+      PsiClass javaLangObject = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, subClass.getResolveScope());
       if (includeNonProject && javaLangObject != null && !manager.areElementsEquivalent(javaLangObject, subClass)) {
         bases.add(javaLangObject);
       }

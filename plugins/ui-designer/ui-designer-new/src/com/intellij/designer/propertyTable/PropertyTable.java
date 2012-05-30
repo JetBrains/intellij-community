@@ -15,13 +15,18 @@
  */
 package com.intellij.designer.propertyTable;
 
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.inspection.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -643,6 +648,18 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
                                Messages.getErrorIcon());
   }
 
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    int row = rowAtPoint(event.getPoint());
+    if (row != -1) {
+      ErrorInfo errorInfo = getErrorInfoForRow(row);
+      if (errorInfo != null) {
+        return errorInfo.getName();
+      }
+    }
+    return super.getToolTipText(event);
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   //
@@ -926,6 +943,9 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   }
 
   private class PropertyCellRenderer implements TableCellRenderer {
+    private final Map<HighlightSeverity, SimpleTextAttributes> myRegularAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
+    private final Map<HighlightSeverity, SimpleTextAttributes> myBoldAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
+    private final Map<HighlightSeverity, SimpleTextAttributes> myItalicAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
     private final ColoredTableCellRenderer myPropertyNameRenderer;
     private final ColoredTableCellRenderer myErrorRenderer;
     private final Icon myExpandIcon;
@@ -993,6 +1013,41 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
         else if (property.isExpert()) {
           attributes = SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES;
         }
+
+        ErrorInfo errorInfo = getErrorInfoForRow(row);
+        if (errorInfo != null) {
+          Map<HighlightSeverity, SimpleTextAttributes> cache = myRegularAttributes;
+          if (property.isImportant()) {
+            cache = myBoldAttributes;
+          }
+          else if (property.isExpert()) {
+            cache = myItalicAttributes;
+          }
+
+          HighlightSeverity severity = errorInfo.getLevel().getSeverity();
+          SimpleTextAttributes errorAttributes = cache.get(severity);
+
+          if (errorAttributes == null) {
+            TextAttributesKey attributesKey =
+              SeverityRegistrar.getInstance(myDesigner.getProject()).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+            TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
+
+            if (property.isImportant()) {
+              textAttributes = textAttributes.clone();
+              textAttributes.setFontType(textAttributes.getFontType() | Font.BOLD);
+            }
+            else if (property.isExpert()) {
+              textAttributes = textAttributes.clone();
+              textAttributes.setFontType(textAttributes.getFontType() | Font.ITALIC);
+            }
+
+            errorAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
+            cache.put(severity, errorAttributes);
+          }
+
+          attributes = errorAttributes;
+        }
+
         if (property.isDeprecated()) {
           attributes = new SimpleTextAttributes(attributes.getBgColor(), attributes.getFgColor(), attributes.getWaveColor(),
                                                 attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);

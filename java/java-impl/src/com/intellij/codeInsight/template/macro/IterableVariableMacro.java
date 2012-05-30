@@ -61,7 +61,7 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
     final GlobalSearchScope scope = file.getResolveScope();
 
     PsiType iterableType = elementFactory.createTypeByFQClassName("java.lang.Iterable", scope);
-    PsiType mapType = elementFactory.createTypeByFQClassName("java.util.Map", scope);
+    PsiType mapType = elementFactory.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, scope);
 
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(place, "");
     for (PsiVariable var : variables) {

@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
@@ -74,7 +75,7 @@ public class SignatureParsing {
     while (singatureIterator.current() == ':') {
       singatureIterator.next();
       String bound = parseToplevelClassRefSignature(singatureIterator);
-      if (bound != null && !bound.equals("java.lang.Object")) {
+      if (bound != null && !bound.equals(CommonClassNames.JAVA_LANG_OBJECT)) {
         if (bounds == null) bounds = new ArrayList<String>();
         bounds.add(bound);
       }

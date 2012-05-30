@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomTarget;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -194,7 +195,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
             final DomExtension extension = registerChild(registrar, genericInfo, nestedElementName);
             if (extension != null) {
               Class type = parentIntrospector.getNestedElementType(nestedElementName);
-              if (type != null && "java.lang.Object".equals(type.getName())) { 
+              if (type != null && CommonClassNames.JAVA_LANG_OBJECT.equals(type.getName())) { 
                 type = null; // hack to support badly written tasks 
               }
               if (type == null) {

@@ -149,10 +149,10 @@ public class PsiWildcardType extends PsiType {
 
     PsiWildcardType that = (PsiWildcardType)o;
     if (myBound == null && that.myBound != null) {
-      return that.isExtends() && that.myBound.equalsToText("java.lang.Object");
+      return that.isExtends() && that.myBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
     }
     else if (myBound != null && that.myBound == null) {
-      return isExtends() && myBound.equalsToText("java.lang.Object");
+      return isExtends() && myBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
     }
     return myIsExtending == that.myIsExtending && Comparing.equal(myBound, that.myBound);
   }

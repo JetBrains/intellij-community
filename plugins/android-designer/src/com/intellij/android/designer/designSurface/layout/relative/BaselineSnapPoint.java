@@ -16,6 +16,7 @@
 package com.intellij.android.designer.designSurface.layout.relative;
 
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +40,7 @@ public class BaselineSnapPoint extends SnapPoint {
   public void addTextInfo(TextFeedback feedback) {
     feedback.append("baseline", SnapPointFeedbackHost.SNAP_ATTRIBUTES);
     feedback.append(" to ");
-    getComponentDecorator().decorate(myComponent, feedback, false);
+    getComponentDecorator().decorate(myComponent, feedback, AttributeWrapper.DEFAULT, false);
   }
 
   @Override

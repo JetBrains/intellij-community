@@ -442,10 +442,10 @@ public class AntTypeDefImpl extends AntTaskImpl implements AntTypeDef {
     
     for (AntTypeId nestedTypeId : def.getNestedElements()) {
       final String className = def.getNestedClassName(nestedTypeId);
-      if ("java.lang.Object".equals(className)) {
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
         // check if such typeId is already mapped correct the definition's nested element
         for (AntTypeDefinition typeDefinition : getAntFile().getBaseTypeDefinitions()) {
-          if (nestedTypeId.equals(typeDefinition.getTypeId()) && !"java.lang.Object".equals(typeDefinition.getClassName())) {
+          if (nestedTypeId.equals(typeDefinition.getTypeId()) && !CommonClassNames.JAVA_LANG_OBJECT.equals(typeDefinition.getClassName())) {
             def.registerNestedType(nestedTypeId, typeDefinition.getClassName());
             break;
           }

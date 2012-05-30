@@ -224,7 +224,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (!aClass.isEnum() && !aClass.isAnnotationType()) {
       PsiReferenceList extendsList = aClass.getExtendsList();
       refs = extendsList == null ? PsiClassType.EMPTY_ARRAY : extendsList.getReferencedTypes();
-      if (refs.length > 0 || !aClass.isInterface() && !"java.lang.Object".equals(aClass.getQualifiedName())) {
+      if (refs.length > 0 || !aClass.isInterface() && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
         buffer.append(" extends ");
         if (refs.length == 0) {
           buffer.append("Object");

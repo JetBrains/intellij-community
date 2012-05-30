@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,10 @@
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class JoinConcatenatedStringLiteralsIntention extends Intention {
@@ -35,65 +31,44 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)element.getParent();
-    assert binaryExpression != null;
-    final PsiBinaryExpression copy =
-      (PsiBinaryExpression)binaryExpression.copy();
-    final PsiExpression lhs = copy.getLOperand();
-    String newExpression = "";
-    if (lhs instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression lhsBinaryExpression =
-        (PsiBinaryExpression)lhs;
-      newExpression += getLeftSideText(lhsBinaryExpression);
-      final PsiExpression rightSide = lhsBinaryExpression.getROperand();
-      assert rightSide != null;
-      lhs.replace(rightSide);
+  public void processIntention(PsiElement element) throws IncorrectOperationException {
+    if (element instanceof PsiWhiteSpace) {
+      element = element.getPrevSibling();
     }
-    newExpression += '"' + computeConstantStringExpression(copy) + '"';
-    replaceExpression(newExpression, binaryExpression);
-  }
-
-  /**
-   * handles the specified expression as if it was part of a string expression
-   * (even if it's of another type) and computes a constant string expression
-   * from it.
-   */
-  private static String computeConstantStringExpression(
-    PsiBinaryExpression expression) {
-    final PsiExpression lhs = expression.getLOperand();
-    final Object lhsConstant =
-      ExpressionUtils.computeConstantExpression(lhs);
-    final String lhsText;
-    if (lhsConstant == null) {
-      lhsText = "";
+    if (!(element instanceof PsiJavaToken)) {
+      return;
     }
-    else {
-      lhsText = lhsConstant.toString();
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element.getParent();
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    StringBuilder newExpression = new StringBuilder();
+    PsiExpression previous = null;
+    for (PsiExpression operand : operands) {
+      if (newExpression.length() != 0 && previous != null) {
+        newExpression.append('+');
+      }
+      final PsiJavaToken currentToken = polyadicExpression.getTokenBeforeOperand(operand);
+      if (token == currentToken) {
+        final PsiLiteralExpression literal1 = (PsiLiteralExpression)previous;
+        assert literal1 != null;
+        final PsiLiteralExpression literal2 = (PsiLiteralExpression)operand;
+        final Object value1 = literal1.getValue();
+        final Object value2 = literal2.getValue();
+        assert value1 != null && value2 != null;
+        final String text1 = StringUtil.escapeStringCharacters(value1.toString());
+        final String text2 = StringUtil.escapeStringCharacters(value2.toString());
+        newExpression.append('"').append(text1).append(text2).append('"');
+        previous = null;
+      } else {
+        if (previous != null) {
+          newExpression.append(previous.getText());
+        }
+        previous = operand;
+      }
     }
-    String result;
-    if (lhsText.length() == 0) {
-      result = "";
+    if (previous != null) {
+      newExpression.append('+').append(previous.getText());
     }
-    else {
-      result = lhsText;
-    }
-    final PsiExpression rhs = expression.getROperand();
-    final Object rhsConstant =
-      ExpressionUtils.computeConstantExpression(rhs);
-    if (rhsConstant != null) {
-      result += rhsConstant.toString();
-    }
-    result = StringUtil.escapeStringCharacters(result);
-    return result;
-  }
-
-  private static String getLeftSideText(
-    PsiBinaryExpression binaryExpression) {
-    final PsiExpression lhs = binaryExpression.getLOperand();
-    final PsiJavaToken sign = binaryExpression.getOperationSign();
-    return lhs.getText() + sign.getText();
+    replaceExpression(newExpression.toString(), polyadicExpression);
   }
 }

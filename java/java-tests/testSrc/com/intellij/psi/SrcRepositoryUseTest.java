@@ -88,7 +88,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertEquals(params[1].getName(), "B");
 
     assertEquals("java.lang.String", params[0].getSupers()[0].getQualifiedName());
-    assertEquals("java.lang.Object", params[1].getSupers()[0].getQualifiedName());
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, params[1].getSupers()[0].getQualifiedName());
 
     teardownLoadingFilter();
   }
@@ -381,7 +381,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     LOG.assertTrue(type instanceof PsiArrayType);
     PsiType componentType = ((PsiArrayType) type).getComponentType();
 
-    assertTrue(componentType.equalsToText("java.lang.Object"));
+    assertTrue(componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
     assertFalse(componentType instanceof PsiPrimitiveType);
     assertFalse(componentType instanceof PsiArrayType);
 
@@ -403,7 +403,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
 
     PsiField field3 = aClass.getFields()[2];
     PsiType type3 = ((PsiArrayType) field3.getType()).getComponentType();
-    assertTrue(type3.equalsToText("java.lang.Object"));
+    assertTrue(type3.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
 
     teardownLoadingFilter();
   }
@@ -443,7 +443,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     PsiType type1 = aClass.getFields()[1].getType();
     PsiElement target1 = PsiUtil.resolveClassInType(type1);
     assertNotNull(target1);
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(myProject));
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myProject));
     assertEquals(objectClass, target1);
 
     PsiType type2 = aClass.getFields()[1].getType();
@@ -525,7 +525,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     assertFalse(type2 instanceof PsiPrimitiveType);
     PsiClass target2 = PsiUtil.resolveClassInType(type2);
     assertNotNull(target2);
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", GlobalSearchScope.allScope(myProject));
+    PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myProject));
     assertEquals(objectClass, target2);
 
     checkPackAAA(parms[2].getType());
