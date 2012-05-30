@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.frameworkSupport.*;
@@ -34,7 +35,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -231,7 +231,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       model.addFrameworkListener(this);
 
       myErrorLabel = new HyperlinkLabel();
-      myErrorLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+      myErrorLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
       myErrorLabel.setVisible(false);
       myErrorLabel.setHyperlinkTarget(AppEngineSdkUtil.APP_ENGINE_DOWNLOAD_URL);
       myErrorPanel.add(BorderLayout.CENTER, myErrorLabel);
