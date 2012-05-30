@@ -775,6 +775,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         myReturnValueWatcher = null;
         myNodeRederersMap.clear();
         myRenderers.clear();
+        DebuggerUtils.cleanupAfterProcessFinish(this);
         myState.set(STATE_DETACHED);
         try {
           myDebugProcessDispatcher.getMulticaster().processDetached(this, closedByUser);
