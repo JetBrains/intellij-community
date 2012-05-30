@@ -18,6 +18,7 @@ package com.intellij.designer.inspection;
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -270,6 +271,11 @@ public abstract class AbstractQuickFixManager {
     public boolean hasSubstep(ErrorInfo selectedValue) {
       return true;
     }
+
+    @Override
+    public boolean isAutoSelectionEnabled() {
+      return false;
+    }
   }
 
   private class SecondStep extends BaseListPopupStep<QuickFix> {
@@ -301,7 +307,7 @@ public abstract class AbstractQuickFixManager {
         myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
           @Override
           public void run() throws Exception {
-            value.run();
+            ApplicationManager.getApplication().runWriteAction(value);
           }
         }, "Run '" + value.getName() + "' QuickFix", true);
       }
@@ -316,7 +322,7 @@ public abstract class AbstractQuickFixManager {
   private static final Icon INTENTION_ICON = IconLoader.getIcon("/actions/realIntentionBulb.png");
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/arrowDown.png");
   private static final Icon INACTIVE_ARROW_ICON = new EmptyIcon(ARROW_ICON.getIconWidth(), ARROW_ICON.getIconHeight());
-  private static final Icon ICON = IconLoader.findIcon("/actions/intentionBulb.png");
+  public static final Icon ICON = IconLoader.findIcon("/actions/intentionBulb.png");
 
   private class InspectionHint extends JLabel {
     private final RowIcon myInactiveIcon;

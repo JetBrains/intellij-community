@@ -518,7 +518,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   public void loadInspections(ProgressIndicator progress) {
     if (myRootComponent != null) {
-      ErrorAnalyzer.load(myXmlFile, myRootComponent, progress);
+      ErrorAnalyzer.load(getProject(), myXmlFile, myRootComponent, progress);
     }
   }
 }
