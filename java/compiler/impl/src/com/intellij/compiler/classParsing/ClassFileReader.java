@@ -24,6 +24,7 @@ import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
@@ -210,7 +211,7 @@ public class ClassFileReader {
       BytePointer ptr = new BytePointer(getData(), getConstantPoolEnd() + 4);
       int index = ClsUtil.readU2(ptr);
       if (index == 0) {
-        if ("java.lang.Object".equals(getQualifiedName())) {
+        if (CommonClassNames.JAVA_LANG_OBJECT.equals(getQualifiedName())) {
           mySuperClassName = "";
         }
         else {
@@ -221,7 +222,7 @@ public class ClassFileReader {
         ptr.offset = getOffsetInConstantPool(index);
         mySuperClassName = readClassInfo(ptr); // keep '$' in the name for anonymous classes
         if (isInterface()) {
-          if (!"java.lang.Object".equals(mySuperClassName)) {
+          if (!CommonClassNames.JAVA_LANG_OBJECT.equals(mySuperClassName)) {
             throw new ClsFormatException();
           }
         }

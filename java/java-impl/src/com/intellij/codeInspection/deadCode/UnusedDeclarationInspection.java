@@ -300,7 +300,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (!"writeReplace".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 0) return false;
-    if (!method.getReturnType().equalsToText("java.lang.Object")) return false;
+    if (!method.getReturnType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = method.getContainingClass();
     return !(aClass != null && !isSerializable(aClass, refClass));
@@ -311,7 +311,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (!"readResolve".equals(name)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length != 0) return false;
-    if (!method.getReturnType().equalsToText("java.lang.Object")) return false;
+    if (!method.getReturnType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return false;
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     final PsiClass aClass = method.getContainingClass();
     return !(aClass != null && !isSerializable(aClass, refClass));

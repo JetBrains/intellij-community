@@ -58,7 +58,7 @@ public class InheritanceImplUtil {
 
     @NonNls final String baseName = baseClass.getName();
     if ("Object".equals(baseName)) {
-      PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", candidateClass.getResolveScope());
+      PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, candidateClass.getResolveScope());
       if (manager.areElementsEquivalent(baseClass, objectClass)) {
         if (manager.areElementsEquivalent(candidateClass, objectClass)) return false;
         if (checkDeep || candidateClass.isInterface()) return true;

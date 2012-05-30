@@ -28,6 +28,7 @@ import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -127,7 +128,7 @@ public class ToStringRenderer extends NodeRendererImpl {
       if (methods.size() > 0) {
         for (Iterator iterator = methods.iterator(); iterator.hasNext();) {
           final Method method = (Method)iterator.next();
-          if(!(method.declaringType().name()).equals("java.lang.Object")){
+          if(!(method.declaringType().name()).equals(CommonClassNames.JAVA_LANG_OBJECT)){
             return true;
           }
         }

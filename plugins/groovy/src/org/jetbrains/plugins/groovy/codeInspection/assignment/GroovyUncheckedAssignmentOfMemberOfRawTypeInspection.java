@@ -110,7 +110,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
             final PsiType argType = expr.getType();
             if (argType != null) {
               final PsiClassType listType = JavaPsiFacade.getInstance(argument.getProject()).getElementFactory()
-                .createTypeByFQClassName("java.util.List", argument.getResolveScope());
+                .createTypeByFQClassName(CommonClassNames.JAVA_UTIL_LIST, argument.getResolveScope());
               if (listType.isAssignableFrom(argType)) return; //this is constructor arguments list
               checkAssignability(expectedType, expr, argument);
             }
@@ -152,7 +152,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       if (isListAssignment(lValue) && lType != null && lType instanceof PsiClassType) {
         final PsiClassType pct = (PsiClassType)lType;
         final PsiClass clazz = pct.resolve();
-        if (clazz != null && "java.util.List".equals(clazz.getQualifiedName())) {
+        if (clazz != null && CommonClassNames.JAVA_UTIL_LIST.equals(clazz.getQualifiedName())) {
           final PsiType[] types = pct.getParameters();
           if (types.length == 1 && types[0] != null && rType != null) {
             checkAssignability(types[0], rValue, assignment);

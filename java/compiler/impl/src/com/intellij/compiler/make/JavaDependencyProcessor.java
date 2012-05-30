@@ -105,7 +105,7 @@ class JavaDependencyProcessor {
     mySuperlistGenericSignatureChanged = isSuperlistGenericSignatureChanged(cache.getGenericSignature(qName), newClassesCache.getGenericSignature(qName));
 
     boolean superclassesDiffer = cache.getSuperQualifiedName(qName) != newClassesCache.getSuperQualifiedName(qName);
-    boolean wasDerivedFromObject = "java.lang.Object".equals(dependencyCache.resolve(cache.getSuperQualifiedName(qName)));
+    boolean wasDerivedFromObject = CommonClassNames.JAVA_LANG_OBJECT.equals(dependencyCache.resolve(cache.getSuperQualifiedName(qName)));
     mySuperClassChanged = !wasDerivedFromObject && superclassesDiffer;
     mySuperClassAdded = wasDerivedFromObject && superclassesDiffer;
   }
@@ -961,7 +961,7 @@ class JavaDependencyProcessor {
     }
     else {
       final String qName = myDependencyCache.resolve(superQName);
-      if (!"java.lang.Object".equals(qName)) {
+      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) {
         if (hasBaseAbstractMethods2(qName, methodsToCheck)) {
           return true;
         }

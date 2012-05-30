@@ -23,10 +23,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
@@ -66,7 +63,7 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
       selectedClass = chooser.getSelected();
     }
     else {
-      selectedClass = getBaseClass(context, project, myBaseClass == null ? "java.lang.Object" : myBaseClass);
+      selectedClass = getBaseClass(context, project, myBaseClass == null ? CommonClassNames.JAVA_LANG_OBJECT : myBaseClass);
     }
     if (selectedClass == null) return null;
 

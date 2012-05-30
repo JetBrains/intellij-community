@@ -30,7 +30,7 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     assertNotNull(element);
     assertThat(element, instanceOf(PsiMethod.class));
     final PsiMethod method = (PsiMethod)element;
-    assertEquals("java.lang.Object", method.getContainingClass().getQualifiedName());
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, method.getContainingClass().getQualifiedName());
   }
 
   public void testStaticImportDirect() throws Exception {

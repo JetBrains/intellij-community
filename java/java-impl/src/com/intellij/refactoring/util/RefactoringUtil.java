@@ -478,7 +478,7 @@ public class RefactoringUtil {
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(expr.getProject()).getExpectedTypes(expr, false);
     if (expectedTypes.length == 1) {
       type = expectedTypes[0].getType();
-      if (!type.equalsToText("java.lang.Object")) return type;
+      if (!type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type;
     }
     return null;
   }
@@ -515,7 +515,7 @@ public class RefactoringUtil {
         type = infos[0].getType();
       }
       else {
-        type = factory.createTypeByFQClassName("java.lang.Object", expr.getResolveScope());
+        type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());
       }
     }
 

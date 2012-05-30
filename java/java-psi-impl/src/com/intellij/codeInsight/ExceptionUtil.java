@@ -459,7 +459,7 @@ public class ExceptionUtil {
     if (!(element instanceof PsiMethodCallExpression)) return false;
     if (!method.getName().equals(CLONE_METHOD_NAME)) return false;
     PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || !"java.lang.Object".equals(containingClass.getQualifiedName())) {
+    if (containingClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
       return false;
     }
 

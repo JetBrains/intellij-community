@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.gpath;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -113,7 +114,7 @@ public class GroovyMapGetCanBeKeyedAccessInspection extends BaseInspection {
 
       if (referenceExpression.getDotTokenType() == GroovyTokenTypes.mOPTIONAL_DOT) return;
       final PsiType type = qualifier.getType();
-      if (!InheritanceUtil.isInheritor(type, "java.util.Map")) {
+      if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
         return;
       }
       registerMethodCallError(grMethodCallExpression);

@@ -19,6 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
@@ -43,7 +44,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
 
   protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
     final PsiClass psiClass = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
-    if ("java.lang.Object".equals(psiClass.getQualifiedName())) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
       return new Object[]{IdeBundle.message("node.hierarchy.java.lang.object")};
     }
     if (psiClass instanceof PsiAnonymousClass) return ArrayUtil.EMPTY_OBJECT_ARRAY;

@@ -82,7 +82,7 @@ public class Util {
             return null;
           }
 
-          if (pp == Bottom.BOTTOM || (objectBottom && pp.getCanonicalText().equals("java.lang.Object"))) {
+          if (pp == Bottom.BOTTOM || (objectBottom && pp.getCanonicalText().equals(CommonClassNames.JAVA_LANG_OBJECT))) {
             anyBottom = true;
           }
 
@@ -275,7 +275,7 @@ public class Util {
                                                  final PsiTypeVariableFactory factory,
                                                  final boolean upper,
                                                  final PsiElement context) {
-    if (t == null || (upper && t.getCanonicalText().equals("java.lang.Object"))) {
+    if (t == null || (upper && t.getCanonicalText().equals(CommonClassNames.JAVA_LANG_OBJECT))) {
       return factory.create(context);
     }
 

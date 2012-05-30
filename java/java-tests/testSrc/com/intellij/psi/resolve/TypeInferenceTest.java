@@ -13,7 +13,7 @@ public class TypeInferenceTest extends Resolve15TestCase {
     assertTrue(type instanceof PsiClassType);
     PsiType[] paramTypes = ((PsiClassType)type).getParameters();
     assertEquals(1, paramTypes.length);
-    assertEquals( "java.lang.Object", paramTypes[0].getCanonicalText());
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, paramTypes[0].getCanonicalText());
   }
 
   public void testInferInAssign1 () throws Exception {
@@ -31,7 +31,7 @@ public class TypeInferenceTest extends Resolve15TestCase {
     assertTrue(type instanceof PsiClassType);
     PsiType[] paramTypes = ((PsiClassType)type).getParameters();
     assertEquals(1, paramTypes.length);
-    assertEquals( "java.lang.Object", paramTypes[0].getCanonicalText());
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, paramTypes[0].getCanonicalText());
   }
 
   public void testInferInCast () throws Exception {
@@ -40,7 +40,7 @@ public class TypeInferenceTest extends Resolve15TestCase {
     assertTrue(type instanceof PsiClassType);
     PsiType[] paramTypes = ((PsiClassType)type).getParameters();
     assertEquals(1, paramTypes.length);
-    assertEquals( "java.lang.Object", paramTypes[0].getCanonicalText());
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, paramTypes[0].getCanonicalText());
   }
 
   public void testInferWithBounds () throws Exception {
@@ -65,7 +65,7 @@ public class TypeInferenceTest extends Resolve15TestCase {
   }
 
   public void testInferRawType () throws Exception {
-    checkResolvesTo("java.lang.Object");
+    checkResolvesTo(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
   private void checkResolvesTo(@NonNls String typeName) throws Exception {
@@ -144,7 +144,7 @@ public class TypeInferenceTest extends Resolve15TestCase {
   }
 
   public void testInferUnchecked () throws Exception {
-    checkResolvesTo("java.lang.Object");
+    checkResolvesTo(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
   public void testInferNotNull () throws Exception {
