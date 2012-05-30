@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,13 @@ import com.intellij.ide.actions.CopyAction;
 import com.intellij.ide.actions.CutAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeEvent;
@@ -39,7 +36,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
@@ -49,7 +49,7 @@ import java.util.List;
  */
 public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   implements ActionListener, FocusListener, FileStatusListener, AnActionListener,
-             PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener {
+             PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener {
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
   private final NavBarPanel myPanel;
@@ -71,7 +71,6 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
     connection.subscribe(NavBarModelListener.NAV_BAR, listener);
     panel.putClientProperty(BUS, connection);
-    panel.addKeyListener(listener);
   }
 
   static void unsubscribeFrom(NavBarPanel panel) {
@@ -257,46 +256,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
            || action instanceof CutAction;
   }
 
-  @Override
-  public void keyPressed(final KeyEvent e) {
-    if (!(e.isAltDown() || e.isMetaDown() || e.isControlDown() || myPanel.isNodePopupActive())) {
-      if (!Character.isLetter(e.getKeyChar())) {
-        return;
-      }
-
-      final IdeFocusManager focusManager = IdeFocusManager.getInstance(myPanel.getProject());
-      final ActionCallback firstCharTyped = new ActionCallback();
-      focusManager.typeAheadUntil(firstCharTyped);
-      myPanel.moveDown();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          try {
-            final Robot robot = new Robot();
-            final boolean shiftOn = e.isShiftDown();
-            final int code = e.getKeyCode();
-            if (shiftOn) {
-              robot.keyPress(KeyEvent.VK_SHIFT);
-            }
-            robot.keyPress(code);
-            robot.keyRelease(code);
-
-            //don't release Shift
-            firstCharTyped.setDone();
-          }
-          catch (AWTException ignored) {
-          }
-        }
-      });
-    }
-  }
-
   //---- Ignored
-  @Override
-  public void keyTyped(KeyEvent e) {}
-
-  @Override
-  public void keyReleased(KeyEvent e) {}
-
   @Override
   public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
 
