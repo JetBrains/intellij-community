@@ -58,19 +58,19 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
         } else if (type == RegExpTT.LBRACE) {
             final ASTNode[] numbers = getNode().getChildren(TokenSet.create(RegExpTT.NUMBER));
             if (numbers.length >= 1) {
-                final int min = Integer.parseInt(numbers[0].getText());
-                final int max;
+                final String min = numbers[0].getText();
+                final String max;
                 if (numbers.length == 2) {
-                    max = Integer.parseInt(numbers[1].getText());
+                    max = numbers[1].getText();
                 } else if (getNode().findChildByType(RegExpTT.COMMA) != null) {
-                    max = Integer.MAX_VALUE;
+                    max = "";
                 } else {
                     max = min;
                 }
                 return new RepeatedCount(min, max);
             }
             // syntactically incorrect
-            return new RepeatedCount(-1, -1);
+            return new RepeatedCount("", "");
         }
 
         assert false;
@@ -92,19 +92,21 @@ public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQua
     }
 
     private static class RepeatedCount implements RegExpQuantifier.Count {
-        private final int myMin;
-        private final int myMax;
+        private final String myMin;
+        private final String myMax;
 
-        public RepeatedCount(int min, int max) {
+        public RepeatedCount(@NotNull String min, @NotNull String max) {
             myMin = min;
             myMax = max;
         }
 
-        public int getMin() {
+        @NotNull
+        public String getMin() {
             return myMin;
         }
 
-        public int getMax() {
+        @NotNull
+        public String getMax() {
             return myMax;
         }
     }
