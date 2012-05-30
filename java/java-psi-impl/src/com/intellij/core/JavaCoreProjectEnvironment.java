@@ -43,21 +43,22 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
   public JavaCoreProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
     super(parentDisposable, applicationEnvironment);
 
-    myFileManager = createCoreFileManager();
-    myPackageIndex = createCorePackageIndex();
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
     myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
-    myProject.registerService(PackageIndex.class, myPackageIndex);
     myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myMessageBus));
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
     myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
-
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
 
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
+    myPackageIndex = createCorePackageIndex();
+    myProject.registerService(PackageIndex.class, myPackageIndex);
+
+    myFileManager = createCoreFileManager();
     myProject.registerService(JavaFileManager.class, myFileManager);
+
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
     registerProjectComponent(JavaPsiFacade.class, javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
   }
