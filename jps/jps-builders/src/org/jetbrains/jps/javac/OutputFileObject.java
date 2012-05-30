@@ -25,6 +25,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Nullable private final URI mySourceUri;
   private volatile Content myContent;
   private final File mySourceFile;
+  public boolean myIsTemp = false;
 
   public OutputFileObject(@NotNull JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI sourceUri) {
     this(context, outputRoot, relativePath, file, kind, className, sourceUri, null);
@@ -40,6 +41,14 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     myFile = file;
     myClassName = className;
     mySourceFile = srcUri != null? Utils.convertToFile(srcUri) : null;
+  }
+
+  public boolean isTemp() {
+    return myIsTemp;
+  }
+
+  public void setTemp(boolean isTemp) {
+    myIsTemp = isTemp;
   }
 
   @Nullable

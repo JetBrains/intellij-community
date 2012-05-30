@@ -19,9 +19,8 @@ package com.intellij.compiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 public abstract class CompilerConfiguration {
   // need this flag for profiling purposes. In production code is always set to 'true'
@@ -34,6 +33,14 @@ public abstract class CompilerConfiguration {
   public abstract String getBytecodeTargetLevel(Module module);
 
   public abstract void setBytecodeTargetLevel(Module module, String level);
+
+  @NotNull
+  public abstract AnnotationProcessingConfiguration getAnnotationProcessingConfiguration(Module module);
+
+  /**
+   * @return true if exists at least one enabled annotation processing profile
+   */
+  public abstract boolean isAnnotationProcessorsEnabled();
 
   public static CompilerConfiguration getInstance(Project project) {
     return project.getComponent(CompilerConfiguration.class);
@@ -50,28 +57,4 @@ public abstract class CompilerConfiguration {
   public abstract boolean isAddNotNullAssertions();
 
   public abstract void setAddNotNullAssertions(boolean enabled);
-
-  public abstract boolean isAnnotationProcessorsEnabled();
-
-  public abstract void setAnnotationProcessorsEnabled(boolean enableAnnotationProcessors);
-
-  public abstract boolean isObtainProcessorsFromClasspath();
-
-  public abstract void setObtainProcessorsFromClasspath(boolean obtainProcessorsFromClasspath);
-
-  public abstract String getProcessorPath();
-
-  public abstract void setProcessorsPath(String processorsPath);
-
-  public abstract Map<String, String> getAnnotationProcessorsMap();
-
-  public abstract void setAnnotationProcessorsMap(Map<String, String> map);
-
-  public abstract void setAnotationProcessedModules(Map<Module, String> modules);
-
-  public abstract Map<Module, String> getAnotationProcessedModules();
-
-  public abstract boolean isAnnotationProcessingEnabled(Module module);
-
-  public abstract String getGeneratedSourceDirName(Module module);
 }

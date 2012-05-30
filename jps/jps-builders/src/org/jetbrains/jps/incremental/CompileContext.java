@@ -46,6 +46,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final CanceledStatus myCancelStatus;
   private float myDone = -1.0f;
   private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
+  private Map<Module, AnnotationProcessingProfile> myAnnotationProcessingProfileMap;
 
   public CompileContext(CompileScope scope,
                         ProjectDescriptor pd, boolean isMake,
@@ -101,6 +102,32 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public void removeBuildListener(BuildListener listener) {
     myListeners.removeListener(listener);
+  }
+
+  @NotNull
+  public AnnotationProcessingProfile getAnnotationProcessingProfile(Module module) {
+    final CompilerConfiguration compilerConfig = getProject().getCompilerConfiguration();
+    Map<Module, AnnotationProcessingProfile> map = myAnnotationProcessingProfileMap;
+    if (map == null) {
+      map = new HashMap<Module, AnnotationProcessingProfile>();
+      final Map<String, Module> namesMap = new HashMap<String, Module>();
+      for (Module m : getProject().getModules().values()) {
+        namesMap.put(m.getName(), m);
+      }
+      if (!namesMap.isEmpty()) {
+        for (AnnotationProcessingProfile profile : compilerConfig.getModuleAnnotationProcessingProfiles()) {
+          for (String name : profile.getProcessModule()) {
+            final Module mod = namesMap.get(name);
+            if (mod != null) {
+              map.put(mod, profile);
+            }
+          }
+        }
+      }
+      myAnnotationProcessingProfileMap = map;
+    }
+    final AnnotationProcessingProfile profile = map.get(module);
+    return profile != null? profile : compilerConfig.getDefaultAnnotationProcessingProfile();
   }
 
   public void markDirty(final File file) throws IOException {

@@ -15,12 +15,14 @@ public final class RootDescriptor {
   public final File root;
   public final boolean isTestRoot;
   public final boolean isGeneratedSources;
+  public final boolean isTemp;
 
-  public RootDescriptor(@NotNull final String moduleName, @NotNull File root, boolean isTestRoot, boolean isGenerated) {
+  public RootDescriptor(@NotNull final String moduleName, @NotNull File root, boolean isTestRoot, boolean isGenerated, boolean isTemp) {
     this.module = moduleName;
     this.root = root;
     this.isTestRoot = isTestRoot;
     this.isGeneratedSources = isGenerated;
+    this.isTemp = isTemp;
   }
 
   @Override

@@ -15,10 +15,7 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerIOUtil;
-import com.intellij.compiler.OutputParser;
+import com.intellij.compiler.*;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.ExternalCompiler;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
@@ -283,33 +280,21 @@ public class JavacCompiler extends ExternalCompiler {
       annotationProcessorsEnabled = false;
     }
     if (isAnnotationProcessing) {
-      final CompilerConfiguration config = CompilerConfiguration.getInstance(chunk.getProject());
+      final AnnotationProcessingConfiguration config = CompilerConfiguration.getInstance(chunk.getProject()).getAnnotationProcessingConfiguration(chunk.getModules()[0]);
       additionalOptions.add("-Xprefer:source");
       additionalOptions.add("-implicit:none");
       additionalOptions.add("-proc:only");
       if (!config.isObtainProcessorsFromClasspath()) {
         final String processorPath = config.getProcessorPath();
-        if (processorPath.length() > 0) {
-          additionalOptions.add("-processorpath");
-          additionalOptions.add(FileUtil.toSystemDependentName(processorPath));
-        }
+        additionalOptions.add("-processorpath");
+        additionalOptions.add(FileUtil.toSystemDependentName(processorPath));
       }
-      for (Map.Entry<String, String> entry : config.getAnnotationProcessorsMap().entrySet()) {
+      for (String processorName : config.getProcessors()) {
         additionalOptions.add("-processor");
-        additionalOptions.add(entry.getKey());
-        final String options = entry.getValue();
-        if (options.length() > 0) {
-          StringTokenizer optionsTokenizer = new StringTokenizer(options, " ", false);
-          while (optionsTokenizer.hasMoreTokens()) {
-            final String token = optionsTokenizer.nextToken();
-            if (token.startsWith("-A")) {
-              additionalOptions.add(token.substring("-A".length()));
-            }
-            else {
-              additionalOptions.add("-A" + token);
-            }
-          }
-        }
+        additionalOptions.add(processorName);
+      }
+      for (Map.Entry<String, String> entry : config.getProcessorOptions().entrySet()) {
+        additionalOptions.add("-A" + entry.getKey() + "=" +entry.getValue());
       }
     }
     else {
