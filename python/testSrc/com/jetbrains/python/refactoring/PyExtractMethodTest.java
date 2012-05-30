@@ -91,15 +91,15 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   }
 
   public void testNameCollisionClass() {
-    doFail("hello", "Method name clashes with already existing method name");
+    doFail("hello", "Method name clashes with already existing name");
   }
 
   public void testNameCollisionFile() {
-    doFail("hello", "Method name clashes with already existing method name");
+    doFail("hello", "Method name clashes with already existing name");
   }
 
   public void testNameCollisionSuperClass() {
-    doFail("hello", "Method name clashes with already existing method name");
+    doFail("hello", "Method name clashes with already existing name");
   }
 
   public void testOutNotEmptyStatements() {

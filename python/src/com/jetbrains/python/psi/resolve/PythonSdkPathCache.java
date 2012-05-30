@@ -94,7 +94,8 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     while (true) {
       PyBuiltinCache pyBuiltinCache = myBuiltins.get();
       if (pyBuiltinCache == null || !pyBuiltinCache.isValid()) {
-        PyBuiltinCache newCache = new PyBuiltinCache(PyBuiltinCache.getBuiltinsForSdk(myProject, mySdk));
+        PyBuiltinCache newCache = new PyBuiltinCache(PyBuiltinCache.getBuiltinsForSdk(myProject, mySdk),
+                                                     PyBuiltinCache.getSkeletonFile(myProject, mySdk, PyBuiltinCache.EXCEPTIONS_FILE));
         if (myBuiltins.compareAndSet(pyBuiltinCache, newCache)) {
           return newCache;
         }

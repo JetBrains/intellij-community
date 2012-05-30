@@ -553,45 +553,26 @@ public class PyExtractMethodUtil {
     public PyExtractMethodValidator(final PsiElement element, final Project project) {
       myElement = element;
       myProject = project;
-
-      ScopeOwner owner = ScopeUtil.getScopeOwner(myElement);
-      if (owner instanceof PyFunction) {
-        owner = ScopeUtil.getScopeOwner(owner);
-      }
-      final ScopeOwner parent = owner;
-
-      if (parent instanceof PyFile){
-        final List<PyFunction> functions = ((PyFile)parent).getTopLevelFunctions();
-        myFunction = new Function<String, Boolean>() {
-          public Boolean fun(@NotNull final String s) {
-            for (PyFunction function : functions) {
-              if (s.equals(function.getName())){
+      final ScopeOwner parent = ScopeUtil.getScopeOwner(myElement);
+      myFunction = new Function<String, Boolean>() {
+        @Override
+        public Boolean fun(String s) {
+          ScopeOwner owner = parent;
+          while (owner != null) {
+            if (owner instanceof PyClass) {
+              if (((PyClass)owner).findMethodByName(s, true) != null) {
                 return false;
               }
             }
-            return true;
+            final Scope scope = ControlFlowCache.getScope(owner);
+            if (scope.containsDeclaration(s)) {
+              return false;
+            }
+            owner = ScopeUtil.getScopeOwner(owner);
           }
-        };
-      }
-      else if (parent instanceof PyClass){
-        myFunction = new Function<String, Boolean>() {
-          public Boolean fun(@NotNull final String s) {
-            return ((PyClass) parent).findMethodByName(s, true) == null;
-          }
-        };
-      }
-      else if (parent instanceof PyFunction) {
-        final Scope scope = ControlFlowCache.getScope(parent);
-        myFunction = new Function<String, Boolean>() {
-          @Override
-          public Boolean fun(String s) {
-            return !scope.containsDeclaration(s);
-          }
-        };
-      }
-      else {
-        myFunction = null;
-      }
+          return true;
+        }
+      };
     }
 
     public String check(final String name) {

@@ -2,4 +2,4 @@ class C(object):
     pass
 
 
-C.__m<caret>
+C.__mr<caret>

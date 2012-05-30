@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,7 +30,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
     return getUsageType(element, UsageTarget.EMPTY_ARRAY);
   }
 
-  public UsageType getUsageType(PsiElement element, UsageTarget[] targets) {
+  public UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
     if (element instanceof PyElement) {
       if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return IN_IMPORT;
@@ -76,7 +77,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
     if (targets.length == 1 && targets[0] instanceof PsiElementUsageTarget) {
       final PsiElement element = ((PsiElementUsageTarget)targets[0]).getElement();
       if (element instanceof PyFunction) {
-        PyFunction function = (PyFunction) element;
+        PyFunction function = (PyFunction)element;
         final PyFunction.Modifier modifier = function.getModifier();
         PyCallExpression.PyMarkedCallee callee = new PyCallExpression.PyMarkedCallee(function, modifier, 1, true);
         CallArgumentsMappingImpl mapping = new CallArgumentsMappingImpl(call.getArgumentList());
