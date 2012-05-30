@@ -14,6 +14,7 @@ import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.List;
  */
 public class AndroidBuildConfigGeneratingCompiler implements SourceGeneratingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidBuildConfigGeneratingCompiler");
+  private static final String MANIFEST_LOCATION = NanoXmlUtil.createLocation("manifest");
 
   @Nullable
   @Override
@@ -126,7 +128,8 @@ public class AndroidBuildConfigGeneratingCompiler implements SourceGeneratingCom
         throws Exception {
         super.addAttribute(key, nsPrefix, nsURI, value, type);
 
-        if ("package".equals(key) && NanoXmlUtil.createLocation("manifest").equals(getLocation())) {
+        if (AndroidCommonUtils.PACKAGE_MANIFEST_ATTRIBUTE.equals(key) &&
+            MANIFEST_LOCATION.equals(getLocation())) {
           packageNameRef.set(value);
           stop();
         }

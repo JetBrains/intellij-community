@@ -88,6 +88,8 @@ public class AndroidCommonUtils {
     {"JUnit", "TestNG", "ScalaTestRunConfiguration", "SpecsRunConfiguration", "Specs2RunConfiguration"};
   @NonNls public static final String ANNOTATIONS_JAR_RELATIVE_PATH = "/tools/support/annotations.jar";
 
+  @NonNls public static final String PACKAGE_MANIFEST_ATTRIBUTE = "package";
+
   private AndroidCommonUtils() {
   }
 

@@ -49,7 +49,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   @NonNls private static final String AIDL_EXTENSION = "aidl";
   @NonNls private static final String RENDERSCRIPT_EXTENSION = "rs";
   @NonNls private static final String MANIFEST_TAG = "manifest";
-  @NonNls private static final String PACKAGE_MANIFEST_ATTRIBUTE = "package";
   @NonNls private static final String PERMISSION_TAG = "permission";
   @NonNls private static final String PERMISSION_GROUP_TAG = "permission-group";
   @NonNls private static final String NAME_ATTRIBUTE = "name";
@@ -751,7 +750,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         @Override
         public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type)
           throws Exception {
-          if (value != null && PACKAGE_MANIFEST_ATTRIBUTE.equals(key)) {
+          if (value != null && AndroidCommonUtils.PACKAGE_MANIFEST_ATTRIBUTE.equals(key)) {
             packageName.set(value.trim());
           }
         }
