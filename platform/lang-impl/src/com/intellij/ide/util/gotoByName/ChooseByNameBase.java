@@ -1329,6 +1329,9 @@ public abstract class ChooseByNameBase {
         }
       }
       if (commonPrefix == null) commonPrefix = "";
+      if (!StringUtil.startsWithIgnoreCase(commonPrefix, pattern)) {
+        commonPrefix = pattern;
+      }
       final String newPattern = commonPrefix;
 
       myHistory.add(Pair.create(oldText, oldPos));
