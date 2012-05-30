@@ -115,7 +115,7 @@ public class ProcessorProfilePanel extends JPanel {
     final JLabel warning = new JLabel("<html>WARNING!<br>" +
                                               /*"All source files located in the generated sources output directory WILL BE EXCLUDED from annotation processing. " +*/
                                               "If option 'Clear output directory on rebuild' is enabled, " +
-                                              "the entire contents of directories specified in the table below WILL BE CLEARED on rebuild.</html>");
+                                              "the entire contents of directories where generated sources are stored WILL BE CLEARED on rebuild.</html>");
     warning.setFont(warning.getFont().deriveFont(Font.BOLD));
 
     add(myCbEnableProcessing,

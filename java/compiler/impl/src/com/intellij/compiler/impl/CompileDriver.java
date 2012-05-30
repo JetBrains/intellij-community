@@ -2364,21 +2364,23 @@ public class CompileDriver {
               modulesWithoutOutputPathSpecified.add(module.getName());
             }
           }
-          if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
-            final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-            if (path == null) {
-              final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
-              if (extension == null || extension.getCompilerOutputUrl() == null) {
-                isProjectCompilePathSpecified = false;
+          if (!useOutOfProcessBuild()) {
+            if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+              final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+              if (path == null) {
+                final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
+                if (extension == null || extension.getCompilerOutputUrl() == null) {
+                  isProjectCompilePathSpecified = false;
+                }
+                else {
+                  modulesWithoutOutputPathSpecified.add(module.getName());
+                }
               }
               else {
-                modulesWithoutOutputPathSpecified.add(module.getName());
-              }
-            }
-            else {
-              final File file = new File(path);
-              if (!file.exists()) {
-                nonExistingOutputPaths.add(file);
+                final File file = new File(path);
+                if (!file.exists()) {
+                  nonExistingOutputPaths.add(file);
+                }
               }
             }
           }
@@ -2456,12 +2458,10 @@ public class CompileDriver {
         if (chunkModules.size() <= 1) {
           continue; // no need to check one-module chunks
         }
-        if (!useOutOfProcessBuild()) {
-          for (Module chunkModule : chunkModules) {
-            if (config.getAnnotationProcessingConfiguration(chunkModule).isEnabled()) {
-              showCyclesNotSupportedForAnnotationProcessors(chunkModules.toArray(new Module[chunkModules.size()]));
-              return false;
-            }
+        for (Module chunkModule : chunkModules) {
+          if (config.getAnnotationProcessingConfiguration(chunkModule).isEnabled()) {
+            showCyclesNotSupportedForAnnotationProcessors(chunkModules.toArray(new Module[chunkModules.size()]));
+            return false;
           }
         }
         Sdk jdk = null;
