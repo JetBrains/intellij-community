@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 /**
  * @author nik
@@ -74,7 +75,7 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
     final VirtualFile depOutput = setModuleOutput(dep, false);
     final VirtualFile depTestOutput = setModuleOutput(dep, true);
     addLibraryDependency(dep, createJDomLibrary());
-    addModuleDependency(myModule, dep);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
                     depOutput, getJDomJar());
@@ -85,7 +86,7 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testModuleDependencyScope() throws Exception {
     final Module dep = createModule("dep");
     addLibraryDependency(dep, createJDomLibrary());
-    addModuleDependency(myModule, dep, DependencyScope.TEST, true);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
 
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,

@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 
 /**
@@ -52,7 +53,7 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
     final VirtualFile output = setModuleOutput(dep, false);
     final VirtualFile testOutput = setModuleOutput(dep, true);
     addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
-    addModuleDependency(myModule, dep);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar(), getJDomJar());
     assertOrderFiles(OrderRootType.SOURCES, srcRoot, testRoot, getJDomSources());
@@ -64,7 +65,7 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
   public void testModuleDependencyScope() throws Exception {
     final Module dep = createModule("dep");
     addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
-    addModuleDependency(myModule, dep, DependencyScope.TEST, true);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar(), getJDomJar());
     assertOrderFiles(OrderRootType.SOURCES, getJDomSources());
@@ -76,7 +77,7 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
   public void testNotExportedLibraryDependency() throws Exception {
     final Module dep = createModule("dep");
     addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false);
-    addModuleDependency(myModule, dep);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar());
     assertOrderFiles(OrderRootType.SOURCES);

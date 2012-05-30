@@ -108,23 +108,6 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
     });
   }
 
-  protected void addModuleDependency(Module module, Module dependency) {
-    addModuleDependency(module, dependency, DependencyScope.COMPILE, false);
-  }
-
-  protected void addModuleDependency(final Module module, final Module dependency, final DependencyScope scope, final boolean exported) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final ModuleOrderEntry entry = model.addModuleOrderEntry(dependency);
-        entry.setScope(scope);
-        entry.setExported(exported);
-        model.commit();
-      }
-    });
-  }
-
   protected Library createLibrary(final String name, final VirtualFile classesRoot) {
     return createLibrary(name, classesRoot, null);
   }

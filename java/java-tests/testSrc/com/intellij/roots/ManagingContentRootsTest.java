@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.impl.ContentEntryImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.IOException;
 
@@ -36,15 +37,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     VirtualFile root = dir.createChildDirectory(null, "root");
     String url = root.getUrl();
 
-    final VirtualFile finalRoot = root;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ModifiableRootModel m = getRootManager().getModifiableModel();
-        m.addContentEntry(finalRoot);
-        m.commit();
-      }
-    });
+    PsiTestUtil.addContentRoot(myModule, root);
 
 
     assertSame(root, findContentEntry(url).getFile());
@@ -98,11 +91,9 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ModifiableRootModel m = getRootManager().getModifiableModel();
-        m.addContentEntry(dir);
-        m.commit();
+        PsiTestUtil.addContentRoot(myModule, dir);
 
-        m = getRootManager().getModifiableModel();
+        ModifiableRootModel m = getRootManager().getModifiableModel();
         ContentEntry e = findContentEntry(dir.getUrl(), m);
 
         assertSame(m, ((ContentEntryImpl)e).getRootModel());

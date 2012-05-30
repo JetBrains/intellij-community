@@ -338,14 +338,19 @@ import java.util.List;
   }
 
   public static void addDependency(final Module from, final Module to) {
+    addDependency(from, to, DependencyScope.COMPILE, false);
+  }
+
+  public static void addDependency(final Module from, final Module to, final DependencyScope scope, final boolean exported) {
     new WriteCommandAction(from.getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
         final ModifiableRootModel model = ModuleRootManager.getInstance(from).getModifiableModel();
-        model.addModuleOrderEntry(to);
+        final ModuleOrderEntry entry = model.addModuleOrderEntry(to);
+        entry.setScope(scope);
+        entry.setExported(exported);
         model.commit();
       }
-    }.execute().getResultObject();
-
+    }.execute();
   }
 }

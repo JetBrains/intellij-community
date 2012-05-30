@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootsEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
@@ -60,7 +61,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     final VirtualFile depOutput = setModuleOutput(dep, false);
     final VirtualFile depTestOutput = setModuleOutput(dep, true);
     addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
-    addModuleDependency(myModule, dep, DependencyScope.COMPILE, true);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, true);
 
     final VirtualFile srcRoot = addSourceRoot(myModule, false);
     final VirtualFile testRoot = addSourceRoot(myModule, true);
@@ -93,7 +94,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
   public void testModuleDependencyScope() throws Exception {
     final Module dep = createModule("dep");
     addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
-    addModuleDependency(myModule, dep, DependencyScope.TEST, true);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
 
     assertClassRoots(orderEntries(myModule).withoutSdk());
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getJDomJar());
@@ -108,7 +109,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     final Module dep = createModule("dep");
     addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false);
     addLibraryDependency(myModule, createAsmLibrary(), DependencyScope.COMPILE, false);
-    addModuleDependency(myModule, dep, DependencyScope.COMPILE, false);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertClassRoots(orderEntries(myModule).withoutSdk(), getAsmJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());

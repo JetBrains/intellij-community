@@ -25,13 +25,12 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -335,9 +334,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       protected void run(Result<Module> moduleResult) throws Throwable {
         VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
         Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type.getId());
-        ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        model.addContentEntry(f.getParent());
-        model.commit();
+        PsiTestUtil.addContentRoot(module, f.getParent());
         moduleResult.setResult(module);
       }
     }.execute().getResultObject();
