@@ -1,6 +1,7 @@
 package org.jetbrains.jps;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.util.*;
  *         Date: 9/30/11
  */
 public class ProjectPaths {
+  private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
   @NotNull
   private final Project myProject;
   @Nullable
@@ -234,6 +236,36 @@ public class ProjectPaths {
 
     final String path = forTests ? module.getTestOutputPath() : module.getOutputPath();
     return path != null ? new File(path) : null;
+  }
+
+  @Nullable
+  public File getAnnotationProcessorGeneratedSourcesOutputDir(Module module, final boolean forTests, String sourceDirName) {
+    if (!StringUtil.isEmpty(sourceDirName)) {
+      List<String> roots = module.getContentRoots();
+      if (roots.isEmpty()) {
+        return null;
+      }
+      if (roots.size() > 1) {
+        roots = new ArrayList<String>(roots); // sort roots to get deterministic result
+        Collections.sort(roots, new Comparator<String>() {
+          @Override
+          public int compare(String o1, String o2) {
+            return o1.compareTo(o2);
+          }
+        });
+      }
+      return new File(roots.get(0), sourceDirName);
+    }
+
+    final File outputDir = getModuleOutputDir(module, forTests);
+    if (outputDir == null) {
+      return null;
+    }
+    final File parentFile = outputDir.getParentFile();
+    if (parentFile == null) {
+      return null;
+    }
+    return new File(parentFile, outputDir.getName() + "_" + DEFAULT_GENERATED_DIR_NAME);
   }
 
   public List<String> getProjectRuntimeClasspath(boolean includeTests) {

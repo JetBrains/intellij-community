@@ -60,7 +60,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-target"
+    "-target", "-proc:none", "-proc:only"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-g", "-deprecation", "-nowarn", "-verbose"
@@ -399,6 +399,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
                               DiagnosticOutputConsumer diagnosticSink,
                               final OutputFileConsumer outputSink) throws Exception {
     final List<String> options = getCompilationOptions(context, chunk);
+    if (context.errorsDetected()) {
+      return true;
+    }
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
       final boolean rc;
@@ -670,7 +673,55 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
+    AnnotationProcessingProfile profile = null;
+    for (Module module : chunk.getModules()) {
+      if (profile == null) {
+        profile = context.getAnnotationProcessingProfile(module);
+      }
+      else {
+        final AnnotationProcessingProfile profile2 = context.getAnnotationProcessingProfile(module);
+        if (profile2 != profile) {
+          String message = "Modules in cycle [" + getChunkPresentableName(chunk) + "] must use the same annotation processing profile";
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+        }
+      }
+    }
+
+    if (profile != null && profile.isEnabled()) {
+      // configuring annotation processing
+      if (!profile.getObtainProcessorsFromClasspath()) {
+        final String processorsPath = profile.getProcessorsPath();
+        options.add("-processorpath");
+        options.add(processorsPath == null? "" : FileUtil.toSystemDependentName(processorsPath.trim()));
+      }
+
+      for (String procFQName : profile.getProcessors()) {
+        options.add("-processor");
+        options.add(procFQName);
+      }
+
+      for (Map.Entry<String, String> optionEntry : profile.getProcessorsOptions().entrySet()) {
+        options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
+      }
+
+      final File srcOutput = getGeneratedSourcesOutputDirectory(context, chunk, profile.getGeneratedSourcesDirName());
+      if (srcOutput != null) {
+        srcOutput.mkdirs();
+        options.add("-s");
+        options.add(srcOutput.getPath());
+      }
+    }
+    else {
+      options.add("-proc:none");
+    }
+
     return options;
+  }
+
+  @Nullable
+  private static File getGeneratedSourcesOutputDirectory(CompileContext context, ModuleChunk chunk, String name) {
+    // todo: support multiple outputs for module chunk
+    return context.getProjectPaths().getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), context.isCompilingTests(), name);
   }
 
   private static boolean isEncodingSet(List<String> options) {
@@ -718,7 +769,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     //options.add("-verbose");
     final Project project = context.getProject();
-    final Map<String, String> javacOpts = project.getCompilerConfiguration().getJavacOptions();
+    final CompilerConfiguration compilerConfig = project.getCompilerConfiguration();
+    final Map<String, String> javacOpts = compilerConfig.getJavacOptions();
     final boolean debugInfo = !"false".equals(javacOpts.get("DEBUGGING_INFO"));
     final boolean nowarn = "true".equals(javacOpts.get("GENERATE_NO_WARNINGS"));
     final boolean deprecation = !"false".equals(javacOpts.get("DEPRECATION"));
@@ -778,6 +830,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static void instrumentNotNull(CompileContext context, OutputFilesSink sink, final InstrumentationClassFinder finder) {
     for (final OutputFileObject fileObject : sink.getFileObjects()) {
       final OutputFileObject.Content originalContent = fileObject.getContent();
+      if (originalContent == null || !JavaFileObject.Kind.CLASS.equals(fileObject.getKind())) {
+        continue;
+      }
       final ClassReader reader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
       final int version = getClassFileVersion(reader);
       if (version >= Opcodes.V1_5) {
@@ -822,7 +877,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final Map<String, OutputFileObject> compiledClassNames = new HashMap<String, OutputFileObject>();
     for (OutputFileObject fileObject : outputSink.getFileObjects()) {
-      compiledClassNames.put(fileObject.getClassName(), fileObject);
+      if (JavaFileObject.Kind.CLASS.equals(fileObject.getKind())) {
+        compiledClassNames.put(fileObject.getClassName(), fileObject);
+      }
     }
 
     final MyNestedFormLoader nestedFormsLoader =
