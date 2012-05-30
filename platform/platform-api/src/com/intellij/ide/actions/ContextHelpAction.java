@@ -34,7 +34,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
     this(null);
   }
 
-  public ContextHelpAction(@NonNls String helpID) {
+  public ContextHelpAction(@NonNls @Nullable String helpID) {
     myHelpID = helpID;
   }
 
