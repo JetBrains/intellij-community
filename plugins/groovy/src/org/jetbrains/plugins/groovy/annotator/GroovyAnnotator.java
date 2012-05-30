@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFi
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
+import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -101,12 +102,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -324,6 +327,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     PsiElement resolved = resolveResult.getElement();
     final PsiElement parent = referenceExpression.getParent();
+
     if (resolved != null) {
       if (resolved instanceof PsiMember) {
         highlightMemberResolved(myHolder, referenceExpression, ((PsiMember)resolved));
@@ -337,7 +341,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           Annotation annotation = myHolder.createInfoAnnotation(referenceExpression,
                                                                 GroovyBundle.message("cannot.reference.nonstatic",
                                                                                      referenceExpression.getReferenceName()));
-          annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
+          annotation.setTextAttributes(isStaticallyCompiled(referenceExpression)?DefaultHighlighter.BAD_CHARACTER:DefaultHighlighter.UNRESOLVED_ACCESS);
         }
       }
     }
@@ -377,8 +381,22 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       PsiElement refNameElement = referenceExpression.getReferenceNameElement();
       PsiElement elt = refNameElement == null ? referenceExpression : refNameElement;
 
-      Annotation annotation = myHolder.createInfoAnnotation(elt, null);
       final GrExpression qualifier = referenceExpression.getQualifierExpression();
+
+      Annotation annotation;
+
+      boolean compileStatic = isCompileStatic(referenceExpression);
+      if (compileStatic) {
+        annotation = myHolder.createInfoAnnotation(elt, GroovyBundle.message("cannot.resolve", referenceExpression.getReferenceName()));
+        annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      }
+      else {
+        if (qualifier != null && qualifier.getType() == null) return;
+
+        annotation = myHolder.createInfoAnnotation(elt, null);
+        annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
+      }
+
       if (qualifier == null) {
         if (parent instanceof GrMethodCall) {
           registerStaticImportFix(referenceExpression, annotation);
@@ -388,18 +406,20 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           registerAddImportFixes(referenceExpression, annotation);
         }
       }
-      else {
-        if (qualifier.getType() == null) {
-          return;
-        }
-      }
 
-      registerReferenceFixes(referenceExpression, annotation);
+      registerReferenceFixes(referenceExpression, annotation, compileStatic);
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(referenceExpression, new QuickFixActionRegistrarAdapter(annotation));
       OrderEntryFix.registerFixes(new QuickFixActionRegistrarAdapter(annotation), referenceExpression);
-
-      annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
+  }
+
+  private static boolean isCompileStatic(GrReferenceExpression referenceExpression) {
+    PsiMember containingMember = PsiTreeUtil.getParentOfType(referenceExpression, PsiMember.class);
+    return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
+  }
+
+  private static boolean isStaticallyCompiled(GrReferenceExpression referenceExpression) {
+    return AnnotatedContextFilter.findContextAnnotation(referenceExpression, GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC)!=null;
   }
 
   private void highlightVariable(GrVariable variable, PsiElement toHighlight) {
@@ -1772,11 +1792,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
 
-  private static void registerReferenceFixes(GrReferenceExpression refExpr, Annotation annotation) {
-    PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr);
+  private static void registerReferenceFixes(GrReferenceExpression refExpr, Annotation annotation, boolean compileStatic) {
+    PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr, compileStatic);
     if (targetClass == null) return;
 
-    addDynamicAnnotation(annotation, refExpr);
+    if (!compileStatic) {
+      addDynamicAnnotation(annotation, refExpr);
+    }
     if (targetClass.isWritable()) {
       if (!(targetClass instanceof GroovyScriptClass)) {
         if (targetClass instanceof GrMemberOwner) {

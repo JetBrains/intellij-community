@@ -50,7 +50,8 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_LANG_USE = "groovy.lang.Use";
   @NonNls public static final String GROOVY_LANG_MIXIN = "groovy.lang.Mixin";
   @NonNls public static final String GROOVY_UTIL_TEST_CASE = "groovy.util.GroovyTestCase";
-  public static final String GROOVY_LANG_SINGLETON = "groovy.lang.Singleton";
+  @NonNls public static final String GROOVY_LANG_SINGLETON = "groovy.lang.Singleton";
+  @NonNls public static final String GROOVY_TRANSFORM_COMPILE_STATIC = "groovy.transform.CompileStatic";
 
 
   private GroovyCommonClassNames() {

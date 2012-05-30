@@ -1009,4 +1009,28 @@ use(Ca) {
 ''', GroovyAssignabilityCheckInspection)
   }
 
+  void testCompileStatic() {
+    myFixture.addClass('''\
+package groovy.transform;
+public @interface CompileStatic {
+}''')
+
+    myFixture.configureByText('_.groovy', '''\
+<info descr="null">import</info> <info descr="null">groovy.transform.CompileStatic</info>
+
+<info descr="null">class</info> <info descr="null">A</info> {
+
+<info descr="null">def</info> <info descr="null">foo</info>() {
+<info descr="null">print</info> <info descr="null">abc</info>
+}
+
+<info descr="null">@CompileStatic</info>
+<info descr="null">def</info> <info descr="null">bar</info>() {
+<info descr="null">print</info> <info descr="Cannot resolve symbol 'abc'">abc</info>
+}
+}
+''')
+    myFixture.testHighlighting(true, true, true)
+  }
+
 }

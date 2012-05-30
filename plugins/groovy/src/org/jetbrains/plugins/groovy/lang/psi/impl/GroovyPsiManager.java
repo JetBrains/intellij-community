@@ -65,6 +65,7 @@ public class GroovyPsiManager {
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
   private final ConcurrentMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>> myClassCache = new ConcurrentHashMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>>();
+  private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = new ConcurrentHashMap<PsiMember, Boolean>();
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
 
@@ -92,6 +93,7 @@ public class GroovyPsiManager {
 
   public void dropTypesCache() {
     myCalculatedTypes.clear();
+    myCompileStatic.clear();
   }
 
   public static boolean isInheritorCached(@Nullable PsiClass aClass, @NotNull String baseClassName) {
@@ -120,6 +122,25 @@ public class GroovyPsiManager {
     }
 
     return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqName, resolveScope);
+  }
+
+  public boolean isCompileStatic(PsiMember member) {
+    Boolean aBoolean = myCompileStatic.get(member);
+    if (aBoolean == null) {
+      aBoolean = ConcurrencyUtil.cacheOrGet(myCompileStatic, member, isCompileStaticInner(member));
+    }
+    return aBoolean;
+  }
+
+  private boolean isCompileStaticInner(PsiMember member) {
+    PsiModifierList list = member.getModifierList();
+    if (list != null) {
+      PsiAnnotation annotation = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC);
+      if (annotation != null) return true;
+    }
+    PsiClass aClass = member.getContainingClass();
+    if (aClass != null) return isCompileStatic(aClass);
+    return false;
   }
 
   @Nullable
