@@ -80,9 +80,11 @@ public class CreateNewLibraryAction extends DumbAwareAction {
                                       @NotNull final Project project, @NotNull final LibrariesModifiableModel modifiableModel) {
     final NewLibraryConfiguration configuration = createNewLibraryConfiguration(type, parentComponent, project);
     if (configuration == null) return null;
-    final Library library = modifiableModel.createLibrary(LibraryEditingUtil.suggestNewLibraryName(modifiableModel, configuration.getDefaultLibraryName()), configuration.getLibraryType().getKind());
+    final LibraryType<?> libraryType = configuration.getLibraryType();
+    final Library library = modifiableModel.createLibrary(
+      LibraryEditingUtil.suggestNewLibraryName(modifiableModel, configuration.getDefaultLibraryName()), libraryType != null ? libraryType.getKind() : null);
 
-    final NewLibraryEditor editor = new NewLibraryEditor(configuration.getLibraryType(), configuration.getProperties());
+    final NewLibraryEditor editor = new NewLibraryEditor(libraryType, configuration.getProperties());
     configuration.addRoots(editor);
     final Library.ModifiableModel model = library.getModifiableModel();
     editor.applyTo((LibraryEx.ModifiableModelEx)model);
