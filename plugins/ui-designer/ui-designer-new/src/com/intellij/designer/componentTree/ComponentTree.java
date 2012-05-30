@@ -15,14 +15,23 @@
  */
 package com.intellij.designer.componentTree;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.actions.StartInplaceEditing;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
+import com.intellij.designer.inspection.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -33,15 +42,20 @@ import javax.swing.border.LineBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
  */
 public final class ComponentTree extends Tree implements DataProvider {
+  private final Map<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>> myAttributes =
+    new HashMap<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>>();
   private final StartInplaceEditing myInplaceEditingAction;
   private QuickFixManager myQuickFixManager;
   private TreeComponentDecorator myDecorator;
   private DesignerActionPanel myActionPanel;
+  private Project myProject;
   private EditableArea myArea;
   private RadComponent myMarkComponent;
   private int myMarkFeedback;
@@ -80,10 +94,12 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (designer == null) {
       myDecorator = null;
       myActionPanel = null;
+      myProject = null;
     }
     else {
       myDecorator = designer.getTreeDecorator();
       myActionPanel = designer.getActionPanel();
+      myProject = designer.getProject();
     }
     myMarkComponent = null;
     myArea = null;
@@ -133,6 +149,50 @@ public final class ComponentTree extends Tree implements DataProvider {
     return Math.max(5, ((JComponent)getCellRenderer()).getPreferredSize().height / 2 - 3);
   }
 
+  @Nullable
+  private static HighlightDisplayLevel getHighlightDisplayLevel(Project project, RadComponent component) {
+    HighlightDisplayLevel displayLevel = null;
+    SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
+    for (ErrorInfo errorInfo : ErrorInfo.get(component)) {
+      if (displayLevel == null || severityRegistrar.compare(errorInfo.getLevel().getSeverity(), displayLevel.getSeverity()) > 0) {
+        displayLevel = errorInfo.getLevel();
+      }
+    }
+    return displayLevel;
+  }
+
+  private AttributeWrapper getAttributeWrapper(RadComponent component) {
+    AttributeWrapper wrapper = AttributeWrapper.DEFAULT;
+    final HighlightDisplayLevel level = getHighlightDisplayLevel(myProject, component);
+
+    if (level != null) {
+      TextAttributesKey attributesKey =
+        SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+      final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
+
+      wrapper = new AttributeWrapper() {
+        @Override
+        public SimpleTextAttributes getAttribute(SimpleTextAttributes attributes) {
+          Map<SimpleTextAttributes, SimpleTextAttributes> attributesMap = myAttributes.get(level.getSeverity());
+          if (attributesMap == null) {
+            attributesMap = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
+            myAttributes.put(level.getSeverity(), attributesMap);
+          }
+
+          SimpleTextAttributes result = attributesMap.get(attributes);
+          if (result == null) {
+            result = SimpleTextAttributes.fromTextAttributes(TextAttributes.merge(attributes.toTextAttributes(), textAttributes));
+            attributesMap.put(attributes, result);
+          }
+
+          return result;
+        }
+      };
+    }
+
+    return wrapper;
+  }
+
   private void installCellRenderer() {
     setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
@@ -144,8 +204,9 @@ public final class ComponentTree extends Tree implements DataProvider {
                                         int row,
                                         boolean hasFocus) {
         RadComponent component = extractComponent(value);
+
         if (component != null) {
-          myDecorator.decorate(component, this, true);
+          myDecorator.decorate(component, this, getAttributeWrapper(component), true);
 
           if (myMarkComponent == component) {
             if (myMarkFeedback == FeedbackTreeLayer.INSERT_SELECTION) {

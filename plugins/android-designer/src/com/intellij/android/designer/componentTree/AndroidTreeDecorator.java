@@ -16,6 +16,7 @@
 package com.intellij.android.designer.componentTree;
 
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.MetaModel;
@@ -31,16 +32,16 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Alexander Lobas
  */
-public final class AndroidTreeDecorator extends TreeComponentDecorator {
+public final class AndroidTreeDecorator implements TreeComponentDecorator {
   @Override
-  public void decorate(RadComponent component, SimpleColoredComponent renderer, boolean full) {
+  public void decorate(RadComponent component, SimpleColoredComponent renderer, AttributeWrapper wrapper, boolean full) {
     MetaModel metaModel = component.getMetaModel();
 
     String id = getPropertyValue(component, "id");
     if (!StringUtil.isEmpty(id)) {
       id = id.substring(id.indexOf('/') + 1);
       if (!StringUtil.isEmpty(id)) {
-        renderer.append(id + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        renderer.append(id + ": ", wrapper.getAttribute(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
       }
     }
 
@@ -76,14 +77,14 @@ public final class AndroidTreeDecorator extends TreeComponentDecorator {
     }
 
     if (fullTitle.length() > 0) {
-      renderer.append(fullTitle.toString());
+      renderer.append(fullTitle.toString(), wrapper.getAttribute(SimpleTextAttributes.REGULAR_ATTRIBUTES));
     }
 
     if (full) {
       renderer.setIcon(metaModel.getIcon());
 
       if (component instanceof IComponentDecorator) {
-        ((IComponentDecorator)component).decorateTree(renderer);
+        ((IComponentDecorator)component).decorateTree(renderer, wrapper);
       }
     }
   }

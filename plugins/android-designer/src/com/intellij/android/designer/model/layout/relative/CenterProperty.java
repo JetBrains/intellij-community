@@ -17,12 +17,14 @@ package com.intellij.android.designer.model.layout.relative;
 
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.propertyTable.IXmlAttributeLocator;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.android.designer.propertyTable.JavadocParser;
@@ -32,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Alexander Lobas
  */
-public class CenterProperty extends Property<RadViewComponent> {
+public class CenterProperty extends Property<RadViewComponent> implements IXmlAttributeLocator {
   private static final String[] COMBO_ITEMS = {"horizontal", "vertical", "both"};
   private static final String[] ATTR_ITEMS =
     {"android:layout_centerHorizontal", "android:layout_centerVertical", "android:layout_centerInParent"};
@@ -120,5 +122,16 @@ public class CenterProperty extends Property<RadViewComponent> {
   @Override
   public String getJavadocText() {
     return JAVA_DOC;
+  }
+
+  @Override
+  public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
+    XmlTag tag = component.getTag();
+    for (String name : ATTR_ITEMS) {
+      if (tag.getAttribute(name) == attribute) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
+package com.intellij.designer.componentTree;
 
-import com.intellij.designer.componentTree.AttributeWrapper;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 
 /**
  * @author Alexander Lobas
  */
-public interface IComponentDecorator {
-  void decorateTree(SimpleColoredComponent renderer, AttributeWrapper wrapper);
+public interface AttributeWrapper {
+  AttributeWrapper DEFAULT = new AttributeWrapper() {
+    @Override
+    public SimpleTextAttributes getAttribute(SimpleTextAttributes attributes) {
+      return attributes;
+    }
+  };
+
+  SimpleTextAttributes getAttribute(SimpleTextAttributes attributes);
 }

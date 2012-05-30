@@ -21,10 +21,11 @@ import com.intellij.ui.SimpleColoredComponent;
 /**
  * @author Alexander Lobas
  */
-public abstract class TreeComponentDecorator {
-  public static final String KEY = "TreeComponentDecorator";
+public interface TreeComponentDecorator {
+  String KEY = "TreeComponentDecorator";
 
-  public abstract void decorate(RadComponent component,
-                                SimpleColoredComponent renderer,
-                                boolean full);
+  void decorate(RadComponent component,
+                SimpleColoredComponent renderer,
+                AttributeWrapper wrapper,
+                boolean full);
 }

@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.intellij.android.designer.propertyTable.CustomViewProperty;
 import com.intellij.android.designer.propertyTable.editors.ChooseClassDialog;
+import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -94,10 +96,10 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
   }
 
   @Override
-  public void decorateTree(SimpleColoredComponent renderer) {
+  public void decorateTree(SimpleColoredComponent renderer, AttributeWrapper wrapper) {
     String viewClass = getViewClass();
     if (viewClass != null) {
-      renderer.append(" - " + viewClass);
+      renderer.append(" - " + viewClass, wrapper.getAttribute(SimpleTextAttributes.REGULAR_ATTRIBUTES));
     }
   }
 
