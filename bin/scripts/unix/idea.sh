@@ -142,7 +142,8 @@ if [ -n "$@@product_uc@@_CLASSPATH" ]; then
 fi
 export CLASSPATH
 
-export LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
+LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH
 
 # ---------------------------------------------------------------------
 # Run the IDE.
