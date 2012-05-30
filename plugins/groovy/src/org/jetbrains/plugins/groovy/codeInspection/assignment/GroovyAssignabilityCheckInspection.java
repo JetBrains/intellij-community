@@ -16,14 +16,22 @@
 
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +39,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -45,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -56,10 +64,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -79,11 +89,6 @@ import java.util.Map;
  */
 public class GroovyAssignabilityCheckInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(GroovyAssignabilityCheckInspection.class);
-
-  @Override
-  protected GroovyFix buildFix(PsiElement location) {
-    return super.buildFix(location);    //To change body of overridden methods use File | Settings | File Templates.
-  }
 
   @Nls
   @NotNull
@@ -159,6 +164,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitMethod(GrMethod method) {
+      if (GroovyPsiManager.getInstance(method.getProject()).isCompileStatic(method)) return;
+
       super.visitMethod(method);
       final GrOpenBlock block = method.getBlock();
       if (block == null) return;
@@ -176,6 +183,18 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           return true;
         }
       });
+    }
+
+    @Override
+    public void visitField(GrField field) {
+      if (GroovyPsiManager.getInstance(field.getProject()).isCompileStatic(field)) return;
+      super.visitField(field);
+    }
+
+    @Override
+    public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+      if (GroovyPsiManager.getInstance(typeDefinition.getProject()).isCompileStatic(typeDefinition)) return;
+      super.visitTypeDefinition(typeDefinition);
     }
 
     @Override
@@ -760,5 +779,76 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       return place.getType();
     }
     return GrReferenceResolveUtil.getQualifierType(place);
+  }
+
+
+  private static class AnnotatingVisitor extends MyVisitor {
+    private AnnotationHolder myHolder;
+
+
+    @Override
+    protected void registerError(@NotNull final PsiElement location,
+                                 final String description,
+                                 final LocalQuickFix[] fixes,
+                                 final ProblemHighlightType highlightType) {
+      Annotation annotation = myHolder.createErrorAnnotation(location, description);
+      for (final LocalQuickFix fix : fixes) {
+        annotation.registerFix(new IntentionAction() {
+          @NotNull
+          @Override
+          public String getText() {
+            return fix.getName();
+          }
+
+          @NotNull
+          @Override
+          public String getFamilyName() {
+            return fix.getFamilyName();
+          }
+
+          @Override
+          public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+            return true;
+          }
+
+          @Override
+          public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+            InspectionManager manager = InspectionManager.getInstance(project);
+            ProblemDescriptor descriptor = manager.createProblemDescriptor(location, description, fixes, highlightType, fixes.length == 1, false);
+            fix.applyFix(project, descriptor);
+          }
+
+          @Override
+          public boolean startInWriteAction() {
+            return true;
+          }
+        });
+      }
+    }
+
+    @Override
+    public void visitElement(GroovyPsiElement element) {
+      //do nothing
+    }
+  }
+
+  private static final ThreadLocal<AnnotatingVisitor> visitor = new ThreadLocal<AnnotatingVisitor>() {
+    @Override
+    protected AnnotatingVisitor initialValue() {
+      return new AnnotatingVisitor();
+    }
+  };
+
+  public static void checkElement(GroovyPsiElement e, AnnotationHolder holder) {
+    AnnotatingVisitor annotatingVisitor = visitor.get();
+
+    AnnotationHolder oldHolder = annotatingVisitor.myHolder;
+    try {
+      annotatingVisitor.myHolder = holder;
+      e.accept(annotatingVisitor);
+    }
+    finally {
+      annotatingVisitor.myHolder = oldHolder;
+    }
   }
 }

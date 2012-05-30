@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
@@ -131,6 +132,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (element instanceof GroovyPsiElement) {
       myHolder = holder;
       ((GroovyPsiElement)element).accept(this);
+      if (isCompileStatic(element)) {
+        GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
+      }
       myHolder = null;
     }
     else {
@@ -413,8 +417,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static boolean isCompileStatic(GrReferenceExpression referenceExpression) {
-    PsiMember containingMember = PsiTreeUtil.getParentOfType(referenceExpression, PsiMember.class);
+  private static boolean isCompileStatic(PsiElement e) {
+    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class);
     return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
   }
 

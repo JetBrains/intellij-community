@@ -1033,4 +1033,29 @@ public @interface CompileStatic {
     myFixture.testHighlighting(true, true, true)
   }
 
+
+  void testCompileStaticWithAssignabilityCheck() {
+    myFixture.addClass('''\
+package groovy.transform;
+public @interface CompileStatic {
+}''')
+
+    myFixture.configureByText('_.groovy', '''\
+import groovy.transform.CompileStatic
+
+class A {
+
+  def foo(String s) {
+    int x = <warning descr="Cannot assign 'Date' to 'int'">new Date()</warning>
+  }
+
+  @CompileStatic
+  def bar() {
+    int x = <error descr="Cannot assign 'Date' to 'int'">new Date()</error>
+  }
+}
+''')
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection)
+    myFixture.checkHighlighting(true, false, true)
+  }
 }
