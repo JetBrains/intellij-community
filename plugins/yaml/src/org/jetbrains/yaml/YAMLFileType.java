@@ -1,7 +1,7 @@
 package org.jetbrains.yaml;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +13,7 @@ public class YAMLFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "yml";
   @NonNls private static final String NAME = "YAML";
   @NonNls private static final String DESCRIPTION = YAMLBundle.message("filetype.description.yaml");
-  public static final Icon YAML_ICON = IconLoader.getIcon("/nodes/DataTables.png");
+  public static final Icon YAML_ICON = AllIcons.Nodes.DataTables;
 
   private YAMLFileType() {
     super(YAMLLanguage.INSTANCE);
