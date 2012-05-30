@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         addTypeUseAnnotationsFromModifierList(getParent(), typeAnnotations);
         final PsiAnnotation[] array = toAnnotationsArray(typeAnnotations);
         cachedType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(element.getText(), array);
-        assert cachedType != null;
       }
       else if (elementType == JavaElementType.TYPE) {
         final IElementType tailType = getLastChildNode().getElementType();
