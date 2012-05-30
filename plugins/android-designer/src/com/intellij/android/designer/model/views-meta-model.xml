@@ -19,6 +19,15 @@
     <palette title="Device Screen (#merge)" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadRequestFocus"
+        class="java.lang.Object"
+        tag="requestFocus">
+
+    <palette title="requestFocus" icon="/com/intellij/android/designer/icons/requestFocus.png"
+             tooltip="Requests focus for the parent element or one of its descendants."/>
+
+  </meta>
+
   <meta model="com.intellij.android.designer.model.RadIncludeLayout"
         class="java.lang.Object"
         tag="include">

@@ -35,7 +35,7 @@ public class InheritanceToDelegationUtil {
       if (baseMethod != null) {
         PsiClass containingClass = baseMethod.getContainingClass();
         String qName = containingClass.getQualifiedName();
-        if (qName == null || !"java.lang.Object".equals(qName)) return true;
+        if (qName == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) return true;
       }
     }
     return false;

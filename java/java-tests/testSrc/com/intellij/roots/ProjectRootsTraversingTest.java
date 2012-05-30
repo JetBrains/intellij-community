@@ -1,9 +1,11 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 
 /**
@@ -42,7 +44,7 @@ public class ProjectRootsTraversingTest extends ModuleRootManagerTestCase {
     addSourceRoot(dep, false);
     addSourceRoot(dep, true);
     addLibraryDependency(dep, createJDomLibrary());
-    addModuleDependency(myModule, dep);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     doTest(ProjectRootsTraversing.PROJECT_LIBRARIES, getJDomJar());
     doTest(ProjectRootsTraversing.PROJECT_SOURCES);

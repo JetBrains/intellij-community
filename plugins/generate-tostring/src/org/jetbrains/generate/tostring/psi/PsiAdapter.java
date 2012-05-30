@@ -137,7 +137,7 @@ public class PsiAdapter {
      * @return true if it's a Map type.
      */
     public boolean isMapType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, "java.util.Map");
+        return isTypeOf(factory, type, CommonClassNames.JAVA_UTIL_MAP);
     }
 
     /**
@@ -148,7 +148,7 @@ public class PsiAdapter {
      * @return true if it's a Map type.
      */
     public boolean isSetType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, "java.util.Set");
+        return isTypeOf(factory, type, CommonClassNames.JAVA_UTIL_SET);
     }
 
     /**
@@ -159,7 +159,7 @@ public class PsiAdapter {
      * @return true if it's a Map type.
      */
     public boolean isListType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, "java.util.List");
+        return isTypeOf(factory, type, CommonClassNames.JAVA_UTIL_LIST);
     }
 
     /**
@@ -181,7 +181,7 @@ public class PsiAdapter {
      * @return true if it's an Object type.
      */
     public boolean isObjectType(PsiElementFactory factory, PsiType type) {
-        return isTypeOf(factory, type, "java.lang.Object");
+        return isTypeOf(factory, type, CommonClassNames.JAVA_LANG_OBJECT);
     }
 
     /**
@@ -588,7 +588,7 @@ public class PsiAdapter {
             }
 
             // parameter must be Object
-            if (!(parameters[0].getType().getCanonicalText().equals("java.lang.Object"))) {
+            if (!(parameters[0].getType().getCanonicalText().equals(CommonClassNames.JAVA_LANG_OBJECT))) {
                 continue;
             }
 

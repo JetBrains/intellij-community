@@ -63,8 +63,18 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
         Disposer.dispose(builder);
         return;
       }
-      // todo ?
-      builder.removeAllActions();
+      final Runnable onOkRunnable = request.getOnOkRunnable();
+      if (onOkRunnable != null){
+        builder.setOkOperation(new Runnable() {
+          @Override
+          public void run() {
+            builder.getDialogWrapper().close(0);
+            onOkRunnable.run();
+          }
+        });
+      } else {
+        builder.removeAllActions();
+      }
       builder.setCenterPanel(diffPanel.getComponent());
       builder.setPreferedFocusComponent(diffPanel.getPreferredFocusedComponent());
       builder.setTitle(request.getWindowTitle());

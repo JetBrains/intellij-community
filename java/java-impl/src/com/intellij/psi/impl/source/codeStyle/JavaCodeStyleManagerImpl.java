@@ -440,7 +440,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               return getLongTypeName(bound);
             }
             else {
-              return "java.lang.Object";
+              return CommonClassNames.JAVA_LANG_OBJECT;
             }
           }
           else {
@@ -450,7 +450,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                 return getLongTypeName(bound);
               }
               else {
-                return "java.lang.Object";
+                return CommonClassNames.JAVA_LANG_OBJECT;
               }
             }
             else {

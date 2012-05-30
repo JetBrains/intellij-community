@@ -20,6 +20,7 @@ import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import org.jetbrains.annotations.NonNls;
@@ -163,7 +164,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   }
 
   public boolean isExtensionPointType(final ClassLoader loader, final String className) {
-    if ("java.lang.Object".equals(className)) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(className)) {
       return false;
     }
     if (myExtensionPoints.contains(className)) {
@@ -178,7 +179,7 @@ public class AntTypeDefinitionImpl implements AntTypeDefinition {
   }
 
   private boolean isExtensionPointType(final Class<?> aClass) {
-     if (aClass == null || "java.lang.Object".equals(aClass.getName())) {
+     if (aClass == null || CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getName())) {
        return false;
      }
      if (myExtensionPoints.contains(aClass.getName())) {

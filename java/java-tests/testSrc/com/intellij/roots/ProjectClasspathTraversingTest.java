@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectClasspathTraversing;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 
 /**
@@ -65,7 +66,7 @@ public class ProjectClasspathTraversingTest extends ModuleRootManagerTestCase {
     final VirtualFile output = setModuleOutput(dep, false);
     final VirtualFile testOutput = setModuleOutput(dep, true);
     addLibraryDependency(dep, createJDomLibrary());
-    addModuleDependency(myModule, dep);
+    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     doTest(ProjectClasspathTraversing.FULL_CLASSPATH, getRtJar());
     doTest(ProjectClasspathTraversing.FULL_CLASS_RECURSIVE_WO_JDK, testOutput, output, getJDomJar());

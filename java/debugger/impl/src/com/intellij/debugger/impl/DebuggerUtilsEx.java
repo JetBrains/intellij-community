@@ -93,7 +93,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
 
   public static boolean isAssignableFrom(final String baseQualifiedName, ReferenceType checkedType) {
-    if ("java.lang.Object".equals(baseQualifiedName)) {
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {
       return true;
     }
     return getSuperClass(baseQualifiedName, checkedType) != null;

@@ -96,11 +96,10 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
       HighlightInfo info = null;
       if (myRange != null)  {
         info = new HighlightInfo(new TextAttributes(null, null,
-                                                    myEditor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor(),
-                                                    null, Font.PLAIN),
-                                 HighlightInfoType.INFORMATION, myRange.getStartOffset(), myRange.getEndOffset(),
-                                 SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED, SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED,
-                                 HighlightSeverity.INFORMATION, false, true, false);
+                                                            myEditor.getColorsScheme().getAttributes(CodeInsightColors.WEAK_WARNING_ATTRIBUTES).getEffectColor(),
+                                                            null, Font.PLAIN), null, HighlightInfoType.INFORMATION,
+                                 myRange.getStartOffset(), myRange.getEndOffset(), SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED,
+                                 SIGNATURE_SHOULD_BE_POSSIBLY_CHANGED, HighlightSeverity.INFORMATION, false, true, false);
         final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
         options.add(new DismissNewSignatureIntentionAction());
         QuickFixAction.registerQuickFixAction(info, new ChangeSignatureDetectorAction(), options, null);

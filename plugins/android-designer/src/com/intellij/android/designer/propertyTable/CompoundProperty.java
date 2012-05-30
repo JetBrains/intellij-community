@@ -23,6 +23,7 @@ import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class CompoundProperty extends Property<RadViewComponent> implements IPropertyDecorator {
+public class CompoundProperty extends Property<RadViewComponent> implements IPropertyDecorator, IXmlAttributeLocator {
   private final List<Property<RadViewComponent>> myChildren = new ArrayList<Property<RadViewComponent>>();
   private PropertyRenderer myRenderer;
 
@@ -125,5 +126,15 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   @Override
   public String getJavadocText() {
     return myChildren.isEmpty() ? null : myChildren.get(0).getJavadocText();
+  }
+
+  @Override
+  public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
+    for (Property<RadViewComponent> childProperty : myChildren) {
+      if (((IXmlAttributeLocator)childProperty).checkAttribute(component, attribute)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

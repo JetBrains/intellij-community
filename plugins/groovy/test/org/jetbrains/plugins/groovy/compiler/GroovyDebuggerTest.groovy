@@ -40,11 +40,11 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
@@ -180,11 +180,7 @@ println 2 //4
     edt {
       tempDir.setUp()
       disposeOnTearDown({ tempDir.tearDown() } as Disposable)
-      ApplicationManager.application.runWriteAction {
-        def model = ModuleRootManager.getInstance(myModule).modifiableModel
-        model.addContentEntry(tempDir.getFile(''))
-        model.commit()
-      }
+      PsiTestUtil.addContentRoot(myModule, tempDir.getFile(''))
     }
 
     VirtualFile myClass = null

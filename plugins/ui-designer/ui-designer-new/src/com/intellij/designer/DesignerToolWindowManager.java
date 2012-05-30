@@ -134,6 +134,15 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     }
   }
 
+  public void updateInspections() {
+    if (myComponentTree != null) {
+      myComponentTree.updateInspections();
+    }
+    if (myPropertyTablePanel != null) {
+      myPropertyTablePanel.getPropertyTable().updateInspections();
+    }
+  }
+
   @Nullable
   private static DesignerEditorPanel getDesigner(FileEditor editor) {
     if (editor instanceof DesignerEditor) {
@@ -186,6 +195,7 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     JScrollPane treeScrollPane = ScrollPaneFactory.createScrollPane(myComponentTree);
     treeScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     treeScrollPane.setPreferredSize(new Dimension(250, -1));
+    myComponentTree.initQuickFixManager(treeScrollPane.getViewport());
 
     myPropertyTablePanel = new PropertyTablePanel();
 

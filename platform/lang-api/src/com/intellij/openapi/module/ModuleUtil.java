@@ -213,7 +213,7 @@ public class ModuleUtil {
     return list;
   }
 
-  public static boolean visitMeAndDependentModules(final @NotNull Module module, final ModuleVisitor visitor) {
+  public static boolean visitMeAndDependentModules(@NotNull final Module module, final ModuleVisitor visitor) {
     if (!visitor.visit(module)) {
       return false;
     }
@@ -226,7 +226,7 @@ public class ModuleUtil {
     return true;
   }
 
-  public static boolean moduleContainsFile(final Module module, VirtualFile file, boolean isLibraryElement) {
+  public static boolean moduleContainsFile(@NotNull final Module module, VirtualFile file, boolean isLibraryElement) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     if (isLibraryElement) {
       OrderEntry orderEntry = moduleRootManager.getFileIndex().getOrderEntryForFile(file);

@@ -19,15 +19,11 @@ import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.structureView.GroupByWordPrefixes;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -41,100 +37,77 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     super(editor, structureViewModel, project);
   }
 
-  protected ActionGroup createActionGroup() {
-    DefaultActionGroup actionGroup = (DefaultActionGroup)super.createActionGroup();
-    actionGroup.add(new ChangeGroupSeparatorAction());
-    return actionGroup;
+  @Override
+  protected void addGroupByActions(DefaultActionGroup result) {
+    super.addGroupByActions(result);
+    result.add(new ChangeGroupSeparatorAction());
   }
 
-  private class ChangeGroupSeparatorAction extends ComboBoxAction {
-    private DefaultActionGroup myActionGroup;
+  private class ChangeGroupSeparatorAction extends DefaultActionGroup {
     // separator -> presentable text
-    private final Map<String,String> myPredefindedSeparators = new LinkedHashMap<String, String>();
-    private JPanel myPanel;
+    private final Map<String,String> myPredefinedSeparators = new LinkedHashMap<String, String>();
 
     public ChangeGroupSeparatorAction() {
-      myPredefindedSeparators.put(".",".");
-      myPredefindedSeparators.put("_","__");
-      myPredefindedSeparators.put("/","/");
+      super("Group by: ", true);
+      myPredefinedSeparators.put(".", ".");
+      myPredefinedSeparators.put("_", "__");
+      myPredefinedSeparators.put("/", "/");
       String currentSeparator = getCurrentSeparator();
-      if (!myPredefindedSeparators.containsKey(currentSeparator)) {
-        myPredefindedSeparators.put(currentSeparator, currentSeparator);
+      if (!myPredefinedSeparators.containsKey(currentSeparator)) {
+        myPredefinedSeparators.put(currentSeparator, currentSeparator);
       }
+      refillActionGroup();
     }
 
     public final void update(AnActionEvent e) {
-      Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-      if (project == null) return;
       String separator = getCurrentSeparator();
       Presentation presentation = e.getPresentation();
-      presentation.setText(separator);
+      presentation.setText("Group by: " + myPredefinedSeparators.get(separator));
     }
 
     private String getCurrentSeparator() {
       return ((PropertiesGroupingStructureViewModel)getTreeModel()).getSeparator();
     }
 
-    @NotNull
-    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-      myActionGroup = new DefaultActionGroup();
-      refillActionGroup();
-
-      return myActionGroup;
-    }
-
     private void refillActionGroup() {
-      myActionGroup.removeAll();
-      for (String separator : myPredefindedSeparators.keySet()) {
-        String presentableText = myPredefindedSeparators.get(separator);
-        myActionGroup.add(new SelectSeparatorAction(separator, presentableText));
-      }
-      myActionGroup.add(new SelectSeparatorAction(null, null));
-    }
+      removeAll();
+      for (final String separator : myPredefinedSeparators.keySet()) {
+        if (separator.equals(getCurrentSeparator())) continue;
+        String presentableText = myPredefinedSeparators.get(separator);
+        add(new AnAction(presentableText) {
 
-    public final JComponent createCustomComponent(Presentation presentation) {
-      myPanel = new JPanel(new GridBagLayout());
-      myPanel.add(new JLabel(PropertiesBundle.message("properties.structure.view.group.by.label")),
-                  new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                         new Insets(0, 5, 0, 0), 0, 0));
-      myPanel.add(super.createCustomComponent(presentation),
-                  new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.BOTH,
-                                         new Insets(0, 0, 0, 0), 0, 0));
-      return myPanel;
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            ((PropertiesGroupingStructureViewModel)getTreeModel()).setSeparator(separator);
+            setActionActive(GroupByWordPrefixes.ID, true);
+            refillActionGroup();
+            rebuild();
+          }
+        });
+      }
+      add(new SelectSeparatorAction());
     }
 
     private final class SelectSeparatorAction extends AnAction {
-      private final String myActionSeparator;
 
-      public SelectSeparatorAction(String separator, final String presentableText) {
-        super(separator == null ? PropertiesBundle.message("select.separator.action.with.empty.separator.name") : presentableText);
-        myActionSeparator = separator;
+      public SelectSeparatorAction() {
+        super(PropertiesBundle.message("select.separator.action.with.empty.separator.name"));
       }
 
       public final void actionPerformed(AnActionEvent e) {
-        String separator;
-        if (myActionSeparator == null) {
-          String[] strings = myPredefindedSeparators.keySet().toArray(new String[myPredefindedSeparators.size()]);
-          String current = getCurrentSeparator();
-          separator = Messages.showEditableChooseDialog(PropertiesBundle.message("select.property.separator.dialog.text"),
-                                                        PropertiesBundle.message("select.property.separator.dialog.title"), Messages.getQuestionIcon(),
-                                                        strings, current, null);
-          if (separator == null) {
-            return;
-          }
-          myPredefindedSeparators.put(separator,separator);
-          refillActionGroup();
+        String[] strings = myPredefinedSeparators.keySet().toArray(new String[myPredefinedSeparators.size()]);
+        String current = getCurrentSeparator();
+        String separator = Messages.showEditableChooseDialog(PropertiesBundle.message("select.property.separator.dialog.text"),
+                                                             PropertiesBundle.message("select.property.separator.dialog.title"),
+                                                             Messages.getQuestionIcon(),
+                                                             strings, current, null);
+        if (separator == null) {
+          return;
         }
-        else {
-          separator = myActionSeparator;
-        }
-
-        ((PropertiesGroupingStructureViewModel)getTreeModel()).setSeparator(separator);
-        setActionActive(GroupByWordPrefixes.ID, true);
-        rebuild();
+        myPredefinedSeparators.put(separator, separator);
+        refillActionGroup();
       }
     }
-
   }
 
   @NonNls

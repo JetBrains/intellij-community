@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class QuickFixManager extends AbstractQuickFixManager implements ComponentSelectionListener {
+public final class QuickFixManager extends AbstractQuickFixManager implements ComponentSelectionListener {
   public QuickFixManager(DesignerEditorPanel designer, JComponent component, JViewport viewPort) {
     super(designer, component, viewPort);
     designer.getSurfaceArea().addSelectionListener(this);

@@ -180,7 +180,7 @@ public class ResolveMethodTest extends ResolveTestCase {
     assertTrue(target instanceof PsiMethod);
     final PsiMethod method = (PsiMethod)target;
     assertEquals("clone", method.getName());
-    assertEquals("java.lang.Object", method.getContainingClass().getQualifiedName());
+    assertEquals(CommonClassNames.JAVA_LANG_OBJECT, method.getContainingClass().getQualifiedName());
   }
 
 

@@ -35,8 +35,9 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   protected int compareEqualStartIntervals(@NotNull IntervalNode<RangeHighlighterEx> i1, @NotNull IntervalNode<RangeHighlighterEx> i2) {
     RHNode o1 = (RHNode)i1;
     RHNode o2 = (RHNode)i2;
-    if (o1.myLayer != o2.myLayer) {
-      return o2.myLayer - o1.myLayer;
+    int d = o2.myLayer - o1.myLayer;
+    if (d != 0) {
+      return d;
     }
     return super.compareEqualStartIntervals(i1, i2);
   }

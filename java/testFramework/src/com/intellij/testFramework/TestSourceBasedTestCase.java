@@ -15,16 +15,13 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.ide.highlighter.ProjectFileType;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -66,13 +63,11 @@ import java.io.File;
   }
 
   private void setupContentRoot() {
-    ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    ContentEntry contentEntry = modifiableModel.addContentEntry(getContentRoot());
+    PsiTestUtil.addContentRoot(myModule, getContentRoot());
     VirtualFile src = getContentRoot().findChild("src");
     if (src != null) {
-      contentEntry.addSourceFolder(src, false);
+      PsiTestUtil.addSourceRoot(myModule, src);
     }
-    modifiableModel.commit();
   }
 
   protected VirtualFile getContentRoot() {

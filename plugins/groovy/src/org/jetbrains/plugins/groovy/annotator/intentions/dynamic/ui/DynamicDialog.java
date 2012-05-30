@@ -192,7 +192,7 @@ public abstract class DynamicDialog extends DialogWrapper {
     GrTypeElement typeElement = getEnteredTypeName();
 
     if (typeElement == null) {
-      mySettings.setType("java.lang.Object");
+      mySettings.setType(CommonClassNames.JAVA_LANG_OBJECT);
     }
     else {
       PsiType type = typeElement.getType();

@@ -903,7 +903,7 @@ public class SystemBuilder {
     if (elemenType != null) {
       addBoundConstraintsImpl(definedType, elemenType, system);
 
-      if (mySettings.cookObjects() && elemenType.getCanonicalText().equals("java.lang.Object")) {
+      if (mySettings.cookObjects() && elemenType.getCanonicalText().equals(CommonClassNames.JAVA_LANG_OBJECT)) {
         system.addSubtypeConstraint(definedType, elemenType);
       }
     }

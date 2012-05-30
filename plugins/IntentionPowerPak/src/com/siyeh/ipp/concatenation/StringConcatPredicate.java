@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,63 +17,49 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.Nullable;
 
 class StringConcatPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (element instanceof PsiJavaToken) {
-      final PsiJavaToken token = (PsiJavaToken)element;
-      final IElementType tokenType = token.getTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUS)) {
-        return false;
-      }
+    if (element instanceof PsiWhiteSpace) {
+      element = element.getPrevSibling();
     }
-    else if (!(element instanceof PsiWhiteSpace)) {
+    if (!(element instanceof PsiJavaToken)) {
       return false;
     }
-    final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)parent;
-    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final IElementType tokenType = token.getTokenType();
     if (!tokenType.equals(JavaTokenType.PLUS)) {
       return false;
     }
-    final PsiType type = binaryExpression.getType();
-    if (type == null || !type.equalsToText("java.lang.String")) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiPolyadicExpression)) {
       return false;
     }
-    final PsiExpression rhs = binaryExpression.getROperand();
-    if (rhs == null) {
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    final PsiType type = polyadicExpression.getType();
+    if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return false;
     }
-    final PsiExpression lhs = binaryExpression.getLOperand();
-    final PsiExpression rightMostExpression = getRightmostExpression(lhs);
-    if (rightMostExpression instanceof PsiPrefixExpression) {
-      final PsiType prefixExpressionType = rightMostExpression.getType();
-      if (prefixExpressionType == null ||
-          prefixExpressionType.equalsToText("java.lang.String")) {
-        return false;
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    PsiExpression previous = null;
+    boolean stringTypeSeen = false;
+    for (int i = 0, length = operands.length; i < length; i++) {
+      final PsiExpression operand = operands[i];
+      final PsiType operandType = operand.getType();
+      final PsiJavaToken currentToken = polyadicExpression.getTokenBeforeOperand(operand);
+      if (token == currentToken) {
+        if (!(previous instanceof PsiLiteralExpression) || !(operand instanceof PsiLiteralExpression)) {
+          return false;
+        }
+        return stringTypeSeen || (i == 1 && operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING));
+      }
+      previous = operand;
+      if (!stringTypeSeen) {
+        stringTypeSeen = operandType != null && operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
       }
     }
-    return PsiUtil.isConstantExpression(rhs) &&
-           PsiUtil.isConstantExpression(rightMostExpression);
-  }
-
-  @Nullable
-  private static PsiExpression getRightmostExpression(
-    PsiExpression expression) {
-    if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
-      final PsiExpression rhs = binaryExpression.getROperand();
-      return getRightmostExpression(rhs);
-    }
-    return expression;
+    return false;
   }
 }

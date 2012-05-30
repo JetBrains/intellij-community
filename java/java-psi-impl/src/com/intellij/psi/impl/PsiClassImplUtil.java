@@ -695,19 +695,19 @@ public class PsiClassImplUtil {
       PsiClass baseClass = baseClassReference.resolve();
       if (baseClass != null) {
         if (baseClass.isInterface()) {
-          PsiClass objectClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.lang.Object", psiClass.getResolveScope());
+          PsiClass objectClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
           return objectClass != null ? new PsiClass[]{objectClass, baseClass} : new PsiClass[]{baseClass};
         }
         return new PsiClass[]{baseClass};
       }
 
-      PsiClass objectClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.lang.Object", psiClass.getResolveScope());
+      PsiClass objectClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
       return objectClass != null ? new PsiClass[]{objectClass} : PsiClass.EMPTY_ARRAY;
     }
     else if (psiClass instanceof PsiTypeParameter) {
       if (extendsListTypes.length == 0) {
         final PsiClass objectClass =
-          JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.lang.Object", psiClass.getResolveScope());
+          JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
         return objectClass != null ? new PsiClass[]{objectClass} : PsiClass.EMPTY_ARRAY;
       }
       return resolveClassReferenceList(extendsListTypes, psiClass.getManager(),
@@ -820,7 +820,7 @@ public class PsiClassImplUtil {
                                                       final PsiManager manager,
                                                       final GlobalSearchScope resolveScope,
                                                       boolean includeObject) {
-    PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
+    PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
     if (objectClass == null) includeObject = false;
     if (listOfTypes == null || listOfTypes.length == 0) {
       if (includeObject) return new PsiClass[]{objectClass};

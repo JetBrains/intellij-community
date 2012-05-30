@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -105,7 +106,7 @@ public class GroovyUnconditionalWaitInspection extends BaseInspection {
           return;
         }
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass == null || !"java.lang.Object".equals(containingClass.getQualifiedName())) {
+        if (containingClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
           return;
         }
         registerMethodCallError(methodCallExpression);

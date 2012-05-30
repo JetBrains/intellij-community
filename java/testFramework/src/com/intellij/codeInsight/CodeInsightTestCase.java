@@ -53,6 +53,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -155,16 +156,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
     final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        final ContentEntry contentEntry = rootModel.addContentEntry(vdir);
-        contentEntry.addSourceFolder(vdir, false);
-        rootModel.commit();
-      }
-    });
+    PsiTestUtil.addSourceRoot(myModule, vdir);
 
     configureByExistingFile(vFile);
 

@@ -47,7 +47,7 @@ public class HighlightNamesUtil {
   public static HighlightInfo highlightMethodName(final PsiMethod method,
                                                   final PsiElement elementToHighlight,
                                                   final boolean isDeclaration,
-                                                  final EditorColorsScheme colorsScheme) {
+                                                  @NotNull EditorColorsScheme colorsScheme) {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(method, type, colorsScheme);
@@ -59,7 +59,7 @@ public class HighlightNamesUtil {
 
   private static TextAttributes mergeWithScopeAttributes(final PsiElement element,
                                                          final HighlightInfoType type,
-                                                         final EditorColorsScheme colorsScheme) {
+                                                         @NotNull EditorColorsScheme colorsScheme) {
     TextAttributes regularAttributes = HighlightInfo.getAttributesByType(element, type, colorsScheme);
     if (element == null) return regularAttributes;
     TextAttributes scopeAttributes = getScopeAttributes(element, colorsScheme);
@@ -67,7 +67,7 @@ public class HighlightNamesUtil {
   }
 
   @Nullable
-  public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight, final EditorColorsScheme colorsScheme) {
+  public static HighlightInfo highlightClassName(PsiClass aClass, PsiElement elementToHighlight, @NotNull EditorColorsScheme colorsScheme) {
     HighlightInfoType type = getClassNameHighlightType(aClass, elementToHighlight);
     if (elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(aClass, type, colorsScheme);
@@ -98,7 +98,7 @@ public class HighlightNamesUtil {
   @Nullable
   public static HighlightInfo highlightVariableName(final PsiVariable variable,
                                                     final PsiElement elementToHighlight,
-                                                    final EditorColorsScheme colorsScheme) {
+                                                    @NotNull EditorColorsScheme colorsScheme) {
     HighlightInfoType varType = getVariableNameHighlightType(variable);
     if (varType != null) {
       if (variable instanceof PsiField) {
@@ -112,7 +112,7 @@ public class HighlightNamesUtil {
 
   @Nullable
   public static HighlightInfo highlightClassNameInQualifier(final PsiJavaCodeReferenceElement element,
-                                                            final EditorColorsScheme colorsScheme) {
+                                                            @NotNull EditorColorsScheme colorsScheme) {
     PsiExpression qualifierExpression = null;
     if (element instanceof PsiReferenceExpression) {
       qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();

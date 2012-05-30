@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,14 +33,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -66,18 +65,21 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createEmptyCOWList();
   private boolean myFiltersLoaded = false;
   private final ProblemListener fireProblemListeners = new ProblemListener() {
+    @Override
     public void problemsAppeared(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsAppeared(file);
       }
     }
 
+    @Override
     public void problemsChanged(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsChanged(file);
       }
     }
 
+    @Override
     public void problemsDisappeared(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsDisappeared(file);
@@ -103,7 +105,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     private final Collection<Problem> problems = new THashSet<Problem>();
     private boolean hasSyntaxErrors;
 
-    public boolean equals(final Object o) {
+    public boolean equals(@Nullable final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
@@ -119,44 +121,52 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public WolfTheProblemSolverImpl(Project project, PsiManager psiManager, VirtualFileManager virtualFileManager) {
+  public WolfTheProblemSolverImpl(@NotNull Project project, @NotNull PsiManager psiManager, @NotNull VirtualFileManager virtualFileManager) {
     myProject = project;
     PsiTreeChangeListener changeListener = new PsiTreeChangeAdapter() {
+      @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childRemoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         clearSyntaxErrorFlag(event);
       }
     };
     psiManager.addPsiTreeChangeListener(changeListener);
     VirtualFileListener virtualFileListener = new VirtualFileAdapter() {
-      public void fileDeleted(final VirtualFileEvent event) {
+      @Override
+      public void fileDeleted(@NotNull final VirtualFileEvent event) {
         onDeleted(event.getFile());
       }
 
-      public void fileMoved(final VirtualFileMoveEvent event) {
+      @Override
+      public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
         onDeleted(event.getFile());
       }
 
-      private void onDeleted(final VirtualFile file) {
+      private void onDeleted(@NotNull final VirtualFile file) {
         if (file.isDirectory()) {
           clearInvalidFiles();
         }
@@ -169,10 +179,12 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) { //tests?
       fileStatusManager.addFileStatusListener(new FileStatusListener() {
+        @Override
         public void fileStatusesChanged() {
           clearInvalidFiles();
         }
 
+        @Override
         public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
           fileStatusesChanged();
         }
@@ -192,7 +204,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  private void clearSyntaxErrorFlag(final PsiTreeChangeEvent event) {
+  private void clearSyntaxErrorFlag(@NotNull final PsiTreeChangeEvent event) {
     PsiFile file = event.getFile();
     if (file == null) return;
     VirtualFile virtualFile = file.getVirtualFile();
@@ -204,22 +216,27 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getComponentName() {
     return "Problems";
   }
 
+  @Override
   public void initComponent() {
 
   }
 
+  @Override
   public void disposeComponent() {
 
   }
@@ -236,35 +253,29 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       if (file.isValid()) progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
     }
     pass.setProgressLimit(progressLimit);
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    Pair<String, String> oldInfo = saveStatusBarInfo(statusBar);
-    try {
-      for (final VirtualFile virtualFile : files) {
-        progress.checkCanceled();
-        if (virtualFile == null) break;
-        if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress, statusBar)) {
-          doRemove(virtualFile);
-        }
-        if (virtualFile.isValid()) pass.advanceProgress(virtualFile.getLength());
+    for (final VirtualFile virtualFile : files) {
+      progress.checkCanceled();
+      if (virtualFile == null) break;
+      if (!virtualFile.isValid() || orderVincentToCleanTheCar(virtualFile, progress)) {
+        doRemove(virtualFile);
       }
-    }
-    finally {
-      restoreStatusBarInfo(statusBar, oldInfo);
+      if (virtualFile.isValid()) pass.advanceProgress(virtualFile.getLength());
     }
   }
 
   public static class HaveGotErrorException extends RuntimeException {
-    private final HighlightInfo myHighlightInfo;
+    @NotNull private final HighlightInfo myHighlightInfo;
     private final boolean myHasErrorElement;
 
-    private HaveGotErrorException(HighlightInfo info, final boolean hasErrorElement) {
+    private HaveGotErrorException(@NotNull HighlightInfo info, final boolean hasErrorElement) {
       myHighlightInfo = info;
       myHasErrorElement = hasErrorElement;
     }
   }
 
   // returns true if car has been cleaned
-  private boolean orderVincentToCleanTheCar(final VirtualFile file, final ProgressIndicator progressIndicator, final StatusBar statusBar) throws ProcessCanceledException {
+  private boolean orderVincentToCleanTheCar(@NotNull final VirtualFile file,
+                                            @NotNull final ProgressIndicator progressIndicator) throws ProcessCanceledException {
     if (!isToBeHighlighted(file)) {
       clearProblems(file);
       return true; // file is going to be red waved no more
@@ -282,9 +293,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
 
     try {
       GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false) {
-        protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
+        @Override
+        protected HighlightInfoHolder createInfoHolder(@NotNull final PsiFile file) {
           return new HighlightInfoHolder(file, HighlightInfoFilter.EMPTY_ARRAY) {
-            public boolean add(HighlightInfo info) {
+            @Override
+            public boolean add(@Nullable HighlightInfo info) {
               if (info != null && info.getSeverity() == HighlightSeverity.ERROR) {
                 throw new HaveGotErrorException(info, myHasErrorElement);
               }
@@ -293,12 +306,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
           };
         }
       };
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (progressIndicator.isCanceled()) return;
-          statusBar.setInfo("Checking '" + file.getPresentableUrl() + "'");
-        }
-      });
       pass.collectInformation(progressIndicator);
     }
     catch (HaveGotErrorException e) {
@@ -310,26 +317,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return true;
   }
 
-  @Nullable
-  private static Pair<String, String> saveStatusBarInfo(final StatusBar statusBar) {
-    Pair<String, String> oldInfo = null;
-    if (statusBar instanceof StatusBarEx) {
-      oldInfo = Pair.create(statusBar.getInfo(), ((StatusBarEx)statusBar).getInfoRequestor());
-    }
-
-    return oldInfo;
-  }
-
-  private static void restoreStatusBarInfo(final StatusBar statusBar, final Pair<String, String> oldInfo) {
-    if (statusBar instanceof StatusBarEx) {
-      LaterInvocator.invokeLater(new Runnable() {
-        public void run() {
-          statusBar.setInfo(oldInfo.first, oldInfo.second);
-        }
-      });
-    }
-  }
-
+  @Override
   public boolean hasSyntaxErrors(final VirtualFile file) {
     synchronized (myProblems) {
       ProblemFileInfo info = myProblems.get(file);
@@ -350,7 +338,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return false;
   }
 
-  public boolean hasProblemFilesBeneath(Condition<VirtualFile> condition) {
+  @Override
+  public boolean hasProblemFilesBeneath(@NotNull Condition<VirtualFile> condition) {
     if (!myProject.isOpen()) return false;
     synchronized (myProblems) {
       if (!myProblems.isEmpty()) {
@@ -363,34 +352,42 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public boolean hasProblemFilesBeneath(final Module scope) {
+  @Override
+  public boolean hasProblemFilesBeneath(@NotNull final Module scope) {
     return hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      @Override
       public boolean value(final VirtualFile virtualFile) {
         return ModuleUtil.moduleContainsFile(scope, virtualFile, false);
       }
     });
   }
 
-  public void addProblemListener(ProblemListener listener) {
+  @Override
+  public void addProblemListener(@NotNull ProblemListener listener) {
     myProblemListeners.add(listener);
   }
 
-  public void addProblemListener(final ProblemListener listener, Disposable parentDisposable) {
+  @Override
+  public void addProblemListener(@NotNull final ProblemListener listener, @NotNull Disposable parentDisposable) {
     addProblemListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeProblemListener(listener);
       }
     });
   }
 
-  public void removeProblemListener(ProblemListener listener) {
+  @Override
+  public void removeProblemListener(@NotNull ProblemListener listener) {
     myProblemListeners.remove(listener);
   }
 
-  public void registerFileHighlightFilter(final Condition<VirtualFile> filter, Disposable parentDisposable) {
+  @Override
+  public void registerFileHighlightFilter(@NotNull final Condition<VirtualFile> filter, @NotNull Disposable parentDisposable) {
     myFilters.add(filter);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         myFilters.remove(filter);
       }
@@ -405,13 +402,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @Override
   public boolean isProblemFile(VirtualFile virtualFile) {
     synchronized (myProblems) {
       return myProblems.containsKey(virtualFile);
     }
   }
 
-  private boolean isToBeHighlighted(VirtualFile virtualFile) {
+  private boolean isToBeHighlighted(@Nullable VirtualFile virtualFile) {
     if (virtualFile == null) return false;
 
     synchronized (myFilters) {
@@ -430,6 +428,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return false;
   }
 
+  @Override
   public void weHaveGotProblems(@NotNull final VirtualFile virtualFile, @NotNull List<Problem> problems) {
     if (problems.isEmpty()) return;
     if (!isToBeHighlighted(virtualFile)) return;
@@ -452,14 +451,19 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
+  @Override
   public void clearProblems(@NotNull VirtualFile virtualFile) {
     doRemove(virtualFile);
   }
 
-  public Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity,
-                                  final TextRange textRange, final String messageText) {
+  @Override
+  public Problem convertToProblem(@Nullable final VirtualFile virtualFile,
+                                  final HighlightSeverity severity,
+                                  @NotNull final TextRange textRange,
+                                  final String messageText) {
     if (virtualFile == null || textRange.getStartOffset() < 0 || textRange.getLength() < 0 ) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
+      @Override
       public HighlightInfo compute() {
         return HighlightInfo.createHighlightInfo(HighlightInfo.convertSeverity(severity), textRange, messageText);
       }
@@ -467,9 +471,11 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return new ProblemImpl(virtualFile, info, false);
   }
 
-  public Problem convertToProblem(final VirtualFile virtualFile, final int line, final int column, final String[] message) {
+  @Override
+  public Problem convertToProblem(@Nullable final VirtualFile virtualFile, final int line, final int column, @NotNull final String[] message) {
     if (virtualFile == null || virtualFile.isDirectory() || virtualFile.getFileType().isBinary()) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
+      @Override
       public HighlightInfo compute() {
         TextRange textRange = getTextRange(virtualFile, line, column);
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, StringUtil.join(message, "\n"));
@@ -479,7 +485,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return new ProblemImpl(virtualFile, info, false);
   }
 
-  public void reportProblems(final VirtualFile file, Collection<Problem> problems) {
+  @Override
+  public void reportProblems(@NotNull final VirtualFile file, @NotNull Collection<Problem> problems) {
     if (problems.isEmpty()) {
       clearProblems(file);
       return;
@@ -510,7 +517,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   @NotNull
-  private static TextRange getTextRange(final VirtualFile virtualFile, int line, final int column) {
+  private static TextRange getTextRange(@NotNull final VirtualFile virtualFile, int line, final int column) {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (line > document.getLineCount()) line = document.getLineCount();
     line = line <= 0 ? 0 : line - 1;

@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public class SetupJDKFix implements IntentionAction, HighPriorityAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return JavaPsiFacade.getInstance(project).findClass("java.lang.Object", file.getResolveScope()) == null;
+    return JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, file.getResolveScope()) == null;
   }
 
   @Override

@@ -83,7 +83,7 @@ public class ClassUtil {
     // super class can have package local abstract methods not accessible for overriding
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null) return null;
-    if ("java.lang.Object".equals(aClass.getQualifiedName())) return null;
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return null;
     if (JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass)) return null;
 
     for (HierarchicalMethodSignature methodSignature : superClass.getVisibleSignatures()) {

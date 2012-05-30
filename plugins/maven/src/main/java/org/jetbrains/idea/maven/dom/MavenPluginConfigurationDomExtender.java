@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlElement;
@@ -47,7 +48,8 @@ import java.util.*;
 public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
   public static final Key<ParameterData> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
 
-  private static final Set<String> COLLECTIONS_TYPE_NAMES = ImmutableSet.of("java.util.Collection", "java.util.Set", "java.util.List",
+  private static final Set<String> COLLECTIONS_TYPE_NAMES = ImmutableSet.of("java.util.Collection", CommonClassNames.JAVA_UTIL_SET,
+                                                                            CommonClassNames.JAVA_UTIL_LIST,
                                                                             "java.util.ArrayList", "java.util.HashSet",
                                                                             "java.util.LinkedList");
 

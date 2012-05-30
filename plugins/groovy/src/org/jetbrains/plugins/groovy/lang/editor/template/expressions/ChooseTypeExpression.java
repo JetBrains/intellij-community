@@ -86,7 +86,7 @@ public class ChooseTypeExpression extends Expression {
 
   private PsiType chooseType(TypeConstraint[] constraints) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
-    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(myManager.getProject()));
+    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myManager.getProject()));
   }
 
   public Result calculateResult(ExpressionContext context) {

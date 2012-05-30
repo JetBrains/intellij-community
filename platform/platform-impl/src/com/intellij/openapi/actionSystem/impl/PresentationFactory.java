@@ -31,7 +31,7 @@ public class PresentationFactory {
   public final Presentation getPresentation(@NotNull AnAction action){
     Presentation presentation = myAction2Presentation.get(action);
     if (presentation == null){
-      presentation = (Presentation)action.getTemplatePresentation().clone();
+      presentation = action.getTemplatePresentation().clone();
       myAction2Presentation.put(action, processPresentation(presentation));
     }
     return presentation;

@@ -18,6 +18,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
@@ -85,7 +86,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   }
 
   public void testScr34020() throws Exception {
-    doTest("java.util.List", "java.util.Collection", false);
+    doTest(CommonClassNames.JAVA_UTIL_LIST, "java.util.Collection", false);
   }
 
    public void testCommonInheritor() throws Exception {

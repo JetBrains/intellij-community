@@ -57,7 +57,7 @@ class IndexedForEachLoopPredicate implements PsiElementPredicate {
       final Project project = element.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiClass listInterface =
-        psiFacade.findClass("java.util.List",
+        psiFacade.findClass(CommonClassNames.JAVA_UTIL_LIST,
                             GlobalSearchScope.allScope(project));
       if (listInterface == null ||
           !InheritanceUtil.isInheritorOrSelf(aClass,

@@ -21,6 +21,7 @@ import com.intellij.ide.util.treeView.smartTree.TreeAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.project.DumbAware;
 
 public class TreeActionWrapper extends ToggleAction implements DumbAware {
@@ -37,7 +38,9 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware {
     super.update(e);
     Presentation presentation = e.getPresentation();
     ActionPresentation actionPresentation = myAction.getPresentation();
-    presentation.setIcon(actionPresentation.getIcon());
+    if (presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON) == null) {
+      presentation.setIcon(actionPresentation.getIcon());
+    }
     presentation.setText(actionPresentation.getText());
   }
 

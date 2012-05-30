@@ -136,7 +136,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
     PsiMethod supConstructor = null;
     PsiClass superClass = targetClass.getSuperClass();
-    if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) &&
+    if (superClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()) &&
         !"java.lang.Enum".equals(superClass.getQualifiedName())) {
       PsiMethod[] constructors = superClass.getConstructors();
       boolean hasDefaultConstructor = false;
@@ -188,7 +188,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       }
       else {
         PsiReferenceList extendsList = targetClass.getExtendsList();
-        if (extendsList.getReferencedTypes().length == 0 && !"java.lang.Object".equals(classType.getCanonicalText())) {
+        if (extendsList.getReferencedTypes().length == 0 && !CommonClassNames.JAVA_LANG_OBJECT.equals(classType.getCanonicalText())) {
           extendsList.add(factory.createReferenceElementByType(classType));
         }
       }

@@ -17,6 +17,7 @@ package com.intellij.android.designer.inspection;
 
 import com.android.tools.lint.detector.api.Issue;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.propertyTable.IXmlAttributeLocator;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -25,6 +26,7 @@ import com.intellij.designer.inspection.ErrorInfo;
 import com.intellij.designer.inspection.QuickFix;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
+import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -71,9 +73,9 @@ public final class ErrorAnalyzer {
             PsiElement endElement = xmlFile.findElementAt(range.getEndOffset() - 1);
 
             if (startElement != null && endElement != null && !inspection.isSuppressedFor(startElement)) {
-              RadComponent component = findComponent(rootComponent, startElement);
-              ErrorInfo errorInfo = new ErrorInfo(message, null, pair.getSecond());
-              ErrorInfo.add(component, errorInfo);
+              Pair<RadComponent, String> componentInfo = findComponent(rootComponent, startElement);
+              ErrorInfo errorInfo = new ErrorInfo(message, componentInfo.second, pair.getSecond());
+              ErrorInfo.add(componentInfo.first, errorInfo);
 
               List<QuickFix> designerFixes = errorInfo.getQuickFixes();
 
@@ -135,19 +137,18 @@ public final class ErrorAnalyzer {
     }
   }
 
-  private static RadComponent findComponent(RadComponent rootComponent, PsiElement element) {
-    Pair<XmlTag, XmlAttribute> tagInfo = extractTag(element);
+  private static Pair<RadComponent, String> findComponent(RadComponent rootComponent, PsiElement element) {
+    final Pair<XmlTag, XmlAttribute> tagInfo = extractTag(element);
     if (tagInfo.first == null) {
-      return rootComponent;
+      return new Pair<RadComponent, String>(rootComponent, null);
     }
 
-    final XmlTag tag = tagInfo.first;
     final RadComponent[] result = new RadComponent[]{rootComponent};
 
     rootComponent.accept(new RadComponentVisitor() {
       @Override
       public boolean visit(RadComponent component) {
-        if (tag == ((RadViewComponent)component).getTag()) {
+        if (tagInfo.first == ((RadViewComponent)component).getTag()) {
           result[0] = component;
           return false;
         }
@@ -159,7 +160,18 @@ public final class ErrorAnalyzer {
       }
     }, true);
 
-    return result[0];
+    String propertyName = null;
+    if (tagInfo.second != null && result[0] != rootComponent) {
+      RadViewComponent component = (RadViewComponent)result[0];
+      for (Property property : component.getProperties()) {
+        if (((IXmlAttributeLocator)property).checkAttribute(component, tagInfo.second)) {
+          propertyName = property.getName();
+          break;
+        }
+      }
+    }
+
+    return new Pair<RadComponent, String>(result[0], propertyName);
   }
 
   private static Pair<XmlTag, XmlAttribute> extractTag(PsiElement element) {

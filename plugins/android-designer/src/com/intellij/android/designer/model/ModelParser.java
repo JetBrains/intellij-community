@@ -377,12 +377,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
   public static void updateRootComponent(RadViewComponent rootComponent,
                                          RenderSession session,
                                          RootView nativeComponent) {
-    List<ViewInfo> views = session.getRootViews();
-    List<RadComponent> children = rootComponent.getChildren();
-    int size = children.size();
-    for (int i = 0; i < size; i++) {
-      updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, 0, 0);
-    }
+    updateChildren(rootComponent, session.getRootViews(), nativeComponent, 0, 0);
 
     rootComponent.setNativeComponent(nativeComponent);
     rootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
@@ -407,12 +402,18 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
     component.setBounds(left, top, Math.max(width, EMPTY_COMPONENT_SIZE), Math.max(height, EMPTY_COMPONENT_SIZE));
 
-    List<ViewInfo> views = view.getChildren();
+    updateChildren(component, view.getChildren(), nativeComponent, left, top);
+  }
+
+  private static void updateChildren(RadViewComponent component, List<ViewInfo> views, RootView nativeComponent, int left, int top) {
     List<RadComponent> children = component.getChildren();
     int size = children.size();
 
-    for (int i = 0; i < size; i++) {
-      updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, left, top);
+    for (int componentIndex = 0, viewIndex = 0; componentIndex < size; componentIndex++) {
+      RadViewComponent childComponent = (RadViewComponent)children.get(componentIndex);
+      if (!(childComponent instanceof RadRequestFocus)) {
+        updateComponent(childComponent, views.get(viewIndex++), nativeComponent, left, top);
+      }
     }
   }
 }

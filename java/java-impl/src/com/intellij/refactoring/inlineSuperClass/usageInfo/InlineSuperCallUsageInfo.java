@@ -72,7 +72,7 @@ public class InlineSuperCallUsageInfo extends FixableUsageInfo {
           assert inliningClass != null;
           methodCopy = (PsiMethod)inliningClass.add(methodCopy);
           final InlineMethodProcessor inlineMethodProcessor = new InlineMethodProcessor(getProject(), methodCopy, methodExpression, null, true);
-          inlineMethodProcessor.run();
+          inlineMethodProcessor.inlineMethodCall(methodExpression);
           methodCopy.delete();
         }
       }

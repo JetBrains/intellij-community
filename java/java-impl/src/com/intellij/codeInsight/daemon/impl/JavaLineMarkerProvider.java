@@ -175,7 +175,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       return;
     }
-    if ("java.lang.Object".equals(aClass.getQualifiedName())) return; // It's useless to have overridden markers for object.
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return; // It's useless to have overridden markers for object.
 
     PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
     if (inheritor != null) {
@@ -197,7 +197,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     for (PsiMethod method : methods) {
       ProgressManager.checkCanceled();
       final PsiClass parentClass = method.getContainingClass();
-      if (!"java.lang.Object".equals(parentClass.getQualifiedName())) {
+      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(parentClass.getQualifiedName())) {
         classes.add(parentClass);
       }
     }

@@ -18,6 +18,9 @@ package com.intellij.openapi.editor.ex;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * An iterator you must to {@link #dispose()} after use
+ */
 public interface DisposableIterator<T> extends Iterator<T> {
   void dispose();
   DisposableIterator EMPTY = new DisposableIterator() {

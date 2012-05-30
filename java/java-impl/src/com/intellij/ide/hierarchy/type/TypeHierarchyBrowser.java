@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -129,7 +130,7 @@ public final class TypeHierarchyBrowser extends TypeHierarchyBrowserBase {
 
   public static class BaseOnThisTypeAction extends TypeHierarchyBrowserBase.BaseOnThisTypeAction {
     protected boolean isEnabled(final HierarchyBrowserBaseEx browser, final PsiElement psiElement) {
-      return super.isEnabled(browser, psiElement) && !"java.lang.Object".equals(((PsiClass)psiElement).getQualifiedName());
+      return super.isEnabled(browser, psiElement) && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)psiElement).getQualifiedName());
     }
   }
 }

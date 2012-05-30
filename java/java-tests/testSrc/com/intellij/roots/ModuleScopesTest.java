@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.util.PathsList;
 
@@ -83,9 +84,7 @@ public class ModuleScopesTest extends ModuleTestCase {
         VirtualFile rootB = myFixture.findOrCreateDir("b");
         VirtualFile outB = myFixture.findOrCreateDir("out");
 
-        final ModifiableRootModel modelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
-        modelA.addModuleOrderEntry(moduleB).setScope(scope);
-        modelA.commit();
+        PsiTestUtil.addDependency(moduleA, moduleB, scope, false);
 
         final ModifiableRootModel modelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
         final ContentEntry contentEntry = modelB.addContentEntry(rootB);
@@ -206,9 +205,7 @@ public class ModuleScopesTest extends ModuleTestCase {
 
   public void testLibUnderModuleContent() throws IOException {
     VirtualFile lib = myFixture.findOrCreateDir("lib");
-    ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    model.addContentEntry(lib);
-    model.commit();
+    PsiTestUtil.addContentRoot(myModule, lib);
 
     VirtualFile file = lib.createChildData(this, "a.txt");
     addLibrary(myModule, DependencyScope.COMPILE);

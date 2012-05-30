@@ -18,6 +18,7 @@ package com.intellij.ide.hierarchy.type;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 
@@ -34,7 +35,7 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
     final PsiClass psiClass = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     final PsiClass[] supers = psiClass.getSupers();
     final List<HierarchyNodeDescriptor> descriptors = new ArrayList<HierarchyNodeDescriptor>();
-    PsiClass objectClass = JavaPsiFacade.getInstance(myProject).findClass("java.lang.Object", psiClass.getResolveScope());
+    PsiClass objectClass = JavaPsiFacade.getInstance(myProject).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
     for (PsiClass aSuper : supers) {
       if (!psiClass.isInterface() || !aSuper.equals(objectClass)) {
         descriptors.add(new TypeHierarchyNodeDescriptor(myProject, descriptor, aSuper, false));

@@ -16,6 +16,7 @@
 package com.intellij.designer.inspection;
 
 import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 
@@ -36,6 +37,7 @@ public final class DesignerHighlightingPass implements HighlightingPass {
 
   @Override
   public void applyInformationToEditor() {
+    DesignerToolWindowManager.getInstance(myDesigner.getProject()).updateInspections();
     myDesigner.updateInspections();
   }
 }

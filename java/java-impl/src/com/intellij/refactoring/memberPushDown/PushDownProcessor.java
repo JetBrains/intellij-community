@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -356,7 +357,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       }
       else if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
-        final PsiMethod methodBySignature = targetClass.findMethodBySignature(method, false);
+        final PsiMethod methodBySignature =
+          MethodSignatureUtil.findMethodBySuperSignature(targetClass, method.getSignature(substitutor), false);
         if (methodBySignature == null) {
           final boolean wasInterface = myClass.isInterface();
           newMember = (PsiMethod)targetClass.add(method);

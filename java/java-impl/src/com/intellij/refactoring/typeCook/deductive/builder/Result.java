@@ -69,7 +69,7 @@ public class Result {
     if (myBinding != null) {
       final PsiType type = myBinding.substitute(myTypes.get(element));
 
-      @NonNls final String objectFQName = "java.lang.Object";
+      @NonNls final String objectFQName = CommonClassNames.JAVA_LANG_OBJECT;
       if (originalType.getCanonicalText().equals(objectFQName)) {
         if (type == null) {
           return originalType;

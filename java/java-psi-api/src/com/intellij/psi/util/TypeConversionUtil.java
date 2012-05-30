@@ -511,7 +511,7 @@ public class TypeConversionUtil {
     }
     if (isApplicable && strict) {
       if (resultTypeRank > MAX_NUMERIC_RANK) {
-        isApplicable = ltypeRank == resultTypeRank || ltype.equalsToText("java.lang.Object");
+        isApplicable = ltypeRank == resultTypeRank || ltype.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
       }
       else {
         isApplicable = ltypeRank <= MAX_NUMERIC_RANK;
@@ -678,7 +678,7 @@ public class TypeConversionUtil {
           return "java.io.Serializable".equals(qualifiedName) || "java.lang.Cloneable".equals(qualifiedName);
         }
         else {
-          return left.equalsToText("java.lang.Object");
+          return left.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
         }
       }
       PsiType lCompType = ((PsiArrayType)left).getComponentType();
@@ -873,9 +873,9 @@ public class TypeConversionUtil {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
       final PsiType leftBound = leftWildcard.getBound();
       if (leftBound == null) return true;
-      if (leftBound.equalsToText("java.lang.Object")) {
+      if (leftBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         if (!leftWildcard.isSuper()) return true;
-        if (typeRight.equalsToText("java.lang.Object")) return true;
+        if (typeRight.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
       }
 
       if (typeRight instanceof PsiWildcardType) {
@@ -956,7 +956,7 @@ public class TypeConversionUtil {
       return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(superClass);
     }
 
-    final PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", superClass.getResolveScope());
+    final PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, superClass.getResolveScope());
     if (manager.areElementsEquivalent(superClass, objectClass)) {
       return PsiSubstitutor.EMPTY;
     }

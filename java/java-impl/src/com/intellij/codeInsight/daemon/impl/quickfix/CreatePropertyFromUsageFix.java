@@ -100,13 +100,8 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
 
     for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
-        if (CreateFromUsageUtils.shouldShowTag(offset, ref.getReferenceNameElement(), myMethodCall)) {
-          setText(getterOrSetter);
-          return true;
-        }
-        else {
-          return false;
-        }
+        setText(getterOrSetter);
+        return true;
       }
     }
 
@@ -151,7 +146,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
           }
         }
       }
-      
+
       if (set.size() < 2) return null;
       return set.toArray(new LookupElement[set.size()]);
     }
@@ -313,8 +308,8 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     String methodName = methodCall.getMethodExpression().getReferenceName();
     String propertyName = PropertyUtil.getPropertyName(methodName);
     if (propertyName != null && propertyName.length() > 0) {
-        VariableKind kind = isStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
-        return codeStyleManager.propertyNameToVariableName(propertyName, kind);
+      VariableKind kind = isStatic ? VariableKind.STATIC_FIELD : VariableKind.FIELD;
+      return codeStyleManager.propertyNameToVariableName(propertyName, kind);
     }
 
     return null;
@@ -322,7 +317,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
 
   @Override
   protected boolean isValidElement(PsiElement element) {
-    PsiMethodCallExpression methodCall = (PsiMethodCallExpression) element;
+    PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
     return methodCall.getMethodExpression().resolve() != null;
   }
 }

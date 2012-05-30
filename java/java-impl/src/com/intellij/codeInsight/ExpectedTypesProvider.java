@@ -446,7 +446,7 @@ public class ExpectedTypesProvider {
 
     @Override public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
       PsiElementFactory factory = JavaPsiFacade.getInstance(statement.getProject()).getElementFactory();
-      PsiType objectType = factory.createTypeByFQClassName("java.lang.Object", myExpr.getResolveScope());
+      PsiType objectType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, myExpr.getResolveScope());
       myResult = new ExpectedTypeInfo[]{createInfoImpl(objectType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objectType, TailType.NONE)};
     }
 

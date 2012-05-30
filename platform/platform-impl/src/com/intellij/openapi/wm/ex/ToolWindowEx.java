@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 
@@ -49,7 +50,7 @@ public interface ToolWindowEx extends ToolWindow {
 
   InternalDecorator getDecorator();
 
-  void setAdditionalGearActions(ActionGroup additionalGearActions);
+  void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions);
 
   void setTitleActions(AnAction... actions);
 
