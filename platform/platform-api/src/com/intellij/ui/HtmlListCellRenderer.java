@@ -74,7 +74,7 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
 
   public void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes) {
     if (fragment.length() > 0) {
-      myText.append("<span ");
+      myText.append("<span");
       formatStyle(myText, attributes);
       myText.append('>').append(StringUtil.escapeXml(fragment)).append("</span>");
     }
@@ -82,13 +82,13 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
 
   public void appendLink(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, @NotNull final String url) {
     if (fragment.length() > 0) {
-      myText.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\" ");
+      myText.append("<a href=\"").append(StringUtil.replace(url, "\"", "%22")).append("\"");
       formatStyle(myText, attributes);
       myText.append('>').append(StringUtil.escapeXml(fragment)).append("</a>");
     }
   }
 
-  public void append(SimpleColoredText text) {
+  public void append(@NotNull final SimpleColoredText text) {
     int length = text.getTexts().size();
     for (int i = 0; i < length; i++) {
       String fragment = text.getTexts().get(i);
@@ -102,7 +102,7 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
     final Color bgColor = attributes.getBgColor();
     final int style = attributes.getStyle();
 
-    builder.append("style=\"");
+    final int pos = builder.length();
     if (fgColor != null) {
       builder.append("color:#").append(Integer.toString(fgColor.getRGB() & 0xFFFFFF, 16)).append(';');
     }
@@ -121,6 +121,9 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
     else if ((style & SimpleTextAttributes.STYLE_STRIKEOUT) != 0) {
       builder.append("text-decoration:line-through;");
     }
-    builder.append('"');
+    if (builder.length() > pos) {
+      builder.insert(pos, " style=\"");
+      builder.append('"');
+    }
   }
 }
