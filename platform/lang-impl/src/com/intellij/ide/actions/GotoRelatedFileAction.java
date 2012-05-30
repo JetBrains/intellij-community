@@ -165,6 +165,7 @@ public class GotoRelatedFileAction extends AnAction {
 
         final JComponent leftRenderer = (JComponent)component.getComponents()[0];
         component.remove(leftRenderer);
+        panelWithMnemonic.setBorder(BorderFactory.createEmptyBorder(0, 7, 0, 0));
         panelWithMnemonic.setBackground(leftRenderer.getBackground());
         label.setBackground(leftRenderer.getBackground());
         panelWithMnemonic.add(label, BorderLayout.WEST);
