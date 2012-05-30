@@ -15,6 +15,7 @@
  */
 package com.intellij.core;
 
+import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.PackageIndex;
@@ -28,6 +29,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
+import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import org.jetbrains.annotations.NotNull;
@@ -35,17 +37,19 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
-  private final CoreJavaFileManager myFileManager;
+  private final JavaFileManager myFileManager;
+  private final PackageIndex myPackageIndex;
 
   public JavaCoreProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
     super(parentDisposable, applicationEnvironment);
 
     myFileManager = createCoreFileManager();
+    myPackageIndex = createCorePackageIndex();
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
     myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
-    myProject.registerService(PackageIndex.class, myFileManager);
+    myProject.registerService(PackageIndex.class, myPackageIndex);
     myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myMessageBus));
     myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
     myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
@@ -53,13 +57,17 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
     registerProjectExtensionPoint(PsiElementFinder.EP_NAME, PsiElementFinder.class);
 
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
-    myProject.registerService(CoreJavaFileManager.class, myFileManager);
+    myProject.registerService(JavaFileManager.class, myFileManager);
     registerProjectComponent(JavaPsiFacade.class, javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
   }
 
-  protected CoreJavaFileManager createCoreFileManager() {
-    return new CoreJavaFileManager(myPsiManager, getEnvironment().getLocalFileSystem(), getEnvironment().getJarFileSystem());
+  protected JavaFileManager createCoreFileManager() {
+    return new CoreJavaFileManager(myPsiManager);
+  }
+
+  protected PackageIndex createCorePackageIndex() {
+    return new CorePackageIndex();
   }
 
   public void addJarToClassPath (File path) {
@@ -75,8 +83,8 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
 
   public void addSourcesToClasspath(@NotNull VirtualFile root) {
     assert root.isDirectory();
-    myFileManager.addToClasspath(root);
-    myFileIndexFacade.addLibraryRoot(root);
+    ((CoreJavaFileManager)myFileManager).addToClasspath(root);
+    ((CorePackageIndex)myPackageIndex).addToClasspath(root);
+    ((MockFileIndexFacade)myFileIndexFacade).addLibraryRoot(root);
   }
-
 }

@@ -41,7 +41,7 @@ public class CoreProjectEnvironment {
   private final Disposable myParentDisposable;
   private final CoreApplicationEnvironment myEnvironment;
 
-  protected final MockFileIndexFacade myFileIndexFacade;
+  protected final FileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
   protected final MockProject myProject;
   protected final MessageBusImpl myMessageBus;
