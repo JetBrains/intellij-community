@@ -23,6 +23,8 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,7 +33,7 @@ import java.io.OutputStream;
  * @author traff
  */
 public class ConsoleExecuteActionHandler {
-  private final ProcessHandler myProcessHandler;
+  private ProcessHandler myProcessHandler;
   private final boolean myPreserveMarkup;
   private boolean myAddCurrentToHistory = true;
   private ConsoleHistoryModel myConsoleHistoryModel;
@@ -40,6 +42,15 @@ public class ConsoleExecuteActionHandler {
     myProcessHandler = processHandler;
     myConsoleHistoryModel = new ConsoleHistoryModel();
     myPreserveMarkup = preserveMarkup;
+  }
+
+  @Nullable
+  private synchronized ProcessHandler getProcessHandler() {
+    return myProcessHandler;
+  }
+
+  public synchronized void setProcessHandler(@NotNull final ProcessHandler processHandler) {
+    myProcessHandler = processHandler;
   }
 
   public void setConsoleHistoryModel(ConsoleHistoryModel consoleHistoryModel) {
@@ -81,7 +92,10 @@ public class ConsoleExecuteActionHandler {
 
   public void sendText(String line) {
     //final Charset charset = myProcessHandler.getCharset();
-    final OutputStream outputStream = myProcessHandler.getProcessInput();
+    final ProcessHandler handler = getProcessHandler();
+    assert handler != null : "process handler is null";
+    final OutputStream outputStream = handler.getProcessInput();
+    assert outputStream != null : "output stream is null";
     try {
       //byte[] bytes = (line + "\n").getBytes(charset.name());
       byte[] bytes = line.getBytes();
@@ -98,6 +112,11 @@ public class ConsoleExecuteActionHandler {
   }
 
   public void finishExecution() {
+  }
+
+  public final boolean isProcessTerminated() {
+    final ProcessHandler handler = getProcessHandler();
+    return handler == null || handler.isProcessTerminated();
   }
 
   public String getEmptyExecuteAction() {

@@ -20,10 +20,16 @@
       <entry name="?*.tld" />
       <entry name="?*.ftl" />
     </wildcardResourcePatterns>
-    <annotationProcessing enabled="true" useClasspath="false">
-      <processorPath value="$PROJECT_DIR$/src" />
-      <processor name="my.proc" options="a=b c=d" />
-      <processModule name="compilerConfiguration" generatedDirName="gen" />
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true">
+        <sourceOutputDir name="gen" />
+        <option name="a" value="b" />
+        <option name="c" value="d" />
+        <processor name="my.proc" />
+        <processorPath useClasspath="false">
+          <entry name="$PROJECT_DIR$/src" />
+        </processorPath>
+      </profile>
     </annotationProcessing>
   </component>
 </project>

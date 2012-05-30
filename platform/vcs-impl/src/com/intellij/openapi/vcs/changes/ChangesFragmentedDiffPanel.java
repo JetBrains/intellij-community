@@ -238,7 +238,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
               final DialogWrapper wrapper = ((DialogWrapperDialog)window).getDialogWrapper();
               if (wrapper != null) {
                 Disposer.dispose(wrapper.getDisposable());
-                wrapper.close(0);
+                wrapper.close(DialogWrapper.CANCEL_EXIT_CODE);
                 ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
                 return;
               }

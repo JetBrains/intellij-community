@@ -26,7 +26,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
@@ -34,13 +33,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicElementSettings;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -53,22 +52,13 @@ import java.util.*;
  */
 public class QuickfixUtil {
   @Nullable
-  public static PsiClass findTargetClass(GrReferenceExpression refExpr) {
-    final PsiClass psiClass;
-    if (refExpr.isQualified()) {
-      GrExpression qualifier = refExpr.getQualifierExpression();
-      PsiType type = qualifier.getType();
-      if (!(type instanceof PsiClassType)) return null;
-
-      psiClass = ((PsiClassType)type).resolve();
-    } else {
-      GroovyPsiElement context = PsiTreeUtil.getParentOfType(refExpr, GrTypeDefinition.class, GroovyFileBase.class);
-      if (context instanceof GrTypeDefinition) {
-        return (PsiClass)context;
-      } else if (context instanceof GroovyFileBase) return ((GroovyFileBase)context).getScriptClass();
-      return null;
+  public static PsiClass findTargetClass(GrReferenceExpression refExpr, boolean compileStatic) {
+    PsiType type = GrReferenceResolveUtil.getQualifierType(refExpr);
+    if (type == null && compileStatic) {
+      return GroovyPsiManager.getInstance(refExpr.getProject()).findClassWithCache(CommonClassNames.JAVA_LANG_OBJECT, refExpr.getResolveScope());
     }
-    return psiClass;
+    if (!(type instanceof PsiClassType)) return null;
+    return ((PsiClassType)type).resolve();
   }
 
   public static boolean isStaticCall(GrReferenceExpression refExpr) {
@@ -184,7 +174,7 @@ public class QuickfixUtil {
 
   public static DynamicElementSettings createSettings(GrReferenceExpression referenceExpression) {
     DynamicElementSettings settings = new DynamicElementSettings();
-    final PsiClass containingClass = findTargetClass(referenceExpression);
+    final PsiClass containingClass = findTargetClass(referenceExpression, false);
 
     assert containingClass != null;
     String className = containingClass.getQualifiedName();

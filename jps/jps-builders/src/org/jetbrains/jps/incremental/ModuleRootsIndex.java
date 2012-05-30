@@ -41,13 +41,13 @@ public class ModuleRootsIndex {
       }
       for (String r : module.getSourceRoots()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
-        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, false, generatedRoots.contains(r));
+        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, false, generatedRoots.contains(r), false);
         myRootToModuleMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
       for (String r : module.getTestRoots()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
-        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, true, generatedRoots.contains(r));
+        final RootDescriptor descriptor = new RootDescriptor(moduleName, root, true, generatedRoots.contains(r), false);
         myRootToModuleMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
@@ -79,7 +79,7 @@ public class ModuleRootsIndex {
   }
 
   @NotNull
-  public RootDescriptor associateRoot(File root, Module module, boolean isTestRoot, final boolean isForGeneratedSources) {
+  public RootDescriptor associateRoot(File root, Module module, boolean isTestRoot, final boolean isForGeneratedSources, final boolean isTemp) {
     final RootDescriptor d = myRootToModuleMap.get(root);
     if (d != null) {
       return d;
@@ -89,10 +89,27 @@ public class ModuleRootsIndex {
       moduleRoots = new ArrayList<RootDescriptor>();
       myModuleToRootsMap.put(module, moduleRoots);
     }
-    final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, isTestRoot, isForGeneratedSources);
+    final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, isTestRoot, isForGeneratedSources, isTemp);
     myRootToModuleMap.put(root, descriptor);
     moduleRoots.add(descriptor);
     return descriptor;
+  }
+
+  @NotNull
+  public Collection<RootDescriptor> clearTempRoots() {
+    final Set<RootDescriptor> toRemove = new HashSet<RootDescriptor>();
+    for (Iterator<Map.Entry<File, RootDescriptor>> iterator = myRootToModuleMap.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<File, RootDescriptor> entry = iterator.next();
+      final RootDescriptor rd = entry.getValue();
+      if (rd.isTemp) {
+        toRemove.add(rd);
+        iterator.remove();
+      }
+    }
+    for (Map.Entry<Module, List<RootDescriptor>> entry : myModuleToRootsMap.entrySet()) {
+      entry.getValue().removeAll(toRemove);
+    }
+    return toRemove;
   }
 
   @Nullable

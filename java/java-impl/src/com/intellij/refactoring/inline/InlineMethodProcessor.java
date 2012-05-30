@@ -412,7 +412,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
+  public void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
     InlineUtil.TailCallType tailCall = InlineUtil.getTailCallType(ref);
     ChangeContextUtil.encodeContextInfo(myMethod, false);
     myMethodCopy = (PsiMethod)myMethod.copy();

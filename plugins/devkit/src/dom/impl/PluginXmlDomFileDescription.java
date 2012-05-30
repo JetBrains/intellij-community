@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
@@ -33,7 +34,7 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
   }
 
   @Override
-  public Icon getFileIcon(int flags) {
+  public Icon getFileIcon(@Iconable.IconFlags int flags) {
     return ICON;
   }
 }

@@ -6,7 +6,7 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <compiler implementation="org.jetbrains.android.compiler.AndroidExternalApklibExtractingCompiler" order="first"/>
-    <compiler implementation="org.jetbrains.android.compiler.AndroidMavenResourcesCompiler"/>
+    <compiler implementation="org.jetbrains.android.compiler.AndroidMavenResourcesCompiler" order="first"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <android.mavenProvider implementation="org.jetbrains.android.maven.AndroidMavenProviderImpl"/>
