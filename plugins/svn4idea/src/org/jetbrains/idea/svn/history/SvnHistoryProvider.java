@@ -162,7 +162,8 @@ public class SvnHistoryProvider
           afterRevision.getFile().equals(path)) {
         committedPath = beforeRevision.getFile();
       }
-      if (peg == null && change.getBeforeRevision() != null) {
+      // revision can be VcsRevisionNumber.NULL
+      if (peg == null && change.getBeforeRevision() != null && change.getBeforeRevision().getRevisionNumber() instanceof SvnRevisionNumber) {
         peg = ((SvnRevisionNumber) change.getBeforeRevision().getRevisionNumber()).getRevision();
       }
     }
