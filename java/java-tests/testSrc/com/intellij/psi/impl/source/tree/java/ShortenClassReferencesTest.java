@@ -34,7 +34,7 @@ public class ShortenClassReferencesTest extends PsiTestCase {
     final PsiMethod method = (PsiMethod)aClass.add(methodFromText);
     final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement) method.getBody().getStatements()[0];
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement) declarationStatement.getFirstChild().getFirstChild();
-    final PsiClass javaUtilListClass = myJavaFacade.findClass("java.util.List", GlobalSearchScope.allScope(myPsiManager.getProject()));
+    final PsiClass javaUtilListClass = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_LIST, GlobalSearchScope.allScope(myPsiManager.getProject()));
     assertNotNull(javaUtilListClass);
     final PsiElement resultingElement = referenceElement.bindToElement(javaUtilListClass);
     assertEquals("List<", resultingElement.getText());

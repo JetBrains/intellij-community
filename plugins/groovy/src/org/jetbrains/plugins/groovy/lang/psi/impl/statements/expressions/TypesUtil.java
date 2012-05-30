@@ -729,7 +729,7 @@ public class TypesUtil {
     if (InheritanceUtil.isInheritor(collection, "java.util.Vector")) {
       return createCollection(project, "java.util.Vector", itemType);
     }
-    if (InheritanceUtil.isInheritor(collection, "java.util.List")) {
+    if (InheritanceUtil.isInheritor(collection, CommonClassNames.JAVA_UTIL_LIST)) {
       return createCollection(project, "java.util.ArrayList", itemType);
     }
     if (InheritanceUtil.isInheritor(collection, "java.util.Queue")) {
