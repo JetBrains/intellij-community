@@ -35,10 +35,6 @@ public class ActionMacroConfigurable implements Configurable {
     return IdeBundle.message("title.edit.macros");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

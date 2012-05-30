@@ -45,10 +45,6 @@ public class BrowserSettings implements Configurable, SearchableConfigurable {
     return IdeBundle.message("browsers.settings");
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   public String getHelpTopic() {
     return "reference.settings.ide.settings.web.browsers";
   }

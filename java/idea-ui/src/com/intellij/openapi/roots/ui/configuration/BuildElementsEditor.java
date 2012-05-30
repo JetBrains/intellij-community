@@ -232,10 +232,6 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     return ProjectBundle.message("output.tab.title");
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   @Nullable
   @NonNls
   public String getHelpTopic() {

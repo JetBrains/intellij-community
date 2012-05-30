@@ -45,11 +45,6 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.autoimport";
   }

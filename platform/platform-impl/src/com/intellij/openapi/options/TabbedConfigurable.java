@@ -43,7 +43,7 @@ public abstract class TabbedConfigurable extends CompositeConfigurable<Configura
 
   protected void createConfigurableTabs() {
     for (Configurable configurable : getConfigurables()) {
-      myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
+      myTabbedPane.addTab(configurable.getDisplayName(), configurable.createComponent());
     }
   }
 

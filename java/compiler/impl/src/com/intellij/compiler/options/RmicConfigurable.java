@@ -63,10 +63,6 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     return CompilerBundle.message("rmi.compiler.description");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.projectsettings.compiler.rmicompiler";
   }

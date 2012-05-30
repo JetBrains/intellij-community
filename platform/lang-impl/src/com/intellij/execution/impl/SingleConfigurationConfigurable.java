@@ -183,10 +183,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myDisplayName;
   }
 
-  public Icon getIcon() {
-    return myIcon;
-  }
-
   public String getHelpTopic() {
     return myHelpTopic;
   }

@@ -18,7 +18,6 @@ package com.intellij.internal.statistic.configurable;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,11 +43,6 @@ public class StatisticsConfigurable implements SearchableConfigurable {
   @Nls
   public String getDisplayName() {
     return "Usage Statistics";
-  }
-
-  @Nullable
-  public Icon getIcon() {
-    return PlatformIcons.TASK_ICON;
   }
 
   @Nullable

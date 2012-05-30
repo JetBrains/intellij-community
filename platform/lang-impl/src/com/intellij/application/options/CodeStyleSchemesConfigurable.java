@@ -17,7 +17,6 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.*;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
@@ -279,11 +278,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   @Override
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableCodeStyle;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.globalcodestyle";
   }
@@ -341,11 +335,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       if (displayName != null) return displayName;
       
       return ensurePanel().getDisplayName();  // fallback for 8.0 API compatibility
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
     }
 
     @Override

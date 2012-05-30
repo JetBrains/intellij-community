@@ -89,11 +89,6 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   }
 
   @Nullable
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Nullable
   @NonNls
   public String getHelpTopic() {
     return null;

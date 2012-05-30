@@ -919,10 +919,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     return KeyMapBundle.message("keymap.display.name");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

@@ -36,7 +36,10 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
+import org.jetbrains.idea.maven.utils.MavenIcons;
+import org.jetbrains.idea.maven.utils.MavenPluginInfo;
+import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
 import java.util.*;
@@ -134,11 +137,6 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
   public String getDisplayName() {
     return RunnerBundle.message("maven.runner.parameters.title");
-  }
-
-  @Nullable
-  public Icon getIcon() {
-    return null;
   }
 
   @Nullable

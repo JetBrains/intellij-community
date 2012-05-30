@@ -94,10 +94,6 @@ public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoS
     return "External Diff Tools";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "diff";
   }

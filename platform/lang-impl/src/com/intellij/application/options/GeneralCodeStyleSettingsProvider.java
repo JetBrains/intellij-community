@@ -17,14 +17,11 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author yole
@@ -37,11 +34,6 @@ public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider 
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new GeneralCodeStylePanel(settings);
-      }
-
-      @Override
-      public Icon getIcon() {
-        return FileTypes.PLAIN_TEXT.getIcon();
       }
 
       @Override

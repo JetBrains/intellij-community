@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.settings;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -38,10 +37,6 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public DebuggerConfigurable(Configurable rootConfigurable, List<Configurable> children) {
     myRootConfigurable = rootConfigurable;
     myChildren = children.toArray(new Configurable[children.size()]);
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableDebugger;
   }
 
   public String getDisplayName() {

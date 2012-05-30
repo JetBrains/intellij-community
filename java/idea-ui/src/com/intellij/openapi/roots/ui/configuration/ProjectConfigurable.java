@@ -245,7 +245,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     return ProjectBundle.message("project.roots.project.display.name");
   }
 
-  public Icon getIcon() {
+  public Icon getIcon(boolean open) {
     return PROJECT_ICON;
   }
 

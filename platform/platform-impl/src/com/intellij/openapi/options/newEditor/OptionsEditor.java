@@ -1206,10 +1206,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       return myConfigurable.getDisplayName();
     }
 
-    public Icon getIcon() {
-      return myConfigurable.getIcon();
-    }
-
     public String getHelpTopic() {
       return myConfigurable.getHelpTopic();
     }

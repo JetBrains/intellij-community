@@ -88,9 +88,4 @@ public class CompositeConfigurable implements Configurable {
   public String getDisplayName() {
     return null;
   }
-
-  @Nullable
-  public Icon getIcon() {
-    return null;
-  }
 }

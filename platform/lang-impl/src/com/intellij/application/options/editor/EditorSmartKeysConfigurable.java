@@ -106,11 +106,6 @@ public class EditorSmartKeysConfigurable extends CompositeConfigurable<UnnamedCo
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.smartkey";
   }

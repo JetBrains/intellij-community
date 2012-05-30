@@ -40,11 +40,6 @@ public class PlatformFileEncodingConfigurable implements SearchableConfigurable 
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return null;
   }

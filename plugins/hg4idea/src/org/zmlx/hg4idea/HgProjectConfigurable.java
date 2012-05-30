@@ -33,10 +33,6 @@ public class HgProjectConfigurable implements SearchableConfigurable {
     return HgVcsMessages.message("hg4idea.mercurial");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "project.propVCSSupport.VCSs.Mercurial";
   }

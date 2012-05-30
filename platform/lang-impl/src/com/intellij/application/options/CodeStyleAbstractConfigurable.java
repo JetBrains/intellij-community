@@ -45,11 +45,6 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public JComponent createComponent() {
     myPanel = createPanel(myCloneSettings);
     myPanel.setModel(myModel);

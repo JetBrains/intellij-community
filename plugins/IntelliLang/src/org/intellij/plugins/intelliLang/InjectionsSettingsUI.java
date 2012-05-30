@@ -522,10 +522,6 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
     return "Language Injections";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.settings.injection.language.injection.settings";
   }

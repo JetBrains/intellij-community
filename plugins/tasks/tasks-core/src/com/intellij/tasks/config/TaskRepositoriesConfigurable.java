@@ -206,10 +206,6 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     return "Servers";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.settings.project.tasks.servers";
   }

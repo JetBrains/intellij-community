@@ -168,10 +168,6 @@ public class SvnConfigurable implements Configurable {
     return null;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return HELP_ID;
   }

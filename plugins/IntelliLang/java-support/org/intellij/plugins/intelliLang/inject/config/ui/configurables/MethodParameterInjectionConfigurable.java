@@ -16,11 +16,8 @@
 package org.intellij.plugins.intelliLang.inject.config.ui.configurables;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.MethodParameterPanel;
-
-import javax.swing.*;
 
 public class MethodParameterInjectionConfigurable extends InjectionConfigurable<MethodParameterInjection, MethodParameterPanel> {
   public MethodParameterInjectionConfigurable(MethodParameterInjection injection, Runnable treeUpdater, Project project) {
@@ -33,9 +30,5 @@ public class MethodParameterInjectionConfigurable extends InjectionConfigurable<
 
   public String getBannerSlogan() {
     return "Edit Method Parameter Injection";
-  }
-
-  public Icon getIcon() {
-    return PlatformIcons.METHOD_ICON;
   }
 }

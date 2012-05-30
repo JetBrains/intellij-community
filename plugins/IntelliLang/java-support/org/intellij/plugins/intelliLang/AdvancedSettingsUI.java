@@ -208,10 +208,6 @@ public class AdvancedSettingsUI implements Configurable {
     return "Advanced";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.settings.injection.advanced";
   }

@@ -93,10 +93,6 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     return myModuleName;
   }
 
-  public Icon getIcon() {
-    return ModuleType.get(myModule).getNodeIcon(false);
-  }
-
   public Icon getIcon(final boolean open) {
     return ModuleType.get(myModule).getNodeIcon(open);
   }

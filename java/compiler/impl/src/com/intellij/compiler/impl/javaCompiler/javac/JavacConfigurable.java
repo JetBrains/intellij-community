@@ -45,10 +45,6 @@ public class JavacConfigurable implements Configurable{
     return null;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

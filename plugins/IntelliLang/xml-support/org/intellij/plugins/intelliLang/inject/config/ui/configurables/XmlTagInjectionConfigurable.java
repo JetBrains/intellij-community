@@ -16,11 +16,8 @@
 package org.intellij.plugins.intelliLang.inject.config.ui.configurables;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.intelliLang.inject.config.XmlTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlTagPanel;
-
-import javax.swing.*;
 
 public class XmlTagInjectionConfigurable extends InjectionConfigurable<XmlTagInjection, XmlTagPanel> {
   public XmlTagInjectionConfigurable(XmlTagInjection injection, Runnable treeUpdater, Project project) {
@@ -33,9 +30,5 @@ public class XmlTagInjectionConfigurable extends InjectionConfigurable<XmlTagInj
 
   protected XmlTagPanel createOptionsPanelImpl() {
     return new XmlTagPanel(myInjection, myProject);
-  }
-
-  public Icon getIcon() {
-    return PlatformIcons.XML_TAG_ICON;
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -176,10 +175,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   public boolean isModified() {
     return myPluginManagerMain != null && myPluginManagerMain.isModified();
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.PluginManager;
   }
 
   @NotNull

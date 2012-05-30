@@ -16,7 +16,6 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
@@ -41,10 +40,6 @@ public class CodeStyleImportsConfigurable extends BaseConfigurable {
 
   public String getDisplayName() {
     return ApplicationBundle.message("title.imports");
-  }
-
-  public Icon getIcon() {
-    return StdFileTypes.JAVA.getIcon();
   }
 
   public void reset() {

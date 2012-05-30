@@ -96,11 +96,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.tabs";
   }

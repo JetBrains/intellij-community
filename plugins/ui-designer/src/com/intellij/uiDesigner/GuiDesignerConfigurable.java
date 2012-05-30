@@ -63,10 +63,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     return UIDesignerBundle.message("title.gui.designer");
   }
 
-  public Icon getIcon() {
-    return AllIcons.General.UiDesigner;
-  }
-
   @NotNull
   public String getHelpTopic() {
     return "project.propGUI";

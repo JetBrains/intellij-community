@@ -91,10 +91,6 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     return "project.propVCSSupport.Mappings";
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   @NotNull
   public String getId() {
     return getDefaultConfigurableIdValue(this);
@@ -162,10 +158,6 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       @Nls
       public String getDisplayName() {
         return vcs.getDisplayName();
-      }
-
-      public Icon getIcon() {
-        return null;
       }
 
       public String getHelpTopic() {

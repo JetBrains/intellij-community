@@ -60,10 +60,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     return CompilerBundle.message("compiler.configurable.display.name");
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   public String getHelpTopic() {
     return "project.propCompiler";
   }
@@ -163,10 +159,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
       @Nls
       public String getDisplayName() {
         return "Excludes";
-      }
-
-      public Icon getIcon() {
-        return null;
       }
 
       public String getHelpTopic() {

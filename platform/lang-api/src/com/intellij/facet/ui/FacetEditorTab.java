@@ -33,11 +33,6 @@ import javax.swing.*;
 public abstract class FacetEditorTab implements Configurable {
 
   @Nullable
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Nullable
   @NonNls
   public String getHelpTopic() {
     return null;

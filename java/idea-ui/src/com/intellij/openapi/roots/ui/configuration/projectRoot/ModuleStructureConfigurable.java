@@ -416,10 +416,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return ProjectBundle.message("project.roots.display.name");
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   @Nullable
   @NonNls
   public String getHelpTopic() {

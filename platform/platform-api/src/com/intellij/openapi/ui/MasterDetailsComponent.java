@@ -16,7 +16,6 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -878,10 +877,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
         public String getDisplayName() {
           return "";
-        }
-
-        public Icon getIcon() {
-          return AllIcons.General.ApplicationSettings;
         }
 
         @Nullable

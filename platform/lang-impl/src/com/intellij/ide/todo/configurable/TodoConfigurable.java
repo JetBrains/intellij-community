@@ -16,7 +16,6 @@
 
 package com.intellij.ide.todo.configurable;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
@@ -383,10 +382,6 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   @NotNull
   public String getHelpTopic() {
     return "preferences.toDoOptions";
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableTodo;
   }
 
   public void reset() {

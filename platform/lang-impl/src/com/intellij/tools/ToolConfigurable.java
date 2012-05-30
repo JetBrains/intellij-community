@@ -39,10 +39,6 @@ public class ToolConfigurable implements SearchableConfigurable, Configurable.No
     return myPanel;
   }
 
-  public Icon getIcon() {
-    return ourIcon;
-  }
-
   public void apply() throws ConfigurationException {
     try {
       myPanel.apply();

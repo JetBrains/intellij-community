@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.build;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
@@ -138,10 +137,6 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   public String getDisplayName() {
     return DevKitBundle.message("deployment.title");
-  }
-
-  public Icon getIcon() {
-    return AllIcons.Nodes.Plugin;
   }
 
   public String getHelpTopic() {

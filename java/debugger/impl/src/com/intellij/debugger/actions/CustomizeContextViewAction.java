@@ -33,7 +33,6 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,10 +61,6 @@ public class CustomizeContextViewAction extends DebuggerAction{
 
       public String getDisplayName() {
         return DebuggerBundle.message("title.customize.data.views");
-      }
-
-      public Icon getIcon() {
-        return null;
       }
 
       public String getHelpTopic() {

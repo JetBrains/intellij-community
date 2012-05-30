@@ -30,10 +30,6 @@ public class KeymapConfigurable extends SearchableConfigurable.Parent.Abstract {
     return KeyMapBundle.message("keymap.parent.display.name");
   }
 
-  public Icon getIcon() {
-    return icon;
-  }
-  
   public String getHelpTopic() {
     return "preferences.keymap";
   }

@@ -37,11 +37,6 @@ class Cvs2Configurable implements Configurable {
     return "CVS2";
   }
 
-  public Icon getIcon() {
-    
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.projectsettings.vcs.cvs.options";
   }

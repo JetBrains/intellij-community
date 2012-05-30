@@ -270,10 +270,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return IdeBundle.message("scopes.display.name");
   }
 
-  public Icon getIcon() {
-    return SCOPES;
-  }
-
   @NotNull
   @NonNls
   public String getHelpTopic() {

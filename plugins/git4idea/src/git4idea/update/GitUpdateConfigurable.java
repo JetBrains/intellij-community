@@ -51,13 +51,6 @@ public class GitUpdateConfigurable implements Configurable {
   /**
    * {@inheritDoc}
    */
-  public Icon getIcon() {
-    return null;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public String getHelpTopic() {
     return "reference.VersionControl.Git.UpdateProject";
   }

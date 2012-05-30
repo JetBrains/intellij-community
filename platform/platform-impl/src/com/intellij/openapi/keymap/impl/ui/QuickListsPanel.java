@@ -334,10 +334,6 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     return "Quick Lists";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.idesettings.quicklists";
   }

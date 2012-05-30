@@ -495,10 +495,6 @@ class RunConfigurable extends BaseConfigurable {
     return myWholePanel;
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   public void reset() {
     final RunManagerEx manager = getRunManager();
     final RunManagerConfig config = manager.getConfig();

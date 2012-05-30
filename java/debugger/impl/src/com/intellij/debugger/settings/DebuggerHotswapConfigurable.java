@@ -79,10 +79,6 @@ public class DebuggerHotswapConfigurable implements SearchableConfigurable {
     return DebuggerBundle.message("debugger.hotswap.configurable.display.name");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.idesettings.debugger.hotswap";
   }

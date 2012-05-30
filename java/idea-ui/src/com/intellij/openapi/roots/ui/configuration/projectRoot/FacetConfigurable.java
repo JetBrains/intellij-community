@@ -88,7 +88,7 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
   }
 
   @Nullable
-  public Icon getIcon() {
+  public Icon getIcon(boolean open) {
     return myFacet.getType().getIcon();
   }
 

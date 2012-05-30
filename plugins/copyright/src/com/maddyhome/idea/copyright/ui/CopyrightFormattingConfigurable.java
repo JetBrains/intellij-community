@@ -55,10 +55,6 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
     return "Formatting";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return getId();
   }

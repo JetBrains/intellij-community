@@ -62,10 +62,6 @@ public class JikesConfigurable implements Configurable {
     return null;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

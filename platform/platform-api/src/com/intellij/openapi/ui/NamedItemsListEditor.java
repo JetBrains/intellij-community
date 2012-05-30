@@ -213,14 +213,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
             return myNamer.getName(myItem);
         }
 
-        public Icon getIcon() {
-            if (myConfigurable instanceof Iconable) {
-              return ((Iconable)myConfigurable).getIcon(0);
-            }
-            return null;
-        }
-
-        public String getHelpTopic() {
+    public String getHelpTopic() {
             return null;
         }
 

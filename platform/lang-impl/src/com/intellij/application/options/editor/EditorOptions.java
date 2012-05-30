@@ -16,7 +16,6 @@
 
 package com.intellij.application.options.editor;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.Configurable;
@@ -45,11 +44,6 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   @Override
   public String getDisplayName() {
     return ApplicationBundle.message("title.editor");
-  }
-
-  @Override
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableEditor;
   }
 
   @Override

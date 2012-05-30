@@ -19,7 +19,6 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.lang.Language;
@@ -95,10 +94,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       }
     });
     myRecognizedFileType.setFileTypes(types);
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableFileTypes;
   }
 
   private static FileType[] getModifiableFileTypes() {

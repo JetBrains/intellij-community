@@ -91,11 +91,6 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
   }
 
   @Nullable
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Nullable
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.project.maven.ignored.files";

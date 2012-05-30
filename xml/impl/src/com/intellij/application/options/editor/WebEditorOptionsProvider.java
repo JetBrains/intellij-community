@@ -56,10 +56,6 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     return XmlBundle.message("web.editor.configuration.title");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

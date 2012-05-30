@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.*;
 
 import javax.swing.*;
@@ -265,10 +264,6 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     myComponent = null;
     myGradleHomeComponent = null;
     myPathManuallyModified = false;
-  }
-
-  public Icon getIcon() {
-    return GradleIcons.GRADLE_ICON;
   }
 
   @NotNull

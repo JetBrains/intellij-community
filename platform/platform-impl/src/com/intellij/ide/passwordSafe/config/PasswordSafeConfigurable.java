@@ -47,13 +47,6 @@ public class PasswordSafeConfigurable implements SearchableConfigurable, Configu
   /**
    * {@inheritDoc}
    */
-  public Icon getIcon() {
-    return null;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public String getHelpTopic() {
     return "reference.ide.settings.password.safe";
   }

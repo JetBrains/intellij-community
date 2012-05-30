@@ -122,10 +122,6 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     return NAME;
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   public void disposeUIResources() {
     if (myRootTreeEditor != null) {
       myRootTreeEditor.setContentEntryEditor(null);

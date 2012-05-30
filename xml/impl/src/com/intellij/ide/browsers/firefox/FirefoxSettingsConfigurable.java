@@ -24,8 +24,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -135,10 +135,6 @@ public class FirefoxSettingsConfigurable implements Configurable {
   @Nls
   public String getDisplayName() {
     return XmlBundle.message("display.name.firefox.settings");
-  }
-
-  public Icon getIcon() {
-    return null;
   }
 
   public String getHelpTopic() {
