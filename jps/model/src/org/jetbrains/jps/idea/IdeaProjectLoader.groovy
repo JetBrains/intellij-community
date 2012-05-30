@@ -251,18 +251,36 @@ public class IdeaProjectLoader {
 
     def annotationProcessingTag = componentTag?.annotationProcessing
     if (annotationProcessingTag != null) {
-      configuration.annotationProcessing.enabled = parseBoolean(annotationProcessingTag."@enabled", false)
-      configuration.annotationProcessing.obtainProcessorsFromClasspath = parseBoolean(annotationProcessingTag."@useClasspath", true)
-      List<String> processorPaths = []
-      annotationProcessingTag.processorPath?.each {
-        processorPaths << projectMacroExpander.expandMacros(it."@value")
-      }
-      configuration.annotationProcessing.processorsPath = processorPaths.join(File.pathSeparator)
-      annotationProcessingTag.processor?.each {
-        configuration.annotationProcessing.processorsOptions[it."@name"] = it."@options" ?: ""
-      }
-      annotationProcessingTag.processModule?.each {
-        configuration.annotationProcessing.processModule[it."@name"] = it."@generatedDirName"
+      configuration.moduleAnnotationProcessingProfiles = []
+      annotationProcessingTag?.profile?.each {profileTag ->
+        AnnotationProcessingProfile profile
+        if (parseBoolean(profileTag."@default", false)) {
+          profile =  configuration.defaultAnnotationProcessingProfile
+        }
+        else {
+          profile = new AnnotationProcessingProfile()
+          configuration.moduleAnnotationProcessingProfiles << profile
+        }
+        profile.name = profileTag."@name";
+        profile.enabled = parseBoolean(profileTag."@enabled", false)
+        profile.generatedSourcesDirName = profileTag.sourceOutputDir?.getAt(0)?."@name"
+        profileTag.processor?.each {
+          profile.processors << it."@name"
+        }
+        profileTag.option?.each {
+          profile.processorsOptions[it."@name"] = it."@value" ?: ""
+        }
+        def pathTag = profileTag.processorPath?.getAt(0)
+        profile.obtainProcessorsFromClasspath = parseBoolean(pathTag?."@useClasspath", true)
+        List<String> processorPaths = []
+        pathTag?.each {
+          processorPaths << projectMacroExpander.expandMacros(it."@name")
+        }
+        profile.processorsPath = processorPaths.join(File.pathSeparator)
+
+        profileTag.module?.each {
+          profile.processModule << it."@name"
+        }
       }
     }
 

@@ -169,12 +169,10 @@ public class CompileDriver {
           final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
           myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
         }
-        if (config.isAnnotationProcessorsEnabled()) {
-          if (config.isAnnotationProcessingEnabled(module)) {
-            final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-            if (path != null) {
-              lookupVFile(lfs, path);  // ensure the file is created and added to VFS
-            }
+        if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+          final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+          if (path != null) {
+            lookupVFile(lfs, path);  // ensure the file is created and added to VFS
           }
         }
       }
@@ -395,7 +393,7 @@ public class CompileDriver {
     final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
     final Set<Module> affected = new HashSet<Module>(Arrays.asList(context.getCompileScope().getAffectedModules()));
     for (Module module : affected) {
-      if (!config.isAnnotationProcessingEnabled(module)) {
+      if (!config.getAnnotationProcessingConfiguration(module).isEnabled()) {
         continue;
       }
       final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
@@ -1725,7 +1723,7 @@ public class CompileDriver {
     final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
     if (context.isAnnotationProcessorsEnabled()) {
       for (Module module : modules) {
-        if (config.isAnnotationProcessingEnabled(module)) {
+        if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
           final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
           if (path != null) {
             outputDirs.add(new File(path));
@@ -2366,7 +2364,7 @@ public class CompileDriver {
               modulesWithoutOutputPathSpecified.add(module.getName());
             }
           }
-          if (config.isAnnotationProcessorsEnabled() && config.isAnnotationProcessingEnabled(module)) {
+          if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
             final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
             if (path == null) {
               final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(module.getProject());
@@ -2458,9 +2456,9 @@ public class CompileDriver {
         if (chunkModules.size() <= 1) {
           continue; // no need to check one-module chunks
         }
-        if (config.isAnnotationProcessorsEnabled()) {
+        if (!useOutOfProcessBuild()) {
           for (Module chunkModule : chunkModules) {
-            if (config.isAnnotationProcessingEnabled(chunkModule)) {
+            if (config.getAnnotationProcessingConfiguration(chunkModule).isEnabled()) {
               showCyclesNotSupportedForAnnotationProcessors(chunkModules.toArray(new Module[chunkModules.size()]));
               return false;
             }

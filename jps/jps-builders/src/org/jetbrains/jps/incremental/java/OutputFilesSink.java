@@ -19,7 +19,7 @@ import java.util.*;
 */
 class OutputFilesSink implements OutputFileConsumer {
   private final CompileContext myContext;
-  private final Set<File> mySuccessfullyCompiled = new HashSet<File>();
+  private final Set<File> mySuccessfullyCompiled = new LinkedHashSet<File>();
   private final Set<File> myProblematic = new HashSet<File>();
   private final List<OutputFileObject> myFileObjects = new ArrayList<OutputFileObject>();
   private final Map<String, OutputFileObject> myCompiledClasses = new HashMap<String, OutputFileObject>();
@@ -113,7 +113,7 @@ class OutputFilesSink implements OutputFileConsumer {
     }
     
     final File source = fileObject.getSourceFile();
-    if (source != null && !myProblematic.contains(source)) {
+    if (!fileObject.isTemp() && source != null && !myProblematic.contains(source)) {
       mySuccessfullyCompiled.add(source);
       final String className = fileObject.getClassName();
       if (className != null) {

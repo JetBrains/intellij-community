@@ -19,7 +19,7 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-verbose", "-proc:none", "-implicit:class", "-implicit:none"
+    "-verbose", "-proc:only", "-implicit:class", "-implicit:none"
   ));
 
   public static boolean compile(Collection<String> options,
@@ -71,12 +71,12 @@ public class JavacMain {
         out, fileManager, outConsumer, _options, null, fileManager.toJavaFileObjects(sources)
       );
 
-      if (!IS_VM_6_VERSION) {
-        // Do not add the processor for JDK 1.6 because of the bugs in javac
-        // The processor's presence may lead to NPE and resolve bugs in compiler
-        final JavacASTAnalyser analyzer = new JavacASTAnalyser(outConsumer, shouldSuppressAnnotationProcessing(options));
-        task.setProcessors(Collections.singleton(analyzer));
-      }
+      //if (!IS_VM_6_VERSION) { //todo!
+      //  // Do not add the processor for JDK 1.6 because of the bugs in javac
+      //  // The processor's presence may lead to NPE and resolve bugs in compiler
+      //  final JavacASTAnalyser analyzer = new JavacASTAnalyser(outConsumer, !annotationProcessingEnabled);
+      //  task.setProcessors(Collections.singleton(analyzer));
+      //}
       return task.call();
     }
     catch(IllegalArgumentException e) {
@@ -88,13 +88,13 @@ public class JavacMain {
     return false;
   }
 
-  private static boolean shouldSuppressAnnotationProcessing(final Collection<String> options) {
+  private static boolean isAnnotationProcessingEnabled(final Collection<String> options) {
     for (String option : options) {
       if ("-proc:none".equals(option)) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   private static Collection<String> prepareOptions(final Collection<String> options) {

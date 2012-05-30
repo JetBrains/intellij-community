@@ -10,17 +10,21 @@ class CompilerConfiguration {
   Map<String, String> javacOptions = [:]
   boolean clearOutputDirectoryOnRebuild = true
   boolean addNotNullAssertions = true
-  AnnotationProcessingConfiguration annotationProcessing = new AnnotationProcessingConfiguration()
+  AnnotationProcessingProfile defaultAnnotationProcessingProfile = new AnnotationProcessingProfile()
+  Collection<AnnotationProcessingProfile> moduleAnnotationProcessingProfiles = []
   BytecodeTargetConfiguration bytecodeTarget = new BytecodeTargetConfiguration()
   CompilerExcludes excludes = new CompilerExcludes()
 }
 
-class AnnotationProcessingConfiguration {
+class AnnotationProcessingProfile {
+  String name = ""
   boolean enabled = false
   boolean obtainProcessorsFromClasspath = true
   String processorsPath
+  List<String> processors = []
   Map<String, String> processorsOptions = [:]
-  Map<String, String> processModule = [:]
+  String generatedSourcesDirName = ""
+  List<String> processModule = []
 }
 
 class BytecodeTargetConfiguration {

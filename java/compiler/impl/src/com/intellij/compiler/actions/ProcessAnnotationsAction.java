@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.actions;
 
+import com.intellij.compiler.AnnotationProcessingConfiguration;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.ModuleCompileScope;
@@ -82,9 +83,12 @@ public class ProcessAnnotationsAction extends CompileActionBase {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     final Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
-    if (!compilerConfiguration.isAnnotationProcessorsEnabled() ||
-        (!compilerConfiguration.isObtainProcessorsFromClasspath() && compilerConfiguration.getAnnotationProcessorsMap().isEmpty()) ||
-        module != null && StringUtil.isEmpty(compilerConfiguration.getAnotationProcessedModules().get(module))) {
+    if (module == null) {
+      presentation.setEnabled(false);
+      return;
+    }
+    final AnnotationProcessingConfiguration profile = compilerConfiguration.getAnnotationProcessingConfiguration(module);
+    if (!profile.isEnabled() || (!profile.isObtainProcessorsFromClasspath() && profile.getProcessors().isEmpty())) {
       presentation.setEnabled(false);
       return;
     }

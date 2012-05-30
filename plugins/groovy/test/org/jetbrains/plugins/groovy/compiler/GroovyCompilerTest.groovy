@@ -640,7 +640,7 @@ public class Main {
     CompileServerManager.instance.shutdownServer()
   }
 
-  public void "_test make stub-level error and correct it"() {
+  public void "test make stub-level error and correct it"() {
     def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo { }')
     myFixture.addFileToProject('Bar.java', 'class Bar extends Foo {}')
 

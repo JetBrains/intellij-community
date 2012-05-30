@@ -416,6 +416,15 @@ public class IncProjectBuilder {
           throw new ProjectBuildException(e);
         }
         finally {
+          final Collection<RootDescriptor> tempRoots = context.getRootsIndex().clearTempRoots();
+          if (!tempRoots.isEmpty()) {
+            final Set<File> rootFiles = new HashSet<File>();
+            for (RootDescriptor rd : tempRoots) {
+              rootFiles.add(rd.root);
+              context.getProjectDescriptor().fsState.clearRecompile(rd);
+            }
+            FileUtil.asyncDelete(rootFiles);
+          }
 
           try {
             // restore deleted paths that were not procesesd by 'integrate'
