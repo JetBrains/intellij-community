@@ -17,10 +17,12 @@
 package com.intellij.uiDesigner.clientProperties;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
@@ -56,9 +58,9 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   public ConfigureClientPropertiesDialog(final Project project) {
     super(project, true);
     myProject = project;
-    init();
     setTitle(UIDesignerBundle.message("client.properties.title"));
     myManager = ClientPropertiesManager.getInstance(project).clone();
+    init();
   }
 
   public void save() {
@@ -113,7 +115,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     myPropertiesTable.setModel(myTableModel);
 
 
-    mySplitter = new Splitter(true, Float.valueOf(myPropertiesComponent.getValue(SPLITTER_PROPORTION_PROPERTY, "0.5f")));
+    mySplitter = new Splitter(false, Float.valueOf(myPropertiesComponent.getValue(SPLITTER_PROPORTION_PROPERTY, "0.5f")));
     mySplitter.setFirstComponent(
       ToolbarDecorator.createDecorator(myClassTree)
         .setAddAction(new AnActionButtonRunnable() {
@@ -153,7 +155,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
             fillClassTree();
           }
         }
-      }).createPanel());
+      }).setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT).createPanel());
 
     mySplitter.setSecondComponent(
       ToolbarDecorator.createDecorator(myPropertiesTable).disableUpDownActions()
