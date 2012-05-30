@@ -34,13 +34,17 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -132,6 +136,21 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
     if (progressIndicator != null) {
       progressIndicator.setIndeterminate(false);
     }
+
+    final Map<PsiMember, Set<Module>> memberWithModulesMap = new HashMap<PsiMember, Set<Module>>();
+    for (PsiMember member : members) {
+      final Module module = ModuleUtil.findModuleForPsiElement(member);
+      if (module != null) {
+        final HashSet<Module> dependencies = new HashSet<Module>();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            ModuleUtil.collectModulesDependsOn(module, dependencies);
+          }
+        });
+        memberWithModulesMap.put(member, dependencies);
+      }
+    }
+
     scope.accept(new PsiRecursiveElementVisitor() {
       private int myFileCount = 0;
       @Override public void visitFile(final PsiFile file) {
@@ -143,7 +162,13 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
             progressIndicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, project));
           }
         }
-        for (PsiMember method : members) {
+        final Module targetModule = ModuleUtil.findModuleForPsiElement(file);
+        if (targetModule == null) return;
+        for (Map.Entry<PsiMember, Set<Module>> entry : memberWithModulesMap.entrySet()) {
+          final Set<Module> dependencies = entry.getValue();
+          if (dependencies == null || !dependencies.contains(targetModule)) continue;
+
+          final PsiMember method = entry.getKey();
           final List<Match> matchList = hasDuplicates(file, method);
           for (Iterator<Match> iterator = matchList.iterator(); iterator.hasNext(); ) {
             Match match = iterator.next();
