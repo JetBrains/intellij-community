@@ -15,20 +15,21 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.*;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
+import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
+import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +42,6 @@ import java.util.List;
  */
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowSettingsUtilImpl");
-  @NonNls
-  private static final String PREFER_CLASSIC_OPTIONS_EDITOR = "PREFER_CLASSIC_OPTIONS_EDITOR";
 
   public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
     try {
@@ -56,16 +55,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static void _showSettingsDialog(final Project project, ConfigurableGroup[] group, Configurable toSelect) {
     group = filterEmptyGroups(group);
 
-    if ("false".equalsIgnoreCase(System.getProperty("new.options.editor"))) {
-      if (Boolean.toString(true).equals(PropertiesComponent.getInstance().getValue(PREFER_CLASSIC_OPTIONS_EDITOR))) {
-        showExplorerOptions(project, group);
-      }
-      else {
-        showControlPanelOptions(project, group, toSelect);
-      }
-    } else {
-      new OptionsEditorDialog(project, group, toSelect).show();
-    }
+    new OptionsEditorDialog(project, group, toSelect).show();
   }
 
   public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
@@ -175,19 +165,6 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       }
     }
     return groups.toArray(new ConfigurableGroup[groups.size()]);
-  }
-
-  public static void showControlPanelOptions(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
-    PropertiesComponent.getInstance().setValue(PREFER_CLASSIC_OPTIONS_EDITOR, Boolean.toString(false));
-
-    ControlPanelSettingsEditor editor = new ControlPanelSettingsEditor(project, groups, preselectedConfigurable);
-    editor.show();
-  }
-
-  public static void showExplorerOptions(Project project, ConfigurableGroup[] group) {
-    PropertiesComponent.getInstance().setValue(PREFER_CLASSIC_OPTIONS_EDITOR, Boolean.toString(true));
-    ExplorerSettingsEditor editor = new ExplorerSettingsEditor(project, group);
-    editor.show();
   }
 
   public boolean editConfigurable(Project project, Configurable configurable) {
