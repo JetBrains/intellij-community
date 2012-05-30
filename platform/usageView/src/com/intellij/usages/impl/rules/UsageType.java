@@ -23,6 +23,7 @@ public final class UsageType {
   public static final UsageType CLASS_CAST_TO = new UsageType(UsageViewBundle.message("usage.type.cast.target"));
   public static final UsageType CLASS_EXTENDS_IMPLEMENTS_LIST = new UsageType(UsageViewBundle.message("usage.type.extends"));
   public static final UsageType CLASS_STATIC_MEMBER_ACCESS = new UsageType(UsageViewBundle.message("usage.type.static.member"));
+  public static final UsageType CLASS_NESTED_CLASS_ACCESS = new UsageType(UsageViewBundle.message("usage.type.nested.class"));
   public static final UsageType CLASS_METHOD_THROWS_LIST = new UsageType(UsageViewBundle.message("usage.type.throws.list"));
   public static final UsageType CLASS_CLASS_OBJECT_ACCESS = new UsageType(UsageViewBundle.message("usage.type.class.object"));
   public static final UsageType CLASS_FIELD_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.field.declaration"));
@@ -31,7 +32,6 @@ public final class UsageType {
   public static final UsageType CLASS_CATCH_CLAUSE_PARAMETER_DECLARATION = new UsageType(UsageViewBundle.message("usage.type.catch.declaration"));
   public static final UsageType CLASS_METHOD_RETURN_TYPE = new UsageType(UsageViewBundle.message("usage.type.return"));
   public static final UsageType CLASS_NEW_OPERATOR = new UsageType(UsageViewBundle.message("usage.type.new"));
-  public static final UsageType CLASS_NESTED_NEW_OPERATOR = new UsageType(UsageViewBundle.message("usage.type.new.nested"));
   public static final UsageType CLASS_ANONYMOUS_NEW_OPERATOR = new UsageType(UsageViewBundle.message("usage.type.new.anonymous"));
   public static final UsageType CLASS_NEW_ARRAY = new UsageType(UsageViewBundle.message("usage.type.new.array"));
   public static final UsageType ANNOTATION = new UsageType(UsageViewBundle.message("usage.type.annotation"));

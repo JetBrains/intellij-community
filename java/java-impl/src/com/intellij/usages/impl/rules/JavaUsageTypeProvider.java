@@ -157,6 +157,11 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
 
   @Nullable
   private static UsageType getClassUsageType(@NotNull PsiElement element, @NotNull UsageTarget[] targets) {
+    final PsiJavaCodeReferenceElement codeReference = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
+    if(codeReference != null && isNestedClassOf(codeReference,targets)){
+      return UsageType.CLASS_NESTED_CLASS_ACCESS;
+    }
+
     if (element.getParent() instanceof PsiAnnotation &&
         element == ((PsiAnnotation)element.getParent()).getNameReferenceElement()) {
       return UsageType.ANNOTATION;
@@ -224,9 +229,6 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
         if (isAnonymousClassOf(psiNewExpression.getAnonymousClass(), targets)) {
           return UsageType.CLASS_ANONYMOUS_NEW_OPERATOR;
         }
-        if (isInnerClassOf(classReference, targets)) {
-          return UsageType.CLASS_INNER_NEW_OPERATOR;
-        }
         if (isNewArrayCreation(psiNewExpression)) {
           return UsageType.CLASS_NEW_ARRAY;
         }
@@ -249,7 +251,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return qualifiesToTargetClasses(anonymousClass.getBaseClassReference(), targets);
   }
 
-  private static boolean isInnerClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
+  private static boolean isNestedClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
     final PsiElement qualifier = classReference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
       return qualifiesToTargetClasses((PsiJavaCodeReferenceElement)qualifier, targets);
