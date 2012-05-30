@@ -7,6 +7,7 @@ package com.intellij.coverage;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +32,10 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -64,7 +68,7 @@ public class SrcFileAnnotator implements Disposable {
   private final Editor myEditor;
   private final Document myDocument;
   private final Project myProject;
-  private static final Icon ourIcon = IconLoader.getIcon("/general/exclMark.png");
+  private static final Icon ourIcon = AllIcons.General.ExclMark;
 
   private SoftReference<TIntIntHashMap> myNewToOldLines;
   private SoftReference<TIntIntHashMap> myOldToNewLines;

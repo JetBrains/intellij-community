@@ -2,9 +2,9 @@ package com.intellij.coverage.actions;
 
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 
 /**
 * User: anna
@@ -12,7 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 */
 public class HideCoverageInfoAction extends AnAction {
   public HideCoverageInfoAction() {
-    super("&Hide Coverage Data", "Hide coverage data", IconLoader.getIcon("/actions/cancel.png"));
+    super("&Hide Coverage Data", "Hide coverage data", AllIcons.Actions.Cancel);
   }
 
   public void actionPerformed(final AnActionEvent e) {

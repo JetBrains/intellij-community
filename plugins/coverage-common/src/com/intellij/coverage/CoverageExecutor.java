@@ -1,7 +1,7 @@
 package com.intellij.coverage;
 
 import com.intellij.execution.Executor;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
@@ -10,8 +10,8 @@ import javax.swing.*;
 
 public class CoverageExecutor extends Executor {
 
-  private static final Icon TOOLWINDOW_ICON = IconLoader.getIcon("/general/runWithCoverage.png");
-  private static final Icon DISABLED_ICON = IconLoader.getIcon("/general/runWithCoverage.png");
+  private static final Icon TOOLWINDOW_ICON = AllIcons.General.RunWithCoverage;
+  private static final Icon DISABLED_ICON = AllIcons.General.RunWithCoverage;
   private static final Icon ICON = DISABLED_ICON;
 
   public static final String EXECUTOR_ID = "Coverage";

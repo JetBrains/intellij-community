@@ -4,6 +4,7 @@ import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -28,7 +29,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
 
   public static final Key<CoverageEnabledConfiguration> COVERAGE_KEY = Key.create("com.intellij.coverage");
 
-  public static final Icon WITH_COVERAGE_CONFIGURATION = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png");
+  public static final Icon WITH_COVERAGE_CONFIGURATION = AllIcons.RunConfigurations.WithCoverageLayer;
 
   @NonNls protected static final String COVERAGE_ENABLED_ATTRIBUTE_NAME = "enabled";
   @NonNls protected static final String COVERAGE_RUNNER = "runner";

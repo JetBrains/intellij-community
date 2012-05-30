@@ -12,6 +12,7 @@ import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.coverage.actions.HideCoverageInfoAction;
 import com.intellij.coverage.actions.ShowCoveringTestsAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +31,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineCoverage;
@@ -368,7 +368,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer {
     }
   }
 
-  private static final Icon ICON = IconLoader.getIcon("/general/editColors.png");
+  private static final Icon ICON = AllIcons.General.EditColors;
   private class EditCoverageColorsAction extends AnAction {
     private final Editor myEditor;
     private final int myLineNumber;

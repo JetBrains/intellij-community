@@ -7,6 +7,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -18,7 +19,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -258,7 +258,7 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
   private class FlattenPackagesAction extends ToggleAction {
 
     private FlattenPackagesAction() {
-      super("Flatten Packages", "Flatten Packages", IconLoader.getIcon("/objectBrowser/flattenPackages.png"));
+      super("Flatten Packages", "Flatten Packages", AllIcons.ObjectBrowser.FlattenPackages);
     }
 
     @Override
@@ -285,7 +285,7 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
     private final CoverageViewTreeStructure myTreeStructure;
 
     public GoUpAction(CoverageViewTreeStructure treeStructure) {
-      super("Go Up", "Go to Upper Level", IconLoader.getIcon("/nodes/upLevel.png"));
+      super("Go Up", "Go to Upper Level", AllIcons.Nodes.UpLevel);
       myTreeStructure = treeStructure;
       registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, myTable);
     }
