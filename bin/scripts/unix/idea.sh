@@ -65,7 +65,7 @@ VERSION_LOG=`mktemp -t java.version.log.XXXXXX`
 $JDK/bin/java -version 2> "$VERSION_LOG"
 grep 'OpenJDK' "$VERSION_LOG"
 OPEN_JDK=$?
-grep "64-Bit\|x86_64" "$VERSION_LOG"
+egrep "64-Bit|x86_64" "$VERSION_LOG"
 BITS=$?
 rm "$VERSION_LOG"
 if [ $OPEN_JDK -eq 0 ]; then
@@ -119,7 +119,7 @@ if [ -z "$VM_OPTIONS_FILE" ]; then
 fi
 
 if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=`cat "$VM_OPTIONS_FILE" | grep -ve "^#.*" | tr '\n' ' '`
+  VM_OPTIONS=`cat "$VM_OPTIONS_FILE" | egrep -v "^#.*" | tr '\n' ' '`
   VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
 fi
 
