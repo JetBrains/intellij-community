@@ -205,6 +205,17 @@ public class VfsUtilCore {
   }
 
   @NotNull
+  public static String loadText(@NotNull VirtualFile file, int length) throws IOException{
+    InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
+    try {
+      return new String(FileUtil.loadText(reader, length));
+    }
+    finally {
+      reader.close();
+    }
+  }
+
+  @NotNull
   public static VirtualFile[] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
     int size = files.size();
     if (size == 0) return VirtualFile.EMPTY_ARRAY;
