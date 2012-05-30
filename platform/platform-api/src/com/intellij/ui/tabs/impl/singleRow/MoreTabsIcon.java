@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.tabs.impl.singleRow;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ import java.awt.*;
  * @author pegov
  */
 public abstract class MoreTabsIcon {
-  final Icon myIcon = IconLoader.getIcon("/general/moreTabs.png");
+  final Icon myIcon = AllIcons.General.MoreTabs;
   private boolean myPainted;
 
   public void paintIcon(final Component c, final Graphics g) {

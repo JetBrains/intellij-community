@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.hierarchy.method;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
@@ -22,7 +23,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -36,9 +36,9 @@ import javax.swing.*;
 import java.awt.*;
 
 public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
-  private static final Icon METHOD_DEFINED_ICON = IconLoader.getIcon("/hierarchy/methodDefined.png");
-  private static final Icon METHOD_NOT_DEFINED_ICON = IconLoader.getIcon("/hierarchy/methodNotDefined.png");
-  private static final Icon SHOULD_DEFINE_METHOD_ICON = IconLoader.getIcon("/hierarchy/shouldDefineMethod.png");
+  private static final Icon METHOD_DEFINED_ICON = AllIcons.Hierarchy.MethodDefined;
+  private static final Icon METHOD_NOT_DEFINED_ICON = AllIcons.Hierarchy.MethodNotDefined;
+  private static final Icon SHOULD_DEFINE_METHOD_ICON = AllIcons.Hierarchy.ShouldDefineMethod;
 
   private Icon myRawIcon;
   private Icon myStateIcon;

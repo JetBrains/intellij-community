@@ -120,7 +120,7 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
     }
     final Module module = context.getModuleByFile(file);
     if (module != null) {
-      if (!myConfig.isAnnotationProcessingEnabled(module)) {
+      if (!myConfig.getAnnotationProcessingConfiguration(module).isEnabled()) {
         return true;
       }
       final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);

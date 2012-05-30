@@ -16,6 +16,7 @@
 
 package com.intellij.packageDependencies;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String VALUE = "value";
 
 
-  private static final Icon SHARED_SCOPES = IconLoader.getIcon("/ide/sharedScope.png");
+  private static final Icon SHARED_SCOPES = AllIcons.Ide.SharedScope;
 
   private final Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
 

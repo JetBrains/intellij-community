@@ -15,9 +15,9 @@
  */
 package com.intellij.ui.content.tabs;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
@@ -33,7 +33,7 @@ import javax.swing.*;
 public class PinToolwindowTabAction extends ToggleAction implements DumbAware {
   public static final String ACTION_NAME = "PinToolwindowTab";
 
-  private static final Icon ICON = IconLoader.getIcon("/general/pin_tab.png");
+  private static final Icon ICON = AllIcons.General.Pin_tab;
 
   public static AnAction getPinAction() {
     return ActionManager.getInstance().getAction(ACTION_NAME);

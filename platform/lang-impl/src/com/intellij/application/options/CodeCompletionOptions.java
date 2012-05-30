@@ -17,11 +17,11 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Searchabl
 
   @Override
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableCodeCompletion.png");
+    return AllIcons.General.ConfigurableCodeCompletion;
   }
 
   @Override

@@ -15,10 +15,10 @@
  */
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
@@ -625,8 +625,8 @@ public String getAccessorsVisibility() {
     }
   }
 
-  private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/general/overridingMethod.png");
-  private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/general/implementingMethod.png");
+  private static final Icon OVERRIDING_METHOD_ICON = AllIcons.General.OverridingMethod;
+  private static final Icon IMPLEMENTING_METHOD_ICON = AllIcons.General.ImplementingMethod;
   private static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.ICON_16;
 
   private class MyTableRenderer extends DefaultTableCellRenderer {

@@ -14,7 +14,6 @@ import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -100,8 +99,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       if (myForStubs) {
         for (Module module : generationOutputs.keySet()) {
           File root = new File(generationOutputs.get(module));
-          context.getRootsIndex().associateRoot(root, module, context.isCompilingTests(), true);
-          JavaBuilder.addTempSourcePathRoot(context, root);
+          context.getRootsIndex().associateRoot(root, module, context.isCompilingTests(), true, true);
         }
       }
 

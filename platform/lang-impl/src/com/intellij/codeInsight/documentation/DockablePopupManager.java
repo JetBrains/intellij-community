@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
@@ -24,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -83,7 +83,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     myToolWindow = toolWindow == null
                    ? toolWindowManagerEx.registerToolWindow(getToolwindowId(), true, ToolWindowAnchor.RIGHT, myProject)
                    : toolWindow;
-    myToolWindow.setIcon(IconLoader.getIcon("/general/documentation.png"));
+    myToolWindow.setIcon(AllIcons.General.Documentation);
 
     myToolWindow.setAvailable(true, null);
     myToolWindow.setToHideOnEmptyContent(false);
@@ -131,7 +131,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected AnAction[] createActions() {
     return new AnAction[]{
       new ToggleAction(getAutoUpdateTitle(), getAutoUpdateDescription(),
-                       IconLoader.getIcon("/general/autoscrollFromSource.png")) {
+                       AllIcons.General.AutoscrollFromSource) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return myAutoUpdateDocumentation;
@@ -144,7 +144,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
           restartAutoUpdate(state);
         }
       },
-      new AnAction("Restore Popup", getRestorePopupDescription(), IconLoader.getIcon("/actions/cancel.png")) {
+      new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.Actions.Cancel) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           restorePopupBehavior();

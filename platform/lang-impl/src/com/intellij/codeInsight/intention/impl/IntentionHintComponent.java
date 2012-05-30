@@ -26,6 +26,7 @@ import com.intellij.codeInsight.hint.ScrollAwareHint;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -45,7 +46,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBaseIntention;
 import com.intellij.ui.HintHint;
@@ -79,13 +79,13 @@ import java.util.List;
 public class IntentionHintComponent extends JPanel implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
-  static final Icon ourIntentionIcon = IconLoader.getIcon("/actions/realIntentionBulb.png");
-  static final Icon ourBulbIcon = IconLoader.getIcon("/actions/intentionBulb.png");
-  static final Icon ourQuickFixIcon = IconLoader.getIcon("/actions/quickfixBulb.png");
-  static final Icon ourRefactoringBulbIcon = IconLoader.getIcon("/actions/refactoringBulb.png");
-  static final Icon ourIntentionOffIcon = IconLoader.getIcon("/actions/realIntentionOffBulb.png");
-  static final Icon ourQuickFixOffIcon = IconLoader.getIcon("/actions/quickfixOffBulb.png");
-  static final Icon ourArrowIcon = IconLoader.getIcon("/general/arrowDown.png");
+  static final Icon ourIntentionIcon = AllIcons.Actions.RealIntentionBulb;
+  static final Icon ourBulbIcon = AllIcons.Actions.IntentionBulb;
+  static final Icon ourQuickFixIcon = AllIcons.Actions.QuickfixBulb;
+  static final Icon ourRefactoringBulbIcon = AllIcons.Actions.RefactoringBulb;
+  static final Icon ourIntentionOffIcon = AllIcons.Actions.RealIntentionOffBulb;
+  static final Icon ourQuickFixOffIcon = AllIcons.Actions.QuickfixOffBulb;
+  static final Icon ourArrowIcon = AllIcons.General.ArrowDown;
   static final Icon ourInactiveArrowIcon = new EmptyIcon(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight());
   
   private static final int NORMAL_BORDER_SIZE = 6;

@@ -20,10 +20,10 @@
  */
 package org.jetbrains.idea.eclipse.importWizard;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import com.intellij.util.ArrayUtil;
@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<String> {
-  private static final Icon ICON_CONFLICT = IconLoader.getIcon("/actions/cancel.png");
+  private static final Icon ICON_CONFLICT = AllIcons.Actions.Cancel;
 
   Set<String> duplicateNames;
 

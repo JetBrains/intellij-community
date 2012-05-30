@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -26,7 +27,6 @@ import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,7 +69,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
 
   @Nullable
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configureEncoding.png");
+    return AllIcons.General.ConfigureEncoding;
   }
 
   @Nullable

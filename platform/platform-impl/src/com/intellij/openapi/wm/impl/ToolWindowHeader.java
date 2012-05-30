@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -23,7 +24,6 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -55,26 +55,26 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
 
-  private static final Icon ourHideLeftSideIcon = IconLoader.getIcon("/general/hideLeft.png");
-  private static final Icon ourHideRightSideIcon = IconLoader.getIcon("/general/hideRight.png");
-  private static final Icon ourHideDownSideIcon = IconLoader.getIcon("/general/hideDown.png");
+  private static final Icon ourHideLeftSideIcon = AllIcons.General.HideLeft;
+  private static final Icon ourHideRightSideIcon = AllIcons.General.HideRight;
+  private static final Icon ourHideDownSideIcon = AllIcons.General.HideDown;
 
-  private static final Icon ourHideLeftIcon = IconLoader.getIcon("/general/hideLeftPart.png");
-  private static final Icon ourHideRightIcon = IconLoader.getIcon("/general/hideRightPart.png");
-  private static final Icon ourHideDownIcon = IconLoader.getIcon("/general/hideDownPart.png");
+  private static final Icon ourHideLeftIcon = AllIcons.General.HideLeftPart;
+  private static final Icon ourHideRightIcon = AllIcons.General.HideRightPart;
+  private static final Icon ourHideDownIcon = AllIcons.General.HideDownPart;
 
-  private static final Icon ourSettingsIcon = IconLoader.getIcon("/general/gear.png");
-  private static final Icon ourSeparatorIcon = IconLoader.getIcon("/general/divider.png");
+  private static final Icon ourSettingsIcon = AllIcons.General.Gear;
+  private static final Icon ourSeparatorIcon = AllIcons.General.Divider;
 
-  private static final Icon ourHideLeftSideHoveredIcon = IconLoader.getIcon("/general/hideLeftHover.png");
-  private static final Icon ourHideRightSideHoveredIcon = IconLoader.getIcon("/general/hideRightHover.png");
-  private static final Icon ourHideDownSideHoveredIcon = IconLoader.getIcon("/general/hideDownHover.png");
+  private static final Icon ourHideLeftSideHoveredIcon = AllIcons.General.HideLeftHover;
+  private static final Icon ourHideRightSideHoveredIcon = AllIcons.General.HideRightHover;
+  private static final Icon ourHideDownSideHoveredIcon = AllIcons.General.HideDownHover;
 
-  private static final Icon ourHideLeftHoveredIcon = IconLoader.getIcon("/general/hideLeftPartHover.png");
-  private static final Icon ourHideRightHoveredIcon = IconLoader.getIcon("/general/hideRightPartHover.png");
-  private static final Icon ourHideDownHoveredIcon = IconLoader.getIcon("/general/hideDownPartHover.png");
+  private static final Icon ourHideLeftHoveredIcon = AllIcons.General.HideLeftPartHover;
+  private static final Icon ourHideRightHoveredIcon = AllIcons.General.HideRightPartHover;
+  private static final Icon ourHideDownHoveredIcon = AllIcons.General.HideDownPartHover;
 
-  private static final Icon ourSettingsHoveredIcon = IconLoader.getIcon("/general/gearHover.png");
+  private static final Icon ourSettingsHoveredIcon = AllIcons.General.GearHover;
 
   private ToolWindow myToolWindow;
   private WindowInfoImpl myInfo;

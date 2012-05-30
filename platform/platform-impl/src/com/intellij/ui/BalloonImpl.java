@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -190,7 +191,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private final boolean myHideOnKey;
   private boolean myHideOnAction;
   private final boolean myEnableCloseButton;
-  private final Icon myCloseButton = IconLoader.getIcon("/general/balloonClose.png");
+  private final Icon myCloseButton = AllIcons.General.BalloonClose;
 
   public BalloonImpl(JComponent content,
                      Color borderColor,

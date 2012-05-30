@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.todo;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.openapi.actionSystem.*;
@@ -23,7 +24,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
@@ -40,7 +40,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
   private final Consumer<TodoFilter> myTodoFilterConsumer;
 
   public SetTodoFilterAction(final Project project, final TodoPanelSettings toDoSettings, final Consumer<TodoFilter> todoFilterConsumer) {
-    super(IdeBundle.message("action.filter.todo.items"), null, IconLoader.getIcon("/ant/filter.png"));
+    super(IdeBundle.message("action.filter.todo.items"), null, AllIcons.Ant.Filter);
     myProject = project;
     myToDoSettings = toDoSettings;
     myTodoFilterConsumer = todoFilterConsumer;
@@ -79,7 +79,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     group.addSeparator();
     group.add(
       new AnAction(IdeBundle.message("action.todo.edit.filters"),
-                   IdeBundle.message("action.todo.edit.filters"), IconLoader.getIcon("/general/ideOptions.png")) {
+                   IdeBundle.message("action.todo.edit.filters"), AllIcons.General.IdeOptions) {
         public void actionPerformed(AnActionEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           util.editConfigurable(project, new TodoConfigurable());

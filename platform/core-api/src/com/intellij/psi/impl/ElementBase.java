@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconLayerProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,10 @@ import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -73,7 +77,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     @NotNull
     @Override
     protected Icon compute() {
-      return IconLoader.getIcon("/nodes/nodePlaceholder.png");
+      return AllIcons.Nodes.NodePlaceholder;
     }
   };
 

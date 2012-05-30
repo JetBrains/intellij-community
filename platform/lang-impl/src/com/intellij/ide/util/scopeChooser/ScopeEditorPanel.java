@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -29,7 +30,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyUISettings;
@@ -698,7 +698,7 @@ public class ScopeEditorPanel {
 
     public FilterLegalsAction(final Runnable update) {
       super(IdeBundle.message("action.show.included.only"),
-            IdeBundle.message("action.description.show.included.only"), IconLoader.getIcon("/ant/filter.png"));
+            IdeBundle.message("action.description.show.included.only"), AllIcons.Ant.Filter);
       myUpdate = update;
     }
 

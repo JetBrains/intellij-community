@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
 
 import javax.swing.*;
@@ -29,6 +29,6 @@ public interface PoolOfTestIcons {
   Icon LOADING_ICON = TestsUIUtil.loadIcon("loadingTree");
   Icon TERMINATED_ICON = TestsUIUtil.loadIcon("testTerminated");
   Icon IGNORED_ICON = TestsUIUtil.loadIcon("testIgnored");
-  Icon ERROR_ICON_MARK = IconLoader.getIcon("/nodes/errorMark.png");
+  Icon ERROR_ICON_MARK = AllIcons.Nodes.ErrorMark;
   Icon TEAR_DOWN_FAILURE = new LayeredIcon(PASSED_ICON, ERROR_ICON_MARK);
 }

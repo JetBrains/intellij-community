@@ -114,16 +114,16 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     UndoUtil.markPsiFileForUndo(file);
   }
 
-  public static void registerQuickFixAction(PsiVariable variable, PsiType returnType, HighlightInfo info) {
-    final PsiClass returnClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
-    final PsiType variableType = variable.getType();
-    final PsiClass variableClass = PsiUtil.resolveClassInClassTypeOnly(variableType);
+  public static void registerQuickFixAction(PsiType lType, PsiType rType, HighlightInfo info) {
+    final PsiClass lClass = PsiUtil.resolveClassInClassTypeOnly(lType);
+    final PsiClass rClass = PsiUtil.resolveClassInClassTypeOnly(rType);
 
-    if (returnClass == null || variableClass == null) return;
-    if (returnClass instanceof PsiAnonymousClass) return;
-    if (returnClass.isInheritor(variableClass, true)) return;
+    if (rClass == null || lClass == null) return;
+    if (rClass instanceof PsiAnonymousClass) return;
+    if (rClass.isInheritor(lClass, true)) return;
+    if (lClass.isInheritor(rClass, true)) return;
 
-    QuickFixAction.registerQuickFixAction(info, new ChangeParameterClassFix(returnClass, (PsiClassType)variableType));
+    QuickFixAction.registerQuickFixAction(info, new ChangeParameterClassFix(rClass, (PsiClassType)lType));
   }
 
   public static void registerQuickFixActions(PsiCall methodCall, PsiExpressionList list, HighlightInfo highlightInfo) {

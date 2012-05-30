@@ -16,12 +16,12 @@
 
 package com.intellij.uiDesigner.clientProperties;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -37,8 +37,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -236,7 +237,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
   private class RemoveClassAction extends AnAction {
     public RemoveClassAction() {
-      super(UIDesignerBundle.message("client.properties.remove.class.tooltip"), "", IconLoader.getIcon("/general/remove.png"));
+      super(UIDesignerBundle.message("client.properties.remove.class.tooltip"), "", AllIcons.General.Remove);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -273,7 +274,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
   private class RemovePropertyAction extends AnAction {
     public RemovePropertyAction() {
-      super(UIDesignerBundle.message("client.properties.remove.property.tooltip"), "", IconLoader.getIcon("/general/remove.png"));
+      super(UIDesignerBundle.message("client.properties.remove.property.tooltip"), "", AllIcons.General.Remove);
     }
 
     public void actionPerformed(AnActionEvent e) {

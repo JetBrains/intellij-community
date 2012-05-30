@@ -16,6 +16,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +32,6 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -372,7 +372,7 @@ public class PackageChooserDialog extends PackageChooser {
   private class NewPackageAction extends AnAction {
     public NewPackageAction() {
       super(IdeBundle.message("action.new.package"),
-            IdeBundle.message("action.description.create.new.package"), IconLoader.getIcon("/actions/newFolder.png"));
+            IdeBundle.message("action.description.create.new.package"), AllIcons.Actions.NewFolder);
     }
 
     public void actionPerformed(AnActionEvent e) {

@@ -19,12 +19,12 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
 import com.intellij.openapi.options.SettingsEditorListener;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 
@@ -220,14 +220,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         }
       });
 
-      myWarningLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+      myWarningLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
 
       myComponentPlace.setLayout(new GridBagLayout());
       myComponentPlace.add(getEditorComponent(),
                            new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                   new Insets(0, 0, 0, 0), 0, 0));
       myComponentPlace.doLayout();
-      myFixButton.setIcon(IconLoader.getIcon("/actions/quickfixBulb.png"));
+      myFixButton.setIcon(AllIcons.Actions.QuickfixBulb);
       updateWarning();
       myFixButton.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {

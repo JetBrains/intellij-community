@@ -15,13 +15,13 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
@@ -33,7 +33,7 @@ import javax.swing.*;
     )}
 )
 public class NamedScopeManager extends NamedScopesHolder {
-  private static final Icon LOCAL_SCOPES = IconLoader.getIcon("/ide/localScope.png");
+  private static final Icon LOCAL_SCOPES = AllIcons.Ide.LocalScope;
 
   public NamedScopeManager(final Project project) {
     super(project);

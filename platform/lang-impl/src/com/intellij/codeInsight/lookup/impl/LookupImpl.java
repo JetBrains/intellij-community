@@ -26,6 +26,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
@@ -44,7 +45,10 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -88,8 +92,8 @@ import java.util.List;
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
 
-  private static final Icon relevanceSortIcon = IconLoader.getIcon("/ide/lookupRelevance.png");
-  private static final Icon lexiSortIcon = IconLoader.getIcon("/ide/lookupAlphanumeric.png");
+  private static final Icon relevanceSortIcon = AllIcons.Ide.LookupRelevance;
+  private static final Icon lexiSortIcon = AllIcons.Ide.LookupAlphanumeric;
 
   private final Project myProject;
   private final Editor myEditor;
@@ -1419,7 +1423,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     private LookupHint() {
       setOpaque(false);
       setBorder(INACTIVE_BORDER);
-      setIcon(IconLoader.findIcon("/actions/intentionBulb.png"));
+      setIcon(AllIcons.Actions.IntentionBulb);
       String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
               ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
       if (acceleratorsText.length() > 0) {

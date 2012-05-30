@@ -27,7 +27,7 @@ import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.ThreadDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
@@ -45,10 +45,10 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
   private boolean            myIsAtBreakpoint;
   private SuspendContextImpl mySuspendContext;
 
-  private static final Icon myRunningThreadIcon = IconLoader.getIcon("/debugger/threadRunning.png");
-  private static final Icon myCurrentThreadIcon = IconLoader.getIcon("/debugger/threadCurrent.png");
-  private static final Icon myThreadAtBreakpointIcon = IconLoader.getIcon("/debugger/threadAtBreakpoint.png");
-  private static final Icon myFrozenThreadIcon = IconLoader.getIcon("/debugger/threadFrozen.png");
+  private static final Icon myRunningThreadIcon = AllIcons.Debugger.ThreadRunning;
+  private static final Icon myCurrentThreadIcon = AllIcons.Debugger.ThreadCurrent;
+  private static final Icon myThreadAtBreakpointIcon = AllIcons.Debugger.ThreadAtBreakpoint;
+  private static final Icon myFrozenThreadIcon = AllIcons.Debugger.ThreadFrozen;
 
   public ThreadDescriptorImpl(ThreadReferenceProxyImpl thread) {
     myThread = thread;

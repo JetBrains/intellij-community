@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.AdditionalTabComponentManager;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.PathManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -88,7 +88,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
                             ProcessHandler process) {
     if (manager instanceof DebuggerSessionTabBase) {
       final DebuggerSessionTabBase mgr = (DebuggerSessionTabBase)manager;
-      mgr.addAdditionalTabComponent(new OutputTabComponent(outputConsole), "XSLT-Output", IconLoader.getIcon("/debugger/console.png"));
+      mgr.addAdditionalTabComponent(new OutputTabComponent(outputConsole), "XSLT-Output", AllIcons.Debugger.Console);
       mgr.addAdditionalTabComponent(StructureTabComponent.create(process, outputConsole), "XSLT-Structure", PlatformIcons.FLATTEN_PACKAGES_ICON);
     } else {
       manager.addAdditionalTabComponent(new OutputTabComponent(outputConsole), "XSLT-Output");

@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.find.FindBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,7 +30,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ import java.util.Comparator;
  * @author nik
  */
 public abstract class FindUsagesInProjectStructureActionBase extends AnAction implements DumbAware {
-  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
+  private static final Icon FIND_ICON = AllIcons.Actions.Find;
   private final JComponent myParentComponent;
   private final Project myProject;
 

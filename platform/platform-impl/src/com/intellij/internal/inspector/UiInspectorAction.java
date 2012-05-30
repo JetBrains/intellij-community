@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.inspector;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -25,7 +26,6 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
@@ -117,7 +117,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       JToolBar bar = new JToolBar(SwingConstants.HORIZONTAL);
       bar.setFloatable(false);
-      bar.add(new AbstractAction("Highlight", IconLoader.getIcon("/toolbar/unknown.png")) {
+      bar.add(new AbstractAction("Highlight", AllIcons.Toolbar.Unknown) {
         public void actionPerformed(ActionEvent e) {
           myHighlighted = !myHighlighted;
           highlight(myComponent, !myHighlighted);
@@ -131,7 +131,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       bar.addSeparator();
 
-      bar.add(new AbstractAction("Refresh", IconLoader.getIcon("/vcs/refresh.png")) {
+      bar.add(new AbstractAction("Refresh", AllIcons.Vcs.Refresh) {
         public void actionPerformed(ActionEvent e) {
           getCurrentTable().refresh();
         }

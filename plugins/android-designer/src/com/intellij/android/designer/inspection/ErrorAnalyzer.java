@@ -22,12 +22,16 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.ex.DisableInspectionToolAction;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
+import com.intellij.designer.inspection.AbstractQuickFixManager;
 import com.intellij.designer.inspection.ErrorInfo;
 import com.intellij.designer.inspection.QuickFix;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -42,7 +46,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public final class ErrorAnalyzer {
-  public static void load(XmlFile xmlFile, RadComponent rootComponent, ProgressIndicator progress) {
+  public static void load(final Project project, final XmlFile xmlFile, RadComponent rootComponent, ProgressIndicator progress) {
     ErrorInfo.clear(rootComponent);
 
     AndroidLintExternalAnnotator annotator = new AndroidLintExternalAnnotator();
@@ -69,8 +73,8 @@ public final class ErrorAnalyzer {
           HighlightDisplayKey key = HighlightDisplayKey.find(inspection.getShortName());
 
           if (key != null) {
-            PsiElement startElement = xmlFile.findElementAt(range.getStartOffset());
-            PsiElement endElement = xmlFile.findElementAt(range.getEndOffset() - 1);
+            final PsiElement startElement = xmlFile.findElementAt(range.getStartOffset());
+            final PsiElement endElement = xmlFile.findElementAt(range.getEndOffset() - 1);
 
             if (startElement != null && endElement != null && !inspection.isSuppressedFor(startElement)) {
               Pair<RadComponent, String> componentInfo = findComponent(rootComponent, startElement);
@@ -79,52 +83,51 @@ public final class ErrorAnalyzer {
 
               List<QuickFix> designerFixes = errorInfo.getQuickFixes();
 
-              for (AndroidLintQuickFix fix : inspection.public_getQuickFixes(message)) {
+              for (final AndroidLintQuickFix fix : inspection.public_getQuickFixes(message)) {
                 if (fix.isApplicable(startElement, endElement, false)) {
-                  designerFixes.add(new QuickFix(fix.getName(), null) {
+                  designerFixes.add(new QuickFix(fix.getName(), AbstractQuickFixManager.ICON) {
                     @Override
-                    public void run() throws Exception {
-                      System.out.println("00000000");
-                      // TODO: Auto-generated method stub
+                    public void run() {
+                      fix.apply(startElement, endElement, null);
                     }
                   });
                 }
               }
 
-              for (IntentionAction intention : inspection.getIntentions(startElement, endElement)) {
-                designerFixes.add(new QuickFix(intention.getText(), null) {
+              for (final IntentionAction intention : inspection.getIntentions(startElement, endElement)) {
+                designerFixes.add(new QuickFix(intention.getText(), AbstractQuickFixManager.ICON) {
                   @Override
-                  public void run() throws Exception {
-                    System.out.println("1111111");
-                    // TODO: Auto-generated method stub
+                  public void run() {
+                    intention.invoke(project, null, xmlFile);
                   }
                 });
               }
 
-              designerFixes.add(new QuickFix("Disable inspection", null) {
+              final DisableInspectionToolAction disableAction = new DisableInspectionToolAction(key);
+              designerFixes.add(new QuickFix("Disable inspection", disableAction.getIcon(0)) {
                 @Override
-                public void run() throws Exception {
-                  System.out.println("22222");
-                  // TODO: Auto-generated method stub
-                }
-              });
-              designerFixes.add(new QuickFix("Edit '" + inspection.getDisplayName() + "' inspection settings", null) {
-                @Override
-                public void run() throws Exception {
-                  System.out.println("3333333");
-                  // TODO: Auto-generated method stub
+                public void run() {
+                  disableAction.invoke(project, null, xmlFile);
                 }
               });
 
+              final EditInspectionToolsSettingsAction editSettingsAction = new EditInspectionToolsSettingsAction(key);
+              designerFixes
+                .add(new QuickFix("Edit '" + inspection.getDisplayName() + "' inspection settings", editSettingsAction.getIcon(0)) {
+                  @Override
+                  public void run() {
+                    editSettingsAction.invoke(project, null, xmlFile);
+                  }
+                });
+
               SuppressIntentionAction[] suppressActions = inspection.getSuppressActions(startElement);
               if (suppressActions != null) {
-                for (SuppressIntentionAction action : suppressActions) {
+                for (final SuppressIntentionAction action : suppressActions) {
                   if (action.isAvailable(xmlFile.getProject(), null, startElement)) {
-                    designerFixes.add(new QuickFix("Suppress: " + action.getText(), action.getIcon(0)) {
+                    designerFixes.add(new QuickFix(action.getText(), action.getIcon(0)) {
                       @Override
-                      public void run() throws Exception {
-                        System.out.println("4444444");
-                        // TODO: Auto-generated method stub
+                      public void run() {
+                        action.invoke(project, null, startElement);
                       }
                     });
                   }

@@ -18,6 +18,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
@@ -43,7 +44,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -425,8 +425,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
   public void setupToolWindow(ToolWindowEx window) {
     final CollapseAllAction collapseAction = new CollapseAllAction(myTree);
-    collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
-    collapseAction.getTemplatePresentation().setHoveredIcon(IconLoader.getIcon("/general/collapseAllHover.png"));
+    collapseAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
+    collapseAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
     window.setTitleActions(collapseAction);
 
     final DefaultActionGroup group = new DefaultActionGroup();

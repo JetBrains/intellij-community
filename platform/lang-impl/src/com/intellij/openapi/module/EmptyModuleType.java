@@ -15,17 +15,17 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
-  private static final Icon ICON = IconLoader.getIcon("/modules/emptyProjectType.png");
-  private static final Icon NODE_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
-  private static final Icon NODE_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
+  private static final Icon ICON = AllIcons.Modules.EmptyProjectType;
+  private static final Icon NODE_ICON_OPEN = AllIcons.Nodes.ModuleOpen;
+  private static final Icon NODE_ICON_CLOSED = AllIcons.Nodes.ModuleClosed;
   @NonNls public static final String EMPTY_MODULE = "EMPTY_MODULE";
   //private static final EmptyModuleType ourInstance = new EmptyModuleType();
 

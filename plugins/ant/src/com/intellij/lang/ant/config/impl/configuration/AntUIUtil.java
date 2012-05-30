@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.impl.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.impl.AntClasspathEntry;
@@ -26,7 +27,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -43,8 +43,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AntUIUtil {
-  private static final Icon ANT_INSTALLATION_ICON = IconLoader.getIcon("/ant/antInstallation.png");
-  private static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
+  private static final Icon ANT_INSTALLATION_ICON = AllIcons.Ant.AntInstallation;
+  private static final Icon GENERIC_JDK_ICON = AllIcons.General.Jdk;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.impl.configuration.AntUIUtil");
 

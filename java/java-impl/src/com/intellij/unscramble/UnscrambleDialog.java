@@ -17,6 +17,7 @@ package com.intellij.unscramble;
 
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.PropertiesComponent;
@@ -31,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,9 +71,9 @@ public class UnscrambleDialog extends DialogWrapper {
       return state.isDeadlocked();
     }
   };
-  private static final Icon THREAD_DUMP_ICON = IconLoader.getIcon("/debugger/threadStates/threaddump.png");
-  private static final Icon DEADLOCK_ICON = IconLoader.getIcon("/debugger/killProcess.png");
-  private static final Icon EXCEPTION_ICON = IconLoader.getIcon("/debugger/threadStates/exception.png");
+  private static final Icon THREAD_DUMP_ICON = AllIcons.Debugger.ThreadStates.Threaddump;
+  private static final Icon DEADLOCK_ICON = AllIcons.Debugger.KillProcess;
+  private static final Icon EXCEPTION_ICON = AllIcons.Debugger.ThreadStates.Exception;
 
   private final Project myProject;
   private JPanel myEditorPanel;

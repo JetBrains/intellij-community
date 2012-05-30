@@ -16,8 +16,8 @@
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -32,9 +32,9 @@ import java.util.ArrayList;
  * @author nik
  */
 public abstract class AbstractValueHintTreeComponent<H> {
-  private static final Icon ICON_FWD = IconLoader.getIcon("/actions/forward.png");
-  private static final Icon ICON_BACK = IconLoader.getIcon("/actions/back.png");
-  private static final Icon ICON_UNMARK_WEBROOT = IconLoader.getIcon("/modules/unmarkWebroot.png");
+  private static final Icon ICON_FWD = AllIcons.Actions.Forward;
+  private static final Icon ICON_BACK = AllIcons.Actions.Back;
+  private static final Icon ICON_UNMARK_WEBROOT = AllIcons.Modules.UnmarkWebroot;
   private static final int HISTORY_SIZE = 11;
   private final ArrayList<H> myHistory = new ArrayList<H>();
   private int myCurrentIndex = -1;

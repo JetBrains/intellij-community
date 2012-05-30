@@ -15,13 +15,13 @@
  */
 package com.intellij.javaee;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -151,7 +151,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableExternalResources.png");
+    return AllIcons.General.ConfigurableExternalResources;
   }
 
   public void apply() {

@@ -16,10 +16,10 @@
 
 package com.intellij.ui.debugger.extensions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredText;
@@ -92,7 +92,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
   class ClearAction extends AnAction {
     ClearAction() {
-      super("Clear", "", IconLoader.getIcon("/actions/cross.png"));
+      super("Clear", "", AllIcons.Actions.Cross);
     }
 
     @Override

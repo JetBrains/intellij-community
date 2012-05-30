@@ -15,12 +15,12 @@
  */
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -49,7 +49,7 @@ public class RawCommandLineEditor extends JPanel {
         Messages.showTextAreaDialog(myTextField.getTextField(), myDialogCaption, "EditParametersPopupWindow");
       }
     });
-    myTextField.setButtonIcon(IconLoader.getIcon("/actions/showViewer.png"));
+    myTextField.setButtonIcon(AllIcons.Actions.ShowViewer);
     add(myTextField, BorderLayout.CENTER);
     setDescriptor(null);
   }

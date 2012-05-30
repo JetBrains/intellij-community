@@ -17,12 +17,12 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public class LiveTemplatesConfigurable extends BaseConfigurable implements Searc
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/liveTemplates.png");
+    return AllIcons.General.LiveTemplates;
   }
 
   public void reset() {

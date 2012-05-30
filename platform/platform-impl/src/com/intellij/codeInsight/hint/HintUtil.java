@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.SimpleColoredComponent;
@@ -36,7 +36,7 @@ public class HintUtil {
   public static final Color ERROR_COLOR = new Color(255, 220, 220);
 
   private static final Icon INFORMATION_ICON = null;
-  private static final Icon QUESTION_ICON = IconLoader.getIcon("/actions/help.png");
+  private static final Icon QUESTION_ICON = AllIcons.Actions.Help;
   private static final Icon ERROR_ICON = null;
 
   public static final Color QUESTION_UNDERSCORE_COLOR = Color.black;

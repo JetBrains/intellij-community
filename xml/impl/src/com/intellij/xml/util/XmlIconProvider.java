@@ -15,9 +15,9 @@
  */
 package com.intellij.xml.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.ElementBase;
@@ -32,8 +32,8 @@ import javax.swing.*;
  * @author peter
  */
 public class XmlIconProvider extends IconProvider implements DumbAware {
-  private static final Icon ourXsdIcon = IconLoader.getIcon("/fileTypes/xsdFile.png");
-  private static final Icon ourWsdlIcon = IconLoader.getIcon("/fileTypes/wsdlFile.png");
+  private static final Icon ourXsdIcon = AllIcons.FileTypes.XsdFile;
+  private static final Icon ourWsdlIcon = AllIcons.FileTypes.WsdlFile;
   @NonNls private static final String XSD_FILE_EXTENSION = "xsd";
   @NonNls private static final String WSDL_FILE_EXTENSION = "wsdl";
 

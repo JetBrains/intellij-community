@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
@@ -40,7 +41,6 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.components.panels.Wrapper;
@@ -159,7 +159,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   @Nullable
   public Icon getIcon() {
-    return IconLoader.getIcon("/modules/modules.png");
+    return AllIcons.Modules.Modules;
   }
 
   @Nullable

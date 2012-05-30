@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -151,7 +152,7 @@ public class DomFileDescription<T> {
   }
 
   @Nullable
-  public Icon getFileIcon(int flags) {
+  public Icon getFileIcon(@Iconable.IconFlags int flags) {
     return null;
   }
 

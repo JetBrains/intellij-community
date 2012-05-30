@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.errorTreeView;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.ClickableTreeCellRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeNodePartListener;
@@ -32,10 +32,10 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
-  private final static Icon ourFileIcon = IconLoader.getIcon("/fileTypes/java.png");
-  private final static Icon ourErrorIcon = IconLoader.getIcon("/compiler/error.png");
-  private final static Icon ourWarningIcon = IconLoader.getIcon("/compiler/warning.png");
-  private final static Icon ourInfoIcon = IconLoader.getIcon("/compiler/information.png");
+  private final static Icon ourFileIcon = AllIcons.FileTypes.Java;
+  private final static Icon ourErrorIcon = AllIcons.Compiler.Error;
+  private final static Icon ourWarningIcon = AllIcons.Compiler.Warning;
+  private final static Icon ourInfoIcon = AllIcons.Compiler.Information;
 
   private final MyWrapperRenderer myWrapperRenderer;
   private final CallingBackColoredTreeCellRenderer myColoredTreeCellRenderer;

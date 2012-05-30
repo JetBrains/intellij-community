@@ -22,11 +22,11 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -57,7 +57,7 @@ public class PatchFileType implements FileType {
 
   @Nullable
   public Icon getIcon() {
-    return IconLoader.getIcon("/nodes/pointcut.png");
+    return AllIcons.Nodes.Pointcut;
   }
 
   public boolean isBinary() {

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -30,11 +30,11 @@ public enum DirDiffOperation {
 
   public Icon getIcon() {
     switch (this) {
-      case COPY_TO:   return IconLoader.getIcon("/vcs/arrow_right.png");
-      case COPY_FROM: return IconLoader.getIcon("/vcs/arrow_left.png");
-      case MERGE:     return IconLoader.getIcon("/vcs/not_equal.png");
-      case EQUAL:     return IconLoader.getIcon("/vcs/equal.png");
-      case DELETE:    return IconLoader.getIcon("/vcs/remove.png");
+      case COPY_TO:   return AllIcons.Vcs.Arrow_right;
+      case COPY_FROM: return AllIcons.Vcs.Arrow_left;
+      case MERGE:     return AllIcons.Vcs.Not_equal;
+      case EQUAL:     return AllIcons.Vcs.Equal;
+      case DELETE:    return AllIcons.Vcs.Remove;
       case NONE:
     }
     return EmptyIcon.create(16);

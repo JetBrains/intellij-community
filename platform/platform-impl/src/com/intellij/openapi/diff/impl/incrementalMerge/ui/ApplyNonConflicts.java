@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -22,7 +23,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
 
@@ -32,7 +32,7 @@ import java.util.List;
 
 public class ApplyNonConflicts extends AnAction implements DumbAware {
   public ApplyNonConflicts() {
-    super(DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name"), null, IconLoader.getIcon("/diff/applyNotConflicts.png"));
+    super(DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name"), null, AllIcons.Diff.ApplyNotConflicts);
   }
 
   public void actionPerformed(AnActionEvent e) {

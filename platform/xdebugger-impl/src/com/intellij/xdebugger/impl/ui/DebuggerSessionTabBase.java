@@ -26,6 +26,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppIcon;
@@ -72,7 +72,7 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
   protected ExecutionConsole myConsole;
   protected RunContentDescriptor myRunContentDescriptor;
 
-  private final Icon DEFAULT_TAB_COMPONENT_ICON = IconLoader.getIcon("/fileTypes/text.png");
+  private final Icon DEFAULT_TAB_COMPONENT_ICON = AllIcons.FileTypes.Text;
 
   public DebuggerSessionTabBase(Project project, @NotNull String runnerId, @NotNull final String sessionName) {
     myProject = project;

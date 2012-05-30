@@ -26,13 +26,13 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +78,7 @@ public class MavenResumeAction extends AnAction {
                            ProgramRunner runner,
                            Executor executor,
                            ExecutionEnvironment environment) {
-    super("Resume build from specified module", null, IconLoader.getIcon("/runConfigurations/rerunFailedTests.png"));
+    super("Resume build from specified module", null, AllIcons.RunConfigurations.RerunFailedTests);
     myRunner = runner;
     myExecutor = executor;
     myEnvironment = environment;

@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -27,7 +28,6 @@ import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.KeymapGroupFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
 
 import javax.swing.*;
@@ -40,8 +40,8 @@ import java.util.Map;
 class AntKeymapExtension implements KeymapExtension {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntProjectKeymap");
 
-  private static final Icon ANT_ICON = IconLoader.getIcon("/nodes/keymapAnt.png");
-  private static final Icon ANT_OPEN_ICON = IconLoader.getIcon("/nodes/keymapAntOpen.png");
+  private static final Icon ANT_ICON = AllIcons.Nodes.KeymapAnt;
+  private static final Icon ANT_OPEN_ICON = AllIcons.Nodes.KeymapAntOpen;
 
   public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {
     final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<AntBuildFile, KeymapGroup>();

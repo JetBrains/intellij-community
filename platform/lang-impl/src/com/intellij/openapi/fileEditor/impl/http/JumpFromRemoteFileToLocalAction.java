@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl.http;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -47,7 +47,7 @@ public class JumpFromRemoteFileToLocalAction extends AnAction {
   private final Project myProject;
 
   public JumpFromRemoteFileToLocalAction(HttpVirtualFile file, Project project) {
-    super("Find Local File", "", IconLoader.findIcon("/general/autoscrollToSource.png"));
+    super("Find Local File", "", AllIcons.General.AutoscrollToSource);
     myFile = file;
     myProject = project;
   }

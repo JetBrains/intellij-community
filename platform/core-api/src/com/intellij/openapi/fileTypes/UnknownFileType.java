@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public class UnknownFileType implements FileType {
     @NotNull
     @Override
     protected Icon compute() {
-      return IconLoader.getIcon("/fileTypes/unknown.png");
+      return AllIcons.FileTypes.Unknown;
     }
   };
   public static final FileType INSTANCE = new UnknownFileType();

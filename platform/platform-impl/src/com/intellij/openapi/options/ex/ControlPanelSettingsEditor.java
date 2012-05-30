@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.DefaultSearchableConfigurable;
@@ -38,7 +39,6 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LabeledIcon;
 import com.intellij.ui.ScrollPaneFactory;
@@ -354,7 +354,7 @@ public class ControlPanelSettingsEditor extends DialogWrapper {
     private Icon createIcon() {
       Icon icon = myConfigurable.getIcon();
       if (icon == null) {
-        icon = IconLoader.getIcon("/general/configurableDefault.png");
+        icon = AllIcons.General.ConfigurableDefault;
       }
 
       String displayName = myConfigurable.getDisplayName();

@@ -17,7 +17,7 @@ package com.intellij.cvsSupport2.cvsBrowser;
 
 import com.intellij.CommonBundle;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
@@ -36,18 +36,18 @@ class LoadingNode extends DefaultMutableTreeNode {
   private int myPeriod = 0;
 
   private final Icon[] myIcons = new Icon[] {
-    IconLoader.getIcon("/process/step_1.png"),
-    IconLoader.getIcon("/process/step_2.png"),
-    IconLoader.getIcon("/process/step_3.png"),
-    IconLoader.getIcon("/process/step_4.png"),
-    IconLoader.getIcon("/process/step_5.png"),
-    IconLoader.getIcon("/process/step_6.png"),
-    IconLoader.getIcon("/process/step_7.png"),
-    IconLoader.getIcon("/process/step_8.png"),
-    IconLoader.getIcon("/process/step_9.png"),
-    IconLoader.getIcon("/process/step_10.png"),
-    IconLoader.getIcon("/process/step_11.png"),
-    IconLoader.getIcon("/process/step_12.png")
+    AllIcons.Process.Step_1,
+    AllIcons.Process.Step_2,
+    AllIcons.Process.Step_3,
+    AllIcons.Process.Step_4,
+    AllIcons.Process.Step_5,
+    AllIcons.Process.Step_6,
+    AllIcons.Process.Step_7,
+    AllIcons.Process.Step_8,
+    AllIcons.Process.Step_9,
+    AllIcons.Process.Step_10,
+    AllIcons.Process.Step_11,
+    AllIcons.Process.Step_12
   };
   private volatile boolean stopped = false;
   private Runnable myPeriodRequest;

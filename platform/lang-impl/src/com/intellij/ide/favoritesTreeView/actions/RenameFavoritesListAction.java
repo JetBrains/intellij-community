@@ -16,6 +16,7 @@
 
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ArrayUtil;
 
 /**
@@ -37,7 +37,7 @@ import com.intellij.util.ArrayUtil;
 public class RenameFavoritesListAction extends AnAction implements DumbAware {
   public RenameFavoritesListAction() {
     super(IdeBundle.message("action.rename.favorites.list"), IdeBundle.message("action.rename.favorites.list"),
-          IconLoader.getIcon("/actions/menu-replace.png"));
+          AllIcons.Actions.Menu_replace);
   }
 
   public void actionPerformed(AnActionEvent e) {

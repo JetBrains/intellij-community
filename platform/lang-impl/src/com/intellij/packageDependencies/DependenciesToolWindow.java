@@ -15,11 +15,11 @@
  */
 package com.intellij.packageDependencies;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -50,7 +50,7 @@ public class DependenciesToolWindow {
                                                                      project);
         myContentManager = toolWindow.getContentManager();
 
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowInspection.png"));
+        toolWindow.setIcon(AllIcons.General.ToolWindowInspection);
         new ContentManagerWatcher(toolWindow, myContentManager);
       }
     });

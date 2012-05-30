@@ -15,15 +15,15 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class XHtmlFileType extends HtmlFileType {
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/xhtml.png");
+  private static final Icon ICON = AllIcons.FileTypes.Xhtml;
   public static final XHtmlFileType INSTANCE = new XHtmlFileType();
 
   private XHtmlFileType() {

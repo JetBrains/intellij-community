@@ -19,6 +19,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
@@ -31,7 +32,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -65,11 +65,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class RunConfigurable extends BaseConfigurable {
-  private static final Icon ICON = IconLoader.getIcon("/general/configurableRunDebug.png");
+  private static final Icon ICON = AllIcons.General.ConfigurableRunDebug;
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
-  private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
-  private static final Icon EDIT_DEFAULTS_ICON = IconLoader.getIcon("/general/ideOptions.png");
+  private static final Icon SAVE_ICON = AllIcons.RunConfigurations.SaveTempConfig;
+  private static final Icon EDIT_DEFAULTS_ICON = AllIcons.General.IdeOptions;
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private volatile boolean isDisposed = false;

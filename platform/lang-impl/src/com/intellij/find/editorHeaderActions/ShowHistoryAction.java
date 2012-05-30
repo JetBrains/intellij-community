@@ -1,10 +1,10 @@
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -29,7 +29,7 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
   public ShowHistoryAction(final Getter<JTextComponent> textField, EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent);
     myTextField = textField;
-    getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/search.png"));
+    getTemplatePresentation().setIcon(AllIcons.Actions.Search);
     final String s = getTextField() == getEditorSearchComponent().getSearchField() ? "Search" : "Replace";
     getTemplatePresentation().setDescription(s + " history");
     getTemplatePresentation().setText(s + " History");

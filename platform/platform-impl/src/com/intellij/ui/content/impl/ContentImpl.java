@@ -16,9 +16,13 @@
  */
 package com.intellij.ui.content.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.BusyObject;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
@@ -32,7 +36,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
-  private static final Icon PIN_ICON = IconLoader.getIcon("/nodes/pinToolWindow.png");
+  private static final Icon PIN_ICON = AllIcons.Nodes.PinToolWindow;
   private String myDisplayName;
   private String myDescription;
   private JComponent myComponent;

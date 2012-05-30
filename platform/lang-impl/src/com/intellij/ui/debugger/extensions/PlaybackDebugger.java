@@ -16,6 +16,7 @@
 
 package com.intellij.ui.debugger.extensions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -28,7 +29,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFrame;
@@ -164,7 +164,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private class SaveAction extends AnAction {
     private SaveAction() {
-      super("Save", "", IconLoader.getIcon("/actions/menu-saveall.png"));
+      super("Save", "", AllIcons.Actions.Menu_saveall);
     }
 
     @Override
@@ -210,7 +210,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private class SetScriptFileAction extends AnAction {
 
     private SetScriptFileAction() {
-      super("Set Script File", "", IconLoader.getIcon("/nodes/packageOpen.png"));
+      super("Set Script File", "", AllIcons.Nodes.PackageOpen);
     }
 
     @Override
@@ -226,7 +226,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private class NewScriptAction extends AnAction {
     private NewScriptAction() {
-      super("New Script", "", IconLoader.getIcon("/actions/new.png"));
+      super("New Script", "", AllIcons.Actions.New);
     }
 
     @Override
@@ -287,7 +287,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private class StopAction extends AnAction {
     private StopAction() {
-      super("Stop", null, IconLoader.getIcon("/actions/suspend.png"));
+      super("Stop", null, AllIcons.Actions.Suspend);
     }
 
     @Override
@@ -310,7 +310,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private class ActivateFrameAndRun extends AnAction {
     private ActivateFrameAndRun() {
-      super("Activate Frame And Run", "", IconLoader.getIcon("/nodes/deploy.png"));
+      super("Activate Frame And Run", "", AllIcons.Nodes.Deploy);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -326,7 +326,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private class RunOnFameActivationAction extends AnAction {
 
     private RunOnFameActivationAction() {
-      super("Run On Frame Activation", "", IconLoader.getIcon("/general/run.png"));
+      super("Run On Frame Activation", "", AllIcons.General.Run);
     }
 
     @Override

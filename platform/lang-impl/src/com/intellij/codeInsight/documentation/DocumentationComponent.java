@@ -20,8 +20,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ExternalJavaDocAction;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
@@ -561,7 +560,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public BackAction() {
-      super(CodeInsightBundle.message("javadoc.action.back"), null, IconLoader.getIcon("/actions/back.png"));
+      super(CodeInsightBundle.message("javadoc.action.back"), null, AllIcons.Actions.Back);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -576,7 +575,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public ForwardAction() {
-      super(CodeInsightBundle.message("javadoc.action.forward"), null, IconLoader.getIcon("/actions/forward.png"));
+      super(CodeInsightBundle.message("javadoc.action.forward"), null, AllIcons.Actions.Forward);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -591,7 +590,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public ExternalDocAction() {
-      super(CodeInsightBundle.message("javadoc.action.view.external"), null, IconLoader.getIcon("/actions/browser-externalJavaDoc.png"));
+      super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.Browser_externalJavaDoc);
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
     }
 
@@ -746,7 +745,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
       super(action, presentation, place, minimumSize);
-      myPresentation.setIcon(IconLoader.getIcon("/general/secondaryGroup.png"));
+      myPresentation.setIcon(AllIcons.General.SecondaryGroup);
     }
 
     public void hideSettings() {

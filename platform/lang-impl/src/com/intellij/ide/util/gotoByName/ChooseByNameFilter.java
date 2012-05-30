@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbService;
@@ -24,7 +25,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ public abstract class ChooseByNameFilter<T> {
   /**
    * an icon to use
    */
-  private static final Icon FILTER_ICON = IconLoader.getIcon("/icons/inspector/useFilter.png");
+  private static final Icon FILTER_ICON = AllIcons.Icons.Inspector.UseFilter;
   /**
    * a parent popup
    */

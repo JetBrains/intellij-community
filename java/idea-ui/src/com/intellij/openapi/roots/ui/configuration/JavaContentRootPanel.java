@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.roots.IconActionComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +27,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class JavaContentRootPanel extends ContentRootPanel {
-  private static final Icon ADD_PREFIX_ICON = IconLoader.getIcon("/modules/setPackagePrefix.png");
-  private static final Icon ADD_PREFIX_ROLLOVER_ICON = IconLoader.getIcon("/modules/setPackagePrefixRollover.png");
+  private static final Icon ADD_PREFIX_ICON = AllIcons.Modules.SetPackagePrefix;
+  private static final Icon ADD_PREFIX_ROLLOVER_ICON = AllIcons.Modules.SetPackagePrefixRollover;
 
   public JavaContentRootPanel(ActionCallback callback) {
     super(callback, true, true);

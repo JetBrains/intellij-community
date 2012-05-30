@@ -15,11 +15,11 @@
  */
 package com.intellij.ui.debugger.extensions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 
@@ -47,7 +47,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
     if (myComponent == null) {
       myText = new JTextArea();
       final JBScrollPane log = new JBScrollPane(myText);
-      final AnAction clear = new AnAction("Clear", "Clear log", IconLoader.getIcon("/general/reset.png")) {
+      final AnAction clear = new AnAction("Clear", "Clear log", AllIcons.General.Reset) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           myText.setText(null);

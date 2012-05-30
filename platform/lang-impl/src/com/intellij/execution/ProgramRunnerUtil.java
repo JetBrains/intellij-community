@@ -23,6 +23,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +41,7 @@ import javax.swing.*;
  */
 public class ProgramRunnerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ProgramRunnerUtil");
-  private static final Icon INVALID_CONFIGURATION = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png");
+  private static final Icon INVALID_CONFIGURATION = AllIcons.RunConfigurations.InvalidConfigurationLayer;
 
   private ProgramRunnerUtil() {
   }

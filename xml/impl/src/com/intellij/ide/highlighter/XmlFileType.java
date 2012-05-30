@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ public class XmlFileType extends XmlLikeFileType implements DomSupportEnabled {
   public static final XmlFileType INSTANCE = new XmlFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "xml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/xml.png");
+  private static final Icon ICON = AllIcons.FileTypes.Xml;
 
   private XmlFileType() {
     super(XMLLanguage.INSTANCE);

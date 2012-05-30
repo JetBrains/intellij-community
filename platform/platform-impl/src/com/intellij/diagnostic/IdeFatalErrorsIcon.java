@@ -1,7 +1,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
 
 import javax.swing.*;
@@ -16,9 +16,9 @@ import java.util.concurrent.TimeUnit;
  * @author ksafonov
  */
 public class IdeFatalErrorsIcon extends JLabel {
-  public static final Icon UNREAD_ERROR_ICON = IconLoader.getIcon("/ide/fatalError.png");
-  private static final Icon READ_ERROR_ICON = IconLoader.getIcon("/ide/fatalError-read.png");
-  private static final Icon NO_ERRORS_ICON = IconLoader.getIcon("/ide/emptyFatalError.png");
+  public static final Icon UNREAD_ERROR_ICON = AllIcons.Ide.FatalError;
+  private static final Icon READ_ERROR_ICON = AllIcons.Ide.FatalError_read;
+  private static final Icon NO_ERRORS_ICON = AllIcons.Ide.EmptyFatalError;
 
   public enum State {UnreadErrors, ReadErrors, NoErrors}
 

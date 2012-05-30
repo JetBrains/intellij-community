@@ -15,11 +15,11 @@
  */
 package com.intellij.psi.templateLanguages;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -62,7 +62,7 @@ public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurabl
   @Override
   @Nullable
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableFileTypes.png");
+    return AllIcons.General.ConfigurableFileTypes;
   }
 
   @Override

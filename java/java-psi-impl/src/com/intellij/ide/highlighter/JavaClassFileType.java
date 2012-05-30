@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class JavaClassFileType implements FileType {
     @NotNull
     @Override
     protected Icon compute() {
-      return IconLoader.getIcon("/fileTypes/javaClass.png");
+      return AllIcons.FileTypes.JavaClass;
     }
   };
 

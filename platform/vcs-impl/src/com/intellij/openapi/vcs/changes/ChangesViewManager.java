@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -73,7 +74,7 @@ import java.util.List;
 
 public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, ProjectComponent {
   public static final int UNVERSIONED_MAX_SIZE = 50;
-  public static final Icon detailsIcon = IconLoader.getIcon("/vcs/volute.png");
+  public static final Icon detailsIcon = AllIcons.Vcs.Volute;
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
 
@@ -551,7 +552,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     public ToggleShowIgnoredAction() {
       super(VcsBundle.message("changes.action.show.ignored.text"),
             VcsBundle.message("changes.action.show.ignored.description"),
-            IconLoader.getIcon("/actions/showHiddens.png"));
+            AllIcons.Actions.ShowHiddens);
     }
 
     public boolean isSelected(AnActionEvent e) {

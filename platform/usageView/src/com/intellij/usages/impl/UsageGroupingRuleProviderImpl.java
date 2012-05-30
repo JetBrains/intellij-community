@@ -15,11 +15,11 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewSettings;
@@ -121,7 +121,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByUsageTypeAction extends RuleAction {
     private GroupByUsageTypeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.usage.type"), IconLoader.getIcon("/ant/filter.png")); //TODO: special icon
+      super(view, UsageViewBundle.message("action.group.by.usage.type"), AllIcons.Ant.Filter); //TODO: special icon
     }
     @Override
     protected boolean getOptionValue() {
@@ -149,7 +149,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByModuleTypeAction extends RuleAction {
     private GroupByModuleTypeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.module"), IconLoader.getIcon("/objectBrowser/showModules.png"));
+      super(view, UsageViewBundle.message("action.group.by.module"), AllIcons.ObjectBrowser.ShowModules);
     }
 
     @Override
@@ -179,7 +179,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByFileStructureAction extends RuleAction {
     private GroupByFileStructureAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.file.structure"), IconLoader.getIcon("/actions/groupByMethod.png"));
+      super(view, UsageViewBundle.message("action.group.by.file.structure"), AllIcons.Actions.GroupByMethod);
     }
     @Override
     protected boolean getOptionValue() {

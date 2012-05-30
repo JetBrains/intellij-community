@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,7 +35,7 @@ public class ScrollToTheEndToolbarAction extends AnAction {
     final String message = ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text");
     getTemplatePresentation().setDescription(message);
     getTemplatePresentation().setText(message);
-    getTemplatePresentation().setIcon(IconLoader.getIcon("/runConfigurations/scroll_down.png"));
+    getTemplatePresentation().setIcon(AllIcons.RunConfigurations.Scroll_down);
   }
 
   @Override

@@ -25,12 +25,12 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -262,7 +262,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     public ConsoleExecuteAction(LanguageConsoleImpl languageConsole,
                                 ProcessHandler processHandler,
                                 ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-      super(null, null, IconLoader.getIcon(ACTIONS_EXECUTE_ICON));
+      super(null, null, AllIcons.Actions.Execute);
       myLanguageConsole = languageConsole;
       myProcessHandler = processHandler;
       myConsoleExecuteActionHandler = consoleExecuteActionHandler;

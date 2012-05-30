@@ -15,13 +15,13 @@
  */
 package com.intellij.ide.bookmarks.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ListUtil;
 
 import javax.swing.*;
@@ -32,7 +32,7 @@ class DeleteBookmarkAction extends DumbAwareAction {
   private final JList myList;
 
   DeleteBookmarkAction(Project project, JList list) {
-    super("Delete", "Delete current bookmark", IconLoader.getIcon("/general/remove.png"));
+    super("Delete", "Delete current bookmark", AllIcons.General.Remove);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("DELETE")), list);

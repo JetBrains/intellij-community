@@ -15,7 +15,7 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Iconable;
 
 import javax.swing.*;
@@ -30,6 +30,6 @@ public class AxisLookup extends AbstractLookup implements Iconable {
     }
 
     public Icon getIcon(int flags) {
-        return IconLoader.getIcon("/nodes/j2eeParameter.png");
+        return AllIcons.Nodes.J2eeParameter;
     }
 }

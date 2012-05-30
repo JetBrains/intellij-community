@@ -15,18 +15,18 @@
  */
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.execution.AntBuildMessageView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.util.IconLoader;
 
 public final class PauseOutputAction extends ToggleAction {
   private final AntBuildMessageView myAntBuildMessageView;
 
   public PauseOutputAction(AntBuildMessageView antBuildMessageView) {
-    super(AntBundle.message("ant.view.pause.output.action.name"),null, IconLoader.getIcon("/actions/pause.png"));
+    super(AntBundle.message("ant.view.pause.output.action.name"),null, AllIcons.Actions.Pause);
     myAntBuildMessageView = antBuildMessageView;
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowFilePathAction;
@@ -376,10 +377,10 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     ShadowAction myShadow;
     private final TabInfo myTabInfo;
-    private final Icon myIcon = IconLoader.getIcon("/actions/close.png");
-    private final Icon myNewIcon = IconLoader.getIcon("/actions/closeNew.png");
-    private final Icon myHoveredIcon = IconLoader.getIcon("/actions/closeHovered.png");
-    private final Icon myNewHoveredIcon = IconLoader.getIcon("/actions/closeNewHovered.png");
+    private final Icon myIcon = AllIcons.Actions.Close;
+    private final Icon myNewIcon = AllIcons.Actions.CloseNew;
+    private final Icon myHoveredIcon = AllIcons.Actions.CloseHovered;
+    private final Icon myNewHoveredIcon = AllIcons.Actions.CloseNewHovered;
 
     public CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;

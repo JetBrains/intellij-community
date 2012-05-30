@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.build;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
@@ -25,7 +26,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NonNls;
@@ -141,7 +141,7 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/nodes/plugin.png");
+    return AllIcons.Nodes.Plugin;
   }
 
   public String getHelpTopic() {

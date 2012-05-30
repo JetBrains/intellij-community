@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -114,7 +114,7 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
       eachLabel.setFont(eachLabel.getFont().deriveFont(Font.BOLD, eachLabel.getFont().getSize()));
       myText.add(eachLabel);
       if (i < text.length - 1) {
-        final JLabel eachIcon = new JLabel(IconLoader.getIcon("/general/comboArrowRight.png"), JLabel.CENTER);
+        final JLabel eachIcon = new JLabel(AllIcons.General.ComboArrowRight, JLabel.CENTER);
         eachIcon.setBorder(new EmptyBorder(0, 0, 0, gap));
         myText.add(eachIcon);
       }

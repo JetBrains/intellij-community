@@ -20,10 +20,10 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyUISettings;
 
 public final class ShowModulesAction extends ToggleAction {
@@ -31,7 +31,7 @@ public final class ShowModulesAction extends ToggleAction {
 
   public ShowModulesAction(final Runnable update) {
     super(IdeBundle.message("action.show.modules"),
-          IdeBundle.message("action.description.show.modules"), IconLoader.getIcon("/objectBrowser/showModules.png"));
+          IdeBundle.message("action.description.show.modules"), AllIcons.ObjectBrowser.ShowModules);
     myUpdate = update;
   }
 

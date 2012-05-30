@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +31,7 @@ public class XmlNSRenderer extends ColoredListCellRenderer {
 
   public static final XmlNSRenderer INSTANCE = new XmlNSRenderer();
   
-  private static final Icon ICON = IconLoader.getIcon("/nodes/static.png");
+  private static final Icon ICON = AllIcons.Nodes.Static;
 
   public XmlNSRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();

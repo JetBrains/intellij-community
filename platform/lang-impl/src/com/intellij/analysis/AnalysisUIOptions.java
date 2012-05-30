@@ -18,13 +18,12 @@ package com.intellij.analysis;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -91,7 +90,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public AnAction createGroupBySeverityAction(final InspectionResultsView view) {
     return new ToggleAction(InspectionsBundle.message("inspection.action.group.by.severity"),
                             InspectionsBundle.message("inspection.action.group.by.severity.description"),
-                            IconLoader.getIcon("/nodes/sortBySeverity.png")) {
+                            AllIcons.Nodes.SortBySeverity) {
 
 
       @Override
@@ -110,7 +109,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public AnAction createFilterResolvedItemsAction(final InspectionResultsView view){
     return new ToggleAction(InspectionsBundle.message("inspection.filter.resolved.action.text"),
                             InspectionsBundle.message("inspection.filter.resolved.action.text"),
-                            IconLoader.getIcon("/ant/filter.png")) {
+                            AllIcons.Ant.Filter) {
 
 
       @Override
@@ -129,7 +128,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public AnAction createShowOutdatedProblemsAction(final InspectionResultsView view) {
     return new ToggleAction(InspectionsBundle.message("inspection.filter.show.diff.action.text"),
                             InspectionsBundle.message("inspection.filter.show.diff.action.text"),
-                            IconLoader.getIcon("/actions/diff.png")) {
+                            AllIcons.Actions.Diff) {
 
 
       @Override
@@ -169,7 +168,7 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
   public AnAction createShowDiffOnlyAction(final InspectionResultsView view) {
     return new ToggleAction(InspectionsBundle.message("inspection.filter.show.diff.only.action.text"),
                             InspectionsBundle.message("inspection.filter.show.diff.only.action.text"),
-                            IconLoader.getIcon("/actions/showChangesOnly.png")) {
+                            AllIcons.Actions.ShowChangesOnly) {
 
 
       @Override

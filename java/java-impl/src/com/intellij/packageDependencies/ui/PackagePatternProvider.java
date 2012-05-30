@@ -20,13 +20,13 @@
  */
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.GroupByScopeTypeAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -45,7 +45,7 @@ import java.util.Set;
 public class PackagePatternProvider extends PatternDialectProvider {
   @NonNls public static final String PACKAGES = "package";
   private static final Logger LOG = Logger.getInstance("#" + PackagePatternProvider.class.getName());
-   public static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
+   public static final Icon ICON = AllIcons.General.PackagesTab;
 
   @Nullable
   private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {

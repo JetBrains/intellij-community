@@ -17,6 +17,7 @@ package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
@@ -43,7 +44,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -98,10 +98,10 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return canExpand();
     }
   };
-  private static final Icon ICON_RUN = IconLoader.getIcon("/actions/execute.png");
+  private static final Icon ICON_RUN = AllIcons.Actions.Execute;
   private static final Icon ICON_REMOVE = IconUtil.getRemoveIcon();
   private static final Icon ICON_ADD = IconUtil.getAddIcon();
-  private static final Icon ICON_FILTER = IconLoader.getIcon("/ant/filter.png");
+  private static final Icon ICON_FILTER = AllIcons.Ant.Filter;
 
   public AntExplorer(final Project project) {
     super(true, true);

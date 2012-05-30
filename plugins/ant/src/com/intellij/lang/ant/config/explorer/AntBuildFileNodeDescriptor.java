@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
@@ -22,7 +23,6 @@ import com.intellij.lang.ant.config.AntBuildModelBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
-  private static final Icon ICON = IconLoader.getIcon("/ant/build.png");
+  private static final Icon ICON = AllIcons.Ant.Build;
 
   private final AntBuildFileBase myBuildFile;
   private CompositeAppearance myAppearance;

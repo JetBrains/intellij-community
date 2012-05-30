@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -41,7 +41,7 @@ public class ArtifactErrorPanel {
   private String myErrorText;
 
   public ArtifactErrorPanel(final ArtifactEditorImpl artifactEditor) {
-    myErrorLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+    myErrorLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
     new UiNotifyConnector(myMainPanel, new Activatable.Adapter() {
       @Override
       public void showNotify() {

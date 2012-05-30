@@ -18,12 +18,12 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
@@ -42,7 +42,7 @@ import java.awt.*;
  * User: Sergey.Vasiliev
  */
 public class DomElementsErrorPanel extends JPanel implements CommittablePanel, Highlightable {
-  private static final Icon ERRORS_FOUND_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
+  private static final Icon ERRORS_FOUND_ICON = AllIcons.General.ErrorsInProgress;
 
   private static final int ALARM_PERIOD = 241;
 

@@ -25,6 +25,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -32,7 +33,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -51,7 +51,7 @@ import java.util.Map;
  * @author dyoma
  */
 public class RunContentBuilder implements LogConsoleManager, Disposable  {
-  private static final Icon DEFAULT_RERUN_ICON = IconLoader.getIcon("/actions/refreshUsages.png");
+  private static final Icon DEFAULT_RERUN_ICON = AllIcons.Actions.RefreshUsages;
   @NonNls private static final String JAVA_RUNNER = "JavaRunner";
   
   private final ProgramRunner myRunner;
@@ -148,7 +148,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
 
   public static void buildConsoleUiDefault(RunnerLayoutUi ui, final ExecutionConsole console) {
     final Content consoleContent = ui.createContent(ExecutionConsole.CONSOLE_CONTENT_ID, console.getComponent(), "Console",
-                                                      IconLoader.getIcon("/debugger/console.png"),
+                                                    AllIcons.Debugger.Console,
                                                       console.getPreferredFocusableComponent());
 
     consoleContent.setCloseable(false);
@@ -259,7 +259,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
 
   public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
     final Content content = myUi.createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(),
-                                               IconLoader.getIcon("/debugger/console.png"), tabComponent.getPreferredFocusableComponent());
+                                               AllIcons.Debugger.Console, tabComponent.getPreferredFocusableComponent());
 
 
 

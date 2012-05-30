@@ -17,10 +17,10 @@
 package org.intellij.plugins.relaxNG.model.annotation;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.Set;
 
 class OverridingDefineRenderer extends GutterIconRenderer {
-  private static final Icon ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
+  private static final Icon ICON = AllIcons.Gutter.OverridingMethod;
 
   private final Set<Define> mySet;
   private final String myMessage;

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -37,7 +38,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -205,7 +205,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     labelPanel.add(new JLabel("Available Elements"));
     final HyperlinkLabel link = new HyperlinkLabel("");
-    link.setIcon(IconLoader.getIcon("/general/help.png"));
+    link.setIcon(AllIcons.General.Help);
     link.setUseIconAsLink(true);
     link.addHyperlinkListener(new HyperlinkListener() {
       public void hyperlinkUpdate(HyperlinkEvent e) {

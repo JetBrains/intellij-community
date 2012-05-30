@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.ui.UIUtil;
@@ -68,7 +68,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
       myField.setBorder(emptyBorder);
     }
 
-    myField.setSearchIcon(IconLoader.getIcon("/actions/filter_small.png"));
+    myField.setSearchIcon(AllIcons.Actions.Filter_small);
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
     myComponent.setLayout(layout);

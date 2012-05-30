@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.navigation.ItemPresentation;
@@ -37,7 +38,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -69,7 +69,7 @@ import java.util.Set;
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
-  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
+  private static final Icon FIND_ICON = AllIcons.Actions.Find;
 
   private PsiElement[] myElements;
   private int myIndex;
@@ -505,7 +505,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public BackAction() {
-      super(CodeInsightBundle.message("quick.definition.back"), null, IconLoader.getIcon("/actions/back.png"));
+      super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -521,7 +521,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public ForwardAction() {
-      super(CodeInsightBundle.message("quick.definition.forward"), null, IconLoader.getIcon("/actions/forward.png"));
+      super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -536,7 +536,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class EditSourceAction extends EditSourceActionBase {
     public EditSourceAction() {
-      super(true, IconLoader.getIcon("/actions/editSource.png"), CodeInsightBundle.message("quick.definition.edit.source"));
+      super(true, AllIcons.Actions.EditSource, CodeInsightBundle.message("quick.definition.edit.source"));
     }
 
     @Override public void actionPerformed(AnActionEvent e) {
@@ -549,7 +549,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private class ShowSourceAction extends EditSourceActionBase implements HintManagerImpl.ActionToIgnore {
     public ShowSourceAction() {
-      super(false, IconLoader.getIcon("/actions/showSource.png"), CodeInsightBundle.message("quick.definition.show.source"));
+      super(false, AllIcons.Actions.ShowSource, CodeInsightBundle.message("quick.definition.show.source"));
     }
   }
 

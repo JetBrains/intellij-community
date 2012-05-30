@@ -16,25 +16,25 @@
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class ContextHelpAction extends AnAction implements DumbAware {
-  private static final Icon myIcon=IconLoader.getIcon("/actions/help.png");
+  private static final Icon myIcon= AllIcons.Actions.Help;
   private final String myHelpID;
 
   public ContextHelpAction() {
     this(null);
   }
 
-  public ContextHelpAction(@NonNls String helpID) {
+  public ContextHelpAction(@NonNls @Nullable String helpID) {
     myHelpID = helpID;
   }
 

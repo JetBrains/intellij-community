@@ -15,16 +15,17 @@
  */
 package com.intellij.ui.popup.tree;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.ui.treeStructure.*;
+import com.intellij.ui.treeStructure.SimpleNodeRenderer;
+import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.Range;
@@ -397,8 +398,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
         if (!hasNextStep) continue;
 
         Icon icon = isPathSelected(eachPath) ?
-                    IconLoader.getIcon("/icons/ide/nextStep.png") :
-                    IconLoader.getIcon("/icons/ide/nextStepGrayed.png");
+                    AllIcons.Icons.Ide.NextStep :
+                    AllIcons.Icons.Ide.NextStepGrayed;
         final Rectangle rec = getPathBounds(eachPath);
         int x = getSize().width - icon.getIconWidth() - 1;
         int y = rec.y + (rec.height - icon.getIconWidth()) / 2;

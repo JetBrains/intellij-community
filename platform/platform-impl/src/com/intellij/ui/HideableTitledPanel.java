@@ -1,9 +1,9 @@
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -14,8 +14,8 @@ import java.awt.event.*;
  * @author evgeny zakrevsky
  */
 public class HideableTitledPanel extends JPanel {
-  private final static Icon OFF_ICON = IconLoader.getIcon("/general/comboArrow.png");
-  private final static Icon ON_ICON = IconLoader.getIcon("/general/comboUpPassive.png");
+  private final static Icon OFF_ICON = AllIcons.General.ComboArrow;
+  private final static Icon ON_ICON = AllIcons.General.ComboUpPassive;
 
   private TitledSeparatorWithMnemonic myTitledSeparator;
   private boolean myOn;

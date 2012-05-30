@@ -15,9 +15,9 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageViewSettings;
-import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
@@ -25,7 +25,7 @@ import javax.swing.*;
 * @author cdr
 */
 class PreviewUsageAction extends RuleAction {
-  private static final Icon PREVIEW_ICON = IconLoader.getIcon("/actions/preview.png");
+  private static final Icon PREVIEW_ICON = AllIcons.Actions.Preview;
 
   PreviewUsageAction(UsageViewImpl usageView) {
     super(usageView, UsageViewBundle.message("preview.usages.action.text"), PREVIEW_ICON);

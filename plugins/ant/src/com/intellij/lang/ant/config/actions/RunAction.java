@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.execution.AntBuildMessageView;
@@ -23,14 +24,13 @@ import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import java.util.Collections;
 
 public final class RunAction extends AnAction {
   private final AntBuildMessageView myAntBuildMessageView;
-  public static final Icon RERUN_ICON = IconLoader.getIcon("/actions/refreshUsages.png");
+  public static final Icon RERUN_ICON = AllIcons.Actions.RefreshUsages;
 
   public RunAction(AntBuildMessageView antBuildMessageView) {
     super(AntBundle.message("rerun.ant.action.name"), null, RERUN_ICON);

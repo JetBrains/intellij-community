@@ -15,8 +15,8 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
@@ -30,7 +30,7 @@ import javax.swing.*;
  * @author nik
  */
 public class PlainArtifactType extends ArtifactType {
-  public static final Icon ARTIFACT_ICON = IconLoader.getIcon("/nodes/artifact.png");
+  public static final Icon ARTIFACT_ICON = AllIcons.Nodes.Artifact;
   @NonNls public static final String ID = "plain";
 
   public static PlainArtifactType getInstance() {

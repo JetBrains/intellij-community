@@ -15,17 +15,17 @@
  */
 package com.intellij.openapi.diff.impl.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class GutterActionRenderer extends GutterIconRenderer {
   private final AnAction myAction;
-  public static final Icon REPLACE_ARROW = IconLoader.getIcon("/diff/arrow.png");
-  public static final Icon REMOVE_CROSS = IconLoader.getIcon("/diff/remove.png");
+  public static final Icon REPLACE_ARROW = AllIcons.Diff.Arrow;
+  public static final Icon REMOVE_CROSS = AllIcons.Diff.Remove;
 
   public GutterActionRenderer(@NotNull AnAction action) {
     myAction = action;

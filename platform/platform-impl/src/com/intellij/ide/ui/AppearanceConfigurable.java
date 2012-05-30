@@ -15,12 +15,12 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
@@ -99,7 +99,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableAppearance.png");
+    return AllIcons.General.ConfigurableAppearance;
   }
 
   public void apply() {

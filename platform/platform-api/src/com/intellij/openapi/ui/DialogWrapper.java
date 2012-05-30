@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -237,8 +238,8 @@ public abstract class DialogWrapper {
   private int myValidationDelay = 300;
   private boolean myDisposed = false;
   private boolean myValidationStarted = false;
-  private static final Icon ERROR_POINT = IconLoader.getIcon("/ide/errorPoint.png");
-  private static final Icon ERROR_SIGN = IconLoader.getIcon("/ide/errorSign.png");
+  private static final Icon ERROR_POINT = AllIcons.Ide.ErrorPoint;
+  private static final Icon ERROR_SIGN = AllIcons.Ide.ErrorSign;
   private final ErrorPainter myErrorPainter = new ErrorPainter();
   private JComponent myErrorPane;
   private boolean myErrorPainterInstalled = false;
@@ -1761,7 +1762,7 @@ public abstract class DialogWrapper {
       }
       else {
         myLabel.setText("<html><body><font color=red><left>" + text + "</left></b></font></body></html>");
-        myLabel.setIcon(IconLoader.getIcon("/actions/lightning.png"));
+        myLabel.setIcon(AllIcons.Actions.Lightning);
         myLabel.setBorder(new EmptyBorder(4, 10, 0, 2));
         setVisible(true);
       }

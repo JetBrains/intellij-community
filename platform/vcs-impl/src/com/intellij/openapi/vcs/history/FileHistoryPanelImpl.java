@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -56,7 +57,10 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.dualView.*;
+import com.intellij.ui.dualView.CellWrapper;
+import com.intellij.ui.dualView.DualTreeElement;
+import com.intellij.ui.dualView.DualView;
+import com.intellij.ui.dualView.DualViewColumnInfo;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.text.DateFormatUtil;
@@ -808,7 +812,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
     result.add(new RefreshFileHistoryAction());
     if (! myIsStaticAndEmbedded) {
-      result.add(new ToggleAction("Show Details", "Display details panel", IconLoader.getIcon("/actions/showSource.png")) {
+      result.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.ShowSource) {
         @Override
         public boolean isSelected(AnActionEvent e) {
           return getConfiguration().SHOW_FILE_HISTORY_DETAILS;
@@ -1141,7 +1145,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private class MyAnnotateAction extends AnAction {
     public MyAnnotateAction() {
       super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"),
-            IconLoader.getIcon("/actions/annotate.png"));
+            AllIcons.Actions.Annotate);
     }
 
     private String key(final VirtualFile vf) {
@@ -1687,7 +1691,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private class RefreshFileHistoryAction extends AnAction implements DumbAware {
     public RefreshFileHistoryAction() {
-      super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.desctiption.refresh"), IconLoader.getIcon("/actions/sync.png"));
+      super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.desctiption.refresh"), AllIcons.Actions.Sync);
     }
 
     public void actionPerformed(AnActionEvent e) {

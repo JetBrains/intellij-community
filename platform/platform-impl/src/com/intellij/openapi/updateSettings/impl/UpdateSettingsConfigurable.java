@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -23,7 +24,6 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableUpdates.png");
+    return AllIcons.General.ConfigurableUpdates;
   }
 
   public void setCheckNowEnabled(boolean enabled) {

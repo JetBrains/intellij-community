@@ -15,8 +15,8 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -30,7 +30,7 @@ import java.nio.charset.Charset;
  * @author max
  */
 public class PropertiesFileType extends LanguageFileType {
-  public static final Icon FILE_ICON = IconLoader.getIcon("/fileTypes/properties.png");
+  public static final Icon FILE_ICON = AllIcons.FileTypes.Properties;
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "properties";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;

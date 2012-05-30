@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.icons.AllIcons;
 
 import javax.swing.*;
 
@@ -25,7 +25,7 @@ import javax.swing.*;
  * @author max
  */
 public class EntryPointsNode extends InspectionNode {
-  private static final Icon ENTRY_POINTS = IconLoader.getIcon("/nodes/entryPoints.png");
+  private static final Icon ENTRY_POINTS = AllIcons.Nodes.EntryPoints;
   public EntryPointsNode(UnusedDeclarationInspection tool) {
     super(new DummyEntryPointsTool(tool));
     getTool().updateContent();

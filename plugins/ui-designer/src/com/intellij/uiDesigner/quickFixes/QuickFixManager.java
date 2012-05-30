@@ -16,13 +16,13 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -63,7 +63,7 @@ public abstract class QuickFixManager <T extends JComponent>{
    * My currently visible hint. May be null if there is no visible hint
    */
   private LightweightHint myHint;
-  private final Icon myIcon = IconLoader.getIcon("/actions/intentionBulb.png");
+  private final Icon myIcon = AllIcons.Actions.IntentionBulb;
   private Rectangle myLastHintBounds;
 
   public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component, @NotNull final JViewport viewPort) {

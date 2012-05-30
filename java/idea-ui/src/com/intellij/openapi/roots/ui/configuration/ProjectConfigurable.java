@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.StorageScheme;
@@ -37,7 +38,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -61,7 +61,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   private final Project myProject;
 
-  private static final Icon PROJECT_ICON = IconLoader.getIcon("/nodes/project.png");
+  private static final Icon PROJECT_ICON = AllIcons.Nodes.Project;
 
   private LanguageLevelCombo myLanguageLevelCombo;
   private ProjectJdkConfigurable myProjectJdkConfigurable;

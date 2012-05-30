@@ -16,6 +16,7 @@
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +31,10 @@ import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -370,7 +374,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                 //noinspection SSBasedInspection
                 ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
                                                                          XmlStringUtil.escapeString(message),
-                                                                         IconLoader.getIcon("/actions/find.png"), null);
+                                                                         AllIcons.Actions.Find, null);
               }
               else {
                 List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);

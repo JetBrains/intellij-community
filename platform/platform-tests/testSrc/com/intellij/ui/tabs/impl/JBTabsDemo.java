@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.tabs.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -150,7 +151,7 @@ public class JBTabsDemo {
     };
     //someTree.setBorder(new LineBorder(Color.cyan));
     tabs.addTab(new TabInfo(someTree)).setText("Tree1").setActions(new DefaultActionGroup(), null)
-        .setIcon(IconLoader.getIcon("/debugger/frame.png"));
+        .setIcon(AllIcons.Debugger.Frame);
 
     final JTree component = new Tree();
     final TabInfo toAnimate1 = new TabInfo(component);

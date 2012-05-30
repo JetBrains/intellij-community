@@ -15,10 +15,10 @@
  */
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,8 +52,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Konstantin Bulenkov
  */
 public class ColorPicker extends JPanel implements ColorListener, DocumentListener {
-  public static final Icon PICK = IconLoader.findIcon("/ide/pipette.png");
-  public static final Icon PICK_ROLLOVER = IconLoader.findIcon("/ide/pipette_rollover.png");
+  public static final Icon PICK = AllIcons.Ide.Pipette;
+  public static final Icon PICK_ROLLOVER = AllIcons.Ide.Pipette_rollover;
   private static final String COLOR_CHOOSER_COLORS_KEY = "ColorChooser.RecentColors";
   private static final String HSB_PROPERTY = "color.picker.is.hsb";
 

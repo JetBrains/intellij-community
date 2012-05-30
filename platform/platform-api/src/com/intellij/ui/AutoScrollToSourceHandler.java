@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -25,7 +26,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -205,7 +205,8 @@ public abstract class AutoScrollToSourceHandler {
 
   private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
     public AutoscrollToSourceAction() {
-      super(UIBundle.message("autoscroll.to.source.action.name"), UIBundle.message("autoscroll.to.source.action.description"), IconLoader.getIcon("/general/autoscrollToSource.png"));
+      super(UIBundle.message("autoscroll.to.source.action.name"), UIBundle.message("autoscroll.to.source.action.description"),
+            AllIcons.General.AutoscrollToSource);
     }
 
     public boolean isSelected(AnActionEvent event) {

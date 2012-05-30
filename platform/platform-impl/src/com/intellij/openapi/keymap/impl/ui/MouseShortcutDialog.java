@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.UIUtil;
@@ -267,7 +267,7 @@ class MouseShortcutDialog extends DialogWrapper{
     public MyClickPad(){
       super(
         KeyMapBundle.message("mouse.shortcut.label"),
-        IconLoader.getIcon("/general/mouse.png"), SwingConstants.CENTER
+        AllIcons.General.Mouse, SwingConstants.CENTER
       );
       // It's very imporatant that MouseListener is added to the Dialog. If you add
       // the same listener, for example, into the MyClickPad component you get fake

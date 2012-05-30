@@ -16,6 +16,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
@@ -238,9 +239,9 @@ public class AbstractPopup implements JBPopup {
       }
 
       if (pinCallback != null) {
-        myCaption.setButtonComponent(new InplaceButton(new IconButton("Pin", IconLoader.getIcon("/general/autohideOff.png"),
-                                                                      IconLoader.getIcon("/general/autohideOff.png"),
-                                                                      IconLoader.getIcon("/general/autohideOffInactive.png")),
+        myCaption.setButtonComponent(new InplaceButton(new IconButton("Pin", AllIcons.General.AutohideOff,
+                                                                      AllIcons.General.AutohideOff,
+                                                                      AllIcons.General.AutohideOffInactive),
                                                        new ActionListener() {
                                                          public void actionPerformed(final ActionEvent e) {
                                                            pinCallback.process(AbstractPopup.this);

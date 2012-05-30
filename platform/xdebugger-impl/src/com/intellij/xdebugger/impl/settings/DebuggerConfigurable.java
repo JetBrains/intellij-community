@@ -15,10 +15,10 @@
  */
 package com.intellij.xdebugger.impl.settings;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +41,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableDebugger.png");
+    return AllIcons.General.ConfigurableDebugger;
   }
 
   public String getDisplayName() {

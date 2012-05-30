@@ -15,6 +15,7 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -37,7 +37,7 @@ import java.awt.event.MouseEvent;
  * @author irengrig
  */
 public abstract class BasePopupAction extends DumbAwareAction implements CustomComponentAction {
-  private static final Icon ARROWS_ICON = IconLoader.getIcon("/ide/statusbar_arrows.png");
+  private static final Icon ARROWS_ICON = AllIcons.Ide.Statusbar_arrows;
   protected final JLabel myLabel;
   protected final JPanel myPanel;
   protected final Project myProject;

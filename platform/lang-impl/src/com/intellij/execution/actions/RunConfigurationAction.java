@@ -22,6 +22,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -30,7 +31,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ui.UIUtil;
@@ -177,7 +177,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
   }
 
   private static class SaveTemporaryAction extends AnAction {
-    private static final Icon ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
+    private static final Icon ICON = AllIcons.RunConfigurations.SaveTempConfig;
 
     public SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();

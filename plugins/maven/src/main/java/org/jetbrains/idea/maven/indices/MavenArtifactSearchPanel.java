@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
@@ -335,7 +335,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
   private static class MyClassCellRenderer extends MyArtifactCellRenderer {
-    public static final Icon CLASS_ICON = IconLoader.getIcon("/nodes/class.png");
+    public static final Icon CLASS_ICON = AllIcons.Nodes.Class;
 
     private MyClassCellRenderer(Tree tree) {
       super(tree);

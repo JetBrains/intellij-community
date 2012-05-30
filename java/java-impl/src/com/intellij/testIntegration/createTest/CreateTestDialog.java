@@ -18,6 +18,7 @@ package com.intellij.testIntegration.createTest;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
@@ -40,7 +41,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -295,7 +295,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     myFixLibraryPanel = new JPanel(new BorderLayout());
     myFixLibraryLabel = new JLabel();
-    myFixLibraryLabel.setIcon(IconLoader.getIcon("/actions/intentionBulb.png"));
+    myFixLibraryLabel.setIcon(AllIcons.Actions.IntentionBulb);
     myFixLibraryPanel.add(myFixLibraryLabel, BorderLayout.CENTER);
     myFixLibraryPanel.add(myFixLibraryButton, BorderLayout.EAST);
 

@@ -27,6 +27,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -255,7 +256,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableErrorHighlighting.png");
+    return AllIcons.General.ConfigurableErrorHighlighting;
   }
 
   public String getHelpTopic() {

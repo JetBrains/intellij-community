@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.mvc;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -24,6 +23,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -38,7 +38,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -77,7 +80,7 @@ public class MvcConsole implements Disposable {
   private final MyKillProcessAction myKillAction = new MyKillProcessAction();
   private boolean myExecuting = false;
   private final Content myContent;
-  private static final Icon KILL_PROCESS_ICON = IconLoader.getIcon("/debugger/killProcess.png");
+  private static final Icon KILL_PROCESS_ICON = AllIcons.Debugger.KillProcess;
 
   public MvcConsole(Project project, TextConsoleBuilderFactory consoleBuilderFactory) {
     myProject = project;

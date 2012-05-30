@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
@@ -28,7 +29,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
@@ -881,7 +881,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         }
 
         public Icon getIcon() {
-          return IconLoader.getIcon("/general/applicationSettings.png");
+          return AllIcons.General.ApplicationSettings;
         }
 
         @Nullable

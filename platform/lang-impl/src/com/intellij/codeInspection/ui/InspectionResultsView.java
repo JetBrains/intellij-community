@@ -29,6 +29,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -45,7 +46,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -55,7 +55,10 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.ui.*;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.SmartExpander;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -774,7 +777,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private class CloseAction extends AnAction implements DumbAware {
     private CloseAction() {
-      super(CommonBundle.message("action.close"), null, IconLoader.getIcon("/actions/cancel.png"));
+      super(CommonBundle.message("action.close"), null, AllIcons.Actions.Cancel);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -784,7 +787,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private class EditSettingsAction extends AnAction {
     private EditSettingsAction() {
-      super(InspectionsBundle.message("inspection.action.edit.settings"), InspectionsBundle.message("inspection.action.edit.settings"), IconLoader.getIcon("/general/ideOptions.png"));
+      super(InspectionsBundle.message("inspection.action.edit.settings"), InspectionsBundle.message("inspection.action.edit.settings"),
+            AllIcons.General.IdeOptions);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -819,7 +823,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
-      super(InspectionsBundle.message("inspection.action.rerun"), InspectionsBundle.message("inspection.action.rerun"), IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(InspectionsBundle.message("inspection.action.rerun"), InspectionsBundle.message("inspection.action.rerun"),
+            AllIcons.Actions.RefreshUsages);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 

@@ -16,9 +16,9 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -40,7 +40,7 @@ import java.util.List;
  * @author spleaner
  */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
-  private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
+  private static final Icon ARROW_ICON = AllIcons.General.ComboArrow;
 
   private final T[] myValues;
   private WeakReference<ListPopup> myPopupRef;

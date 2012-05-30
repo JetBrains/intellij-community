@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
@@ -435,7 +435,7 @@ public class ModuleDependenciesAnalyzer {
     /**
      * Missing file ICON
      */
-    public static final Icon MISSING_ICON = IconLoader.findIcon("/compiler/error.png");
+    public static final Icon MISSING_ICON = AllIcons.Compiler.Error;
     /**
      * The URL in the path
      */

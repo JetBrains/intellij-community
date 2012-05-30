@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -52,7 +53,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
 
-  private static final Icon myDropdownIcon = IconLoader.getIcon("/general/dropdown.png");
+  private static final Icon myDropdownIcon = AllIcons.General.Dropdown;
 
   private boolean myNoIconsInPopup = false;
   private Insets myInsets;

@@ -15,12 +15,11 @@
  */
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -251,7 +250,7 @@ public abstract class AppIcon {
       AppImage img = createAppImage();
 
       if (visible) {
-        Icon okIcon = IconLoader.getIcon("/mac/appIconOk512.png");
+        Icon okIcon = AllIcons.Mac.AppIconOk512;
 
         int x = img.myImg.getWidth() - okIcon.getIconWidth();
         int y = 0;

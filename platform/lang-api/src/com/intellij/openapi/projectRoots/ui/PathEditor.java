@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -26,7 +27,6 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -55,8 +55,8 @@ public class PathEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.PathEditor");
 
   public static final Color INVALID_COLOR = new Color(210, 0, 0);
-  private static final Icon ICON_INVALID = IconLoader.getIcon("/nodes/ppInvalid.png");
-  private static final Icon ICON_EMPTY = IconLoader.getIcon("/nodes/emptyNode.png");
+  private static final Icon ICON_INVALID = AllIcons.Nodes.PpInvalid;
+  private static final Icon ICON_EMPTY = AllIcons.Nodes.EmptyNode;
 
   protected JPanel myPanel;
   private JBList myList;

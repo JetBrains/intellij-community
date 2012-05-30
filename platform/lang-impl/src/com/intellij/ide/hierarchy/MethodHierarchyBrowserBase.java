@@ -16,12 +16,12 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,19 +60,19 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
     final GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(3, 5, 0, 5), 0, 0);
 
-    label = new JLabel(methodDefinedText, IconLoader.getIcon("/hierarchy/methodDefined.png"), SwingConstants.LEFT);
+    label = new JLabel(methodDefinedText, AllIcons.Hierarchy.MethodDefined, SwingConstants.LEFT);
     label.setUI(new MultiLineLabelUI());
     label.setIconTextGap(10);
     panel.add(label, gc);
 
     gc.gridy++;
-    label = new JLabel(methodNotDefinedLegallyText, IconLoader.getIcon("/hierarchy/methodNotDefined.png"), SwingConstants.LEFT);
+    label = new JLabel(methodNotDefinedLegallyText, AllIcons.Hierarchy.MethodNotDefined, SwingConstants.LEFT);
     label.setUI(new MultiLineLabelUI());
     label.setIconTextGap(10);
     panel.add(label, gc);
 
     gc.gridy++;
-    label = new JLabel(methodShouldBeDefined, IconLoader.getIcon("/hierarchy/shouldDefineMethod.png"), SwingConstants.LEFT);
+    label = new JLabel(methodShouldBeDefined, AllIcons.Hierarchy.ShouldDefineMethod, SwingConstants.LEFT);
     label.setUI(new MultiLineLabelUI());
     label.setIconTextGap(10);
     panel.add(label, gc);
@@ -99,7 +99,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   final class ShowImplementationsOnlyAction extends ToggleAction {
     public ShowImplementationsOnlyAction() {
       super(IdeBundle.message("action.hide.non.implementations"), null,
-            IconLoader.getIcon("/ant/filter.png")); // TODO[anton] use own icon!!!
+            AllIcons.Ant.Filter); // TODO[anton] use own icon!!!
     }
 
     public final boolean isSelected(final AnActionEvent event) {
