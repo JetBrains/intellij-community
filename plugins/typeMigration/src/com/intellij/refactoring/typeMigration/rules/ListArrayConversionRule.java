@@ -107,7 +107,7 @@ public class ListArrayConversionRule extends TypeConversionRule {
       if (psiClass != null) {
         final GlobalSearchScope allScope = GlobalSearchScope.allScope(psiClass.getProject());
         final PsiClass collectionClass =
-          JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.util.List", allScope);
+          JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, allScope);
         if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, collectionClass, true)) {
           final PsiSubstitutor derivedSubstitutor = classResolveResult.getSubstitutor();
           if (PsiUtil.isRawSubstitutor(psiClass, derivedSubstitutor)) return null;

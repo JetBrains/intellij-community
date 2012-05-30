@@ -232,21 +232,21 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   //Set s = new HashSet() -> HashSet s = new HashSet();
   public void testT40() throws Exception {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList", null));
   }
 
   //Set s = new HashSet<String>() -> HashSet s = new HashSet<String>();
   public void testT41() throws Exception {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList", null));
   }
 
   //Set s = new HashSet() -> HashSet<String> s = new HashSet();
   public void testT42() throws Exception {
     doTestFieldType("l",
-                    myJavaFacade.getElementFactory().createTypeFromText("java.util.List", null),
+                    myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.String>", null));
   }
 

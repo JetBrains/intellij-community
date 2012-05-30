@@ -112,7 +112,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   public void testExprInstanceofNeg() throws Exception {
     doTestFirstParamType("meth", "Expr",
                          myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null),
-                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List", null));
+                         myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null));
   }
 
   public void testExprInstanceofPos() throws Exception {
