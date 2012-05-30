@@ -71,6 +71,7 @@ public class AndroidRootUtil {
     return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().CUSTOM_COMPILER_MANIFEST, false);
   }
 
+  // DO NOT get PSI or DOM from this file, because it may be excluded (f.ex. it can be in /target/ directory)
   @Nullable
   public static VirtualFile getManifestFileForCompiler(@NotNull AndroidFacet facet) {
     return facet.getConfiguration().USE_CUSTOM_COMPILER_MANIFEST
