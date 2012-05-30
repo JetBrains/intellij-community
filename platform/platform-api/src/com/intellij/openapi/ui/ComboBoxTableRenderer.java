@@ -40,7 +40,7 @@ import java.util.List;
  * @author spleaner
  */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
-  private static final Icon ARROW_ICON = AllIcons.General.ComboArrow;
+  private static final Icon ARROW_ICON = AllIcons.General.ArrowDown;
 
   private final T[] myValues;
   private WeakReference<ListPopup> myPopupRef;
