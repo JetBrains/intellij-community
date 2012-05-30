@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui;
+package com.intellij.ui;
+
+import com.intellij.ide.ui.ListCellRendererWrapper;
 
 import javax.swing.*;
 import java.util.Map;
 
-/** @deprecated use [platform-api] {@link com.intellij.ide.MappingListCellRenderer} (to remove in IDEA 13) */
-@SuppressWarnings("UnusedDeclaration")
 public class MappingListCellRenderer extends ListCellRendererWrapper {
   private final Map<Object, String> myValueMap;
 
