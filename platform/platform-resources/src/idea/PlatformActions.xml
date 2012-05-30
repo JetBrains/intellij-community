@@ -366,8 +366,7 @@
         <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
         <separator/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
-        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"
-                icon="/general/defaultKeymap.png"/>
+        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
         <action id="Help.JetBrainsTV" class="com.intellij.openapi.wm.impl.welcomeScreen.JetBrainsTvAction"/>
         <separator/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>

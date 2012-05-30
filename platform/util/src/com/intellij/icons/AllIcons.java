@@ -396,8 +396,6 @@ public class AllIcons {
     public static final Icon BalloonError = IconLoader.getIcon("/general/balloonError.png"); 
     public static final Icon BalloonInformation = IconLoader.getIcon("/general/balloonInformation.png"); 
     public static final Icon BalloonWarning = IconLoader.getIcon("/general/balloonWarning.png"); 
-    public static final Icon Bea = IconLoader.getIcon("/general/bea.png"); 
-    public static final Icon Browsersettings = IconLoader.getIcon("/general/browsersettings.png"); 
     public static final Icon Bullet = IconLoader.getIcon("/general/bullet.png"); 
     public static final Icon CheckForUpdate = IconLoader.getIcon("/general/checkForUpdate.png"); 
     public static final Icon CollapseAll = IconLoader.getIcon("/general/collapseAll.png"); 
@@ -423,7 +421,6 @@ public class AllIcons {
     public static final Icon EditColors = IconLoader.getIcon("/general/editColors.png"); 
     public static final Icon EditItemInSection = IconLoader.getIcon("/general/editItemInSection.png"); 
     public static final Icon Ellipsis = IconLoader.getIcon("/general/ellipsis.png"); 
-    public static final Icon EnterpriseEAR = IconLoader.getIcon("/general/enterpriseEAR.png"); 
     public static final Icon ErrorDialog = IconLoader.getIcon("/general/errorDialog.png"); 
     public static final Icon ErrorMask = IconLoader.getIcon("/general/errorMask.png"); 
     public static final Icon ErrorsFound = IconLoader.getIcon("/general/errorsFound.png"); 
@@ -550,7 +547,6 @@ public class AllIcons {
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); 
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); 
     public static final Icon ToolWindowAnt = IconLoader.getIcon("/general/toolWindowAnt.png"); 
-    public static final Icon ToolWindowAspects = IconLoader.getIcon("/general/toolWindowAspects.png"); 
     public static final Icon ToolWindowChanges = IconLoader.getIcon("/general/toolWindowChanges.png"); 
     public static final Icon ToolWindowCommander = IconLoader.getIcon("/general/toolWindowCommander.png"); 
     public static final Icon ToolWindowCoverage = IconLoader.getIcon("/general/toolWindowCoverage.png"); 
