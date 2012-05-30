@@ -161,10 +161,12 @@ public class MavenModuleImporter {
         if (typeString != null && !typeString.equals("jar")) continue;
 
         OrderRootType rootType = OrderRootType.CLASSES;
-        if ("sources".equals(typeString)) {
+
+        String classifier = artifactElement.getChildTextTrim("classifier");
+        if ("sources".equals(classifier)) {
           rootType = OrderRootType.SOURCES;
         }
-        else if ("javadoc".equals(typeString)) {
+        else if ("javadoc".equals(classifier)) {
           rootType = OrderRootType.DOCUMENTATION;
         }
 

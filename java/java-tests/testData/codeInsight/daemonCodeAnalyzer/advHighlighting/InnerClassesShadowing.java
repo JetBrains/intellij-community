@@ -68,3 +68,16 @@ class C extends D implements A
     interface F2 extends A.B1 { }
 
 }
+
+
+class AO {}
+class BAO {
+    AO bar = new AO();
+    {
+        bar.foo();
+    }
+    private class AO {
+        void foo(){}
+    }
+
+}

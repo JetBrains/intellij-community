@@ -13,26 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.ui;
+package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-/** @deprecated use [platform-api] {@link com.intellij.ui.ListCellRendererWrapper} (to remove in IDEA 13) */
-@SuppressWarnings("UnusedDeclaration")
+/**
+ * Please use this wrapper in case you need simple cell renderer with text and icon.
+ * This avoids ugly UI under GTK+ look&feel, because in this case SynthComboBoxUI#SynthComboBoxRenderer
+ * is used instead of DefaultComboBoxRenderer.
+ *
+ * @author oleg
+ * @since 30.09.2010
+ */
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private final ListCellRenderer myOriginalRenderer;
-
+  private boolean mySeparator;
   private Icon myIcon;
   private String myText;
   private String myToolTipText;
   private Color myForeground;
+  private Color myBackground;
   private Font myFont;
 
   /**
    * A combo box for which this cell renderer is created should be passed here.
+   *
    * @param comboBox The combo box for which this cell renderer is created.
    */
   public ListCellRendererWrapper(final JComboBox comboBox) {
@@ -41,6 +50,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
 
   /**
    * Default JComboBox cell renderer should be passed here.
+   *
    * @param listCellRenderer Default cell renderer ({@link javax.swing.JComboBox#getRenderer()}).
    */
   public ListCellRendererWrapper(final ListCellRenderer listCellRenderer) {
@@ -52,40 +62,59 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
                                                       final int index,
                                                       final boolean isSelected,
                                                       final boolean cellHasFocus) {
-    try {
-      @SuppressWarnings("unchecked") final T t = (T)value;
-      customize(list, t, index, isSelected, cellHasFocus);
-      final Component component = myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (component instanceof JLabel) {
-        final JLabel label = (JLabel)component;
-        label.setIcon(myIcon);
-        if (myText != null) label.setText(myText);
-        if (myForeground != null) label.setForeground(myForeground);
-        if (myFont != null) label.setFont(myFont);
-        label.setToolTipText(myToolTipText);
+    mySeparator = false;
+    myIcon = null;
+    myText = null;
+    myForeground = null;
+    myBackground = null;
+    myFont = null;
+    myToolTipText = null;
+
+    @SuppressWarnings("unchecked") final T t = (T)value;
+    customize(list, t, index, isSelected, cellHasFocus);
+
+    if (mySeparator) {
+      final TitledSeparator separator = new TitledSeparator(myText);
+      separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+      if (!UIUtil.isUnderGTKLookAndFeel()) {
+        separator.setOpaque(false);
+        separator.setBackground(UIUtil.TRANSPARENT_COLOR);
+        separator.getLabel().setOpaque(false);
+        separator.getLabel().setBackground(UIUtil.TRANSPARENT_COLOR);
       }
-      return component;
+      return separator;
     }
-    finally {
-      myIcon = null;
-      myText = null;
-      myToolTipText = null;
+
+    final Component component = myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    if (component instanceof JLabel) {
+      final JLabel label = (JLabel)component;
+      label.setIcon(myIcon);
+      if (myText != null) label.setText(myText);
+      if (myForeground != null) label.setForeground(myForeground);
+      if (myBackground != null && !isSelected) label.setBackground(myBackground);
+      if (myFont != null) label.setFont(myFont);
+      label.setToolTipText(myToolTipText);
     }
+    return component;
   }
 
   /**
    * Implement this method to configure text and icon for given value.
    * Use {@link #setIcon(javax.swing.Icon)} and {@link #setText(String)} methods.
    *
-   * @param list The JList we're painting.
-   * @param value The value returned by list.getModel().getElementAt(index).
-   * @param index The cells index.
+   * @param list     The JList we're painting.
+   * @param value    The value returned by list.getModel().getElementAt(index).
+   * @param index    The cells index.
    * @param selected True if the specified cell was selected.
    * @param hasFocus True if the specified cell has the focus.
    */
   public abstract void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
 
-  public final void setIcon(final @Nullable Icon icon) {
+  public final void setSeparator() {
+    mySeparator = true;
+  }
+
+  public final void setIcon(@Nullable final Icon icon) {
     myIcon = icon;
   }
 
@@ -93,15 +122,19 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
     myText = text;
   }
 
-  public final void setToolTipText(final String toolTipText) {
+  public final void setToolTipText(@Nullable final String toolTipText) {
     myToolTipText = toolTipText;
   }
 
-  public void setForeground(final Color foreground) {
+  public final void setForeground(@Nullable final Color foreground) {
     myForeground = foreground;
   }
-  
-  public void setFont(final Font font) {
+
+  public final void setBackground(@Nullable final Color background) {
+    myBackground = background;
+  }
+
+  public final void setFont(@Nullable final Font font) {
     myFont = font;
   }
 }

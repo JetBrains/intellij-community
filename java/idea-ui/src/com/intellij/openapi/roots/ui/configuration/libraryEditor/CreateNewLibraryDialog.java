@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;

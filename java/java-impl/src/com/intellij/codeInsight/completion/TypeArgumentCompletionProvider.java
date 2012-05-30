@@ -47,9 +47,11 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 */
 class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
   private final boolean mySmart;
+  @Nullable private final InheritorsHolder myInheritors;
 
-  TypeArgumentCompletionProvider(boolean smart) {
+  TypeArgumentCompletionProvider(boolean smart, @Nullable InheritorsHolder inheritors) {
     mySmart = smart;
+    myInheritors = inheritors;
   }
 
   protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext processingContext, @NotNull final CompletionResultSet resultSet) {
@@ -71,7 +73,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     }
   }
 
-  private static void fillExpectedTypeArgs(CompletionResultSet resultSet,
+  private void fillExpectedTypeArgs(CompletionResultSet resultSet,
                                            PsiElement context,
                                            final PsiClass actualClass,
                                            final int index,
@@ -96,6 +98,14 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
         return;
       }
       typeItems.add(PsiTypeLookupItem.createLookupItem(arg, context));
+    }
+
+    if (typeItems.size() == 1 && myInheritors != null) {
+      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(typeItems.get(0).getPsiType());
+      if (aClass != null) {
+        JavaCompletionUtil.setShowFQN(typeItems.get(0));
+        myInheritors.registerClass(aClass);
+      }
     }
 
     resultSet.addElement(new TypeArgsLookupElement(typeItems, globalTail, ConstructorInsertHandler.hasConstructorParameters(actualClass, context)));
@@ -208,8 +218,10 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     public void renderElement(LookupElementPresentation presentation) {
       myTypeItems.get(0).renderElement(presentation);
       presentation.setItemText(getLookupString());
-      presentation.setTailText(null);
-      presentation.setTypeText(null);
+      if (myTypeItems.size() > 1) {
+        presentation.setTailText(null);
+        presentation.setTypeText(null);
+      }
     }
 
     @Override

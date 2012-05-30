@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.BrowserSettings;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.IconLoader;

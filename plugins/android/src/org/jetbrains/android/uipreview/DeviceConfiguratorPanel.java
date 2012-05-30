@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.jetbrains.android.uipreview;
 
 import com.android.ide.common.resources.configuration.*;
 import com.android.resources.*;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;

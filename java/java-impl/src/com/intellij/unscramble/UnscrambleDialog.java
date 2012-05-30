@@ -19,7 +19,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;

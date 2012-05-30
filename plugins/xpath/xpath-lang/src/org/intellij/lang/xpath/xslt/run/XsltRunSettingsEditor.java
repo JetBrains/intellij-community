@@ -16,7 +16,7 @@
 package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;

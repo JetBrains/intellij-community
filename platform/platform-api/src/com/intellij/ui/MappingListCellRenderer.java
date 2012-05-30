@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.scopeChooser;
+package com.intellij.ui;
 
-import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.Nullable;
+import javax.swing.*;
+import java.util.Map;
 
-/**
- * @author anna
- * @since 16-Jan-2008
- */
-public class ScopeDescriptor {
-  private final SearchScope myScope;
+public class MappingListCellRenderer extends ListCellRendererWrapper {
+  private final Map<Object, String> myValueMap;
 
-  public ScopeDescriptor(@Nullable SearchScope scope) {
-    myScope = scope;
+  public MappingListCellRenderer(final ListCellRenderer original, final Map<Object, String> valueMap) {
+    super(original);
+    myValueMap = valueMap;
   }
 
-  public String getDisplay() {
-    return myScope.getDisplayName();
-  }
-
-  public SearchScope getScope() {
-    return myScope;
+  @Override
+  public void customize(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
+    final String newValue = myValueMap.get(value);
+    if (newValue != null) {
+      setText(newValue);
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,19 @@ package com.intellij.psi.search;
 import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
-
 public abstract class SearchScope {
-  private static int hashcode_counter = 0;
+  private static int hashCodeCounter = 0;
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-  private final int _hashcode = hashcode_counter++;
+  private final int myHashCode = hashCodeCounter++;
 
   /**
-   * Overriden for performance reason. Object.hashCode() is native method and becomes a bottleneck when called often.
+   * Overridden for performance reason. Object.hashCode() is native method and becomes a bottleneck when called often.
+   *
    * @return hashCode value semantically identical to one from Object but not native
    */
   public int hashCode() {
-    return _hashcode;
+    return myHashCode;
   }
 
   public String getDisplayName() {

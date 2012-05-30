@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -652,7 +652,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
                   return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = "#{" + params + " ->";
+              @NonNls final String lambdas = "(" + params + ") -> {";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();

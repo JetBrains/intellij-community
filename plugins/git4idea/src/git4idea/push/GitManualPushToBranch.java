@@ -16,7 +16,7 @@
 package git4idea.push;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;

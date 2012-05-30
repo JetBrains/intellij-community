@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.extract;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPrimitiveType;

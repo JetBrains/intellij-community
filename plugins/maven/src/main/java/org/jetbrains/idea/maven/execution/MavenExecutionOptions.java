@@ -115,7 +115,8 @@ public class MavenExecutionOptions {
 
   public enum PluginUpdatePolicy {
     UPDATE("Check For Updates", "--check-plugin-updates", MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE),
-    DO_NOT_UPDATE("Do Not Update", "--no-plugin-updates", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
+    DO_NOT_UPDATE("Do Not Update", "--no-plugin-updates", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE),
+    DEFAULT("Default", "", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
 
     private final String myDisplayString;
     private final String myCommandLineOption;
