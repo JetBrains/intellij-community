@@ -2545,7 +2545,7 @@ public class HighlightUtil {
 
   @Nullable
   private static HighlightInfo checkFeature(@Nullable final PsiElement element, @NotNull final Feature feature) {
-    if (element != null && !PsiUtil.getLanguageLevel(element).isAtLeast(feature.level)) {
+    if (element != null && element.getManager().isInProject(element) && !PsiUtil.getLanguageLevel(element).isAtLeast(feature.level)) {
       final String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
       final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, message);
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(feature.level));
