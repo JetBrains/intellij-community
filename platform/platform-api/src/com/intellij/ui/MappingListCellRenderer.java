@@ -15,8 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
-
 import javax.swing.*;
 import java.util.Map;
 

@@ -18,7 +18,7 @@ package com.intellij.ide.ui;
 import javax.swing.*;
 import java.util.Map;
 
-/** @deprecated use [platform-api] {@link com.intellij.ide.MappingListCellRenderer} (to remove in IDEA 13) */
+/** @deprecated use [platform-api] {@link com.intellij.ui.MappingListCellRenderer} (to remove in IDEA 13) */
 @SuppressWarnings("UnusedDeclaration")
 public class MappingListCellRenderer extends ListCellRendererWrapper {
   private final Map<Object, String> myValueMap;

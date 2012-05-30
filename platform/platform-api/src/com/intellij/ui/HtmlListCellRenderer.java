@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
