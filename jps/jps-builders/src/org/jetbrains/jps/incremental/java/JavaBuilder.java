@@ -89,26 +89,32 @@ public class JavaBuilder extends ModuleLevelBuilder {
     //add here class processors in the sequence they should be executed
     myClassProcessors.add(new ClassPostProcessor() {
       public void process(CompileContext context, OutputFileObject out) {
-        final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
-        if (callback != null) {
-          final OutputFileObject.Content content = out.getContent();
-          final File srcFile = out.getSourceFile();
-          if (srcFile != null && content != null) {
-            final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
-            final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-            final RootDescriptor moduleAndRoot = context.getModuleAndRoot(srcFile);
-            final BuildDataManager dataManager = context.getDataManager();
-            if (moduleAndRoot != null) {
+        final OutputFileObject.Content content = out.getContent();
+        final File srcFile = out.getSourceFile();
+        if (srcFile != null && content != null) {
+          final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
+          final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
+          final RootDescriptor moduleAndRoot = context.getModuleAndRoot(srcFile);
+          final BuildDataManager dataManager = context.getDataManager();
+          boolean isTemp = false;
+          if (moduleAndRoot != null) {
+            isTemp = moduleAndRoot.isTemp;
+            if (!isTemp) {
               try {
-                final String moduleName = moduleAndRoot.module;
-                dataManager.getSourceToOutputMap(moduleName, context.isCompilingTests()).appendData(sourcePath, outputPath);
+                dataManager.getSourceToOutputMap(moduleAndRoot.module, context.isCompilingTests()).appendData(sourcePath, outputPath);
               }
               catch (Exception e) {
                 context.processMessage(new CompilerMessage(BUILDER_NAME, e));
               }
             }
-            final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-            callback.associate(outputPath, sourcePath, reader);
+          }
+          out.setTemp(isTemp);
+          if (!isTemp) {
+            final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
+            if (callback != null) {
+              final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
+              callback.associate(outputPath, sourcePath, reader);
+            }
           }
         }
       }
@@ -122,17 +128,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public String getDescription() {
     return "Java Builder";
-  }
-
-  private static final Key<Set<File>> TEMPORARY_SOURCE_ROOTS_KEY = Key.create("_additional_source_roots_");
-
-  public static void addTempSourcePathRoot(CompileContext context, File root) {
-    Set<File> roots = TEMPORARY_SOURCE_ROOTS_KEY.get(context);
-    if (roots == null) {
-      roots = new HashSet<File>();
-      TEMPORARY_SOURCE_ROOTS_KEY.set(context, roots);
-    }
-    roots.add(root);
   }
 
   public ExitCode build(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
@@ -282,7 +277,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
-        final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context, Collections.<File>emptySet());
+        final Set<File> tempRootsSourcePath = new HashSet<File>();
+        final ModuleRootsIndex index = context.getRootsIndex();
+        for (Module module : chunk.getModules()) {
+          for (RootDescriptor rd : index.getModuleRoots(module)) {
+            if (rd.isTemp) {
+              tempRootsSourcePath.add(rd.root);
+            }
+          }
+        }
 
         final String chunkName = getChunkPresentableName(chunk);
         context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
@@ -291,7 +294,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         boolean compiledOk = true;
         if (filesCount > 0) {
           LOG.info("Compiling " + filesCount + " java files; module: " + chunkName);
-          compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
+          compiledOk = compileJava(chunk, files, classpath, platformCp, tempRootsSourcePath, outs, context, diagnosticSink, outputSink);
         }
 
         context.checkCanceled();
@@ -362,13 +365,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (exitCode != ExitCode.ADDITIONAL_PASS_REQUIRED) {
-      final Set<File> tempRoots = TEMPORARY_SOURCE_ROOTS_KEY.get(context);
-      TEMPORARY_SOURCE_ROOTS_KEY.set(context, null);
-      if (tempRoots != null && tempRoots.size() > 0) {
-        FileUtil.asyncDelete(tempRoots);
-      }
-    }
     return exitCode;
   }
 
