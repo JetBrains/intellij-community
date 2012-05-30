@@ -846,7 +846,7 @@ public class Mappings {
   }
 
   private class Differential {
-    static final int DESPERATE_MASK = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+    final int DESPERATE_MASK = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
     final Mappings myDelta;
     final Collection<String> myRemoved;
@@ -994,7 +994,7 @@ public class Mappings {
       }
     }
 
-    private void processAddedMethods (final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+    private void processAddedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
       debug("Processing added methods: ");
       for (final MethodRepr m : diff.methods().added()) {
         debug("Method: ", m.name);
@@ -1120,7 +1120,7 @@ public class Mappings {
       debug("End of added methods processing");
     }
 
-    private void processRemovedMethods (final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+    private void processRemovedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
       debug("Processing removed methods:");
       for (final MethodRepr m : diff.methods().removed()) {
         debug("Method ", m.name);
@@ -1216,7 +1216,7 @@ public class Mappings {
       debug("End of removed methods processing");
     }
 
-    private void processChangedMethods (final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+    private void processChangedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
       debug("Processing changed methods:");
       for (final Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
         final MethodRepr m = mr.first;
@@ -1305,7 +1305,7 @@ public class Mappings {
       debug("End of changed methods processing");
     }
 
-    private boolean processAddedFields (final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+    private boolean processAddedFields(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
       debug("Processing added fields");
 
       for (final FieldRepr f : diff.fields().added()) {
@@ -1407,7 +1407,7 @@ public class Mappings {
       return true;
     }
 
-    private boolean processRemovedFields (final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+    private boolean processRemovedFields(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
       debug("Processing removed fields:");
 
       for (final FieldRepr f : diff.fields().removed()) {
@@ -1434,7 +1434,7 @@ public class Mappings {
       return true;
     }
 
-    private boolean processChangedFields (final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
+    private boolean processChangedFields(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
       debug("Processing changed fields:");
 
       for (final Pair<FieldRepr, Difference> f : diff.fields().changed()) {
@@ -1623,19 +1623,19 @@ public class Mappings {
           debug("End of annotation-specific analysis");
         }
 
-        processAddedMethods (state, diff, it);
-        processRemovedMethods (state, diff, it);
-        processChangedMethods (state, diff, it);
+        processAddedMethods(state, diff, it);
+        processRemovedMethods(state, diff, it);
+        processChangedMethods(state, diff, it);
 
-        if (!processAddedFields (state, diff, it)) {
+        if (!processAddedFields(state, diff, it)) {
           return false;
         }
 
-        if (!processRemovedFields (state, diff, it)) {
+        if (!processRemovedFields(state, diff, it)) {
           return false;
         }
 
-        if (!processChangedFields (state, diff, it)) {
+        if (!processChangedFields(state, diff, it)) {
           return false;
         }
       }
@@ -1880,6 +1880,16 @@ public class Mappings {
         }
 
         if (delta.myIsDifferentiated) {
+          final TIntHashSet compiledClasses = new TIntHashSet();
+
+          delta.myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
+            @Override
+            public boolean execute(final int a, final int b) {
+              compiledClasses.add(a);
+              return true;
+            }
+          });
+
           for (ClassRepr repr : delta.getDeletedClasses()) {
             cleanupRemovedClass(repr, null, subclassesTrashBin, dependenciesTrashBin);
           }
@@ -1895,13 +1905,31 @@ public class Mappings {
 
           delta.getChangedClasses().forEach(new TIntProcedure() {
             @Override
-            public boolean execute(int className) {
-              final TIntHashSet subClasses = delta.myClassToSubclasses.get(className);
-              if (subClasses != null) {
-                myClassToSubclasses.replace(className, subClasses);
+            public boolean execute(final int className) {
+              TIntHashSet s = delta.myClassToSubclasses.get(className);
+
+              final TIntHashSet newSubClasses = s == null ? new TIntHashSet() : s;
+              final TIntHashSet oldSubClasses = myClassToSubclasses.get(className);
+
+              if (oldSubClasses != null) {
+                oldSubClasses.forEach(new TIntProcedure() {
+                  @Override
+                  public boolean execute(final int value) {
+                    if (!compiledClasses.contains(value)) {
+                      newSubClasses.add(value);
+                    }
+
+                    return true;
+                  }
+                }
+                );
+              }
+
+              if (newSubClasses.size() == 0) {
+                myClassToSubclasses.remove(className);
               }
               else {
-                myClassToSubclasses.remove(className);
+                myClassToSubclasses.replace(className, newSubClasses);
               }
 
               final int sourceFile = delta.myClassToSourceFile.get(className);
