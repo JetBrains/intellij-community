@@ -27,7 +27,7 @@ import java.text.MessageFormat;
 
 public class MavenArtifact implements Serializable {
 
-  private static final String MAVEN_LIB_PREFIX = "Maven: ";
+  public static final String MAVEN_LIB_PREFIX = "Maven: ";
 
   private final String myGroupId;
   private final String myArtifactId;
