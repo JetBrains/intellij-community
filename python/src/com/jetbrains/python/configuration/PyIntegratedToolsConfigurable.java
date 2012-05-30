@@ -145,11 +145,6 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "test_runner_configuration";
   }
