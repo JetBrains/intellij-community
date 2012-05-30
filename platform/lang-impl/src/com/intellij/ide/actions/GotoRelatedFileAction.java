@@ -205,7 +205,7 @@ public class GotoRelatedFileAction extends AnAction {
         for (int i = 0; i < model.getSize(); i++) {
           final Object element = model.getElementAt(i);
           final GotoRelatedItem item = itemsMap.get(element);
-          if (!StringUtil.equals(current, item.getGroup())) {
+          if (item != null && !StringUtil.equals(current, item.getGroup())) {
             current = item.getGroup();
             separators.put(element, current);
             if (!hasTitle && !StringUtil.isEmpty(current)) {
