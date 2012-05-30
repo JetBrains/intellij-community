@@ -1,9 +1,9 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.LayeredIcon;
 
@@ -35,7 +35,7 @@ public class PySdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
         final LayeredIcon layered = new LayeredIcon(2);
         layered.setIcon(icon, 0);
         // TODO: Create a separate invalid SDK overlay icon
-        final Icon overlay = IconLoader.findIcon("/actions/cancel.png");
+        final Icon overlay = AllIcons.Actions.Cancel;
         layered.setIcon(overlay, 1);
         setIcon(layered);
       }

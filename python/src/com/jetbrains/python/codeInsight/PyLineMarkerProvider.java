@@ -4,8 +4,8 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectionQuery;
@@ -34,8 +34,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author yole
  */
 public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
-  private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
-  private static final Icon OVERRIDDEN_ICON = IconLoader.getIcon("/gutter/overridenMethod.png");
+  private static final Icon OVERRIDING_METHOD_ICON = AllIcons.Gutter.OverridingMethod;
+  private static final Icon OVERRIDDEN_ICON = AllIcons.Gutter.OverridenMethod;
 
   private static class TooltipProvider implements Function<PsiElement, String> {
     private final String myText;

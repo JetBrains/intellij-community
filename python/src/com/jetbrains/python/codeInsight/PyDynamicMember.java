@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
@@ -109,7 +109,7 @@ public class PyDynamicMember {
     if (myTarget != null) {
       return myTarget.getIcon(0);
     }
-    return IconLoader.getIcon("/nodes/method.png");
+    return AllIcons.Nodes.Method;
   }
 
   @Nullable
