@@ -1,7 +1,7 @@
 <component>
   <actions>
     <action id="Vcs.ShowTabbedFileHistory" class="com.intellij.openapi.vcs.actions.TabbedShowHistoryAction"
-      icon="AllIcons._cvs.ShowAsTree"/>
+      icon="AllIcons.Actions.ShowAsTree"/>
 
     <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="AllIcons.Actions.Commit">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
@@ -48,7 +48,7 @@
                 text = "VCS Operations Popup..." description="Context aware popup with list of commonly used VCS actions"/>
         <action id="Vcs.ChangesView" class="com.intellij.openapi.vcs.changes.ShowChangesViewAction"/>
         <reference ref="CheckinProject"/>
-        <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons._cvs.CheckOut">
+        <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
           <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
         </action>
         <action id="Vcs.IntegrateProject" class="com.intellij.openapi.vcs.update.CommonIntegrateProjectAction"/>
