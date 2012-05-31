@@ -37,7 +37,6 @@ public class SofterReference<T> {
   @SuppressWarnings("UnusedDeclaration") private static LowMemoryWatcher ourWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
-      System.out.println("SofterReference.run: " + ourRegistry.size());
       for (SofterReference reference : ourRegistry.copyAndClear()) {
         reference.weaken();
       }

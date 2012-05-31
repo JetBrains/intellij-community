@@ -52,7 +52,6 @@ public class LowMemoryWatcher {
     ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(new NotificationListener() {
       public void handleNotification(Notification n, Object hb) {
         if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType()) || MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(n.getType())) {
-          System.out.println(n.getType());
           for (LowMemoryWatcher watcher : ourInstances) {
             try {
               watcher.myRunnable.run();
