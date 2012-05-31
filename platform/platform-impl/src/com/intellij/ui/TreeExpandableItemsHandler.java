@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.MacTreeUI;
 
@@ -156,7 +157,14 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
     if (myComponent.isRowSelected(key)) {
       rComponent.setBackground(myComponent.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground());
     } else {
-      rComponent.setBackground(UIUtil.getTreeTextBackground());
+      Color bg = UIUtil.getTreeTextBackground();
+      if (myComponent instanceof Tree && ((Tree)myComponent).isFileColorsEnabled()) {
+          final Color color = ((Tree)myComponent).getFileColorForPath(myComponent.getPathForRow(key));
+          if (color != null) {
+            bg = color;
+          }
+      }
+      rComponent.setBackground(bg);
     }
     
     super.doPaintTooltipImage(rComponent, cellBounds, height, g, key);
