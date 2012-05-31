@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.zip.ZipFile;
 
 public abstract class JarFileSystem extends NewVirtualFileSystem implements JarCopyingFileSystem {
   @NonNls public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
@@ -34,7 +33,8 @@ public abstract class JarFileSystem extends NewVirtualFileSystem implements JarC
 
   @Nullable
   public abstract VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile);
-  public abstract ZipFile getJarFile(VirtualFile entryVFile) throws IOException;
+  @Nullable
+  public abstract JarFile getJarFile(VirtualFile entryVFile) throws IOException;
 
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable

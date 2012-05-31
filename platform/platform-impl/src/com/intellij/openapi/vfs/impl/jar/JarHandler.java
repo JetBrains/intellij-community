@@ -64,7 +64,7 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
   public VirtualFile markDirty() {
     synchronized (lock) {
       myRelPathsToEntries.clear();
-      myZipFile.set(null);
+      myJarFile.set(null);
 
       final NewVirtualFile root = (NewVirtualFile)
         JarFileSystem.getInstance().findFileByPath(myBasePath + JarFileSystem.JAR_SEPARATOR);

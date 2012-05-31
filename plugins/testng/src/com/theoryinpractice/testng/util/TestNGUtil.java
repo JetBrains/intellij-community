@@ -57,7 +57,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.ZipFile;
 
 /**
  * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:37:36 PM
@@ -77,7 +76,7 @@ public class TestNGUtil
         try {
           final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(testngjar);
           if (jarRoot != null) {
-            final ZipFile zipFile = JarFileSystem.getInstance().getJarFile(jarRoot);
+            final JarFile zipFile = JarFileSystem.getInstance().getJarFile(jarRoot);
             final String version = JarVersionDetectionUtil.detectJarVersion(zipFile);
             if (version != null && version.compareTo("5.12") > 0) {
               return false;

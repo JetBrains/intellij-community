@@ -65,7 +65,7 @@ public class CoreApplicationEnvironment {
   private final CoreEncodingRegistry myEncodingRegistry;
   protected final MockApplication myApplication;
   private final CoreLocalFileSystem myLocalFileSystem;
-  protected final CoreJarFileSystem myJarFileSystem;
+  protected final VirtualFileSystem myJarFileSystem;
   private final Disposable myParentDisposable;
 
   public CoreApplicationEnvironment(Disposable parentDisposable) {
@@ -81,7 +81,7 @@ public class CoreApplicationEnvironment {
                                       new StaticGetter<EncodingRegistry>(myEncodingRegistry),
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
-    myJarFileSystem = new CoreJarFileSystem();
+    myJarFileSystem = createJarFileSystem();
 
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
 
@@ -138,6 +138,10 @@ public class CoreApplicationEnvironment {
         };
       }
     };
+  }
+
+  protected VirtualFileSystem createJarFileSystem() {
+    return new CoreJarFileSystem();
   }
 
   protected CoreLocalFileSystem createLocalFileSystem() {
@@ -222,7 +226,7 @@ public class CoreApplicationEnvironment {
     return myLocalFileSystem;
   }
 
-  public CoreJarFileSystem getJarFileSystem() {
+  public VirtualFileSystem getJarFileSystem() {
     return myJarFileSystem;
   }
 }
