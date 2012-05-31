@@ -31,7 +31,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -78,7 +77,23 @@ public class XMLParserDefinition implements ParserDefinition {
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final Lexer lexer = createLexer(left.getPsi().getProject());
-    return XmlUtil.canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
+    return canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
   }
 
+  public static SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left,
+                                                                                      final ASTNode right,
+                                                                                      final Lexer lexer,
+                                                                                      int state) {
+    if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+        right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      return SpaceRequirements.MUST_NOT;
+    }
+    if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER && right.getElementType() == XmlTokenType.XML_NAME) {
+      return SpaceRequirements.MUST;
+    }
+    if (left.getElementType() == XmlTokenType.XML_NAME && right.getElementType() == XmlTokenType.XML_NAME) {
+      return SpaceRequirements.MUST;
+    }
+    return SpaceRequirements.MAY;
+  }
 }

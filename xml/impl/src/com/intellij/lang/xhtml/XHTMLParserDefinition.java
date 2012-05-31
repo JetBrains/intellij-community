@@ -24,7 +24,6 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.xml.XmlElementType;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +38,7 @@ public class XHTMLParserDefinition extends XMLParserDefinition {
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final Lexer lexer = createLexer(left.getPsi().getProject());
-    return XmlUtil.canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
+    return canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
   }
 
   public PsiFile createFile(FileViewProvider viewProvider) {
