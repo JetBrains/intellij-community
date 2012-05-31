@@ -83,7 +83,7 @@ public final class ErrorAnalyzer {
 
               List<QuickFix> designerFixes = errorInfo.getQuickFixes();
 
-              for (final AndroidLintQuickFix fix : inspection.public_getQuickFixes(message)) {
+              for (final AndroidLintQuickFix fix : inspection.getQuickFixes(message)) {
                 if (fix.isApplicable(startElement, endElement, AndroidQuickfixContexts.DesignerContext.TYPE)) {
                   designerFixes.add(new QuickFix(fix.getName(), AbstractQuickFixManager.ICON) {
                     @Override

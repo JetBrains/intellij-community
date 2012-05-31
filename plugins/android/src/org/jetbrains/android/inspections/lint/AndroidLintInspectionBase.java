@@ -65,13 +65,8 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
   }
 
   @NotNull
-  protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+  public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
     return AndroidLintQuickFix.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public AndroidLintQuickFix[] public_getQuickFixes(@NotNull String message) {
-    return getQuickFixes(message);
   }
 
   @NotNull
