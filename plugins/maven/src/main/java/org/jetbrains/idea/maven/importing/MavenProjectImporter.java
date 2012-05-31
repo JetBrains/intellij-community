@@ -19,7 +19,9 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -36,6 +38,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -46,8 +49,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class MavenProjectImporter {
   private final Project myProject;
@@ -397,36 +398,48 @@ public class MavenProjectImporter {
 
   private void importModules(final List<MavenProjectsProcessorTask> postTasks) {
     Map<MavenProject, MavenProjectChanges> projectsWithChanges = myProjectsToImportWithChanges;
-    Set<MavenProject> projects = projectsWithChanges.keySet();
 
     Set<MavenProject> projectsWithNewlyCreatedModules = new THashSet<MavenProject>();
 
-    for (MavenProject each : projects) {
+    for (MavenProject each : projectsWithChanges.keySet()) {
       if (ensureModuleCreated(each)) {
         projectsWithNewlyCreatedModules.add(each);
       }
     }
 
-    final Map<Module, MavenModuleImporter> moduleImporters = new THashMap<Module, MavenModuleImporter>();
+    List<Module> modulesToMavenize = new ArrayList<Module>();
+    List<MavenModuleImporter> importers = new ArrayList<MavenModuleImporter>();
+
     for (Map.Entry<MavenProject, MavenProjectChanges> each : projectsWithChanges.entrySet()) {
       MavenProject project = each.getKey();
       Module module = myMavenProjectToModule.get(project);
       boolean isNewModule = projectsWithNewlyCreatedModules.contains(project);
 
-      MavenModuleImporter moduleImporter = createModuleImporter(module, Pair.create(project, each.getValue()));
-      moduleImporters.put(module, moduleImporter);
+      MavenModuleImporter moduleImporter = createModuleImporter(module, project, each.getValue());
+      modulesToMavenize.add(module);
+      importers.add(moduleImporter);
 
       moduleImporter.config(isNewModule);
     }
 
-    for (MavenProject each : projects) {
-      moduleImporters.get(myMavenProjectToModule.get(each)).preConfigFacets();
-    }
-    for (MavenProject each : projects) {
-      moduleImporters.get(myMavenProjectToModule.get(each)).configFacets(postTasks);
+    for (MavenProject project : myAllProjects) {
+      if (!projectsWithChanges.containsKey(project)) {
+        Module module = myMavenProjectToModule.get(project);
+        if (module == null) continue;
+
+        importers.add(createModuleImporter(module, project, null));
+      }
     }
 
-    setMavenizedModules(moduleImporters.keySet(), true);
+    for (MavenModuleImporter importer : importers) {
+      importer.preConfigFacets();
+    }
+
+    for (MavenModuleImporter importer : importers) {
+      importer.configFacets(postTasks);
+    }
+
+    setMavenizedModules(modulesToMavenize, true);
   }
 
   private void setMavenizedModules(final Collection<Module> modules, final boolean mavenized) {
@@ -466,10 +479,11 @@ public class MavenProjectImporter {
     });
   }
 
-  private MavenModuleImporter createModuleImporter(Module module, Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+  private MavenModuleImporter createModuleImporter(Module module, MavenProject mavenProject, @Nullable MavenProjectChanges changes) {
     return new MavenModuleImporter(module,
                                    myProjectsTree,
-                                   projectWithChanges,
+                                   mavenProject,
+                                   changes,
                                    myMavenProjectToModuleName,
                                    myImportingSettings,
                                    myModelsProvider);
