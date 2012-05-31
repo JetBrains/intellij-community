@@ -89,9 +89,9 @@ public class StartupUtil {
 
     if (!"true".equals(System.getProperty("idea.no.jdk.check"))) {
       final String version = System.getProperty("java.version");
-      if (!version.startsWith("1.6") && !version.startsWith("1.7")) {
-        showError("Java Version Mismatch", "The JDK version is " + version + "\n." +
-                                           ApplicationNamesInfo.getInstance().getProductName() + " requires JDK 1.6 or 1.7.");
+      if (!SystemInfo.isJavaVersionAtLeast("1.6")) {
+        showError("Java Version Mismatch", "The JDK version is " + version + ".\n" +
+                                           ApplicationNamesInfo.getInstance().getProductName() + " requires JDK 1.6 or higher.");
         return false;
       }
     }
