@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -36,11 +35,12 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
+import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
-import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -85,7 +85,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private JPanel myPanel;
   private GrTypeComboBox myTypeCombo;
   private ReferenceEditorComboWithBrowseButton myTargetClassEditor;
-  private TextFieldWithAutoCompletion<String> myNameField;
+  private NameSuggestionsField myNameField;
   private JavaVisibilityPanel myJavaVisibilityPanel;
   private JPanel myTargetClassPanel;
   private JLabel myTargetClassLabel;
@@ -193,11 +193,9 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    myNameField.addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
-      public void documentChanged(DocumentEvent event) {
+    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+      @Override
+      public void dataChanged() {
         updateOkStatus();
       }
     });
@@ -227,7 +225,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   @Nullable
   @Override
   public String getName() {
-    return myNameField.getText().trim();
+    return myNameField.getEnteredName();
   }
 
   @Override
@@ -260,11 +258,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.getExpression(), new GroovyVariableValidator(myContext), true);
     ContainerUtil.addAll(names, possibleNames);
 
-    myNameField = TextFieldWithAutoCompletion.create(myContext.getProject(), names, null, true);
-    if (names.size()>0) {
-      myNameField.setText(names.get(0));
-      myNameField.selectAll();
-    }
+    myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
     GrTypeComboBox.registerUpDownHint(myNameField, myTypeCombo);
   }
