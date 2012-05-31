@@ -156,12 +156,12 @@
   <actions>
     <action id="Maven.Reimport" class="org.jetbrains.idea.maven.project.actions.ReimportAction"
             text="Reimport All Maven Projects"
-            icon="/actions/sync.png">
+            icon="AllIcons.Actions.Sync">
     </action>
 
     <action id="Maven.ReimportProject" class="org.jetbrains.idea.maven.project.actions.ReimportProjectAction"
             text="Reimport" description="Reimport selected Maven projects"
-            icon="/actions/sync.png">
+            icon="AllIcons.Actions.Sync">
     </action>
 
     <action id="Maven.UpdateFolders" class="org.jetbrains.idea.maven.project.actions.UpdateFoldersAction"
@@ -209,14 +209,14 @@
             class="org.jetbrains.idea.maven.project.actions.AddManagedFilesAction"
             text="Add Maven Projects"
             description="Add and import Maven projects to the projects tree"
-            icon="/general/add.png">
+            icon="AllIcons.General.Add">
     </action>
 
     <action id="Maven.AddFileAsMavenProject"
             class="org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction"
             text="Add as Maven Project"
             description="Add and import Maven project to the projects tree"
-            icon="/general/add.png">
+            icon="AllIcons.General.Add">
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="Maven.GlobalProjectMenu"/>
     </action>
@@ -225,7 +225,7 @@
             class="org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction"
             text="Remove Projects"
             description="Remove selected Maven projects from the project tree"
-            icon="/general/remove.png">
+            icon="AllIcons.General.Remove">
     </action>
 
     <action id="Maven.OpenSettingsXml"
@@ -253,13 +253,13 @@
             class="org.jetbrains.idea.maven.project.actions.RunBuildAction"
             text="_Run Maven Build"
             description="Execute selected phases or goals"
-            icon="/actions/execute.png">
+            icon="AllIcons.Actions.Execute">
     </action>
 
     <action id="Maven.ShowSettings"
             class="org.jetbrains.idea.maven.project.actions.EditSettingsAction" text="Maven Settings"
             description="Edit Maven integration settings for the current project"
-            icon="/actions/showSettings.png">
+            icon="AllIcons.Actions.ShowSettings">
     </action>
 
     <action id="Maven.ToggleOffline"
@@ -271,17 +271,17 @@
     <action id="Maven.ToggleSkipTests"
             class="org.jetbrains.idea.maven.project.actions.ToggleSkipTestsAction" text="Toggle 'Skip Tests' Mode"
             description="Toggle 'Skip tests' mode for Maven builds"
-            icon="/nodes/exceptionClass.png">
+            icon="AllIcons.Nodes.ExceptionClass">
     </action>
 
     <action id="Maven.Help"
             class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
 
     <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll" text="Expand All"
-            icon="/actions/expandall.png"
+            icon="AllIcons.Actions.Expandall"
             use-shortcut-of="ExpandAll"/>
     <action id="Maven.CollapseAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$CollapseAll" text="Collapse All"
-            icon="/actions/collapseall.png"
+            icon="AllIcons.Actions.Collapseall"
             use-shortcut-of="CollapseAll"/>
 
     <group id="Maven.TasksGroup">
@@ -330,13 +330,13 @@
               text="Group Modules"
               description="Group projects according to Maven structure"
               secondary="true"
-              icon="/nodes/folder.png"/>
+              icon="AllIcons.Nodes.Folder"/>
       <action id="Maven.ShowIgnored"
               class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
               text="Show Ignored Projects"
               description="Show ignored projects"
               secondary="true"
-              icon="/actions/showHiddens.png"/>
+              icon="AllIcons.Actions.ShowHiddens"/>
       <action id="Maven.ShowBasicPhasesOnly"
               class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
               text="Show Basic Phases Only"

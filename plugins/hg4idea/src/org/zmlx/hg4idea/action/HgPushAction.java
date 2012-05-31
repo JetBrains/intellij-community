@@ -12,12 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.HgPusher;
 
 public class HgPushAction extends HgAction {
-  private static final Logger LOG = Logger.getInstance(HgPushAction.class);
+  public HgPushAction() {
+    super(AllIcons.Actions.Commit);
+  }
 
   @Override
   public void execute(final Project project) {

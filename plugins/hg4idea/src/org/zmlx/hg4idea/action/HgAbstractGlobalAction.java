@@ -18,13 +18,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.util.HgUtil;
 
+import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 
 abstract class HgAbstractGlobalAction extends AnAction {
+  protected HgAbstractGlobalAction(Icon icon) {
+    super(icon);
+  }
+
+  protected HgAbstractGlobalAction() {
+  }
 
   protected abstract HgGlobalCommandBuilder getHgGlobalCommandBuilder(Project project);
   private static final Logger LOG = Logger.getInstance(HgAbstractGlobalAction.class.getName());

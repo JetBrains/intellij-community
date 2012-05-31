@@ -81,7 +81,16 @@ public abstract class AnAction implements PossiblyDumbAware {
    * Creates a new action with its text, description and icon set to <code>null</code>.
    */
   public AnAction(){
-    this(null);
+    this(null, null, null);
+  }
+
+  /**
+   * Creates a new action with <code>icon</code> provided. Its text, description set to <code>null</code>.
+   *
+   * @param icon Default icon to appear in toolbars and menus (Note some platform don't have icons in menu).
+   */
+  public AnAction(Icon icon){
+    this(null, null, icon);
   }
 
   /**
@@ -106,7 +115,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(String text, @Nullable String description, @Nullable Icon icon){
+  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon){
     myShortcutSet = ourEmptyShortcutSet;
     myEnabledInModalContext = false;
     Presentation presentation = getTemplatePresentation();
