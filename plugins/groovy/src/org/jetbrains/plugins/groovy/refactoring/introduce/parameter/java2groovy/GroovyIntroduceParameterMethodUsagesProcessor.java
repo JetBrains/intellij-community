@@ -169,6 +169,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
       public boolean execute(final int paramNum) {
         try {
           final GrClosureSignatureUtil.ArgInfo<PsiElement> actualArg = actualArgs[paramNum];
+          if (actualArg == null) return true;
           for (PsiElement arg : actualArg.args) {
             arg.delete();
           }

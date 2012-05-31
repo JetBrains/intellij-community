@@ -75,6 +75,7 @@ class ArgumentListGenerator {
     boolean hasArgs = false;
     for (int i = 0; i < argInfos.length; i++) {
       GrClosureSignatureUtil.ArgInfo<PsiElement> arg = argInfos[i];
+      if (arg == null) continue;
       final GrClosureParameter param = params[i];
       if (arg.isMultiArg ? generateMultiArg(arg, param, substitutor, project, context) : generateSingeArg(arg, param)) {
         hasArgs = true;

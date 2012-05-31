@@ -318,7 +318,7 @@ public class OldReferencesResolver {
 
   @NotNull
   private GrExpression getActualArg(int index) {
-    if (myActualArgs == null) {
+    if (myActualArgs == null || myActualArgs[index] == null) {
       final GrExpression[] arguments = myContext.getArgumentList().getExpressionArguments();
       if (index < arguments.length) return arguments[index];
       index -= arguments.length;
