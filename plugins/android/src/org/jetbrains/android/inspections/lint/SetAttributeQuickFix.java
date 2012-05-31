@@ -82,7 +82,7 @@ class SetAttributeQuickFix implements AndroidLintQuickFix {
   private String askForAttributeValue(@NotNull PsiElement context) {
     final AndroidFacet facet = AndroidFacet.getInstance(context);
     final String message = "Specify value of attribute '" + myAttributeName + "'";
-    final String title = "Set attribute value";
+    final String title = "Set Attribute Value";
 
     if (facet != null) {
       final SystemResourceManager srm = facet.getSystemResourceManager();
