@@ -128,9 +128,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return myCanReEnumerate ? size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE: false;
   }
 
-  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
+  private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new Runnable() {
     @Override
-    public void force() {
+    public void run() {
       //System.out.println("Flushing caches: " + myFile.getPath());
       dropMemoryCaches();
     }

@@ -89,8 +89,9 @@ public class SemServiceImpl extends SemService{
 
     myInheritors = cacheKeyHierarchy(myProducers.keySet());
     
-    final LowMemoryWatcher watcher = LowMemoryWatcher.register(new LowMemoryWatcher.ForceableAdapter() {
-      public void force() {
+    final LowMemoryWatcher watcher = LowMemoryWatcher.register(new Runnable() {
+      @Override
+      public void run() {
         clearCache();
         //System.out.println("SemService cache flushed");
       }

@@ -15,16 +15,16 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakList;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import javax.management.Notification;
+import javax.management.NotificationEmitter;
+import javax.management.NotificationListener;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryNotificationInfo;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
 
 /**
  * @author Eugene Zhuravlev
@@ -33,97 +33,50 @@ import java.util.Set;
 public class LowMemoryWatcher {
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
   
-  public abstract static class ForceableAdapter implements Forceable {
-    public boolean isDirty() {
-      return true;
-    }
-  }
-  
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcher");
   
-  private static final ReferenceQueue<Object> ourRefQueue = new ReferenceQueue<Object>();
-  @SuppressWarnings({"FieldCanBeLocal"}) 
-  private static SoftReference<Object> ourRef;
-  private static final List<WeakReference<LowMemoryWatcher>> ourInstances = ContainerUtil.createEmptyCOWList();
+  private static final WeakList<LowMemoryWatcher> ourInstances = new WeakList<LowMemoryWatcher>();
 
-  private final Forceable myForceable;
+  private final Runnable myRunnable;
 
   static {
-    final Thread thread = new Thread("LowMemoryWatcher") {
-      boolean shouldCleanup = false;
-      public void run() {
-        updateRef();
-        final Set<WeakReference<LowMemoryWatcher>> toRemove = new HashSet<WeakReference<LowMemoryWatcher>>();
-        
-        while (true)  {
-          try {
-            ourRefQueue.remove();
-            updateRef();
-
-            if (!shouldCleanup) {
-              final Runtime runtime = Runtime.getRuntime();
-              shouldCleanup = runtime.maxMemory() - runtime.totalMemory() <= MEM_THRESHOLD;
+    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+      if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
+        long threshold = bean.getUsage().getMax() - MEM_THRESHOLD;
+        if (threshold > 0) {
+          bean.setUsageThreshold(threshold);
+          bean.setCollectionUsageThreshold(threshold);
+        }
+      }
+    }
+    ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(new NotificationListener() {
+      public void handleNotification(Notification n, Object hb) {
+        if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType()) || MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(n.getType())) {
+          System.out.println(n.getType());
+          for (LowMemoryWatcher watcher : ourInstances) {
+            try {
+              watcher.myRunnable.run();
             }
-
-            for (WeakReference<LowMemoryWatcher> instanceRef : ourInstances) {
-              final LowMemoryWatcher watcher = instanceRef.get();
-              if (watcher == null) {
-                toRemove.add(instanceRef);
-              }
-              else {
-                if (shouldCleanup) {
-                  try {
-                    watcher.doCleanup();
-                  }
-                  catch (Throwable e) {
-                    LOG.info(e);
-                  }
-                }
-              }
+            catch (Throwable e) {
+              LOG.info(e);
             }
-            
-            if (!toRemove.isEmpty()) {
-              ourInstances.removeAll(toRemove);
-              toRemove.clear();
-            }
-            
-          }
-          catch (InterruptedException ignored) {
           }
         }
       }
-    };
-    thread.setPriority(Thread.NORM_PRIORITY - 1);
-    thread.setDaemon(true);
-    thread.start();
+    }, null, null);
   }
   
-  public static LowMemoryWatcher register(Forceable forceable) {
-    return new LowMemoryWatcher(forceable);
+  public static LowMemoryWatcher register(Runnable runnable) {
+    return new LowMemoryWatcher(runnable);
   }
   
-  private LowMemoryWatcher(Forceable forceable) {
-    myForceable = forceable;
-    updateRef();
-    ourInstances.add(new WeakReference<LowMemoryWatcher>(this));
+  private LowMemoryWatcher(Runnable runnable) {
+    myRunnable = runnable;
+    ourInstances.add(this);
   }
 
   public void stop() {
-    for (WeakReference<LowMemoryWatcher> ref : ourInstances) {
-      if (ref.get() == this) {
-        ourInstances.remove(ref);
-        break;
-      }
-    }
+    ourInstances.remove(this);
   }
   
-  private void doCleanup() {
-    if (myForceable.isDirty()) {
-      myForceable.force();
-    }
-  }
-
-  private static void updateRef() {
-    ourRef = new SoftReference<Object>(new Object(), ourRefQueue);
-  }
 }
