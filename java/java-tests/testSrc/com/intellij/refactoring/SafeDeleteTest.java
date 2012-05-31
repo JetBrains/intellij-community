@@ -144,6 +144,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testStripOverride() throws Exception {
+    doSingleFileTest();
+  }
+  
   private void doTest(@NonNls final String qClassName) throws Exception {
     doTest(new PerformAction() {
       @Override
