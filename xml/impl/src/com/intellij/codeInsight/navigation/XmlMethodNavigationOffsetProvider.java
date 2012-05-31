@@ -27,6 +27,7 @@ import java.util.ArrayList;
  * @author yole
  */
 public class XmlMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
+  @Override
   public int[] getMethodNavigationOffsets(final PsiFile file, final int caretOffset) {
     if (file instanceof XmlFile) {
       PsiElement element = file;

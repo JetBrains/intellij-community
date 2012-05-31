@@ -24,6 +24,7 @@ import java.util.ArrayList;
  * @author yole
  */
 public class JavaMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
+  @Override
   @Nullable
   public int[] getMethodNavigationOffsets(final PsiFile file, final int caretOffset) {
     if (file instanceof PsiJavaFile) {
