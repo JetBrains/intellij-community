@@ -103,6 +103,8 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
   public void testSideEffectInitializer() {doTest();}
 
+  public void testVarargs() {doTest();}
+
   public void testInlineAll() throws Throwable {
     doTest(new GroovyInlineHandler() {
       @Override

@@ -368,19 +368,22 @@ public class GrClosureSignatureUtil {
                                                                boolean partial) {
     if (checkForOnlyMapParam(signature, args.length)) return ArgInfo.empty_array();
     GrClosureParameter[] params = signature.getParameters();
-    if (args.length > params.length && !signature.isVarargs()) return null;
+    if (args.length > params.length && !signature.isVarargs() && !partial) return null;
     int optional = getOptionalParamCount(signature, false);
     int notOptional = params.length - optional;
     if (signature.isVarargs()) notOptional--;
     if (notOptional > args.length && !partial) return null;
 
-    final ArgInfo<Arg>[] map = mapSimple(params, args, typeComputer, context);
+    final ArgInfo<Arg>[] map = mapSimple(params, args, typeComputer, context, false);
     if (map != null) return map;
 
     if (signature.isVarargs()) {
       return new ParameterMapperForVararg<Arg>(context, params, args, typeComputer).isApplicable();
     }
-    return null;
+
+    if (!partial) return null;
+
+    return mapSimple(params, args, typeComputer, context, true);
   }
 
   private static boolean checkForOnlyMapParam(@NotNull GrClosureSignature signature, final int argCount) {
@@ -395,19 +398,25 @@ public class GrClosureSignatureUtil {
   private static <Arg> ArgInfo<Arg>[] mapSimple(@NotNull GrClosureParameter[] params,
                                                 @NotNull Arg[] args,
                                                 @NotNull Function<Arg, PsiType> typeComputer,
-                                                @NotNull GroovyPsiElement context) {
+                                                @NotNull GroovyPsiElement context,
+                                                boolean partial) {
+    if (args.length > params.length && !partial) return null;
+
     ArgInfo<Arg>[] map = new ArgInfo[params.length];
     int optional = getOptionalParamCount(params, false);
     int notOptional = params.length - optional;
     int optionalArgs = args.length - notOptional;
+
+    if (notOptional > args.length && !partial) return null;
+
     int cur = 0;
     for (int i = 0; i < args.length; i++, cur++) {
       while (optionalArgs == 0 && cur < params.length && params[cur].isOptional()) {
         cur++;
       }
-      if (cur == params.length) return null;
+      if (cur == params.length) return partial ? map : null;
       if (params[cur].isOptional()) optionalArgs--;
-      if (!isAssignableByConversion(params[cur].getType(), typeComputer.fun(args[i]), context)) return null;
+      if (!isAssignableByConversion(params[cur].getType(), typeComputer.fun(args[i]), context)) return partial ? map : null;
       map[cur] = new ArgInfo<Arg>(args[i]);
     }
     for (int i = 0; i < map.length; i++) {
@@ -668,7 +677,9 @@ public class GrClosureSignatureUtil {
     if (hasNamedArgs) {
       if (params.length == 0) return null;
       PsiType type = params[0].getType();
-      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP) ||
+          type == null ||
+          type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         innerArgs.add(new InnerArg(new GrMapType(context.getResolveScope()), namedArgs));
       }
       else {
