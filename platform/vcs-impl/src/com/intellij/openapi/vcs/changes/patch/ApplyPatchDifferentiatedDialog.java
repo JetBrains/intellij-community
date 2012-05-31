@@ -551,6 +551,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
     myChangesTreeList.setChangesToDisplay(changes);
     myChangesTreeList.setIncludedChanges(included);
+    if (doInitCheck) {
+      myChangesTreeList.expandAll();
+    }
     myChangesTreeList.repaint();
     if ((! doInitCheck) && patchesToSelect != null) {
       final List<FilePatchInProgress.PatchChange> toSelect = new ArrayList<FilePatchInProgress.PatchChange>(patchesToSelect.size());
