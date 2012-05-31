@@ -142,24 +142,27 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       for (VirtualFile rootFile : files) {
         final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
         if (classFile != null) {
-          return getLanguageLevel(classFile);
+          final PsiJavaFile javaFile = getPsiFileInRoot(classFile);
+          if (javaFile != null) {
+            return javaFile.getLanguageLevel();
+          }
         }
       }
+      return LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel();
     }
     return null;
   }
 
-  private LanguageLevel getLanguageLevel(final VirtualFile dirFile) {
+  @Nullable
+  private PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile) {
     final VirtualFile[] children = dirFile.getChildren();
-    final LanguageLevel defaultLanguageLevel = LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel();
     for (VirtualFile child : children) {
       if (StdFileTypes.CLASS.equals(child.getFileType())) {
         final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(child);
-        if (psiFile instanceof PsiJavaFile) return ((PsiJavaFile)psiFile).getLanguageLevel();
+        if (psiFile instanceof PsiJavaFile) return ((PsiJavaFile)psiFile);
       }
     }
-
-    return defaultLanguageLevel;
+    return null;
   }
 
   @Override
