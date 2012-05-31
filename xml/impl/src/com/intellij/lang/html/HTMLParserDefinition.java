@@ -18,6 +18,7 @@ package com.intellij.lang.html;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
+import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lexer.HtmlLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -77,6 +77,6 @@ public class HTMLParserDefinition implements ParserDefinition {
 
   public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
     final Lexer lexer = createLexer(left.getPsi().getProject());
-    return XmlUtil.canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
+    return XMLParserDefinition.canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
   }
 }

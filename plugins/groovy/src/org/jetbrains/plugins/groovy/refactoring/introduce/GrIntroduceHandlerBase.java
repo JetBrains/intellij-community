@@ -374,7 +374,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   public static PsiElement findAnchor(GrIntroduceContext context,
                                        GrIntroduceSettings settings,
                                        PsiElement[] occurrences,
-                                       final PsiElement container) {
+                                       PsiElement container) {
     if (occurrences.length == 0) return null;
     PsiElement candidate;
     if (occurrences.length == 1 || !settings.replaceAllOccurrences()) {
@@ -407,6 +407,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     if ((container instanceof GrForStatement) &&
         candidate.equals(((GrForStatement)container).getClause())) {
       return container;
+    }
+
+    while (candidate instanceof GrIfStatement &&
+           candidate.getParent() instanceof GrIfStatement &&
+           ((GrIfStatement)candidate.getParent()).getElseBranch() == candidate) {
+      candidate = candidate.getParent();
     }
     return candidate;
   }

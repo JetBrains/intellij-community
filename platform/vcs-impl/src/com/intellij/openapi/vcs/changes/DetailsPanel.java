@@ -29,20 +29,19 @@ import java.awt.*;
 public class DetailsPanel {
   private CardLayout myLayout;
   private JPanel myPanel;
-  private JPanel myDataPanel;
   private Layer myCurrentLayer;
 
   public DetailsPanel() {
     myPanel = new JPanel();
     myLayout = new CardLayout();
     myPanel.setLayout(myLayout);
-    myDataPanel = new JPanel(new BorderLayout());
+    JPanel dataPanel = new JPanel(new BorderLayout());
 
     myPanel.add(UIVcsUtil.errorPanel("No details available", false), Layer.notAvailable.name());
     myPanel.add(UIVcsUtil.errorPanel("Nothing selected", false), Layer.nothingSelected.name());
     myPanel.add(UIVcsUtil.errorPanel("Changes content is not loaded yet", false), Layer.notLoadedInitial.name());
     myPanel.add(UIVcsUtil.errorPanel("Loading...", false), Layer.loading.name());
-    myPanel.add(myDataPanel, Layer.data.name());
+    myPanel.add(dataPanel, Layer.data.name());
   }
 
   public void nothingSelected() {

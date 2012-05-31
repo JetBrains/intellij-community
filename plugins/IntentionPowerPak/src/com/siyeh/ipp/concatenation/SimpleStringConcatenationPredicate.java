@@ -18,13 +18,12 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
-class SimpleStringConcatenationPredicate
-  implements PsiElementPredicate {
+class SimpleStringConcatenationPredicate implements PsiElementPredicate {
 
   private final boolean excludeConcatenationsInsideAnnotations;
 
@@ -43,10 +42,6 @@ class SimpleStringConcatenationPredicate
   }
 
   private static boolean isInsideAnnotation(PsiElement element) {
-    if (!(element instanceof PsiPolyadicExpression)) {
-      return false;
-    }
-    final PsiElement parent = element.getParent();
-    return parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue;
+    return PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class, PsiArrayInitializerMemberValue.class) != null;
   }
 }

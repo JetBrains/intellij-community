@@ -23,10 +23,8 @@ import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -38,10 +36,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.StringPattern;
 import com.intellij.patterns.XmlPatterns;
@@ -130,10 +125,6 @@ public class XmlUtil {
   @NonNls public static final String APACHE_TRINIDAD_URI = "http://myfaces.apache.org/trinidad";
   @NonNls public static final String APACHE_TRINIDAD_HTML_URI = "http://myfaces.apache.org/trinidad/html";
 
-
-  @NonNls public static final String[] HIBERNATE_URIS =
-    {"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd", "http://hibernate.sourceforge.net/hibernate-mapping-2.0.dtd"};
-
   @NonNls public static final String XSD_SIMPLE_CONTENT_TAG = "simpleContent";
   @NonNls public static final String NO_NAMESPACE_SCHEMA_LOCATION_ATT = "noNamespaceSchemaLocation";
   @NonNls public static final String SCHEMA_LOCATION_ATT = "schemaLocation";
@@ -163,7 +154,7 @@ public class XmlUtil {
 
   static {
     final URL xhtml4SchemaLocationUrl = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "xhtml1-transitional.xsd");
-    XHTML4_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm())));
+    XHTML4_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtil.fixURLforIDEA(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm())));
   }
 
   @Nullable
@@ -172,7 +163,7 @@ public class XmlUtil {
     if (uri != null && !uri.equals(namespace)) return uri;
 
     while (true) {
-      if ("".equals(namespace)) {
+      if (namespace.isEmpty()) {
         final String attributeValue = tag.getAttributeValue("noNamespaceSchemaLocation", XML_SCHEMA_INSTANCE_URI);
         if (attributeValue != null) return attributeValue;
       }
@@ -353,23 +344,6 @@ public class XmlUtil {
     }
 
     return true;
-  }
-
-  public static ParserDefinition.SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left,
-                                                                                      final ASTNode right,
-                                                                                      final Lexer lexer,
-                                                                                      int state) {
-    if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
-        right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
-      return ParserDefinition.SpaceRequirements.MUST_NOT;
-    }
-    if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER && right.getElementType() == XmlTokenType.XML_NAME) {
-      return ParserDefinition.SpaceRequirements.MUST;
-    }
-    if (left.getElementType() == XmlTokenType.XML_NAME && right.getElementType() == XmlTokenType.XML_NAME) {
-      return ParserDefinition.SpaceRequirements.MUST;
-    }
-    return ParserDefinition.SpaceRequirements.MAY;
   }
 
   public static boolean tagFromTemplateFramework(@NotNull final XmlTag tag) {
@@ -619,21 +593,6 @@ public class XmlUtil {
            ? Html5SchemaProvider.XHTML5_SCHEMA_LOCATION
            : doctype;
   }
-  //
-  //public static void expandTag(@NotNull XmlTag tag) {
-  //  final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
-  //  if (emptyTagEnd == null) return;
-  //
-  //  PsiFile file = tag.getContainingFile().getOriginalFile();
-  //
-  //  TextRange textRange = emptyTagEnd.getTextRange();
-  //  Document document = file.getViewProvider().getDocument();
-  //  if (document == null) return;
-  //
-  //  PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-  //  document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), "></" + tag.getName() + '>');
-  //  PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-  //}
 
   private static class XmlElementProcessor {
     private final PsiElementProcessor processor;
@@ -845,42 +804,14 @@ public class XmlUtil {
     return (XmlTag)parent.add(child);
   }
 
+  /**
+   * @see XmlTag#getAttributeValue(String)
+   */
+  @Nullable
+  @Deprecated
   public static String getAttributeValue(XmlTag tag, String name) {
     for (XmlAttribute attribute : tag.getAttributes()) {
       if (name.equals(attribute.getName())) return attribute.getValue();
-    }
-    return null;
-  }
-
-  public static XmlTag findOnAnyLevel(XmlTag root, String[] chain) {
-    XmlTag curTag = root;
-    for (String s : chain) {
-      curTag = curTag.findFirstSubTag(s);
-      if (curTag == null) return null;
-    }
-
-    return curTag;
-  }
-
-  public static XmlTag findSubTag(XmlTag rootTag, String path) {
-    String[] pathElements = path.split("/");
-
-    XmlTag curTag = rootTag;
-    for (String curTagName : pathElements) {
-      curTag = curTag.findFirstSubTag(curTagName);
-      if (curTag == null) break;
-    }
-    return curTag;
-  }
-
-  @Nullable
-  public static XmlTag findSubTagWithValue(XmlTag rootTag, String tagName, String tagValue) {
-    if (rootTag == null) return null;
-    final XmlTag[] subTags = rootTag.findSubTags(tagName);
-    for (XmlTag subTag : subTags) {
-      if (subTag.getValue().getTrimmedText().equals(tagValue)) {
-        return subTag;
-      }
     }
     return null;
   }
@@ -1364,7 +1295,7 @@ public class XmlUtil {
       final XmlTag rootTag = doc.getRootTag();
       computeTag(rootTag, tags, attributes, full);
 
-      // For supporting not welformed XML
+      // For supporting not well-formed XML
       for (PsiElement element = rootTag != null ? rootTag.getNextSibling() : null; element != null; element = element.getNextSibling()) {
         if (element instanceof XmlTag) {
           computeTag((XmlTag)element, tags, attributes, full);
