@@ -32,4 +32,6 @@ public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements 
   public Collection<Psi> get(Key key, final Project project, final GlobalSearchScope scope) {
     return StubIndex.getInstance().get(getKey(), key, project, scope);
   }
+
+  public int getCacheSize() { return 5; }
 }

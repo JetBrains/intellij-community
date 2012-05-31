@@ -21,11 +21,11 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
-import gnu.trove.TIntArrayList;
+import gnu.trove.TObjectObjectProcedure;
+import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,11 +64,9 @@ public class StubTree {
   }
 
   @NotNull
-  public Map<StubIndexKey, Map<Object, TIntArrayList>> indexStubTree() {
-    final Map<StubIndexKey, Map<Object, TIntArrayList>> result = new HashMap<StubIndexKey, Map<Object, TIntArrayList>>();
-
+  public Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
     SerializationManager serializationManager = SerializationManager.getInstance();
-    StubIndexSink sink = new StubIndexSink(result);
+    StubIndexSink sink = new StubIndexSink();
 
     for (int i = 0, plainListSize = myPlainList.size(); i < plainListSize; i++) {
       final StubElement<?> stub = myPlainList.get(i);
@@ -76,31 +74,63 @@ public class StubTree {
       serializationManager.getSerializer(stub).indexStub(stub, sink);
     }
 
-    return result;
+    return sink.getResult();
   }
 
-  private static class StubIndexSink implements IndexSink {
-    private final Map<StubIndexKey, Map<Object, TIntArrayList>> myResult;
+  private static class StubIndexSink implements IndexSink, TObjectProcedure<Map<Object, int[]>>,TObjectObjectProcedure<Object,int[]> {
+    private final THashMap<StubIndexKey, Map<Object, int[]>> myResult = new THashMap<StubIndexKey, Map<Object, int[]>>();;
     private int myStubIdx;
-
-    public StubIndexSink(Map<StubIndexKey, Map<Object, TIntArrayList>> result) {
-      myResult = result;
-    }
+    private Map<Object, int[]> myProcessingMap;
 
     @Override
     public void occurrence(@NotNull final StubIndexKey indexKey, @NotNull final Object value) {
-      Map<Object, TIntArrayList> map = myResult.get(indexKey);
+      Map<Object, int[]> map = myResult.get(indexKey);
       if (map == null) {
-        map = new THashMap<Object, TIntArrayList>();
+        map = new THashMap<Object, int[]>();
         myResult.put(indexKey, map);
       }
 
-      TIntArrayList list = map.get(value);
+      int[] list = map.get(value);
       if (list == null) {
-        list = new TIntArrayList();
-        map.put(value, list);
+        map.put(value, new int[] {myStubIdx});
+      } else {
+        int lastZero;
+        for(lastZero = list.length - 1; lastZero >=0 && list[lastZero] == 0; --lastZero);
+        ++lastZero;
+
+        if (lastZero == list.length) {
+          int[] newlist = new int[Math.max(4, list.length << 1)];
+          System.arraycopy(list, 0, newlist, 0, list.length);
+          lastZero = list.length;
+          map.put(value, list = newlist);
+        }
+        list[lastZero] = myStubIdx;
       }
-      list.add(myStubIdx);
+    }
+
+    public Map<StubIndexKey, Map<Object, int[]>> getResult() {
+      myResult.forEachValue(this);
+      return myResult;
+    }
+
+    @Override
+    public boolean execute(Map<Object, int[]> object) {
+      myProcessingMap = object;
+      ((THashMap<Object, int[]>)object).forEachEntry(this);
+      return true;
+    }
+
+    @Override
+    public boolean execute(Object a, int[] b) {
+      if (b.length == 1) return true;
+      int firstZero;
+      for(firstZero = 0; firstZero < b.length && b[firstZero] != 0; ++firstZero);
+      if (firstZero != b.length) {
+        int[] shorterList = new int[firstZero];
+        System.arraycopy(b, 0, shorterList, 0, shorterList.length);
+        myProcessingMap.put(a, shorterList);
+      }
+      return true;
     }
   }
 }

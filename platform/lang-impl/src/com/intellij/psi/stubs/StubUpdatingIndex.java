@@ -201,21 +201,21 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     return new MyIndex(indexId, storage, getIndexer());
   }
 
-  private static void updateStubIndices(@NotNull final Collection<StubIndexKey> indexKeys, final int inputId, @NotNull final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree, @NotNull final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
+  private static void updateStubIndices(@NotNull final Collection<StubIndexKey> indexKeys, final int inputId, @NotNull final Map<StubIndexKey, Map<Object, int[]>> oldStubTree, @NotNull final Map<StubIndexKey, Map<Object, int[]>> newStubTree) {
     final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
     for (StubIndexKey key : indexKeys) {
-      final Map<Object, TIntArrayList> oldMap = oldStubTree.get(key);
-      final Map<Object, TIntArrayList> newMap = newStubTree.get(key);
+      final Map<Object, int[]> oldMap = oldStubTree.get(key);
+      final Map<Object, int[]> newMap = newStubTree.get(key);
 
-      final Map<Object, TIntArrayList> _oldMap = oldMap != null ? oldMap : Collections.<Object, TIntArrayList>emptyMap();
-      final Map<Object, TIntArrayList> _newMap = newMap != null ? newMap : Collections.<Object, TIntArrayList>emptyMap();
+      final Map<Object, int[]> _oldMap = oldMap != null ? oldMap : Collections.<Object, int[]>emptyMap();
+      final Map<Object, int[]> _newMap = newMap != null ? newMap : Collections.<Object, int[]>emptyMap();
 
       stubIndex.updateIndex(key, inputId, _oldMap, _newMap);
     }
   }
 
   @NotNull
-  private static Collection<StubIndexKey> getAffectedIndices(@NotNull final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree, @NotNull final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree) {
+  private static Collection<StubIndexKey> getAffectedIndices(@NotNull final Map<StubIndexKey, Map<Object, int[]>> oldStubTree, @NotNull final Map<StubIndexKey, Map<Object, int[]>> newStubTree) {
     Set<StubIndexKey> allIndices = new HashSet<StubIndexKey>();
     allIndices.addAll(oldStubTree.keySet());
     allIndices.addAll(newStubTree.keySet());
@@ -254,7 +254,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       throws StorageException {
 
       checkNameStorage();
-      final Map<StubIndexKey, Map<Object, TIntArrayList>> newStubTree = getStubTree(newData);
+      final Map<StubIndexKey, Map<Object, int[]>> newStubTree = getStubTree(newData);
 
       final StubIndexImpl stubIndex = getStubIndex();
       final Collection<StubIndexKey> allStubIndices = stubIndex.getAllStubIndexKeys();
@@ -268,7 +268,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           getWriteLock().lock();
 
           final Map<Integer, SerializedStubTree> oldData = readOldData(inputId);
-          final Map<StubIndexKey, Map<Object, TIntArrayList>> oldStubTree = getStubTree(oldData);
+          final Map<StubIndexKey, Map<Object, int[]>> oldStubTree = getStubTree(oldData);
 
           super.updateWithMap(inputId, newData, oldKeysGetter);
 
@@ -302,8 +302,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
-    private static Map<StubIndexKey, Map<Object, TIntArrayList>> getStubTree(@NotNull final Map<Integer, SerializedStubTree> data) {
-      final Map<StubIndexKey, Map<Object, TIntArrayList>> stubTree;
+    private static Map<StubIndexKey, Map<Object, int[]>> getStubTree(@NotNull final Map<Integer, SerializedStubTree> data) {
+      final Map<StubIndexKey, Map<Object, int[]>> stubTree;
       if (!data.isEmpty()) {
         final SerializedStubTree stub = data.values().iterator().next();
         stubTree = new StubTree((PsiFileStub)stub.getStub(true), false).indexStubTree();
