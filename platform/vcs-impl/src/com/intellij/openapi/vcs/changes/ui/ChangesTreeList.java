@@ -927,4 +927,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
   public void setAlwaysExpandList(boolean alwaysExpandList) {
     myAlwaysExpandList = alwaysExpandList;
   }
+
+  public void setPaintBusy(final boolean value) {
+    myTree.setPaintBusy(value);
+    myList.setPaintBusy(value);
+  }
 }

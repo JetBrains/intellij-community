@@ -148,7 +148,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatchFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         setPathFileChangeDefault();
-        myLoadQueue.queue(myUpdater);
+        queueRequest();
       }
     });
 
@@ -191,7 +191,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         public void contentsChanged(VirtualFileEvent event) {
           if (myRecentPathFileChange.get() != null && myRecentPathFileChange.get().getVf() != null &&
               myRecentPathFileChange.get().getVf().equals(event.getFile())) {
-            myLoadQueue.queue(myUpdater);
+            queueRequest();
           }
         }
       };
@@ -204,6 +204,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         }
       });
     }
+  }
+
+  private void queueRequest() {
+    paintBusy(true);
+    myLoadQueue.queue(myUpdater);
   }
 
   private void init(List<TextFilePatch> patches, final LocalChangeList localChangeList) {
@@ -284,7 +289,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   public void init(final VirtualFile patchFile) {
     myPatchFile.setText(patchFile.getPresentableUrl());
     myRecentPathFileChange.set(new FilePresentation(patchFile));
-    myLoadQueue.queue(myUpdater);
+    queueRequest();
   }
 
   private class MyUpdater implements Runnable {
@@ -309,6 +314,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           myPatches.addAll(matchedPathes);
           myReader = patchReader;
           updateTree(true);
+          paintBusy(false);
         }
       });
     }
@@ -368,6 +374,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myChangesTreeList.setChangesToDisplay(Collections.<FilePatchInProgress.PatchChange>emptyList());
     myChangesTreeList.repaint();
     myContainBasedChanges = false;
+    paintBusy(false);
   }
 
   @Override
@@ -410,7 +417,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         group.add(new AnAction("Refresh", "Refresh", AllIcons.Actions.Sync) {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            myLoadQueue.queue(myUpdater);
+            queueRequest();
           }
         });
       }
@@ -443,6 +450,14 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myCenterPanel.add(wrapper, gb);
     }
     return myCenterPanel;
+  }
+
+  private void paintBusy(final boolean requestPut) {
+    if (requestPut) {
+      myChangesTreeList.setPaintBusy(true);
+    } else {
+      myChangesTreeList.setPaintBusy(! myLoadQueue.isEmpty());
+    }
   }
 
   private static class MyChangeTreeList extends ChangesTreeList<FilePatchInProgress.PatchChange> {
