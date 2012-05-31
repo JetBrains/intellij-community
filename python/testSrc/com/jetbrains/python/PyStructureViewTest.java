@@ -73,7 +73,8 @@ public class PyStructureViewTest extends PyTestCase {
            "  __setattr__(self, name, value)\n" +
            "  __class__\n" +
            "  __dict__\n" +
-           "  __doc__\n",
+           "  __doc__\n" +
+           "  __module__\n",
            true);
   }
 
