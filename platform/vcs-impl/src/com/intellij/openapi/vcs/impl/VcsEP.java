@@ -43,6 +43,8 @@ public class VcsEP extends AbstractExtensionPointBean {
   public String displayName;
   @Attribute("administrativeAreaName")
   public String administrativeAreaName;
+  @Attribute("crawlUpToCheckUnderVcs")
+  public boolean crawlUpToCheckUnderVcs;
 
   private AbstractVcs myVcs;
 
@@ -69,6 +71,6 @@ public class VcsEP extends AbstractExtensionPointBean {
   }
 
   public VcsDescriptor createDescriptor() {
-    return new VcsDescriptor(administrativeAreaName, displayName, name);
+    return new VcsDescriptor(administrativeAreaName, displayName, name, crawlUpToCheckUnderVcs);
   }
 }

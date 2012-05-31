@@ -15,31 +15,57 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class VcsDescriptor implements Comparable<VcsDescriptor> {
   private final String myName;
+  private final boolean myCrawlUpToCheckUnderVcs;
   private final String myDisplayName;
   private final String myAdministrativePattern;
   private boolean myIsNone;
 
-  public VcsDescriptor(String administrativePattern, String displayName, String name) {
+  public VcsDescriptor(String administrativePattern, String displayName, String name, boolean crawlUpToCheckUnderVcs) {
     myAdministrativePattern = administrativePattern;
     myDisplayName = displayName;
     myName = name;
+    myCrawlUpToCheckUnderVcs = crawlUpToCheckUnderVcs;
   }
 
   public boolean probablyUnderVcs(final VirtualFile file) {
     if (file == null || (! file.isDirectory()) || (! file.isValid())) return false;
     if (myAdministrativePattern == null) return false;
-    final String[] patterns = myAdministrativePattern.split(",");
-    for (String pattern : patterns) {
-      final VirtualFile child = file.findChild(pattern.trim());
-      if (child != null) return true;
-    }
-    return false;
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        if (checkFileForBeingAdministrative(file)) return true;
+        if (myCrawlUpToCheckUnderVcs) {
+          VirtualFile current = file.getParent();
+          while (current != null) {
+            if (checkFileForBeingAdministrative(current)) return true;
+            current = current.getParent();
+          }
+        }
+        return false;
+      }
+    });
+  }
+
+  private boolean checkFileForBeingAdministrative(final VirtualFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        final String[] patterns = myAdministrativePattern.split(",");
+        for (String pattern : patterns) {
+          final VirtualFile child = file.findChild(pattern.trim());
+          if (child != null) return true;
+        }
+        return false;
+      }
+    });
   }
 
   public String getDisplayName() {
@@ -72,7 +98,7 @@ public class VcsDescriptor implements Comparable<VcsDescriptor> {
   }
 
   public static VcsDescriptor createFictive() {
-    final VcsDescriptor vcsDescriptor = new VcsDescriptor(null, VcsBundle.message("none.vcs.presentation"), null);
+    final VcsDescriptor vcsDescriptor = new VcsDescriptor(null, VcsBundle.message("none.vcs.presentation"), null, false);
     vcsDescriptor.myIsNone = true;
     return vcsDescriptor;
   }
