@@ -1157,6 +1157,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected void declareNecessaryVariablesAfterCall(PsiVariable outputVariable) throws IncorrectOperationException {
+    if (myHasExpressionOutput) return;
     List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariables();
     Collection<ControlFlowUtil.VariableInfo> reassigned = myControlFlowWrapper.getInitializedTwice();
     for (PsiVariable variable : usedVariables) {
