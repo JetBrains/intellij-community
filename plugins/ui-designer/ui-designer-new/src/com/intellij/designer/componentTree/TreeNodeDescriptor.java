@@ -16,7 +16,6 @@
 package com.intellij.designer.componentTree;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 /**
