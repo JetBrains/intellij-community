@@ -282,7 +282,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
           openView(usageView);
           Usage firstUsage = myFirstUsage.get();
           if (firstUsage != null) {
-            usageView.appendUsageLater(firstUsage);
+            usageView.appendUsage(firstUsage);
           }
         }
         else {
@@ -308,8 +308,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     @Override
     public void run() {
+      //long start = System.currentTimeMillis();
       searchUsages();
       endSearchForUsages();
+      //System.out.println("Usage search took " + (System.currentTimeMillis() - start));
     }
 
     private void searchUsages() {
@@ -342,7 +344,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
             }
             UsageViewImpl usageView = getUsageView();
             if (usageView != null) {
-              usageView.appendUsageLater(usage);
+              usageView.appendUsage(usage);
             }
           }
           return indicator == null || !indicator.isCanceled();

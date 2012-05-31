@@ -22,6 +22,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,7 +91,12 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     model.setRoot(rootNode);
     UsageNodeTreeBuilder usageNodeTreeBuilder = new UsageNodeTreeBuilder(UsageTarget.EMPTY_ARRAY, rules, UsageFilteringRule.EMPTY_ARRAY, rootNode);
     for (Usage usage : usages) {
-      usageNodeTreeBuilder.appendUsage(usage);
+      usageNodeTreeBuilder.appendUsage(usage, new Consumer<Runnable>() {
+        @Override
+        public void consume(Runnable runnable) {
+          runnable.run();
+        }
+      });
       UIUtil.dispatchAllInvocationEvents();
     }
 
