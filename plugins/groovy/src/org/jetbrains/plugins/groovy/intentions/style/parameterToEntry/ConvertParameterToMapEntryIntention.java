@@ -36,6 +36,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -445,7 +446,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       .message("find.method.ro.closure.usages.0", owner instanceof GrClosableBlock ? CLOSURE_CAPTION : METHOD_CAPTION), true) {
       public void run(@NotNull final ProgressIndicator indicator) {
         final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
-        final Collection<PsiReference> references = Collections.synchronizedList(new ArrayList<PsiReference>());
+        final Collection<PsiReference> references = Collections.synchronizedSet(new HashSet<PsiReference>());
         final Processor<PsiReference> consumer = new Processor<PsiReference>() {
           @Override
           public boolean process(PsiReference psiReference) {
