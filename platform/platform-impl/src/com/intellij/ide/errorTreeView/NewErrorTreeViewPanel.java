@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.errorTreeView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.*;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
@@ -24,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -518,7 +518,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     private final AnAction myCloseAction;
 
     public RerunAction(@NotNull Runnable rerunAction, @NotNull AnAction closeAction) {
-      super(IdeBundle.message("action.refresh"), null, IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(IdeBundle.message("action.refresh"), null, AllIcons.Actions.RefreshUsages);
       myRerunAction = rerunAction;
       myCloseAction = closeAction;
     }
@@ -536,7 +536,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class StopAction extends AnAction {
     public StopAction() {
-      super(IdeBundle.message("action.stop"), null, IconLoader.getIcon("/actions/suspend.png"));
+      super(IdeBundle.message("action.stop"), null, AllIcons.Actions.Suspend);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -559,7 +559,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class HideWarningsAction extends ToggleAction {
     public HideWarningsAction() {
-      super(IdeBundle.message("action.hide.warnings"), null, IconLoader.getIcon("/compiler/hideWarnings.png"));
+      super(IdeBundle.message("action.hide.warnings"), null, AllIcons.Compiler.HideWarnings);
     }
 
     public boolean isSelected(AnActionEvent event) {

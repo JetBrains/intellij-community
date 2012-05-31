@@ -176,7 +176,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return convertedSuper;
   }
 
-  // for lexer, so need not to be precise
   private static LanguageLevel convertFromVersion(final int version) {
     switch (version) {
       case Opcodes.V1_1:
@@ -188,9 +187,13 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         return LanguageLevel.JDK_1_4;
 
       case Opcodes.V1_5:
-      case Opcodes.V1_6:
-      case Opcodes.V1_7:
         return LanguageLevel.JDK_1_5;
+
+      case Opcodes.V1_6:
+        return LanguageLevel.JDK_1_6;
+
+      case Opcodes.V1_7:
+        return LanguageLevel.JDK_1_7;
 
       default:
         return LanguageLevel.HIGHEST;

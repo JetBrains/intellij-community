@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -33,7 +34,6 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,10 +51,10 @@ public class ActionsTreeUtil {
   public static final String MAIN_TOOLBAR = KeyMapBundle.message("main.toolbar.title");
   public static final String EDITOR_POPUP = KeyMapBundle.message("editor.popup.menu.title");
 
-  private static final Icon MAIN_MENU_ICON = IconLoader.getIcon("/nodes/keymapMainMenu.png");
-  private static final Icon EDITOR_ICON = IconLoader.getIcon("/nodes/keymapEditor.png");
-  private static final Icon EDITOR_OPEN_ICON = IconLoader.getIcon("/nodes/keymapEditorOpen.png");
-  private static final Icon OTHER_ICON = IconLoader.getIcon("/nodes/keymapOther.png");
+  private static final Icon MAIN_MENU_ICON = AllIcons.Nodes.KeymapMainMenu;
+  private static final Icon EDITOR_ICON = AllIcons.Nodes.KeymapEditor;
+  private static final Icon EDITOR_OPEN_ICON = AllIcons.Nodes.KeymapEditorOpen;
+  private static final Icon OTHER_ICON = AllIcons.Nodes.KeymapOther;
   public static final String EDITOR_TAB_POPUP = KeyMapBundle.message("editor.tab.popup.menu.title");
   public static final String FAVORITES_POPUP = KeyMapBundle.message("favorites.popup.title");
   public static final String PROJECT_VIEW_POPUP = KeyMapBundle.message("project.view.popup.menu.title");

@@ -166,7 +166,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
     }
   }
 
-  public Icon getIcon() {
+  public Icon getIcon(boolean open) {
     return LibraryPresentationManager.getInstance().getNamedLibraryIcon(myLibrary, myContext);
   }
 

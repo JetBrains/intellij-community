@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.UIBundle;
@@ -523,11 +523,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       int xMask = isVerticalSplit ? 1 : 0;
       int yMask = isVerticalSplit ? 0 : 1;
 
-      Icon glueIcon = IconLoader.getIcon(isVerticalSplit ? "/general/splitGlueV.png" : "/general/splitGlueH.png");
+      Icon glueIcon = isVerticalSplit ? AllIcons.General.SplitGlueV : AllIcons.General.SplitCenterH;
       int glueFill = isVerticalSplit ? GridBagConstraints.VERTICAL : GridBagConstraints.HORIZONTAL;
       add(new JLabel(glueIcon),
           new GridBagConstraints(0, 0, 1, 1, 0, 0, isVerticalSplit ? GridBagConstraints.EAST : GridBagConstraints.NORTH, glueFill, new Insets(0, 0, 0, 0), 0, 0));
-      JLabel splitDownlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitDown.png" : "/general/splitRight.png"));
+      JLabel splitDownlabel = new JLabel(isVerticalSplit ? AllIcons.General.SplitDown : AllIcons.General.SplitRight);
       splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       splitDownlabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
         .message("splitter.right.tooltip.text"));
@@ -551,7 +551,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       //
       add(new JLabel(glueIcon),
           new GridBagConstraints(2 * xMask, 2 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, 0, 0, 0), 0, 0));
-      JLabel splitCenterlabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitCenterV.png" : "/general/splitCenterH.png"));
+      JLabel splitCenterlabel = new JLabel(isVerticalSplit ? AllIcons.General.SplitCenterV : AllIcons.General.SplitCenterH);
       splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
       splitCenterlabel.addMouseListener(new MouseAdapter() {
@@ -564,7 +564,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       add(new JLabel(glueIcon),
           new GridBagConstraints(4 * xMask, 4 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, glueFill, new Insets(0, 0, 0, 0), 0, 0));
       //
-      JLabel splitUpLabel = new JLabel(IconLoader.getIcon(isVerticalSplit ? "/general/splitUp.png" : "/general/splitLeft.png"));
+      JLabel splitUpLabel = new JLabel(isVerticalSplit ? AllIcons.General.SplitUp : AllIcons.General.SplitLeft);
       splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       splitUpLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.up.tooltip.text") : UIBundle
         .message("splitter.left.tooltip.text"));

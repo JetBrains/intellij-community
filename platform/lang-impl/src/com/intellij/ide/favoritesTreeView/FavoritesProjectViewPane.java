@@ -16,6 +16,7 @@
 
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
@@ -26,7 +27,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilBase;
@@ -83,7 +83,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   }
 
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/toolWindowFavorites.png");
+    return AllIcons.General.ToolWindowFavorites;
   }
 
   @NotNull

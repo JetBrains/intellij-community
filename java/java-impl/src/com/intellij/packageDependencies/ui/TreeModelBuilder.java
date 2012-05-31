@@ -16,6 +16,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -25,7 +26,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -79,9 +79,9 @@ public class TreeModelBuilder {
   private GeneralGroupNode myTestRoot = null;
   private GeneralGroupNode myLibsRoot = null;
 
-  private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
-  private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
-  private static final Icon TEST_ICON = IconLoader.getIcon("/nodes/testSourceFolder.png");
+  private static final Icon LIB_ICON_OPEN = AllIcons.Nodes.PpLibOpen;
+  private static final Icon LIB_ICON_CLOSED = AllIcons.Nodes.PpLibClosed;
+  private static final Icon TEST_ICON = AllIcons.Nodes.TestSourceFolder;
   public static final String PRODUCTION_NAME = AnalysisScopeBundle.message("package.dependencies.production.node.text");
   public static final String TEST_NAME = AnalysisScopeBundle.message("package.dependencies.test.node.text");
   public static final String LIBRARY_NAME = AnalysisScopeBundle.message("package.dependencies.library.node.text");

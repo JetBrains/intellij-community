@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -737,15 +738,15 @@ public class UIUtil {
   }
 
   public static Icon getBalloonInformationIcon() {
-    return IconLoader.getIcon("/general/balloonInformation.png");
+    return AllIcons.General.BalloonInformation;
   }
 
   public static Icon getBalloonWarningIcon() {
-    return IconLoader.getIcon("/general/balloonWarning.png");
+    return AllIcons.General.BalloonWarning;
   }
 
   public static Icon getBalloonErrorIcon() {
-    return IconLoader.getIcon("/general/balloonError.png");
+    return AllIcons.General.BalloonError;
   }
 
   public static Icon getRadioButtonIcon() {

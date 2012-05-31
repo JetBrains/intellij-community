@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -30,8 +30,8 @@ import java.util.Map;
  *         Date: Dec 11, 2004
  */
 public class UnknownSdkType extends SdkType{
-  public static final Icon ICON = IconLoader.getIcon("/nodes/unknownJdkClosed.png");
-  private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/unknownJdkOpen.png");
+  public static final Icon ICON = AllIcons.Nodes.UnknownJdkClosed;
+  private static final Icon JDK_ICON_EXPANDED = AllIcons.Nodes.UnknownJdkOpen;
   private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<String, UnknownSdkType>();
 
   /**

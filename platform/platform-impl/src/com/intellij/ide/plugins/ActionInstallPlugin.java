@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -31,7 +32,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.net.IOExceptionDialog;
@@ -54,7 +54,8 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
   private final PluginManagerMain host;
 
   public ActionInstallPlugin(PluginManagerMain mgr, PluginManagerMain installed) {
-    super(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("action.download.and.install.plugin"), IconLoader.getIcon("/actions/install.png"));
+    super(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("action.download.and.install.plugin"),
+          AllIcons.Actions.Install);
     host = mgr;
     this.installed = installed;
   }

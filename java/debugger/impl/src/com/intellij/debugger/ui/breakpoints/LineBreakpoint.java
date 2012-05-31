@@ -30,6 +30,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -39,7 +40,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +71,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   public static final Icon MUTED_ICON = DebuggerIcons.MUTED_BREAKPOINT_ICON;
   public static final Icon DISABLED_ICON = DebuggerIcons.DISABLED_BREAKPOINT_ICON;
   public static final Icon MUTED_DISABLED_ICON = DebuggerIcons.MUTED_DISABLED_BREAKPOINT_ICON;
-  private static final Icon ourMutedVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_muted_verified_warning_breakpoint.png");
+  private static final Icon ourMutedVerifiedWarningsIcon = AllIcons.Debugger.Db_muted_verified_warning_breakpoint;
 
   private String myMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");

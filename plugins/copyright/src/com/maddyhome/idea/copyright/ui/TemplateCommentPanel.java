@@ -360,10 +360,6 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     return fileType.getName();
   }
 
-  public Icon getIcon() {
-    return fileType.getIcon();
-  }
-
   public String getHelpTopic() {
     return "copyright.filetypes";
   }

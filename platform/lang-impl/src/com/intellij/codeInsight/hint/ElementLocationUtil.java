@@ -16,11 +16,11 @@
 
 package com.intellij.codeInsight.hint;
 
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -28,7 +28,7 @@ import javax.swing.*;
 import java.util.List;
 
 public class ElementLocationUtil {
-  public static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");//TODO: Move to a more proper place
+  public static final Icon LIB_ICON_CLOSED = AllIcons.Nodes.PpLibClosed;//TODO: Move to a more proper place
 
   private ElementLocationUtil() {
   }

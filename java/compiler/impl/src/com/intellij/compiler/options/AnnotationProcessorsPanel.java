@@ -16,6 +16,7 @@
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.ProcessorConfigProfile;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -72,7 +73,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     myTree = new Tree(new MyTreeModel());
     myTree.setRootVisible(false);
     final JPanel treePanel =
-      ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", IconLoader.getIcon("/actions/nextfile.png")) {
+      ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", AllIcons.Actions.Nextfile) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           final MyModuleNode node = (MyModuleNode)myTree.getSelectionPath().getLastPathComponent();
@@ -361,8 +362,6 @@ public class AnnotationProcessorsPanel extends JPanel {
   }
 
   private static class MyCellRenderer extends ColoredTreeCellRenderer {
-    private static final Icon MODULE_ICON = IconLoader.getIcon("/nodes/ModuleClosed.png");
-
     @Override
     public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof ProfileNode) {
@@ -370,7 +369,7 @@ public class AnnotationProcessorsPanel extends JPanel {
       }
       else if (value instanceof MyModuleNode) {
         final Module module = (Module)((MyModuleNode)value).getUserObject();
-        setIcon(MODULE_ICON);
+        setIcon(AllIcons.Nodes.ModuleClosed);
         append(module.getName());
       }
     }

@@ -540,6 +540,7 @@ public class HighlightUtil {
           if (errorResult != null && valueType != null) {
             IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true);
             QuickFixAction.registerQuickFixAction(errorResult, fix);
+            ChangeParameterClassFix.registerQuickFixAction(returnType, valueType, errorResult);
             if (returnType instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)returnType).getComponentType(), valueType)) {
               QuickFixAction.registerQuickFixAction(errorResult, new SurroundWithArrayFix(null) {
                 @Override
@@ -2507,7 +2508,7 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(highlightInfo, action);
       }
     }
-    ChangeParameterClassFix.registerQuickFixAction(parameter, itemType, highlightInfo);
+    ChangeParameterClassFix.registerQuickFixAction(parameter.getType(), itemType, highlightInfo);
   }
 
   @Nullable
@@ -2544,7 +2545,7 @@ public class HighlightUtil {
 
   @Nullable
   private static HighlightInfo checkFeature(@Nullable final PsiElement element, @NotNull final Feature feature) {
-    if (element != null && !PsiUtil.getLanguageLevel(element).isAtLeast(feature.level)) {
+    if (element != null && element.getManager().isInProject(element) && !PsiUtil.getLanguageLevel(element).isAtLeast(feature.level)) {
       final String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
       final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, message);
       QuickFixAction.registerQuickFixAction(info, new IncreaseLanguageLevelFix(feature.level));

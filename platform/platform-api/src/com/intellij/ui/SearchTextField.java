@@ -15,13 +15,13 @@
  */
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
@@ -39,8 +39,8 @@ import java.util.List;
  * @author max
  */
 public class SearchTextField extends JPanel {
-  private static final Icon SEARCH_ICON = IconLoader.getIcon("/actions/search.png");
-  private static final Icon CLEAR_ICON = IconLoader.getIcon("/actions/cleanLight.png");
+  private static final Icon SEARCH_ICON = AllIcons.Actions.Search;
+  private static final Icon CLEAR_ICON = AllIcons.Actions.CleanLight;
 
   private int myHistorySize = 5;
   private final MyModel myModel;

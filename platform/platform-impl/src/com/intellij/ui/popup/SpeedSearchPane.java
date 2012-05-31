@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.popup;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.CaptionPanel;
 
 import javax.swing.*;
@@ -32,7 +32,7 @@ public class SpeedSearchPane extends JDialog {
   private final JPanel myPanel = new JPanel();
 
   private Dimension myLastLabelSize = new Dimension();
-  private static final Icon ICON_PROMPT = IconLoader.getIcon("/icons/ide/speedSearchPrompt.png");
+  private static final Icon ICON_PROMPT = AllIcons.Icons.Ide.SpeedSearchPrompt;
 
   public SpeedSearchPane(WizardPopup popup) throws HeadlessException {
     myPopup = popup;

@@ -19,24 +19,24 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.Gray;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class PushedTabBackground {
-  private static final Icon ourLeftRound = IconLoader.getIcon("/general/tab_grey_left.png");
-  private static final Icon ourRightRound = IconLoader.getIcon("/general/tab_grey_right.png");
+  private static final Icon ourLeftRound = AllIcons.General.Tab_grey_left;
+  private static final Icon ourRightRound = AllIcons.General.Tab_grey_right;
 
-  private static final Icon ourLeftWhiteRound = IconLoader.getIcon("/general/tab-white-left.png");
-  private static final Icon ourRightWhiteRound = IconLoader.getIcon("/general/tab-white-right.png");
+  private static final Icon ourLeftWhiteRound = AllIcons.General.Tab_white_left;
+  private static final Icon ourRightWhiteRound = AllIcons.General.Tab_white_right;
 
-  private static final Icon ourRightStraight = IconLoader.getIcon("/general/tab_grey_right_inner.png");
-  private static final Icon ourLeftStraight = IconLoader.getIcon("/general/tab_grey_left_inner.png");
+  private static final Icon ourRightStraight = AllIcons.General.Tab_grey_right_inner;
+  private static final Icon ourLeftStraight = AllIcons.General.Tab_grey_left_inner;
   
-  private static final Icon ourMiddle = IconLoader.getIcon("/general/tab_grey_bckgrnd.png");
-  private static final Icon ourMiddleWhite = IconLoader.getIcon("/general/tab-white-center.png");
+  private static final Icon ourMiddle = AllIcons.General.Tab_grey_bckgrnd;
+  private static final Icon ourMiddleWhite = AllIcons.General.Tab_white_center;
 
 
 

@@ -25,6 +25,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -34,7 +35,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
@@ -53,8 +53,8 @@ import java.util.List;
  * @author spleaner
  */
 public class ChooseRunConfigurationAction extends AnAction {
-  private static final Icon EDIT_ICON = IconLoader.getIcon("/actions/editSource.png");
-  private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
+  private static final Icon EDIT_ICON = AllIcons.Actions.EditSource;
+  private static final Icon SAVE_ICON = AllIcons.RunConfigurations.SaveTempConfig;
 
   private Executor myCurrentExecutor;
   private boolean myEditConfiguration;

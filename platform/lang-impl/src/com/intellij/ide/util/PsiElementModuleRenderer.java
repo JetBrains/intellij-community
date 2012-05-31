@@ -16,11 +16,11 @@
 
 package com.intellij.ide.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -32,8 +32,8 @@ import java.awt.*;
 import java.io.File;
 
 public class PsiElementModuleRenderer extends DefaultListCellRenderer{
-  private static final Icon TEST_ICON = IconLoader.getIcon("/nodes/testSourceFolder.png");
-  private static final Icon LIB_ICON = IconLoader.getIcon("/nodes/ppLibClosed.png");
+  private static final Icon TEST_ICON = AllIcons.Nodes.TestSourceFolder;
+  private static final Icon LIB_ICON = AllIcons.Nodes.PpLibClosed;
 
   private String myText;
 

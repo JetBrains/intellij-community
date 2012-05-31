@@ -40,7 +40,6 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.components.panels.Wrapper;
@@ -155,11 +154,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("project.settings.display.name");
-  }
-
-  @Nullable
-  public Icon getIcon() {
-    return IconLoader.getIcon("/modules/modules.png");
   }
 
   @Nullable

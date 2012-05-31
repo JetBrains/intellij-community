@@ -2,7 +2,7 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Iconable;
 
 import javax.swing.*;
@@ -12,7 +12,7 @@ import javax.swing.*;
  * Date: 11/11/11
  */
 public abstract class RefactoringBaseIntention extends PsiElementBaseIntentionAction implements Iconable, HighPriorityAction {
-  public static final Icon REFACTORING_BULB = IconLoader.getIcon("/actions/refactoringBulb.png");
+  public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
 
   @Override
   public Icon getIcon(int flags) {

@@ -17,10 +17,10 @@ package com.intellij.ide.util;
 
 import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.featureStatistics.ProductivityFeaturesProvider;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jdom.Document;
@@ -51,7 +51,7 @@ public class TipPanel extends JPanel {
 
   public TipPanel() {
     setLayout(new BorderLayout());
-    JLabel jlabel = new JLabel(IconLoader.getIcon("/general/tip.png"));
+    JLabel jlabel = new JLabel(AllIcons.General.Tip);
     jlabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     JLabel jlabel1 = new JLabel(IdeBundle.message("label.did.you.know"));
     Font font = jlabel1.getFont();

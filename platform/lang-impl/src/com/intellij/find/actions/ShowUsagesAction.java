@@ -22,6 +22,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -39,7 +40,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -311,7 +311,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (shortcut != null) {
       shortcutText = "(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
-    return new InplaceButton("Options..." + shortcutText, IconLoader.getIcon("/general/ideOptions.png"), new ActionListener() {
+    return new InplaceButton("Options..." + shortcutText, AllIcons.General.IdeOptions, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -500,7 +500,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     usageView.addFilteringActions(toolbar);
 
     toolbar.add(UsageGroupingRuleProviderImpl.createGroupByFileStructureAction(usageView));
-    toolbar.add(new AnAction("Open Find Usages Toolwindow", "Show all usages in a separate toolwindow", IconLoader.getIcon("/general/toolWindowFind.png")) {
+    toolbar.add(new AnAction("Open Find Usages Toolwindow", "Show all usages in a separate toolwindow", AllIcons.General.ToolWindowFind) {
       {
         AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);
         setShortcutSet(action.getShortcutSet());

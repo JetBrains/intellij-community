@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.util.registry;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -26,7 +27,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
@@ -143,7 +143,7 @@ public class RegistryUi implements Disposable {
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(!myTable.isEditing() && myTable.getSelectedRow() >= 0);
       e.getPresentation().setText("Revert to Default");
-      e.getPresentation().setIcon(IconLoader.getIcon("/general/remove.png"));
+      e.getPresentation().setIcon(AllIcons.General.Remove);
 
       if (e.getPresentation().isEnabled()) {
         final RegistryValue rv = myModel.getRegistryValue(myTable.getSelectedRow());
@@ -170,7 +170,7 @@ public class RegistryUi implements Disposable {
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(!myTable.isEditing() && myTable.getSelectedRow() >= 0);
       e.getPresentation().setText("Edit");
-      e.getPresentation().setIcon(IconLoader.getIcon("/actions/editSource.png"));
+      e.getPresentation().setIcon(AllIcons.Actions.EditSource);
     }
 
     public void actionPerformed(AnActionEvent e) {

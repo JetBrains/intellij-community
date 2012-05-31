@@ -25,16 +25,16 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +57,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private ObjectReference myThisObject;
   private Color myBackgroundColor;
 
-  private static final Icon myObsoleteFrameIcon = IconLoader.getIcon("/debugger/db_obsolete.png");
+  private static final Icon myObsoleteFrameIcon = AllIcons.Debugger.Db_obsolete;
   private Icon myIcon = DebuggerIcons.STACK_FRAME_ICON;
 
   public StackFrameDescriptorImpl(StackFrameProxyImpl frame, final MethodsTracker tracker) {

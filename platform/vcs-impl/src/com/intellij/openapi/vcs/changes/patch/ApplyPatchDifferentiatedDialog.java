@@ -15,10 +15,14 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.PatchReader;
+import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -30,7 +34,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -400,7 +407,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       group.add(new ResetStrip());
       group.add(new ZeroStrip());
       if (myCanChangePatchFile) {
-        group.add(new AnAction("Refresh", "Refresh", IconLoader.getIcon("/actions/sync.png")) {
+        group.add(new AnAction("Refresh", "Refresh", AllIcons.Actions.Sync) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             myLoadQueue.queue(myUpdater);
@@ -481,7 +488,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final NewBaseSelector myNewBaseSelector;
 
     private MapDirectory() {
-      super("Map base directory", "Map base directory", IconLoader.getIcon("/vcs/mapBase.png"));
+      super("Map base directory", "Map base directory", AllIcons.Vcs.MapBase);
       myNewBaseSelector = new NewBaseSelector();
     }
 
@@ -819,7 +826,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class ZeroStrip extends AnAction {
     private ZeroStrip() {
-      super("Remove Directories", "Remove Directories", IconLoader.getIcon("/vcs/stripNull.png"));
+      super("Remove Directories", "Remove Directories", AllIcons.Vcs.StripNull);
     }
 
     @Override
@@ -834,7 +841,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class StripDown extends AnAction {
     private StripDown() {
-      super("Restore Directory", "Restore Directory", IconLoader.getIcon("/vcs/stripDown.png"));
+      super("Restore Directory", "Restore Directory", AllIcons.Vcs.StripDown);
     }
 
     @Override
@@ -864,7 +871,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class StripUp extends AnAction {
     private StripUp() {
-      super("Strip Directory", "Strip Directory", IconLoader.getIcon("/vcs/stripUp.png"));
+      super("Strip Directory", "Strip Directory", AllIcons.Vcs.StripUp);
     }
 
     @Override
@@ -894,7 +901,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private class ResetStrip extends AnAction {
     private ResetStrip() {
-      super("Reset Directories", "Reset Directories", IconLoader.getIcon("/vcs/resetStrip.png"));
+      super("Reset Directories", "Reset Directories", AllIcons.Vcs.ResetStrip);
     }
 
     @Override
@@ -910,7 +917,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private class MyShowDiff extends AnAction {
     private final MyChangeComparator myMyChangeComparator;
     private MyShowDiff() {
-      super("Show Diff", "Show Diff", IconLoader.getIcon("/actions/diff.png"));
+      super("Show Diff", "Show Diff", AllIcons.Actions.Diff);
       myMyChangeComparator = new MyChangeComparator();
     }
 

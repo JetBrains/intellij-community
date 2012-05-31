@@ -19,6 +19,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.CollapseAllToolbarAction;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
@@ -39,7 +40,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -78,7 +78,10 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.*;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -182,7 +185,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final FileEditorManager myFileEditorManager;
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
-  private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
+  private static final Icon BULLET_ICON = AllIcons.General.Bullet;
   private final MessageBusConnection myConnection;
   private final Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
   private final Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
@@ -504,8 +507,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
       if (action instanceof CollapseAllToolbarAction) {
         collapseAction = (CollapseAllToolbarAction)action;
-        collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
-        collapseAction.getTemplatePresentation().setHoveredIcon(IconLoader.getIcon("/general/collapseAllHover.png"));
+        collapseAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
+        collapseAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
         myActionGroup.remove(collapseAction);
       }
     }
@@ -633,7 +636,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       myActionGroup.addAction(new FlattenPackagesDependableAction(myAbbreviatePackageNames,
                                                             IdeBundle.message("action.abbreviate.qualified.package.names"),
                                                             IdeBundle.message("action.abbreviate.qualified.package.names"),
-                                                            IconLoader.getIcon("/objectBrowser/abbreviatePackageNames.png"),
+                                                            AllIcons.ObjectBrowser.AbbreviatePackageNames,
                                                             ourAbbreviatePackagesDefaults) {
         public boolean isSelected(AnActionEvent event) {
           return super.isSelected(event) && isAbbreviatePackageNames(myCurrentViewId);
@@ -652,7 +655,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (!PlatformUtils.isCidr()) {
       myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
                                                    IdeBundle.message("action.show.hide.members"),
-                                                   IconLoader.getIcon("/objectBrowser/showMembers.png"), ourShowMembersDefaults))
+                                                   AllIcons.ObjectBrowser.ShowMembers, ourShowMembersDefaults))
         .setAsSecondary(true);
     }
     myActionGroup.addAction(myAutoScrollToSourceHandler.createToggleAction()).setAsSecondary(true);
@@ -1677,7 +1680,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private class SortByTypeAction extends ToggleAction {
     private SortByTypeAction() {
       super(IdeBundle.message("action.sort.by.type"), IdeBundle.message("action.sort.by.type"),
-            IconLoader.getIcon("/objectBrowser/sortByType.png"));
+            AllIcons.ObjectBrowser.SortByType);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -1697,8 +1700,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
-      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/locate.png"));
-      getTemplatePresentation().setHoveredIcon(IconLoader.getIcon("/general/locateHover.png"));
+      super("Scroll from Source", "Select the file open in the active editor", AllIcons.General.Locate);
+      getTemplatePresentation().setHoveredIcon(AllIcons.General.LocateHover);
     }
 
     @Override

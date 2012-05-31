@@ -20,8 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable;
 
-import javax.swing.*;
-
 /**
  * @author peter
  */
@@ -29,10 +27,6 @@ public class GantConfigurable extends SdkHomeConfigurable implements Configurabl
 
   public GantConfigurable(Project project) {
     super(project, "Gant");
-  }
-
-  public Icon getIcon() {
-    return GantIcons.GANT_ICON_16x16;
   }
 
   public String getHelpTopic() {

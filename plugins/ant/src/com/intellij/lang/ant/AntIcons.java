@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 
 import javax.swing.*;
 
@@ -23,6 +23,6 @@ import javax.swing.*;
  * @author nik
  */
 public interface AntIcons {
-  Icon ANT_TARGET_ICON = IconLoader.getIcon("/ant/target.png");
-  Icon ANT_META_TARGET_ICON = IconLoader.getIcon("/ant/metaTarget.png");
+  Icon ANT_TARGET_ICON = AllIcons.Ant.Target;
+  Icon ANT_META_TARGET_ICON = AllIcons.Ant.MetaTarget;
 }

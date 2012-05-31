@@ -15,9 +15,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.util.OnOffListener;
 import com.intellij.util.ui.UIUtil;
@@ -54,12 +54,12 @@ public abstract class SplitterWithSecondHideable {
     Icon icon;
     Icon openIcon;
     if (vertical) {
-      icon = IconLoader.getIcon("/general/comboArrow.png");
-      openIcon = IconLoader.getIcon("/general/comboUpPassive.png");
+      icon = AllIcons.General.ComboArrow;
+      openIcon = AllIcons.General.ComboUpPassive;
     }
     else {
-      icon = IconLoader.getIcon("/general/comboArrowRight.png");
-      openIcon = IconLoader.getIcon("/general/comboArrowRightPassive.png");
+      icon = AllIcons.General.ComboArrowRight;
+      openIcon = AllIcons.General.ComboArrowRightPassive;
     }
 
     myTitledSeparator = new AbstractTitledSeparatorWithIcon(icon, openIcon, separatorText) {

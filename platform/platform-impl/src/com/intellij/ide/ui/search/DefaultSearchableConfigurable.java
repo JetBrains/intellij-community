@@ -55,10 +55,6 @@ public class DefaultSearchableConfigurable implements Configurable {
     return myDelegate.getDisplayName();
   }
 
-  public Icon getIcon() {
-    return myDelegate.getIcon();
-  }
-
   @Nullable
   @NonNls
   public String getHelpTopic() {

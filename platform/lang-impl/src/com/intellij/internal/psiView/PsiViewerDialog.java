@@ -23,7 +23,7 @@ import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.internal.psiView.formattingblocks.BlockTreeBuilder;

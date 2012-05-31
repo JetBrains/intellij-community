@@ -26,6 +26,7 @@ import com.intellij.psi.scope.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -227,7 +228,13 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     myHasInaccessibleCandidate |= !accessible;
     myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
     myResult = null;
-    if (!accessible || aClass.hasModifierProperty(PsiModifier.PRIVATE)) return true;
+    if (!accessible) return true;
+    if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      final PsiClass containingPlaceClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class, false);
+      if (containingPlaceClass != null && !PsiTreeUtil.isAncestor(containingPlaceClass, aClass, true)){
+        return true;
+      }
+    }
     return myCurrentFileContext instanceof PsiImportStatementBase;
   }
 

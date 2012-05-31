@@ -20,6 +20,7 @@ import com.intellij.Patches;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
@@ -1328,6 +1329,9 @@ public abstract class ChooseByNameBase {
         }
       }
       if (commonPrefix == null) commonPrefix = "";
+      if (!StringUtil.startsWithIgnoreCase(commonPrefix, pattern)) {
+        commonPrefix = pattern;
+      }
       final String newPattern = commonPrefix;
 
       myHistory.add(Pair.create(oldText, oldPos));
@@ -1528,7 +1532,7 @@ public abstract class ChooseByNameBase {
   }
 
   private static final String ACTION_NAME = "Show All in View";
-  private static final Icon FIND_ICON = IconLoader.getIcon("/actions/find.png");
+  private static final Icon FIND_ICON = AllIcons.Actions.Find;
 
   private abstract class ShowFindUsagesAction extends AnAction {
     public ShowFindUsagesAction() {

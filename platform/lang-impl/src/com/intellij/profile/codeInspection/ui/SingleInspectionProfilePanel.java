@@ -29,6 +29,7 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeTooltipManager;
@@ -44,7 +45,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.ProfileManager;
@@ -336,7 +336,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     actions.add(actionManager.createExpandAllAction(myTreeExpander, myTree));
     actions.add(actionManager.createCollapseAllAction(myTreeExpander, myTree));
 
-    actions.add(new AnAction(CommonBundle.message("button.reset.to.default"), CommonBundle.message("button.reset.to.default"), IconLoader.getIcon("/actions/reset-to-default.png")) {
+    actions.add(new AnAction(CommonBundle.message("button.reset.to.default"), CommonBundle.message("button.reset.to.default"),
+                             AllIcons.Actions.Reset_to_default) {
       {
         registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK)), myTree);
       }
@@ -352,7 +353,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    actions.add(new AnAction("Reset to Empty", "Reset to empty", IconLoader.getIcon("/general/reset.png")){
+    actions.add(new AnAction("Reset to Empty", "Reset to empty", AllIcons.General.Reset){
 
       @Override
       public void update(AnActionEvent e) {
@@ -365,7 +366,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    actions.add(new ToggleAction("Lock Profile", "Lock profile", IconLoader.getIcon("/nodes/padlock.png")) {
+    actions.add(new ToggleAction("Lock Profile", "Lock profile", AllIcons.Nodes.Padlock) {
       public boolean isSelected(AnActionEvent e) {
         return mySelectedProfile != null && mySelectedProfile.isProfileLocked();
       }

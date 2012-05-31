@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -45,7 +46,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
@@ -73,7 +76,7 @@ import java.util.List;
 
 public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, ProjectComponent {
   public static final int UNVERSIONED_MAX_SIZE = 50;
-  public static final Icon detailsIcon = IconLoader.getIcon("/vcs/volute.png");
+  public static final Icon detailsIcon = AllIcons.Vcs.Volute;
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
 
@@ -222,6 +225,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   public void projectClosed() {
+    PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
     if (myToggleDetailsAction.isSelected(null)) {
       myListenersForShortDiff.off();
     }
@@ -329,6 +333,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private void setChangeDetailsPanel(@Nullable final JComponent component) {
     mySplitter.setSecondComponent(component);
+    mySplitter.getFirstComponent().setBorder(component == null ? null : IdeBorderFactory.createBorder(SideBorder.RIGHT));
     mySplitter.revalidate();
     mySplitter.repaint();
   }
@@ -551,7 +556,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     public ToggleShowIgnoredAction() {
       super(VcsBundle.message("changes.action.show.ignored.text"),
             VcsBundle.message("changes.action.show.ignored.description"),
-            IconLoader.getIcon("/actions/showHiddens.png"));
+            AllIcons.Actions.ShowHiddens);
     }
 
     public boolean isSelected(AnActionEvent e) {
@@ -566,7 +571,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   @Override
   public void disposeComponent() {
-    PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
   }
 
   @Override

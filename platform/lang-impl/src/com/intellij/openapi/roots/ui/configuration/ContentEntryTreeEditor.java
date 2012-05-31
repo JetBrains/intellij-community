@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -39,7 +40,6 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -240,7 +240,7 @@ public class ContentEntryTreeEditor {
     private MyNewFolderAction() {
       super(ActionsBundle.message("action.FileChooser.NewFolder.text"),
             ActionsBundle.message("action.FileChooser.NewFolder.description"),
-            IconLoader.getIcon("/actions/newFolder.png"));
+            AllIcons.Actions.NewFolder);
     }
 
     public JComponent createCustomComponent(Presentation presentation) {

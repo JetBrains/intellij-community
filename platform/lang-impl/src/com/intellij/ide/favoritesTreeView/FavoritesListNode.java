@@ -15,12 +15,12 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +50,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
 
   @Override
   protected void update(PresentationData presentation) {
-    presentation.setIcons(IconLoader.getIcon("/general/toolWindowFavorites.png"));
+    presentation.setIcons(AllIcons.General.ToolWindowFavorites);
     presentation.setPresentableText(myListName);
   }
   

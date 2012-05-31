@@ -15,10 +15,10 @@
  */
 package com.intellij.cvsSupport2.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +83,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
 
   private class CloseAction extends AnAction implements DumbAware {
     public CloseAction() {
-      super(com.intellij.CvsBundle.message("close.tab.action.name"), "", IconLoader.getIcon("/actions/cancel.png"));
+      super(com.intellij.CvsBundle.message("close.tab.action.name"), "", AllIcons.Actions.Cancel);
     }
 
     public void actionPerformed(AnActionEvent e) {

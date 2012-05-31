@@ -16,8 +16,8 @@
 
 package org.intellij.plugins.relaxNG.compact.psi.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -121,7 +121,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
 
   @Nullable
   public Icon getIcon(int flags) {
-    return IconLoader.findIcon("/nodes/property.png");
+    return AllIcons.Nodes.Property;
   }
 
   public boolean isMetaEnough() {

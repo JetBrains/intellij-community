@@ -16,9 +16,9 @@
 package com.siyeh.ig.telemetry;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.IconLoader;
 import com.siyeh.InspectionGadgetsBundle;
 
 class ResetTelemetryAction extends AnAction {
@@ -31,7 +31,7 @@ class ResetTelemetryAction extends AnAction {
     super(CommonBundle.message("button.reset"),
           InspectionGadgetsBundle.message(
             "action.reset.telemetry.description"),
-          IconLoader.getIcon("/actions/reset.png"));
+          AllIcons.Actions.Reset);
     this.telemetry = telemetry;
     this.display = display;
   }

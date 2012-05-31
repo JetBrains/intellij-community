@@ -37,10 +37,6 @@ public class PlatformContentEntriesConfigurable implements Configurable {
     return "Project Structure";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

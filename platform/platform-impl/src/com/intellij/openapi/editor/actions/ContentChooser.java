@@ -16,13 +16,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListSpeedSearch;
@@ -46,7 +46,7 @@ import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
 
-  private static final Icon textIcon = IconLoader.getIcon("/fileTypes/text.png");
+  private static final Icon textIcon = AllIcons.FileTypes.Text;
 
   private JList myList;
   private List<Data> myAllContents;

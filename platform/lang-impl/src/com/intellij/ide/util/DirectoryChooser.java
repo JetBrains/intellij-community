@@ -16,6 +16,7 @@
 
 package com.intellij.ide.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
@@ -28,7 +29,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -525,7 +525,7 @@ public class DirectoryChooser extends DialogWrapper {
     public FilterExistentAction() {
       super(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text"),
             UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existent.checkBox.text")),
-            IconLoader.getIcon("/ant/filter.png"));
+            AllIcons.Ant.Filter);
     }
 
     @Override

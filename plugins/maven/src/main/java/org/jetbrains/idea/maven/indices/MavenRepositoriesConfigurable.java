@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListUtil;
@@ -69,7 +69,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   private JButton myEditButton;
 
   private AnimatedIcon myUpdatingIcon;
-  private final Icon myWaitingIcon = IconLoader.getIcon("/process/step_passive.png");
+  private final Icon myWaitingIcon = AllIcons.Process.Step_passive;
   private Timer myRepaintTimer;
   private ActionListener myTimerListener;
   private final Project myProject;
@@ -216,10 +216,6 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
 
   public String getDisplayName() {
     return IndicesBundle.message("maven.repositories.title");
-  }
-
-  public Icon getIcon() {
-    return null;
   }
 
   public String getHelpTopic() {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -442,7 +443,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private class MyRefresh extends AnAction {
     private MyRefresh() {
       super(SvnBundle.message("committed.changes.action.merge.highlighting.refresh.text"),
-            SvnBundle.message("committed.changes.action.merge.highlighting.refresh.description"), IconLoader.getIcon("/actions/sync.png"));
+            SvnBundle.message("committed.changes.action.merge.highlighting.refresh.description"), AllIcons.Actions.Sync);
     }
 
     @Override

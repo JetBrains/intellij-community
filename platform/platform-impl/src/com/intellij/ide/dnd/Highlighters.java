@@ -15,16 +15,13 @@
  */
 package com.intellij.ide.dnd;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.UIUtil;
 
-import javax.accessibility.Accessible;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
@@ -232,8 +229,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
-    private final Icon myLeft = IconLoader.getIcon("/ide/dnd/left.png");
-    private final Icon myRight = IconLoader.getIcon("/ide/dnd/right.png");
+    private final Icon myLeft = AllIcons.Ide.Dnd.Left;
+    private final Icon myRight = AllIcons.Ide.Dnd.Right;
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x - myLeft.getIconWidth(), aRectangle.y - myLeft.getIconHeight(), aRectangle.width + myLeft.getIconWidth() + myRight.getIconWidth(), aRectangle.height + myLeft.getIconHeight());
@@ -251,8 +248,8 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class VerticalLinesHighlighter extends AbstractComponentHighlighter {
-    private final Icon myTop = IconLoader.getIcon("/ide/dnd/top.png");
-    private final Icon myBottom = IconLoader.getIcon("/ide/dnd/bottom.png");
+    private final Icon myTop = AllIcons.Ide.Dnd.Top;
+    private final Icon myBottom = AllIcons.Ide.Dnd.Bottom;
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
       final Rectangle rectangle = new Rectangle(aRectangle.x, aRectangle.y - myTop.getIconHeight(), aRectangle.width, aRectangle.height + myTop.getIconHeight() + myBottom.getIconHeight());

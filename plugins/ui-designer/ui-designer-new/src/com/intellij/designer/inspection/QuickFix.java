@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * @author Alexander Lobas
  */
-public abstract class QuickFix {
+public abstract class QuickFix implements Runnable {
   private final String myName;
   private final Icon myIcon;
 
@@ -36,6 +36,4 @@ public abstract class QuickFix {
   public final Icon getIcon() {
     return myIcon;
   }
-
-  public abstract void run() throws Exception;
 }

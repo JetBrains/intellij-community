@@ -27,7 +27,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.wrq.rearranger.configuration.RearrangerSettingsPanel;
 import com.wrq.rearranger.settings.RearrangerSettings;
-import com.wrq.rearranger.util.IconUtil;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -130,10 +129,6 @@ public final class Rearranger
 
   public String getDisplayName() {
     return COMPONENT_NAME;
-  }
-
-  public Icon getIcon() {
-    return IconUtil.getIcon("RearrangerIcon");
   }
 
   public String getHelpTopic() {

@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.*;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,10 +120,6 @@ public class GeneralSettingsConfigurable extends CompositeConfigurable<Searchabl
 
   public String getDisplayName() {
     return IdeBundle.message("title.general");
-  }
-
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableGeneral.png");
   }
 
   public void reset() {

@@ -22,6 +22,7 @@ import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -48,7 +49,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -569,7 +569,8 @@ public class OverrideImplementUtil {
         super.fillToolbarActions(group);
         if (toImplement) return;
 
-        final ToggleAction mergeAction = new ToggleAction("Show methods to implement", "Show methods to implement", IconLoader.getIcon("/general/show_to_implement.png")) {
+        final ToggleAction mergeAction = new ToggleAction("Show methods to implement", "Show methods to implement",
+                                                          AllIcons.General.Show_to_implement) {
           @Override
           public boolean isSelected(AnActionEvent e) {
             return merge.get().booleanValue();

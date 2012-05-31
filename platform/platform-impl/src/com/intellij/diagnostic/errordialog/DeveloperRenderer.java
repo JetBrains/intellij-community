@@ -16,7 +16,7 @@
 package com.intellij.diagnostic.errordialog;
 
 import com.intellij.diagnostic.Developer;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 
 import javax.swing.*;
 

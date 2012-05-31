@@ -15,10 +15,10 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
@@ -33,7 +33,7 @@ import javax.swing.*;
 * @author nik
 */
 class DirectoryElementType extends CompositePackagingElementType<DirectoryPackagingElement> {
-  private static final Icon ICON = IconLoader.getIcon("/actions/newFolder.png");
+  private static final Icon ICON = AllIcons.Actions.NewFolder;
 
   DirectoryElementType() {
     super("directory", CompilerBundle.message("element.type.name.directory"));

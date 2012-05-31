@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,8 +30,8 @@ import java.awt.*;
 import java.io.File;
 
 class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
-  private static final Icon INVALID_ITEM_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
-  private static final Icon JAR_DIRECTORY_ICON = IconLoader.getIcon("/nodes/jarDirectory.png");
+  private static final Icon INVALID_ITEM_ICON = AllIcons.Nodes.PpInvalid;
+  private static final Icon JAR_DIRECTORY_ICON = AllIcons.Nodes.JarDirectory;
   private final ItemElement myElement;
 
     public ItemElementDescriptor(NodeDescriptor parentDescriptor, ItemElement element) {

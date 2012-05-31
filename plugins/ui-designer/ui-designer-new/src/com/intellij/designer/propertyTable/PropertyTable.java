@@ -215,12 +215,28 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
 
     Property property = myProperties.get(row);
+    if (property.getParent() != null) {
+      return null;
+    }
+
     for (ErrorInfo errorInfo : ErrorInfo.get(myComponents.get(0))) {
       if (property.getName().equals(errorInfo.getPropertyName())) {
         return errorInfo;
       }
     }
     return null;
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    int row = rowAtPoint(event.getPoint());
+    if (row != -1) {
+      ErrorInfo errorInfo = getErrorInfoForRow(row);
+      if (errorInfo != null) {
+        return errorInfo.getName();
+      }
+    }
+    return super.getToolTipText(event);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -646,18 +662,6 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     Messages.showMessageDialog(DesignerBundle.message("designer.properties.setting.error", message),
                                DesignerBundle.message("designer.properties.invalid_input"),
                                Messages.getErrorIcon());
-  }
-
-  @Override
-  public String getToolTipText(MouseEvent event) {
-    int row = rowAtPoint(event.getPoint());
-    if (row != -1) {
-      ErrorInfo errorInfo = getErrorInfoForRow(row);
-      if (errorInfo != null) {
-        return errorInfo.getName();
-      }
-    }
-    return super.getToolTipText(event);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

@@ -16,12 +16,12 @@
 
 package com.intellij.ui.tabs;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
@@ -46,8 +46,8 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   private final FileColorSettingsTable myLocalTable;
   private final FileColorSettingsTable mySharedTable;
 
-  private static final Icon SHARE = IconLoader.getIcon("/actions/share.png");
-  private static final Icon UNSHARE = IconLoader.getIcon("/actions/unshare.png");
+  private static final Icon SHARE = AllIcons.Actions.Share;
+  private static final Icon UNSHARE = AllIcons.Actions.Unshare;
 
 
   public FileColorsConfigurablePanel(@NotNull final FileColorManagerImpl manager) {

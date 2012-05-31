@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.cyclicDependencies.actions.CyclicDependenciesHandler;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesToolWindow;
 import com.intellij.packageDependencies.DependencyUISettings;
@@ -443,7 +443,8 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class CloseAction extends AnAction implements DumbAware {
     public CloseAction() {
-      super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"), IconLoader.getIcon("/actions/cancel.png"));
+      super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"),
+            AllIcons.Actions.Cancel);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -455,7 +456,8 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"), IconLoader.getIcon("/fileTypes/java.png"));
+      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"),
+            AllIcons.FileTypes.Java);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -473,7 +475,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     @NonNls public static final String SHOW_PACKAGES_FROM_CYCLES_ONLY = "Hide packages without cyclic dependencies";
 
     HideOutOfCyclePackagesAction() {
-      super(SHOW_PACKAGES_FROM_CYCLES_ONLY, SHOW_PACKAGES_FROM_CYCLES_ONLY, IconLoader.getIcon("/ant/filter.png"));
+      super(SHOW_PACKAGES_FROM_CYCLES_ONLY, SHOW_PACKAGES_FROM_CYCLES_ONLY, AllIcons.Ant.Filter);
     }
 
     @Override
@@ -491,7 +493,8 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"), IconLoader.getIcon("/nodes/testSourceFolder.png"));
+      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"),
+            AllIcons.Nodes.TestSourceFolder);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -507,7 +510,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
-      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.RefreshUsages);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 

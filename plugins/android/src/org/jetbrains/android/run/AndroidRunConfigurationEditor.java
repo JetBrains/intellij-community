@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 package org.jetbrains.android.run;
 
 import com.intellij.execution.ui.ConfigurationModuleSelector;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.icons.AllIcons;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -24,7 +25,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -41,7 +41,7 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase> extends SettingsEditor<T> implements PanelWithAnchor {
-  private static final Icon INFO_MESSAGE_ICON = IconLoader.getIcon("/compiler/warning.png");
+  private static final Icon INFO_MESSAGE_ICON = AllIcons.Compiler.Warning;
 
   private JPanel myPanel;
   private JComboBox myModulesComboBox;

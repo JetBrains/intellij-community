@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Please use this wrapper in case you need simple cell renderer with text and icon.
- * This avoids ugly UI under GTK+ look&feel, because in this case SynthComboBoxUI#SynthComboBoxRenderer
- * is used instead of DefaultComboBoxRenderer.
- *
- * @author oleg
- * @since 30.09.2010
- */
+/** @deprecated use [platform-api] {@link com.intellij.ui.ListCellRendererWrapper} (to remove in IDEA 13) */
+@SuppressWarnings("UnusedDeclaration")
 public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private final ListCellRenderer myOriginalRenderer;
 

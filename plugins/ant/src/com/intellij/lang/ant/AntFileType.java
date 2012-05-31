@@ -15,9 +15,9 @@
  */
 package com.intellij.lang.ant;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ public class AntFileType extends LanguageFileType {
 
   @NonNls public static final String DEFAULT_EXTENSION = "ant";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".ant";
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/xml.png");
+  private static final Icon ICON = AllIcons.FileTypes.Xml;
 
   public AntFileType() {
     super(new AntLanguage());

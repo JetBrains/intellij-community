@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -28,12 +29,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
   public ShowDiffAction() {
     super(ourText,
           ActionsBundle.actionDescription("ChangesView.Diff"),
-          IconLoader.getIcon("/actions/diff.png"));
+          AllIcons.Actions.Diff);
   }
 
   public void update(AnActionEvent e) {

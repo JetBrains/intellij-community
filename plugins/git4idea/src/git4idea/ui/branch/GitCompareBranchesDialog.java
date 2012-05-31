@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
@@ -67,7 +68,7 @@ public class GitCompareBranchesDialog extends DialogWrapper {
 
     TabbedPaneImpl tabbedPane = new TabbedPaneImpl(SwingConstants.TOP);
     tabbedPane.addTab("Log", IconLoader.getIcon("/icons/branch.png"), myLogPanel);
-    tabbedPane.addTab("Diff", IconLoader.getIcon("/actions/diff.png"), diffPanel);
+    tabbedPane.addTab("Diff", AllIcons.Actions.Diff, diffPanel);
     tabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
     return tabbedPane;
   }

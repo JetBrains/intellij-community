@@ -6,7 +6,7 @@
 #
 
 UNAME=`which uname`
-GREP=`which grep`
+GREP=`which egrep`
 GREP_OPTIONS=""
 CUT=`which cut`
 READLINK=`which readlink`
@@ -80,7 +80,7 @@ VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
 "$JDK/bin/java" -version 2> "$VERSION_LOG"
 "$GREP" 'OpenJDK' "$VERSION_LOG"
 OPEN_JDK=$?
-"$GREP" "64-Bit\|x86_64" "$VERSION_LOG"
+"$GREP" "64-Bit|x86_64" "$VERSION_LOG"
 BITS=$?
 "$RM" -f "$VERSION_LOG"
 if [ $OPEN_JDK -eq 0 ]; then
@@ -136,7 +136,7 @@ if [ -z "$VM_OPTIONS_FILE" ]; then
 fi
 
 if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -ve "^#.*" | "$TR" '\n' ' '`
+  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
   VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
 fi
 
@@ -159,7 +159,8 @@ if [ -n "$@@product_uc@@_CLASSPATH" ]; then
 fi
 export CLASSPATH
 
-export LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
+LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH
 
 # ---------------------------------------------------------------------
 # Run the IDE.

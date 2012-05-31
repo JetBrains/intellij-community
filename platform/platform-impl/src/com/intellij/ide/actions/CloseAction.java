@@ -15,18 +15,18 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 
 public class CloseAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(ActionPlaces.isToolbarPlace(e.getPlace()) ? IconLoader.getIcon("/actions/cancel.png") : null);
+    e.getPresentation().setIcon(ActionPlaces.isToolbarPlace(e.getPlace()) ? AllIcons.Actions.Cancel : null);
 
     CloseTarget closeTarget = e.getData(CloseTarget.KEY);
     e.getPresentation().setEnabled(closeTarget != null);

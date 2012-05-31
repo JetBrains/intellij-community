@@ -21,8 +21,8 @@ import com.intellij.facet.ProjectFacetManager;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,10 +46,6 @@ public class DefaultFacetSettingsConfigurable<C extends FacetConfiguration> impl
 
   public String getDisplayName() {
     return ProjectBundle.message("facet.defaults.display.name");
-  }
-
-  public Icon getIcon() {
-    return null;
   }
 
   public String getHelpTopic() {

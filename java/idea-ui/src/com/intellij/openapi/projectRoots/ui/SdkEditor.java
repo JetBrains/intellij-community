@@ -112,10 +112,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
     return ProjectBundle.message("sdk.configure.editor.title");
   }
 
-  public Icon getIcon(){
-    return null;
-  }
-
   public String getHelpTopic(){
     return null;
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -22,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -48,7 +48,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   public MoveChangesToAnotherListAction() {
     super(ActionsBundle.actionText("ChangesView.Move"),
           ActionsBundle.actionDescription("ChangesView.Move"),
-          IconLoader.getIcon("/actions/fileStatus.png"));
+          AllIcons.Actions.FileStatus);
   }
 
   public void update(AnActionEvent e) {

@@ -20,7 +20,6 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +41,6 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
 
   public String getDisplayName() {
     return IdeBundle.message("title.customizations");
-  }
-
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableCustomization.png");
   }
 
   public String getHelpTopic() {

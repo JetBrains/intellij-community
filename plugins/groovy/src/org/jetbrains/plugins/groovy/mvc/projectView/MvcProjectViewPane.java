@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ViewSettings;
@@ -36,7 +37,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -165,7 +165,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     TreeExpander expander = new DefaultTreeExpander(myTree);
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     AnAction collapseAction = actionsManager.createCollapseAllAction(expander, myTree);
-    collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
+    collapseAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
 
     toolWindow.setTitleActions(new AnAction[]{new ScrollFromSourceAction(), collapseAction});
   }
@@ -446,7 +446,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
-      super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/locate.png"));
+      super("Scroll from Source", "Select the file open in the active editor", AllIcons.General.Locate);
     }
 
     @Override
@@ -482,7 +482,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   private class HideEmptyMiddlePackagesAction extends ToggleAction implements DumbAware {
     private HideEmptyMiddlePackagesAction() {
       super("Compact Empty Middle Packages", "Show/Compact Empty Middle Packages",
-            IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png"));
+            AllIcons.ObjectBrowser.CompactEmptyPackages);
     }
 
     @Override

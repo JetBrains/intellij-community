@@ -19,9 +19,9 @@ package com.intellij.testIntegration;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -64,7 +64,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
 
           @Override
           public Icon getIcon() {
-            return IconLoader.getIcon("/actions/intentionBulb.png");
+            return AllIcons.Actions.IntentionBulb;
           }
 
           @Override

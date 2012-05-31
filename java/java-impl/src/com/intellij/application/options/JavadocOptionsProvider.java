@@ -51,11 +51,6 @@ public class JavadocOptionsProvider implements EditorOptionsProvider {
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return null;
   }

@@ -26,7 +26,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,10 +175,6 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
 
   public boolean isModified() {
     return myPluginManagerMain != null && myPluginManagerMain.isModified();
-  }
-
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/pluginManager.png");
   }
 
   @NotNull

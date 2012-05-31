@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.Comparing;
@@ -323,12 +324,12 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   private static class RatesPanel extends JPanel {
     public static int MAX_RATE = 5;
 
-    private static final Icon STAR = IconLoader.getIcon("/ide/rating.png");
+    private static final Icon STAR = AllIcons.Ide.Rating;
 
-    private static final Icon STAR3 = IconLoader.getIcon("/ide/rating1.png");
-    private static final Icon STAR4 = IconLoader.getIcon("/ide/rating2.png");
-    private static final Icon STAR5 = IconLoader.getIcon("/ide/rating3.png");
-    private static final Icon STAR6 = IconLoader.getIcon("/ide/rating4.png");
+    private static final Icon STAR3 = AllIcons.Ide.Rating1;
+    private static final Icon STAR4 = AllIcons.Ide.Rating2;
+    private static final Icon STAR5 = AllIcons.Ide.Rating3;
+    private static final Icon STAR6 = AllIcons.Ide.Rating4;
     private static final Icon[] STARs = new Icon[]{IconLoader.getDisabledIcon(STAR), STAR3, STAR3, STAR4, STAR4, STAR5, STAR5, STAR6, STAR6, STAR};
 
     private JLabel[] myLabels = new JLabel[MAX_RATE];

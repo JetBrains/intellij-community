@@ -51,11 +51,6 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.code.folding";
   }

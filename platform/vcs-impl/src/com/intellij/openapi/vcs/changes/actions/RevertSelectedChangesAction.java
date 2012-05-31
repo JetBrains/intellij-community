@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.containers.Convertor;
 
@@ -40,7 +40,7 @@ public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAct
 
   private static void initPresentation() {
     if (ourIcon == null) {
-      ourIcon = IconLoader.getIcon("/actions/rollback.png");
+      ourIcon = AllIcons.Actions.Rollback;
       ourText = VcsBundle.message("action.revert.selected.changes.text");
     }
   }

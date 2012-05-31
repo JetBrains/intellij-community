@@ -26,7 +26,6 @@ import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,11 +64,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
   @Nls
   public String getDisplayName() {
     return IdeBundle.message("file.encodings.configurable");
-  }
-
-  @Nullable
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configureEncoding.png");
   }
 
   @Nullable

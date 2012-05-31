@@ -16,8 +16,8 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ import java.util.List;
 public class NativeFileType implements INativeFileType {
   public static final NativeFileType INSTANCE = new NativeFileType();
 
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/custom.png");
+  private static final Icon ICON = AllIcons.FileTypes.Custom;
 
   private NativeFileType() { }
 

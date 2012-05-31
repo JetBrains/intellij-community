@@ -20,18 +20,18 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
-import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
 public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  private static final Icon ICON = IconLoader.getIcon("/nodes/compiledClassesFolder.png");
+  private static final Icon ICON = AllIcons.Nodes.CompiledClassesFolder;
 
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new SdkPathEditor(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, new FileChooserDescriptor(true, true, true, false, true, true));

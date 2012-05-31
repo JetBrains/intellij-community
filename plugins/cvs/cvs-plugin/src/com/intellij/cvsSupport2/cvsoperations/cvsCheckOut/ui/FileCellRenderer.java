@@ -16,7 +16,7 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsCheckOut.ui;
 
 import com.intellij.cvsSupport2.ui.AbstractListCellRenderer;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 
 import javax.swing.*;
 import java.io.File;
@@ -26,7 +26,7 @@ import java.io.File;
  */
 
 public class FileCellRenderer extends AbstractListCellRenderer {
-  private static final Icon ICON = IconLoader.getIcon("/nodes/enterpriseProject.png");
+  private static final Icon ICON = AllIcons.Nodes.EnterpriseProject;
 
   protected String getPresentableString(Object value) {
     return ((File) value).getAbsolutePath();

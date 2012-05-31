@@ -15,12 +15,12 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +49,7 @@ public class ProductionModuleOutputElementType extends ModuleOutputElementTypeBa
 
   @Override
   public Icon getCreateElementIcon() {
-    return IconLoader.getIcon("/nodes/ModuleOpen.png");
+    return AllIcons.Nodes.ModuleOpen;
   }
 
   protected List<Module> getSuitableModules(ArtifactEditorContext context) {

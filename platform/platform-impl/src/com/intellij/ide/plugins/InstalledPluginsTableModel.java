@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -28,7 +29,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -128,12 +128,17 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
     updatePluginDependencies();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Load custom plugin repositories data...") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        updateRepositoryPlugins();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Load custom plugin repositories data...") {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            updateRepositoryPlugins();
+          }
+        });
       }
-    });
+    };
+    SwingUtilities.invokeLater(runnable);
   }
 
   public void updateRepositoryPlugins() {
@@ -551,14 +556,14 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }
         }
         if (myPluginDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPluginDescriptor).isDeleted()) {
-          myNameLabel.setIcon(IconLoader.getIcon("/actions/clean.png"));
+          myNameLabel.setIcon(AllIcons.Actions.Clean);
         }
         else if (hasNewerVersion(pluginId)) {
-          myNameLabel.setIcon(IconLoader.getIcon("/nodes/pluginobsolete.png"));
+          myNameLabel.setIcon(AllIcons.Nodes.Pluginobsolete);
           myPanel.setToolTipText("Newer version of the plugin is available");
         }
         else {
-          myNameLabel.setIcon(IconLoader.getIcon("/nodes/plugin.png"));
+          myNameLabel.setIcon(AllIcons.Nodes.Plugin);
         }
 
         final Color fg = orig.getForeground();

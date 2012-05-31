@@ -19,7 +19,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author peter
@@ -57,12 +54,6 @@ public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurabl
   @Nls
   public String getDisplayName() {
     return LangBundle.message("template.data.language.configurable");
-  }
-
-  @Override
-  @Nullable
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableFileTypes.png");
   }
 
   @Override

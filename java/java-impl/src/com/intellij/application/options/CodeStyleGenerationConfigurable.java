@@ -17,7 +17,6 @@ package com.intellij.application.options;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -80,11 +79,6 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.globalcodestyle.codegen";
   }
-
-  public Icon getIcon() {
-    return StdFileTypes.JAVA.getIcon();
-  }
-  
 
 
   /*private JPanel createNamingPanel() {

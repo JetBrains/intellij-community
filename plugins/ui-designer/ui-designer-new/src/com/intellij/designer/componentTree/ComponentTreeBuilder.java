@@ -31,11 +31,12 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
   private final TreeEditableArea myTreeArea;
   private final TreeGlassLayer myGlassLayer;
   private final ExpandStateHandler myExpandStateHandler;
-  private volatile boolean mySelectionMode;
-  private volatile int mySelectionOperation;
 
   public ComponentTreeBuilder(ComponentTree tree, DesignerEditorPanel designer) {
     super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null);
+
+    setPassthroughMode(true);
+    setCanYieldUpdate(false);
 
     initRootNode();
 
@@ -85,27 +86,17 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
 
   @Override
   public void selectionChanged(EditableArea area) {
-    if (mySurfaceArea == area) {
-      mySelectionMode = true;
-      final int selectionOperation = ++mySelectionOperation;
-
-      myTreeArea.setRawSelection(mySurfaceArea.getSelection(), new Runnable() {
-        @Override
-        public void run() {
-          if (selectionOperation == mySelectionOperation) {
-            mySelectionMode = false;
-          }
-        }
-      });
-    }
-    else if (!mySelectionMode) {
-      try {
-        removeListeners();
+    try {
+      removeListeners();
+      if (mySurfaceArea == area) {
+        myTreeArea.setSelection(mySurfaceArea.getSelection());
+      }
+      else {
         mySurfaceArea.setSelection(myTreeArea.getSelection());
       }
-      finally {
-        addListeners();
-      }
+    }
+    finally {
+      addListeners();
     }
   }
 

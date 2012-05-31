@@ -32,6 +32,7 @@ import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -47,7 +48,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -71,7 +71,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   @NonNls private static final String XML = "XML";
 
   public ExportHTMLAction(final InspectionResultsView view) {
-    super(InspectionsBundle.message("inspection.action.export.html"), null, IconLoader.getIcon("/actions/export.png"));
+    super(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.Actions.Export);
     myView = view;
   }
 

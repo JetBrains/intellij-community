@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties.structureView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.lang.properties.IProperty;
@@ -22,7 +23,6 @@ import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,7 +150,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(PropertiesBundle.message("structure.view.group.by.prefixes.action.name"),
                                       PropertiesBundle.message("structure.view.group.by.prefixes.action.description"),
-                                      IconLoader.getIcon("/actions/fileStatus.png"));
+                                      AllIcons.Actions.FileStatus);
   }
 
   @NotNull

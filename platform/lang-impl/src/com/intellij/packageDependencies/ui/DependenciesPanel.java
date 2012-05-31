@@ -21,6 +21,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.actions.ContextHelpAction;
@@ -41,7 +42,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -481,7 +481,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class CloseAction extends AnAction implements DumbAware {
     public CloseAction() {
-      super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"), IconLoader.getIcon("/actions/cancel.png"));
+      super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"),
+            AllIcons.Actions.Cancel);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -511,7 +512,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"), IconLoader.getIcon("/fileTypes/unknown.png"));
+      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"),
+            AllIcons.FileTypes.Unknown);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -547,7 +549,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class ShowModulesAction extends ToggleAction {
     ShowModulesAction() {
-      super(AnalysisScopeBundle.message("action.show.modules"), AnalysisScopeBundle.message("action.show.modules.description"), IconLoader.getIcon("/objectBrowser/showModules.png"));
+      super(AnalysisScopeBundle.message("action.show.modules"), AnalysisScopeBundle.message("action.show.modules.description"),
+            AllIcons.ObjectBrowser.ShowModules);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -563,7 +566,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   
   private final class ShowModuleGroupsAction extends ToggleAction {
     ShowModuleGroupsAction() {
-      super("Show module groups", "Show module groups", IconLoader.getIcon("/nodes/moduleGroupClosed.png"));
+      super("Show module groups", "Show module groups", AllIcons.Nodes.ModuleGroupClosed);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -584,7 +587,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"), IconLoader.getIcon("/nodes/testSourceFolder.png"));
+      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"),
+            AllIcons.Nodes.TestSourceFolder);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -605,7 +609,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class FilterLegalsAction extends ToggleAction {
     FilterLegalsAction() {
-      super(AnalysisScopeBundle.message("action.show.illegals.only"), AnalysisScopeBundle.message("action.show.illegals.only.description"), IconLoader.getIcon("/ant/filter.png"));
+      super(AnalysisScopeBundle.message("action.show.illegals.only"), AnalysisScopeBundle.message("action.show.illegals.only.description"),
+            AllIcons.Ant.Filter);
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -621,7 +626,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class EditDependencyRulesAction extends AnAction {
     public EditDependencyRulesAction() {
-      super(AnalysisScopeBundle.message("action.edit.rules"), AnalysisScopeBundle.message("action.edit.rules.description"), IconLoader.getIcon("/general/ideOptions.png"));
+      super(AnalysisScopeBundle.message("action.edit.rules"), AnalysisScopeBundle.message("action.edit.rules.description"),
+            AllIcons.General.IdeOptions);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -689,7 +695,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
-      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), IconLoader.getIcon("/actions/refreshUsages.png"));
+      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.RefreshUsages);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 
@@ -905,8 +911,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class MarkAsIllegalAction extends AnAction {
     public MarkAsIllegalAction() {
-      super(AnalysisScopeBundle.message("mark.dependency.illegal.text"), AnalysisScopeBundle.message("mark.dependency.illegal.text"), IconLoader.getIcon(
-        "/actions/lightning.png"));
+      super(AnalysisScopeBundle.message("mark.dependency.illegal.text"), AnalysisScopeBundle.message("mark.dependency.illegal.text"),
+            AllIcons.Actions.Lightning);
     }
 
     public void actionPerformed(AnActionEvent e) {

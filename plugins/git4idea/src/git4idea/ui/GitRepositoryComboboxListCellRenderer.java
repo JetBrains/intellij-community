@@ -15,7 +15,7 @@
  */
 package git4idea.ui;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 

@@ -20,6 +20,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
@@ -28,7 +29,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -116,7 +116,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     gc.fill = GridBagConstraints.BOTH;
     myWholePanel.add(Box.createVerticalBox(), gc);
     final JLabel note = new JLabel(
-      "<html>" + buf.toString() + "</html>", IconLoader.getIcon("/nodes/warningIntroduction.png"),
+      "<html>" + buf.toString() + "</html>", AllIcons.Nodes.WarningIntroduction,
       SwingConstants.LEFT
     );
     note.setVisible(buf.length() > 0);

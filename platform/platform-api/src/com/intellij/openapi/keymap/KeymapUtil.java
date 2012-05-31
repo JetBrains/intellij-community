@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.keymap;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,8 +39,8 @@ import java.util.StringTokenizer;
 
 public class KeymapUtil {
   
-  private static final Icon ourKeyboardShortcutIcon = IconLoader.getIcon("/general/keyboardShortcut.png");
-  private static final Icon ourMouseShortcutIcon = IconLoader.getIcon("/general/mouseShortcut.png");
+  private static final Icon ourKeyboardShortcutIcon = AllIcons.General.KeyboardShortcut;
+  private static final Icon ourMouseShortcutIcon = AllIcons.General.MouseShortcut;
   @NonNls private static final String APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls private static final String GET_KEY_MODIFIERS_TEXT_METHOD = "getKeyModifiersText";
   @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";

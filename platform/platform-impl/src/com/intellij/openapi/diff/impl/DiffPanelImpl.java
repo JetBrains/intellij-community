@@ -775,7 +775,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public static class DiffIsApproximate extends EditorNotificationPanel {
     public DiffIsApproximate() {
-      myLabel.setText("<html>Coulnd't find context for patch. Some fragments were applied at the best possible place. <b>Please check carefully.</b></html>");
+      myLabel.setText("<html>Couldn't find context for patch. Some fragments were applied at the best possible place. <b>Please check carefully.</b></html>");
     }
   }
 

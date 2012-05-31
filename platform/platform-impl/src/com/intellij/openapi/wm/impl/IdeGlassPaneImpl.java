@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.MenuDragMouseEvent;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -80,15 +81,16 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   public boolean dispatch(final AWTEvent e) {
     JRootPane eventRootPane = myRootPane;
-    
+
     if (e instanceof MouseEvent) {
       MouseEvent me = (MouseEvent)e;
-      Window eventWindow = me.getComponent() instanceof Window ? (Window)me.getComponent() : SwingUtilities.getWindowAncestor(me.getComponent());
+      Window eventWindow =
+        me.getComponent() instanceof Window ? (Window)me.getComponent() : SwingUtilities.getWindowAncestor(me.getComponent());
 
       if (isContextMenu(eventWindow)) return false;
 
       final Window thisGlassWindow = SwingUtilities.getWindowAncestor(myRootPane);
-      
+
       if (eventWindow instanceof JWindow) {
         eventRootPane = ((JWindow)eventWindow).getRootPane();
         if (eventRootPane != null) {
@@ -100,7 +102,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
           }
         }
       }
-      
+
       if (eventWindow != thisGlassWindow) return false;
     }
 
@@ -114,11 +116,14 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     boolean dispatched;
     if (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_RELEASED || e.getID() == MouseEvent.MOUSE_CLICKED) {
       dispatched = preprocess((MouseEvent)e, false, eventRootPane);
-    } else if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_DRAGGED) {
+    }
+    else if (e.getID() == MouseEvent.MOUSE_MOVED || e.getID() == MouseEvent.MOUSE_DRAGGED) {
       dispatched = preprocess((MouseEvent)e, true, eventRootPane);
-    } else if (e.getID() == MouseEvent.MOUSE_EXITED || e.getID() == MouseEvent.MOUSE_ENTERED) {
+    }
+    else if (e.getID() == MouseEvent.MOUSE_EXITED || e.getID() == MouseEvent.MOUSE_ENTERED) {
       dispatched = preprocess((MouseEvent)e, false, eventRootPane);
-    } else {
+    }
+    else {
       return false;
     }
 
@@ -177,7 +182,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
                 if (!consumed) {
                   myPrevPressEvent = mouseEvent;
-                } else {
+                }
+                else {
                   me.consume();
                 }
 
@@ -267,7 +273,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       for (EventListener each : myMouseListeners) {
         if (motion && each instanceof MouseMotionListener) {
           fireMouseMotion((MouseMotionListener)each, event);
-        } else if (!motion && each instanceof MouseListener) {
+        }
+        else if (!motion && each instanceof MouseListener) {
           fireMouseEvent((MouseListener)each, event);
         }
 
@@ -287,27 +294,28 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
           final Point point = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myRootPane.getContentPane());
           Component target =
-              SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+            SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
 
           if (canProcessCursorFor(target)) {
             target = getCompWithCursor(target);
-  
+
             restoreLastComponent(target);
-  
+
             if (target != null) {
               if (myLastCursorComponent != target) {
                 myLastCursorComponent = target;
                 myLastOriginalCursor = target.getCursor();
               }
-  
+
               if (cursor != null && !cursor.equals(target.getCursor())) {
                 target.setCursor(cursor);
               }
             }
-  
+
             getRootPane().setCursor(cursor);
           }
-        } else {
+        }
+        else {
           cursor = Cursor.getDefaultCursor();
           getRootPane().setCursor(cursor);
 
@@ -322,7 +330,12 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private boolean canProcessCursorFor(Component target) {
-    if (target instanceof JMenu || target instanceof JMenuItem || target instanceof JSeparator) return false;
+    if (target instanceof JMenu ||
+        target instanceof JMenuItem ||
+        target instanceof JSeparator ||
+        (target instanceof JEditorPane && ((JEditorPane)target).getEditorKit() instanceof HTMLEditorKit)) {
+      return false;
+    }
     return true;
   }
 
@@ -346,7 +359,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   public void setCursor(Cursor cursor, @NotNull Object requestor) {
     if (cursor == null) {
       myListener2Cursor.remove(requestor);
-    } else {
+    }
+    else {
       myListener2Cursor.put(requestor, cursor);
     }
   }
@@ -362,7 +376,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       final MenuDragMouseEvent de = (MenuDragMouseEvent)e;
       return new MenuDragMouseEvent(target, de.getID(), de.getWhen(), de.getModifiersEx(), point.x, point.y, e.getClickCount(),
                                     e.isPopupTrigger(), de.getPath(), de.getMenuSelectionManager());
-
     }
     else {
       return new MouseEvent(target, e.getID(), e.getWhen(), e.getModifiersEx(), point.x, point.y, e.getClickCount(), e.isPopupTrigger(),
@@ -473,7 +486,8 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     IdeEventQueue queue = IdeEventQueue.getInstance();
     if (!queue.containsDispatcher(this) && (myPreprocessorActive || isVisible())) {
       queue.addDispatcher(this, null);
-    } else if (queue.containsDispatcher(this) && !myPreprocessorActive && !isVisible()) {
+    }
+    else if (queue.containsDispatcher(this) && !myPreprocessorActive && !isVisible()) {
       queue.removeDispatcher(this);
     }
 

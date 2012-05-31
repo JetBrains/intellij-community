@@ -31,13 +31,13 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -69,18 +69,18 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   @Nullable private JVMName mySignature;
   private boolean myIsStatic;
 
-  @NotNull public static Icon ICON = IconLoader.getIcon("/debugger/db_method_breakpoint.png");
-  @NotNull public static Icon MUTED_ICON = IconLoader.getIcon("/debugger/db_muted_method_breakpoint.png");
-  @NotNull public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_method_breakpoint.png");
-  @NotNull public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_method_breakpoint.png");
-  @NotNull public static Icon MUTED_DISABLED_ICON = IconLoader.getIcon("/debugger/db_muted_disabled_method_breakpoint.png");
-  @NotNull public static Icon MUTED_DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_muted_dep_method_breakpoint.png");
-  private static final Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_method_breakpoint.png");
-  private static final Icon ourMutedInvalidIcon = IconLoader.getIcon("/debugger/db_muted_invalid_method_breakpoint.png");
-  private static final Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.png");
-  private static final Icon ourMutedVerifiedIcon = IconLoader.getIcon("/debugger/db_muted_verified_method_breakpoint.png");
-  private static final Icon ourVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_method_warning_breakpoint.png");
-  private static final Icon ourMutedVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_muted_method_warning_breakpoint.png");
+  @NotNull public static Icon ICON = AllIcons.Debugger.Db_method_breakpoint;
+  @NotNull public static Icon MUTED_ICON = AllIcons.Debugger.Db_muted_method_breakpoint;
+  @NotNull public static Icon DISABLED_ICON = AllIcons.Debugger.Db_disabled_method_breakpoint;
+  @NotNull public static Icon DISABLED_DEP_ICON = AllIcons.Debugger.Db_dep_method_breakpoint;
+  @NotNull public static Icon MUTED_DISABLED_ICON = AllIcons.Debugger.Db_muted_disabled_method_breakpoint;
+  @NotNull public static Icon MUTED_DISABLED_DEP_ICON = AllIcons.Debugger.Db_muted_dep_method_breakpoint;
+  private static final Icon ourInvalidIcon = AllIcons.Debugger.Db_invalid_method_breakpoint;
+  private static final Icon ourMutedInvalidIcon = AllIcons.Debugger.Db_muted_invalid_method_breakpoint;
+  private static final Icon ourVerifiedIcon = AllIcons.Debugger.Db_verified_method_breakpoint;
+  private static final Icon ourMutedVerifiedIcon = AllIcons.Debugger.Db_muted_verified_method_breakpoint;
+  private static final Icon ourVerifiedWarningIcon = AllIcons.Debugger.Db_method_warning_breakpoint;
+  private static final Icon ourMutedVerifiedWarningIcon = AllIcons.Debugger.Db_muted_method_warning_breakpoint;
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
 
   protected MethodBreakpoint(@NotNull Project project) {

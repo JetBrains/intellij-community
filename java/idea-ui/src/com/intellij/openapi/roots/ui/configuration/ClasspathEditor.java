@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ProjectTopics;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
@@ -28,7 +29,6 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.OrderPanelListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +45,7 @@ import java.util.Map;
  */
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
   public static final String NAME = ProjectBundle.message("modules.classpath.title");
-  public static final Icon ICON = IconLoader.getIcon("/modules/classpath.png");
+  public static final Icon ICON = AllIcons.Modules.Classpath;
 
   private ClasspathPanelImpl myPanel;
 
@@ -70,10 +70,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
   public String getDisplayName() {
     return NAME;
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   public void saveData() {

@@ -15,17 +15,17 @@
  */
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FavoritesShowMembersAction extends FavoritesToolbarButtonAction {
   public FavoritesShowMembersAction(Project project, FavoritesViewTreeBuilder builder) {
-    super(project, builder, IdeBundle.message("action.show.members"), IconLoader.getIcon("/objectBrowser/showMembers.png"));
+    super(project, builder, IdeBundle.message("action.show.members"), AllIcons.ObjectBrowser.ShowMembers);
   }
 
   @Override

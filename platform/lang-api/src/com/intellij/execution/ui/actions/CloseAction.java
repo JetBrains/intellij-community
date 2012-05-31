@@ -19,10 +19,10 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 
 public class CloseAction extends AnAction implements DumbAware {
   private RunContentDescriptor myContentDescriptor;
@@ -35,7 +35,7 @@ public class CloseAction extends AnAction implements DumbAware {
     myProject = project;
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE));
     final Presentation templatePresentation = getTemplatePresentation();
-    templatePresentation.setIcon(IconLoader.getIcon("/actions/cancel.png"));
+    templatePresentation.setIcon(AllIcons.Actions.Cancel);
     templatePresentation.setText(ExecutionBundle.message("close.tab.action.name"));
     templatePresentation.setDescription(null);
   }

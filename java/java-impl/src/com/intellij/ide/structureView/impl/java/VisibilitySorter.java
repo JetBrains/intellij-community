@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public class VisibilitySorter implements Sorter{
 
   public static final Sorter INSTANCE = new VisibilitySorter();
 
-  private static final Icon ICON = IconLoader.getIcon("/objectBrowser/visibilitySort.png");
+  private static final Icon ICON = AllIcons.ObjectBrowser.VisibilitySort;
   private static final ActionPresentation PRESENTATION = new ActionPresentation() {
     public String getText() {
       return IdeBundle.message("action.structureview.sort.by.visibility");

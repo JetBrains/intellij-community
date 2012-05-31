@@ -16,7 +16,7 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public class UnknownConfigurationType implements ConfigurationType {
 
   public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
-  private static final Icon ICON = IconLoader.getIcon("/runConfigurations/unknown.png");
+  private static final Icon ICON = AllIcons.RunConfigurations.Unknown;
   public static final String NAME = "Unknown";
 
   public String getDisplayName() {

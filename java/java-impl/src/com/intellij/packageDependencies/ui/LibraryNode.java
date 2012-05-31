@@ -15,20 +15,20 @@
  */
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import java.util.Set;
 
 public class LibraryNode extends PackageDependenciesNode {
-  private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
-  private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
-  private static final Icon JDK_ICON_OPEN = IconLoader.getIcon("/nodes/ppJdkOpen.png");
-  private static final Icon JDK_ICON_CLOSED = IconLoader.getIcon("/nodes/ppJdkClosed.png");
+  private static final Icon LIB_ICON_OPEN = AllIcons.Nodes.PpLibOpen;
+  private static final Icon LIB_ICON_CLOSED = AllIcons.Nodes.PpLibClosed;
+  private static final Icon JDK_ICON_OPEN = AllIcons.Nodes.PpJdkOpen;
+  private static final Icon JDK_ICON_CLOSED = AllIcons.Nodes.PpJdkClosed;
 
   private final OrderEntry myLibraryOrJdk;
 

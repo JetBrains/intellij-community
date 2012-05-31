@@ -24,7 +24,6 @@ import com.intellij.ui.components.panels.VerticalBox;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class DebuggerLaunchingConfigurable implements Configurable{
@@ -82,10 +81,6 @@ public class DebuggerLaunchingConfigurable implements Configurable{
 
   public String getDisplayName() {
     return DebuggerBundle.message("debugger.launching.configurable.display.name");
-  }
-
-  public Icon getIcon() {
-    return null;
   }
 
   public String getHelpTopic() {

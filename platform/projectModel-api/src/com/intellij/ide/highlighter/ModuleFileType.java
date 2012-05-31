@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +29,7 @@ public class ModuleFileType implements InternalFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "iml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".iml";
 
-  private static final Icon ICON = IconLoader.getIcon("/nodes/ideaModule.png");
+  private static final Icon ICON = AllIcons.Nodes.IdeaModule;
 
   @NotNull
   public String getName() {

@@ -16,7 +16,7 @@
 
 package com.intellij.application.options.editor;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
@@ -93,11 +93,6 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
   @Nls
   public String getDisplayName() {
     return "Editor Tabs";
-  }
-
-  @Override
-  public Icon getIcon() {
-    return null;
   }
 
   @Override

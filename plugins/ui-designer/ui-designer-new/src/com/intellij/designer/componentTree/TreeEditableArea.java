@@ -41,12 +41,14 @@ public abstract class TreeEditableArea implements EditableArea, FeedbackTreeLaye
   private final EventListenerList myListenerList = new EventListenerList();
   private final ComponentTree myTree;
   private final AbstractTreeBuilder myTreeBuilder;
-  private volatile boolean mySelectionMode;
-  private volatile int mySelectionOperation;
 
   public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder) {
     myTree = tree;
     myTreeBuilder = treeBuilder;
+    hookSelection();
+  }
+
+  private void hookSelection() {
     myTree.getSelectionModel().addTreeSelectionListener(this);
   }
 
@@ -78,7 +80,7 @@ public abstract class TreeEditableArea implements EditableArea, FeedbackTreeLaye
 
   @Override
   public void valueChanged(TreeSelectionEvent e) {
-    if (!myTreeBuilder.isSelectionBeingAdjusted() && !mySelectionMode) {
+    if (!myTreeBuilder.isSelectionBeingAdjusted()) {
       fireSelectionChanged();
     }
   }
@@ -96,69 +98,53 @@ public abstract class TreeEditableArea implements EditableArea, FeedbackTreeLaye
 
   @Override
   public void select(@NotNull RadComponent component) {
-    setRawSelection(component, null);
+    setRawSelection(component);
   }
 
   @Override
   public void deselect(@NotNull RadComponent component) {
     Collection<RadComponent> selection = getRawSelection();
     selection.remove(component);
-    setRawSelection(selection, null);
+    setRawSelection(selection);
   }
 
   @Override
   public void appendSelection(@NotNull RadComponent component) {
     Collection<RadComponent> selection = getRawSelection();
     selection.add(component);
-    setRawSelection(selection, null);
+    setRawSelection(selection);
   }
 
   @Override
   public void setSelection(@NotNull List<RadComponent> components) {
-    setRawSelection(components, null);
+    setRawSelection(components);
   }
 
   @Override
   public void deselectAll() {
-    setRawSelection(null, null);
+    setRawSelection(null);
   }
 
   private Collection<RadComponent> getRawSelection() {
     return myTreeBuilder.getSelectedElements(RadComponent.class);
   }
 
-  public void setRawSelection(final @Nullable Object value, final @Nullable Runnable globalDone) {
-    mySelectionMode = true;
-    final int selectionOperation = ++mySelectionOperation;
+  private void setRawSelection(@Nullable Object value) {
+    unhookSelection();
+    myTreeBuilder.queueUpdate();
 
-    myTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        Runnable localDone = new Runnable() {
-          @Override
-          public void run() {
-            if (selectionOperation == mySelectionOperation) {
-              mySelectionMode = false;
-              fireSelectionChanged();
+    if (value == null) {
+      myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, null);
+    }
+    else if (value instanceof RadComponent) {
+      myTreeBuilder.select(value);
+    }
+    else {
+      myTreeBuilder.select(((Collection)value).toArray(), null);
+    }
 
-              if (globalDone != null) {
-                globalDone.run();
-              }
-            }
-          }
-        };
-
-        if (value == null) {
-          myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, localDone);
-        }
-        else if (value instanceof RadComponent) {
-          myTreeBuilder.select(value, localDone);
-        }
-        else {
-          myTreeBuilder.select(((Collection)value).toArray(), localDone);
-        }
-      }
-    });
+    hookSelection();
+    fireSelectionChanged();
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

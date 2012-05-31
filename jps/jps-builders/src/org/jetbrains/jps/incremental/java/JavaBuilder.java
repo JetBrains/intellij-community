@@ -109,7 +109,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           out.setTemp(isTemp);
-          if (!isTemp) {
+          if (!isTemp && out.getKind() == JavaFileObject.Kind.CLASS) {
             final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
             if (callback != null) {
               final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
@@ -267,7 +267,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       paths.getCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
     final Collection<File> platformCp =
       paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
-    final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
@@ -294,7 +293,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         boolean compiledOk = true;
         if (filesCount > 0) {
           LOG.info("Compiling " + filesCount + " java files; module: " + chunkName);
-          compiledOk = compileJava(chunk, files, classpath, platformCp, tempRootsSourcePath, outs, context, diagnosticSink, outputSink);
+          compiledOk = compileJava(context, chunk, files, classpath, platformCp, tempRootsSourcePath, diagnosticSink, outputSink);
         }
 
         context.checkCanceled();
@@ -386,18 +385,35 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return buf.toString();
   }
 
-  private boolean compileJava(ModuleChunk chunk, Collection<File> files,
-                              Collection<File> classpath,
-                              Collection<File> platformCp,
-                              Collection<File> sourcePath,
-                              Map<File, Set<File>> outs,
-                              CompileContext context,
-                              DiagnosticOutputConsumer diagnosticSink,
-                              final OutputFileConsumer outputSink) throws Exception {
-    final List<String> options = getCompilationOptions(context, chunk);
-    if (context.errorsDetected()) {
-      return true;
+  private boolean compileJava(
+    CompileContext context,
+    ModuleChunk chunk,
+    Collection<File> files,
+    Collection<File> classpath,
+    Collection<File> platformCp,
+    Collection<File> sourcePath,
+    DiagnosticOutputConsumer diagnosticSink,
+    final OutputFileConsumer outputSink) throws Exception {
+
+    final Set<Module> modules = chunk.getModules();
+    AnnotationProcessingProfile profile = null;
+    if (modules.size() == 1) {
+      profile = context.getAnnotationProcessingProfile(modules.iterator().next());
     }
+    else {
+      // check that all chunk modules are excluded from annotation processing
+      for (Module module : modules) {
+        final AnnotationProcessingProfile prof = context.getAnnotationProcessingProfile(module);
+        if (prof.isEnabled()) {
+          String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + getChunkPresentableName(chunk) + "] are excluded from annotation processing";
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
+          return true;
+        }
+      }
+    }
+
+    final Map<File, Set<File>> outs = buildOutputDirectoriesMap(context, chunk);
+    final List<String> options = getCompilationOptions(context, chunk, profile);
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
       final boolean rc;
@@ -600,7 +616,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return cached;
   }
 
-  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk) {
+  private static List<String> getCompilationOptions(CompileContext context, ModuleChunk chunk, AnnotationProcessingProfile profile) {
     List<String> cached = JAVAC_OPTIONS.get(context);
     if (cached == null) {
       loadCommonJavacOptions(context);
@@ -669,20 +685,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    AnnotationProcessingProfile profile = null;
-    for (Module module : chunk.getModules()) {
-      if (profile == null) {
-        profile = context.getAnnotationProcessingProfile(module);
-      }
-      else {
-        final AnnotationProcessingProfile profile2 = context.getAnnotationProcessingProfile(module);
-        if (profile2 != profile) {
-          String message = "Modules in cycle [" + getChunkPresentableName(chunk) + "] must use the same annotation processing profile";
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
-        }
-      }
-    }
-
     if (profile != null && profile.isEnabled()) {
       // configuring annotation processing
       if (!profile.getObtainProcessorsFromClasspath()) {
@@ -700,7 +702,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
         options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
       }
 
-      final File srcOutput = getGeneratedSourcesOutputDirectory(context, chunk, profile.getGeneratedSourcesDirName());
+      final File srcOutput = context.getProjectPaths()
+        .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), context.isCompilingTests(),
+                                                         profile.getGeneratedSourcesDirName());
       if (srcOutput != null) {
         srcOutput.mkdirs();
         options.add("-s");
@@ -712,12 +716,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     return options;
-  }
-
-  @Nullable
-  private static File getGeneratedSourcesOutputDirectory(CompileContext context, ModuleChunk chunk, String name) {
-    // todo: support multiple outputs for module chunk
-    return context.getProjectPaths().getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), context.isCompilingTests(), name);
   }
 
   private static boolean isEncodingSet(List<String> options) {
@@ -826,7 +824,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static void instrumentNotNull(CompileContext context, OutputFilesSink sink, final InstrumentationClassFinder finder) {
     for (final OutputFileObject fileObject : sink.getFileObjects()) {
       final OutputFileObject.Content originalContent = fileObject.getContent();
-      if (originalContent == null || !JavaFileObject.Kind.CLASS.equals(fileObject.getKind())) {
+      if (originalContent == null || fileObject.getKind() != JavaFileObject.Kind.CLASS) {
         continue;
       }
       final ClassReader reader = new ClassReader(originalContent.getBuffer(), originalContent.getOffset(), originalContent.getLength());
@@ -873,7 +871,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final Map<String, OutputFileObject> compiledClassNames = new HashMap<String, OutputFileObject>();
     for (OutputFileObject fileObject : outputSink.getFileObjects()) {
-      if (JavaFileObject.Kind.CLASS.equals(fileObject.getKind())) {
+      if (fileObject.getKind() == JavaFileObject.Kind.CLASS) {
         compiledClassNames.put(fileObject.getClassName(), fileObject);
       }
     }

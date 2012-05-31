@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -96,10 +96,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myTransparencyPanel.setVisible(WindowManagerEx.getInstanceEx().isAlphaModeSupported());
 
     return myComponent.myPanel;
-  }
-
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableAppearance.png");
   }
 
   public void apply() {

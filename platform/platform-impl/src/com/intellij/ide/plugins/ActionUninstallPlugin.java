@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.plugins;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,7 +23,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 
 import java.io.IOException;
@@ -38,7 +38,7 @@ public class ActionUninstallPlugin extends AnAction implements DumbAware {
   private final PluginManagerMain host;
 
   public ActionUninstallPlugin(PluginManagerMain mgr, PluginTable table) {
-    super(IdeBundle.message("action.uninstall.plugin"), IdeBundle.message("action.uninstall.plugin"), IconLoader.getIcon("/actions/uninstall.png"));
+    super(IdeBundle.message("action.uninstall.plugin"), IdeBundle.message("action.uninstall.plugin"), AllIcons.Actions.Uninstall);
 
     pluginTable = table;
     host = mgr;

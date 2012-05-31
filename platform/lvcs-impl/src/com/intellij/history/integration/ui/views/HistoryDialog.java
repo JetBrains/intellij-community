@@ -26,6 +26,7 @@ import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
@@ -42,7 +43,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -536,7 +536,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   private class RevertAction extends MyAction {
     public RevertAction() {
-      super(message("action.revert"), null, IconLoader.getIcon("/actions/rollback.png"));
+      super(message("action.revert"), null, AllIcons.Actions.Rollback);
     }
 
     @Override
@@ -552,7 +552,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   private class CreatePatchAction extends MyAction {
     public CreatePatchAction() {
-      super(message("action.create.patch"), null, IconLoader.getIcon("/actions/createPatch.png"));
+      super(message("action.create.patch"), null, AllIcons.Actions.CreatePatch);
     }
 
     @Override

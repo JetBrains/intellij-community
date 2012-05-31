@@ -242,10 +242,6 @@ public class QuickAccessConfigurable extends JPanel implements SearchableConfigu
     return "Quick Access";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

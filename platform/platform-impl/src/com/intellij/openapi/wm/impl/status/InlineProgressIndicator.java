@@ -15,15 +15,15 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -63,8 +63,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myInfo = processInfo;
 
     myCancelButton = new InplaceButton(new IconButton(processInfo.getCancelTooltipText(),
-                                                      IconLoader.getIcon("/process/stop.png"),
-                                                      IconLoader.getIcon("/process/stopHovered.png")) {
+                                                      AllIcons.Process.Stop,
+                                                      AllIcons.Process.StopHovered) {
     }, new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         cancelRequest();

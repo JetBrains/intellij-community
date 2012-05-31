@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -32,7 +32,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.table.TableView;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -105,7 +104,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
     private final Icon myEditSourceIcon;
 
     public MyEditSourceAction() {
-      myEditSourceIcon = IconLoader.getIcon("/actions/editSource.png");
+      myEditSourceIcon = AllIcons.Actions.EditSource;
     }
 
     public void update(final AnActionEvent event) {

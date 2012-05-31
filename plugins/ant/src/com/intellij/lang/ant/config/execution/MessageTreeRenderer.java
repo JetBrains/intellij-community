@@ -15,8 +15,8 @@
  */
 package com.intellij.lang.ant.config.execution;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntIcons;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SideBorder;
@@ -26,10 +26,10 @@ import javax.swing.*;
 
 final class MessageTreeRenderer extends MultilineTreeCellRenderer {
 
-  private static final Icon myBuildIcon = IconLoader.getIcon("/ant/build.png");
-  private static final Icon myMessageIcon = IconLoader.getIcon("/ant/message.png");
-  private static final Icon myWarningIcon = IconLoader.getIcon("/compiler/warning.png");
-  private static final Icon myErrorIcon = IconLoader.getIcon("/compiler/error.png");
+  private static final Icon myBuildIcon = AllIcons.Ant.Build;
+  private static final Icon myMessageIcon = AllIcons.Ant.Message;
+  private static final Icon myWarningIcon = AllIcons.Compiler.Warning;
+  private static final Icon myErrorIcon = AllIcons.Compiler.Error;
 
   private MessageTreeRenderer() {
   }

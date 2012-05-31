@@ -20,10 +20,10 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.ui.ProjectPatternProvider;
 
@@ -32,7 +32,7 @@ public final class GroupByScopeTypeAction extends ToggleAction {
 
   public GroupByScopeTypeAction(Runnable update) {
     super(IdeBundle.message("action.group.by.scope.type"),
-          IdeBundle.message("action.description.group.by.scope"), IconLoader.getIcon("/nodes/testSourceFolder.png"));
+          IdeBundle.message("action.description.group.by.scope"), AllIcons.Nodes.TestSourceFolder);
     myUpdate = update;
   }
 

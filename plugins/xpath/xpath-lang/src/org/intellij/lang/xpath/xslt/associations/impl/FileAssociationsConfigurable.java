@@ -20,10 +20,8 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,11 +41,7 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Non
         return "XSLT File Associations";
     }
 
-    public Icon getIcon() {
-        return IconLoader.getIcon("/icons/association_large.png");
-    }
-
-    @NotNull
+  @NotNull
     public String getHelpTopic() {
         return "xslt.associations";
     }

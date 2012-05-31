@@ -101,10 +101,6 @@ public class CacheSettingsPanel implements Configurable {
     return "Cache";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "project.propVCSSupport.Cache";
   }

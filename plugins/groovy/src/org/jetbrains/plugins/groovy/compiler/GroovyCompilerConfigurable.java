@@ -34,7 +34,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -90,10 +89,6 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   @Nls
   public String getDisplayName() {
     return "Groovy Compiler";
-  }
-
-  public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
   }
 
   public String getHelpTopic() {

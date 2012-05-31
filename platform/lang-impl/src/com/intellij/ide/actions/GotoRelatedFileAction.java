@@ -165,6 +165,7 @@ public class GotoRelatedFileAction extends AnAction {
 
         final JComponent leftRenderer = (JComponent)component.getComponents()[0];
         component.remove(leftRenderer);
+        panelWithMnemonic.setBorder(BorderFactory.createEmptyBorder(0, 7, 0, 0));
         panelWithMnemonic.setBackground(leftRenderer.getBackground());
         label.setBackground(leftRenderer.getBackground());
         panelWithMnemonic.add(label, BorderLayout.WEST);
@@ -205,7 +206,7 @@ public class GotoRelatedFileAction extends AnAction {
         for (int i = 0; i < model.getSize(); i++) {
           final Object element = model.getElementAt(i);
           final GotoRelatedItem item = itemsMap.get(element);
-          if (!StringUtil.equals(current, item.getGroup())) {
+          if (item != null && !StringUtil.equals(current, item.getGroup())) {
             current = item.getGroup();
             separators.put(element, current);
             if (!hasTitle && !StringUtil.isEmpty(current)) {

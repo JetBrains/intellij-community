@@ -16,8 +16,8 @@
 
 package com.intellij.util.xml.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
@@ -117,6 +117,6 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
   }
 
   private static Icon getErrorIcon() {
-    return IconLoader.getIcon("/general/exclMark.png");
+    return AllIcons.General.ExclMark;
   }
 }

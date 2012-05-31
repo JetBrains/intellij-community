@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.actions.AddFacetToModuleAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.projectView.impl.ModuleGroup;
@@ -51,7 +52,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,8 +84,8 @@ import java.util.List;
  * Date: 02-Jun-2006
  */
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
-  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
-  private static final Icon ICON = IconLoader.getIcon("/modules/modules.png");
+  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = AllIcons.ObjectBrowser.CompactEmptyPackages;
+  private static final Icon ICON = AllIcons.Modules.Modules;
   private static final Comparator<MyNode> NODE_COMPARATOR = new Comparator<MyNode>() {
     public int compare(final MyNode o1, final MyNode o2) {
       final NamedConfigurable configurable1 = o1.getConfigurable();
@@ -414,10 +414,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   public String getDisplayName() {
     return ProjectBundle.message("project.roots.display.name");
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   @Nullable
@@ -930,7 +926,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private class AddModuleAction extends AnAction implements DumbAware {
     public AddModuleAction() {
-      super(ProjectBundle.message("add.new.module.text.full"), null, IconLoader.getIcon("/actions/modul.png"));
+      super(ProjectBundle.message("add.new.module.text.full"), null, AllIcons.Actions.Modul);
     }
 
     public void actionPerformed(final AnActionEvent e) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.pathMacros;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -22,7 +23,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,7 @@ import javax.swing.*;
  * @author dsl
  */
 public class PathMacroConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  public static final Icon ICON = IconLoader.getIcon("/general/pathVariables.png");
+  public static final Icon ICON = AllIcons.General.PathVariables;
   @NonNls
   public static final String HELP_ID = "preferences.pathVariables";
   private PathMacroListEditor myEditor;
@@ -70,10 +70,6 @@ public class PathMacroConfigurable implements SearchableConfigurable, Configurab
 
   public boolean isModified() {
     return myEditor != null && myEditor.isModified();
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   @NotNull

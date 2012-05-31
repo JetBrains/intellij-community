@@ -16,7 +16,7 @@
 package com.intellij.cvsSupport2.config.ui;
 
 import com.intellij.cvsSupport2.ui.AbstractListCellRenderer;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 
 import javax.swing.*;
 
@@ -25,7 +25,7 @@ import javax.swing.*;
  */
 
 public class CvsListCellRenderer extends AbstractListCellRenderer {
-  private static final Icon ICON = IconLoader.getIcon("/actions/cvs.png");
+  private static final Icon ICON = AllIcons.Actions.Cvs;
 
   protected Icon getPresentableIcon(Object value) {
     if (value == null) return null;

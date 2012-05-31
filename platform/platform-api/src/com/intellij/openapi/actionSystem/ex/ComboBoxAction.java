@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -40,7 +41,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
-  private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
+  private static final Icon ARROW_ICON = AllIcons.General.ComboArrow;
   private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
 
   private boolean mySmallVariant = true;

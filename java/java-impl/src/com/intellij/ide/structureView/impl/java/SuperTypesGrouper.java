@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -115,7 +115,7 @@ public class SuperTypesGrouper implements Grouper{
   @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.group.methods.by.defining.type"), null,
-                                      IconLoader.getIcon("/general/implementingMethod.png"));
+                                      AllIcons.General.ImplementingMethod);
   }
 
   @NotNull

@@ -22,10 +22,10 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +35,8 @@ import java.util.List;
 public interface ResourceBundle {
   DataKey<ResourceBundle[]> ARRAY_DATA_KEY = DataKey.create("resource.bundle.array");
 
-  Icon ICON_CLOSED = IconLoader.getIcon("/nodes/resourceBundleClosed.png");
-  Icon ICON_OPEN = IconLoader.getIcon("/nodes/resourceBundleOpen.png");
+  Icon ICON_CLOSED = AllIcons.Nodes.ResourceBundleClosed;
+  Icon ICON_OPEN = AllIcons.Nodes.ResourceBundleOpen;
 
   @NotNull
   List<PropertiesFile> getPropertiesFiles(final Project project);

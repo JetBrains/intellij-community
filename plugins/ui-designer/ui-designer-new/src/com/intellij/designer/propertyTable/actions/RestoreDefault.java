@@ -18,10 +18,10 @@ package com.intellij.designer.propertyTable.actions;
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author Alexander Lobas
@@ -36,7 +36,7 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
     String text = DesignerBundle.message("designer.properties.restore_default");
     presentation.setText(text);
     presentation.setDescription(text);
-    presentation.setIcon(IconLoader.getIcon("/actions/reset-to-default.png"));
+    presentation.setIcon(AllIcons.Actions.Reset_to_default);
   }
 
   @Override

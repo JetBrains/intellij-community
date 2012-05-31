@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -25,7 +26,10 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,7 +92,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myInfoLabel.setPreferredSize(
       new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
 
-    myComboComponent.setButtonIcon(IconLoader.findIcon("/actions/menu-find.png"));
+    myComboComponent.setButtonIcon(AllIcons.Actions.Menu_find);
     myComboComponent.getButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

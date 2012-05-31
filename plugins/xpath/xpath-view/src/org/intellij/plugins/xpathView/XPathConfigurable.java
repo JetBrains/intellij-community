@@ -17,7 +17,6 @@ package org.intellij.plugins.xpathView;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import org.intellij.plugins.xpathView.ui.ConfigUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +30,7 @@ public class XPathConfigurable implements SearchableConfigurable {
         return "XPath Viewer";
     }
 
-    public Icon getIcon() {
-        return IconLoader.getIcon("/icons/xml_big.png");
-    }
-
-    @Nullable
+  @Nullable
     public String getHelpTopic() {
         return "xpath.settings";
     }

@@ -73,10 +73,6 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return "HTTP proxies configuration";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

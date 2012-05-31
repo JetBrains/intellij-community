@@ -15,16 +15,17 @@
  */
 package org.jetbrains.idea.devkit;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.util.IconLoader;
 
 public class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFactory {
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
-    FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"), IconLoader.getIcon("/nodes/plugin.png"));
+    FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"),
+                                                                             AllIcons.Nodes.Plugin);
     descriptor.addTemplate(new FileTemplateDescriptor("plugin.xml", StdFileTypes.XML.getIcon()));
     descriptor.addTemplate(new FileTemplateDescriptor("ProjectComponent.java", StdFileTypes.JAVA.getIcon()));
     descriptor.addTemplate(new FileTemplateDescriptor("ApplicationComponent.java", StdFileTypes.JAVA.getIcon()));

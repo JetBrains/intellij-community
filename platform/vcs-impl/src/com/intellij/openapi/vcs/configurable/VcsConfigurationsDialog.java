@@ -188,10 +188,6 @@ public class VcsConfigurationsDialog extends DialogWrapper{
       return NONE;
     }
 
-    public Icon getIcon() {
-      return null;
-    }
-
     public String getHelpTopic() {
       return "project.propVCSSupport";
     }

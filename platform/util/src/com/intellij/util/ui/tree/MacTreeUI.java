@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ui.tree;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -42,8 +42,8 @@ public class MacTreeUI extends BasicTreeUI {
 
   private static final Icon TREE_COLLAPSED_ICON = UIUtil.getTreeCollapsedIcon();
   private static final Icon TREE_EXPANDED_ICON = UIUtil.getTreeExpandedIcon();
-  private static final Icon TREE_SELECTED_COLLAPSED_ICON = IconLoader.getIcon("/mac/tree_white_right_arrow.png");
-  private static final Icon TREE_SELECTED_EXPANDED_ICON = IconLoader.getIcon("/mac/tree_white_down_arrow.png");
+  private static final Icon TREE_SELECTED_COLLAPSED_ICON = AllIcons.Mac.Tree_white_right_arrow;
+  private static final Icon TREE_SELECTED_EXPANDED_ICON = AllIcons.Mac.Tree_white_down_arrow;
 
   private static final Border LIST_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListSelectionBackgroundPainter");

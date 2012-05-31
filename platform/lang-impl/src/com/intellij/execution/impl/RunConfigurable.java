@@ -19,6 +19,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
@@ -31,7 +32,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -65,11 +65,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class RunConfigurable extends BaseConfigurable {
-  private static final Icon ICON = IconLoader.getIcon("/general/configurableRunDebug.png");
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
-  private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
-  private static final Icon EDIT_DEFAULTS_ICON = IconLoader.getIcon("/general/ideOptions.png");
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
 
   private volatile boolean isDisposed = false;
@@ -144,7 +141,7 @@ class RunConfigurable extends BaseConfigurable {
           }
           else if (userObject instanceof String) {
             append((String) userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            setIcon(EDIT_DEFAULTS_ICON);
+            setIcon(AllIcons.General.IdeOptions);
           }
           else if (userObject instanceof ConfigurationFactory) {
             append(((ConfigurationFactory)userObject).getName());
@@ -443,7 +440,7 @@ class RunConfigurable extends BaseConfigurable {
     group.add(new MyCopyAction());
     group.add(new MySaveAction());
     group.add(new AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
-                           "Edit default settings", EDIT_DEFAULTS_ICON) {
+                           "Edit default settings", AllIcons.General.IdeOptions) {
       public void actionPerformed(final AnActionEvent e) {
         TreeNode defaults = TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot);
         if (defaults != null) {
@@ -493,10 +490,6 @@ class RunConfigurable extends BaseConfigurable {
     mySplitter.setProportion(myProperties.getFloat(DIVIDER_PROPORTION, 0.3f));
 
     return myWholePanel;
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   public void reset() {
@@ -1086,7 +1079,7 @@ class RunConfigurable extends BaseConfigurable {
   private class MySaveAction extends AnAction {
 
     public MySaveAction() {
-      super(ExecutionBundle.message("action.name.save.configuration"), null, SAVE_ICON);
+      super(ExecutionBundle.message("action.name.save.configuration"), null, AllIcons.RunConfigurations.SaveTempConfig);
     }
 
     public void actionPerformed(final AnActionEvent e) {

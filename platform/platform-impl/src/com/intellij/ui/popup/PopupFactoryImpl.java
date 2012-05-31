@@ -16,6 +16,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
@@ -35,7 +36,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -67,7 +67,7 @@ import java.util.List;
 public class PopupFactoryImpl extends JBPopupFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
-  private static final Icon QUICK_LIST_ICON = IconLoader.getIcon("/actions/quickList.png");
+  private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
 
   public ListPopup createConfirmation(String title, final Runnable onYes, int defaultOptionIndex) {
     return createConfirmation(title, CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(), onYes, defaultOptionIndex);

@@ -18,6 +18,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -31,7 +32,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
-  private static final Icon ICON = IconLoader.getIcon("/runConfigurations/variables.png");
+  private static final Icon ICON = AllIcons.RunConfigurations.Variables;
 
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
   private LabeledComponent<JPanel> myWorkingDirectoryComponent;

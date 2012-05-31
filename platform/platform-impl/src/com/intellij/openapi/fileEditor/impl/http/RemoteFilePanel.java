@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.fileEditor.impl.http;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.FileDownloadingListener;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -48,7 +51,7 @@ import java.beans.PropertyChangeListener;
  */
 public class RemoteFilePanel implements PropertyChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.http.RemoteFilePanel");
-  private static final Icon ERROR_ICON = IconLoader.getIcon("/runConfigurations/configurationWarning.png");
+  private static final Icon ERROR_ICON = AllIcons.RunConfigurations.ConfigurationWarning;
   @NonNls private static final String ERROR_CARD = "error";
   @NonNls private static final String DOWNLOADING_CARD = "downloading";
   @NonNls private static final String EDITOR_CARD = "editor";

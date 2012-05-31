@@ -16,12 +16,12 @@
 package com.intellij.testAssistant;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   private static final Key<Object> KEY = Key.create("TestDataHighlighterKey");
   private static final Object VALUE = new Object();
 
-  private static final Icon ICON = IconLoader.getIcon("/runConfigurations/junit.png");
+  private static final Icon ICON = AllIcons.RunConfigurations.Junit;
   private static final GutterIconRenderer ICON_RENDERER = new MyGutterIconRenderer();
 
   private static final TextAttributes CARET_ATTRIBUTES = new TextAttributes(Color.BLUE, null, null, null, Font.BOLD);

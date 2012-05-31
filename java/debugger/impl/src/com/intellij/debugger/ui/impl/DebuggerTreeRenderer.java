@@ -20,7 +20,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.RowIcon;
@@ -36,11 +36,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
-  private static final Icon myThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroup.png");
-  private static final Icon myCurrentThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroupCurrent.png");
+  private static final Icon myThreadGroupIcon = AllIcons.Debugger.ThreadGroup;
+  private static final Icon myCurrentThreadGroupIcon = AllIcons.Debugger.ThreadGroupCurrent;
   private static final Icon myStaticFieldIcon = PlatformIcons.FIELD_ICON;
 
-  private static final Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
+  private static final Icon myStaticIcon = AllIcons.Nodes.Static;
 
   private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, null);
   private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);

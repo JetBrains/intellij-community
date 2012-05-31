@@ -16,10 +16,10 @@
 
 package com.intellij.tools;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ import javax.swing.*;
 import java.io.IOException;
 
 public class ToolConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private static final Icon ourIcon = IconLoader.getIcon("/general/externalTools.png");
+  private static final Icon ourIcon = AllIcons.General.ExternalTools;
   private ToolsPanel myPanel;
 
   public String getDisplayName() {
@@ -37,10 +37,6 @@ public class ToolConfigurable implements SearchableConfigurable, Configurable.No
   public JComponent createComponent() {
     myPanel = new ToolsPanel();
     return myPanel;
-  }
-
-  public Icon getIcon() {
-    return ourIcon;
   }
 
   public void apply() throws ConfigurationException {

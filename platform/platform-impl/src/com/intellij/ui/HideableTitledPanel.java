@@ -1,9 +1,6 @@
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -14,14 +11,13 @@ import java.awt.event.*;
  * @author evgeny zakrevsky
  */
 public class HideableTitledPanel extends JPanel {
-  private final static Icon OFF_ICON = IconLoader.getIcon("/general/comboArrow.png");
-  private final static Icon ON_ICON = IconLoader.getIcon("/general/comboUpPassive.png");
+  private final static Icon OFF_ICON = AllIcons.General.ComboArrow;
+  private final static Icon ON_ICON = AllIcons.General.ComboUpPassive;
 
   private TitledSeparatorWithMnemonic myTitledSeparator;
   private boolean myOn;
   private final JComponent myContent;
   private Dimension myPreviousContentSize;
-  private boolean myMnemonicActionRegistered = false;
 
   public HideableTitledPanel(String title, JComponent content, boolean on) {
     super(new BorderLayout());
@@ -46,32 +42,6 @@ public class HideableTitledPanel extends JPanel {
 
     setOn(on);
     setTitle(title);
-
-    addHierarchyListener(new HierarchyListener() {
-      @Override
-      public void hierarchyChanged(HierarchyEvent e) {
-        final JComponent rootPane = getRootPane();
-        if (rootPane != null && !myMnemonicActionRegistered) {
-          final int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(getTitle());
-          if (mnemonicIndex != -1) {
-            AnAction action = new AnAction() {
-              public void actionPerformed(AnActionEvent e) {
-                if (myOn) {
-                  off();
-                }
-                else {
-                  on();
-                }
-              }
-            };
-            final Character mnemonicCharacter = UIUtil.removeMnemonic(getTitle()).toLowerCase().charAt(mnemonicIndex);
-            action.registerCustomShortcutSet(
-              new CustomShortcutSet(KeyStroke.getKeyStroke(mnemonicCharacter, InputEvent.ALT_MASK)), rootPane);
-            myMnemonicActionRegistered = true;
-          }
-        }
-      }
-    });
   }
 
   public void setOn(boolean on) {
@@ -140,5 +110,26 @@ public class HideableTitledPanel extends JPanel {
   public void setEnabled(boolean enabled) {
     myTitledSeparator.myLabel.setForeground(enabled ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
     myContent.setEnabled(enabled);
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    final int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(getTitle());
+    if (mnemonicIndex != -1) {
+      getActionMap().put("tt", new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (myOn) {
+            off();
+          }
+          else {
+            on();
+          }
+        }
+      });
+      final Character mnemonicCharacter = UIUtil.removeMnemonic(getTitle()).toUpperCase().charAt(mnemonicIndex);
+      getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(mnemonicCharacter, InputEvent.ALT_MASK, false), "tt");
+    }
   }
 }

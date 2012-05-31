@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -22,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
@@ -45,7 +45,7 @@ import java.util.Set;
  */
 public class NullableNotNullDialog extends DialogWrapper {
   private static final Icon SELECT_ICON = PlatformIcons.CHECK_ICON;
-  private static final Icon SELECTED_ICON = IconLoader.getIcon("/diff/currentLine.png");
+  private static final Icon SELECTED_ICON = AllIcons.Diff.CurrentLine;
 
   private final Project myProject;
   private AnnotationsPanel myNullablePanel;

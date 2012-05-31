@@ -16,12 +16,12 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +31,7 @@ import javax.swing.*;
  * @author max
  */
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
-  protected static final Icon ourCurrentAction = IconLoader.getIcon("/diff/currentLine.png");
+  protected static final Icon ourCurrentAction = AllIcons.Diff.CurrentLine;
   protected static final Icon ourNotCurrentAction = new EmptyIcon(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
   @NotNull
   protected String myActionPlace = ActionPlaces.UNKNOWN;

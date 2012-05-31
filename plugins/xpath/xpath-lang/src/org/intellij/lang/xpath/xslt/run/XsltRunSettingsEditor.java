@@ -15,7 +15,8 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.icons.AllIcons;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +40,6 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -222,7 +222,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         @Override
         public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
           if (type == null) {
-            setIcon(IconLoader.getIcon("/actions/cancel.png"));
+            setIcon(AllIcons.Actions.Cancel);
             setText("Disabled");
           }
           else {

@@ -16,12 +16,12 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
 
@@ -31,7 +31,7 @@ import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsDialog;
 public class IgnoredSettingsAction extends AnAction implements DumbAware {
   public IgnoredSettingsAction() {
     super("Configure Ignored Files...", "Specify file paths and masks which are ignored",
-          IconLoader.getIcon("/actions/properties.png"));
+          AllIcons.Actions.Properties);
   }
 
   public void actionPerformed(AnActionEvent e) {

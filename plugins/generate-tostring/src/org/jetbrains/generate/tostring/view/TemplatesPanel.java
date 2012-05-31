@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.template.TemplateResource;
 import org.jetbrains.generate.tostring.template.TemplatesManager;
 
-import javax.swing.*;
 import java.util.ArrayList;
 
 public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
@@ -89,12 +88,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         return "Templates";
     }
 
-    @Nullable
-    public Icon getIcon() {
-        return null;
-    }
-
-    @Override
+  @Override
     protected String subjDisplayName() {
         return "template";
     }

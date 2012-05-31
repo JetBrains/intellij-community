@@ -16,6 +16,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
@@ -34,7 +35,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.concurrency.SwingWorker;
@@ -511,7 +511,7 @@ public abstract class PluginManagerMain implements Disposable {
   protected class SortByStatusAction extends ToggleAction {
 
     protected SortByStatusAction(final String title) {
-      super(title, title, IconLoader.getIcon("/objectBrowser/sortByType.png"));
+      super(title, title, AllIcons.ObjectBrowser.SortByType);
     }
 
     @Override
@@ -544,7 +544,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected class RefreshAction extends DumbAwareAction {
     public RefreshAction() {
-      super("Reload List of Plugins", "Reload list of plugins", IconLoader.getIcon("/vcs/refresh.png"));
+      super("Reload List of Plugins", "Reload list of plugins", AllIcons.Vcs.Refresh);
     }
 
     @Override

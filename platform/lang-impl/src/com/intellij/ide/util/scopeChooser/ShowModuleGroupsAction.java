@@ -20,9 +20,9 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyUISettings;
 
 public class ShowModuleGroupsAction extends ToggleAction {
@@ -30,7 +30,7 @@ public class ShowModuleGroupsAction extends ToggleAction {
 
   public ShowModuleGroupsAction(final Runnable update) {
     super("Show Module Groups",
-          "Show/hide module groups", IconLoader.getIcon("/nodes/moduleGroupClosed.png"));
+          "Show/hide module groups", AllIcons.Nodes.ModuleGroupClosed);
     myUpdate = update;
   }
 

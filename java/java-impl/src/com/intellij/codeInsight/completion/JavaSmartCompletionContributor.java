@@ -286,7 +286,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, IN_TYPE_ARGS, new TypeArgumentCompletionProvider(true));
+    extend(CompletionType.SMART, IN_TYPE_ARGS, new TypeArgumentCompletionProvider(true, null));
 
 
     extend(CompletionType.SMART, AFTER_NEW, new JavaInheritorsGetter(ConstructorInsertHandler.SMART_INSTANCE));

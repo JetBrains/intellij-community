@@ -1294,6 +1294,13 @@ public class ListUtils {
     assert !('return' in myFixture.lookupElementStrings)
   }
 
+  public void testDuplicateExpectedTypeInTypeArgumentList() {
+    configure()
+    def items = myFixture.lookupElements.findAll { it.lookupString == 'String' }
+    assert items.size() == 1
+    assert LookupElementPresentation.renderElement(items[0]).tailText?.contains('java.lang')
+  }
+
   public void testSameSignature() {
     configure()
     lookup.setCurrentItem(myItems[1])

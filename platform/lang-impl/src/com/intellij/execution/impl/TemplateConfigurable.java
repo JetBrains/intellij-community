@@ -18,8 +18,6 @@ package com.intellij.execution.impl;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
 
-import javax.swing.*;
-
 /**
 * @author Dmitry Avdeev
 *         Date: 10/6/11
@@ -34,10 +32,6 @@ class TemplateConfigurable extends SettingsEditorConfigurable<RunnerAndConfigura
 
   public String getDisplayName() {
     return myTemplate.getConfiguration().getName();
-  }
-
-  public Icon getIcon() {
-    return myTemplate.getConfiguration().getType().getIcon();
   }
 
   public String getHelpTopic() {

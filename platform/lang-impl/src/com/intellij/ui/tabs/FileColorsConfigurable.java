@@ -43,10 +43,6 @@ public class FileColorsConfigurable implements SearchableConfigurable, Configura
     return "File Colors";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.settings.ide.settings.file-colors";
   }

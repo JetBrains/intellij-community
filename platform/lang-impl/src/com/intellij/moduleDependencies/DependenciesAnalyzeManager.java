@@ -16,12 +16,11 @@
 
 package com.intellij.moduleDependencies;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -57,7 +56,7 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
                                                                      ToolWindowAnchor.RIGHT,
                                                                      project);
         myContentManager = toolWindow.getContentManager();
-        toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowModuleDependencies.png"));
+        toolWindow.setIcon(AllIcons.General.ToolWindowModuleDependencies);
         new ContentManagerWatcher(toolWindow, myContentManager);
       }
     });

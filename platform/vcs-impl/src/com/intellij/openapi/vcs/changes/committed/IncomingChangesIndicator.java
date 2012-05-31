@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -121,8 +121,8 @@ public class IncomingChangesIndicator {
   private static class IndicatorComponent implements StatusBarWidget, StatusBarWidget.IconPresentation {
     private StatusBar myStatusBar;
 
-    private static final Icon CHANGES_AVAILABLE_ICON = IconLoader.getIcon("/ide/incomingChangesOn.png");
-    private static final Icon CHANGES_NOT_AVAILABLE_ICON = IconLoader.getIcon("/ide/incomingChangesOff.png");
+    private static final Icon CHANGES_AVAILABLE_ICON = AllIcons.Ide.IncomingChangesOn;
+    private static final Icon CHANGES_NOT_AVAILABLE_ICON = AllIcons.Ide.IncomingChangesOff;
 
     private Icon myCurrentIcon = CHANGES_NOT_AVAILABLE_ICON;
     private String myToolTipText;

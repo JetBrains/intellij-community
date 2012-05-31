@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -39,7 +39,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
   public ShowDiffWithLocalAction() {          
     super(VcsBundle.message("show.diff.with.local.action.text"),
           VcsBundle.message("show.diff.with.local.action.description"),
-          IconLoader.getIcon("/actions/diffWithCurrent.png"));
+          AllIcons.Actions.DiffWithCurrent);
   }
 
   public void actionPerformed(AnActionEvent e) {

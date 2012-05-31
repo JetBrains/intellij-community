@@ -17,6 +17,7 @@
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -431,7 +432,7 @@ public class EventLog implements Notifications {
       panel.setContent(editor.getComponent());
 
       DefaultActionGroup group = new DefaultActionGroup();
-      group.add(new DumbAwareAction("Settings", "Edit notification settings", IconLoader.getIcon("/actions/showSettings.png")) {
+      group.add(new DumbAwareAction("Settings", "Edit notification settings", AllIcons.Actions.ShowSettings) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           ShowSettingsUtil.getInstance().editConfigurable(project, new NotificationsConfigurable());
@@ -445,7 +446,7 @@ public class EventLog implements Notifications {
         }
       });
       group.add(new ScrollToTheEndToolbarAction(editor));
-      group.add(new DumbAwareAction("Mark all as read", "Mark all unread notifications as read", IconLoader.getIcon("/general/reset.png")) {
+      group.add(new DumbAwareAction("Mark all as read", "Mark all unread notifications as read", AllIcons.General.Reset) {
         @Override
         public void update(AnActionEvent e) {
           if (project.isDisposed()) return;
@@ -473,7 +474,7 @@ public class EventLog implements Notifications {
 
     private static class DisplayBalloons extends ToggleAction implements DumbAware {
       public DisplayBalloons() {
-        super("Show balloons", "Enable or suppress notification balloons", IconLoader.getIcon("/general/balloon.png"));
+        super("Show balloons", "Enable or suppress notification balloons", AllIcons.General.Balloon);
       }
 
       @Override

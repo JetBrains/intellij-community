@@ -16,13 +16,13 @@
 
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 
 /**
  * User: anna
@@ -31,7 +31,7 @@ import com.intellij.openapi.util.IconLoader;
 class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
  public AddAllOpenFilesToNewFavoritesListAction() {
    super(IdeBundle.message("action.add.all.open.tabs.to.new.favorites.list"),
-         IdeBundle.message("action.add.to.new.favorites.list"), IconLoader.getIcon("/general/addFavoritesList.png"));
+         IdeBundle.message("action.add.to.new.favorites.list"), AllIcons.General.AddFavoritesList);
  }
 
  public void actionPerformed(AnActionEvent e) {

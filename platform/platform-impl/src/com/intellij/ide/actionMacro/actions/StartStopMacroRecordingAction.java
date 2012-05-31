@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actionMacro.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actionMacro.ActionMacroManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -22,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author max
@@ -36,7 +36,7 @@ public class StartStopMacroRecordingAction extends AnAction implements DumbAware
                                 : IdeBundle.message("action.start.macro.recording"));
 
     if (ActionPlaces.STATUS_BAR_PLACE.equals(e.getPlace())) {
-      e.getPresentation().setIcon(isRecording ? IconLoader.getIcon("/ide/macro/recording_stop.png") : IconLoader.getIcon("/ide/macro/recording_stop.png"));
+      e.getPresentation().setIcon(isRecording ? AllIcons.Ide.Macro.Recording_stop : AllIcons.Ide.Macro.Recording_stop);
     } else {
       e.getPresentation().setIcon(null);
     }

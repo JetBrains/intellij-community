@@ -15,8 +15,8 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
@@ -29,7 +29,7 @@ import javax.swing.*;
  * @author nik
  */
 public class InvalidArtifactType extends ArtifactType {
-  public static final Icon ICON = IconLoader.getIcon("/fileTypes/unknown.png");
+  public static final Icon ICON = AllIcons.FileTypes.Unknown;
 
   public static InvalidArtifactType getInstance() {
     return ServiceManager.getService(InvalidArtifactType.class);

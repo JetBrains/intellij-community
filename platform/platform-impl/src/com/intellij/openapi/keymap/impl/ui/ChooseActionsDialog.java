@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.*;
@@ -28,7 +29,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FilterComponent;
@@ -173,7 +173,7 @@ public class ChooseActionsDialog extends DialogWrapper {
 
     group.add(new AnAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
-                           IconLoader.getIcon("/ant/shortcutFilter.png")) {
+                           AllIcons.Ant.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
         if (myPopup == null || myPopup.getContent() == null) {
@@ -187,7 +187,7 @@ public class ChooseActionsDialog extends DialogWrapper {
       }
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
-                           KeyMapBundle.message("filter.clear.action.text"), IconLoader.getIcon("/actions/gc.png")) {
+                           KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       public void actionPerformed(AnActionEvent e) {
         myActionsTree.filter(null, myQuicklists); //clear filtering
         TreeUtil.collapseAll(myActionsTree.getTree(), 0);

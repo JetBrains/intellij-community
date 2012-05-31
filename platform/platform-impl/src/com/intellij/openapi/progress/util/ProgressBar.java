@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +24,7 @@ import java.awt.*;
 public class ProgressBar extends JComponent {
   private double myFraction = 0.0;
 
-  private Icon myProgressIcon = IconLoader.getIcon("/general/progress.png");
+  private Icon myProgressIcon = AllIcons.General.Progress;
 
   public ProgressBar() {
     updateUI();

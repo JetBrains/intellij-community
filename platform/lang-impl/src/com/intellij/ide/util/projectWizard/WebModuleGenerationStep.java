@@ -16,7 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.google.common.collect.Maps;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;

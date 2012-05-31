@@ -16,8 +16,8 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author cdr
@@ -25,7 +25,7 @@ import com.intellij.openapi.util.IconLoader;
 public final class ViewSupertypesHierarchyAction extends ChangeViewTypeActionBase {
   public ViewSupertypesHierarchyAction() {
     super(IdeBundle.message("action.view.supertypes.hierarchy"), 
-          IdeBundle.message("action.description.view.supertypes.hierarchy"), IconLoader.getIcon("/hierarchy/supertypes.png"));
+          IdeBundle.message("action.description.view.supertypes.hierarchy"), AllIcons.Hierarchy.Supertypes);
   }
 
   protected final String getTypeName() {

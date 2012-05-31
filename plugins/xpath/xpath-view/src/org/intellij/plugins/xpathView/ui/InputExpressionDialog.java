@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
 import org.intellij.plugins.xpathView.eval.EvalExpressionDialog;

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -315,7 +316,7 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   private class MySelectAll extends DumbAwareAction {
     private MySelectAll() {
-      super("Select All", "Select All", IconLoader.getIcon("/actions/selectall.png"));
+      super("Select All", "Select All", AllIcons.Actions.Selectall);
     }
 
     @Override
@@ -327,7 +328,7 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   private class MyUnselectAll extends DumbAwareAction {
     private MyUnselectAll() {
-      super("Unselect All", "Unselect All", IconLoader.getIcon("/actions/unselectall.png"));
+      super("Unselect All", "Unselect All", AllIcons.Actions.Unselectall);
     }
 
     @Override

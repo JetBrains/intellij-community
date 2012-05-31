@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
@@ -95,10 +94,6 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       }
     });
     myRecognizedFileType.setFileTypes(types);
-  }
-
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableFileTypes.png");
   }
 
   private static FileType[] getModifiableFileTypes() {

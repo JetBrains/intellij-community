@@ -16,6 +16,7 @@
 
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -24,7 +25,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 
 import java.util.Collection;
 
@@ -35,7 +35,7 @@ import java.util.Collection;
 class AddToNewFavoritesListAction extends AnAction {
  public AddToNewFavoritesListAction() {
    super(IdeBundle.message("action.add.to.new.favorites.list"),
-         IdeBundle.message("action.add.to.new.favorites.list"), IconLoader.getIcon("/general/addFavoritesList.png"));
+         IdeBundle.message("action.add.to.new.favorites.list"), AllIcons.General.AddFavoritesList);
  }
 
  public void actionPerformed(AnActionEvent e) {

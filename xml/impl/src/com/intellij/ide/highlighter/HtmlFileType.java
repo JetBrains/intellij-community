@@ -15,11 +15,11 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.util.HtmlUtil;
@@ -34,7 +34,7 @@ import java.nio.charset.Charset;
 
 public class HtmlFileType extends XmlLikeFileType {
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
-  private static final Icon ICON = IconLoader.getIcon("/fileTypes/html.png");
+  private static final Icon ICON = AllIcons.FileTypes.Html;
 
   public final static HtmlFileType INSTANCE = new HtmlFileType();
 

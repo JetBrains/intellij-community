@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -22,7 +23,6 @@ import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.WriteExternalException;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public abstract class ExportSchemeAction<T extends Scheme, E extends Externaliza
   protected final SchemesManager<T, E> mySchemesManager;
 
   public ExportSchemeAction(SchemesManager<T, E> manager) {
-    super("Share", "Share scheme on server", IconLoader.getIcon("/actions/export.png"));
+    super("Share", "Share scheme on server", AllIcons.Actions.Export);
     mySchemesManager = manager;
   }
 

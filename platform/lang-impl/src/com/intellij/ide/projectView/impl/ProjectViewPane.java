@@ -19,6 +19,7 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.ProjectPaneSelectInTarget;
@@ -29,7 +30,6 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ import javax.swing.tree.DefaultTreeModel;
 
 public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
-  private static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
+  private static final Icon ICON = AllIcons.General.ProjectTab;
 
   public ProjectViewPane(Project project) {
     super(project);

@@ -27,7 +27,8 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.icons.AllIcons;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -252,10 +253,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
   public String getDisplayName() {
     return DISPLAY_NAME;
-  }
-
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableErrorHighlighting.png");
   }
 
   public String getHelpTopic() {

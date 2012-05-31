@@ -45,6 +45,7 @@ import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -53,7 +54,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -74,8 +74,8 @@ import java.util.List;
 public class DebuggerSessionTab extends DebuggerSessionTabBase implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
-  private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchLastReturnValue.png");
-  private static final Icon AUTO_VARS_ICONS = IconLoader.getIcon("/debugger/autoVariablesMode.png");
+  private static final Icon WATCH_RETURN_VALUES_ICON = AllIcons.Debugger.WatchLastReturnValue;
+  private static final Icon AUTO_VARS_ICONS = AllIcons.Debugger.AutoVariablesMode;
 
   private final VariablesPanel myVariablesPanel;
   private final MainWatchPanel myWatchPanel;
@@ -146,7 +146,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myFramesPanel = new FramesPanel(getProject(), getContextManager());
 
 
-    final AlertIcon breakpointAlert = new AlertIcon(IconLoader.getIcon("/debugger/breakpointAlert.png"));
+    final AlertIcon breakpointAlert = new AlertIcon(AllIcons.Debugger.BreakpointAlert);
 
     // watches
     Content watches = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchPanel, XDebuggerBundle.message("debugger.session.tab.watches.title"),

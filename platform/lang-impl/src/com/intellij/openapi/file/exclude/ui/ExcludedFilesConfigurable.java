@@ -59,11 +59,6 @@ public class ExcludedFilesConfigurable implements SearchableConfigurable {
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return null;
   }

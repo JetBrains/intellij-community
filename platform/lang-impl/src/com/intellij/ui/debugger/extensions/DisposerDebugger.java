@@ -16,6 +16,7 @@
 
 package com.intellij.ui.debugger.extensions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -28,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.objectTree.ObjectTree;
 import com.intellij.openapi.util.objectTree.ObjectTreeListener;
@@ -112,7 +112,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setIcon(IconLoader.getIcon("/debugger/watch.png"));
+      e.getPresentation().setIcon(AllIcons.Debugger.Watch);
     }
 
     public void actionPerformed(AnActionEvent e) {

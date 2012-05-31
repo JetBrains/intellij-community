@@ -356,10 +356,6 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   public void dispose() {
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   private class AddArtifactAction extends DumbAwareAction {
     private final ArtifactType myType;
     private final ArtifactTemplate myArtifactTemplate;

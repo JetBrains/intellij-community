@@ -19,6 +19,7 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
+import com.intellij.icons.AllIcons;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -27,7 +28,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -108,7 +108,7 @@ public class CvsTabbedWindow {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow =
       toolWindowManager.registerToolWindow(ToolWindowId.CVS, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(IconLoader.getIcon("/_cvs/cvs.png"));
+    toolWindow.setIcon(AllIcons._cvs.Cvs);
     toolWindow.installWatcher(myContentManager);
   }
 
@@ -221,7 +221,7 @@ public class CvsTabbedWindow {
 
   private static class GlobalCvsSettingsAction extends AnAction {
     public GlobalCvsSettingsAction() {
-      super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, IconLoader.getIcon("/nodes/cvs_global.png"));
+      super(CvsBundle.message("configure.global.cvs.settings.action.name"), null, AllIcons.Nodes.Cvs_global);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -231,7 +231,7 @@ public class CvsTabbedWindow {
 
   private class ReconfigureCvsRootAction extends AnAction {
     public ReconfigureCvsRootAction() {
-      super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, IconLoader.getIcon("/nodes/cvs_roots.png"));
+      super(CvsBundle.message("action.name.reconfigure.cvs.root"), null, AllIcons.Nodes.Cvs_roots);
     }
 
     public void update(AnActionEvent e) {

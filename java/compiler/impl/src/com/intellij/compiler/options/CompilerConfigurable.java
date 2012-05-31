@@ -31,7 +31,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerConfigurable");
 
   private final Project myProject;
-  private static final Icon ICON = IconLoader.getIcon("/general/configurableCompiler.png");
   private final CompilerUIConfigurable myCompilerUIConfigurable;
   private Configurable[] myKids;
 
@@ -58,10 +56,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
 
   public String getDisplayName() {
     return CompilerBundle.message("compiler.configurable.display.name");
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   public String getHelpTopic() {
@@ -163,10 +157,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
       @Nls
       public String getDisplayName() {
         return "Excludes";
-      }
-
-      public Icon getIcon() {
-        return null;
       }
 
       public String getHelpTopic() {

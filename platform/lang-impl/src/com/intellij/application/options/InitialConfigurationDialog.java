@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package com.intellij.application.options;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.NewColorAndFontPanel;
 import com.intellij.application.options.colors.SimpleEditorPreview;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -38,7 +39,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.ui.AbstractTitledSeparatorWithIcon;
@@ -163,8 +163,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myColorPreviewPanel = new AbstractTitledSeparatorWithIcon(IconLoader.getIcon("/general/comboArrowRight.png"),
-                                                              IconLoader.getIcon("/general/comboArrowDown.png"),
+    myColorPreviewPanel = new AbstractTitledSeparatorWithIcon(AllIcons.General.ComboArrowRight,
+                                                              AllIcons.General.ComboArrowDown,
                                                               "Click to preview") {
 
       private int myAddedWidth;

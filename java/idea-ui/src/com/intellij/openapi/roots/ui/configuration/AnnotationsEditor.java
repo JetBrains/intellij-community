@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -44,7 +44,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   private JTable myTable;
 
   public static final String NAME = ProjectBundle.message("project.roots.external.annotations.tab.title");
-  public static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
+  public static final Icon ICON = AllIcons.Modules.Annotation;
 
   public AnnotationsEditor(final ModuleConfigurationState state) {
     super(state);
@@ -56,10 +56,6 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
   public String getDisplayName() {
     return NAME;
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   public void saveData() {

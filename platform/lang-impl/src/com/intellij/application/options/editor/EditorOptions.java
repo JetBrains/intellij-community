@@ -21,7 +21,6 @@ import com.intellij.openapi.options.AbstractConfigurableEP;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,11 +44,6 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   @Override
   public String getDisplayName() {
     return ApplicationBundle.message("title.editor");
-  }
-
-  @Override
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableEditor.png");
   }
 
   @Override

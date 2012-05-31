@@ -7,13 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.android.dom.manifest.Manifest;
+import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,13 +55,16 @@ public class AndroidBuildConfigGeneratingCompiler implements SourceGeneratingCom
             continue;
           }
 
-          final Manifest manifest = AndroidUtils.loadDomElement(module, manifestFile, Manifest.class);
-          if (manifest == null) {
-            context.addMessage(CompilerMessageCategory.ERROR, "Cannot parse file", manifestFile.getUrl(), -1, -1);
+          String packageName;
+          try {
+            // we cannot use DOM here because custom manifest file can be excluded (ex. it can be located in /target/ folder)
+            packageName = parsePackageName(manifestFile);
+          }
+          catch (IOException e) {
+            context.addMessage(CompilerMessageCategory.ERROR, "I/O error: " + e.getMessage(), null, -1, -1);
             continue;
           }
 
-          String packageName = manifest.getPackage().getValue();
           if (packageName != null) {
             packageName = packageName.trim();
           }
@@ -113,6 +116,31 @@ public class AndroidBuildConfigGeneratingCompiler implements SourceGeneratingCom
     return result.toArray(new GenerationItem[result.size()]);
   }
 
+  @Nullable
+  private static String parsePackageName(@NotNull VirtualFile manifestFile) throws IOException {
+    final Ref<String> packageNameRef = Ref.create(null);
+
+    NanoXmlUtil.parse(manifestFile.getInputStream(), new NanoXmlUtil.BaseXmlBuilder() {
+      @Override
+      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type)
+        throws Exception {
+        super.addAttribute(key, nsPrefix, nsURI, value, type);
+
+        if ("package".equals(key) && NanoXmlUtil.createLocation("manifest").equals(getLocation())) {
+          packageNameRef.set(value);
+          stop();
+        }
+      }
+
+      @Override
+      public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
+        super.elementAttributesProcessed(name, nsPrefix, nsURI);
+        stop();
+      }
+    });
+    return packageNameRef.get();
+  }
+
   @NotNull
   @Override
   public String getDescription() {
@@ -129,7 +157,7 @@ public class AndroidBuildConfigGeneratingCompiler implements SourceGeneratingCom
     return new MyValidityState(in);
   }
 
-  private static class MyGenerationItem implements GenerationItem{
+  private static class MyGenerationItem implements GenerationItem {
     final Module myModule;
     final String myPackage;
     final boolean myDebug;

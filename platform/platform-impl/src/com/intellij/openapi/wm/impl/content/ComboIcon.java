@@ -15,14 +15,14 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.ActiveIcon;
-import com.intellij.openapi.util.IconLoader;
 
 import java.awt.*;
 
 public abstract class ComboIcon {
 
-  private final ActiveIcon myIcon = new ActiveIcon(IconLoader.getIcon("/general/combo2.png"));
+  private final ActiveIcon myIcon = new ActiveIcon(AllIcons.General.Combo2);
 
   public void paintIcon(final Component c, final Graphics g) {
     myIcon.setActive(isActive());

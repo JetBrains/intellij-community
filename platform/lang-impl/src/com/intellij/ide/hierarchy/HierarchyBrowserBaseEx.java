@@ -16,6 +16,7 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
@@ -35,7 +36,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -480,7 +480,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected class AlphaSortAction extends ToggleAction {
     public AlphaSortAction() {
       super(IdeBundle.message("action.sort.alphabetically"), IdeBundle.message("action.sort.alphabetically"),
-            IconLoader.getIcon("/objectBrowser/sorted.png"));
+            AllIcons.ObjectBrowser.Sorted);
     }
 
     public final boolean isSelected(final AnActionEvent event) {
@@ -578,7 +578,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   protected class RefreshAction extends com.intellij.ide.actions.RefreshAction {
     public RefreshAction() {
-      super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), IconLoader.getIcon("/actions/sync.png"));
+      super(IdeBundle.message("action.refresh"), IdeBundle.message("action.refresh"), AllIcons.Actions.Sync);
     }
 
     public final void actionPerformed(final AnActionEvent e) {

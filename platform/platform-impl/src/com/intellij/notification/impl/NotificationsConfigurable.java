@@ -38,10 +38,6 @@ public class NotificationsConfigurable implements Configurable, SearchableConfig
     return DISPLAY_NAME;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.settings.ide.settings.notifications";
   }

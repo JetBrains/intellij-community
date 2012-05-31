@@ -114,10 +114,6 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return "Tasks";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.settings.project.tasks";
   }

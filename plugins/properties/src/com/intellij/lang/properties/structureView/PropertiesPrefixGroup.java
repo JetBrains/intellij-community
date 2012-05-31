@@ -15,14 +15,13 @@
  */
 package com.intellij.lang.properties.structureView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +57,7 @@ public class PropertiesPrefixGroup implements Group {
       }
 
       public Icon getIcon(boolean open) {
-        return IconLoader.getIcon("/nodes/advice.png");
+        return AllIcons.Nodes.Advice;
       }
     };
   }

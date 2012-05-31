@@ -16,12 +16,12 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -61,10 +61,10 @@ public abstract class ContentRootPanel extends JPanel {
   private static final Color CONTENT_COLOR = Color.WHITE;
   private static final Color UNSELECTED_TEXT_COLOR = new Color(0x333333);
 
-  private static final Icon DELETE_ROOT_ICON = IconLoader.getIcon("/modules/deleteContentRoot.png");
-  private static final Icon DELETE_ROOT_ROLLOVER_ICON = IconLoader.getIcon("/modules/deleteContentRootRollover.png");
-  private static final Icon DELETE_FOLDER_ICON = IconLoader.getIcon("/modules/deleteContentFolder.png");
-  private static final Icon DELETE_FOLDER_ROLLOVER_ICON = IconLoader.getIcon("/modules/deleteContentFolderRollover.png");
+  private static final Icon DELETE_ROOT_ICON = AllIcons.Modules.DeleteContentRoot;
+  private static final Icon DELETE_ROOT_ROLLOVER_ICON = AllIcons.Modules.DeleteContentRootRollover;
+  private static final Icon DELETE_FOLDER_ICON = AllIcons.Modules.DeleteContentFolder;
+  private static final Icon DELETE_FOLDER_ROLLOVER_ICON = AllIcons.Modules.DeleteContentFolderRollover;
 
   protected final ActionCallback myCallback;
   private JComponent myHeader;
@@ -188,7 +188,7 @@ public abstract class ContentRootPanel extends JPanel {
 
     final JLabel titleLabel = new JLabel(title);
     final Font labelFont = UIUtil.getLabelFont();
-    titleLabel.setFont(labelFont.deriveFont(Font.BOLD).deriveFont((float)labelFont.getSize() - 0.5f ));
+    titleLabel.setFont(labelFont.deriveFont(Font.BOLD));
     titleLabel.setOpaque(false);
     titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
     registerTextComponent(titleLabel, foregroundColor);

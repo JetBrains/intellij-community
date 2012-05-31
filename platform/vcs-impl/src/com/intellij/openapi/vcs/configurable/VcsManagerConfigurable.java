@@ -19,7 +19,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -37,7 +36,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract {
-  public static final Icon ICON = IconLoader.getIcon("/general/configurableVcs.png");
   private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;
   private VcsGeneralConfigurationPanel myGeneralPanel;
@@ -89,10 +87,6 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
   public String getHelpTopic() {
     return "project.propVCSSupport.Mappings";
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   @NotNull
@@ -162,10 +156,6 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       @Nls
       public String getDisplayName() {
         return vcs.getDisplayName();
-      }
-
-      public Icon getIcon() {
-        return null;
       }
 
       public String getHelpTopic() {

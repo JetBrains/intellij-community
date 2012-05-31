@@ -17,7 +17,7 @@ package com.intellij.execution.executors;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.UIBundle;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -31,9 +31,9 @@ import javax.swing.*;
  */
 public class DefaultDebugExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.DEBUG;
-  private static final Icon TOOL_WINDOW_ICON = IconLoader.getIcon("/general/toolWindowDebugger.png");
-  private static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
-  private static final Icon DISABLED_ICON = IconLoader.getIcon("/process/disabledDebug.png");
+  private static final Icon TOOL_WINDOW_ICON = AllIcons.General.ToolWindowDebugger;
+  private static final Icon ICON = AllIcons.Actions.StartDebugger;
+  private static final Icon DISABLED_ICON = AllIcons.Process.DisabledDebug;
   private final String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
   private final String myDescription = XDebuggerBundle.message("string.debugger.runner.description");
 

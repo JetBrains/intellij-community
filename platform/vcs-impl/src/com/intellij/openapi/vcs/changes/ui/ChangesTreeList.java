@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
@@ -23,7 +24,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -123,7 +123,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }
 
       @Override
-      protected Color getFileColorFor(Object object) {
+      public Color getFileColorFor(Object object) {
         VirtualFile file = null;
         if (object instanceof FilePathImpl) {
           file = LocalFileSystem.getInstance().findFileByPath(((FilePathImpl)object).getPath());
@@ -863,7 +863,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   private class SelectAllAction extends AnAction {
     private SelectAllAction() {
-      super("Select All", "Select all items", IconLoader.getIcon("/actions/selectall.png"));
+      super("Select All", "Select all items", AllIcons.Actions.Selectall);
     }
 
     public void actionPerformed(final AnActionEvent e) {

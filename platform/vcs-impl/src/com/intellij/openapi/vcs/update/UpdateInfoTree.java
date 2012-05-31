@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.history.Label;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
@@ -369,7 +369,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
 
   private class GroupByChangeListAction extends ToggleAction implements DumbAware {
     public GroupByChangeListAction() {
-      super(VcsBundle.message("update.info.group.by.changelist"), null, IconLoader.getIcon("/objectBrowser/browser.png"));
+      super(VcsBundle.message("update.info.group.by.changelist"), null, AllIcons.ObjectBrowser.Browser);
     }
 
     public boolean isSelected(AnActionEvent e) {

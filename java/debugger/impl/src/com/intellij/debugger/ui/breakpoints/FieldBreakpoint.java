@@ -29,12 +29,16 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
@@ -62,18 +66,18 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   private boolean myIsStatic;
   private String myFieldName;
 
-  public static Icon ICON = IconLoader.getIcon("/debugger/db_field_breakpoint.png");
-  public static Icon MUTED_ICON = IconLoader.getIcon("/debugger/db_muted_field_breakpoint.png");
-  public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png");
-  public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png");
-  public static Icon MUTED_DISABLED_ICON = IconLoader.getIcon("/debugger/db_muted_disabled_field_breakpoint.png");
-  public static Icon MUTED_DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_muted_dep_field_breakpoint.png");
-  private static final Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
-  private static final Icon ourMutedInvalidIcon = IconLoader.getIcon("/debugger/db_muted_invalid_field_breakpoint.png");
-  private static final Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png");
-  private static final Icon ourMutedVerifiedIcon = IconLoader.getIcon("/debugger/db_muted_verified_field_breakpoint.png");
-  private static final Icon ourVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_field_warning_breakpoint.png");
-  private static final Icon ourMutedVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_muted_field_warning_breakpoint.png");
+  public static Icon ICON = AllIcons.Debugger.Db_field_breakpoint;
+  public static Icon MUTED_ICON = AllIcons.Debugger.Db_muted_field_breakpoint;
+  public static Icon DISABLED_ICON = AllIcons.Debugger.Db_disabled_field_breakpoint;
+  public static Icon DISABLED_DEP_ICON = AllIcons.Debugger.Db_dep_field_breakpoint;
+  public static Icon MUTED_DISABLED_ICON = AllIcons.Debugger.Db_muted_disabled_field_breakpoint;
+  public static Icon MUTED_DISABLED_DEP_ICON = AllIcons.Debugger.Db_muted_dep_field_breakpoint;
+  private static final Icon ourInvalidIcon = AllIcons.Debugger.Db_invalid_field_breakpoint;
+  private static final Icon ourMutedInvalidIcon = AllIcons.Debugger.Db_muted_invalid_field_breakpoint;
+  private static final Icon ourVerifiedIcon = AllIcons.Debugger.Db_verified_field_breakpoint;
+  private static final Icon ourMutedVerifiedIcon = AllIcons.Debugger.Db_muted_verified_field_breakpoint;
+  private static final Icon ourVerifiedWarningIcon = AllIcons.Debugger.Db_field_warning_breakpoint;
+  private static final Icon ourMutedVerifiedWarningIcon = AllIcons.Debugger.Db_muted_field_warning_breakpoint;
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
   protected FieldBreakpoint(Project project) {

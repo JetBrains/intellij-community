@@ -16,6 +16,7 @@
 
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.util.PropertiesComponent;
@@ -32,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
@@ -66,7 +66,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
-  private static final Icon ourIcon = IconLoader.getIcon("/general/fileTemplates.png");
+  private static final Icon ourIcon = AllIcons.General.FileTemplates;
 
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;
@@ -85,10 +85,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
   private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
-
-  public Icon getIcon() {
-    return ourIcon;
-  }
 
   private void onRemove() {
     myCurrentTab.removeSelected();
@@ -242,7 +238,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     });
 
     DefaultActionGroup group = new DefaultActionGroup();
-    AnAction removeAction = new AnAction(IdeBundle.message("action.remove.template"), null, IconLoader.getIcon("/general/remove.png")) {
+    AnAction removeAction = new AnAction(IdeBundle.message("action.remove.template"), null, AllIcons.General.Remove) {
       public void actionPerformed(AnActionEvent e) {
         onRemove();
       }
@@ -275,7 +271,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
                                        && myCurrentTab.getSelectedTemplate() != null);
       }
     };
-    AnAction resetAction = new AnAction(IdeBundle.message("action.reset.to.default"), null, IconLoader.getIcon("/actions/reset.png")) {
+    AnAction resetAction = new AnAction(IdeBundle.message("action.reset.to.default"), null, AllIcons.Actions.Reset) {
       public void actionPerformed(AnActionEvent e) {
         onReset();
       }

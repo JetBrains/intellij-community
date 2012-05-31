@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.icons.AllIcons;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,9 +27,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.DispatchThreadProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
@@ -58,10 +61,6 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
 
   public String getDisplayName() {
     return UIDesignerBundle.message("title.gui.designer");
-  }
-
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/uiDesigner.png");
   }
 
   @NotNull

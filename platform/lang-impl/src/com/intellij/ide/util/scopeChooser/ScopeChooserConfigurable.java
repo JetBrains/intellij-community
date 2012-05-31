@@ -18,6 +18,7 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
@@ -56,8 +56,6 @@ import java.util.*;
  * Date: 01-Jul-2006
  */
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements /*NonDefaultProjectConfigurable,*/ SearchableConfigurable {
-  private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
-  private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
   @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
   private final NamedScopesHolder myLocalScopesManager;
   private final NamedScopesHolder mySharedScopesManager;
@@ -270,10 +268,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return IdeBundle.message("scopes.display.name");
   }
 
-  public Icon getIcon() {
-    return SCOPES;
-  }
-
   @NotNull
   @NonNls
   public String getHelpTopic() {
@@ -479,7 +473,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private class MySaveAsAction extends AnAction {
     public MySaveAsAction() {
       super(ExecutionBundle.message("action.name.save.as.configuration"), ExecutionBundle.message("action.name.save.as.configuration"),
-            SAVE_ICON);
+            AllIcons.RunConfigurations.SaveTempConfig);
     }
 
     public void actionPerformed(AnActionEvent e) {

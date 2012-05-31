@@ -20,7 +20,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -55,10 +54,6 @@ public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurabl
   @Nls
   public String getDisplayName() {
     return GroovyBundle.message("groovy.debug.caption");
-  }
-
-  public Icon getIcon() {
-    return GroovyIcons.GROOVY_ICON_16x16;
   }
 
   public String getHelpTopic() {

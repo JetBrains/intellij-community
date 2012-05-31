@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -38,8 +38,8 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
-  private static final Icon myLockedIcon = IconLoader.getIcon("/ide/readonly.png");
-  private static final Icon myUnlockedIcon = IconLoader.getIcon("/ide/readwrite.png");
+  private static final Icon myLockedIcon = AllIcons.Ide.Readonly;
+  private static final Icon myUnlockedIcon = AllIcons.Ide.Readwrite;
 
   private StatusBar myStatusBar;
 

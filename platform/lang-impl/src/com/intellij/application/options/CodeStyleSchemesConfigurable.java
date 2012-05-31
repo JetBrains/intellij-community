@@ -23,7 +23,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
@@ -279,11 +278,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   @Override
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableCodeStyle.png");
-  }
-
-  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.globalcodestyle";
   }
@@ -341,11 +335,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       if (displayName != null) return displayName;
       
       return ensurePanel().getDisplayName();  // fallback for 8.0 API compatibility
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
     }
 
     @Override

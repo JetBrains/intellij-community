@@ -45,10 +45,6 @@ public class UndefinedMacrosConfigurable implements Configurable{
     return PathMacroConfigurable.HELP_ID;
   }
 
-  public Icon getIcon() {
-    return PathMacroConfigurable.ICON;
-  }
-
   public String getDisplayName() {
     return ProjectBundle.message("project.configure.path.variables.title");
   }

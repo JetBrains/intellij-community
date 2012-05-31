@@ -15,13 +15,13 @@
  */
 package com.intellij.ide.bookmarks.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ListUtil;
 
@@ -32,7 +32,7 @@ class MoveBookmarkDownAction extends DumbAwareAction {
   private final JList myList;
 
   MoveBookmarkDownAction(Project project, JList list) {
-    super("Down", "Move current bookmark down", IconLoader.getIcon("/actions/nextOccurence.png"));
+    super("Down", "Move current bookmark down", AllIcons.Actions.NextOccurence);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta DOWN" : "control DOWN")), list);

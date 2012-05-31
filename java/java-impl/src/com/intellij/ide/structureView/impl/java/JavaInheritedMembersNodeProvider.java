@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
 import com.intellij.ide.util.FileStructureNodeProvider;
@@ -23,7 +24,6 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -84,8 +84,7 @@ public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvid
 
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"), null, IconLoader
-      .getIcon("/hierarchy/supertypes.png"));
+    return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"), null, AllIcons.Hierarchy.Supertypes);
   }
 
   @NotNull

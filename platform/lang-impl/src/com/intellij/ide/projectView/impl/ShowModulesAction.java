@@ -1,5 +1,6 @@
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,7 +8,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.PlatformUtils;
 
 /**
@@ -21,8 +21,8 @@ public abstract class ShowModulesAction extends ToggleAction {
   private Project myProject;
 
   public ShowModulesAction(Project project) {
-    super(IdeBundle.message("action.show.modules"), IdeBundle.message("action.description.show.modules"), IconLoader
-      .getIcon("/objectBrowser/showModules.png"));
+    super(IdeBundle.message("action.show.modules"), IdeBundle.message("action.description.show.modules"),
+          AllIcons.ObjectBrowser.ShowModules);
     myProject = project;
   }
 

@@ -22,7 +22,6 @@ import org.jetbrains.generate.tostring.config.Config;
 import org.jetbrains.generate.tostring.view.ConfigUI;
 
 import javax.swing.*;
-import java.net.URL;
 
 /**
  * @author yole
@@ -34,14 +33,6 @@ public class GenerateToStringConfigurable implements Configurable {
 
   public String getDisplayName() {
       return "Settings";
-  }
-
-  public Icon getIcon() {
-      URL resource = getClass().getResource("/resources/configurableToStringPlugin.png");
-      if (resource != null) {
-          return new ImageIcon(resource);
-      }
-      return null;
   }
 
   public String getHelpTopic() {

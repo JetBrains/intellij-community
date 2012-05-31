@@ -178,10 +178,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     return "General";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

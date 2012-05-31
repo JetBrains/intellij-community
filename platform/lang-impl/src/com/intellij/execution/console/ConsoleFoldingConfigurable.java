@@ -81,10 +81,6 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable, Confi
     return "Console Folding";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.idesettings.console.folding";
   }

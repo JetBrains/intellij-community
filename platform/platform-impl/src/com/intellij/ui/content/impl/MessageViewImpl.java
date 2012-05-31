@@ -16,10 +16,10 @@
  */
 package com.intellij.ui.content.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -41,7 +41,7 @@ public class MessageViewImpl implements MessageView {
     final Runnable runnable = new Runnable() {
       public void run() {
         myToolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MESSAGES_WINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
-        myToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowMessages.png"));
+        myToolWindow.setIcon(AllIcons.General.ToolWindowMessages);
         new ContentManagerWatcher(myToolWindow, getContentManager());
         for (Runnable postponedRunnable : myPostponedRunnables) {
           postponedRunnable.run();

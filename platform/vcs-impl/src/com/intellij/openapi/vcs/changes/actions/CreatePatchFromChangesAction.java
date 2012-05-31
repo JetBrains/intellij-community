@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -24,7 +25,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -44,7 +44,7 @@ import java.util.List;
 public class CreatePatchFromChangesAction extends AnAction implements DumbAware {
   public CreatePatchFromChangesAction() {
     super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
-          VcsBundle.message("action.description.create.patch.for.selected.revisions"), IconLoader.getIcon("/actions/createPatch.png"));
+          VcsBundle.message("action.description.create.patch.for.selected.revisions"), AllIcons.Actions.CreatePatch);
   }
 
   public void actionPerformed(AnActionEvent e) {

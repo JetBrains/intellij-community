@@ -15,11 +15,11 @@
  */
 package git4idea.push;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.icons.AllIcons;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -238,7 +238,7 @@ class GitManualPushToBranch extends JPanel {
   private abstract static class GitPushLogRefreshAction extends DumbAwareAction {
     
     GitPushLogRefreshAction() {
-      super("Refresh commit list", "Refresh commit list", IconLoader.getIcon("/actions/sync.png"));
+      super("Refresh commit list", "Refresh commit list", AllIcons.Actions.Sync);
     }
   }
   

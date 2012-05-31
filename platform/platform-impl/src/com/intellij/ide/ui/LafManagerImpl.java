@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.StartupUtil;
 import com.intellij.notification.Notification;
@@ -728,14 +729,14 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put("ToolTip.background", new ColorUIResource(255, 255, 231));
       defaults.put("ToolTip.border", new ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1));
       defaults.put("Tree.ancestorInputMap", null);
-      defaults.put("FileView.directoryIcon", IconLoader.getIcon("/nodes/folder.png"));
-      defaults.put("FileChooser.upFolderIcon", IconLoader.getIcon("/nodes/upFolder.png"));
-      defaults.put("FileChooser.newFolderIcon", IconLoader.getIcon("/nodes/newFolder.png"));
-      defaults.put("FileChooser.homeFolderIcon", IconLoader.getIcon("/nodes/homeFolder.png"));
-      defaults.put("OptionPane.errorIcon", IconLoader.getIcon("/general/errorDialog.png"));
-      defaults.put("OptionPane.informationIcon", IconLoader.getIcon("/general/informationDialog.png"));
-      defaults.put("OptionPane.warningIcon", IconLoader.getIcon("/general/warningDialog.png"));
-      defaults.put("OptionPane.questionIcon", IconLoader.getIcon("/general/questionDialog.png"));
+      defaults.put("FileView.directoryIcon", AllIcons.Nodes.Folder);
+      defaults.put("FileChooser.upFolderIcon", AllIcons.Nodes.UpFolder);
+      defaults.put("FileChooser.newFolderIcon", AllIcons.Nodes.NewFolder);
+      defaults.put("FileChooser.homeFolderIcon", AllIcons.Nodes.HomeFolder);
+      defaults.put("OptionPane.errorIcon", AllIcons.General.ErrorDialog);
+      defaults.put("OptionPane.informationIcon", AllIcons.General.InformationDialog);
+      defaults.put("OptionPane.warningIcon", AllIcons.General.WarningDialog);
+      defaults.put("OptionPane.questionIcon", AllIcons.General.QuestionDialog);
       defaults.put("Tree.openIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeOpen.gif"));
       defaults.put("Tree.closedIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeClosed.gif"));
       defaults.put("Tree.leafIcon", LookAndFeel.makeIcon(WindowsLookAndFeel.class, "icons/TreeLeaf.gif"));

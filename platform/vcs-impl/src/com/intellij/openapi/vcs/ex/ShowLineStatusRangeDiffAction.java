@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
   public ShowLineStatusRangeDiffAction(final LineStatusTracker lineStatusTracker, final Range range, final Editor editor) {
-    super(VcsBundle.message("action.name.show.difference"), IconLoader.getIcon("/actions/diff.png"), lineStatusTracker, range);
+    super(VcsBundle.message("action.name.show.difference"), AllIcons.Actions.Diff, lineStatusTracker, range);
   }
 
   public boolean isEnabled() {

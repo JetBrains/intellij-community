@@ -15,11 +15,11 @@
  */
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +35,7 @@ import java.io.FileFilter;
 import java.util.List;
 
 public class AllJarsUnderDirEntry implements AntClasspathEntry {
-  private static final Icon ALL_JARS_IN_DIR_ICON = IconLoader.getIcon("/ant/allJarsInDir.png");
+  private static final Icon ALL_JARS_IN_DIR_ICON = AllIcons.Ant.AllJarsInDir;
   @NonNls private static final String JAR_SUFFIX = ".jar";
 
   private static final Function<VirtualFile, AntClasspathEntry> CREATE_FROM_VIRTUAL_FILE = new Function<VirtualFile, AntClasspathEntry>() {

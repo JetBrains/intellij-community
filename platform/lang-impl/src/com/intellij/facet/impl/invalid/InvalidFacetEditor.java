@@ -17,8 +17,8 @@ package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -53,7 +53,7 @@ public class InvalidFacetEditor extends FacetEditorTab {
 
   @Override
   public JComponent createComponent() {
-    myIconLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
+    myIconLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
     myDescriptionLabel.setText(myErrorMessage);
     return myMainPanel;
   }

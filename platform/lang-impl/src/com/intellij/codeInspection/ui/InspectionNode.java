@@ -17,7 +17,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 
@@ -31,7 +31,7 @@ public class InspectionNode extends InspectionTreeNode {
   public static final Icon TOOL;
 
   static {
-    TOOL = LayeredIcon.create(IconLoader.getIcon("/general/toolWindowInspection.png"), IconUtil.getEmptyIcon(false));
+    TOOL = LayeredIcon.create(AllIcons.General.ToolWindowInspection, IconUtil.getEmptyIcon(false));
   }
 
   public InspectionNode(InspectionTool tool) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
@@ -63,7 +64,7 @@ public class PagedListWithActions<T> {
 
   private class MyNext extends AnAction {
     private MyNext() {
-      super("Next Page", "Next Page", IconLoader.getIcon("/actions/nextfile.png"));
+      super("Next Page", "Next Page", AllIcons.Actions.Nextfile);
     }
 
     @Override
@@ -83,7 +84,7 @@ public class PagedListWithActions<T> {
 
   private class MyPrevious extends AnAction {
     private MyPrevious() {
-      super("Previous Page", "Previous Page", IconLoader.getIcon("/actions/prevfile.png"));
+      super("Previous Page", "Previous Page", AllIcons.Actions.Prevfile);
     }
 
     @Override

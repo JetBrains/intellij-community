@@ -19,12 +19,12 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -41,10 +41,10 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
-  private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/ide/hectorOn.png");
-  private static final Icon INSPECTIONS_OFF_ICON = IconLoader.getIcon("/ide/hectorOff.png");
-  private static final Icon SYNTAX_ONLY_ICON = IconLoader.getIcon("/ide/hectorSyntax.png");
-  private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/hectorNo.png");
+  private static final Icon INSPECTIONS_ICON = AllIcons.Ide.HectorOn;
+  private static final Icon INSPECTIONS_OFF_ICON = AllIcons.Ide.HectorOff;
+  private static final Icon SYNTAX_ONLY_ICON = AllIcons.Ide.HectorSyntax;
+  private static final Icon EMPTY_ICON = AllIcons.Ide.HectorNo;
 
   private Icon myCurrentIcon;
   private String myToolTipText;

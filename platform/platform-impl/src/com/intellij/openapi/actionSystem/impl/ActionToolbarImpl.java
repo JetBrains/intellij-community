@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -33,7 +34,10 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IdRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -88,8 +92,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private Rectangle myAutoPopupRec;
 
-  private static final Icon myAutoPopupIcon = IconLoader.getIcon("/ide/link.png");
-  private static final Icon mySecondaryGroupIcon = IconLoader.getIcon("/general/secondaryGroup.png");
+  private static final Icon myAutoPopupIcon = AllIcons.Ide.Link;
+  private static final Icon mySecondaryGroupIcon = AllIcons.General.SecondaryGroup;
 
   private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
   private boolean myMinimalMode;

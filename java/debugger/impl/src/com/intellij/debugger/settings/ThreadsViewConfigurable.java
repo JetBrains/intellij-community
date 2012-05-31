@@ -58,10 +58,6 @@ public class ThreadsViewConfigurable extends BaseConfigurable {
     return myPanel;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public void apply() {
     myDataBinding.saveData(mySettings);
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();

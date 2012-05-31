@@ -17,13 +17,14 @@ package com.intellij.designer.inspection;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -270,6 +271,11 @@ public abstract class AbstractQuickFixManager {
     public boolean hasSubstep(ErrorInfo selectedValue) {
       return true;
     }
+
+    @Override
+    public boolean isAutoSelectionEnabled() {
+      return false;
+    }
   }
 
   private class SecondStep extends BaseListPopupStep<QuickFix> {
@@ -301,7 +307,7 @@ public abstract class AbstractQuickFixManager {
         myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
           @Override
           public void run() throws Exception {
-            value.run();
+            ApplicationManager.getApplication().runWriteAction(value);
           }
         }, "Run '" + value.getName() + "' QuickFix", true);
       }
@@ -313,10 +319,10 @@ public abstract class AbstractQuickFixManager {
     BorderFactory
       .createCompoundBorder(BorderFactory.createLineBorder(Color.orange, 2), BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-  private static final Icon INTENTION_ICON = IconLoader.getIcon("/actions/realIntentionBulb.png");
-  private static final Icon ARROW_ICON = IconLoader.getIcon("/general/arrowDown.png");
+  private static final Icon INTENTION_ICON = AllIcons.Actions.RealIntentionBulb;
+  private static final Icon ARROW_ICON = AllIcons.General.ArrowDown;
   private static final Icon INACTIVE_ARROW_ICON = new EmptyIcon(ARROW_ICON.getIconWidth(), ARROW_ICON.getIconHeight());
-  private static final Icon ICON = IconLoader.findIcon("/actions/intentionBulb.png");
+  public static final Icon ICON = AllIcons.Actions.IntentionBulb;
 
   private class InspectionHint extends JLabel {
     private final RowIcon myInactiveIcon;

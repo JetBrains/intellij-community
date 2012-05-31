@@ -356,7 +356,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (!(reference instanceof LiteralConstructorReference)) return;
 
       final GroovyResolveResult[] results = ((LiteralConstructorReference)reference).multiResolve(false);
-      LOG.assertTrue(results.length > 0);
+      if (results.length == 0) return;
 
       if (results.length == 1) {
         final GroovyResolveResult result = results[0];

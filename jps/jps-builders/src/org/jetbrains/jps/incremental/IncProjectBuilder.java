@@ -294,19 +294,36 @@ public class IncProjectBuilder {
 
   private static void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
     final Collection<Module> modulesToClean = context.getProject().getModules().values();
-    final Map<File, Set<Pair<String, Boolean>>> rootsToDelete =
-      new HashMap<File, Set<Pair<String, Boolean>>>(); // map: outputRoot-> setOfPairs([module, isTest])
+    final Map<File, Set<Pair<String, Boolean>>> rootsToDelete = new HashMap<File, Set<Pair<String, Boolean>>>(); // map: outputRoot-> setOfPairs([module, isTest])
+    final Set<File> annotationOutputs = new HashSet<File>(); // separate collection because no root intersection checks needed for annotation generated sources
     final Set<File> allSourceRoots = new HashSet<File>();
 
+    final ProjectPaths paths = context.getProjectPaths();
+
     for (Module module : modulesToClean) {
-      final File out = context.getProjectPaths().getModuleOutputDir(module, false);
+      final File out = paths.getModuleOutputDir(module, false);
       if (out != null) {
         appendRootInfo(rootsToDelete, out, module, false);
       }
-      final File testOut = context.getProjectPaths().getModuleOutputDir(module, true);
+      final File testOut = paths.getModuleOutputDir(module, true);
       if (testOut != null) {
         appendRootInfo(rootsToDelete, testOut, module, true);
       }
+
+      final AnnotationProcessingProfile profile = context.getAnnotationProcessingProfile(module);
+      if (profile.isEnabled()) {
+        File annotationOut =
+          paths.getAnnotationProcessorGeneratedSourcesOutputDir(module, false, profile.getGeneratedSourcesDirName());
+        if (annotationOut != null) {
+          annotationOutputs.add(annotationOut);
+        }
+        annotationOut =
+          paths.getAnnotationProcessorGeneratedSourcesOutputDir(module, true, profile.getGeneratedSourcesDirName());
+        if (annotationOut != null) {
+          annotationOutputs.add(annotationOut);
+        }
+      }
+
       final List<RootDescriptor> moduleRoots = context.getModuleRoots(module);
       for (RootDescriptor d : moduleRoots) {
         allSourceRoots.add(d.root);
@@ -346,6 +363,14 @@ public class IncProjectBuilder {
         for (Pair<String, Boolean> info : entry.getValue()) {
           clearOutputFiles(context, info.first, info.second);
         }
+      }
+    }
+
+    for (File annotationOutput : annotationOutputs) {
+      // do not delete output root itself to avoid lots of unnecessary "roots_changed" events in IDEA
+      final File[] children = annotationOutput.listFiles();
+      if (children != null) {
+        filesToDelete.addAll(Arrays.asList(children));
       }
     }
 

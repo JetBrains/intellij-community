@@ -121,7 +121,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
 
     myTabbedPane = new TabbedPaneWrapper(myDisposable);
     for (Configurable configurable : myCurrentConfigurables) {
-      myTabbedPane.addTab(configurable.getDisplayName(), configurable.getIcon(), configurable.createComponent(), null);
+      myTabbedPane.addTab(configurable.getDisplayName(), configurable.createComponent());
     }
     return myTabbedPane.getComponent();
   }
@@ -144,10 +144,6 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
 
     public String getDisplayName() {
       return ProjectBundle.message("tab.name.all.facets");
-    }
-
-    public Icon getIcon() {
-      return null;
     }
 
     public String getHelpTopic() {

@@ -15,9 +15,11 @@
  */
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.openapi.fileChooser.*;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -33,7 +35,7 @@ import java.util.List;
 * @author nik
 */
 public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopyPackagingElement> {
-  public static final Icon COPY_OF_FOLDER_ICON = IconLoader.getIcon("/nodes/copyOfFolder.png");
+  public static final Icon COPY_OF_FOLDER_ICON = AllIcons.Nodes.CopyOfFolder;
 
   DirectoryCopyElementType() {
     super("dir-copy", "Directory Content");

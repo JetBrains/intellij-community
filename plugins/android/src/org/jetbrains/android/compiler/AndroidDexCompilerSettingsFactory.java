@@ -22,7 +22,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,11 +53,6 @@ public class AndroidDexCompilerSettingsFactory implements CompilerSettingsFactor
     @Override
     public String getDisplayName() {
       return AndroidBundle.message("android.dex.compiler.configurable.display.name");
-    }
-
-    @Override
-    public Icon getIcon() {
-      return AndroidUtils.ANDROID_ICON;
     }
 
     @Override

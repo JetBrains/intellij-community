@@ -83,10 +83,6 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     return myScope.getName();
   }
 
-  public Icon getIcon() {
-    return myIcon;
-  }
-
   public NamedScopesHolder getHolder() {
     return getHolder(mySharedCheckbox.isSelected());
   }

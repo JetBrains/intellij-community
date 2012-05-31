@@ -18,19 +18,11 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-
-import javax.swing.*;
 
 public class CodeStyleSpacesConfigurable extends CodeStyleAbstractConfigurable {
   public CodeStyleSpacesConfigurable(CodeStyleSettings settings, CodeStyleSettings cloneSettings) {
     super(settings, cloneSettings, ApplicationBundle.message("title.spaces"));
-  }
-
-  @Override
-  public Icon getIcon() {
-    return StdFileTypes.JAVA.getIcon();
   }
 
   @Override

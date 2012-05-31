@@ -22,7 +22,7 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.logging.LogConsoleBase;
 import com.intellij.diagnostic.logging.LogConsoleListener;
 import com.intellij.facet.ProjectFacetManager;
-import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;

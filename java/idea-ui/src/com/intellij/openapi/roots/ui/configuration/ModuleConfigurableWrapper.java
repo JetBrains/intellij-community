@@ -42,10 +42,6 @@ class ModuleConfigurableWrapper implements ModuleConfigurationEditor {
     return myModuleConfigurable.getDisplayName();
   }
 
-  public Icon getIcon() {
-    return myModuleConfigurable.getIcon();
-  }
-
   public String getHelpTopic() {
     return myModuleConfigurable.getHelpTopic();
   }

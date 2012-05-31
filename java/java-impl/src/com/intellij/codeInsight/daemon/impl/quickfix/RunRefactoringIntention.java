@@ -17,9 +17,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -33,7 +33,7 @@ import javax.swing.*;
  * Date: 9/5/11
  */
 public class RunRefactoringIntention implements IntentionAction, Iconable, LowPriorityAction {
-  public static final Icon REFACTORING_BULB = IconLoader.getIcon("/actions/refactoringBulb.png");
+  public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
   private final RefactoringActionHandler myHandler;
   private final String myCommandName;
 

@@ -20,6 +20,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -29,7 +30,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
@@ -50,7 +50,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
     String text = DesignerBundle.message("designer.properties.show.javadoc");
     presentation.setText(text);
     presentation.setDescription(text);
-    presentation.setIcon(IconLoader.getIcon("/actions/help.png"));
+    presentation.setIcon(AllIcons.Actions.Help);
   }
 
   @Override

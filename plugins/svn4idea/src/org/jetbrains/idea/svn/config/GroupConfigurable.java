@@ -58,10 +58,6 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
     return myProxyGroup.getName();
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

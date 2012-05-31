@@ -82,7 +82,7 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
         if (c != null) {
           UIUtil.addInsets(c, UIUtil.PANEL_SMALL_INSETS);
         }
-        tabbedPane.addTab(editorTab.getDisplayName(), editorTab.getIcon(), c, null);
+        tabbedPane.addTab(editorTab.getDisplayName(), c);
       }
       tabbedPane.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {

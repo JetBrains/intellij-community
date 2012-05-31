@@ -78,10 +78,6 @@ public class DebuggerSteppingConfigurable implements SearchableConfigurable, Con
     return DebuggerBundle.message("debugger.stepping.configurable.display.name");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   @NotNull
   public String getHelpTopic() {
     return "reference.idesettings.debugger.stepping";

@@ -20,18 +20,18 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
-import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 
 public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  private static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
+  private static final Icon ICON = AllIcons.Modules.Annotation;
 
   @Override
   public Icon getIcon() {

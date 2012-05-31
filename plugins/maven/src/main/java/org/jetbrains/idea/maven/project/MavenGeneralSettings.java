@@ -47,7 +47,7 @@ public class MavenGeneralSettings implements Cloneable {
   private MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.FAIL;
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.FAST;
   private MavenExecutionOptions.SnapshotUpdatePolicy snapshotUpdatePolicy = MavenExecutionOptions.SnapshotUpdatePolicy.ALWAYS_UPDATE;
-  private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DO_NOT_UPDATE;
+  private MavenExecutionOptions.PluginUpdatePolicy pluginUpdatePolicy = MavenExecutionOptions.PluginUpdatePolicy.DEFAULT;
 
   private File myEffectiveLocalRepositoryCache;
   private Set<String> myDefaultPluginsCache;

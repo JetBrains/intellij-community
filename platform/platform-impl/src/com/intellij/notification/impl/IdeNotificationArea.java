@@ -15,6 +15,7 @@
  */
 package com.intellij.notification.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -25,7 +26,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -46,10 +46,10 @@ import java.util.List;
  * @author spleaner
  */
 public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
-  private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/notifications.png");
-  private static final Icon ERROR_ICON = IconLoader.getIcon("/ide/error_notifications.png");
-  private static final Icon WARNING_ICON = IconLoader.getIcon("/ide/warning_notifications.png");
-  private static final Icon INFO_ICON = IconLoader.getIcon("/ide/info_notifications.png");
+  private static final Icon EMPTY_ICON = AllIcons.Ide.Notifications;
+  private static final Icon ERROR_ICON = AllIcons.Ide.Error_notifications;
+  private static final Icon WARNING_ICON = AllIcons.Ide.Warning_notifications;
+  private static final Icon INFO_ICON = AllIcons.Ide.Info_notifications;
   public static final String WIDGET_ID = "Notifications";
 
   private StatusBar myStatusBar;

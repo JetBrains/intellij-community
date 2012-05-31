@@ -29,6 +29,7 @@ import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
 import com.intellij.execution.testframework.export.ExportTestResultsAction;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.Disposable;
@@ -37,7 +38,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.config.ToggleBooleanProperty;
 
 import javax.swing.*;
@@ -70,7 +70,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                     ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
-                                                    IconLoader.getIcon("/objectBrowser/sorted.png"),
+                                                    AllIcons.ObjectBrowser.Sorted,
                                                     properties, TestConsoleProperties.SORT_ALPHABETICALLY));
     actionGroup.addSeparator();
 
@@ -94,14 +94,14 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                     properties, TestConsoleProperties.SELECT_FIRST_DEFECT)).setAsSecondary(true);
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
                                                     ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),
-                                                    IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"),
+                                                    AllIcons.RunConfigurations.ScrollToStackTrace,
                                                     properties, TestConsoleProperties.SCROLL_TO_STACK_TRACE)).setAsSecondary(true);
     myScrollToSource = new ScrollToTestSourceAction(properties);
     actionGroup.addAction(myScrollToSource).setAsSecondary(true);
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
                                                     ExecutionBundle
                                                       .message("junit.runing.info.open.source.at.exception.action.description"),
-                                                    IconLoader.getIcon("/runConfigurations/sourceAtException.png"),
+                                                    AllIcons.RunConfigurations.SourceAtException,
                                                     properties, TestConsoleProperties.OPEN_FAILURE_LINE)).setAsSecondary(true);
 
     actionGroup.addAction(new ShowStatisticsAction(properties)).setAsSecondary(true);

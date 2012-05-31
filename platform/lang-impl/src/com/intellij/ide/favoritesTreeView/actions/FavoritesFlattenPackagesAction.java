@@ -15,17 +15,17 @@
  */
 package com.intellij.ide.favoritesTreeView.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesViewTreeBuilder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FavoritesFlattenPackagesAction extends FavoritesToolbarButtonAction {
   public FavoritesFlattenPackagesAction(Project project, FavoritesViewTreeBuilder builder) {
-    super(project, builder, IdeBundle.message("action.flatten.packages"), IconLoader.getIcon("/objectBrowser/flattenPackages.png"));
+    super(project, builder, IdeBundle.message("action.flatten.packages"), AllIcons.ObjectBrowser.FlattenPackages);
   }
 
   @Override

@@ -47,7 +47,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
@@ -619,11 +618,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   @Override
   public String getDisplayName() {
     return ApplicationBundle.message("title.colors.and.fonts");
-  }
-
-  @Override
-  public Icon getIcon() {
-    return IconLoader.getIcon("/general/configurableColorsAndFonts.png");
   }
 
   private void revertChanges(){
@@ -1208,11 +1202,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         });
       }
       return mySubPanel;
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
     }
 
     @Override

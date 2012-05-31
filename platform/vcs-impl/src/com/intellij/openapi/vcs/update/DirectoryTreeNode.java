@@ -15,22 +15,22 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.io.File;
 
 /**
  * author: lesya
  */
 public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
-  private static final Icon OPEN_ICON = IconLoader.getIcon("/nodes/folderOpen.png");
-  private static final Icon COLLAPSED_ICON = IconLoader.getIcon("/nodes/folder.png");
+  private static final Icon OPEN_ICON = AllIcons.Nodes.FolderOpen;
+  private static final Icon COLLAPSED_ICON = AllIcons.Nodes.Folder;
 
   public DirectoryTreeNode(String path, Project project, String parentPath) {
     super(path, SimpleTextAttributes.ERROR_ATTRIBUTES, project, parentPath);

@@ -15,10 +15,10 @@
  */
 package com.intellij.ui.components.labels;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -55,7 +55,7 @@ public class LinkLabel extends JLabel {
   private boolean myClickIsBeingProcessed;
   private boolean myPaintDefaultIcon;
   protected static final int DEFAULT_ICON_GAP = 2;
-  private static final Icon LINK = IconLoader.getIcon("/ide/link.png");
+  private static final Icon LINK = AllIcons.Ide.Link;
 
   public LinkLabel() {
     this("", LINK);

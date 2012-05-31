@@ -296,10 +296,6 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     return "Confirmation";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   @NotNull
   public String getHelpTopic() {
     return "project.propVCSSupport.Confirmation";

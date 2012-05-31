@@ -15,10 +15,10 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -36,7 +36,7 @@ import java.util.List;
 * @author nik
 */
 public class ExtractedDirectoryElementType extends PackagingElementType<ExtractedDirectoryPackagingElement> {
-  public static final Icon EXTRACTED_FOLDER_ICON = IconLoader.getIcon("/nodes/extractedFolder.png");
+  public static final Icon EXTRACTED_FOLDER_ICON = AllIcons.Nodes.ExtractedFolder;
 
   ExtractedDirectoryElementType() {
     super("extracted-dir", "Extracted Directory");

@@ -15,7 +15,7 @@
  */
 package com.intellij.ui.components;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
@@ -55,7 +55,7 @@ public class JBComboBoxLabel extends JPanel {
   }
 
   public void setSelectionIcon() {
-    myIcon.setIcon(IconLoader.getIcon("/general/combo.png"));
+    myIcon.setIcon(AllIcons.General.Combo);
   }
 
   @Override

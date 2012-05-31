@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.dependencyAnalysis;
 
 import com.intellij.ProjectTopics;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -23,13 +24,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootAdapter;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleSourceOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -179,14 +182,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   @Override
   public String getDisplayName() {
     return "Classpath Details";
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Icon getIcon() {
-    return null;
   }
 
   /**
@@ -573,8 +568,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     /**
      * {@inheritDoc}
      */
-    @Override
-    public Icon getIcon() {
+    private Icon getIcon() {
       return myExplanation.getIcon();
     }
 
@@ -655,15 +649,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     /**
      * {@inheritDoc}
      */
-    @Override
-    public Icon getIcon() {
-      // Icon is displayed using cell appearance
-      return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Nls
     @Override
     public String getDisplayName() {
@@ -680,7 +665,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * The constructor
      */
     public SdkFilterAction() {
-      super("Include SDK", "If selected, the SDK classes are included", IconLoader.findIcon("/general/jdk.png"));
+      super("Include SDK", "If selected, the SDK classes are included", AllIcons.General.Jdk);
     }
 
     /**
@@ -709,7 +694,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * The constructor
      */
     public UrlModeAction() {
-      super("Use URL mode", "If selected, the URLs are displayed, otherwise order entries", IconLoader.findIcon("/nodes/ppFile.png"));
+      super("Use URL mode", "If selected, the URLs are displayed, otherwise order entries", AllIcons.Nodes.PpFile);
     }
 
     /**

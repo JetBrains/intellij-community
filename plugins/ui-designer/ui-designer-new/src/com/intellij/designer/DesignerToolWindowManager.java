@@ -19,6 +19,7 @@ import com.intellij.designer.componentTree.ComponentTree;
 import com.intellij.designer.componentTree.ComponentTreeBuilder;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -231,7 +232,7 @@ public final class DesignerToolWindowManager implements ProjectComponent {
       }
     };
 
-    AnAction collapseAll = new AnAction("Collapse All", null, IconLoader.getIcon("/general/collapseAll.png")) {
+    AnAction collapseAll = new AnAction("Collapse All", null, AllIcons.General.CollapseAll) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myTreeBuilder != null) {

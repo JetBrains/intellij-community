@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.conflicts;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -74,7 +74,7 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
 
 //    setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
 
-    myLinksPanel.add(new InplaceButton("Show options dialog", IconLoader.getIcon("/general/ideOptions.png"), new ActionListener() {
+    myLinksPanel.add(new InplaceButton("Show options dialog", AllIcons.General.IdeOptions, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
 
         ShowSettingsUtil.getInstance().editConfigurable(myTracker.getProject(),

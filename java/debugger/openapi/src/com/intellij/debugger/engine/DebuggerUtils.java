@@ -54,6 +54,10 @@ public abstract class DebuggerUtils {
       "byte", "short", "int", "long", "float", "double", "boolean", "char"
   ));
 
+  public static void cleanupAfterProcessFinish(DebugProcess debugProcess) {
+    debugProcess.putUserData(TO_STRING_METHOD_KEY, null);
+  }
+
   @NonNls
   public static String getValueAsString(final EvaluationContext evaluationContext, Value value) throws EvaluateException {
     try {

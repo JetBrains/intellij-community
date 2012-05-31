@@ -15,6 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -29,7 +30,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -52,8 +52,8 @@ import java.util.*;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
-  public static final Icon ourDot = IconLoader.getIcon("/general/mdot.png");
-  public static final Icon ourNotDot = IconLoader.getIcon("/general/mdot-empty.png");
+  public static final Icon ourDot = AllIcons.General.Mdot;
+  public static final Icon ourNotDot = AllIcons.General.Mdot_empty;
   protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
   private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
 

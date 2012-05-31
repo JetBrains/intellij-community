@@ -32,18 +32,18 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -431,65 +432,76 @@ public class GroovyInlineMethodUtil {
    * @param method given method
    */
   public static void replaceParametersWithArguments(GrCallExpression call, GrMethod method) throws IncorrectOperationException {
+    GrParameter[] parameters = method.getParameters();
+    if (parameters.length == 0) return;
+
     GrArgumentList argumentList = call.getArgumentList();
     if (argumentList == null) {
       setDefaultValuesToParameters(method, null, call);
       return;
     }
-    // first parameter may have map type
-    final GrNamedArgument[] namedArguments = argumentList.getNamedArguments();
-    boolean firstParamIsMap = namedArguments.length > 0;
 
-    ArrayList<GrExpression> exprs = new ArrayList<GrExpression>();
-    if (firstParamIsMap) {
-      StringBuilder mapArg = new StringBuilder();
-      mapArg.append('[');
-      for (GrNamedArgument namedArgument : namedArguments) {
-        mapArg.append(namedArgument.getText()).append(", ");
-      }
+    Project project = call.getProject();
 
-      mapArg.delete(mapArg.length() - 2, mapArg.length());
-      mapArg.append(']');
-      exprs.add(GroovyPsiElementFactory.getInstance(call.getProject()).createExpressionFromText(mapArg.toString()));
+    GrClosureSignature signature = GrClosureSignatureUtil.createSignature(call);
+    if (signature == null) {
+      return;
     }
+    GrClosureSignatureUtil.ArgInfo<PsiElement>[] infos = GrClosureSignatureUtil.mapParametersToArguments(
+      signature,
+      call.getNamedArguments(),
+      call.getExpressionArguments(),
+      call.getClosureArguments(),
+      call, true, false
+    );
+    if (infos == null) return;
 
-    ContainerUtil.addAll(exprs, argumentList.getExpressionArguments());
-    ContainerUtil.addAll(exprs, call.getClosureArguments());
+    for (int i = 0; i < infos.length; i++) {
+      GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo = infos[i];
+      GrParameter parameter = parameters[i];
 
-    GrParameter[] parameters = method.getParameters();
-    if (parameters.length == 0) return;
-    GrParameter firstParam = parameters[0];
-    while (exprs.size() > parameters.length) {
-      exprs.remove(exprs.size() - 1);
-    }
-
-    int nonDefault = 0;
-    for (GrParameter parameter : parameters) {
-      if (!(firstParam == parameter && firstParamIsMap)) {
-        if (parameter.getDefaultInitializer() == null) {
-          nonDefault++;
-        }
+      final GrExpression arg = inferArg(signature, parameters, parameter, argInfo, project);
+      if (arg != null) {
+        replaceAllOccurrencesWithExpression(method, call, arg, parameter);
       }
     }
-    nonDefault = exprs.size() - nonDefault - (firstParamIsMap ? 1 : 0);
-    // Parameters that will be replaced by its default values
-    Set<String> nameFilter = new HashSet<String>();
-    for (GrParameter parameter : parameters) {
-      if (!(firstParam == parameter && firstParamIsMap)) {
-        GrExpression initializer = parameter.getDefaultInitializer();
-        if (initializer != null) {
-          if (nonDefault > 0) {
-            nonDefault--;
+  }
+
+  @Nullable
+  private static GrExpression inferArg(GrClosureSignature signature,
+                                       GrParameter[] parameters,
+                                       GrParameter parameter,
+                                       GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo,
+                                       Project project) {
+    if (argInfo == null) return null;
+    List<PsiElement> arguments = argInfo.args;
+
+    if (argInfo.isMultiArg) { //arguments for Map and varArg
+      final PsiType type = parameter.getDeclaredType();
+      return GroovyRefactoringUtil.generateArgFromMultiArg(signature.getSubstitutor(), arguments, type, project);
+    }
+    else {  //arguments for simple parameters
+      if (arguments.size() == 1) { //arg exists
+        PsiElement arg = arguments.iterator().next();
+        if (isVararg(parameter, parameters)) {
+          if (arg instanceof GrSafeCastExpression) {
+            PsiElement expr = ((GrSafeCastExpression)arg).getOperand();
+            if (expr instanceof GrListOrMap && !((GrListOrMap)expr).isMap()) {
+              return ((GrListOrMap)expr);
+            }
           }
-          else {
-            nameFilter.add(parameter.getName());
-          }
         }
+
+        return (GrExpression)arg;
+      }
+      else { //arg is skipped. Parameter is optional
+        return parameter.getDefaultInitializer();
       }
     }
+  }
 
-    setDefaultValuesToParameters(method, nameFilter, call);
-    setValuesToParameters(method, call, exprs, nameFilter);
+  private static boolean isVararg(GrParameter p, GrParameter[] parameters) {
+    return parameters[parameters.length - 1] == p && p.getType() instanceof PsiArrayType;
   }
 
   /**
@@ -512,32 +524,6 @@ public class GroovyInlineMethodUtil {
       if (nameFilter.contains(parameter.getName()) && initializer != null) {
         replaceAllOccurrencesWithExpression(method, call, initializer, parameter);
       }
-    }
-  }
-
-  /**
-   * Replace first m parameters by given values, where m is length of given values vector
-   *
-   * @param method
-   * @param call
-   * @param values          values vector
-   * @param nameFilter
-   */
-  private static void setValuesToParameters(GrMethod method, GrCallExpression call, List<GrExpression> values, Set<String> nameFilter)
-    throws IncorrectOperationException {
-    GrParameter[] parameters = method.getParameters();
-    if (parameters.length == 0) return;
-    
-    if (nameFilter == null) nameFilter = new HashSet<String>();
-    
-    int i = 0;
-    for (GrExpression value : values) {
-      while (i < parameters.length && nameFilter.contains(parameters[i].getName())) i++;
-      if (i < parameters.length) {
-        GrParameter parameter = parameters[i];
-        replaceAllOccurrencesWithExpression(method, call, value, parameter);
-      }
-      i++;
     }
   }
 

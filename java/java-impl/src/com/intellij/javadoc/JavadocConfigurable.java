@@ -146,10 +146,6 @@ public final class JavadocConfigurable implements Configurable {
     return null;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "project.propJavaDoc";
   }
