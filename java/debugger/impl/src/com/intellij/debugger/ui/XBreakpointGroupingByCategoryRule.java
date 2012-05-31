@@ -15,8 +15,11 @@
  */
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.ui.breakpoints.AnyExceptionBreakpoint;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
+import com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint;
+import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,12 +39,16 @@ class XBreakpointGroupingByCategoryRule<B> extends XBreakpointGroupingRule<B, XB
   public XBreakpointCategoryGroup getGroup(@NotNull B b, @NotNull Collection<XBreakpointCategoryGroup> groups) {
     if (b instanceof Breakpoint) {
       final Breakpoint breakpoint = (Breakpoint)b;
+      Key<? extends Breakpoint> category = breakpoint.getCategory();
+      if (category.equals(AnyExceptionBreakpoint.ANY_EXCEPTION_BREAKPOINT)) {
+        category = ExceptionBreakpoint.CATEGORY;
+      }
       for (XBreakpointCategoryGroup group : groups) {
-        if (group.getCategory().equals(breakpoint.getCategory())) {
+        if (group.getCategory().equals(category)) {
           return group;
         }
       }
-      final BreakpointFactory factory = BreakpointFactory.getInstance(breakpoint.getCategory());
+      final BreakpointFactory factory = BreakpointFactory.getInstance(category);
       if (factory != null) {
         return new XBreakpointCategoryGroup(factory);
       }
