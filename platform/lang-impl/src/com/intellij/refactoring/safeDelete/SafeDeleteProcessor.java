@@ -243,16 +243,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
 
     UsageViewManager manager = UsageViewManager.getInstance(myProject);
-    UsageTarget[] targets = new UsageTarget[myElements.length];
-    for (int i = 0; i < targets.length; i++) {
-      targets[i] = new PsiElement2UsageTargetAdapter(myElements[i]);
-    }
-
-    final UsageView usageView = manager.showUsages(
-      targets,
-      UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myElements), usages),
-      presentation
-    );
+    final UsageView usageView = showUsages(usages, presentation, manager);
     usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
                                         RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"));
     usageView.addPerformOperationAction(new Runnable() {
@@ -266,6 +257,24 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         execute(filteredUsages);
       }
     }, "Delete Anyway", RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"));
+  }
+
+  private UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager) {
+    for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+       if (delegate instanceof SafeDeleteProcessorDelegateBase) {
+         final UsageView view = ((SafeDeleteProcessorDelegateBase)delegate).showUsages(usages, presentation, manager, myElements);
+         if (view != null) return view;
+       }
+    }
+    UsageTarget[] targets = new UsageTarget[myElements.length];
+    for (int i = 0; i < targets.length; i++) {
+      targets[i] = new PsiElement2UsageTargetAdapter(myElements[i]);
+    }
+
+    return manager.showUsages(targets,
+                              UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(myElements), usages),
+                              presentation
+    );
   }
 
   public PsiElement[] getElements() {

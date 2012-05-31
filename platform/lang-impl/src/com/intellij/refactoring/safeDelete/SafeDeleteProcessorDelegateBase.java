@@ -17,6 +17,10 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -31,5 +35,10 @@ public abstract class SafeDeleteProcessorDelegateBase implements SafeDeleteProce
   @Override
   public Collection<? extends PsiElement> getElementsToSearch(PsiElement element, Collection<PsiElement> allElementsToDelete) {
     return getElementsToSearch(element, null, allElementsToDelete);
+  }
+
+  @Nullable
+  public UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager, PsiElement[] elements) {
+    return null;
   }
 }

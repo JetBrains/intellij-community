@@ -16,6 +16,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +45,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -144,6 +146,34 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     else {
       return Collections.singletonList(element);
     }
+  }
+
+  @Override
+  public UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager, PsiElement[] elements) {
+    final List<PsiElement> overridingMethods = new ArrayList<PsiElement>();
+    final List<UsageInfo> others = new ArrayList<UsageInfo>();
+    for (UsageInfo usage : usages) {
+      if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
+        overridingMethods.add(((SafeDeleteOverridingMethodUsageInfo)usage).getOverridingMethod());
+      } else {
+        others.add(usage);
+      }
+    }
+
+    UsageTarget[] targets = new UsageTarget[elements.length + overridingMethods.size()];
+    for (int i = 0; i < targets.length; i++) {
+      if (i < elements.length) {
+        targets[i] = new PsiElement2UsageTargetAdapter(elements[i]);
+      } else {
+        targets[i] = new PsiElement2UsageTargetAdapter(overridingMethods.get(i - elements.length));
+      }
+    }
+
+    return manager.showUsages(targets,
+                              UsageInfoToUsageConverter.convert(new UsageInfoToUsageConverter.TargetElementsDescriptor(elements),
+                                                                others.toArray(new UsageInfo[others.size()])),
+                              presentation
+    );
   }
 
   public Collection<PsiElement> getAdditionalElementsToDelete(final PsiElement element, final Collection<PsiElement> allElementsToDelete,
