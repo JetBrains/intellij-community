@@ -48,7 +48,7 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
     MappedByteBuffer buffer = myBuffer;
     myBuffer = null;
-    if (!clean(buffer)) {
+    if (!clean(buffer, isDirty())) {
       LOG.error("Unmapping failed for: " + myFile);
     }
 
@@ -74,10 +74,10 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
     return buffer;
   }
 
-  private static boolean clean(final MappedByteBuffer buffer) {
+  private static boolean clean(final MappedByteBuffer buffer, boolean dirty) {
     if (buffer == null) return true;
 
-    if (!tryForce(buffer)) {
+    if (dirty && !tryForce(buffer)) {
       return false;
     }
 
@@ -117,8 +117,8 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
   @Override
   public void flush() {
     final MappedByteBuffer buffer = myBuffer;
-    if (buffer != null) {
-      tryForce(buffer);
+    if (buffer != null && isDirty()) {
+      if(tryForce(buffer)) myDirty = false;
     }
   }
 }

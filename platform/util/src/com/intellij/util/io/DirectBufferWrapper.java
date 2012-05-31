@@ -48,7 +48,7 @@ public abstract class DirectBufferWrapper extends ByteBufferWrapper {
 
   @Override
   public void unmap() {
-    flush();
+    if (isDirty()) flush();
     myBuffer = null;
   }
 }

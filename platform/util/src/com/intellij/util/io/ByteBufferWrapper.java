@@ -27,6 +27,7 @@ public abstract class ByteBufferWrapper {
   protected final File myFile;
   protected final long myPosition;
   protected final long myLength;
+  protected volatile boolean myDirty;
 
   protected ByteBufferWrapper(final File file, final long offset, final long length) {
     myFile = file;
@@ -36,6 +37,14 @@ public abstract class ByteBufferWrapper {
 
   @Nullable
   public abstract ByteBuffer getCachedBuffer();
+
+  public final void markDirty() {
+    if (!myDirty) myDirty = true;
+  }
+
+  public final boolean isDirty() {
+    return myDirty;
+  }
 
   public abstract ByteBuffer getBuffer() throws IOException;
 
