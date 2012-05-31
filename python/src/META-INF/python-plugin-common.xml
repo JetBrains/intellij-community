@@ -933,7 +933,7 @@
     </action>
 
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction" text="Python Package"
-            description="Create a new directory and __init__.py inside it" icon="/nodes/packageClosed.png">
+            description="Create a new directory and __init__.py inside it" icon="AllIcons.Nodes.PackageClosed">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
 
