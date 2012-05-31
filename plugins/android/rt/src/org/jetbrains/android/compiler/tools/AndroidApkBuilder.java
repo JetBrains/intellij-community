@@ -177,7 +177,7 @@ public class AndroidApkBuilder {
         continue;
       }
 
-      if (!dstDir.mkdirs()) {
+      if (!dstDir.exists() && !dstDir.mkdirs()) {
         map.get(ERROR).add("Cannot create directory: " + FileUtil.toSystemDependentName(dstDir.getPath()));
         continue;
       }
