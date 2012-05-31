@@ -85,7 +85,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
     final LocalQuickFix[] result = new LocalQuickFix[fixes.length];
     
     for (int i = 0; i < fixes.length; i++) {
-      if (fixes[i].isApplicable(startElement, endElement, true)) {
+      if (fixes[i].isApplicable(startElement, endElement, AndroidQuickfixContexts.BatchContext.TYPE)) {
         result[i] = new MyLocalQuickFix(fixes[i]);
       }
     }
@@ -349,7 +349,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      myLintQuickFix.apply(descriptor.getStartElement(), descriptor.getEndElement(), null);
+      myLintQuickFix.apply(descriptor.getStartElement(), descriptor.getEndElement(), AndroidQuickfixContexts.BatchContext.getInstance());
     }
   }
 }
