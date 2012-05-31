@@ -100,16 +100,4 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
     }
     return Collections.emptyList();
   }
-
-  private static Collection<TextRange> selectWithoutDocComment(@NotNull PsiElement[] children,
-                                                               @NotNull CharSequence editorText) {
-    int start = CodeBlockOrInitializerSelectioner.findOpeningBrace(children);
-    // in non-Java PsiClasses, there can be no opening brace
-    if (start != 0) {
-      int end = CodeBlockOrInitializerSelectioner.findClosingBrace(children, start);
-
-      return expandToWholeLine(editorText, new TextRange(start, end));
-    }
-    return Collections.emptyList();
-  }
 }
