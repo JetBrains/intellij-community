@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -72,6 +73,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -593,16 +595,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Runnable action = new Runnable() {
       @Override
       public void run() {
-        //noinspection unchecked
         boolean failed = false;
+        //noinspection unchecked
         for (List<PsiElement> elements : new List[]{elements1, elements2}) {
           int nextLimit = chunkSize;
           for (int i = 0; i < elements.size(); i++) {
             PsiElement element = elements.get(i);
             progress.checkCanceled();
 
+            PsiElement parent = element.getParent();
             if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
-              skipParentsSet.add(element.getParent());
+              skipParentsSet.add(parent);
               continue;
             }
 
@@ -637,6 +640,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               nextLimit = i + chunkSize;
             }
 
+            TextRange elementRange = element.getTextRange();
             //noinspection ForLoopReplaceableByForEach
             for (int j = 0; j < holder.size(); j++) {
               final HighlightInfo info = holder.get(j);
@@ -646,11 +650,18 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
               if (isError) {
                 if (!forceHighlightParents) {
-                  skipParentsSet.add(element.getParent());
+                  skipParentsSet.add(parent);
                 }
                 myErrorFound = true;
               }
+              // if this highlight info range is exactly the same as the element range we are visiting
+              // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
+              info.bijective = elementRange.equalsToRange(info.startOffset, info.endOffset);
+
               myTransferToEDTQueue.offer(info);
+            }
+            if (parent == null || !Comparing.equal(elementRange, parent.getTextRange())) {
+              killAbandonedHighlightsUnder(elementRange, holder, progress);
             }
           }
           advanceProgress(elements.size() - (nextLimit-chunkSize));
@@ -660,6 +671,36 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     };
 
     analyzeByVisitors(progress, visitors, holder, 0, action);
+  }
+
+  private void killAbandonedHighlightsUnder(@NotNull final TextRange range,
+                                            @NotNull final HighlightInfoHolder holder,
+                                            @NotNull final ProgressIndicator progress) {
+    DaemonCodeAnalyzerImpl.processHighlights(getDocument(), myProject, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(final HighlightInfo existing) {
+        if (existing.bijective &&
+            existing.group == Pass.UPDATE_ALL &&
+            range.equalsToRange(existing.getActualStartOffset(), existing.getActualEndOffset())) {
+          for (int j = 0; j < holder.size(); j++) {
+            HighlightInfo created = holder.get(j);
+            if (existing.equalsByActualOffset(created)) return true;
+          }
+          // seems that highlight info "existing" is going to disappear
+          // remove it earlier
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              RangeHighlighterEx highlighter = existing.highlighter;
+              if (!progress.isCanceled() && highlighter != null) {
+                highlighter.dispose();
+              }
+            }
+          });
+        }
+        return true;
+      }
+    });
   }
 
   private void analyzeByVisitors(@NotNull final ProgressIndicator progress,
