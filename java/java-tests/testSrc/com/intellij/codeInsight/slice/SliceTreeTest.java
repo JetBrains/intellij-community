@@ -27,7 +27,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement element = new SliceHandler(true).getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
-    Collection<HighlightInfo> errors = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.ERROR);
+    Collection<HighlightInfo> errors = highlightErrors();
     assertEmpty(errors);
 
     SliceAnalysisParams params = new SliceAnalysisParams();
