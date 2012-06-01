@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NullUtils;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
@@ -63,7 +64,7 @@ class ArgumentListGenerator {
     }
 
     final PsiSubstitutor substitutor = signature == null ? PsiSubstitutor.EMPTY : signature.getSubstitutor();
-    if (argInfos == null) {
+    if (argInfos == null || NullUtils.hasNull(argInfos)) {
       generateSimple(exprs, namedArgs, clArgs, context, substitutor);
       return;
     }
