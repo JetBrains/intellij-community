@@ -222,6 +222,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   public void projectClosed() {
+    PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
     if (myToggleDetailsAction.isSelected(null)) {
       myListenersForShortDiff.off();
     }
@@ -555,7 +556,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   @Override
   public void disposeComponent() {
-    PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
   }
 
   @Override
