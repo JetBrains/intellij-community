@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * @author oleg
@@ -30,13 +31,18 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   }
 
   private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<FoldingDescriptor> descriptors) {
-    final ASTNode[] children = node.getChildren(myTokenSet);
-    if (children.length > 0) {
-      if (node.getTreeParent() !=null && node.getTextLength() > 1) {
-        descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+    final Queue<ASTNode> toProcess = new LinkedList<ASTNode>();
+    toProcess.add(node);
+    while (!toProcess.isEmpty()) {
+      final ASTNode current = toProcess.remove();
+      if (current.getTreeParent() != null
+          && current.getTextLength() > 1
+          && myTokenSet.contains(current.getElementType()))
+      {
+        descriptors.add(new FoldingDescriptor(current, current.getTextRange()));
       }
-      for (ASTNode child : children) {
-        collectDescriptors(child, descriptors);
+      for (ASTNode child = current.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        toProcess.add(child);
       }
     }
   }

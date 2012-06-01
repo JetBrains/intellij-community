@@ -1,13 +1,11 @@
 package org.jetbrains.android.inspections.lint;
 
 import com.android.sdklib.SdkConstants;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -15,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 class InefficientWeightQuickFix implements AndroidLintQuickFix {
 
   @Override
-  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @Nullable Editor editor) {
+  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull AndroidQuickfixContexts.Context context) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(startElement, XmlTag.class);
     if (tag == null) {
       return;
@@ -38,7 +36,9 @@ class InefficientWeightQuickFix implements AndroidLintQuickFix {
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement startElement, @NotNull PsiElement endElement, boolean inBatchMode) {
+  public boolean isApplicable(@NotNull PsiElement startElement,
+                              @NotNull PsiElement endElement,
+                              @NotNull AndroidQuickfixContexts.ContextType contextType) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(startElement, XmlTag.class);
     if (tag == null) {
       return false;

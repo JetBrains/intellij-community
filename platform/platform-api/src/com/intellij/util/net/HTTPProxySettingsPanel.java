@@ -22,8 +22,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -164,10 +164,6 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   @Nls
   public String getDisplayName() {
     return "HTTP Proxy";
-  }
-
-  public Icon getIcon() {
-    return null;
   }
 
   public String getHelpTopic() {

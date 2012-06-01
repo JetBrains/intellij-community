@@ -46,8 +46,8 @@
       <reference ref="Annotate"/>
       <separator/>
 
-      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" icon="/actions/checkOut.png"/>
-      <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction" icon="/actions/commit.png"/>
+      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" />
+      <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction" />
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
       <!--<action id="hg4idea.mq.rebase" class="org.zmlx.hg4idea.action.HgMqRebaseAction"/>-->

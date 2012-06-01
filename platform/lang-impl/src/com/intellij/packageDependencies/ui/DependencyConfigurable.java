@@ -68,10 +68,6 @@ public class DependencyConfigurable extends BaseConfigurable {
     return AnalysisScopeBundle.message("dependency.configurable.display.name");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "editing.analyzeDependencies.validation";
   }

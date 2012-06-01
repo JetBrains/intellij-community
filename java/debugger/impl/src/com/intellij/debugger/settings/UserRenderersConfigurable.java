@@ -64,10 +64,6 @@ public class UserRenderersConfigurable implements SearchableConfigurable, Config
     return DebuggerBundle.message("user.renderers.configurable.display.name");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.idesettings.debugger.typerenderers"; 
   }

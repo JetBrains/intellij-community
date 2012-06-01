@@ -96,12 +96,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
         return "Copyright Profiles";
     }
 
-    @Nullable
-    public Icon getIcon() {
-        return null;
-    }
-
-    @Nullable
+  @Nullable
     @NonNls
     public String getHelpTopic() {
         return "copyright.profiles";

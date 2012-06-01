@@ -307,12 +307,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         if (type == HyperlinkEvent.EventType.ACTIVATED) {
           manager.navigateByLink(DocumentationComponent.this, e.getDescription());
         }
-        else if (type == HyperlinkEvent.EventType.ENTERED) {
-          myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
-        else if (type == HyperlinkEvent.EventType.EXITED) {
-          myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
       }
     };
     myEditorPane.addHyperlinkListener(hyperlinkListener);

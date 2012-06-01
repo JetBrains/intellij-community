@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -65,11 +64,6 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
   @Nls
   public String getDisplayName() {
     return IdeBundle.message("file.encodings.configurable");
-  }
-
-  @Nullable
-  public Icon getIcon() {
-    return AllIcons.General.ConfigureEncoding;
   }
 
   @Nullable

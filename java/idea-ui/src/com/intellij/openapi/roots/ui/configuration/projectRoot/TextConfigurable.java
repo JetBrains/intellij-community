@@ -85,10 +85,6 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
     return myDisplayName;
   }
 
-  public Icon getIcon() {
-    return myOpenedIcon;
-  }
-
   public Icon getIcon(final boolean open) {
     return open ? myOpenedIcon : myClosedIcon;
   }

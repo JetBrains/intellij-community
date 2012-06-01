@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,11 +92,6 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   @Nls
   public String getDisplayName() {
     return "SDKs";
-  }
-
-  @Nullable
-  public Icon getIcon() {
-    return null;
   }
 
   @Nullable

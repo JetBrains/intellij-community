@@ -45,10 +45,6 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
     return "Copyright";
   }
 
-  public Icon getIcon() {
-    return icon;
-  }
-
   public String getHelpTopic() {
     return getId();
   }

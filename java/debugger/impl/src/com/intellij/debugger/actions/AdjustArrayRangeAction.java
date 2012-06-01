@@ -23,7 +23,6 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
@@ -31,8 +30,6 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class AdjustArrayRangeAction extends DebuggerAction {
   public void actionPerformed(AnActionEvent e) {
@@ -144,10 +141,6 @@ public class AdjustArrayRangeAction extends DebuggerAction {
 
     public String getDisplayName() {
       return myTitle;
-    }
-
-    public Icon getIcon() {
-      return null;
     }
 
     public String getHelpTopic() {

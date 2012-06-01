@@ -4,7 +4,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubSettings;
-import org.jetbrains.plugins.github.GithubUtil;
 
 import javax.swing.*;
 
@@ -21,10 +20,6 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
 
   public String getDisplayName() {
     return "GitHub";
-  }
-
-  public Icon getIcon() {
-    return GithubUtil.GITHUB_ICON;
   }
 
   @NotNull

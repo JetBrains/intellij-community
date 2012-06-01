@@ -63,7 +63,7 @@ public abstract class ArtifactConfigurableBase extends ProjectStructureElementCo
     return getArtifact().getName();
   }
 
-  public Icon getIcon() {
+  public Icon getIcon(boolean open) {
     return getArtifact().getArtifactType().getIcon();
   }
 

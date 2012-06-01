@@ -47,10 +47,6 @@ public class EclipseCompilerConfigurable implements Configurable {
     return null;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   @Nullable
   @NonNls
   public String getHelpTopic() {

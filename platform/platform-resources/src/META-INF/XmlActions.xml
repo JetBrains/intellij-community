@@ -1,4 +1,4 @@
-<component xmlns:xi="http://www.w3.org/2001/XInclude">
+<component>
   <actions>
 
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
@@ -62,7 +62,7 @@
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
     </group>
 
-    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonEmptyActionGroup" text="XML Configuration File" popup="true" icon="/fileTypes/xml.png">
+    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonEmptyActionGroup" text="XML Configuration File" popup="true" icon="AllIcons.FileTypes.Xml">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
@@ -74,7 +74,7 @@
 
     <action id="OpenInBrowser" class="com.intellij.ide.browsers.OpenFileInBrowserAction"
             text="Open in _Browser" description="Open a selected file in browser"
-            icon="/nodes/ppWeb.png">
+            icon="AllIcons.Nodes.PpWeb">
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="CutCopyPasteGroup"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource"/>

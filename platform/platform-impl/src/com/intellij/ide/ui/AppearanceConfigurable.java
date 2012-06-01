@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -97,10 +96,6 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myTransparencyPanel.setVisible(WindowManagerEx.getInstanceEx().isAlphaModeSupported());
 
     return myComponent.myPanel;
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableAppearance;
   }
 
   public void apply() {

@@ -171,10 +171,6 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     return "Issue Navigation";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "project.propVCSSupport.Issue.Navigation";
   }

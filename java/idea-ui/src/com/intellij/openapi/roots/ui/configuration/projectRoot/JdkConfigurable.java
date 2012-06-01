@@ -78,7 +78,7 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
     return myProjectJdk.getName();
   }
 
-  public Icon getIcon() {
+  public Icon getIcon(boolean open) {
     return ((SdkType) myProjectJdk.getSdkType()).getIcon();
   }
 

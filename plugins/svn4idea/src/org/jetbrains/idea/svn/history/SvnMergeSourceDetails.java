@@ -97,10 +97,6 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     return null;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }
@@ -226,10 +222,6 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     @Nls
     public String getDisplayName() {
       return getBannerSlogan();  
-    }
-
-    public Icon getIcon() {
-      return null;
     }
 
     public String getHelpTopic() {

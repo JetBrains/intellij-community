@@ -352,10 +352,6 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     return ProjectBundle.message("project.facets.display.name");
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   public String getHelpTopic() {
     final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(DataManager.getInstance().getDataContext());
     if (myTree.equals(component)) {

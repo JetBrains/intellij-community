@@ -43,10 +43,6 @@ public abstract class SvnUpdateConfigurable implements Configurable {
     myPanel.apply(SvnConfiguration.getInstance(myProject));
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public JComponent createComponent() {
     myPanel = createPanel();
     return myPanel.getPanel();

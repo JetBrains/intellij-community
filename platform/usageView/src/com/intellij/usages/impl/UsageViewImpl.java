@@ -34,7 +34,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -47,6 +47,7 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -237,10 +238,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       });
     }
-    myTransferToEDTQueue = new TransferToEDTQueue<Usage>("Insert usages", new Processor<Usage>() {
+    myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("Insert usages", new Processor<Runnable>() {
       @Override
-      public boolean process(Usage usage) {
-        appendUsage(usage);
+      public boolean process(Runnable runnable) {
+        runnable.run();
         return true;
       }
     }, new Condition<Object>() {
@@ -672,7 +673,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
               if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
                 ((UsageViewManagerImpl)usageViewManager).showTooManyUsagesWarning(indicator, waitWhileUserClick, usageCountWithoutDefinition.get());
               }
-              appendUsageLater(usage);
+              appendUsage(usage);
             }
             ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
             return indicator == null || !indicator.isCanceled();
@@ -699,10 +700,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private final TransferToEDTQueue<Usage> myTransferToEDTQueue;
-  public void appendUsageLater(@NotNull Usage usage) {
-    myTransferToEDTQueue.offer(usage);
-  }
+  private final TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   public void drainQueuedUsageNodes() {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -718,6 +716,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     doAppendUsage(usage);
   }
 
+  @Nullable
   public UsageNode doAppendUsage(@NotNull Usage usage) {
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -725,7 +724,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       // because the view is built incrementally, the usage may be already invalid, so need to filter such cases
       return null;
     }
-    UsageNode node = myBuilder.appendUsage(usage);
+    UsageNode node = myBuilder.appendUsage(usage, new Consumer<Runnable>() {
+      @Override
+      public void consume(Runnable runnable) {
+        myTransferToEDTQueue.offer(runnable);
+      }
+    });
     myUsageNodes.put(usage, node == null ? NULL_NODE : node);
     return node;
   }
@@ -934,7 +938,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final Set<VirtualFile> readOnlyUsages = getReadOnlyUsagesFiles();
 
     return readOnlyUsages.isEmpty() ||
-           !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyUsages)).hasReadonlyFiles();
+           !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(readOnlyUsages)).hasReadonlyFiles();
   }
 
   @NotNull

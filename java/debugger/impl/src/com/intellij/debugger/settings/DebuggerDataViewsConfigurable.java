@@ -176,10 +176,6 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     return panel;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public void apply() {
     final ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();

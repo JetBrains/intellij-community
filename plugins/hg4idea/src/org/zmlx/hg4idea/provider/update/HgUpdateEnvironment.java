@@ -98,10 +98,6 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       return "Update";
     }
 
-    public Icon getIcon() {
-      return null;
-    }
-
     public String getHelpTopic() {
       return null;
     }

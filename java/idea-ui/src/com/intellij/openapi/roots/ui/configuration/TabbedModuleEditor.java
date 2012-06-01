@@ -43,7 +43,7 @@ public abstract class TabbedModuleEditor extends ModuleEditor {
     myTabbedPane = new TabbedPaneWrapper(this);
 
     for (ModuleConfigurationEditor editor : myEditors) {
-      myTabbedPane.addTab(editor.getDisplayName(), editor.getIcon(), editor.createComponent(), null);
+      myTabbedPane.addTab(editor.getDisplayName(), editor.createComponent());
       editor.reset();
     }
     restoreSelectedEditor();

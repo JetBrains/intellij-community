@@ -32,9 +32,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -42,6 +43,7 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -77,7 +79,7 @@ import static com.intellij.refactoring.IntroduceParameterRefactoring.*;
 
 public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntroduceDialog<GrIntroduceParameterSettings> {
   private GrTypeComboBox myTypeComboBox;
-  private TextFieldWithAutoCompletion<String> myNameSuggestionsField;
+  private NameSuggestionsField myNameSuggestionsField;
   private JCheckBox myDeclareFinalCheckBox;
   private JCheckBox myDelegateViaOverloadingMethodCheckBox;
   private JBRadioButton myDoNotReplaceRadioButton;
@@ -342,7 +344,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     return returnType;
   }
 
-  private TextFieldWithAutoCompletion<String> createNameField(GrVariable var, GrExpression expr) {
+  private NameSuggestionsField createNameField(GrVariable var, GrExpression expr) {
     String[] possibleNames;
     if (expr != null) {
       final GrIntroduceContext
@@ -366,12 +368,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
     }
     ContainerUtil.addAll(names, possibleNames);
 
-    TextFieldWithAutoCompletion<String> result = TextFieldWithAutoCompletion.create(myProject, names, null, true);
-    if (names.size() > 0) {
-      result.setText(names.get(0));
-      result.selectAll();
-    }
-    return result;
+    return new NameSuggestionsField(ArrayUtil.toStringArray(names), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
   private void initReplaceFieldsWithGetters(JavaRefactoringSettings settings) {
@@ -510,7 +507,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
   }
 
   private String getEnteredName() {
-    return myNameSuggestionsField.getText().trim();
+    return myNameSuggestionsField.getEnteredName();
   }
 
   private void saveSettings() {

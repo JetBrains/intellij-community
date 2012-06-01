@@ -15,12 +15,12 @@
  */
 package com.intellij.cvsSupport2;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui.UpdateOptionsPanel;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.CvsBundle;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -38,10 +38,6 @@ public class UpdateConfigurable extends BaseConfigurable {
 
   public String getDisplayName() {
     return CvsBundle.getCvsDisplayName();
-  }
-
-  public Icon getIcon() {
-    return null;
   }
 
   public String getHelpTopic() {

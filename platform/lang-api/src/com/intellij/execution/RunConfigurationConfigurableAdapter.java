@@ -19,8 +19,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorConfigurable;
 
-import javax.swing.*;
-
 public class  RunConfigurationConfigurableAdapter<T extends RunConfiguration> extends SettingsEditorConfigurable<T>{
   public RunConfigurationConfigurableAdapter(SettingsEditor<T> settingsEditor, T configuration) {
     super(settingsEditor, configuration);
@@ -28,10 +26,6 @@ public class  RunConfigurationConfigurableAdapter<T extends RunConfiguration> ex
 
   public String getDisplayName() {
     return getSettings().getName();
-  }
-
-  public Icon getIcon() {
-    return getSettings().getType().getIcon();
   }
 
   public String getHelpTopic() {

@@ -185,14 +185,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   }
 
   /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  /**
    * Reload tree
    */
   public void reloadTree() {
@@ -576,8 +568,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     /**
      * {@inheritDoc}
      */
-    @Override
-    public Icon getIcon() {
+    private Icon getIcon() {
       return myExplanation.getIcon();
     }
 
@@ -653,15 +644,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
         final String p = myExplanation.entry().getPresentableName() + " in module " + myExplanation.entry().getOwnerModule().getName();
         return suffixForBanner(p);
       }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Icon getIcon() {
-      // Icon is displayed using cell appearance
-      return null;
     }
 
     /**

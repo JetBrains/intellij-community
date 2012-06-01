@@ -123,7 +123,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }
 
       @Override
-      protected Color getFileColorFor(Object object) {
+      public Color getFileColorFor(Object object) {
         VirtualFile file = null;
         if (object instanceof FilePathImpl) {
           file = LocalFileSystem.getInstance().findFileByPath(((FilePathImpl)object).getPath());

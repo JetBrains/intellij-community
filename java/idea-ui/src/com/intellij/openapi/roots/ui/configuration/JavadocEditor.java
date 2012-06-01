@@ -61,10 +61,6 @@ public class JavadocEditor extends ModuleElementsEditor {
     return NAME;
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   public void saveData() {
     TableUtil.stopEditing(myTable);
     final int count = myTable.getRowCount();

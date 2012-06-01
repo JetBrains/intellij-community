@@ -56,8 +56,6 @@ import java.util.*;
  * Date: 01-Jul-2006
  */
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements /*NonDefaultProjectConfigurable,*/ SearchableConfigurable {
-  private static final Icon SCOPES = AllIcons.Ide.ScopeConfigurable;
-  private static final Icon SAVE_ICON = AllIcons.RunConfigurations.SaveTempConfig;
   @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
   private final NamedScopesHolder myLocalScopesManager;
   private final NamedScopesHolder mySharedScopesManager;
@@ -270,10 +268,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return IdeBundle.message("scopes.display.name");
   }
 
-  public Icon getIcon() {
-    return SCOPES;
-  }
-
   @NotNull
   @NonNls
   public String getHelpTopic() {
@@ -479,7 +473,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private class MySaveAsAction extends AnAction {
     public MySaveAsAction() {
       super(ExecutionBundle.message("action.name.save.as.configuration"), ExecutionBundle.message("action.name.save.as.configuration"),
-            SAVE_ICON);
+            AllIcons.RunConfigurations.SaveTempConfig);
     }
 
     public void actionPerformed(AnActionEvent e) {

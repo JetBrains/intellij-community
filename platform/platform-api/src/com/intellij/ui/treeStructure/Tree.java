@@ -312,7 +312,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
         Color color = getFileColorFor(object);
         if (color != null) {
-          g.setColor(ColorUtil.softer(color));
+          g.setColor(color);
           g.fillRect(0, bounds.y, getWidth(), bounds.height);
         }
       }
@@ -321,7 +321,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   @Nullable
-  protected Color getFileColorFor(Object object) {
+  public Color getFileColorForPath(@Nullable TreePath path) {
+    if (path != null) {
+      final Object node = path.getLastPathComponent();
+      if (node instanceof DefaultMutableTreeNode) {
+        return getFileColorFor(((DefaultMutableTreeNode)node).getUserObject());
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public Color getFileColorFor(Object object) {
     return null;
   }
 

@@ -23,7 +23,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.Consumer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,22 +62,22 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return children == null ? result : result + children.toString();
   }
 
-  public GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex) {
+  public GroupNode addGroup(@NotNull UsageGroup group, int ruleIndex, Consumer<Runnable> edtQueue) {
     synchronized (lock) {
       GroupNode node = mySubgroupNodes.get(group);
       if (node == null) {
         final GroupNode node1 = node = new GroupNode(group, ruleIndex, getBuilder());
         mySubgroupNodes.put(group, node);
 
-        addNode(node1);
+        addNode(node1, edtQueue);
       }
       return node;
     }
   }
 
-  void addNode(@NotNull final DefaultMutableTreeNode node) {
+  void addNode(@NotNull final DefaultMutableTreeNode node, @NotNull Consumer<Runnable> edtQueue) {
     if (!getBuilder().isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
+      edtQueue.consume(new Runnable() {
         @Override
         public void run() {
           myTreeModel.insertNodeInto(node, GroupNode.this, getNodeInsertionIndex(node));
@@ -102,7 +102,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myTreeModel.reload(this);
   }
 
-  private UsageNode tryMerge(@NotNull Usage usage) {
+  @Nullable UsageNode tryMerge(@NotNull Usage usage) {
     if (!(usage instanceof MergeableUsage)) return null;
     MergeableUsage mergeableUsage = (MergeableUsage)usage;
     for (UsageNode node : myUsageNodes) {
@@ -154,7 +154,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     myTreeModel.nodeChanged(this);
   }
 
-  public UsageNode addUsage(@NotNull Usage usage) {
+  public UsageNode addUsage(@NotNull Usage usage, Consumer<Runnable> edtQueue) {
     final UsageNode node;
     synchronized (lock) {
       if (UsageViewSettings.getInstance().isFilterDuplicatedLine()) {
@@ -168,7 +168,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
 
     if (!getBuilder().isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
+      edtQueue.consume(new Runnable() {
         @Override
         public void run() {
           myTreeModel.insertNodeInto(node, GroupNode.this, getNodeIndex(node));

@@ -490,10 +490,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     return "Mappings";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

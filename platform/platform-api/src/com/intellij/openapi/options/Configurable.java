@@ -20,8 +20,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * Named component which provides a configuration user interface.
  *
@@ -62,14 +60,6 @@ public interface Configurable extends UnnamedConfigurable {
    */
   @Nls
   String getDisplayName();
-
-  /**
-   * Returns the icon representing the settings component. Components
-   * shown in the IDEA settings dialog have 32x32 icons.
-   *
-   * @return the icon for the component.
-   */
-  @Nullable Icon getIcon();
 
   /**
    * Returns the topic in the help file which is shown when help for the configurable

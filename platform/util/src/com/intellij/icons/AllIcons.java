@@ -6,26 +6,6 @@ import javax.swing.*;
 
 public class AllIcons {
   
-  public static class _cvs {
-    public static final Icon CheckOut = IconLoader.getIcon("/_cvs/checkOut.png"); 
-    public static final Icon Cvs = IconLoader.getIcon("/_cvs/cvs.png"); 
-    public static final Icon HideMissing = IconLoader.getIcon("/_cvs/hideMissing.png"); 
-    public static final Icon HideUnknown = IconLoader.getIcon("/_cvs/hideUnknown.png"); 
-    public static final Icon HideUptodate = IconLoader.getIcon("/_cvs/hideUptodate.png"); 
-    public static final Icon Missing = IconLoader.getIcon("/_cvs/missing.png"); 
-    public static final Icon ShowAsTree = IconLoader.getIcon("/_cvs/showAsTree.png"); 
-    public static final Icon TestInProgress1 = IconLoader.getIcon("/_cvs/testInProgress1.png"); 
-    public static final Icon TestInProgress2 = IconLoader.getIcon("/_cvs/testInProgress2.png"); 
-    public static final Icon TestInProgress3 = IconLoader.getIcon("/_cvs/testInProgress3.png"); 
-    public static final Icon TestInProgress4 = IconLoader.getIcon("/_cvs/testInProgress4.png"); 
-    public static final Icon TestInProgress5 = IconLoader.getIcon("/_cvs/testInProgress5.png"); 
-    public static final Icon TestInProgress6 = IconLoader.getIcon("/_cvs/testInProgress6.png"); 
-    public static final Icon TestInProgress7 = IconLoader.getIcon("/_cvs/testInProgress7.png"); 
-    public static final Icon TestInProgress8 = IconLoader.getIcon("/_cvs/testInProgress8.png"); 
-    public static final Icon Unknown = IconLoader.getIcon("/_cvs/unknown.png"); 
-
-  }
-  
   public static class Actions {
     public static final Icon AddFacesSupport = IconLoader.getIcon("/actions/addFacesSupport.png"); 
     public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.png"); 
@@ -155,6 +135,7 @@ public class AllIcons {
     public static final Icon Search = IconLoader.getIcon("/actions/search.png"); 
     public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.png"); 
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); 
+    public static final Icon ShowAsTree = IconLoader.getIcon("/actions/showAsTree.png"); 
     public static final Icon ShowChangesOnly = IconLoader.getIcon("/actions/showChangesOnly.png"); 
     public static final Icon ShowHiddens = IconLoader.getIcon("/actions/showHiddens.png"); 
     public static final Icon ShowImportStatements = IconLoader.getIcon("/actions/showImportStatements.png"); 
@@ -396,8 +377,6 @@ public class AllIcons {
     public static final Icon BalloonError = IconLoader.getIcon("/general/balloonError.png"); 
     public static final Icon BalloonInformation = IconLoader.getIcon("/general/balloonInformation.png"); 
     public static final Icon BalloonWarning = IconLoader.getIcon("/general/balloonWarning.png"); 
-    public static final Icon Bea = IconLoader.getIcon("/general/bea.png"); 
-    public static final Icon Browsersettings = IconLoader.getIcon("/general/browsersettings.png"); 
     public static final Icon Bullet = IconLoader.getIcon("/general/bullet.png"); 
     public static final Icon CheckForUpdate = IconLoader.getIcon("/general/checkForUpdate.png"); 
     public static final Icon CollapseAll = IconLoader.getIcon("/general/collapseAll.png"); 
@@ -411,34 +390,7 @@ public class AllIcons {
     public static final Icon ComboArrowRight = IconLoader.getIcon("/general/comboArrowRight.png"); 
     public static final Icon ComboArrowRightPassive = IconLoader.getIcon("/general/comboArrowRightPassive.png"); 
     public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png"); 
-    public static final Icon ConfigurableAppearance = IconLoader.getIcon("/general/configurableAppearance.png"); 
-    public static final Icon ConfigurableCodeCompletion = IconLoader.getIcon("/general/configurableCodeCompletion.png"); 
-    public static final Icon ConfigurableCodeStyle = IconLoader.getIcon("/general/configurableCodeStyle.png"); 
-    public static final Icon ConfigurableColorsAndFonts = IconLoader.getIcon("/general/configurableColorsAndFonts.png"); 
-    public static final Icon ConfigurableCompiler = IconLoader.getIcon("/general/configurableCompiler.png"); 
-    public static final Icon ConfigurableCustomization = IconLoader.getIcon("/general/configurableCustomization.png"); 
-    public static final Icon ConfigurableDebugger = IconLoader.getIcon("/general/configurableDebugger.png"); 
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); 
-    public static final Icon ConfigurableEditor = IconLoader.getIcon("/general/configurableEditor.png"); 
-    public static final Icon ConfigurableEjb = IconLoader.getIcon("/general/configurableEjb.png"); 
-    public static final Icon ConfigurableErrorHighlighting = IconLoader.getIcon("/general/configurableErrorHighlighting.png"); 
-    public static final Icon ConfigurableExternalResources = IconLoader.getIcon("/general/configurableExternalResources.png"); 
-    public static final Icon ConfigurableFileTypes = IconLoader.getIcon("/general/configurableFileTypes.png"); 
-    public static final Icon ConfigurableGeneral = IconLoader.getIcon("/general/configurableGeneral.png"); 
-    public static final Icon ConfigurableGlobalLibraries = IconLoader.getIcon("/general/configurableGlobalLibraries.png"); 
-    public static final Icon ConfigurableIntentionSettings = IconLoader.getIcon("/general/configurableIntentionSettings.png"); 
-    public static final Icon ConfigurableJavadoc = IconLoader.getIcon("/general/configurableJavadoc.png"); 
-    public static final Icon ConfigurableLocalVCS = IconLoader.getIcon("/general/configurableLocalVCS.png"); 
-    public static final Icon ConfigurableMisc = IconLoader.getIcon("/general/configurableMisc.png"); 
-    public static final Icon ConfigurableProjectLibraries = IconLoader.getIcon("/general/configurableProjectLibraries.png"); 
-    public static final Icon ConfigurableProjectPaths = IconLoader.getIcon("/general/configurableProjectPaths.png"); 
-    public static final Icon ConfigurableRunDebug = IconLoader.getIcon("/general/configurableRunDebug.png"); 
-    public static final Icon ConfigurableTodo = IconLoader.getIcon("/general/configurableTodo.png"); 
-    public static final Icon ConfigurableUpdates = IconLoader.getIcon("/general/configurableUpdates.png"); 
-    public static final Icon ConfigurableValidation = IconLoader.getIcon("/general/configurableValidation.png"); 
-    public static final Icon ConfigurableVcs = IconLoader.getIcon("/general/configurableVcs.png"); 
-    public static final Icon ConfigurableWeb = IconLoader.getIcon("/general/configurableWeb.png"); 
-    public static final Icon ConfigureEncoding = IconLoader.getIcon("/general/configureEncoding.png"); 
     public static final Icon CreateNewProject = IconLoader.getIcon("/general/createNewProject.png"); 
     public static final Icon Debug = IconLoader.getIcon("/general/debug.png"); 
     public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); 
@@ -450,7 +402,6 @@ public class AllIcons {
     public static final Icon EditColors = IconLoader.getIcon("/general/editColors.png"); 
     public static final Icon EditItemInSection = IconLoader.getIcon("/general/editItemInSection.png"); 
     public static final Icon Ellipsis = IconLoader.getIcon("/general/ellipsis.png"); 
-    public static final Icon EnterpriseEAR = IconLoader.getIcon("/general/enterpriseEAR.png"); 
     public static final Icon ErrorDialog = IconLoader.getIcon("/general/errorDialog.png"); 
     public static final Icon ErrorMask = IconLoader.getIcon("/general/errorMask.png"); 
     public static final Icon ErrorsFound = IconLoader.getIcon("/general/errorsFound.png"); 
@@ -577,7 +528,6 @@ public class AllIcons {
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.png"); 
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.png"); 
     public static final Icon ToolWindowAnt = IconLoader.getIcon("/general/toolWindowAnt.png"); 
-    public static final Icon ToolWindowAspects = IconLoader.getIcon("/general/toolWindowAspects.png"); 
     public static final Icon ToolWindowChanges = IconLoader.getIcon("/general/toolWindowChanges.png"); 
     public static final Icon ToolWindowCommander = IconLoader.getIcon("/general/toolWindowCommander.png"); 
     public static final Icon ToolWindowCoverage = IconLoader.getIcon("/general/toolWindowCoverage.png"); 
@@ -732,7 +682,6 @@ public class AllIcons {
     public static final Icon Rating4 = IconLoader.getIcon("/ide/rating4.png"); 
     public static final Icon Readonly = IconLoader.getIcon("/ide/readonly.png"); 
     public static final Icon Readwrite = IconLoader.getIcon("/ide/readwrite.png"); 
-    public static final Icon ScopeConfigurable = IconLoader.getIcon("/ide/scopeConfigurable.png"); 
     
     public static class Shadow {
       public static final Icon Bottom_left = IconLoader.getIcon("/ide/shadow/bottom-left.png"); 

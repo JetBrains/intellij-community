@@ -19,7 +19,6 @@ import com.intellij.openapi.options.BaseConfigurableWithChangeSupport;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
@@ -44,11 +43,7 @@ public final class OptionsConfigurabe extends BaseConfigurableWithChangeSupport 
         return DISPLAY_NAME;
     }
 
-    public Icon getIcon() {
-        return IconLoader.getIcon("/org/intellij/images/icons/ImagesConfigurable.png");
-    }
-
-    public String getHelpTopic() {
+  public String getHelpTopic() {
         return "preferences.images";
     }
 

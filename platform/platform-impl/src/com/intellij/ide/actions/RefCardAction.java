@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -49,8 +50,7 @@ public class RefCardAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
     super.update(e);
-    if (!ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
-      e.getPresentation().setIcon(null);
-    }
+    boolean atWelcome = ActionPlaces.WELCOME_SCREEN.equals(e.getPlace());
+    e.getPresentation().setIcon(atWelcome ? AllIcons.General.DefaultKeymap : null);
   }
 }

@@ -290,7 +290,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     int indexToSelect = -1;
     int size = propertyPath.size();
     for (int i = 0; i < size; i++) {
-      int index = findProperty(myProperties, propertyPath.get(i));
+      int index = findFullPathProperty(myProperties, propertyPath.get(i));
       if (index == -1) {
         break;
       }
@@ -332,7 +332,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
           for (Iterator<Property> I = myProperties.iterator(); I.hasNext(); ) {
             Property property = I.next();
 
-            int index = findProperty(properties, property);
+            int index = findFullPathProperty(properties, property);
             if (index == -1) {
               I.remove();
               continue;
@@ -406,6 +406,32 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
 
     return -1;
+  }
+
+  private static int findFullPathProperty(List<Property> properties, Property property) {
+    Property parent = property.getParent();
+    if (parent == null) {
+      return findProperty(properties, property);
+    }
+
+    String name = getFullPathName(property);
+    int size = properties.size();
+
+    for (int i = 0; i < size; i++) {
+      if (name.equals(getFullPathName(properties.get(i)))) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  private static String getFullPathName(Property property) {
+    StringBuilder builder = new StringBuilder();
+    for (; property != null; property = property.getParent()) {
+      builder.insert(0, ".").insert(0, property.getName());
+    }
+    return builder.toString();
   }
 
   public static void moveProperty(List<Property> source, String name, List<Property> destination, int index) {

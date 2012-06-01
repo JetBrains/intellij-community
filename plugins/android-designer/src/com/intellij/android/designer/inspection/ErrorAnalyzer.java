@@ -83,12 +83,12 @@ public final class ErrorAnalyzer {
 
               List<QuickFix> designerFixes = errorInfo.getQuickFixes();
 
-              for (final AndroidLintQuickFix fix : inspection.public_getQuickFixes(message)) {
-                if (fix.isApplicable(startElement, endElement, false)) {
+              for (final AndroidLintQuickFix fix : inspection.getQuickFixes(message)) {
+                if (fix.isApplicable(startElement, endElement, AndroidQuickfixContexts.DesignerContext.TYPE)) {
                   designerFixes.add(new QuickFix(fix.getName(), AbstractQuickFixManager.ICON) {
                     @Override
                     public void run() {
-                      fix.apply(startElement, endElement, null);
+                      fix.apply(startElement, endElement, AndroidQuickfixContexts.DesignerContext.getInstance());
                     }
                   });
                 }
@@ -140,7 +140,7 @@ public final class ErrorAnalyzer {
     }
   }
 
-  private static Pair<RadComponent, String> findComponent(RadComponent rootComponent, PsiElement element) {
+  private static Pair<RadComponent, String> findComponent(final RadComponent rootComponent, PsiElement element) {
     final Pair<XmlTag, XmlAttribute> tagInfo = extractTag(element);
     if (tagInfo.first == null) {
       return new Pair<RadComponent, String>(rootComponent, null);
@@ -152,7 +152,12 @@ public final class ErrorAnalyzer {
       @Override
       public boolean visit(RadComponent component) {
         if (tagInfo.first == ((RadViewComponent)component).getTag()) {
-          result[0] = component;
+          if (component == rootComponent && rootComponent.getChildren().size() == 1) {
+            result[0] = rootComponent.getChildren().get(0);
+          }
+          else {
+            result[0] = component;
+          }
           return false;
         }
         return true;

@@ -15,7 +15,6 @@
  */
 package com.intellij.javaee;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -148,10 +147,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     myIgnorePanel.getEmptyText().setText(XmlBundle.message("no.ignored.resources"));
 
     return myPanel;
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableExternalResources;
   }
 
   public void apply() {

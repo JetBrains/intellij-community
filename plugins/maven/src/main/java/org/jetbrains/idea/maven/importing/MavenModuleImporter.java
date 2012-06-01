@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,6 +30,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
@@ -45,6 +45,8 @@ public class MavenModuleImporter {
   private final Module myModule;
   private final MavenProjectsTree myMavenTree;
   private final MavenProject myMavenProject;
+
+  @Nullable
   private final MavenProjectChanges myMavenProjectChanges;
   private final Map<MavenProject, String> myMavenProjectToModuleName;
   private final MavenImportingSettings mySettings;
@@ -53,14 +55,15 @@ public class MavenModuleImporter {
 
   public MavenModuleImporter(Module module,
                              MavenProjectsTree mavenTree,
-                             Pair<MavenProject, MavenProjectChanges> mavenProjectWithChanges,
+                             MavenProject mavenProject,
+                             @Nullable MavenProjectChanges changes,
                              Map<MavenProject, String> mavenProjectToModuleName,
                              MavenImportingSettings settings,
                              MavenModifiableModelsProvider modifiableModelsProvider) {
     myModule = module;
     myMavenTree = mavenTree;
-    myMavenProject = mavenProjectWithChanges.first;
-    myMavenProjectChanges = mavenProjectWithChanges.second;
+    myMavenProject = mavenProject;
+    myMavenProjectChanges = changes;
     myMavenProjectToModuleName = mavenProjectToModuleName;
     mySettings = settings;
     myModifiableModelsProvider = modifiableModelsProvider;
@@ -84,12 +87,21 @@ public class MavenModuleImporter {
     final ModuleType moduleType = ModuleType.get(myModule);
 
     for (final MavenImporter importer : getSuitableImporters()) {
+      final MavenProjectChanges changes;
+      if (myMavenProjectChanges == null) {
+        if (importer.processChangedModulesOnly()) continue;
+        changes = MavenProjectChanges.NONE;
+      }
+      else {
+        changes = myMavenProjectChanges;
+      }
+
       if (importer.getModuleType() == moduleType) {
         // facets use FacetConfiguration and like that do not have modifiable models,
         // therefore we have to take write lock
         MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
           public void run() {
-            importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
+            importer.preProcess(myModule, myMavenProject, changes, myModifiableModelsProvider);
           }
         });
       }
@@ -100,6 +112,15 @@ public class MavenModuleImporter {
     final ModuleType moduleType = ModuleType.get(myModule);
 
     for (final MavenImporter importer : getSuitableImporters()) {
+      final MavenProjectChanges changes;
+      if (myMavenProjectChanges == null) {
+        if (importer.processChangedModulesOnly()) continue;
+        changes = MavenProjectChanges.NONE;
+      }
+      else {
+        changes = myMavenProjectChanges;
+      }
+
       if (importer.getModuleType() == moduleType) {
         // facets use FacetConfiguration and like that do not have modifiable models,
         // therefore we have to take write lock
@@ -110,7 +131,7 @@ public class MavenModuleImporter {
                              myRootModelAdapter,
                              myMavenTree,
                              myMavenProject,
-                             myMavenProjectChanges,
+                             changes,
                              myMavenProjectToModuleName,
                              postTasks);
           }

@@ -64,11 +64,6 @@ public class FrameworkDetectionConfigurable extends NamedConfigurable<DetectionE
   }
 
   @Override
-  public Icon getIcon() {
-    return myConfigurable.getIcon();
-  }
-
-  @Override
   public String getHelpTopic() {
     return myConfigurable.getHelpTopic();
   }

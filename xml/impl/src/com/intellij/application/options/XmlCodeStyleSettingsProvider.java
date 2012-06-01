@@ -15,16 +15,13 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author yole
@@ -35,9 +32,6 @@ public class XmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.xml")){
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new XmlCodeStyleMainPanel(getCurrentSettings(), settings);
-      }
-      public Icon getIcon() {
-        return StdFileTypes.XML.getIcon();
       }
 
       public String getHelpTopic() {

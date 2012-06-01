@@ -18,10 +18,19 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 
+import javax.swing.*;
+
 /**
  * @author Kirill Likhodedov
  */
 public abstract class HgAction extends AnAction {
+  protected HgAction() {
+  }
+
+  protected HgAction(Icon icon) {
+    super(icon);
+  }
+
   @Override
   public void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();

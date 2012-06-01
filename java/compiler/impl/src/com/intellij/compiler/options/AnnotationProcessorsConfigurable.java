@@ -47,10 +47,6 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     return "Annotation Processors";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "reference.projectsettings.compiler.annotationProcessors";
   }

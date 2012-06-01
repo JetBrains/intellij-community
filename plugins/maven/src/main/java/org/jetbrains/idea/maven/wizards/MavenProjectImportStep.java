@@ -154,11 +154,6 @@ public class MavenProjectImportStep extends ProjectImportWizardStep {
     }
 
     @Nullable
-    public Icon getIcon() {
-      return null;
-    }
-
-    @Nullable
     @NonNls
     public String getHelpTopic() {
       return null;

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,13 @@ public abstract class ProjectViewTree extends DnDAwareTree {
     super(model);
     myProject = project;
 
-    final NodeRenderer cellRenderer = new NodeRenderer();
+    final NodeRenderer cellRenderer = new NodeRenderer() {
+      @Override
+      protected void doPaint(Graphics2D g) {
+        super.doPaint(g);
+        setOpaque(false);
+      }
+    };
     cellRenderer.setOpaque(false);
     cellRenderer.setIconOpaque(false);
     setCellRenderer(cellRenderer);
@@ -84,7 +91,7 @@ public abstract class ProjectViewTree extends DnDAwareTree {
 
   @Nullable
   @Override
-  protected Color getFileColorFor(Object object) {
+  public Color getFileColorFor(Object object) {
     Color color = null;
     if (object instanceof AbstractTreeNode) {
       final Object element = ((AbstractTreeNode)object).getValue();
@@ -104,7 +111,7 @@ public abstract class ProjectViewTree extends DnDAwareTree {
             Color c = FileColorManager.getInstance(getProject()).getFileColor(dir.getVirtualFile());
             if (c != null && color == null) {
               color = c;
-            } else if (c != null && color != null) {
+            } else if (c != null) {
               color = null;
               break;
             }
@@ -112,6 +119,6 @@ public abstract class ProjectViewTree extends DnDAwareTree {
         }
       }
     }
-    return color;
+    return color == null ? null : ColorUtil.softer(color);
   }
 }

@@ -180,11 +180,6 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
   }
 
   @Nullable
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Nullable
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.dialog.project.maven";

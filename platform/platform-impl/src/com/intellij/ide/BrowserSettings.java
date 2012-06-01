@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -28,7 +27,6 @@ import javax.swing.*;
  * @author spleaner
  */
 public class BrowserSettings implements Configurable, SearchableConfigurable {
-  private static final Icon ICON = AllIcons.General.Browsersettings;
   private BrowserSettingsPanel mySettingsPanel;
 
   @NotNull
@@ -43,10 +41,6 @@ public class BrowserSettings implements Configurable, SearchableConfigurable {
   @Nls
   public String getDisplayName() {
     return IdeBundle.message("browsers.settings");
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   public String getHelpTopic() {

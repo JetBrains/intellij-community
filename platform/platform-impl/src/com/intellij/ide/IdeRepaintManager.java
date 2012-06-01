@@ -44,7 +44,6 @@ public class IdeRepaintManager extends RepaintManager {
   WeakReference<JComponent> myLastComponent;
 
   public Image getVolatileOffscreenBuffer(Component c, int proposedWidth, int proposedHeight) {
-    if (proposedWidth <= 0 || proposedHeight <= 0) return null;
     final Image buffer = super.getVolatileOffscreenBuffer(c, proposedWidth, proposedHeight);
     clearLeakyImages(false); // DisplayChangedListener might be unavailable
     return buffer;

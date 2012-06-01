@@ -173,11 +173,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.appearance";
   }

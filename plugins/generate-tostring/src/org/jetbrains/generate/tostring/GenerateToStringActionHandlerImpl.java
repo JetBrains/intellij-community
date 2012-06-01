@@ -225,11 +225,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
                             return "toString() Generation Settings";
                         }
 
-                        public Icon getIcon() {
-                            return null;
-                        }
-
-                        public String getHelpTopic() {
+                    public String getHelpTopic() {
                             return null; // TODO:
                         }
 

@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,9 @@ import org.zmlx.hg4idea.ui.HgPullDialog;
 import java.util.Collection;
 
 public class HgPullAction extends HgAbstractGlobalAction {
+  public HgPullAction() {
+    super(AllIcons.Actions.CheckOut);
+  }
 
   protected HgGlobalCommandBuilder getHgGlobalCommandBuilder(final Project project) {
     return new HgGlobalCommandBuilder() {

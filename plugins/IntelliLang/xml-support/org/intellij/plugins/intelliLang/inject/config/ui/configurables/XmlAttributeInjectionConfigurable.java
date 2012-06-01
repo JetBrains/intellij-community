@@ -16,11 +16,8 @@
 package org.intellij.plugins.intelliLang.inject.config.ui.configurables;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.PlatformIcons;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.intellij.plugins.intelliLang.inject.config.ui.XmlAttributePanel;
-
-import javax.swing.*;
 
 public class XmlAttributeInjectionConfigurable extends InjectionConfigurable<XmlAttributeInjection, XmlAttributePanel> {
   public XmlAttributeInjectionConfigurable(XmlAttributeInjection injection, Runnable treeUpdater, Project project) {
@@ -33,9 +30,5 @@ public class XmlAttributeInjectionConfigurable extends InjectionConfigurable<Xml
 
   public String getBannerSlogan() {
     return "Edit XML Attribute Injection";
-  }
-
-  public Icon getIcon() {
-    return PlatformIcons.ANNOTATION_TYPE_ICON;
   }
 }

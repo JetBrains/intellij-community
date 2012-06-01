@@ -72,10 +72,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     return NAME;
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   public void saveData() {
     myPanel.stopEditing();
     flushChangesToModel();

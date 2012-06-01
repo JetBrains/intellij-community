@@ -42,12 +42,7 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable, Conf
      return SpellCheckerBundle.message("spelling");
    }
 
-   @Nullable
-   public Icon getIcon() {
-     return null;
-   }
-
-   @Nullable
+  @Nullable
    @NonNls
    public String getHelpTopic() {
      return "reference.settings.ide.settings.spelling";

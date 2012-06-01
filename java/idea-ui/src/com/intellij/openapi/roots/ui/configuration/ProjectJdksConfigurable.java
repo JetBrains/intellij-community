@@ -44,7 +44,6 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -203,11 +202,6 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
   @Nullable
   public String getDisplayName() {
-    return null;
-  }
-
-  @Nullable
-  public Icon getIcon() {
     return null;
   }
 

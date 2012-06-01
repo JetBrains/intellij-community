@@ -72,10 +72,6 @@ public class PathMacroConfigurable implements SearchableConfigurable, Configurab
     return myEditor != null && myEditor.isModified();
   }
 
-  public Icon getIcon() {
-    return ICON;
-  }
-
   @NotNull
   public String getId() {
     return getHelpTopic();

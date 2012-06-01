@@ -108,7 +108,7 @@ public class CvsTabbedWindow {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow =
       toolWindowManager.registerToolWindow(ToolWindowId.CVS, myContentManager.getComponent(), ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(AllIcons._cvs.Cvs);
+    toolWindow.setIcon(AllIcons.Actions.Cvs);
     toolWindow.installWatcher(myContentManager);
   }
 

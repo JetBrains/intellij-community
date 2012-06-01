@@ -151,10 +151,6 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return IdeBundle.message("title.file.templates");
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return null;
   }

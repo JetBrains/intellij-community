@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
-import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.ui.NamedConfigurable;
 
 import javax.swing.*;
 
@@ -52,10 +52,6 @@ public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
 
   public String getDisplayName() {
     return myFacetType.getPresentableName();
-  }
-
-  public Icon getIcon() {
-    return myFacetType.getIcon();
   }
 
   public String getHelpTopic() {

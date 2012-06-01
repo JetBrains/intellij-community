@@ -137,6 +137,8 @@ public class GroovyPsiManager {
     if (list != null) {
       PsiAnnotation annotation = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_COMPILE_STATIC);
       if (annotation != null) return true;
+      PsiAnnotation typeChecked = list.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKED);
+      if (typeChecked != null) return true;
     }
     PsiClass aClass = member.getContainingClass();
     if (aClass != null) return isCompileStatic(aClass);

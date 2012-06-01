@@ -21,7 +21,6 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerSettingsFactory;
 import com.intellij.compiler.impl.rmiCompiler.RmicConfiguration;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +46,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerConfigurable");
 
   private final Project myProject;
-  private static final Icon ICON = AllIcons.General.ConfigurableCompiler;
   private final CompilerUIConfigurable myCompilerUIConfigurable;
   private Configurable[] myKids;
 
@@ -58,10 +56,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
 
   public String getDisplayName() {
     return CompilerBundle.message("compiler.configurable.display.name");
-  }
-
-  public Icon getIcon() {
-    return ICON;
   }
 
   public String getHelpTopic() {
@@ -163,10 +157,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
       @Nls
       public String getDisplayName() {
         return "Excludes";
-      }
-
-      public Icon getIcon() {
-        return null;
       }
 
       public String getHelpTopic() {

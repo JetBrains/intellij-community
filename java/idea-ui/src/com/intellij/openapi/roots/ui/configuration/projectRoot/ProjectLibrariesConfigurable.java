@@ -23,9 +23,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   public ProjectLibrariesConfigurable(final Project project) {
@@ -41,11 +38,6 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   @Nls
   public String getDisplayName() {
     return "Libraries";
-  }
-
-  @Nullable
-  public Icon getIcon() {
-    return null;
   }
 
   @NotNull

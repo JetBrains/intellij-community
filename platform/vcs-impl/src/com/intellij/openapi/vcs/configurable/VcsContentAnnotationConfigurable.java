@@ -47,11 +47,6 @@ public class VcsContentAnnotationConfigurable implements Configurable {
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return null;
   }

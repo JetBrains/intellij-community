@@ -110,12 +110,7 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
             return "XSLT";
         }
 
-        @Nullable
-        public Icon getIcon() {
-            return null;
-        }
-
-        @Nullable
+    @Nullable
         @NonNls
         public String getHelpTopic() {
             return "settings.xslt";

@@ -166,10 +166,6 @@ public class VcsBackgroundOperationsConfigurationPanel implements SearchableConf
     return "Background";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "project.propVCSSupport.Background";
   }

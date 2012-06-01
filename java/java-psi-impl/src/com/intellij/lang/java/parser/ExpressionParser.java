@@ -62,7 +62,7 @@ public class ExpressionParser {
   private static final TokenSet ARGS_LIST_END = TokenSet.create(JavaTokenType.RPARENTH, JavaTokenType.RBRACE, JavaTokenType.RBRACKET);
   private static final TokenSet ARGS_LIST_CONTINUE = TokenSet.create(
     JavaTokenType.IDENTIFIER, TokenType.BAD_CHARACTER, JavaTokenType.COMMA, JavaTokenType.INTEGER_LITERAL, JavaTokenType.STRING_LITERAL);
-  private static final TokenSet CONSTRUCTOR_CALL = TokenSet.create(JavaTokenType.THIS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
+  private static final TokenSet THIS_OR_SUPER = TokenSet.create(JavaTokenType.THIS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
 
   public ExpressionParser(DeclarationParser declarationParser, ReferenceParser referenceParser) {
     myDeclarationParser = declarationParser;
@@ -363,8 +363,7 @@ public class ExpressionParser {
           dotPos.drop();
           expr = parseNew(builder, expr);
         }
-        else if ((dotTokenType == JavaTokenType.THIS_KEYWORD || dotTokenType == JavaTokenType.SUPER_KEYWORD) &&
-                 exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
+        else if (THIS_OR_SUPER.contains(dotTokenType) && exprType(expr) == JavaElementType.REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P2 && builder.getCurrentOffset() == breakOffset) {
             dotPos.rollbackTo();
             startMarker.drop();
@@ -581,13 +580,13 @@ public class ExpressionParser {
       }
 
       tokenType = builder.getTokenType();
-      if (!CONSTRUCTOR_CALL.contains(tokenType)) {
+      if (!THIS_OR_SUPER.contains(tokenType)) {
         expr.rollbackTo();
         return null;
       }
     }
 
-    if (CONSTRUCTOR_CALL.contains(tokenType)) {
+    if (THIS_OR_SUPER.contains(tokenType)) {
       if (expr == null) {
         expr = builder.mark();
         builder.mark().done(JavaElementType.REFERENCE_PARAMETER_LIST);

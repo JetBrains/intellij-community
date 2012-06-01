@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui.customization;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -42,10 +41,6 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
 
   public String getDisplayName() {
     return IdeBundle.message("title.customizations");
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableCustomization;
   }
 
   public String getHelpTopic() {

@@ -29,17 +29,17 @@
 
   <actions>
     <action id="RerunFailedTests" class="com.intellij.execution.actions.AbstractRerunFailedTestsAction"
-            icon="/runConfigurations/rerunFailedTests.png"/>
+            icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
-            icon="/nodes/ModuleClosed.png">
+            icon="AllIcons.Nodes.ModuleClosed">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
 
 
     <group id="NewGroup1">
       <action id="NewModuleInGroup" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleInGroupAction"
-              icon="/nodes/ModuleClosed.png"/>
+              icon="AllIcons.Nodes.ModuleClosed"/>
 
       <add-to-group group-id="NewGroup" anchor="first"/>
     </group>
@@ -90,7 +90,7 @@
     </group>
 
     <group id="BuildMenu" popup="true">
-      <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="/actions/compile.png"/>
+      <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile"/>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
       <action id="RunAPT" class="com.intellij.compiler.actions.ProcessAnnotationsAction"/>
@@ -376,17 +376,17 @@
 
     <group id="WelcomeScreen.QuickStart.IDEA">
       <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction"
-              icon="/general/createNewProject.png"/>
+              icon="AllIcons.General.CreateNewProject"/>
       <action id="WelcomeScreen.OpenProject" class="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenOpenProjectAction"
-              icon="/general/openProject.png"/>
+              icon="AllIcons.General.OpenProject"/>
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
       <action id="WelcomeScreen.JetBrainsTV.IDEA" class="com.intellij.openapi.wm.impl.welcomeScreen.IdeaJetBrainsTvAction"
-              icon="/general/jetbrainsTvIdea.png"/>
+              icon="AllIcons.General.JetbrainsTvIdea"/>
       <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
-              icon="/general/pluginManager.png"/>
+              icon="AllIcons.General.PluginManager"/>
 
       <add-to-group group-id="WelcomeScreen.Documentation" anchor="last"/>
     </group>
@@ -403,9 +403,9 @@
     </group>
 
     <group>
-      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction" icon="/modules/sourceRootClosed.png"/>
-      <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction" icon="/modules/testRootClosed.png"/>
-      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="/modules/excludeRootClosed.png"/>
+      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction" icon="AllIcons.Modules.SourceRootClosed"/>
+      <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction" icon="AllIcons.Modules.TestRootClosed"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="AllIcons.Modules.ExcludeRootClosed"/>
       <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       <add-to-group group-id="MarkRootGroup"/>
     </group>

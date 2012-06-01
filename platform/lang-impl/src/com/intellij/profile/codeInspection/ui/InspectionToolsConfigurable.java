@@ -255,10 +255,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return DISPLAY_NAME;
   }
 
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableErrorHighlighting;
-  }
-
   public String getHelpTopic() {
     return "preferences.inspections";
   }

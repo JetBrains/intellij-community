@@ -22,6 +22,7 @@ import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleEx;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ class UsageNodeTreeBuilder {
   }
 
   @Nullable
-  UsageNode appendUsage(@NotNull Usage usage) {
+  UsageNode appendUsage(@NotNull Usage usage, Consumer<Runnable> edtQueue) {
     if (!isVisible(usage)) return null;
 
     GroupNode lastGroupNode = myRoot;
@@ -83,10 +84,10 @@ class UsageNodeTreeBuilder {
         group = rule.groupUsage(usage);
       }
       if (group != null) {
-        lastGroupNode = lastGroupNode.addGroup(group, i);
+        lastGroupNode = lastGroupNode.addGroup(group, i, edtQueue);
       }
     }
 
-    return lastGroupNode.addUsage(usage);
+    return lastGroupNode.addUsage(usage, edtQueue);
   }
 }

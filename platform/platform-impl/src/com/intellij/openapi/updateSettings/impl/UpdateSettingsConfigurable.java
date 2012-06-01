@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -50,10 +49,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
   public String getHelpTopic() {
     return "preferences.updates";
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableUpdates;
   }
 
   public void setCheckNowEnabled(boolean enabled) {

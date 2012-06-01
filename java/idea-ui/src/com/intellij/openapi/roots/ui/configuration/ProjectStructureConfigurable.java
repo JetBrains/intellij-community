@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
@@ -155,11 +154,6 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   @Nls
   public String getDisplayName() {
     return ProjectBundle.message("project.settings.display.name");
-  }
-
-  @Nullable
-  public Icon getIcon() {
-    return AllIcons.Modules.Modules;
   }
 
   @Nullable

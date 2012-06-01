@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
@@ -26,17 +25,11 @@ import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class WrappingAndBracesSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("wrapping.and.braces")) {
-      @Override
-      public Icon getIcon() {
-        return StdFileTypes.JAVA.getIcon();
-      }
 
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {

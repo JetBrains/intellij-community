@@ -26,14 +26,17 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -60,7 +63,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
 
     final XmlAttributeValuePattern pluginXml = XmlPatterns.xmlAttributeValue().withLocalName("icon");
 
-    registrar.registerReferenceProvider(or(javaFile, pluginXml), new PsiReferenceProvider() {
+    registrar.registerReferenceProvider(javaFile, new PsiReferenceProvider() {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
@@ -84,6 +87,46 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
             return super.getExtraContexts();
           }
         }.getAllReferences();
+      }
+    });
+
+    registrar.registerReferenceProvider(pluginXml, new PsiReferenceProvider() {
+      @NotNull
+      @Override
+      public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+        return new PsiReference[] {
+          new PsiReferenceBase<PsiElement>(element, false) {
+            @Override
+            public PsiElement resolve() {
+              String value = ((XmlAttributeValue)element).getValue();
+              if (value.startsWith("AllIcons.")) {
+                List<String> path = StringUtil.split(value, ".");
+                Project project = element.getProject();
+                PsiClass cur = JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons",
+                                                                           GlobalSearchScope.projectScope(project));
+                if (cur == null) return null;
+
+                for (int i = 1; i < path.size() - 1; i++) {
+                  cur = cur.findInnerClassByName(path.get(i), false);
+                  if (cur == null) return null;
+                }
+
+                return cur.findFieldByName(path.get(path.size() - 1), false);
+              }
+              else if (value.startsWith("/")) {
+                FileReference lastRef = new FileReferenceSet(element).getLastReference();
+                return lastRef != null ? lastRef.resolve() : null;
+              }
+              return null;
+            }
+
+            @NotNull
+            @Override
+            public Object[] getVariants() {
+              return EMPTY_ARRAY;
+            }
+          }
+        };
       }
     });
   }

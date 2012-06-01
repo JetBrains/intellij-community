@@ -116,10 +116,6 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     return "Changelist Conflicts";
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public String getHelpTopic() {
     return "project.propVCSSupport.ChangelistConflict";
   }

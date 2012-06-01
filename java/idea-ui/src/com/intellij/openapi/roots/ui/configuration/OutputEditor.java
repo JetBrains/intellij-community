@@ -70,10 +70,6 @@ public class OutputEditor extends ModuleElementsEditor {
     return ProjectBundle.message("project.roots.path.tab.title");
   }
 
-  public Icon getIcon() {
-    return myCompilerOutputEditor.getIcon();
-  }
-
 
   public void moduleStateChanged() {
     super.moduleStateChanged();

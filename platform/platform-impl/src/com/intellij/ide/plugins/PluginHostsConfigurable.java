@@ -59,10 +59,6 @@ public class PluginHostsConfigurable extends BaseConfigurable {
     return null;
   }
 
-  public Icon getIcon() {
-    return null;
-  }
-
   public void apply() throws ConfigurationException {
     UpdateSettings settings = UpdateSettings.getInstance();
 

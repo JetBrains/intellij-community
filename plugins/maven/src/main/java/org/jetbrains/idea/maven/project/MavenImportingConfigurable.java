@@ -89,11 +89,6 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   }
 
   @Nullable
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Nullable
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.project.maven.importing";

@@ -43,12 +43,6 @@ public class GitVcsConfigurable implements Configurable {
 
   @Nullable
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.VCSs.Git";
   }

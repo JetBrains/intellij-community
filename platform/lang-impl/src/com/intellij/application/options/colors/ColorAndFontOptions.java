@@ -21,7 +21,6 @@ import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -621,11 +620,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     return ApplicationBundle.message("title.colors.and.fonts");
   }
 
-  @Override
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableColorsAndFonts;
-  }
-
   private void revertChanges(){
     if (isSchemeListModified() || isSomeSchemeModified()) {
       myRevertChangesCompleted = false;
@@ -1208,11 +1202,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         });
       }
       return mySubPanel;
-    }
-
-    @Override
-    public Icon getIcon() {
-      return null;
     }
 
     @Override

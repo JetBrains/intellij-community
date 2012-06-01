@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -107,10 +106,6 @@ public class MavenSettings implements SearchableConfigurable.Parent {
   @Nls
   public String getDisplayName() {
     return DISPLAY_NAME;
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableEditor;
   }
 
   public String getHelpTopic() {

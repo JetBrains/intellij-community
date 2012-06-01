@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -71,10 +70,6 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
 
   public String getDisplayName() {
     return DISPLAY_NAME;
-  }
-
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableIntentionSettings;
   }
 
   public void reset() {

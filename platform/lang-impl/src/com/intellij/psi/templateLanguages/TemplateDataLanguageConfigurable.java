@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author peter
@@ -57,12 +54,6 @@ public class TemplateDataLanguageConfigurable extends LanguagePerFileConfigurabl
   @Nls
   public String getDisplayName() {
     return LangBundle.message("template.data.language.configurable");
-  }
-
-  @Override
-  @Nullable
-  public Icon getIcon() {
-    return AllIcons.General.ConfigurableFileTypes;
   }
 
   @Override

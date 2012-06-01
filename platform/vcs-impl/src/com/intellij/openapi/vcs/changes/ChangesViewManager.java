@@ -46,7 +46,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
@@ -331,6 +333,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private void setChangeDetailsPanel(@Nullable final JComponent component) {
     mySplitter.setSecondComponent(component);
+    mySplitter.getFirstComponent().setBorder(component == null ? null : IdeBorderFactory.createBorder(SideBorder.RIGHT));
     mySplitter.revalidate();
     mySplitter.repaint();
   }

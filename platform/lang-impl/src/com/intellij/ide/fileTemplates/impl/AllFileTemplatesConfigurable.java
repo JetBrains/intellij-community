@@ -86,10 +86,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
   private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
 
-  public Icon getIcon() {
-    return ourIcon;
-  }
-
   private void onRemove() {
     myCurrentTab.removeSelected();
     myModified = true;
