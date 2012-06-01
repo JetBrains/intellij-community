@@ -17,6 +17,7 @@ package com.intellij.core;
 
 import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;

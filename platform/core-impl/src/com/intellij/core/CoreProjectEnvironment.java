@@ -51,7 +51,7 @@ public class CoreProjectEnvironment {
     myEnvironment = applicationEnvironment;
     myProject = new MockProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
 
-    myFileIndexFacade = new MockFileIndexFacade(myProject);
+    myFileIndexFacade = createFileIndexFacade();
     myMessageBus = new MessageBusImpl();
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
@@ -72,12 +72,16 @@ public class CoreProjectEnvironment {
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
   }
 
-  public  <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
-                                                 final Class<? extends T> aClass) {
+  protected FileIndexFacade createFileIndexFacade() {
+    return new MockFileIndexFacade(myProject);
+  }
+
+  public <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,
+                                                final Class<? extends T> aClass) {
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
   }
 
-  public  <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
+  public <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
     CoreApplicationEnvironment.registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);
   }
 
