@@ -221,7 +221,7 @@ public class ApplyPatchAction extends DumbAwareAction {
     simpleRequest.setContents(new SimpleContent(texts.getLocal().toString(), file.getFileType()),
                               mergedDocument);
     simpleRequest.setContentTitles(VcsBundle.message("diff.title.local"), "Patched (with problems)");
-    simpleRequest.addHint(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG);
+    simpleRequest.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
     simpleRequest.addHint(DiffTool.HINT_DIFF_IS_APPROXIMATE);
 
     if (! readonly) {
