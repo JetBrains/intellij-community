@@ -118,7 +118,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
             if (rootStub == null) return;
 
             final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
-            SerializationManager.getInstance().serialize(rootStub, bytes);
+            SerializationManagerEx.getInstanceEx().serialize(rootStub, bytes);
 
             final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
             result.put(key, new SerializedStubTree(bytes.getInternalBuffer(), bytes.size(), rootStub));
@@ -294,7 +294,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     private static void checkNameStorage() throws StorageException {
-      final SerializationManager serializationManager = SerializationManager.getInstance();
+      final SerializationManagerEx serializationManager = SerializationManagerEx.getInstanceEx();
       if (serializationManager.isNameStorageCorrupted()) {
         serializationManager.repairNameStorage();
         //noinspection ThrowFromFinallyBlock
