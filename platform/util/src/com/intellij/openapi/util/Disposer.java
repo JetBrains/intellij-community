@@ -43,12 +43,12 @@ public class Disposer {
 
   private static final ObjectTreeAction<Disposable> ourDisposeAction = new ObjectTreeAction<Disposable>() {
     @Override
-    public void execute(final Disposable each) {
+    public void execute(@NotNull final Disposable each) {
       each.dispose();
     }
 
     @Override
-    public void beforeTreeExecution(final Disposable parent) {
+    public void beforeTreeExecution(@NotNull final Disposable parent) {
       if (parent instanceof Disposable.Parent) {
         ((Disposable.Parent)parent).beforeTreeDispose();
       }
