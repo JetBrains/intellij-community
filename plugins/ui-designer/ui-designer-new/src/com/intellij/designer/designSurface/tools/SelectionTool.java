@@ -116,6 +116,7 @@ public class SelectionTool extends InputTool {
       refreshCursor();
 
       if (myTracker != null) {
+        myToolProvider.hideInspections();
         myTracker.setToolProvider(myToolProvider);
         myTracker.setArea(myArea);
         myTracker.activate();

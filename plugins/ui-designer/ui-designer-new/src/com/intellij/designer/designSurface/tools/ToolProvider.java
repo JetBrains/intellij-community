@@ -136,4 +136,6 @@ public abstract class ToolProvider {
   public abstract void execute(List<EditOperation> operations, String command);
 
   public abstract void startInplaceEditing(@Nullable InplaceContext inplaceContext);
+
+  public abstract void hideInspections();
 }
