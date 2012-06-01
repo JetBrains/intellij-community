@@ -97,7 +97,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
         return new PsiReference[] {
-          new PsiReferenceBase<PsiElement>(element, false) {
+          new PsiReferenceBase<PsiElement>(element, true) {
             @Override
             public PsiElement resolve() {
               String value = ((XmlAttributeValue)element).getValue();
