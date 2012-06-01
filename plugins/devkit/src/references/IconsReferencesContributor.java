@@ -194,6 +194,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         model.setStringToFind(path);
         model.setCaseSensitive(true);
         model.setFindAll(true);
+        model.setWholeWordsOnly(true);
         final List<UsageInfo> usages = FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false);
         if (!usages.isEmpty()) {
           for (UsageInfo usage : usages) {
