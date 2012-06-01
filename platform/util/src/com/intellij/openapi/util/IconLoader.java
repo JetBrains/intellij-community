@@ -157,6 +157,7 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
+    if (path.startsWith("AllIcons.")) return getReflectiveIcon(path);
     if (!path.startsWith("/")) return null;
 
     final URL url = aClassLoader.getResource(path.substring(1));
