@@ -16,6 +16,8 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -152,11 +154,16 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       if (success || excThrown) {
         baseDir.refresh(true, true, new Runnable() {
           public void run() {
-            VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(project.getBaseDir());
-            if (checker.isHadNoMappings() && SvnUtil.seemsLikeVersionedDir(baseDir)) {
-              final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-              vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", SvnVcs.VCS_NAME)));
-            }
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(project.getBaseDir());
+                if (checker.isHadNoMappings() && SvnUtil.seemsLikeVersionedDir(baseDir)) {
+                  final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+                  vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", SvnVcs.VCS_NAME)));
+                }
+              }
+            }, ModalityState.NON_MODAL, project.getDisposed());
           }
         });
       }
