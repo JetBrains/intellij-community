@@ -17,12 +17,14 @@ package org.jetbrains.idea.devkit.references;
 
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -97,7 +99,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
         return new PsiReference[] {
-          new PsiReferenceBase<PsiElement>(element, false) {
+          new PsiReferenceBase<PsiElement>(element, true) {
             @Override
             public PsiElement resolve() {
               String value = ((XmlAttributeValue)element).getValue();
@@ -184,7 +186,13 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
   public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     final PsiElement file = queryParameters.getElementToSearch();
     if (file instanceof PsiBinaryFile) {
-      final Module module = ModuleUtil.findModuleForPsiElement(file);
+      final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+        @Override
+        public Module compute() {
+          return ModuleUtil.findModuleForPsiElement(file);
+        }
+      });
+
       final VirtualFile image = ((PsiBinaryFile)file).getVirtualFile();
       if (isImage(image) && isIconsModule(module)) {
         final Project project = file.getProject();
@@ -194,6 +202,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         model.setStringToFind(path);
         model.setCaseSensitive(true);
         model.setFindAll(true);
+        model.setWholeWordsOnly(true);
         final List<UsageInfo> usages = FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false);
         if (!usages.isEmpty()) {
           for (UsageInfo usage : usages) {
