@@ -24,8 +24,7 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
-import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
+import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -45,23 +44,15 @@ public class DefaultConfigLoader {
   @Nullable
   public static SvnBranchConfigurationNew loadDefaultConfiguration(final Project project, final VirtualFile vcsRoot) {
     try {
-      SVNURL baseUrl = null;
-      final SVNWCAccess wcAccess = SVNWCAccess.newInstance(null);
+      final SvnVcs vcs = SvnVcs.getInstance(project);
+
       File rootFile = new File(vcsRoot.getPath());
-      wcAccess.open(rootFile, false, 0);
-      try {
-        SVNEntry entry = wcAccess.getEntry(rootFile, false);
-        if (entry != null) {
-          baseUrl = entry.getSVNURL();
-        }
-        else {
-          LOG.info("Directory is not a working copy: " + vcsRoot.getPresentableUrl());
-          return null;
-        }
+      final SVNInfo info = vcs.createWCClient().doInfo(rootFile, SVNRevision.UNDEFINED);
+      if (info == null || info.getURL() == null) {
+        LOG.info("Directory is not a working copy: " + vcsRoot.getPresentableUrl());
+        return null;
       }
-      finally {
-        wcAccess.close();
-      }
+      SVNURL baseUrl = info.getURL();
 
       final SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
       result.setTrunkUrl(baseUrl.toString());
@@ -69,7 +60,7 @@ public class DefaultConfigLoader {
         final String s = SVNPathUtil.tail(baseUrl.getPath());
         if (s.equalsIgnoreCase(DEFAULT_TRUNK_NAME) || s.equalsIgnoreCase(DEFAULT_BRANCHES_NAME) || s.equalsIgnoreCase(DEFAULT_TAGS_NAME)) {
           final SVNURL rootPath = baseUrl.removePathTail();
-          SVNLogClient client = SvnVcs.getInstance(project).createLogClient();
+          SVNLogClient client = vcs.createLogClient();
           client.doList(rootPath, SVNRevision.UNDEFINED, SVNRevision.HEAD, false, false, new ISVNDirEntryHandler() {
             public void handleDirEntry(final SVNDirEntry dirEntry) throws SVNException {
               if (("".equals(dirEntry.getRelativePath())) || (! SVNNodeKind.DIR.equals(dirEntry.getKind()))) {
