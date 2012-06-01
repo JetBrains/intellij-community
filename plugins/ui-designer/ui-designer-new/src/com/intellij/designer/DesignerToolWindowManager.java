@@ -22,6 +22,7 @@ import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -77,7 +78,12 @@ public final class DesignerToolWindowManager implements ProjectComponent {
 
       @Override
       public void fileClosed(FileEditorManager source, VirtualFile file) {
-        bindToDesigner(getActiveDesigner());
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            bindToDesigner(getActiveDesigner());
+          }
+        });
       }
 
       @Override

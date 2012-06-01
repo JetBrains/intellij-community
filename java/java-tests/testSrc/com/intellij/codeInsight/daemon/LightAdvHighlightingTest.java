@@ -54,8 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.filter;
-
 /**
  * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
  * For "heavyweight" tests use AdvHighlightingTest
@@ -275,7 +273,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       }
     });
 
-    List<HighlightInfo> infos = filter(doHighlighting(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEmpty(infos);
   }
 
@@ -327,7 +325,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testSOEForTypeOfHugeBinaryExpression() throws IOException {
     configureFromFileText("a.java", "class A { String s = \"\"; }");
-    assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
+    assertEmpty(highlightErrors());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     final StringBuilder sb = new StringBuilder("\"-\"");

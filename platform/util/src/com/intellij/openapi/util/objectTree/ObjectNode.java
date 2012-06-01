@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
@@ -35,13 +36,13 @@ public final class ObjectNode<T> {
   private ObjectNode<T> myParent;
   private final T myObject;
 
-  private LinkedHashSet<ObjectNode<T>> myChildren;
+  LinkedHashSet<ObjectNode<T>> myChildren;
   private final Throwable myTrace;
 
   private final long myOwnModification;
   private long myChildModification;
 
-  public ObjectNode(ObjectTree<T> tree, ObjectNode<T> parentNode, T object, long modification) {
+  public ObjectNode(@NotNull ObjectTree<T> tree, ObjectNode<T> parentNode, @NotNull T object, long modification) {
     myTree = tree;
     myParent = parentNode;
     myObject = object;
@@ -50,6 +51,7 @@ public final class ObjectNode<T> {
     myOwnModification = modification;
   }
 
+  @NotNull
   private ObjectNode<T>[] getChildrenArray() {
     synchronized (myTree.treeLock) {
       if (myChildren == null || myChildren.isEmpty()) return EMPTY_ARRAY;
@@ -57,7 +59,7 @@ public final class ObjectNode<T> {
     }
   }
 
-  public void addChild(ObjectNode<T> child) {
+  public void addChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
       ensureChildArray();
       child.setParent(this);
@@ -68,7 +70,7 @@ public final class ObjectNode<T> {
     }
   }
 
-  public void removeChild(ObjectNode<T> child) {
+  public void removeChild(@NotNull ObjectNode<T> child) {
     synchronized (myTree.treeLock) {
       assert myChildren != null: "No children to remove child: " + this + ' ' + child;
       if (myChildren.remove(child)) {
@@ -80,15 +82,14 @@ public final class ObjectNode<T> {
   }
 
   private void setParent(ObjectNode<T> parent) {
-    synchronized (myTree.treeLock) {
-      myParent = parent;
-    }
+    myParent = parent;
   }
 
   public ObjectNode<T> getParent() {
     return myParent;
   }
 
+  @NotNull
   public Collection<ObjectNode<T>> getChildren() {
     synchronized (myTree.treeLock) {
       if (myChildren == null) return Collections.emptyList();
@@ -102,9 +103,10 @@ public final class ObjectNode<T> {
     }
   }
   
-  boolean execute(final boolean disposeTree, final ObjectTreeAction<T> action) {
-    ObjectTree.executeActionWithRecursiveGuard(this, new ObjectTreeAction<ObjectNode<T>>() {
-      public void execute(ObjectNode<T> each) {
+  boolean execute(final boolean disposeTree, @NotNull final ObjectTreeAction<T> action) {
+    ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode<T>>() {
+      @Override
+      public void execute(@NotNull ObjectNode<T> each) {
         action.beforeTreeExecution(myObject);
 
         ObjectNode<T>[] childrenArray = getChildrenArray();
@@ -144,14 +146,16 @@ public final class ObjectNode<T> {
         }
       }
 
-      public void beforeTreeExecution(ObjectNode<T> parent) {
+      @Override
+      public void beforeTreeExecution(@NotNull ObjectNode<T> parent) {
 
       }
-    }, myTree.getNodesInExecution());
+    });
 
     return true;
   }
 
+  @NotNull
   public T getObject() {
     return myObject;
   }
@@ -166,7 +170,7 @@ public final class ObjectNode<T> {
   }
 
   @TestOnly
-  void assertNoReferencesKept(T aDisposable) {
+  void assertNoReferencesKept(@NotNull T aDisposable) {
     assert getObject() != aDisposable;
     if (myChildren != null) {
       for (ObjectNode<T> node: myChildren) {

@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -107,7 +106,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
       }
     }).cpuBound().usesAllCPUCores().assertTiming();
 
-    return DaemonAnalyzerTestCase.filter(infos, HighlightSeverity.ERROR);
+    return highlightErrors();
   }
 
   public void testAThinlet() throws Exception {

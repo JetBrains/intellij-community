@@ -227,6 +227,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
         if (getActiveTool() instanceof CreationTool && !(tool instanceof CreationTool)) {
           PaletteManager.getInstance(getProject()).clearActiveItem();
         }
+        if (!(tool instanceof SelectionTool)) {
+          hideInspections();
+        }
         super.setActiveTool(tool);
       }
 
@@ -253,6 +256,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       @Override
       public void startInplaceEditing(@Nullable InplaceContext inplaceContext) {
         myInplaceEditingLayer.startEditing(inplaceContext);
+      }
+
+      @Override
+      public void hideInspections() {
+        myQuickFixManager.hideHint();
       }
 
       @Override

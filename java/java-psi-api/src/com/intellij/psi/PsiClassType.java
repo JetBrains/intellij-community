@@ -44,7 +44,7 @@ public abstract class PsiClassType extends PsiType {
   protected PsiClassType(LanguageLevel languageLevel) {
     this(languageLevel, PsiAnnotation.EMPTY_ARRAY);
   }
-  protected PsiClassType(LanguageLevel languageLevel, PsiAnnotation[] annotations) {
+  protected PsiClassType(LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
     super(annotations);
     myLanguageLevel = languageLevel;
   }
