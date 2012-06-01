@@ -321,6 +321,7 @@ public class ExpressionParser {
 
   private enum BreakPoint {P1, P2, P3, P4}
 
+  // todo[r.sh] make 'this', 'super' and 'class' reference expressions
   @Nullable
   private PsiBuilder.Marker parsePrimary(final PsiBuilder builder, @Nullable final BreakPoint breakPoint, final int breakOffset) {
     PsiBuilder.Marker startMarker = builder.mark();
@@ -350,7 +351,7 @@ public class ExpressionParser {
           final int offset = builder.getCurrentOffset();
           startMarker.rollbackTo();
 
-          final PsiBuilder.Marker classObjAccess = parseClassObjectAccess(builder);
+          final PsiBuilder.Marker classObjAccess = parseClassAccessOrMethodReference(builder);
           if (classObjAccess == null || builder.getCurrentOffset() < offset) {
             copy.rollbackTo();
             return parsePrimary(builder, BreakPoint.P1, offset);
@@ -466,7 +467,7 @@ public class ExpressionParser {
           final PsiBuilder.Marker copy = startMarker.precede();
           startMarker.rollbackTo();
 
-          final PsiBuilder.Marker classObjAccess = parseClassObjectAccess(builder);
+          final PsiBuilder.Marker classObjAccess = parseClassAccessOrMethodReference(builder);
           if (classObjAccess == null || builder.getCurrentOffset() <= pos) {
             copy.rollbackTo();
             return parsePrimary(builder, BreakPoint.P4, -1);
@@ -498,6 +499,9 @@ public class ExpressionParser {
           expr = arrayAccess;
         }
       }
+      else if (tokenType == JavaTokenType.DOUBLE_COLON) {
+        return parseMethodReference(builder, startMarker);
+      }
       else {
         startMarker.drop();
         return expr;
@@ -515,6 +519,7 @@ public class ExpressionParser {
       literal.done(JavaElementType.LITERAL_EXPRESSION);
       return literal;
     }
+
     if (tokenType == JavaTokenType.LPARENTH) {
       final PsiBuilder.Marker parenth = builder.mark();
       builder.advanceLexer();
@@ -533,12 +538,25 @@ public class ExpressionParser {
       parenth.done(JavaElementType.PARENTH_EXPRESSION);
       return parenth;
     }
+
     if (tokenType == JavaTokenType.LBRACE) {
       return parseArrayInitializer(builder);
     }
 
+    if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(tokenType) || tokenType == JavaTokenType.IDENTIFIER) {
+      final boolean primitive = tokenType != JavaTokenType.IDENTIFIER;
+      final PsiBuilder.Marker mark = builder.mark();
+
+      final ReferenceParser.TypeInfo typeInfo = myReferenceParser.parseTypeInfo(builder, 0);
+      if (typeInfo != null && (primitive || !typeInfo.hasErrors && typeInfo.isParameterized)) {
+        final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, primitive);
+        if (result != null) return result;
+      }
+
+      mark.rollbackTo();
+    }
+
     PsiBuilder.Marker annotation = null;
-    final PsiBuilder.Marker beforeAnnotation = builder.mark();
     if (tokenType == JavaTokenType.AT) {
       annotation = myDeclarationParser.parseAnnotations(builder);
       tokenType = builder.getTokenType();
@@ -558,16 +576,12 @@ public class ExpressionParser {
 
       builder.advanceLexer();
       refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
-      beforeAnnotation.drop();
       return refExpr;
     }
 
     if (annotation != null) {
-      beforeAnnotation.rollbackTo();
+      annotation.rollbackTo();
       tokenType = builder.getTokenType();
-    }
-    else {
-      beforeAnnotation.drop();
     }
 
     PsiBuilder.Marker expr = null;
@@ -599,11 +613,9 @@ public class ExpressionParser {
                   : JavaElementType.SUPER_EXPRESSION);
       return expr;
     }
+
     if (tokenType == JavaTokenType.NEW_KEYWORD) {
       return parseNew(builder, null);
-    }
-    if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(tokenType)) {
-      return parseClassObjectAccess(builder);
     }
 
     return null;
@@ -745,32 +757,66 @@ public class ExpressionParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parseClassObjectAccess(final PsiBuilder builder) {
+  private PsiBuilder.Marker parseClassAccessOrMethodReference(final PsiBuilder builder) {
     final PsiBuilder.Marker expr = builder.mark();
 
+    final boolean primitive = ElementType.PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType());
     if (myReferenceParser.parseType(builder, 0) == null) {
       expr.drop();
       return null;
     }
 
-    if (builder.getTokenType() != JavaTokenType.DOT) {
-      expr.rollbackTo();
-      return null;
+    final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, expr, primitive);
+    if (result == null) expr.rollbackTo();
+    return result;
+  }
+
+  @Nullable
+  private PsiBuilder.Marker continueClassAccessOrMethodReference(final PsiBuilder builder,
+                                                                 final PsiBuilder.Marker expr,
+                                                                 final boolean primitive) {
+    final IElementType tokenType = builder.getTokenType();
+    if (tokenType == JavaTokenType.DOT) {
+      return parseClassObjectAccess(builder, expr, primitive);
     }
-    PsiBuilder.Marker afterType = builder.mark();
+    else if (tokenType == JavaTokenType.DOUBLE_COLON) {
+      return parseMethodReference(builder, expr);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder, PsiBuilder.Marker expr, boolean primitive) {
+    final PsiBuilder.Marker mark = builder.mark();
     builder.advanceLexer();
 
     if (builder.getTokenType() == JavaTokenType.CLASS_KEYWORD) {
-      afterType.drop();
+      mark.drop();
       builder.advanceLexer();
     }
     else {
-      afterType.rollbackTo();
+      if (!primitive) return null;
+      mark.rollbackTo();
       builder.error(".class expected");
     }
 
     expr.done(JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION);
     return expr;
+  }
+
+  @NotNull
+  private PsiBuilder.Marker parseMethodReference(final PsiBuilder builder, final PsiBuilder.Marker start) {
+    builder.advanceLexer();
+
+    myReferenceParser.parseReferenceParameterList(builder, false, false);
+
+    if (!expect(builder, JavaTokenType.IDENTIFIER) && !expect(builder, JavaTokenType.NEW_KEYWORD)) {
+      error(builder, JavaErrorMessages.message("expected.identifier"));
+    }
+
+    start.done(JavaElementType.METHOD_REF_EXPRESSION);
+    return start;
   }
 
   @NotNull

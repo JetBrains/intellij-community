@@ -111,8 +111,16 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testQualifiedSuperMethodCall1() { doParserTest("d.super(0)"); }
   public void testSuperMethodCallTypeParameterList() { doParserTest("super()"); }
   public void testPrimitiveClassObjectAccess() { doParserTest("int.class"); }
+  public void testPrimitiveFieldAccess() { doParserTest("int.x"); }
   public void testChainedClassObjectAccess() { doParserTest("A.class.B.class"); }
   public void testChainedThisObjectAccess() { doParserTest("A.this.B.this"); }
+
+  public void testMethodRef0() { doParserTest("a.b.C::m"); }
+  public void testMethodRef1() { doParserTest("a.b.C<T>::new"); }
+  public void testMethodRef2() { doParserTest("C::<T>m"); }
+  public void testMethodRef3() { doParserTest("a[i]::m"); }
+  public void testMethodRef4() { doParserTest("int[]::clone"); }
+  public void testMethodRef5() { doParserTest("(f ? list.map(String::length) : Collections.emptyList())::iterator"); }
 
   private void doParserTest(@NonNls final String text) {
     doParserTest(text, new MyTestParser());

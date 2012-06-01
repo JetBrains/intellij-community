@@ -1,0 +1,17 @@
+PsiJavaFile:MethodRef3.java
+  PsiMethodReferenceExpression:a[i]::m
+    PsiArrayAccessExpression:a[i]
+      PsiReferenceExpression:a
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:a('a')
+      PsiJavaToken:LBRACKET('[')
+      PsiReferenceExpression:i
+        PsiReferenceParameterList
+          <empty list>
+        PsiIdentifier:i('i')
+      PsiJavaToken:RBRACKET(']')
+    PsiJavaToken:DOUBLE_COLON('::')
+    PsiReferenceParameterList
+      <empty list>
+    PsiIdentifier:m('m')
