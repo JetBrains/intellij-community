@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectExtension;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.*;
@@ -54,6 +55,7 @@ public class ProjectModelEnvironment {
     env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(project, env.getParentDisposable()));
     env.registerProjectComponent(PathMacroManager.class, new ProjectPathMacroManager(pathMacros, project));
     env.registerProjectExtensionPoint(DirectoryIndexExcludePolicy.EP_NAME, DirectoryIndexExcludePolicy.class);
+    env.registerProjectExtensionPoint(ProjectExtension.EP_NAME, ProjectExtension.class);
     DirectoryIndex index = new DirectoryIndexImpl(project);
     env.registerProjectComponent(DirectoryIndex.class, index);
     env.registerProjectComponent(ProjectRootManager.class, new ProjectRootManagerImpl(project, index));

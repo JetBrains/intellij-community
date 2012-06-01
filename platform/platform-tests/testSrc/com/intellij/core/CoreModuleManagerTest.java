@@ -18,10 +18,8 @@ package com.intellij.core;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -33,7 +31,7 @@ import java.io.IOException;
  * @author yole
  */
 public class CoreModuleManagerTest extends UsefulTestCase {
-  public void _testLoadingModules() throws IOException, JDOMException {
+  public void _testLoadingModules() throws IOException, JDOMException, InvalidDataException {
     CoreEnvironment env = new CoreEnvironment(getTestRootDisposable());
     ProjectModelEnvironment.register(env);
     final String projectPath = PathManagerEx.getTestDataPath("/core/loadingTest");
@@ -42,6 +40,9 @@ public class CoreModuleManagerTest extends UsefulTestCase {
     final ModuleManager moduleManager = ModuleManager.getInstance(env.getProject());
     final Module[] modules = moduleManager.getModules();
     assertEquals(1, modules.length);
+
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(env.getProject());
+    assertEquals("1.6", projectRootManager.getProjectSdkName());
 
     ModuleRootManager rootManager = ModuleRootManager.getInstance(modules[0]);
     final ContentEntry[] contentEntries = rootManager.getContentEntries();
