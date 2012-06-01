@@ -17,7 +17,10 @@ package com.intellij.openapi.diff.impl;
 
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -774,7 +777,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public static class DiffIsApproximate extends EditorNotificationPanel {
     public DiffIsApproximate() {
-      myLabel.setText("<html>Coulnd't find context for patch. Some fragments were applied at the best possible place. <b>Please check carefully.</b></html>");
+      myLabel.setText("<html>Couldn't find context for patch. Some fragments were applied at the best possible place. <b>Please check carefully.</b></html>");
     }
   }
 
