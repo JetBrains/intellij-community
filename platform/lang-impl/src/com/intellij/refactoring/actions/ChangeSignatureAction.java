@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
 import org.jetbrains.annotations.NotNull;
@@ -73,9 +70,14 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
       final PsiElement targetMember = fileHandler.findTargetMember(element);
       if (targetMember != null) return targetMember;
     }
-    final PsiReference reference = element.getReference();
-    if (reference == null) return null;
-    return reference.resolve();
+    PsiReference reference = element.getReference();
+    if (reference == null && element instanceof PsiNameIdentifierOwner) {
+      return element;
+    }
+    if (reference != null) {
+      return reference.resolve();
+    }
+    return null;
   }
 
   @Override
