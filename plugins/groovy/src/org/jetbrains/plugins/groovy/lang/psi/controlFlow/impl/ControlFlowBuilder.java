@@ -804,24 +804,32 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         }
       }
 
+      //save added postcalls into separate list because we don't want returnInstruction grabbed their pending edges
+      List<Pair<InstructionImpl, GroovyPsiElement>> pendingPostCalls = myPending;
+      myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
+
       myHead = finallyInstruction;
       finallyClause.accept(this);
-      final ReturnInstruction returnInstruction = new ReturnInstruction(myInstructionNumber++);
+      final ReturnInstruction returnInstruction = new ReturnInstruction(finallyClause, myInstructionNumber++);
       for (AfterCallInstruction postCall : postCalls) {
         postCall.setReturnInstruction(returnInstruction);
         addEdge(returnInstruction, postCall);
       }
       addNode(returnInstruction);
+      checkPending(returnInstruction);
       interruptFlow();
       finishNode(finallyInstruction);
 
       assert oldPending != null;
-      oldPending.addAll(myPending);
+      oldPending.addAll(pendingPostCalls);
       myPending = oldPending;
     }
     else {
       if (tryEnd != null) {
         addPendingEdge(tryCatchStatement, tryEnd);
+      }
+      for (InstructionImpl catchEnd : catches) {
+        addPendingEdge(tryBlock, catchEnd);
       }
     }
   }

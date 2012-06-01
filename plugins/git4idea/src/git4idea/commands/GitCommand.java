@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class GitCommand {
 
   public static final GitCommand ADD = write("add");
-  public static final GitCommand ANNOTATE = read("annotate");
+  public static final GitCommand BLAME = read("blame");
   public static final GitCommand BRANCH = meta("branch");
   public static final GitCommand CHECKOUT = write("checkout");
   public static final GitCommand COMMIT = write("commit");

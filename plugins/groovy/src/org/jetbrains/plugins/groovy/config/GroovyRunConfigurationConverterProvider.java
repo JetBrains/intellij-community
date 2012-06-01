@@ -44,7 +44,7 @@ public class GroovyRunConfigurationConverterProvider extends ConverterProvider {
           @Override
           public boolean isConversionNeeded(RunManagerSettings settings) {
             for (Element element : settings.getRunConfigurations()) {
-              if ("Groovy Script".equals(element.getAttributeValue("factoryName"))) {
+              if ("Groovy Script".equals(element.getAttributeValue("factoryName")) && !"true".equals(element.getAttributeValue("default"))) {
                 return true;
               }
             }

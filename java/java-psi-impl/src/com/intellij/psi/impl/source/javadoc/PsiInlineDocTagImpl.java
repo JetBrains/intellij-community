@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.tree.java;
+package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag, Constants {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiInlineDocTagImpl");
-
-  private static final TokenSet VALUE_BIT_SET = TokenSet.create(JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, DOC_METHOD_OR_FIELD_REF,
-                                                                DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, WHITE_SPACE, DOC_COMMENT_BAD_CHARACTER);
+  private static final TokenSet TAG_VALUE_BIT_SET = TokenSet.create(
+    DOC_TAG_VALUE_ELEMENT, DOC_METHOD_OR_FIELD_REF);
+  private static final TokenSet VALUE_BIT_SET = TokenSet.orSet(TAG_VALUE_BIT_SET, TokenSet.create(
+    JAVA_CODE_REFERENCE, DOC_TAG_VALUE_TOKEN, DOC_COMMENT_DATA, DOC_INLINE_TAG, DOC_REFERENCE_HOLDER, WHITE_SPACE, DOC_COMMENT_BAD_CHARACTER));
 
   public PsiInlineDocTagImpl() {
     super(DOC_INLINE_TAG);
@@ -57,7 +56,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
 
   @Override
   public PsiElement getNameElement() {
-    return findChildByRoleAsPsiElement(ChildRole.DOC_TAG_NAME);
+    return findPsiChildByType(DOC_TAG_NAME);
   }
 
   @Override
@@ -67,7 +66,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
 
   @Override
   public PsiDocTagValue getValueElement() {
-    return (PsiDocTagValue)findChildByRoleAsPsiElement(ChildRole.DOC_TAG_VALUE);
+    return (PsiDocTagValue)findPsiChildByType(TAG_VALUE_BIT_SET);
   }
 
   @Override
@@ -79,7 +78,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
 
   @Override
   public int getChildRole(ASTNode child) {
-    LOG.assertTrue(child.getTreeParent() == this);
+    assert child.getTreeParent() == this : child.getTreeParent();
     IElementType i = child.getElementType();
     if (i == DOC_TAG_NAME) {
       return ChildRole.DOC_TAG_NAME;
@@ -93,10 +92,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
     else if (i == DOC_INLINE_TAG_END) {
       return ChildRole.DOC_INLINE_TAG_END;
     }
-    else if (i == DOC_TAG_VALUE_TOKEN) {
-      return ChildRole.DOC_TAG_VALUE;
-    }
-    else if (i == DOC_METHOD_OR_FIELD_REF) {
+    else if (TAG_VALUE_BIT_SET.contains(i)) {
       return ChildRole.DOC_TAG_VALUE;
     }
     else {

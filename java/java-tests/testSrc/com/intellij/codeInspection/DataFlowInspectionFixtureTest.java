@@ -51,6 +51,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testNullableField() throws Throwable { doTest(); }
   public void testCanBeNullDoesntImplyIsNull() throws Throwable { doTest(); }
 
-  public void testIDEA84489() throws Throwable { doTest(); }
-
+  public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
+  public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
 }

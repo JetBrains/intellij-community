@@ -17,6 +17,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * Allows to specify a set of language-dependent token types for the doc comment lexer.
@@ -27,6 +28,7 @@ public interface DocCommentTokenTypes {
   IElementType commentStart();
   IElementType commentEnd();
   IElementType commentData();
+  TokenSet spaceCommentsTokenSet();
   IElementType space();
   IElementType tagValueToken();
   IElementType tagValueLParen();

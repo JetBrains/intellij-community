@@ -20,6 +20,7 @@ import com.android.AndroidConstants;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -374,6 +375,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                 }
               }
             });
+
+            new ReformatCodeProcessor(project, module, false).run();
           }
         });
       }

@@ -137,7 +137,7 @@ public class GradleUtil {
   }
 
   /**
-   * Delegates to the {@link #refreshProject(Project, String, Ref, boolean, boolean)} with the following defaults:
+   * Delegates to the {@link #refreshProject(Project, String, Ref, Ref, boolean, boolean)} with the following defaults:
    * <pre>
    * <ul>
    *   <li>target gradle project path is retrieved from the {@link GradleSettings gradle settings} associated with the given project;</li>
@@ -155,9 +155,10 @@ public class GradleUtil {
       return;
     }
     assert linkedProjectPath != null;
-    Ref<String> errorHolder = new Ref<String>();
-    refreshProject(project, linkedProjectPath, errorHolder, true, false);
-    final String error = errorHolder.get();
+    Ref<String> errorMessageHolder = new Ref<String>();
+    Ref<String> errorDetailsHolder = new Ref<String>();
+    refreshProject(project, linkedProjectPath, errorMessageHolder, errorDetailsHolder, true, false);
+    final String error = errorDetailsHolder.get();
     if (!StringUtil.isEmpty(error)) {
       GradleLog.LOG.warn(error);
     }
@@ -170,6 +171,7 @@ public class GradleUtil {
    * @return   error message for the given exception
    */
   @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+  @NotNull
   public static String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
     String reason = unwrapped.getLocalizedMessage();
@@ -184,20 +186,33 @@ public class GradleUtil {
       unwrapped.printStackTrace(new PrintWriter(writer));
       return writer.toString();
     }
-  }  
+  }
+
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+  @Nullable
+  private static String extractDetails(@NotNull Throwable e) {
+    final Throwable unwrapped = RemoteUtil.unwrap(e);
+    if (unwrapped instanceof GradleApiException) {
+      return ((GradleApiException)unwrapped).getOriginalReason();
+    }
+    return null;
+  }
+  
   /**
    * Queries slave gradle process to refresh target gradle project.
    * 
    * @param project            target intellij project to use
    * @param gradleProjectPath  path of the target gradle project's file
-   * @param errorHolder        holder for the error message that describes a problem occurred during the refresh (if any)
+   * @param errorMessageHolder holder for the error message that describes a problem occurred during the refresh (if any)
+   * @param errorDetailsHolder holder for the error details of the problem occurred during the refresh (if any)
    * @param resolveLibraries   flag that identifies whether gradle libraries should be resolved during the refresh
    * @return                   the most up-to-date gradle project (if any)
    */
   @Nullable
   public static GradleProject refreshProject(@NotNull final Project project,
                                              @NotNull final String gradleProjectPath,
-                                             @NotNull final Ref<String> errorHolder,
+                                             @NotNull final Ref<String> errorMessageHolder,
+                                             @NotNull final Ref<String> errorDetailsHolder,
                                              final boolean resolveLibraries,
                                              final boolean modal)
   {
@@ -214,7 +229,13 @@ public class GradleUtil {
           return;
         }
         final String message = buildErrorMessage(error);
-        errorHolder.set(String.format("Can't resolve gradle project at '%s'. Reason: %s", gradleProjectPath, message));
+        if (StringUtil.isEmpty(message)) {
+          errorMessageHolder.set(String.format("Can't resolve gradle project at '%s'. Reason: %s", gradleProjectPath, message));
+        }
+        else {
+          errorMessageHolder.set(message);
+        }
+        errorDetailsHolder.set(extractDetails(error));
       }
     };
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {

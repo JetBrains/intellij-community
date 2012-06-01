@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -385,7 +385,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         if (nextParSibling != null && "(".equals(nextParSibling.getText())) {
           endOffset++;
           PsiElement nextElement = nextParSibling.getNextSibling();
-          if (nextElement != null && SourceTreeToPsiMap.psiToTreeNotNull(nextElement).getElementType() == DOC_TAG_VALUE_TOKEN) {
+          if (nextElement != null && SourceTreeToPsiMap.psiToTreeNotNull(nextElement).getElementType() == DOC_TAG_VALUE_ELEMENT) {
             endOffset += nextElement.getTextLength();
             nextElement = nextElement.getNextSibling();
           }

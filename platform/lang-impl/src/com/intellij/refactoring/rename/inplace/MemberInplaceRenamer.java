@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,14 +82,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected PsiElement checkLocalScope() {
-    PsiElement scope = super.checkLocalScope();
-    if (scope == null) {
-      PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-      if (currentFile != null) {
-        return currentFile;
-      }
+    PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    if (currentFile != null) {
+      return currentFile;
     }
-    return scope;
+    return super.checkLocalScope();
   }
 
   @Override
@@ -240,7 +238,15 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Nullable
   public PsiElement getSubstituted() {
-    if (mySubstituted != null && mySubstituted.isValid()) return mySubstituted;
+    if (mySubstituted != null && mySubstituted.isValid()){
+      if (mySubstituted instanceof PsiNameIdentifierOwner) {
+        if (Comparing.strEqual(myOldName, ((PsiNameIdentifierOwner)mySubstituted).getName())) return mySubstituted;
+
+        final RangeMarker rangeMarker = mySubstitutedRange != null ? mySubstitutedRange : myRenameOffset;
+        return PsiTreeUtil.getParentOfType(mySubstituted.getContainingFile().findElementAt(rangeMarker.getStartOffset()), PsiNameIdentifierOwner.class);
+      }
+      return mySubstituted;
+    }
     if (mySubstitutedRange != null) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
       if (psiFile != null) {

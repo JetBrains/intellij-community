@@ -175,7 +175,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
 
         CompilerUtil.refreshIOFile(new File(processingItem.getOutputJarOsPath()));
 
-        AndroidCompileUtil.addMessages(context, messages);
+        AndroidCompileUtil.addMessages(context, messages, processingItem.myModule);
         
         if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
           processedItems.add(item);

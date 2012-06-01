@@ -85,7 +85,13 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
 
   public boolean isChangeSignatureAvailable(@NotNull PsiElement element) {
     final MyDocumentChangeAdapter adapter = myListenerMap.get(PsiUtilCore.getVirtualFile(element));
-    return adapter != null && adapter.getCurrentInfo() != null;
+    if (adapter != null) {
+      final ChangeInfo currentInfo = adapter.getCurrentInfo();
+      if (currentInfo != null && element.equals(adapter.getInitialChangeInfo().getMethod())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void dismissForElement(PsiElement method) {

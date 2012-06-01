@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -82,6 +83,24 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
   }
 
   private static GenerationItem[] doGenerate(final CompileContext context, GenerationItem[] items, VirtualFile outputRootDirectory) {
+    if (items == null || items.length == 0) {
+      return EMPTY_GENERATION_ITEM_ARRAY;
+    }
+
+    // we have one item per module there, so clear output directory
+    final String genRootPath = FileUtil.toSystemDependentName(outputRootDirectory.getPath());
+    final File genRootDir = new File(genRootPath);
+    if (genRootDir.exists()) {
+      if (!FileUtil.delete(genRootDir)) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete directory " + genRootPath, null, -1, -1);
+        return EMPTY_GENERATION_ITEM_ARRAY;
+      }
+      if (!genRootDir.mkdir()) {
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot create directory " + genRootPath, null, -1, -1);
+        return EMPTY_GENERATION_ITEM_ARRAY;
+      }
+    }
+
     List<GenerationItem> results = new ArrayList<GenerationItem>(items.length);
     boolean toRefresh = false;
 
@@ -102,7 +121,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                outputDirOsPath, aptItem.myResourcesPaths,
                                aptItem.myLibraryPackages, aptItem.myNonConstantFields));
           toRefresh = true;
-          AndroidCompileUtil.addMessages(context, messages);
+          AndroidCompileUtil.addMessages(context, messages, aptItem.myModule);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(aptItem);
           }
@@ -217,7 +236,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         if (facet != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
           if (!isToCompileModule(module, configuration) ||
-              (facet.getConfiguration().LIBRARY_PROJECT && hasBadCircularDependencies(facet))) {
+              AndroidCompileUtil.isLibraryWithBadCircularDependency(facet)) {
             continue;
           }
 
@@ -238,8 +257,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
           VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
           if (manifestFile == null) {
-            myContext.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
-                                 null, -1, -1);
+            myContext.addMessage(CompilerMessageCategory.ERROR,
+                                 AndroidBundle.message("android.compilation.error.manifest.not.found", module.getName()), null, -1, -1);
             continue;
           }
 
@@ -258,6 +277,13 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                  -1, -1);
             continue;
           }
+
+          if (!AndroidCommonUtils.contains2Identifiers(packageName)) {
+            final String message = "[" + module.getName() + "] Package name must contain at least 2 segments";
+            myContext.addMessage(facet.getConfiguration().LIBRARY_PROJECT ? CompilerMessageCategory.WARNING : CompilerMessageCategory.ERROR,
+                                 message, manifestFile.getUrl(), -1, -1);
+            continue;
+          }
           final String[] libPackages = AndroidCompileUtil.getLibPackages(module, packageName);
 
           final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
@@ -273,34 +299,6 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         }
       }
       return items.toArray(new GenerationItem[items.size()]);
-    }
-
-    // support for lib<->lib and app<->lib circular dependencies
-    // see IDEA-79737 for details
-    private static boolean hasBadCircularDependencies(@NotNull AndroidFacet facet) {
-      final List<AndroidFacet> dependencies = AndroidUtils.getAllAndroidDependencies(facet.getModule(), false);
-
-      final Manifest manifest = facet.getManifest();
-      if (manifest == null) {
-        return false;
-      }
-
-      final String aPackage = manifest.getPackage().getValue();
-      if (aPackage == null || aPackage.length() == 0) {
-        return false;
-      }
-
-      for (AndroidFacet depFacet : dependencies) {
-        final List<AndroidFacet> depDependencies = AndroidUtils.getAllAndroidDependencies(depFacet.getModule(), true);
-
-        if (depDependencies.contains(facet) &&
-            dependencies.contains(depFacet) &&
-            (depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0 ||
-             !depFacet.getConfiguration().LIBRARY_PROJECT)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 

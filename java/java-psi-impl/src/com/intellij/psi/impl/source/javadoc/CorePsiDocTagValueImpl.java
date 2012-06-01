@@ -21,6 +21,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CorePsiDocTagValueImpl extends CompositePsiElement implements PsiDocTagValue {
   public CorePsiDocTagValueImpl() {
-    super(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
+    super(JavaDocElementType.DOC_TAG_VALUE_ELEMENT);
   }
 
   @Override
@@ -47,6 +48,7 @@ public class CorePsiDocTagValueImpl extends CompositePsiElement implements PsiDo
     if (child.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_COMMA) {
       return ChildRole.COMMA;
     }
+
     return super.getChildRole(child);
   }
 }

@@ -25,10 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureDetectorAction;
 import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
@@ -100,6 +97,17 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
     doTypingNoBorderTest("int param");
   }
 
+  public void testOnAnotherMethod() {
+    doTest(new Runnable() {
+      @Override
+      public void run() {
+        myFixture.type("int param");
+        final int nextMethodOffset = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[1].getTextOffset();
+        myFixture.getEditor().getCaretModel().moveToOffset(nextMethodOffset);
+      }
+    }, false, ChangeSignatureDetectorAction.CHANGE_SIGNATURE);
+  }
+  
   public void testAddParamChangeReturnType() {
     doTest(new Runnable() {
       @Override

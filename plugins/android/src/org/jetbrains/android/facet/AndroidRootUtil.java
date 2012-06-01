@@ -72,6 +72,7 @@ public class AndroidRootUtil {
     return getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().CUSTOM_COMPILER_MANIFEST, false);
   }
 
+  // DO NOT get PSI or DOM from this file, because it may be excluded (f.ex. it can be in /target/ directory)
   @Nullable
   public static VirtualFile getManifestFileForCompiler(@NotNull AndroidFacet facet) {
     return facet.getConfiguration().USE_CUSTOM_COMPILER_MANIFEST
@@ -118,6 +119,10 @@ public class AndroidRootUtil {
 
   @Nullable
   public static VirtualFile getFileByRelativeModulePath(Module module, String relativePath, boolean lookInContentRoot) {
+    if (relativePath == null || relativePath.length() == 0) {
+      return null;
+    }
+
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
 
     String moduleDirPath = new File(module.getModuleFilePath()).getParent();
@@ -510,5 +515,17 @@ public class AndroidRootUtil {
     }
     String moduleDirPath = getModuleDirPath(facet.getModule());
     return moduleDirPath != null ? FileUtil.toSystemDependentName(moduleDirPath + path) : null;
+  }
+
+  @Nullable
+  public static String getPathRelativeToModuleDir(@NotNull Module module, @NotNull String path) {
+    String moduleDirPath = getModuleDirPath(module);
+    if (moduleDirPath == null) {
+      return null;
+    }
+    if (moduleDirPath.equals(path)) {
+      return "";
+    }
+    return FileUtil.getRelativePath(moduleDirPath, path, '/');
   }
 }

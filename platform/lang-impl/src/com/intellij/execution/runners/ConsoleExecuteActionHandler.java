@@ -18,6 +18,9 @@ package com.intellij.execution.runners;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 
@@ -58,7 +61,13 @@ public class ConsoleExecuteActionHandler {
     if (myAddCurrentToHistory) {
       languageConsole.addCurrentToHistory(range, false, myPreserveMarkup);
     }
+
     languageConsole.setInputText("");
+
+    final UndoManager manager = languageConsole.getProject() == null ? UndoManager.getGlobalInstance() : UndoManager.getInstance(
+      languageConsole.getProject());
+
+    ((UndoManagerImpl)manager).invalidateActionsFor(DocumentReferenceManager.getInstance().create(document));
 
     myConsoleHistoryModel.addToHistory(text);
     // Send to interpreter / server

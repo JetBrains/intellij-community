@@ -112,7 +112,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     for (ContentEntry entry : rootManager.getContentEntries()) {
       for (SourceFolder folder : entry.getSourceFolders()) {
         VirtualFile dir = folder.getFile();
-        if (inTests == folder.isTestSource() && dir != null) {
+        if ((!inTests || folder.isTestSource()) && dir != null) {
           if (!rootManager.getFileIndex().iterateContentUnderDirectory(dir, new ContentIterator() {
             @Override
             public boolean processFile(VirtualFile fileOrDir) {

@@ -61,6 +61,11 @@ public class FileUtil {
   public static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
   public static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
 
+  @NotNull
+  public static String join(@NotNull final String... parts) {
+    return StringUtil.join(parts, File.separator);
+  }
+
   @Nullable
   public static String getRelativePath(File base, File file) {
     if (base == null || file == null) return null;

@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider2;
 import com.intellij.openapi.vcs.merge.MergeSession;
@@ -37,6 +38,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.util.StringScanner;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -119,12 +121,7 @@ public class GitMergeProvider implements MergeProvider2 {
           }
           mergeData.CURRENT = loadRevisionCatchingErrors(current);
           mergeData.LAST = loadRevisionCatchingErrors(last);
-          try {
-            mergeData.LAST_REVISION_NUMBER = GitRevisionNumber.resolve(myProject, root, myReverse ? "HEAD" : "MERGE_HEAD");
-          }
-          catch (VcsException e) {
-            // ignore exception, the null value will be used
-          }
+          mergeData.LAST_REVISION_NUMBER = findLastRevisionNumber(root);
         }
         catch (IOException e) {
           throw new IllegalStateException("Failed to load file content", e);
@@ -133,6 +130,40 @@ public class GitMergeProvider implements MergeProvider2 {
     };
     VcsUtil.runVcsProcessWithProgress(runnable, GitBundle.message("merge.load.files"), false, myProject);
     return mergeData;
+  }
+
+  @Nullable
+  private VcsRevisionNumber findLastRevisionNumber(@NotNull VirtualFile root) {
+    if (myReverse) {
+      return resolveHead(root);
+    }
+    else {
+      try {
+        return GitRevisionNumber.resolve(myProject, root, "MERGE_HEAD");
+      }
+      catch (VcsException e) {
+        log.info("Couldn't resolved the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
+        try {
+          return GitRevisionNumber.resolve(myProject, root, "CHERRY_PICK_HEAD");
+        }
+        catch (VcsException e1) {
+          log.info("Couldn't resolve neither MERGE_HEAD, nor the CHERRY_PICK_HEAD in " + root, e1);
+          // for now, we don't know: maybe it is a conflicted file from rebase => then resolve the head.
+          return resolveHead(root);
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private GitRevisionNumber resolveHead(@NotNull VirtualFile root) {
+    try {
+      return GitRevisionNumber.resolve(myProject, root, "HEAD");
+    }
+    catch (VcsException e) {
+      log.error("Couldn't resolve the HEAD in " + root, e);
+      return null;
+    }
   }
 
   private byte[] loadRevisionCatchingErrors(final GitFileRevision revision) throws VcsException, IOException {

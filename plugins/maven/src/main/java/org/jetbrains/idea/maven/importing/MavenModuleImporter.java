@@ -16,15 +16,19 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Map;
 
@@ -64,36 +68,45 @@ public class MavenModuleImporter {
     configFolders();
     configDependencies();
     configLanguageLevel();
+    configEncoding();
   }
 
   public void preConfigFacets() {
+    final ModuleType moduleType = ModuleType.get(myModule);
+
     for (final MavenImporter importer : getSuitableImporters()) {
-      // facets use FacetConfiguration and like that do not have modifiable models,
-      // therefore we have to take write lock
-      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
-        public void run() {
-          importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
-        }
-      });
+      if (importer.getModuleType() == moduleType) {
+        // facets use FacetConfiguration and like that do not have modifiable models,
+        // therefore we have to take write lock
+        MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
+          public void run() {
+            importer.preProcess(myModule, myMavenProject, myMavenProjectChanges, myModifiableModelsProvider);
+          }
+        });
+      }
     }
   }
 
   public void configFacets(final List<MavenProjectsProcessorTask> postTasks) {
+    final ModuleType moduleType = ModuleType.get(myModule);
+
     for (final MavenImporter importer : getSuitableImporters()) {
-      // facets use FacetConfiguration and like that do not have modifiable models,
-      // therefore we have to take write lock
-      MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
-        public void run() {
-          importer.process(myModifiableModelsProvider,
-                           myModule,
-                           myRootModelAdapter,
-                           myMavenTree,
-                           myMavenProject,
-                           myMavenProjectChanges,
-                           myMavenProjectToModuleName,
-                           postTasks);
-        }
-      });
+      if (importer.getModuleType() == moduleType) {
+        // facets use FacetConfiguration and like that do not have modifiable models,
+        // therefore we have to take write lock
+        MavenUtil.invokeAndWaitWriteAction(myModule.getProject(), new Runnable() {
+          public void run() {
+            importer.process(myModifiableModelsProvider,
+                             myModule,
+                             myRootModelAdapter,
+                             myMavenTree,
+                             myMavenProject,
+                             myMavenProjectChanges,
+                             myMavenProjectToModuleName,
+                             postTasks);
+          }
+        });
+      }
     }
   }
 
@@ -129,8 +142,24 @@ public class MavenModuleImporter {
     return DependencyScope.COMPILE;
   }
 
+  private void configEncoding() {
+    if (Boolean.parseBoolean(System.getProperty("maven.disable.encode.import"))) return;
+
+    String encoding = myMavenProject.getEncoding();
+    if (encoding != null) {
+      try {
+        EncodingManager.getInstance().setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
+      }
+      catch (UnsupportedCharsetException ignored) {
+
+      }
+    }
+  }
+
   private void configLanguageLevel() {
     final LanguageLevel level = LanguageLevel.parse(myMavenProject.getSourceLevel());
-    myRootModelAdapter.setLanguageLevel(level);
+    if (level != null) {
+      myRootModelAdapter.setLanguageLevel(level);
+    }
   }
 }

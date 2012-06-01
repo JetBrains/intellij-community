@@ -76,9 +76,9 @@ public class FieldPropertyTest extends IncrementalTestCase {
     doTest();
   }
 
-  public void testNonIncremental1() throws Exception {
-    doTest();
-  }
+  //public void testNonIncremental1() throws Exception {
+  //  doTest();
+  //}
 
   public void testNonIncremental2() throws Exception {
     doTest();

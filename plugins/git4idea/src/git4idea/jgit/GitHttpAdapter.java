@@ -148,7 +148,7 @@ public final class GitHttpAdapter {
   }
 
   private static void logException(GitRepository repository, String remoteName, String remoteUrl, Exception e, String operation) {
-    LOG.info("Exception while " + operation + " " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
+    LOG.error("Exception while " + operation + " " + remoteName + "(" + remoteUrl + ")" + " in " + repository.toLogString(), e);
   }
 
   private static GitFetchResult.Type convertToFetchResultType(GeneralResult result) {
@@ -303,6 +303,18 @@ public final class GitHttpAdapter {
           rememberPassword(provider);
           return GeneralResult.SUCCESS;
         }
+        catch (InvalidRemoteException e) {
+          if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
+            url = addDotGitToUrl(url);
+            command.setUrl(url);
+            provider.setUrl(url);
+            noRemoteWithoutGitErrorFixTried = true;
+            // don't "eat" one password entering attempt
+            //noinspection AssignmentToForLoopParameter
+            i--;
+            command.cleanup();
+          }
+        }
         catch (JGitInternalException e) {
           if (authError(e)) {
             if (provider.wasCancelled()) {  // if user cancels the dialog, just return
@@ -322,7 +334,7 @@ public final class GitHttpAdapter {
             command.cleanup();
           }
           else if (!noRemoteWithoutGitErrorFixTried && isNoRemoteWithoutDotGitError(e, url)) {
-            url += ".git";
+            url = addDotGitToUrl(url);
             command.setUrl(url);
             provider.setUrl(url);
             noRemoteWithoutGitErrorFixTried = true;
@@ -345,6 +357,14 @@ public final class GitHttpAdapter {
       log(command, project);
       ProxySelector.setDefault(defaultProxySelector);
     }
+  }
+
+  @NotNull
+  private static String addDotGitToUrl(@NotNull String url) {
+    if (url.endsWith("/")) {
+      url = url.substring(0, url.length() - 1);
+    }
+    return url + ".git";
   }
 
   private static void log(@NotNull GitHttpRemoteCommand command, @NotNull Project project) {

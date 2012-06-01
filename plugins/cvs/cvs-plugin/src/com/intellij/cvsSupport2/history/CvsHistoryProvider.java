@@ -246,7 +246,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                    }
                                  }
                                });
-    Collections.sort(result, VcsFileRevisionComparator.INSTANCE);
+    Collections.sort(result, Collections.reverseOrder(VcsFileRevisionComparator.INSTANCE));
     return result;
   }
 
@@ -266,12 +266,12 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
 
     public List<TreeItem<VcsFileRevision>> createTreeOn(List<VcsFileRevision> allRevisions) {
-      final List<VcsFileRevision> sortedRevisions = sortRevisions(allRevisions);
+      Collections.sort(allRevisions, VcsFileRevisionComparator.INSTANCE);
 
       final List<TreeItem<VcsFileRevision>> result = new ArrayList<TreeItem<VcsFileRevision>>();
 
       TreeItem<VcsFileRevision> prevRevision = null;
-      for (final VcsFileRevision sortedRevision : sortedRevisions) {
+      for (final VcsFileRevision sortedRevision : allRevisions) {
         final CvsFileRevisionImpl cvsFileRevision = (CvsFileRevisionImpl)sortedRevision;
         final TreeItem<VcsFileRevision> treeItem = new TreeItem<VcsFileRevision>(cvsFileRevision);
         final TreeItem<VcsFileRevision> commonParent = getCommonParent(prevRevision, treeItem);
@@ -281,12 +281,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
         else {
           result.add(treeItem);
         }
-
         prevRevision = treeItem;
       }
 
       return result;
-
     }
 
     @Nullable
@@ -304,11 +302,6 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
       final CvsFileRevisionImpl data = (CvsFileRevisionImpl)cvsFileRevision.getData();
       return data.getRevisionNumber().asString().startsWith(prevData.getRevisionNumber().asString());
     }
-
-    private static List<VcsFileRevision> sortRevisions(List<VcsFileRevision> revisionsList) {
-      Collections.sort(revisionsList, VcsFileRevisionComparator.INSTANCE);
-      return revisionsList;
-    }
   }
 
   private static class VcsFileRevisionComparator implements Comparator<VcsFileRevision> {
@@ -318,7 +311,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     private VcsFileRevisionComparator() {}
 
     public int compare(VcsFileRevision rev1, VcsFileRevision rev2) {
-      return VcsHistoryUtil.compare(rev2, rev1);
+      return VcsHistoryUtil.compare(rev1, rev2);
     }
   }
 }

@@ -152,9 +152,11 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             return null;
           }
           final PsiExpression argument = arguments[0];
+          final PsiType type = argument.getType();
           if (result.length() != 0) {
             result.append('+');
-            if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+            if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
+                (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
               result.append('(').append(argument.getText()).append(')');
             }
             else {
@@ -162,12 +164,11 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             }
           }
           else {
-            final PsiType type = argument.getType();
             if (type instanceof PsiPrimitiveType) {
               result.append("String.valueOf(").append(argument.getText()).append(")");
             }
             else {
-              if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+              if (ParenthesesUtils.getPrecedence(argument) >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
                 result.append('(').append(argument.getText()).append(')');
               }
               else {

@@ -114,6 +114,7 @@ public class SystemInfo {
 
   /**
    * Operating system is supposed to have middle mouse button click occupied by paste action.
+   *
    * @since 6.0
    */
   public static boolean X11PasteEnabledSystem = isUnix && !isMac;
@@ -183,7 +184,7 @@ public class SystemInfo {
     return String.format("%02d%d%d", parts[0], normalize(parts[1]), 0);
   }
 
-  @NotNull 
+  @NotNull
   public static String getMacOSMinorVersionCode(@NotNull String version) {
     int[] parts = getMacOSVersionParts(version);
     return String.format("%02d%02d", parts[1], parts[2]);
@@ -191,7 +192,9 @@ public class SystemInfo {
 
   private static int[] getMacOSVersionParts(@NotNull String version) {
     List<String> parts = StringUtil.split(version, ".");
-    if (parts.size() != 3) return new int[]{0, 0, 0};
+    while (parts.size() < 3) {
+      parts.add("0");
+    }
     return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
 
@@ -218,7 +221,8 @@ public class SystemInfo {
       try {
         return Integer.parseInt(value);
       }
-      catch (NumberFormatException ignored) { }
+      catch (NumberFormatException ignored) {
+      }
     }
 
     return defaultValue;

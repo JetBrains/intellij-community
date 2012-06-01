@@ -187,6 +187,8 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
+    <projectService serviceInterface="com.intellij.compiler.CompilerEncodingService"
+                    serviceImplementation="com.intellij.compiler.impl.CompilerEncodingServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"
                     serviceImplementation="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"/>

@@ -65,6 +65,11 @@ public final class GitFetchResult {
   public static GitFetchResult error(Exception error) {
     return error(Collections.singletonList(error));
   }
+
+  @NotNull
+  public static GitFetchResult error(@NotNull String errorMessage) {
+    return error(new Exception(errorMessage));
+  }
   
   public boolean isSuccess() {
     return myType == Type.SUCCESS;

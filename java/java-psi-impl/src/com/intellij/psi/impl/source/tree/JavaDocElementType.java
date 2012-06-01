@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocCommentImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
-import com.intellij.psi.impl.source.tree.java.PsiInlineDocTagImpl;
+import com.intellij.psi.impl.source.javadoc.PsiInlineDocTagImpl;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.util.ReflectionUtil;
@@ -70,6 +70,7 @@ public interface JavaDocElementType {
   IElementType DOC_INLINE_TAG = new JavaDocCompositeElementType("DOC_INLINE_TAG", PsiInlineDocTagImpl.class);
   IElementType DOC_METHOD_OR_FIELD_REF = new JavaDocCompositeElementType("DOC_METHOD_OR_FIELD_REF", PsiDocMethodOrFieldRef.class);
   IElementType DOC_PARAMETER_REF = new JavaDocCompositeElementType("DOC_PARAMETER_REF", PsiDocParamRef.class);
+  IElementType DOC_TAG_VALUE_ELEMENT = new IJavaDocElementType("DOC_TAG_VALUE_ELEMENT");
 
   ILazyParseableElementType DOC_REFERENCE_HOLDER = new JavaDocLazyElementType("DOC_REFERENCE_HOLDER") {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
@@ -135,6 +136,6 @@ public interface JavaDocElementType {
   };
 
   TokenSet ALL_JAVADOC_ELEMENTS = TokenSet.create(
-    DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT
-  );
+    DOC_TAG, DOC_INLINE_TAG, DOC_METHOD_OR_FIELD_REF, DOC_PARAMETER_REF, DOC_TAG_VALUE_ELEMENT,
+    DOC_REFERENCE_HOLDER, DOC_TYPE_HOLDER, DOC_COMMENT);
 }

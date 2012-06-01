@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -24,8 +25,8 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class ReplaceOperatorAssignmentWithAssignmentIntention
   extends MutablyNamedIntention {
@@ -64,63 +65,53 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiAssignmentExpression assignmentExpression =
-      (PsiAssignmentExpression)element;
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiJavaToken sign = assignmentExpression.getOperationSign();
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final PsiExpression rhs = assignmentExpression.getRExpression();
     final String operator = sign.getText();
     final String newOperator = operator.substring(0, operator.length() - 1);
     final String lhsText = lhs.getText();
-    final String rhsText;
-    if (rhs == null) {
-      rhsText = "";
-    }
-    else {
-      rhsText = rhs.getText();
-    }
+    final String rhsText = (rhs == null) ? "" : rhs.getText();
+    final boolean parentheses;
     if (rhs instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)rhs;
-      final int precedence1 =
-        ParenthesesUtils.getPrecedenceForBinaryOperator(binaryExpression.getOperationTokenType());
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
+      final int precedence1 = ParenthesesUtils.getPrecedenceForBinaryOperator(binaryExpression.getOperationTokenType());
       final IElementType signTokenType = sign.getTokenType();
       final IElementType newOperatorToken = tokenMap.get(signTokenType);
-      final int precedence2 =
-        ParenthesesUtils.getPrecedenceForBinaryOperator(
-          newOperatorToken);
-      if (precedence1 > precedence2 ||
-          !ParenthesesUtils.isCommutativeBinaryOperator(
-            newOperatorToken)) {
-        final String expString;
-        if (needsCast(rhs)) {
-          expString = lhsText + "=(int)" + lhsText + newOperator
-                      + '(' + rhsText + "))";
-        }
-        else {
-          expString = lhsText + '=' + lhsText + newOperator
-                      + '(' + rhsText + ')';
-        }
-        replaceExpression(expString, assignmentExpression);
-        return;
-      }
-    }
-    final String expString;
-    if (needsCast(rhs)) {
-      expString = lhsText + "=(int)(" + lhsText + newOperator + rhsText
-                  + ')';
+      final int precedence2 = ParenthesesUtils.getPrecedenceForBinaryOperator(newOperatorToken);
+      parentheses = precedence1 >= precedence2 || !ParenthesesUtils.isCommutativeBinaryOperator(newOperatorToken);
     }
     else {
-      expString = lhsText + '=' + lhsText + newOperator + rhsText;
+      parentheses = false;
     }
-    replaceExpression(expString, assignmentExpression);
+    final String cast = getCastString(lhs, rhs);
+    final StringBuilder newExpression = new StringBuilder(lhsText);
+    newExpression.append('=').append(cast);
+    if (!cast.isEmpty()) {
+      newExpression.append('(');
+    }
+    newExpression.append(lhsText).append(newOperator);
+    if (parentheses) {
+      newExpression.append('(').append(rhsText).append(')');
+    }
+    else {
+      newExpression.append(rhsText);
+    }
+    if (!cast.isEmpty()) {
+      newExpression.append(')');
+    }
+    replaceExpression(newExpression.toString(), assignmentExpression);
   }
 
-  private static boolean needsCast(PsiExpression expression) {
-    final PsiType type = expression.getType();
-    return PsiType.LONG.equals(type) || PsiType.DOUBLE.equals(type) ||
-           PsiType.FLOAT.equals(type);
+  private static String getCastString(PsiExpression lhs, PsiExpression rhs) {
+    final PsiType lType = lhs.getType();
+    final PsiType rType = rhs.getType();
+    if (lType == null || rType == null ||
+        TypeConversionUtil.isAssignable(lType, rType) || !TypeConversionUtil.areTypesConvertible(lType, rType)) {
+      return "";
+    }
+    return '(' + lType.getCanonicalText() + ')';
   }
 }

@@ -15,16 +15,17 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 
@@ -33,7 +34,9 @@ public class LightTreeUtil {
 
   @Nullable
   public static LighterASTNode firstChildOfType(final LighterAST tree, final LighterASTNode node, final IElementType type) {
-    for (final LighterASTNode child : tree.getChildren(node)) {
+    List<LighterASTNode> children = tree.getChildren(node);
+    for (int i = 0, size = children.size(); i < size; ++i) {
+      final LighterASTNode child = children.get(i);
       if (child.getTokenType() == type) return child;
     }
 
@@ -49,13 +52,18 @@ public class LightTreeUtil {
 
   @NotNull
   public static List<LighterASTNode> getChildrenOfType(final LighterAST tree, final LighterASTNode node, final IElementType type) {
-    final List<LighterASTNode> result = Lists.newArrayList();
+    List<LighterASTNode> result = null;
 
-    for (final LighterASTNode child : tree.getChildren(node)) {
-      if (child.getTokenType() == type) result.add(child);
+    List<LighterASTNode> children = tree.getChildren(node);
+    for (int i = 0, size = children.size(); i < size; ++i) {
+      final LighterASTNode child = children.get(i);
+      if (child.getTokenType() == type) {
+        if (result == null) result = new SmartList<LighterASTNode>();
+        result.add(child);
+      }
     }
 
-    return result;
+    return result != null ? result: Collections.<LighterASTNode>emptyList();
   }
 
   public static String toFilteredString(final LighterAST tree, final LighterASTNode node, @Nullable final TokenSet skipTypes) {
@@ -77,8 +85,9 @@ public class LightTreeUtil {
       return;
     }
 
-    for (final LighterASTNode child : tree.getChildren(node)) {
-      toBuffer(tree, child, buffer, skipTypes);
+    List<LighterASTNode> children = tree.getChildren(node);
+    for (int i = 0, size = children.size(); i < size; ++i) {
+      toBuffer(tree, children.get(i), buffer, skipTypes);
     }
   }
 }

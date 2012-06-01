@@ -43,6 +43,7 @@ public class AndroidMavenUtil {
   public static final String APK_LIB_ARTIFACT_MANIFEST_FILE = "AndroidManifest.xml";
   @NonNls private static final String APKLIB_MODULE_PREFIX = "~apklib-";
   @NonNls private static final String GEN_EXTERNAL_APKLIBS_DIRNAME = "gen-external-apklibs";
+  @NonNls public static final String SO_PACKAGING_AND_DEPENDENCY_TYPE = "so";
 
   private AndroidMavenUtil() {
   }

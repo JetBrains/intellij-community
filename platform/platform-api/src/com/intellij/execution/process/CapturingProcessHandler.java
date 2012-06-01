@@ -16,7 +16,6 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 
 import java.nio.charset.Charset;
 
@@ -41,42 +40,41 @@ public class CapturingProcessHandler extends OSProcessHandler {
   public CapturingProcessHandler(final Process process, final Charset charset, final String commandLine) {
     super(process, commandLine, charset);
     myCharset = charset;
-    addProcessListener(new ProcessAdapter() {
-      @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
-        if (outputType == ProcessOutputTypes.STDOUT) {
-          myOutput.appendStdout(event.getText());
-        }
-        if (outputType == ProcessOutputTypes.STDERR) {
-          myOutput.appendStderr(event.getText());
-        }
-      }
-    });
+    addProcessListener(new CapturingProcessAdapter(myOutput));
   }
 
   public ProcessOutput runProcess() {
     startNotify();
     if (waitFor()) {
       myOutput.setExitCode(getProcess().exitValue());
-    } else {
+    }
+    else {
       LOG.info("runProcess: exit value unavailable");
     }
     return myOutput;
   }
 
+  /**
+   * Starts process with specified timeout
+   *
+   * @param timeoutInMilliseconds non-positive means infinity
+   * @return
+   */
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
-    if (timeoutInMilliseconds < 0) {
+    if (timeoutInMilliseconds <= 0) {
       return runProcess();
     }
-    startNotify();
-    if (waitFor(timeoutInMilliseconds)) {
-      myOutput.setExitCode(getProcess().exitValue());
-    }
     else {
-      destroyProcess();
-      myOutput.setTimeout();
+      startNotify();
+      if (waitFor(timeoutInMilliseconds)) {
+        myOutput.setExitCode(getProcess().exitValue());
+      }
+      else {
+        destroyProcess();
+        myOutput.setTimeout();
+      }
+      return myOutput;
     }
-    return myOutput;
   }
 
   @Override

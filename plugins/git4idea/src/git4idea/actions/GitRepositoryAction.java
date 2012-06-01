@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
@@ -89,25 +88,35 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     final VirtualFile defaultRoot = defaultRootVar;
     final Set<VirtualFile> affectedRoots = new HashSet<VirtualFile>();
     String actionName = getActionName();
-    AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
-    //Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction and returns all exceptions together.
-    List<VcsException> exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
-      public void run(List<VcsException> exceptions) {
-        //noinspection unchecked
-        try {
-          perform(project, roots, defaultRoot, affectedRoots, exceptions);
-        }
-        catch (VcsException e) {
-          exceptions.add(e);
-        }
-        VcsFileUtil.refreshFiles(project, affectedRoots);
-        for (TransactionRunnable task : myDelayedTasks) {
-          task.run(exceptions);
-        }
-      }
-    }, null);
+
+    List<VcsException> exceptions = new ArrayList<VcsException>();
+    try {
+      perform(project, roots, defaultRoot, affectedRoots, exceptions);
+    }
+    catch (VcsException ex) {
+      exceptions.add(ex);
+    }
+    if (executeFinalTasksSynchronously()) {
+      runFinalTasks(project, vcs, affectedRoots, actionName, exceptions);
+    }
+  }
+
+  protected final void runFinalTasks(Project project, GitVcs vcs, Set<VirtualFile> affectedRoots, String actionName,
+                                     List<VcsException> exceptions) {
+    VcsFileUtil.refreshFiles(project, affectedRoots);
+    for (TransactionRunnable task : myDelayedTasks) {
+      task.run(exceptions);
+    }
     myDelayedTasks.clear();
     vcs.showErrors(exceptions, actionName);
+  }
+
+  /**
+   * Return true to indicate that the final tasks should be executed after the action invocation,
+   * false if the task is responsible to call the final tasks manually via {@link #runFinalTasks(Project, GitVcs, Set, String, List)}.
+   */
+  protected boolean executeFinalTasksSynchronously() {
+    return true;
   }
 
   protected static boolean isRebasing(AnActionEvent e) {

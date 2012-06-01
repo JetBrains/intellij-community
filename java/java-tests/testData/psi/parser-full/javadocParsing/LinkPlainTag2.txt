@@ -10,7 +10,7 @@ PsiJavaFile:LinkPlainTag2.java
       PsiDocTag:@linkplain
         PsiDocToken:DOC_TAG_NAME('@linkplain')
         PsiWhiteSpace(' ')
-        PsiElement(DOC_TAG_VALUE_TOKEN)
+        PsiElement(DOC_TAG_VALUE_ELEMENT)
           PsiDocToken:DOC_TAG_VALUE_TOKEN('java.lang.String')
           PsiDocToken:DOC_TAG_VALUE_SHARP_TOKEN('#')
           PsiDocToken:DOC_TAG_VALUE_TOKEN('equals')

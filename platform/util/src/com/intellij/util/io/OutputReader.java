@@ -21,34 +21,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-public abstract class OutputReader {
+public abstract class OutputReader extends BaseOutputReader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.OutputReader");
 
-  private final Reader myReader;
-  private volatile boolean isStopped = false;
-
   private final Semaphore myReadFullySemaphore = new Semaphore();
-  private final Future<?> myFinishedFuture;
 
-
-  private final char[] myBuffer = new char[8192];
-  private boolean skipLF = false;
 
   public OutputReader(@NotNull Reader reader) {
-    myReader = reader;
-    myFinishedFuture = executeOnPooledThread(new Runnable() {
-      public void run() {
-        doRun();
-      }
-    });
+    super(reader);
+    start();
   }
 
-  protected abstract Future<?> executeOnPooledThread(Runnable runnable);
-
-  private void doRun() {
+  protected void doRun() {
     try {
       while (true) {
         boolean read = readAvailable();
@@ -75,46 +60,6 @@ public abstract class OutputReader {
     }
   }
 
-  private synchronized boolean readAvailable() throws IOException {
-    char[] buffer = myBuffer;
-    StringBuilder token = new StringBuilder();
-
-    boolean read = false;
-    while (myReader.ready()) {
-      int n = myReader.read(buffer);
-      if (n <= 0) break;
-      read = true;
-
-      for (int i = 0; i < n; i++) {
-        char c = buffer[i];
-        if (skipLF && c != '\n') {
-          token.append('\r');
-        }
-
-        if (c == '\r') {
-          skipLF = true;
-        }
-        else {
-          skipLF = false;
-          token.append(c);
-        }
-
-        if (c == '\n') {
-          onTextAvailable(token.toString());
-          token.setLength(0);
-        }
-      }
-    }
-
-    if (token.length() != 0) {
-      onTextAvailable(token.toString());
-      token.setLength(0);
-    }
-    return read;
-  }
-
-  protected abstract void onTextAvailable(@NotNull String text);
-
   public void readFully() throws InterruptedException {
     myReadFullySemaphore.down();
     while (!myReadFullySemaphore.waitForUnsafe(10)) {
@@ -125,16 +70,5 @@ public abstract class OutputReader {
     }
   }
 
-  public void stop() {
-    isStopped = true;
-  }
 
-  public void waitFor() throws InterruptedException {
-    try {
-      myFinishedFuture.get();
-    }
-    catch (ExecutionException e) {
-      LOG.error(e);
-    }
-  }
 }

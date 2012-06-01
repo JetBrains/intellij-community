@@ -20,6 +20,11 @@ import com.intellij.ui.mac.foundation.Foundation;
 import junit.framework.TestCase;
 
 public class FoundationTest extends TestCase {
+  public void testStrings() throws Exception {
+    if (!SystemInfo.isMac) return;
+    assertEquals("Test", Foundation.toStringViaUTF8(Foundation.nsString("Test")));
+  }
+
   public void testEncodings() throws Exception {
     if (!SystemInfo.isMac) return;
 

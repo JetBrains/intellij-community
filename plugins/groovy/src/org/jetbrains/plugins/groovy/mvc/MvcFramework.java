@@ -426,24 +426,19 @@ public abstract class MvcFramework {
     }
   }
 
-  public static ProcessBuilder createProcessBuilder(JavaParameters params) {
-    try {
-      ProcessBuilder builder = new ProcessBuilder(CommandLineBuilder.createFromJavaParameters(params).getCommands());
-      Map<String, String> env = params.getEnv();
-      if (env != null) {
-        builder.environment().putAll(env);
-      }
-
-      String workDir = params.getWorkingDirectory();
-      if (workDir != null) {
-        builder.directory(new File(workDir));
-      }
-
-      return builder;
+  public static ProcessBuilder createProcessBuilder(JavaParameters params) throws CantRunException {
+    ProcessBuilder builder = new ProcessBuilder(CommandLineBuilder.createFromJavaParameters(params).getCommands());
+    Map<String, String> env = params.getEnv();
+    if (env != null) {
+      builder.environment().putAll(env);
     }
-    catch (CantRunException e) {
-      throw new RuntimeException(e);
+
+    String workDir = params.getWorkingDirectory();
+    if (workDir != null) {
+      builder.directory(new File(workDir));
     }
+
+    return builder;
   }
 
   private void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, Map<String, VirtualFile> res) {

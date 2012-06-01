@@ -39,6 +39,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -68,13 +69,26 @@ public class RepositoryHelper {
 
         setLabelText(label, IdeBundle.message("progress.waiting.for.reply.from.plugin.manager", getRepositoryHost()));
 
-        InputStream is = getConnectionInputStream(connection);
-        if (is != null) {
-          setLabelText(label, IdeBundle.message("progress.downloading.list.of.plugins"));
-          File temp = createLocalPluginsDescriptions();
-          readPluginsStream(temp, is, handler);
+        connection.setRequestProperty("Accept-Encoding", "gzip");
+        connection.connect();
 
-          plugins = handler.getPluginsList();
+        try {
+          InputStream is = getConnectionInputStream(connection);
+          if (is != null) {
+            try {
+              setLabelText(label, IdeBundle.message("progress.downloading.list.of.plugins"));
+              File temp = createLocalPluginsDescriptions();
+              readPluginsStream(temp, is, handler);
+
+              plugins = handler.getPluginsList();
+            }
+            finally {
+              is.close();
+            }
+          }
+        }
+        finally {
+          connection.disconnect();
         }
       }
     }
@@ -96,9 +110,17 @@ public class RepositoryHelper {
   }
 
 
+  @Nullable
   public static InputStream getConnectionInputStream(URLConnection connection) {
     try {
-      return connection.getInputStream();
+      InputStream inputStream = connection.getInputStream();
+
+      String encoding = connection.getContentEncoding();
+      if ("gzip".equals(encoding)) {
+        inputStream = new GZIPInputStream(inputStream);
+      }
+
+      return inputStream;
     }
     catch (IOException e) {
       return null;

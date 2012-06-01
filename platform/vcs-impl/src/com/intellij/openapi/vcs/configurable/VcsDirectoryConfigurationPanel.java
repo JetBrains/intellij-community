@@ -96,10 +96,10 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
         String directory = mapping.getDirectory();
         VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir != null) {
-          final File directoryFile = new File(directory);
+          final File directoryFile = new File(StringUtil.trimEnd(StringUtil.trimEnd(directory, "/"), "\\") + "/");
           File ioBase = new File(baseDir.getPath());
           if (directoryFile.isAbsolute() && !FileUtil.isAncestor(ioBase, directoryFile, false)) {
-            append(directoryFile.getPath());
+            append(new File(directory).getPath());
             return;
           }
           String relativePath = FileUtil.getRelativePath(ioBase, directoryFile);
@@ -360,36 +360,25 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
           removeMapping();
           updateRootCheckers();
         }
+      }).setAddActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          return !myIsDisabled;
+        }
+      }).setEditActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
+          return (!myIsDisabled) && hasSelection;
+        }
+      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
+          return (!myIsDisabled) && hasSelection;
+        }
       }).disableUpDownActions().createPanel();
-
-    AnActionButton addButton = ToolbarDecorator.findAddButton(panelForTable);
-    assert addButton != null;
-    addButton.addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        return !myIsDisabled;
-      }
-    });
-
-    AnActionButton editButton = ToolbarDecorator.findEditButton(panelForTable);
-    assert editButton != null;
-    editButton.addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
-        return (!myIsDisabled) && hasSelection;
-      }
-    });
-
-    AnActionButton removeButton = ToolbarDecorator.findRemoveButton(panelForTable);
-    assert removeButton != null;
-    removeButton.addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
-        return (!myIsDisabled) && hasSelection;
-      }
-    });
+    panelForTable.setPreferredSize(new Dimension(-1, 200));
     return panelForTable;
   }
 
@@ -523,8 +512,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     VcsRootErrorLabel(String title) {
       super(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
 
-      CompoundBorder outsideBorder = BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
-                                                                 BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker()));
+      CompoundBorder outsideBorder =
+        BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
+                                           BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker()));
       setBorder(BorderFactory.createCompoundBorder(outsideBorder, BorderFactory.createEmptyBorder(DEFAULT_VGAP, DEFAULT_HGAP,
                                                                                                   DEFAULT_VGAP, DEFAULT_HGAP)));
       setOpaque(true);
@@ -553,5 +543,4 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
       }, null);
     }
   }
-
 }

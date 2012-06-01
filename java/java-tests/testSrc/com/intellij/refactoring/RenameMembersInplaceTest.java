@@ -34,11 +34,19 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
+  public void testInnerClass() throws Exception {
+    doTestInplaceRename("NEW_NAME");
+  }
+  
   public void testConstructor() throws Exception {
     doTestInplaceRename("Bar");
   }
 
   public void testSuperMethod() throws Exception {
+    doTestInplaceRename("xxx");
+  }
+  
+  public void testSuperMethodAnonymousInheritor() throws Exception {
     doTestInplaceRename("xxx");
   }
 

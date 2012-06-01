@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.dom;
 
+import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
@@ -47,6 +48,7 @@ import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -207,6 +209,11 @@ public class AndroidDomUtil {
         composite.addConverter(new LightFlagConverter(values));
       }
       return new FlagConverter(simplify(composite), values);
+    }
+
+    if (resConverter == null && formats.contains(AttributeFormat.Enum)) {
+      resConverter = new ResourceReferenceConverter(Arrays.asList(ResourceType.INTEGER.getName()));
+      resConverter.setQuiet(true);
     }
     ResolvingConverter<String> stringConverter = simplify(composite);
     if (resConverter != null) {

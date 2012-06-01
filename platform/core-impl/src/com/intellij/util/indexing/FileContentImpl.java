@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,6 +173,10 @@ public final class FileContentImpl extends UserDataHolderBase implements FileCon
   public CharSequence getContentAsText() {
     if (myFileType.isBinary()) {
       throw new IllegalDataException("Cannot obtain text for binary file type : " + myFileType.getDescription());
+    }
+    final CharSequence content = getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
+    if (content != null) {
+      return content;
     }
     if (myContentAsText == null) {
       if (myContent != null) {

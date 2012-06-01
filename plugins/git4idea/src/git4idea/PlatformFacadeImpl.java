@@ -15,6 +15,8 @@
  */
 package git4idea;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -23,6 +25,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
@@ -60,6 +63,12 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public void runReadAction(@NotNull Runnable runnable) {
     ApplicationManager.getApplication().runReadAction(runnable);
+  }
+
+  @Nullable
+  @Override
+  public IdeaPluginDescriptor getPluginByClassName(@NotNull String name) {
+    return PluginManager.getPlugin(PluginManager.getPluginByClassName(name));
   }
 
   @NotNull

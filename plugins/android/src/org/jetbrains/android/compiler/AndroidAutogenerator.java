@@ -120,8 +120,8 @@ public class AndroidAutogenerator {
 
           final VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
           if (manifestFile == null) {
-            context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
-                               null, -1, -1);
+            context.addMessage(CompilerMessageCategory.ERROR,
+                               AndroidBundle.message("android.compilation.error.manifest.not.found", module.getName()), null, -1, -1);
             return null;
           }
 
@@ -207,8 +207,8 @@ public class AndroidAutogenerator {
 
         final VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
         if (manifestFile == null) {
-          context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
-                             null, -1, -1);
+          context.addMessage(CompilerMessageCategory.ERROR,
+                             AndroidBundle.message("android.compilation.error.manifest.not.found", module.getName()), null, -1, -1);
           return null;
         }
 
@@ -314,7 +314,7 @@ public class AndroidAutogenerator {
           }
         }
       }
-      AndroidCompileUtil.addMessages(context, AndroidCompileUtil.toCompilerMessageCategoryKeys(messages));
+      AndroidCompileUtil.addMessages(context, AndroidCompileUtil.toCompilerMessageCategoryKeys(messages), module);
 
       for (Map.Entry<String, String> entry : item.myGenFileRelPath2package.entrySet()) {
         final String path = item.myOutputDirOsPath + '/' + entry.getKey();
@@ -375,6 +375,9 @@ public class AndroidAutogenerator {
       if (f != vFile && VfsUtilCore.isAncestor(genDir, f, true)) {
         filesToDelete.add(f);
       }
+    }
+    if (filesToDelete.size() == 0) {
+      return;
     }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {

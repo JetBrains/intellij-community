@@ -6,6 +6,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -21,7 +22,8 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.*;
+import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,7 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidRenderscriptCompiler");
 
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
@@ -182,6 +185,8 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
           continue;
         }
 
+        boolean success = true;
+
         for (final VirtualFile sourceFile : genItem.myFiles) {
           final String depFolderOsPath = getDependencyFolder(context.getProject(), sourceFile, outputRootDirectory);
 
@@ -201,18 +206,24 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
               }
             });
 
-            if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
-              results.add(genItem);
+            if (messages.get(CompilerMessageCategory.ERROR).size() > 0) {
+              success = false;
             }
           }
           catch (final IOException e) {
+            LOG.info(e);
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 if (context.getProject().isDisposed()) return;
                 context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), sourceFile.getUrl(), -1, -1);
               }
             });
+            success = false;
           }
+        }
+
+        if (success) {
+          results.add(genItem);
         }
       }
     }

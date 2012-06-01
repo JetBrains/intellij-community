@@ -136,8 +136,8 @@ public class AndroidCompileUtil {
     return null;
   }
 
-  static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages) {
-    addMessages(context, messages, null);
+  static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages, Module module) {
+    addMessages(context, messages, null, module);
   }
 
   public static void addMessages(@NotNull Map<CompilerMessageCategory, List<String>> messages,
@@ -152,8 +152,10 @@ public class AndroidCompileUtil {
     }
   }
 
-  static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages,
-                          @Nullable final Map<VirtualFile, VirtualFile> presentableFilesMap) {
+  static void addMessages(final CompileContext context,
+                          final Map<CompilerMessageCategory, List<String>> messages,
+                          @Nullable final Map<VirtualFile, VirtualFile> presentableFilesMap,
+                          final Module module) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (context.getProject().isDisposed()) return;
@@ -170,7 +172,7 @@ public class AndroidCompileUtil {
                 line = Integer.parseInt(matcher.group(2));
               }
             }
-            context.addMessage(category, message, url, line, -1);
+            context.addMessage(category, '[' + module.getName() + "] " + message, url, line, -1);
           }
         }
       }
@@ -276,12 +278,6 @@ public class AndroidCompileUtil {
 
     final Project project = module.getProject();
 
-    final AndroidFacet facet = AndroidFacet.getInstance(module);
-
-    if (facet != null && facet.getConfiguration().LIBRARY_PROJECT) {
-      removeGenModule(module);
-    }
-
     if (project.isDisposed() || module.isDisposed()) {
       return null;
     }
@@ -332,6 +328,11 @@ public class AndroidCompileUtil {
   private static void removeGenModule(@NotNull final Module libModule) {
     final String genModuleName = getGenModuleName(libModule);
     final ModuleManager moduleManager = ModuleManager.getInstance(libModule.getProject());
+
+    final Module genModule = moduleManager.findModuleByName(genModuleName);
+    if (genModule == null) {
+      return;
+    }
     final ModifiableRootModel model = ModuleRootManager.getInstance(libModule).getModifiableModel();
 
     for (OrderEntry entry : model.getOrderEntries()) {
@@ -347,11 +348,6 @@ public class AndroidCompileUtil {
         model.commit();
       }
     });
-
-    final Module genModule = moduleManager.findModuleByName(genModuleName);
-    if (genModule == null) {
-      return;
-    }
     final VirtualFile moduleFile = genModule.getModuleFile();
     moduleManager.disposeModule(genModule);
 
@@ -654,6 +650,9 @@ public class AndroidCompileUtil {
     final Module module = facet.getModule();
     final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
 
+    if (facet.getConfiguration().LIBRARY_PROJECT) {
+      removeGenModule(module);
+    }
     initializeGenSourceRoot(module, AndroidRootUtil.getBuildconfigGenSourceRootPath(facet), true, true);
 
     initializeGenSourceRoot(module, AndroidRootUtil.getRenderscriptGenSourceRootPath(facet),
@@ -917,5 +916,37 @@ public class AndroidCompileUtil {
     }
 
     return ArrayUtil.toStringArray(result);
+  }
+
+  // support for lib<->lib and app<->lib circular dependencies
+  // see IDEA-79737 for details
+  public static boolean isLibraryWithBadCircularDependency(@NotNull AndroidFacet facet) {
+    if (!facet.getConfiguration().LIBRARY_PROJECT) {
+      return false;
+    }
+
+    final List<AndroidFacet> dependencies = AndroidUtils.getAllAndroidDependencies(facet.getModule(), false);
+
+    final Manifest manifest = facet.getManifest();
+    if (manifest == null) {
+      return false;
+    }
+
+    final String aPackage = manifest.getPackage().getValue();
+    if (aPackage == null || aPackage.length() == 0) {
+      return false;
+    }
+
+    for (AndroidFacet depFacet : dependencies) {
+      final List<AndroidFacet> depDependencies = AndroidUtils.getAllAndroidDependencies(depFacet.getModule(), true);
+
+      if (depDependencies.contains(facet) &&
+          dependencies.contains(depFacet) &&
+          (depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0 ||
+           !depFacet.getConfiguration().LIBRARY_PROJECT)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

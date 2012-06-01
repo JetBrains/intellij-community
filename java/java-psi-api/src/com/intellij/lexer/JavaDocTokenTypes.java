@@ -17,12 +17,14 @@ package com.intellij.lexer;
 
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author yole
  */
 public class JavaDocTokenTypes implements DocCommentTokenTypes {
   public static final DocCommentTokenTypes INSTANCE = new JavaDocTokenTypes();
+  private final TokenSet mySpaceCommentsSet = TokenSet.create(JavaDocTokenType.DOC_SPACE, JavaDocTokenType.DOC_COMMENT_DATA);
 
   private JavaDocTokenTypes() { }
 
@@ -39,6 +41,11 @@ public class JavaDocTokenTypes implements DocCommentTokenTypes {
   @Override
   public IElementType commentData() {
     return JavaDocTokenType.DOC_COMMENT_DATA;
+  }
+
+  @Override
+  public TokenSet spaceCommentsTokenSet() {
+    return mySpaceCommentsSet;
   }
 
   @Override

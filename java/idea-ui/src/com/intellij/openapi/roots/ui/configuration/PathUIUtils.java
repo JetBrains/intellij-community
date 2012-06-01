@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.libraries.ui.RootDetector;
+import com.intellij.openapi.roots.libraries.ui.impl.LibraryRootsDetectorImpl;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +57,8 @@ public class PathUIUtils {
    */
   public static VirtualFile[] scanAndSelectDetectedJavaSourceRoots(Component parentComponent, final VirtualFile[] rootCandidates) {
     final List<OrderRoot> orderRoots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, null,
-                                                                     Collections.singletonList(JAVA_SOURCE_ROOT_DETECTOR), false);
+                                                                     new LibraryRootsDetectorImpl(Collections.singletonList(JAVA_SOURCE_ROOT_DETECTOR)),
+                                                                     new OrderRootType[0]);
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (OrderRoot root : orderRoots) {
       result.add(root.getFile());

@@ -30,7 +30,6 @@ import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.Map;
 
@@ -61,7 +60,7 @@ public class AndroidIdIndex extends ScalarIndexExtension<String> {
       }
       final HashMap<String, Void> ids = new HashMap<String, Void>();
       
-      NanoXmlUtil.parse(new ByteArrayInputStream(inputData.getContent()), new NanoXmlUtil.IXMLBuilderAdapter() {
+      NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()), new NanoXmlUtil.IXMLBuilderAdapter() {
         @Override
         public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
           super.addAttribute(key, nsPrefix, nsURI, value, type);

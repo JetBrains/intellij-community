@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -46,7 +47,21 @@ public class MavenImportingSettings implements Cloneable {
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
 
+  private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
+
   private List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
+
+  public enum GeneratedSourcesFolder {
+    AUTODETECT("Detect automatically"),
+    GENERATED_SOURCE_FOLDER("target/generated-sources"),
+    SUBFOLDER("subdirectories of \"target/generated-sources\"");
+
+    public final String title;
+
+    private GeneratedSourcesFolder(String title) {
+      this.title = title;
+    }
+  }
 
   @NotNull
   public String getDedicatedModuleDir() {
@@ -132,6 +147,18 @@ public class MavenImportingSettings implements Cloneable {
     this.downloadDocsAutomatically = value;
   }
 
+  @Property
+  @NotNull
+  public GeneratedSourcesFolder getGeneratedSourcesFolder() {
+    return generatedSourcesFolder;
+  }
+
+  public void setGeneratedSourcesFolder(GeneratedSourcesFolder generatedSourcesFolder) {
+    if (generatedSourcesFolder == null) return; // null may come from deserializator
+
+    this.generatedSourcesFolder = generatedSourcesFolder;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -147,6 +174,7 @@ public class MavenImportingSettings implements Cloneable {
     if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
+    if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (updateFoldersOnImportPhase != null
         ? !updateFoldersOnImportPhase.equals(that.updateFoldersOnImportPhase)
@@ -159,16 +187,29 @@ public class MavenImportingSettings implements Cloneable {
 
   @Override
   public int hashCode() {
-    int result = dedicatedModuleDir.hashCode();
-    result = 31 * result + (lookForNested ? 1 : 0);
-    result = 31 * result + (importAutomatically ? 1 : 0);
-    result = 31 * result + (createModulesForAggregators ? 1 : 0);
-    result = 31 * result + (createModuleGroups ? 1 : 0);
-    result = 31 * result + (keepSourceFolders ? 1 : 0);
-    result = 31 * result + (useMavenOutput ? 1 : 0);
+    int result = 0;
+
+    if (lookForNested) result++;
+    result <<= 1;
+    if (importAutomatically) result++;
+    result <<= 1;
+    if (createModulesForAggregators) result++;
+    result <<= 1;
+    if (createModuleGroups) result++;
+    result <<= 1;
+    if (keepSourceFolders) result++;
+    result <<= 1;
+    if (useMavenOutput) result++;
+    result <<= 1;
+    if (downloadSourcesAutomatically) result++;
+    result <<= 1;
+    if (downloadDocsAutomatically) result++;
+    result <<= 1;
+
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);
-    result = 31 * result + (downloadSourcesAutomatically ? 1 : 0);
-    result = 31 * result + (downloadDocsAutomatically ? 1 : 0);
+    result = 31 * result + dedicatedModuleDir.hashCode();
+    result = 31 * result + generatedSourcesFolder.hashCode();
+
     return result;
   }
 

@@ -325,6 +325,10 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   public void clearAllMessages() {
+    for (MessageNode messageItem : myMessageItems) {
+      messageItem.clearRangeMarker();
+    }
+    myMessageItems.clear();
     myStatusNode = null;
     createModel();
     myTree.setModel(myTreeModel);

@@ -34,6 +34,8 @@ import org.intellij.lang.regexp.psi.impl.RegExpPropertyImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
+
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
   private AnnotationHolder myHolder;
 
@@ -236,13 +238,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
     final RegExpQuantifier.Count count = quantifier.getCount();
     if (!(count instanceof RegExpQuantifier.SimpleCount)) {
-      final int min = count.getMin();
-      final int max = count.getMax();
-      if (max < min) {
-        myHolder.createErrorAnnotation(quantifier, "Illegal repetition range");
-      }
-      else if (max == min) {
-        if (max == 1) { // TODO: is this safe when reluctant or possesive modifier is present?
+      String min = count.getMin();
+      String max = count.getMax();
+      if (max.equals(min)) {
+        if ("1".equals(max)) { // TODO: is this safe when reluctant or possesive modifier is present?
           final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Single repetition");
           registerFix(a, new SimplifyQuantifierAction(quantifier, null));
         }
@@ -254,17 +253,29 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
           }
         }
       }
-      else if (min == 0 && max == 1) {
+      else if ("0".equals(min) && "1".equals(max)) {
         final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '?'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "?"));
       }
-      else if (min == 0 && max == Integer.MAX_VALUE) {
+      else if ("0".equals(min) && max.isEmpty()) {
         final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '*'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "*"));
       }
-      else if (min == 1 && max == Integer.MAX_VALUE) {
+      else if ("1".equals(min) && max.isEmpty()) {
         final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '+'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "+"));
+      }
+      else if (!min.isEmpty() && !max.isEmpty()) {
+        try {
+          BigInteger minInt = new BigInteger(min);
+          BigInteger maxInt = new BigInteger(max);
+          if (maxInt.compareTo(minInt) < 0) {
+            myHolder.createErrorAnnotation(quantifier, "Illegal repetition range");
+          }
+        }
+        catch (NumberFormatException ex) {
+          myHolder.createErrorAnnotation(quantifier, "Illegal repetition value");
+        }
       }
     }
     if (quantifier.getType() == RegExpQuantifier.Type.POSSESSIVE) {

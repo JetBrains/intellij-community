@@ -8,4 +8,11 @@
     <description>&lt;code&gt;String.valueOf(7)&lt;/code&gt; can be simplified to '7' #loc</description>
   </problem>
 
+  <problem>
+    <file>UnnecessaryCallToStringValueOf.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary call to 'String.valueOf()'</problem_class>
+    <description>&lt;code&gt;String.valueOf('d')&lt;/code&gt; can be simplified to ''d'' #loc</description>
+  </problem>
+
 </problems>

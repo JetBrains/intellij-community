@@ -51,4 +51,8 @@ public class GitFetch extends GitRepositoryAction {
     });
   }
 
+  @Override
+  protected boolean executeFinalTasksSynchronously() {
+    return false;
+  }
 }

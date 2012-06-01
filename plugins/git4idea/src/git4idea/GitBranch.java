@@ -101,7 +101,9 @@ public class GitBranch extends GitReference {
    */
   public static Pair<String, String> splitNameOfRemoteBranch(String branchName) {
     int firstSlash = branchName.indexOf('/');
-    return Pair.create(branchName.substring(0, firstSlash), branchName.substring(firstSlash + 1));
+    String remoteName = firstSlash > -1 ? branchName.substring(0, firstSlash) : branchName;
+    String remoteBranchName = branchName.substring(firstSlash + 1);
+    return Pair.create(remoteName, remoteBranchName);
   }
 
   /**
@@ -365,6 +367,9 @@ public class GitBranch extends GitReference {
     }
     if (branch.startsWith(REFS_HEADS_PREFIX)) {
       branch = branch.substring(REFS_HEADS_PREFIX.length());
+    }
+    else if (branch.startsWith(REFS_REMOTES_PREFIX)) {
+      branch = branch.substring(REFS_REMOTES_PREFIX.length());
     }
     boolean remoteFlag;
     if (!".".equals(remote)) {

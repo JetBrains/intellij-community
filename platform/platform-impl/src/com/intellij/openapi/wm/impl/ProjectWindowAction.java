@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -41,7 +42,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   @NotNull private final String myProjectLocation;
 
   public ProjectWindowAction(@NotNull String projectName, @NotNull String projectLocation, ProjectWindowAction previous) {
-    super(projectName);
+    super();
     myProjectName = projectName;
     myProjectLocation = projectLocation;
     if (previous != null) {
@@ -53,6 +54,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
       myPrevious = this;
       myNext = this;
     }
+    getTemplatePresentation().setText(projectName, false);
   }
 
   public void dispose() {
@@ -87,17 +89,17 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Nullable
-  public Frame findProjectFrame() {
+  private Project findProject() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       if (myProjectLocation.equals(project.getPresentableUrl())) {
-        final WindowManager windowManager = WindowManager.getInstance();
-        return windowManager.getFrame(project);
+        return project;
       }
     }
     return null;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     // show check mark for active and visible project frame
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -107,22 +109,24 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     return myProjectLocation.equals(project.getPresentableUrl());
   }
 
+  @Override
   public void setSelected(@Nullable AnActionEvent e, boolean selected) {
     if (!selected) {
       return;
     }
-    final Frame projectFrame = findProjectFrame();
-    if (projectFrame == null) {
+    final Project project = findProject();
+    if (project == null) {
       return;
     }
+    final JFrame projectFrame = WindowManager.getInstance().getFrame(project);
     final int frameState = projectFrame.getExtendedState();
     if ((frameState & Frame.ICONIFIED) == Frame.ICONIFIED) {
       // restore the frame if it is minimized
       projectFrame.setExtendedState(frameState ^ Frame.ICONIFIED);
     }
-    // bring the frame forward
     projectFrame.toFront();
-    projectFrame.requestFocusInWindow();
+    projectFrame.requestFocus();
+    //ProjectUtil.focusProjectWindow(project, true);
   }
 
   @Override

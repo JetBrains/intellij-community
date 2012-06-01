@@ -61,10 +61,6 @@
     <flex destdir="source/com/intellij/lexer"
           flexfile="${basedir}/_ELLexer.flex"/>
   </target>
-  <target name="QL">
-    <flex destdir="EJB/QL/src/com/intellij/ql/psi/impl/lexer"
-          flexfile="${idea.project.home}/EJB/QL/src/com/intellij/ql/psi/impl/lexer/_QlLexer.flex"/>
-  </target>
   <target name="DTD">
     <flex destdir="source/com/intellij/lexer"
           flexfile="${basedir}/_DTDLexer.flex"/>

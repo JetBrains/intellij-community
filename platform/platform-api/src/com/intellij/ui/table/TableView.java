@@ -90,6 +90,13 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     final RowSorter<? extends TableModel> sorter = getRowSorter();
     final List<? extends RowSorter.SortKey> current = sorter == null ? null : sorter.getSortKeys();
     ColumnInfo[] columns = getListTableModel().getColumnInfos();
+    int[] sizeMode = new int[columns.length];
+    int[] headers = new int[columns.length];
+    int[] widths = new int[columns.length];
+    int allColumnWidth = 0;
+    int varCount = 0;
+
+    // calculate
     for (int i = 0; i < columns.length; i++) {
       final ColumnInfo columnInfo = columns[i];
       final TableColumn column = getColumnModel().getColumn(i);
@@ -104,24 +111,53 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       if (sorter != null && columnInfo.isSortable()) {
         sorter.setSortKeys(current);
       }
-      final Dimension headerSize = headerComponent == null? new Dimension(0, 0) : headerComponent.getPreferredSize();
+      if (headerComponent != null) {
+        headers[i] = headerComponent.getPreferredSize().width;
+      }
       final String maxStringValue;
       final String preferredValue;
       if (columnInfo.getWidth(this) > 0) {
+        sizeMode[i] = 1;
         int width = columnInfo.getWidth(this);
+        widths[i] = width;
+      }
+      else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
+        sizeMode[i] = 2;
+        widths[i] = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
+        varCount ++;
+      }
+      else if ((preferredValue = columnInfo.getPreferredStringValue()) != null) {
+        sizeMode[i] = 3;
+        widths[i] = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
+        varCount ++;
+      }
+      allColumnWidth += widths[i];
+    }
+
+    // apply: distribute available space between resizable columns
+    //        and make sure that header will fit as well
+    int viewWidth = getParent() != null? getParent().getWidth() : getWidth();
+    double gold = 0.5 * (3 - Math.sqrt(5));
+    int addendum = varCount == 0 || viewWidth < allColumnWidth ?
+                   0 : (int)((allColumnWidth < gold * viewWidth ? gold * viewWidth :
+                              allColumnWidth < (1 - gold) * viewWidth ? (1 - gold) * viewWidth :
+                              viewWidth) - allColumnWidth) / varCount;
+
+    for (int i=0 ; i<columns.length; i ++) {
+      TableColumn column = getColumnModel().getColumn(i);
+      int width = widths[i];
+      if (sizeMode[i] == 1) {
         column.setMaxWidth(width);
         column.setPreferredWidth(width);
         column.setMinWidth(width);
       }
-      else if ((maxStringValue = columnInfo.getMaxStringValue()) != null) {
-        int width = getFontMetrics(getFont()).stringWidth(maxStringValue) + columnInfo.getAdditionalWidth();
-        width = Math.max(width, headerSize.width);
+      else if (sizeMode[i] == 2) {
+        width = Math.max(width + addendum, headers[i]);
         column.setPreferredWidth(width);
         column.setMaxWidth(width);
       }
-      else if ((preferredValue = columnInfo.getPreferredStringValue()) != null) {
-        int width = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
-        width = Math.max(width, headerSize.width);
+      else if (sizeMode[i] == 3) {
+        width = Math.max(width + addendum, headers[i]);
         column.setPreferredWidth(width);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -649,7 +649,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final VirtualFile vFile = getVirtualFile();
     if (!(vFile instanceof VirtualFileWithId)) return null;
 
-    StubTree stubHolder = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile);
+    StubTree stubHolder = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (stubHolder == null) return null;
     
     final IElementType contentElementType = getContentElementType();

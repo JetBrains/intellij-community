@@ -25,6 +25,7 @@ import git4idea.tests.TestDialogManager
 import org.jetbrains.annotations.NotNull
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Computable
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 
 /**
  * 
@@ -80,6 +81,11 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @Override
   void runReadAction(Runnable runnable) {
     runnable.run()
+  }
+
+  @Override
+  IdeaPluginDescriptor getPluginByClassName(String name) {
+    return null;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         i == JavaElementType.THIS_EXPRESSION ||
         i == JavaElementType.SUPER_EXPRESSION ||
         i == JavaDocElementType.DOC_METHOD_OR_FIELD_REF ||
-        i == JavaDocTokenType.DOC_TAG_VALUE_TOKEN ||
+        i == JavaDocElementType.DOC_TAG_VALUE_ELEMENT ||
         i == JavaElementType.REFERENCE_PARAMETER_LIST ||
         i == JavaElementType.ANNOTATION) {
       if (isQualified()) {

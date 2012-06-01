@@ -21,7 +21,9 @@ import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Rustam Vishnyakov
@@ -32,16 +34,15 @@ public class MarkAsOriginalTypeAction extends AnAction {
     DataContext dataContext = e.getDataContext();
     final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (selectedFiles == null || selectedFiles.length == 0) return;
+    Collection<VirtualFile> filesToUnmark = new ArrayList<VirtualFile>();
     for (VirtualFile file : selectedFiles) {
       if (file != null && !file.isDirectory()) {
-        unmarkPlainText(file);
+        filesToUnmark.add(file);
       }
     }
-  }
-
-  private static void unmarkPlainText(@NotNull VirtualFile file) {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    if (typeManager != null) typeManager.unmarkPlainText(file);
+    assert typeManager != null;
+    typeManager.unmarkPlainText(filesToUnmark.toArray(new VirtualFile[filesToUnmark.size()]));
   }
 
   @Override
