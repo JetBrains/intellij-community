@@ -42,7 +42,7 @@ public class GotoImplementationTest extends CodeInsightTestCase {
     myProject = ProjectManagerEx.getInstanceEx().loadProject(projectFile.getPath());
 
     simulateProjectOpen();
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
   }
 
   @Override

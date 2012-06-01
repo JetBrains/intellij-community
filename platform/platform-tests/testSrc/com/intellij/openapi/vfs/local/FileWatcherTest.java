@@ -351,7 +351,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 */
 
-  public void testSubst() throws Exception {
+  public void _testSubst() throws Exception {
     if (!SystemInfo.isWindows) {
       System.out.println("Ignored: Windows required");
       return;

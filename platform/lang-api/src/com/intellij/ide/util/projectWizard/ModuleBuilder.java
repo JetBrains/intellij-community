@@ -155,7 +155,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   }
 
   @NotNull
-  public Module createModule(ModifiableModuleModel moduleModel)
+  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     LOG.assertTrue(myName != null);
     LOG.assertTrue(myModuleFilePath != null);
@@ -182,26 +182,24 @@ public abstract class ModuleBuilder extends ProjectBuilder{
   public abstract ModuleType getModuleType();
 
   @NotNull
-  public Module createAndCommitIfNeeded(final Project project, ModifiableModuleModel model, boolean runFromProjectWizard) throws
-                                                                                                 InvalidDataException,
-                                                                                                 ConfigurationException,
-                                                                                                 IOException,
-                                                                                                 JDOMException,
-                                                                                                 ModuleWithNameAlreadyExists{
+  public Module createAndCommitIfNeeded(@NotNull Project project, @Nullable ModifiableModuleModel model, boolean runFromProjectWizard)
+    throws InvalidDataException, ConfigurationException, IOException, JDOMException, ModuleWithNameAlreadyExists {
     final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
     final Module module = createModule(moduleModel);
     if (model == null) moduleModel.commit();
 
     if (runFromProjectWizard) {
       StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            onModuleInitialized(module);
-          }
-        });
-      }
-    });
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              onModuleInitialized(module);
+            }
+          });
+        }
+      });
     }
     else {
       onModuleInitialized(module);
@@ -222,13 +220,14 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return true;
   }
 
+  @Override
   @Nullable
   public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
     final Module module = commitModule(project, model);
     return module != null ? Collections.singletonList(module) : null;
   }
 
-  public Module commitModule(final Project project, final ModifiableModuleModel model) {
+  public Module commitModule(@NotNull final Project project, final ModifiableModuleModel model) {
     final Ref<Module> result = new Ref<Module>();
     if (canCreateModule()) {
       if (myName == null) {
@@ -238,6 +237,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
         myModuleFilePath = project.getBaseDir().getPath() + File.separator + myName + ModuleFileType.DOT_DEFAULT_EXTENSION;
       }
       Exception ex = ApplicationManager.getApplication().runWriteAction(new Computable<Exception>() {
+        @Override
         public Exception compute() {
           try {
             result.set(createAndCommitIfNeeded(project, model, true));

@@ -570,7 +570,7 @@ public class PsiUtil {
   @Nullable
   public static PsiClass getContextClass(PsiElement context) {
     while (context != null) {
-      if (context instanceof PsiClass) {
+      if (context instanceof PsiClass && !isInDummyFile(context)) {
         return (PsiClass)context;
       }
       else if (context instanceof GroovyFileBase && context.isPhysical()) {
@@ -580,6 +580,14 @@ public class PsiUtil {
       context = context.getContext();
     }
     return null;
+  }
+
+  private static boolean isInDummyFile(PsiElement context) {
+    PsiFile file = context.getContainingFile();
+    if (file == null) return false;
+
+    String name = file.getName();
+    return name.startsWith(GroovyPsiElementFactory.DUMMY_FILE_NAME);
   }
 
   @Nullable

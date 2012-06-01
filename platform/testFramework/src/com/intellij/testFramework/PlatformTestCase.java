@@ -44,6 +44,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -180,11 +181,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myThreadTracker = new ThreadTracker();
 
     setUpProject();
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
 
     storeSettings();
     ourTestCase = this;
     if (myProject != null) {
+      ProjectManagerEx.getInstanceEx().openTestProject(myProject);
       CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
       ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject)).pushInjectors();
     }
@@ -212,7 +213,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     File projectFile = getIprFile();
 
     myProject = createProject(projectFile, getClass().getName() + "." + getName());
-    myProjectManager.setCurrentTestProject(myProject);
+    myProjectManager.openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
     setUpModule();
@@ -482,8 +483,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           public void run() {
             Disposer.dispose(myProject);
             ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-            if (projectManager != null) {
-              projectManager.setCurrentTestProject(null);
+            if (projectManager instanceof ProjectManagerImpl) {
+              projectManager.closeTestProject(myProject);
+              ((ProjectManagerImpl)projectManager).assertTestProjectsClosed();
             }
           }
         });

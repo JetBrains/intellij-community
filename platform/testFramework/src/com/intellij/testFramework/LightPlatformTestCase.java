@@ -71,7 +71,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -92,7 +92,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -234,7 +233,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           throw new RuntimeException(e);
         }
 
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).registerIndexableSet(new IndexableFileSet() {
+        FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
           @Override
           public boolean isInSet(@NotNull final VirtualFile file) {
             return ourSourceRoot != null && file.getFileSystem() == ourSourceRoot.getFileSystem() && ourProject.isOpen();
@@ -335,7 +334,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
-    projectManagerEx.setCurrentTestProject(ourProject);
+    projectManagerEx.openTestProject(ourProject);
 
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
@@ -404,8 +403,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     catch (Exception e) {
 
     }
-    assertTrue("open: "+getProject().isOpen()+"; disposed:"+getProject().isDisposed()+"; startup passed:"+ passed+"; testProjectIsOurProject:"+(getProject() == projectManagerEx
-      .getCurrentTestProject())+"; all open projects: "+
+    assertTrue("open: "+getProject().isOpen()+"; disposed:"+getProject().isDisposed()+"; startup passed:"+ passed+"; all open projects: "+
                Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
@@ -461,7 +459,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  public static void doTearDown(final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
+  public static void doTearDown(@NotNull final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
     DocumentCommitThread.getInstance().clearQueue();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkAllTimersAreDisposed();
@@ -526,7 +524,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
 
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
+    ProjectManagerEx.getInstanceEx().closeTestProject(project);
     application.setDataProvider(null);
     ourTestCase = null;
     ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
@@ -705,7 +703,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ApplicationManager.getApplication().assertWriteAccessAllowed();
       ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
       final VirtualFile projFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
-      final File projectFile = projFile == null ? null : VfsUtil.virtualToIoFile(projFile);
+      final File projectFile = projFile == null ? null : VfsUtilCore.virtualToIoFile(projFile);
       if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
 
       if (projectFile != null) {

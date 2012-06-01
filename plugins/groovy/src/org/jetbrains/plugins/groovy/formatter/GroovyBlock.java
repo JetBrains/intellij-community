@@ -111,6 +111,10 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       try {
         mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
       }
+      catch (AssertionError e) {
+        final PsiFile file = myNode.getPsi().getContainingFile();
+        LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), file.getText());
+      }
       catch (RuntimeException e) {
         final PsiFile file = myNode.getPsi().getContainingFile();
         LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), file.getText());
