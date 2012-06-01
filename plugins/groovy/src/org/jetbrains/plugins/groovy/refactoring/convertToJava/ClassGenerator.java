@@ -118,8 +118,9 @@ public class ClassGenerator {
       }
       if (enumConstants.length > 0) {
         //text.removeFromTheEnd(1).append(";\n");
-        text.delete(text.length()-1, text.length()).append(";\n");
+        text.delete(text.length() - 1, text.length());
       }
+      text.append(";\n");
     }
 
     writeAllMethods(text, classItemGenerator.collectMethods(typeDefinition, isClassDef), typeDefinition);

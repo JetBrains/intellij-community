@@ -80,7 +80,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     setUpJdk();
 
-    myProjectManager.setCurrentTestProject(myProject);
+    myProjectManager.openTestProject(myProject);
     runStartupActivities();
   }
 
@@ -175,7 +175,7 @@ public class UpdateCacheTest extends PsiTestCase{
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
     setUpModule();
     setUpJdk();
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     runStartupActivities();
     PsiTestUtil.addSourceContentToRoots(getModule(), content);
 

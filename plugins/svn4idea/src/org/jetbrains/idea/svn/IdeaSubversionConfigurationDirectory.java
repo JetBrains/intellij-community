@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.SystemInfo;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
@@ -26,9 +25,6 @@ public class IdeaSubversionConfigurationDirectory {
 
   public static String getPath() {
     final File standard = SVNWCUtil.getDefaultConfigurationDirectory();
-    if (SystemInfo.isWindows) {
-      return standard.getAbsolutePath();
-    }
-    return standard.getParent() + File.separator + standard.getName() + "_IDEA";
+    return standard.getAbsolutePath();
   }
 }

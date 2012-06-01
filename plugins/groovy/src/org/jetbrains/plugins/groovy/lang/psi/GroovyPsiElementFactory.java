@@ -54,7 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public abstract class GroovyPsiElementFactory implements JVMElementFactory {
 
-  @NonNls public static final String DUMMY_FILE_NAME = "DUMMY__";
+  @NonNls public static final String DUMMY_FILE_NAME = "DUMMY__1234567890_DUMMYYYYYY___";
 
   public abstract GrCodeReferenceElement createCodeReferenceElementFromClass(PsiClass aClass);
 

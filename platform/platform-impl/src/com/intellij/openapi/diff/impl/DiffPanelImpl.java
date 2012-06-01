@@ -363,7 +363,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public boolean hasDifferences() {
-    return getLineBlocks().getCount() > 0;
+    return getLineBlocks().getCount() > 0 || myNotCalculateDiffPanel != null;
   }
 
   public JComponent getPreferredFocusedComponent() {

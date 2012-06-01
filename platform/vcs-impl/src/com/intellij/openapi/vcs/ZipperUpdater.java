@@ -25,6 +25,7 @@ public class ZipperUpdater {
   private boolean myRaised;
   private final Object myLock = new Object();
   private final int myDelay;
+  private boolean myIsEmpty;
 
   public ZipperUpdater(final int delay, Disposable parentDisposable) {
     this(delay, Alarm.ThreadToUse.SHARED_THREAD, parentDisposable);
@@ -32,6 +33,7 @@ public class ZipperUpdater {
 
   public ZipperUpdater(final int delay, final Alarm.ThreadToUse threadToUse, Disposable parentDisposable) {
     myDelay = delay;
+    myIsEmpty = true;
     myAlarm = new Alarm(threadToUse, parentDisposable);
   }
 
@@ -44,6 +46,7 @@ public class ZipperUpdater {
       if (myAlarm.isDisposed()) return;
       final boolean wasRaised = myRaised;
       myRaised = true;
+      myIsEmpty = false;
       if (! wasRaised) {
         myAlarm.addRequest(new Runnable() {
           public void run() {
@@ -52,9 +55,18 @@ public class ZipperUpdater {
               myRaised = false;
             }
             runnable.run();
+            synchronized (myLock) {
+              myIsEmpty = ! myRaised;
+            }
           }
         }, urgent ? 0 : myDelay);
       }
+    }
+  }
+
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      return myIsEmpty;
     }
   }
 

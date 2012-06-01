@@ -37,7 +37,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     VirtualFile projectFile = tempProjectRootDir.findChild("orderEntry.ipr");
 
     myProject = ProjectManagerEx.getInstanceEx().loadProject(projectFile.getPath());
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);
+    ProjectManagerEx.getInstanceEx().openTestProject(myProject);
     ModuleManagerImpl mm = (ModuleManagerImpl)ModuleManager.getInstance(myProject);
     mm.projectOpened();
     setUpJdk();

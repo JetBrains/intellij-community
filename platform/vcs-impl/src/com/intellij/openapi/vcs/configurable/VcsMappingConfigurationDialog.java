@@ -20,6 +20,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,6 +33,8 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -197,20 +201,40 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
       super.onFileChoosen(chosenFile);
       final VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
       if (oldText.length() == 0 && (wrapper == null || wrapper.isNone())) {
-        VcsDescriptor probableVcs = null;
-        for(VcsDescriptor vcs: myVcses.values()) {
-          if (vcs.probablyUnderVcs(chosenFile)) {
-            if (probableVcs != null) {
-              probableVcs = null;
-              break;
+        final ModalityIgnorantBackgroundableTask task =
+          new ModalityIgnorantBackgroundableTask(myProject, "Looking for VCS administrative area, false") {
+            VcsDescriptor probableVcs = null;
+
+            @Override
+            protected void doInAwtIfFail(Exception e) {
             }
-            probableVcs = vcs;
-          }
-        }
-        if (probableVcs != null) {
-          // todo none
-          myVCSComboBox.setSelectedItem(probableVcs);
-        }
+
+            @Override
+            protected void doInAwtIfCancel() {
+            }
+
+            @Override
+            protected void doInAwtIfSuccess() {
+              if (probableVcs != null) {
+                // todo none
+                myVCSComboBox.setSelectedItem(probableVcs);
+              }
+            }
+
+            @Override
+            protected void runImpl(@NotNull ProgressIndicator indicator) {
+              for (VcsDescriptor vcs : myVcses.values()) {
+                if (vcs.probablyUnderVcs(chosenFile)) {
+                  if (probableVcs != null) {
+                    probableVcs = null;
+                    break;
+                  }
+                  probableVcs = vcs;
+                }
+              }
+            }
+          };
+        ProgressManager.getInstance().run(task);
       }
     }
   }

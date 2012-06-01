@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
@@ -78,7 +76,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
       if (isThisCall()) {
         substitutor = PsiSubstitutor.EMPTY;
       } else {
-        GrTypeDefinition enclosing = getEnclosingClass();
+        PsiClass enclosing = PsiUtil.getContextClass(this);
         assert enclosing != null;
         substitutor = TypeConversionUtil.getSuperClassSubstitutor(clazz, enclosing, PsiSubstitutor.EMPTY);
       }
@@ -110,15 +108,11 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
 
   @Nullable
   public PsiClass getDelegatedClass() {
-    GrTypeDefinition typeDefinition = getEnclosingClass();
+    PsiClass typeDefinition = PsiUtil.getContextClass(this);
     if (typeDefinition != null) {
       return isThisCall() ? typeDefinition : typeDefinition.getSuperClass();
     }
     return null;
-  }
-
-  private GrTypeDefinition getEnclosingClass() {
-    return PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class);
   }
 
   @NotNull
