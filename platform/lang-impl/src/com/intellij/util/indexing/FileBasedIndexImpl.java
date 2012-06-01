@@ -117,7 +117,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private static final int ALREADY_PROCESSED = 0x04;
 
   @Nullable private final String myConfigPath;
-  @Nullable private final String mySystemPath;
+  @Nullable private final String myLogPath;
   private final boolean myIsUnitTestMode;
   @Nullable private ScheduledFuture<?> myFlushingFuture;
   private volatile int myLocalModCount;
@@ -144,7 +144,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     myFileTypeManager = fileTypeManager;
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     myConfigPath = calcConfigPath(PathManager.getConfigPath());
-    mySystemPath = calcConfigPath(PathManager.getSystemPath());
+    myLogPath = calcConfigPath(PathManager.getLogPath());
 
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(PsiDocumentTransactionListener.TOPIC, new PsiDocumentTransactionListener() {
@@ -2117,7 +2117,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
     final String filePath = file.getPath();
     return myConfigPath != null && FileUtil.startsWith(filePath, myConfigPath) ||
-           mySystemPath != null && FileUtil.startsWith(filePath, mySystemPath);
+           myLogPath != null && FileUtil.startsWith(filePath, myLogPath);
   }
 
   private static boolean isMock(final VirtualFile file) {
