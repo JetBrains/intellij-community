@@ -861,7 +861,8 @@ public class AsmCodeGenerator {
         Type borderFactoryType = ourBorderFactoryType;
         StringDescriptor borderFactoryValue = (StringDescriptor)container.getDelegeeClientProperties().get(ourBorderFactoryClientProperty);
         if (borderFactoryValue == null && Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) {
-          container.getDelegeeClientProperties().put(ourBorderFactoryClientProperty, StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"));
+          borderFactoryValue = StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
+          container.getDelegeeClientProperties().put(ourBorderFactoryClientProperty, borderFactoryValue);
         }
         if (borderFactoryValue != null && borderFactoryValue.getValue().length() != 0) {
           borderFactoryType = typeFromClassName(borderFactoryValue.getValue());
