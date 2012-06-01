@@ -87,11 +87,6 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
       }
 
       @Override
-      public Icon getIcon() {
-        return null;
-      }
-
-      @Override
       public String getHelpTopic() {
         return helpReference;
       }
@@ -126,11 +121,6 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
   @Override
   public String getDisplayName() {
     return "Console";
-  }
-
-  @Override
-  public Icon getIcon() {
-    return null;
   }
 
   @Override

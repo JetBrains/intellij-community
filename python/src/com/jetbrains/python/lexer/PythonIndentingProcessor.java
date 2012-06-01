@@ -5,6 +5,7 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.cython.parser.CythonTokenTypes;
 import com.jetbrains.python.PyTokenTypes;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +18,16 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   protected int myBraceLevel;
   protected boolean myLineHasSignificantTokens;
   protected int myLastNewLineIndent = -1;
+  private int myCurrentNewLineIndent = 0;
 
   private static final boolean DUMP_TOKENS = false;
+  private static final TokenSet RECOVERY_TOKENS =
+    TokenSet.create(PyTokenTypes.DEF_KEYWORD, PyTokenTypes.CLASS_KEYWORD, PyTokenTypes.RETURN_KEYWORD, PyTokenTypes.WITH_KEYWORD,
+                    PyTokenTypes.WHILE_KEYWORD, PyTokenTypes.BREAK_KEYWORD, PyTokenTypes.CONTINUE_KEYWORD, PyTokenTypes.RAISE_KEYWORD,
+                    PyTokenTypes.TRY_KEYWORD, PyTokenTypes.EXCEPT_KEYWORD, PyTokenTypes.FINALLY_KEYWORD,
+                    // TODO: Cython dependency. Collect these tokens via the PythonDialectsTokenSetProvider (requires setting up the
+                    // "Pythonid.dialectsTokenSetContributor" extension point in all the tests.
+                    CythonTokenTypes.CDEF_KEYWORD, CythonTokenTypes.CPDEF_KEYWORD, CythonTokenTypes.CTYPEDEF_KEYWORD);
 
   public PythonIndentingProcessor(FlexLexer lexer, TokenSet tokens) {
     super(new FlexAdapter(lexer), tokens);
@@ -117,6 +126,19 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   @Override
   public void advance() {
+    if (getTokenType() == PyTokenTypes.LINE_BREAK) {
+      final String text = getTokenText();
+      int spaces = 0;
+      for (int i = text.length() - 1; i >= 0; i--) {
+        if (text.charAt(i) == ' ') {
+          spaces++;
+        }
+      }
+      myCurrentNewLineIndent = spaces;
+    }
+    else if (getTokenType() == PyTokenTypes.TAB) {
+      myCurrentNewLineIndent += 8;
+    }
     if (myTokenQueue.size() > 0) {
       myTokenQueue.remove(0);
       if (myProcessSpecialTokensPending) {
@@ -180,11 +202,29 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   private void adjustBraceLevel() {
-    if (PyTokenTypes.OPEN_BRACES.contains(getTokenType())) {
+    final IElementType tokenType = getTokenType();
+    if (PyTokenTypes.OPEN_BRACES.contains(tokenType)) {
       myBraceLevel++;
     }
-    else if (PyTokenTypes.CLOSE_BRACES.contains(getTokenType())) {
+    else if (PyTokenTypes.CLOSE_BRACES.contains(tokenType)) {
       myBraceLevel--;
+    }
+    else if (myBraceLevel != 0 && RECOVERY_TOKENS.contains(tokenType)) {
+      myBraceLevel = 0;
+      final int pos = getTokenStart();
+      pushToken(PyTokenTypes.STATEMENT_BREAK, pos, pos);
+      final int indents = myIndentStack.size();
+      for (int i = 0; i < indents - 1; i++) {
+        final int indent = myIndentStack.peek();
+        if (myCurrentNewLineIndent >= indent) {
+          break;
+        }
+        if (myIndentStack.size() > 1) {
+          myIndentStack.pop();
+          pushToken(PyTokenTypes.DEDENT, pos, pos);
+        }
+      }
+      pushToken(PyTokenTypes.LINE_BREAK, pos, pos);
     }
   }
 

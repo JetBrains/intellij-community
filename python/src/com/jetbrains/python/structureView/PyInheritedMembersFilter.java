@@ -1,5 +1,6 @@
 package com.jetbrains.python.structureView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.FileStructureFilter;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -7,7 +8,6 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,7 +46,7 @@ public class PyInheritedMembersFilter implements FileStructureFilter {
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"),
                                       null,
-                                      IconLoader.getIcon("/hierarchy/supertypes.png"));
+                                      AllIcons.Hierarchy.Supertypes);
   }
 
   @Override

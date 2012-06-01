@@ -201,6 +201,54 @@ public class PythonLexerTest extends PyLexerTestCase {
     doTest("   a", "Py:SPACE", "Py:INDENT", "Py:IDENTIFIER", "Py:STATEMENT_BREAK");
   }
 
+  // PY-3067
+  public void testErrorOpenParInExpr() {
+    doTest("def f():\n" +
+           "    (\n" +
+           "\n" +
+           "def g():\n" +
+           "    pass\n",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:LPAR", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK", // Error recovery
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK");
+  }
+
+  // PY-3067
+  public void testErrorOpenParInExprBeforeComment() {
+    doTest("def f():\n" +
+           "    (\n" +
+           "#comment\n" +
+           "def g():\n" +
+           "    pass\n",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:LPAR", "Py:LINE_BREAK",
+           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK", // Error recovery
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK");
+  }
+
+  // PY-3067
+  public void testErrorOpenParInMethod() {
+    doTest("class C:\n" +
+           "    def f(self):\n" +
+           "        (\n" +
+           "\n" +
+           "    def g(self):\n" +
+           "        pass\n",
+           "Py:CLASS_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:LPAR", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK", // Error recovery
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:IDENTIFIER", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:DEDENT", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }

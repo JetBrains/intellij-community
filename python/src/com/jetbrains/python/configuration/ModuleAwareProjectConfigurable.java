@@ -50,11 +50,6 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public JComponent createComponent() {
     if (myProject.isDefault()) {
       T configurable = createDefaultProjectConfigurable();

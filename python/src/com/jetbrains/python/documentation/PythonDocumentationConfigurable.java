@@ -42,11 +42,6 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
   }
 
   @Override
-  public Icon getIcon() {
-    return null;
-  }
-
-  @Override
   public String getHelpTopic() {
     return "preferences.ExternalDocumentation";
   }

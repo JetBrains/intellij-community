@@ -1,13 +1,13 @@
 package com.jetbrains.python.packaging.ui;
 
 import com.google.common.collect.Lists;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
@@ -513,7 +513,7 @@ public class PyPackagesPanel extends JPanel {
       final String version = (String)table.getValueAt(row, 1);
       final String availableVersion = (String)table.getValueAt(row, 2);
       cell.setIcon(PyRequirement.VERSION_COMPARATOR.compare(version, availableVersion) < 0 && column == 2 ?
-                   IconLoader.getIcon("/vcs/arrow_right.png") : null);
+                   AllIcons.Vcs.Arrow_right : null);
       final Object pyPackage = table.getValueAt(row, 0);
       if (pyPackage instanceof PyPackage) {
         cell.setToolTipText(PythonSdkType.shortenDirName(((PyPackage)pyPackage).getLocation()));

@@ -1,5 +1,6 @@
 package com.jetbrains.python.packaging.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
@@ -9,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
@@ -97,7 +97,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myNotificationArea = new PyPackagesNotificationPanel(project);
     myNotificationsAreaPlaceholder.add(myNotificationArea.getComponent(), BorderLayout.CENTER);
 
-    final AnActionButton reloadButton = new AnActionButton("Reload List of Packages", IconLoader.getIcon("/vcs/refresh.png")) {
+    final AnActionButton reloadButton = new AnActionButton("Reload List of Packages", AllIcons.Vcs.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myPackages.setPaintBusy(true);
