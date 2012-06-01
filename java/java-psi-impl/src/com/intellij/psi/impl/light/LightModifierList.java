@@ -40,7 +40,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
 
   public LightModifierList(PsiManager manager, final Language language, String... modifiers) {
     super(manager, language);
-    myModifiers = CollectionFactory.newTroveSet(modifiers);
+    myModifiers = CollectionFactory.troveSet(modifiers);
   }
 
   public void addModifier(String modifier) {

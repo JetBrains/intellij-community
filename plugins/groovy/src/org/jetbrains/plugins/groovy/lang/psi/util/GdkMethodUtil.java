@@ -44,7 +44,7 @@ public class GdkMethodUtil {
 
   private static final Logger LOG = Logger.getInstance(GdkMethodUtil.class);
 
-  public static final Set<String> COLLECTION_METHOD_NAMES = CollectionFactory.newSet(
+  public static final Set<String> COLLECTION_METHOD_NAMES = CollectionFactory.hashSet(
     "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
     "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
   );
