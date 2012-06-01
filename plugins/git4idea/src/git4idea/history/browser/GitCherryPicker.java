@@ -18,6 +18,7 @@ package git4idea.history.browser;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -496,10 +497,9 @@ public class GitCherryPicker {
       public void execute(Collection<Change> changes, String commitMessage) {
         final Collection<Document> committingDocs = markCommittingDocs();
         try {
-          CheckinEnvironment ce = myPlatformFacade.getVcs(myProject).getCheckinEnvironment();
-          LOG.assertTrue(ce != null && ce instanceof GitCheckinEnvironment, "Invalid CheckinEnvironment: " + ce);
+          GitCheckinEnvironment ce = ServiceManager.getService(myProject, GitCheckinEnvironment.class);
           try {
-            ((GitCheckinEnvironment)ce).reset();
+            ce.reset();
             List<VcsException> exceptions = ce.commit(myChanges, myCommitMessage);
             VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(myChanges), null);
             if (exceptions != null && !exceptions.isEmpty()) {

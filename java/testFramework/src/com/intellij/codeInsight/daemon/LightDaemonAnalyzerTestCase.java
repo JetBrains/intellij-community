@@ -122,6 +122,11 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   }
 
   @NotNull
+  protected List<HighlightInfo> highlightErrors() {
+    return doHighlighting(HighlightSeverity.ERROR);
+  }
+
+  @NotNull
   protected List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 

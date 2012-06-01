@@ -138,13 +138,13 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(deadCodeInspection);
 
     doTest(true, false);
-    List<HighlightInfo> infos = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEquals(2, infos.size()); // unused class and unused method
 
     try {
       point.registerExtension(extension);
 
-      infos = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.WARNING);
+      infos = doHighlighting(HighlightSeverity.WARNING);
       HighlightInfo info = assertOneElement(infos);
       assertEquals("Class 'WithMain' is never used", info.description);
     }

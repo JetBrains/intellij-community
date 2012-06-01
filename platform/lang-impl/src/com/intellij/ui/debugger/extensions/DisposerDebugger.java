@@ -45,7 +45,6 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -254,13 +253,13 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       return value.getValue().getModification() > myModificationToFilter;
     }
 
-    public void objectRegistered(Object node) {
+    public void objectRegistered(@NotNull Object node) {
       queueUpdate();
     }
 
 
 
-    public void objectExecuted(Object node) {
+    public void objectExecuted(@NotNull Object node) {
       queueUpdate();
     }
 
@@ -354,7 +353,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       }
       else {
         final ObjectTree<Disposable> tree = Disposer.getTree();
-        final THashSet<Disposable> root = tree.getRootObjects();
+        final Set<Disposable> root = tree.getRootObjects();
         ArrayList<DisposerNode> children = new ArrayList<DisposerNode>(root.size());
         for (Disposable each : root) {
           children.add(new DisposerNode(myTree, tree.getNode(each)));

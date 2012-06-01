@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -54,7 +53,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   public void testImportsInsertedAlphabetically() throws Throwable {
     @NonNls String text = "class I {}";
     final PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
-    assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
+    assertEmpty(highlightErrors());
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
       @Override
@@ -109,7 +108,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
                           "class I {{ max(0, 0); Map.class.hashCode(); min(0,0); Component.class.hashCode(); int i = CENTER; }}";
 
     final PsiJavaFile file = (PsiJavaFile)configureByText(StdFileTypes.JAVA, text);
-    assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
+    assertEmpty(highlightErrors());
     CommandProcessor.getInstance().executeCommand(
       getProject(), new Runnable() {
         @Override
@@ -178,7 +177,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   @WrapInCommand
   public void testReimportConflictingClasses() throws Exception {
     configureByFile(BASE_PATH+"/x/Usage.java", BASE_PATH);
-    assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
+    assertEmpty(highlightErrors());
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
@@ -204,7 +203,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   @WrapInCommand
   public void testConflictingClassesFromCurrentPackage() throws Throwable {
     final PsiFile file = configureByText(StdFileTypes.JAVA, "package java.util; class X{ Date d;}");
-    assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
+    assertEmpty(highlightErrors());
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
@@ -229,7 +228,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       type(" ");
       backspace();
       
-      assertOneElement(filter(doHighlighting(), HighlightSeverity.ERROR));
+      assertOneElement(highlightErrors());
 
       int offset = myEditor.getCaretModel().getOffset();
       PsiReference ref = myFile.findReferenceAt(offset - 1);
@@ -244,7 +243,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
       UIUtil.dispatchAllInvocationEvents();
 
-      assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
+      assertEmpty(highlightErrors());
     }
     finally {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
@@ -261,7 +260,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       type(" ");
       backspace();
       
-      assertEquals(2, filter(doHighlighting(), HighlightSeverity.ERROR).size());
+      assertEquals(2, highlightErrors().size());
       UIUtil.dispatchAllInvocationEvents();
 
       int offset = myEditor.getCaretModel().getOffset();
@@ -272,7 +271,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
       UIUtil.dispatchAllInvocationEvents();
 
-      assertEmpty(filter(doHighlighting(), HighlightSeverity.ERROR));
+      assertEmpty(highlightErrors());
     }
     finally {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
@@ -363,7 +362,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
      try {
-       List<HighlightInfo> errs = filter(doHighlighting(), HighlightSeverity.ERROR);
+       List<HighlightInfo> errs = highlightErrors();
 
        assertEquals(1, errs.size());
 
@@ -389,7 +388,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
      try {
-       List<HighlightInfo> errs = filter(doHighlighting(), HighlightSeverity.ERROR);
+       List<HighlightInfo> errs = highlightErrors();
        assertEquals(1, errs.size());
 
        assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());

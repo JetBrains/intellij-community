@@ -25,6 +25,7 @@ import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
@@ -184,16 +185,22 @@ public class TemplateListPanel extends JPanel implements Disposable {
     reset();
   }
 
+  private final boolean isTest = ApplicationManager.getApplication().isUnitTestMode();
   public boolean isModified() {
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     if (templateSettings.getDefaultShortcutChar() != getDefaultShortcutChar()) {
+      if (isTest) System.err.println("LiveTemplatesConfig: templateSettings.getDefaultShortcutChar()="+templateSettings.getDefaultShortcutChar()+"; getDefaultShortcutChar()="+getDefaultShortcutChar());
       return true;
     }
 
     List<TemplateGroup> originalGroups = templateSettings.getTemplateGroups();
     List<TemplateGroup> newGroups = getTemplateGroups();
 
-    return !checkAreEqual(collectTemplates(originalGroups), collectTemplates(newGroups));
+    if (checkAreEqual(collectTemplates(originalGroups), collectTemplates(newGroups))) return false;
+    if (isTest) {
+      System.err.println("LiveTemplatesConfig: originalGroups="+originalGroups+"; collectTemplates(originalGroups)="+collectTemplates(originalGroups)+";\n newGroups="+newGroups+"; collectTemplates(newGroups)="+collectTemplates(newGroups));
+    }
+    return true;
   }
 
   public void editTemplate(TemplateImpl template) {
