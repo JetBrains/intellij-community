@@ -15,10 +15,12 @@
  */
 package com.intellij.designer.componentTree;
 
+import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +39,16 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class TreeEditableArea implements EditableArea, FeedbackTreeLayer, TreeSelectionListener {
+public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, TreeSelectionListener {
   private final EventListenerList myListenerList = new EventListenerList();
   private final ComponentTree myTree;
   private final AbstractTreeBuilder myTreeBuilder;
+  private final DesignerActionPanel myActionPanel;
 
-  public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder) {
+  public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder, DesignerActionPanel actionPanel) {
     myTree = tree;
     myTreeBuilder = treeBuilder;
+    myActionPanel = actionPanel;
     hookSelection();
   }
 
@@ -223,6 +227,11 @@ public abstract class TreeEditableArea implements EditableArea, FeedbackTreeLaye
   @Override
   public FeedbackTreeLayer getFeedbackTreeLayer() {
     return this;
+  }
+
+  @Override
+  public ActionGroup getPopupActions() {
+    return myActionPanel.getPopupActions(this);
   }
 
   @Override

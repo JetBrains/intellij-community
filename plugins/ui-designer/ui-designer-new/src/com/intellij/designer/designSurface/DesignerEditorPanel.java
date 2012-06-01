@@ -192,7 +192,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
       @Override
       public ActionGroup getPopupActions() {
-        return myActionPanel.getPopupActions();
+        return myActionPanel.getPopupActions(this);
       }
 
       @Override

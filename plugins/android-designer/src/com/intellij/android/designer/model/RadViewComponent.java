@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
 import com.intellij.designer.propertyTable.Property;
@@ -249,5 +250,20 @@ public class RadViewComponent extends RadVisualComponent {
     for (RadComponent child : myChildren) {
       child.copyTo(parent);
     }
+  }
+
+  @Override
+  public void morphingTo(final MetaModel target) throws Exception {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myTag.setName(target.getTag());
+      }
+    });
+
+    setMetaModel(target);
+
+    PropertyParser propertyParser = getRoot().getClientProperty(PropertyParser.KEY);
+    propertyParser.load(this);
   }
 }
