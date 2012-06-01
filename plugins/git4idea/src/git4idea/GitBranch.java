@@ -250,6 +250,7 @@ public class GitBranch extends GitReference {
         final String prefix = "ref: refs/heads/";
         return head.startsWith(prefix) ? new GitBranch(head.substring(prefix.length()), true, false) : null;
       } catch (IOException e) {
+        LOG.info(e);
         return null;
       }
     }
