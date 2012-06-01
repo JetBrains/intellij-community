@@ -1,0 +1,121 @@
+package com.intellij.codeInsight.completion;
+
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+
+import java.io.File;
+
+/**
+ * @author spleaner
+ */
+@SuppressWarnings({"ALL"})
+public class XmlSmartEnterTest extends LightCodeInsightTestCase {
+  private static final String BASE_PATH = "/smartEnter";
+  private LookupElement[] myItems;
+
+  public void testSmartFinish1() throws Throwable {
+    doCompletionPopupTest(getTestName(false));
+  }
+
+  public void testSmartFinish2() throws Throwable {
+    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
+    try {
+      doCompletionPopupTest(getTestName(false));
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old;
+    }
+  }
+
+  public void testSmartFinish3() throws Exception {
+    doSmartEnterTest("SmartFinish1");
+  }
+
+  public void testSmartFinish4() throws Exception {
+    doSmartEnterTest("SmartFinish2");
+  }
+
+  public void testSmartFinish5() throws Exception {
+    doSmartEnterTest("SmartFinish3");
+  }
+
+  public void testSmartFinish_IDEADEV_29628() throws Exception {
+    doSmartEnterTest("IDEADEV_29628");
+  }
+
+  public void testSmartFinishWithWrongAttribute() throws Exception {
+    doSmartEnterTest("WrongAttribute");
+  }
+
+  public void testOpenAttribute() throws Exception {
+    doSmartEnterTest("OpenAttribute");
+  }
+
+  public void testComplete1() throws Exception {
+    _doTest("Tag.xml", "Tag_after.xml");
+  }
+
+  private void doCompletionPopupTest(String baseName) throws Exception {
+    _doTestCompletion(baseName + ".xml", baseName + "_after.xml");
+  }
+
+  private void _doTestCompletion(final String name, final String after_name) throws Exception {
+    configureByFile(BASE_PATH + "/" + name);
+    performCompletionAction();
+    select(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
+    checkResultByFile(BASE_PATH + "/" + after_name);
+  }
+
+  private void doSmartEnterTest(String baseName) throws Exception {
+    _doTest(baseName + ".xml", baseName + "_after.xml");
+  }
+
+  private void _doTest(String filename, String filename_after) throws Exception {
+    configureByFile(BASE_PATH + "/" + filename);
+
+    new WriteCommandAction(getProject()) {
+      protected void run(final Result result) throws Throwable {
+        new XmlSmartEnterProcessor().process(getProject(), getEditor(), getFile());
+      }
+    }.execute();
+
+    checkResultByFile("", BASE_PATH + "/" + filename_after, true);
+  }
+
+  private void performCompletionAction() {
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor());
+    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(getEditor());
+    myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
+  }
+
+  private void select(final char c) {
+    if (c != '\n' && c != '\t' && c != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+      type(c);
+      return;
+    }
+
+    final LookupManagerImpl manager = (LookupManagerImpl) LookupManager.getInstance(getProject());
+    final Lookup lookup = manager.getActiveLookup();
+    if(lookup != null) {
+      manager.forceSelection(c, lookup.getCurrentItem());
+    }
+  }
+
+  protected String getBasePath() {
+    return "";
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
+  }
+}

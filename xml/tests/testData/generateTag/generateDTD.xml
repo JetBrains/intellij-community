@@ -1,0 +1,17 @@
+<!DOCTYPE a [
+
+        <!ELEMENT a (b)* >
+
+        <!ELEMENT  b  (c, d)>
+        <!ELEMENT  c  (#PCDATA)>
+        <!ATTLIST b
+                x       CDATA          #REQUIRED
+                y       CDATA          #IMPLIED
+        >
+
+        <!ELEMENT  d  (#PCDATA)>
+        ]>
+
+<a>
+    <caret>
+</a>
