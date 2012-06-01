@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
@@ -32,9 +33,9 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringBufferInputStream;
 import java.util.Collection;
 
 /**
@@ -106,9 +107,8 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
 
     try {
       final String result = command.run();
-      // todo not synchronized wrapper stream!
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new StringBufferInputStream(result), infoHandler[0]);
+      parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), infoHandler[0]);
 
     }
     catch (SvnExceptionWrapper e) {

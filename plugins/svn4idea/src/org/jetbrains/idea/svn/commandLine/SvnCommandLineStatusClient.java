@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.portable.PortableStatus;
@@ -34,7 +35,9 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -156,9 +159,8 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     try {
       final String result = command.run();
-      // todo not synchronized wrapper stream!
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new StringBufferInputStream(result), svnHandl[0]);
+      parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
       if (! svnHandl[0].isAnythingReported()) {
         if (! SvnUtil.isSvnVersioned(myProject, path)) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
