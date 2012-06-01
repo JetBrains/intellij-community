@@ -1,0 +1,1 @@
+(child changed in b child: XmlTag:a)
