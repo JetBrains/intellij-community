@@ -35,7 +35,7 @@ public class ConditionInstruction extends InstructionImpl implements Instruction
 
   @Override
   protected String getElementPresentation() {
-    return "Condition";
+    return "Condition" + getElement();
   }
 
   void addDependent(ConditionInstruction i) {

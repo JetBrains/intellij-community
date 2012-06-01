@@ -39,6 +39,6 @@ public class NegatingGotoInstruction extends InstructionImpl {
 
   @Override
   protected String getElementPresentation() {
-    return " Negating goto instruction, condition=" + myCondition.num();
+    return " Negating goto instruction, condition=" + myCondition.num() + getElement();
   }
 }
