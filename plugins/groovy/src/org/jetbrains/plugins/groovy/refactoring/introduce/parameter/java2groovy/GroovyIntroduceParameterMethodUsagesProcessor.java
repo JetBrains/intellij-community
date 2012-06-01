@@ -103,7 +103,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs = GrClosureSignatureUtil
       .mapParametersToArguments(signature, callExpression.getNamedArguments(), callExpression.getExpressionArguments(),
-                                callExpression.getClosureArguments(), callExpression, true, true);
+                                callExpression.getClosureArguments(), callExpression, false, true);
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(data.getProject());
 
