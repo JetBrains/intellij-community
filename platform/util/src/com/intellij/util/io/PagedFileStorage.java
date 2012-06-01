@@ -304,7 +304,7 @@ public class PagedFileStorage implements Forceable {
 
     final long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
     myStorageLockContext.myStorageLock.invalidateBuffer((int)(myStorageIndex | (mySize / myPageSize)));
-    //unmapAll();
+    //unmapAll(); // we do not need it since all page alighned buffers can be reused
     final long unmapAllFinished = IOStatistics.DEBUG ? System.currentTimeMillis():0;
 
     resizeFile(newSize);
@@ -526,7 +526,10 @@ public class PagedFileStorage implements Forceable {
         throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + owner.length());
       }
       ++myMappingChangeCount;
-      ByteBufferWrapper wrapper = ByteBufferWrapper.readWrite(owner.myFile, off, Math.min((int)(owner.length() - off), owner.myPageSize));
+      int min = Math.min((int)(owner.length() - off), owner.myPageSize);
+      ByteBufferWrapper wrapper = min != owner.myPageSize ?  // last, non aligned buffer allocate directly, it is much faster to unmap it during resize
+                                  ByteBufferWrapper.readWriteDirect(owner.myFile, off, min):
+                                  ByteBufferWrapper.readWrite(owner.myFile, off, min);
       IOException oome = null;
       while (true) {
         try {
