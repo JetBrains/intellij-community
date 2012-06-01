@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.PersistentFSConstants;
@@ -179,7 +180,7 @@ public abstract class AutoScrollToSourceHandler {
         if (vFile != null) {
           // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
           // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
-          if (vFile.getFileType() == FileTypes.UNKNOWN) return;
+          if (vFile.getFileType() == FileTypes.UNKNOWN || vFile.getFileType() instanceof INativeFileType) return;
 
           //IDEA-84881 Don't autoscroll to very large files
           if (vFile.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return;
