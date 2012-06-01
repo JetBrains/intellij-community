@@ -142,7 +142,6 @@ public class NewProjectUtil {
 
       if (projectBuilder != null) {
         projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
-        newProject.save();
       }
 
       final boolean need2OpenProjectStructure = projectBuilder == null || projectBuilder.isOpenProjectSettingsAfter();
@@ -185,6 +184,7 @@ public class NewProjectUtil {
         
         projectManager.openProject(newProject);
       }
+      newProject.save();
     }
     finally {
       if (projectBuilder != null) {
