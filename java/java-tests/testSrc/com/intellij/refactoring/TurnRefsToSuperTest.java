@@ -150,6 +150,22 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
     doTest("Clazz", "Intf", false);
   }
 
+  public void _testStaticCallArguments() throws Exception {
+    doTest("Impl", "Int", false);
+  }
+  
+  public void _testListArgs() throws Exception {
+    doTest("Impl", "Int", false);
+  }
+  
+  public void _testCovariantReturnTypes() throws Exception {
+    doTest("Impl", "Int", false);
+  }
+  
+  public void _testNewExpr() throws Exception {
+    doTest("Impl", "Int", false);
+  }
+
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) throws Exception {
     doTest(new PerformAction() {
       @Override
