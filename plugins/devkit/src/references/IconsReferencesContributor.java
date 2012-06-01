@@ -36,8 +36,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -118,6 +120,45 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                 return lastRef != null ? lastRef.resolve() : null;
               }
               return null;
+            }
+
+            @Override
+            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+              PsiElement element = resolve();
+              if (element instanceof PsiFile) {
+                FileReference lastRef = new FileReferenceSet(element).getLastReference();
+                return lastRef.handleElementRename(newElementName);
+              }
+              else if (element instanceof PsiField) {
+                String fqn = ((PsiField)element).getContainingClass().getQualifiedName();
+
+                if (fqn.startsWith("com.intellij.icons.")) {
+                  XmlAttribute parent = (XmlAttribute)getElement().getParent();
+                  parent.setValue(fqn.substring("com.intellij.icons.".length()) + "." + newElementName);
+                  return parent.getValueElement();
+                }
+              }
+
+              return super.handleElementRename(newElementName);
+            }
+
+            @Override
+            public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+              if (element instanceof PsiFile) {
+                FileReference lastRef = new FileReferenceSet(element).getLastReference();
+                return lastRef.bindToElement(element);
+              }
+              else if (element instanceof PsiField) {
+                String fqn = ((PsiField)element).getContainingClass().getQualifiedName();
+
+                if (fqn.startsWith("com.intellij.icons.")) {
+                  XmlAttribute parent = (XmlAttribute)getElement().getParent();
+                  parent.setValue(fqn.substring("com.intellij.icons.".length()) + "." + ((PsiField)element).getName());
+                  return parent.getValueElement();
+                }
+              }
+
+              return super.bindToElement(element);
             }
 
             @NotNull
