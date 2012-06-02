@@ -2538,7 +2538,8 @@ public class HighlightUtil {
     TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources"),
     BIN_LITERALS(LanguageLevel.JDK_1_7, "feature.binary.literals"),
     UNDERSCORES(LanguageLevel.JDK_1_7, "feature.underscores.in.literals"),
-    EXTENSION_METHODS(LanguageLevel.JDK_1_8, "feature.extension.methods");
+    EXTENSION_METHODS(LanguageLevel.JDK_1_8, "feature.extension.methods"),
+    METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references");
 
     private final LanguageLevel level;
     private final String key;
@@ -2605,5 +2606,10 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkExtensionMethodsFeature(final PsiMethod method) {
     return checkFeature(method, Feature.EXTENSION_METHODS);
+  }
+
+  @Nullable
+  public static HighlightInfo checkMethodReferencesFeature(final PsiMethodReferenceExpression expression) {
+    return checkFeature(expression, Feature.METHOD_REFERENCES);
   }
 }

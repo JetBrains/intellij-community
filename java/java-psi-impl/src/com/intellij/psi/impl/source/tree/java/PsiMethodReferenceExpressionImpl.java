@@ -105,6 +105,16 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   }
 
   @Override
+  public void accept(@NotNull final PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitMethodReferenceExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
+  }
+
+  @Override
   public String toString() {
     return "PsiMethodReferenceExpression:" + getText();
   }
