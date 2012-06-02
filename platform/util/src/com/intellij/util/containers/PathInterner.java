@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.io.IOUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
@@ -45,6 +46,7 @@ public class PathInterner {
   @Nullable
   protected SubstringWrapper[] internParts(String path, boolean forAddition) {
     int start = 0;
+    boolean asBytes = forAddition && IOUtil.isAscii(path);
     List<SubstringWrapper> key = new ArrayList<SubstringWrapper>();
     SubstringWrapper flyweightKey = new SubstringWrapper();
     while (start < path.length()) {
@@ -54,7 +56,7 @@ public class PathInterner {
         if (!forAddition) {
           return null;
         }
-        myInternMap.add(interned = flyweightKey.createPersistentCopy());
+        myInternMap.add(interned = flyweightKey.createPersistentCopy(asBytes));
       }
       key.add(interned);
       start += flyweightKey.len;
@@ -65,19 +67,34 @@ public class PathInterner {
   private static String restorePath(SubstringWrapper[] seq) {
     StringBuilder sb = new StringBuilder();
     for (SubstringWrapper wrapper : seq) {
-      sb.append(wrapper.s);
+      wrapper.append(sb);
     }
     return sb.toString();
   }
 
   private static class SubstringWrapper {
-    private String s;
+    private Object encodedString;
     private int start;
     private int len;
     private int hc;
 
+    void append(StringBuilder sb) {
+      if (encodedString instanceof String) {
+        sb.append(encodedString);
+        return;
+      }
+
+      int oldLen = sb.length();
+      sb.setLength(oldLen + len);
+      byte[] bytes = (byte[]) encodedString;
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, len = bytes.length; i < len; i++) {
+        sb.setCharAt(oldLen + i, (char)bytes[i]);
+      }
+    }
+
     void findSubStringUntilNextSeparator(String s, int start) {
-      this.s = s;
+      encodedString = s;
       this.start = start;
       hc = 0;
 
@@ -96,6 +113,13 @@ public class PathInterner {
       return c == '/' || c == '\\' || c == '.' || c == ' ' || c == '_' || c == '$';
     }
 
+    char charAt(int i) {
+      if (encodedString instanceof String) {
+        return ((String)encodedString).charAt(start + i);
+      }
+      return (char)((byte[]) encodedString)[start + i];
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
@@ -105,10 +129,9 @@ public class PathInterner {
 
       if (hc != wrapper.hc) return false;
       if (len != wrapper.len) return false;
-      if (s == wrapper.s && start == wrapper.start) return true;
 
       for (int i = 0; i < len; i++) {
-        if (s.charAt(i + start) != wrapper.s.charAt(i + wrapper.start)) {
+        if (charAt(i) != wrapper.charAt(i)) {
           return false;
         }
       }
@@ -121,9 +144,19 @@ public class PathInterner {
       return hc;
     }
 
-    SubstringWrapper createPersistentCopy() {
+    SubstringWrapper createPersistentCopy(boolean asBytes) {
       SubstringWrapper wrapper = new SubstringWrapper();
-      wrapper.s = new String(s.substring(start, start + len));
+      String string = (String) encodedString;
+      String substring = string.substring(start, start + len);
+      if (asBytes) {
+        byte[] bytes = new byte[len];
+        for (int i = 0; i < len; i++) {
+          bytes[i] = (byte)string.charAt(i + start);
+        }
+        wrapper.encodedString = bytes;
+      } else {
+        wrapper.encodedString = new String(string.substring(start, start + len));
+      }
       wrapper.start = 0;
       wrapper.len = len;
       wrapper.hc = hc;
