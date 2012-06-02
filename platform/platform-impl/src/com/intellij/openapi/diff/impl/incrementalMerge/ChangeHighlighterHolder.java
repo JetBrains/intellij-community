@@ -82,7 +82,7 @@ class ChangeHighlighterHolder {
 
   private void setHighlighter(ChangeSide changeSide, ChangeType type) {
     myMainHighlighter = type.addMarker(changeSide, this);
-    updateAction();
+    updateActions();
   }
 
   public Editor getEditor() {
@@ -112,10 +112,10 @@ class ChangeHighlighterHolder {
 
   public void setActions(AnAction[] action) {
     myActions = action;
-    updateAction();
+    updateActions();
   }
 
-  private void updateAction() {
+  private void updateActions() {
     removeActionHighlighters();
     if (myMainHighlighter != null && myActions != null && myActions.length > 0) {
       myActionHighlighters = new RangeHighlighter[myActions.length];

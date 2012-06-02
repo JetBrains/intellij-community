@@ -35,6 +35,11 @@ public class ChangeCounter implements ChangeList.Listener {
     updateCounters();
   }
 
+  @Override
+  public void onChangeApplied(ChangeList source) {
+    updateCounters();
+  }
+
   public void onChangeRemoved(ChangeList source) {
     updateCounters();
   }
@@ -60,8 +65,7 @@ public class ChangeCounter implements ChangeList.Listener {
 
   private void fireCountersChanged() {
     Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
-    for (int i = 0; i < listeners.length; i++) {
-      Listener listener = listeners[i];
+    for (Listener listener : listeners) {
       listener.onCountersChanged(this);
     }
   }

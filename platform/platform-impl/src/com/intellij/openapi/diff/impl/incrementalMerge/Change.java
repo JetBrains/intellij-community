@@ -25,8 +25,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
@@ -47,26 +49,64 @@ public abstract class Change {
 
   protected abstract void removeFromList();
 
+  /**
+   * Called when a change has been applied.
+   */
+  public abstract void onApplied();
+
+  /**
+   * Called when a change has been removed from the list.
+   */
   public abstract void onRemovedFromList();
 
   public abstract boolean isValid();
 
+  /**
+   * Apply the change, i.e. change the "Merge result" document and update range markers, highlighting, gutters, etc.
+   * @param source The source side of the change, which is being applied.
+   */
   private void apply(@NotNull FragmentSide original) {
     FragmentSide targetSide = original.otherSide();
     RangeMarker originalRangeMarker = getRangeMarker(original);
     RangeMarker rangeMarker = getRangeMarker(targetSide);
 
     if (originalRangeMarker != null && rangeMarker != null) {
-      apply(getProject(), originalRangeMarker, rangeMarker);
-      if (isValid()) {
-        removeFromList();
+      TextRange textRange = modifyDocument(getProject(), originalRangeMarker, rangeMarker);
+      if (textRange != null && isValid()) {
+        updateTargetRangeMarker(targetSide, textRange);
       }
+      onApplied();
     }
   }
 
-  private static void apply(@NotNull Project project, @NotNull RangeMarker original, @NotNull RangeMarker target) {
+  /**
+   * Updates the target marker of a change after the change has been applied
+   * to allow highlighting of the document modification which has been performed.
+   * @param targetFragmentSide The side to be changed.
+   * @param updatedTextRange   New text range to be applied to the side.
+   */
+  protected final void updateTargetRangeMarker(@NotNull FragmentSide targetFragmentSide, @NotNull TextRange updatedTextRange) {
+    ChangeSide targetSide = getChangeSide(targetFragmentSide);
+    DiffRangeMarker originalRange = targetSide.getRange();
+    DiffRangeMarker updatedRange = new DiffRangeMarker(originalRange.getDocument(), updatedTextRange, null);
+    changeSide(targetSide, updatedRange);
+  }
+
+  /**
+   * Substitutes the specified side of this change to a new side which contains the given range.
+   * @param sideToChange The side to be changed.
+   * @param newRange     New text range of the new side.
+   */
+  protected abstract void changeSide(ChangeSide sideToChange, DiffRangeMarker newRange);
+
+  /**
+   * Applies the text from the original marker to the target marker.
+   * @return the resulting TextRange from the target document, or null if the document if not writable.
+   */
+  @Nullable
+  private static TextRange modifyDocument(@NotNull Project project, @NotNull RangeMarker original, @NotNull RangeMarker target) {
     Document document = target.getDocument();
-    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, document)) return;
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, document)) { return null; }
     if (DocumentUtil.isEmpty(original)) {
       int offset = target.getStartOffset();
       document.deleteString(offset, target.getEndOffset());
@@ -78,6 +118,7 @@ public abstract class Change {
     } else {
       document.replaceString(startOffset, target.getEndOffset(), text);
     }
+    return new TextRange(startOffset, startOffset + text.length());
   }
 
   public void addMarkup(Editor[] editors) {
@@ -152,11 +193,18 @@ public abstract class Change {
   protected static class SimpleChangeSide extends ChangeSide {
     private final FragmentSide mySide;
     private final DiffRangeMarker myRange;
-    private final ChangeHighlighterHolder myHighlighterHolder = new ChangeHighlighterHolder();
+    private final ChangeHighlighterHolder myHighlighterHolder;
 
     public SimpleChangeSide(FragmentSide side, DiffRangeMarker rangeMarker) {
       mySide = side;
       myRange = rangeMarker;
+      myHighlighterHolder = new ChangeHighlighterHolder();
+    }
+
+    public SimpleChangeSide(ChangeSide originalSide, DiffRangeMarker newRange) {
+      mySide = ((SimpleChangeSide)originalSide).getFragmentSide();
+      myRange = newRange;
+      myHighlighterHolder = originalSide.getHighlighterHolder();
     }
 
     public FragmentSide getFragmentSide() {

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a merge conflict, i.e. two {@link ConflictChange conflicting changes}, one from left, another from right.
@@ -27,16 +28,33 @@ import org.jetbrains.annotations.NotNull;
 class MergeConflict extends ChangeSide implements DiffRangeMarker.RangeInvalidListener {
 
   @NotNull private final MergeList myMergeList;
-  @NotNull private final DiffRangeMarker myCommonRange;
-  @NotNull private final ConflictChange myLeftChange;
-  @NotNull private final ConflictChange myRightChange;
-  @NotNull private final ChangeHighlighterHolder myCommonHighlighterHolder = new ChangeHighlighterHolder();
+  @NotNull private DiffRangeMarker myCommonRange;
+  @Nullable private ConflictChange myLeftChange;
+  @Nullable private ConflictChange myRightChange;
+  @NotNull private final ChangeHighlighterHolder myCommonHighlighterHolder;
 
   MergeConflict(TextRange commonRange, MergeList mergeList, TextRange leftMarker, TextRange rightMarker) {
     myCommonRange = new DiffRangeMarker((DocumentEx)mergeList.getBaseDocument(),commonRange, this);
     myMergeList = mergeList;
-    myLeftChange = new ConflictChange(this, FragmentSide.SIDE1, leftMarker);
-    myRightChange = new ConflictChange(this, FragmentSide.SIDE2, rightMarker);
+    myCommonHighlighterHolder = new ChangeHighlighterHolder();
+    myLeftChange = new ConflictChange(this, FragmentSide.SIDE1, leftMarker, mergeList.getLeftChangeList());
+    myRightChange = new ConflictChange(this, FragmentSide.SIDE2, rightMarker, mergeList.getRightChangeList());
+  }
+
+  private MergeConflict(TextRange commonRange, MergeList mergeList, ChangeHighlighterHolder highlighterHolder,
+                        ConflictChange leftChange, ConflictChange rightChange) {
+    myCommonRange = new DiffRangeMarker((DocumentEx)mergeList.getBaseDocument(),commonRange, this);
+    myMergeList = mergeList;
+    myCommonHighlighterHolder = highlighterHolder;
+    myLeftChange = leftChange;
+    myRightChange = rightChange;
+  }
+
+  public MergeConflict deriveSideForNotAppliedChange(TextRange baseRange, @Nullable ConflictChange originalChange, ConflictChange otherChange) {
+    ChangeHighlighterHolder highlighterHolder = new ChangeHighlighterHolder();
+    MergeConflict mergeConflict = new MergeConflict(baseRange, myMergeList, highlighterHolder, originalChange, otherChange);
+    highlighterHolder.highlight(mergeConflict, myCommonHighlighterHolder.getEditor(), ChangeType.CONFLICT);
+    return mergeConflict;
   }
 
   public ChangeHighlighterHolder getHighlighterHolder() {
@@ -47,14 +65,27 @@ class MergeConflict extends ChangeSide implements DiffRangeMarker.RangeInvalidLi
     return myCommonRange;
   }
 
-  @NotNull
+  @Nullable
   public ConflictChange getLeftChange() {
     return myLeftChange;
   }
 
-  @NotNull
+  @Nullable
   public ConflictChange getRightChange() {
     return myRightChange;
+  }
+
+  @Nullable
+  ConflictChange getOtherChange(ConflictChange change) {
+    if (change == myLeftChange) {
+      return myRightChange;
+    }
+    else if (change == myRightChange) {
+      return myLeftChange;
+    }
+    else {
+      throw new IllegalStateException("Unexpected change: " + change);
+    }
   }
 
   public void conflictRemoved() {
@@ -65,8 +96,26 @@ class MergeConflict extends ChangeSide implements DiffRangeMarker.RangeInvalidLi
     myCommonRange.removeListener(this);
   }
 
-  private static void removeHighlighters(@NotNull ConflictChange change) {
-    change.getOriginalSide().getHighlighterHolder().removeHighlighters();
+  public void setRange(DiffRangeMarker range) {
+    myCommonRange = range;
+  }
+
+  public void removeOtherChange(ConflictChange change) {
+    if (change == myLeftChange) {
+      myRightChange = null;
+    }
+    else if (change == myRightChange) {
+      myLeftChange = null;
+    }
+    else {
+      throw new IllegalStateException("Unexpected change: " + change);
+    }
+  }
+
+  private static void removeHighlighters(@Nullable ConflictChange change) {
+    if (change != null) {
+      change.getOriginalSide().getHighlighterHolder().removeHighlighters();
+    }
   }
 
   public Document getOriginalDocument(FragmentSide mergeSide) {

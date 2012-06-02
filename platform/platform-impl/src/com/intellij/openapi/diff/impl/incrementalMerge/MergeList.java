@@ -67,6 +67,16 @@ public class MergeList implements UserDataHolder {
     myBaseToRightChangeList = new ChangeList(base, right, project);
   }
 
+  @NotNull
+  public ChangeList getLeftChangeList() {
+    return myBaseToLeftChangeList;
+  }
+
+  @NotNull
+  public ChangeList getRightChangeList() {
+    return myBaseToRightChangeList;
+  }
+
   public static MergeList create(@NotNull Project project, @NotNull Document left, @NotNull Document base,
                                  @NotNull Document right) throws FilesTooBigForDiffException {
     MergeList mergeList = new MergeList(project, left, base, right);
@@ -109,6 +119,8 @@ public class MergeList implements UserDataHolder {
       }
       else {
         MergeConflict conflict = new MergeConflict(baseRange, mergeList, leftRange, rightRange);
+        assert conflict.getLeftChange() != null;
+        assert conflict.getRightChange() != null;
         leftChanges.add(conflict.getLeftChange());
         rightChanges.add(conflict.getRightChange());
       }
@@ -224,9 +236,13 @@ public class MergeList implements UserDataHolder {
     }
   }
 
-  public void removeChanges(@NotNull Change leftChange, @NotNull Change rightChange) {
-    myBaseToLeftChangeList.remove(leftChange);
-    myBaseToRightChangeList.remove(rightChange);
+  public void removeChanges(@Nullable Change leftChange, @Nullable Change rightChange) {
+    if (leftChange != null) {
+      myBaseToLeftChangeList.remove(leftChange);
+    }
+    if (rightChange != null) {
+      myBaseToRightChangeList.remove(rightChange);
+    }
   }
 
   public Document getBaseDocument() {
