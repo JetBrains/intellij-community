@@ -15,7 +15,7 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,16 +24,26 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class RefreshFileSystemIcon extends AnimatedIcon {
-  private static final Icon[] ICONS = getIcons("/process/fs/step_", 18);
-
-  private static Icon[] getIcons(String path, int count) {
-    Icon[] icons = new Icon[count];
-    for (int i = 0; i < icons.length; i++) {
-      int index = i + 1;
-      icons[i] = IconLoader.getIcon(path + index + ".png");
-    }
-    return icons;
-  }
+  private static final Icon[] ICONS = {
+    AllIcons.Process.FS.Step_1,
+    AllIcons.Process.FS.Step_2,
+    AllIcons.Process.FS.Step_3,
+    AllIcons.Process.FS.Step_4,
+    AllIcons.Process.FS.Step_5,
+    AllIcons.Process.FS.Step_6,
+    AllIcons.Process.FS.Step_7,
+    AllIcons.Process.FS.Step_8,
+    AllIcons.Process.FS.Step_9,
+    AllIcons.Process.FS.Step_10,
+    AllIcons.Process.FS.Step_11,
+    AllIcons.Process.FS.Step_12,
+    AllIcons.Process.FS.Step_13,
+    AllIcons.Process.FS.Step_14,
+    AllIcons.Process.FS.Step_15,
+    AllIcons.Process.FS.Step_16,
+    AllIcons.Process.FS.Step_17,
+    AllIcons.Process.FS.Step_18
+  };
 
   public RefreshFileSystemIcon() {
     super("Refreshing filesystem", ICONS, EmptyIcon.ICON_16, 800);
