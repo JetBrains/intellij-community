@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PsiNavigateUtil;
@@ -106,9 +108,14 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
     if (list.isEmpty()) {
       if (myEmptyText != null) {
         if (event != null) {
-          final JComponent renderer = HintUtil.createErrorLabel(myEmptyText);
-          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(renderer, renderer).createPopup();
-          popup.show(new RelativePoint(event));
+          final JComponent label = HintUtil.createErrorLabel(myEmptyText);
+          label.setBorder(IdeBorderFactory.createEmptyBorder(2, 7, 2, 7));
+          JBPopupFactory.getInstance().createBalloonBuilder(label)
+            .setPreferredPosition(Balloon.Position.above)
+            .setFadeoutTime(3000)
+            .setFillColor(HintUtil.ERROR_COLOR)
+            .createBalloon()
+            .show(new RelativePoint(event), Balloon.Position.above);
         }
       }
       return;
