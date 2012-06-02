@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,11 @@ public class HelpManagerImpl extends HelpManager {
     for (IdeaPluginDescriptor pluginDescriptor : pluginDescriptors) {
       HelpSetPath[] sets = pluginDescriptor.getHelpSets();
       for (HelpSetPath hsPath : sets) {
-        String url = "jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() + "!/" + hsPath.getPath();
+        String url = "jar:file:///" + pluginDescriptor.getPath().getAbsolutePath() + "/help/" + hsPath.getFile() + "!";
+        if (!hsPath.getPath().startsWith("/")) {
+          url += "/";
+        }
+        url += hsPath.getPath();
         HelpSet pluginHelpSet = loadHelpSet(url);
         if (pluginHelpSet != null) {
           mainHelpSet.add(pluginHelpSet);
