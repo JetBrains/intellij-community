@@ -309,7 +309,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return getCachedTextSkipWhiteSpaceAndComments();
   }
 
-  private final Function<PsiReferenceExpressionImpl, PsiType> ourTypeEvaluator = new TypeEvaluator();
+  private static final Function<PsiReferenceExpressionImpl, PsiType> TYPE_EVALUATOR = new TypeEvaluator();
 
   private static class TypeEvaluator implements NullableFunction<PsiReferenceExpressionImpl, PsiType> {
     @Override
@@ -365,7 +365,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
   @Override
   public PsiType getType() {
-    return JavaResolveCache.getInstance(getProject()).getType(this, ourTypeEvaluator);
+    return JavaResolveCache.getInstance(getProject()).getType(this, TYPE_EVALUATOR);
   }
 
   @Override
