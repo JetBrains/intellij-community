@@ -329,5 +329,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems 0, 'reaction', 'rezet', 'return'
   }
 
+  public void testDoNotPreferGetClass() {
+    checkPreferredItems 0, 'get', 'getClass'
+  }
 
 }
