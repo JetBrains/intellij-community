@@ -202,6 +202,7 @@ public class TypeConversionUtil {
 
     if (isAssignable(fromType, toType)) return true;
 
+    if (!(fromType instanceof PsiClassType) || !(toType instanceof PsiClassType)) return false;
     PsiClassType fromClassType = (PsiClassType)fromType;
     PsiClassType toClassType = (PsiClassType)toType;
 
