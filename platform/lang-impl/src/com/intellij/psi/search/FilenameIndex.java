@@ -140,4 +140,9 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     }
     return files;
   }
+
+  @Override
+  public boolean isKeyHighlySelective() {
+    return true;
+  }
 }

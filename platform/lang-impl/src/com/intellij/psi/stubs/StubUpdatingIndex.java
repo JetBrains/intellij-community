@@ -31,7 +31,6 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -100,6 +99,11 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   @Override
   public int getCacheSize() {
     return 5; // no need to cache many serialized trees
+  }
+
+  @Override
+  public boolean isKeyHighlySelective() {
+    return true;
   }
 
   @NotNull

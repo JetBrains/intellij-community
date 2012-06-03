@@ -47,4 +47,8 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
     return super.get(s, project, new JavaSourceFilterScope(scope));
   }
 
+  @Override
+  public boolean isKeyHighlySelective() {
+    return true;
+  }
 }

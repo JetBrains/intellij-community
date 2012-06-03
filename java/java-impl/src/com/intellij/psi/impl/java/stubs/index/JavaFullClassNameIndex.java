@@ -46,4 +46,9 @@ public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
   public Collection<PsiClass> get(final Integer integer, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(integer, project, new JavaSourceFilterScope(scope));
   }
+
+  @Override
+  public boolean isKeyHighlySelective() {
+    return true;
+  }
 }
