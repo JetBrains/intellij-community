@@ -15,32 +15,42 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.filters.AndFilter;
-import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.TextFilter;
-import com.intellij.psi.filters.classes.InterfaceFilter;
-import com.intellij.psi.filters.position.LeftNeighbour;
-import com.intellij.psi.filters.position.ParentElementFilter;
+import com.intellij.codeInsight.TailType;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiClass;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public class Java18CompletionData extends Java15CompletionData {
-  @Override
-  protected void initVariantsInMethodScope() {
-    super.initVariantsInMethodScope();
+  private static final PsiElementPattern<PsiElement, ?> AFTER_PARENTH_IN_EXT_METHOD = psiElement()
+    .afterLeaf(psiElement(JavaTokenType.RPARENTH).withParent(PsiParameterList.class))
+    .withSuperParent(3, psiClass().isInterface().nonAnnotationType());
 
-    {
-      // in extension method
-      ElementFilter position = new AndFilter(
-        new LeftNeighbour(new AndFilter(
-          new TextFilter(")"),
-          new ParentElementFilter(new ClassFilter(PsiParameterList.class)))),
-        new ParentElementFilter(new InterfaceFilter(), 3));
-      CompletionVariant variant = new CompletionVariant(PsiMethod.class, position);
-      variant.addCompletion(PsiKeyword.DEFAULT);
-      registerVariant(variant);
+  private static final PsiElementPattern<PsiElement, ?> AFTER_DOUBLE_COLON = psiElement()
+    .afterLeaf(psiElement(JavaTokenType.DOUBLE_COLON));
+
+  @Override
+  public void fillCompletions(final CompletionParameters parameters, final CompletionResultSet result) {
+    final PsiElement position = parameters.getPosition();
+
+    if (!inComment(position)) {
+      if (AFTER_PARENTH_IN_EXT_METHOD.accepts(position)) {
+        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.DEFAULT), TailType.SPACE));
+        return;
+      }
+
+      if (AFTER_DOUBLE_COLON.accepts(position)) {
+        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), TailType.SEMICOLON));
+        return;
+      }
     }
+
+    super.fillCompletions(parameters, result);
+  }
+
+  private static boolean inComment(final PsiElement position) {
+    return PsiTreeUtil.getParentOfType(position, PsiComment.class, false) != null;
   }
 }
