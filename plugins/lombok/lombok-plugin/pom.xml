@@ -91,6 +91,15 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>de.plushnikov.maven.plugin</groupId>
+        <artifactId>intellij-plugin-modul-importer-plugin</artifactId>
+        <version>0.1</version>
+        <configuration>
+          <pathToMetaInfDirectory>src/main/resources</pathToMetaInfDirectory>
+        </configuration>
+      </plugin>
+
+      <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
