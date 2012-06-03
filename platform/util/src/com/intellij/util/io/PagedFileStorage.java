@@ -161,8 +161,8 @@ public class PagedFileStorage implements Forceable {
     return addr % myPageSize;
   }
   
-  ByteBuffer getByteBuffer(int address, boolean modify) {
-    return getBuffer(address / myPageSize, modify);
+  ByteBuffer getByteBuffer(int address) {
+    return getBuffer(address / myPageSize);
   }
 
   public final short getShort(int addr) {
