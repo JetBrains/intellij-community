@@ -44,8 +44,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @Override
   public PsiType getType() {
-    // todo[r.sh]: implement
-    return null;
+    return new PsiMethodReferenceType(this);
   }
 
   @Override

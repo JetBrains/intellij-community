@@ -2610,6 +2610,10 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkMethodReferencesFeature(final PsiMethodReferenceExpression expression) {
-    return checkFeature(expression, Feature.METHOD_REFERENCES);
+    final HighlightInfo info = checkFeature(expression, Feature.METHOD_REFERENCES);
+    if (info != null) return info;
+    // todo[r.sh] stub; remove after implementing support in TypeConversionUtil
+    final String message = "Method references type check is not yet implemented";
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.WEAK_WARNING, expression, message);
   }
 }

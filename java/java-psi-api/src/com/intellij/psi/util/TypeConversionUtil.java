@@ -637,9 +637,13 @@ public class TypeConversionUtil {
 
   public static boolean isAssignable(@NotNull PsiType left, @NotNull PsiType right, boolean allowUncheckedConversion) {
     if (left == right || left.equals(right)) return true;
+
     if (isNullType(right)) {
       return !(left instanceof PsiPrimitiveType) || isNullType(left);
     }
+
+    // todo[r.sh] implement
+    if (right instanceof PsiMethodReferenceType && left instanceof PsiClassType) return true;
 
     if (left instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)left).getConjuncts();

@@ -22,12 +22,10 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ToolsImpl;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -423,12 +421,19 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected void enableInspectionTool(LocalInspectionTool tool){
-    enableInspectionTool(new LocalInspectionToolWrapper(tool));
-  }
-
-  protected void enableInspectionTool(InspectionTool tool){
-    enableInspectionTool(myAvailableInspectionTools, tool);
+  protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
+    if (tool instanceof InspectionTool) {
+      enableInspectionTool(myAvailableInspectionTools, (InspectionTool)tool);
+    }
+    else if (tool instanceof LocalInspectionTool) {
+      enableInspectionTool(myAvailableInspectionTools, new LocalInspectionToolWrapper((LocalInspectionTool)tool));
+    }
+    else if (tool instanceof GlobalInspectionTool) {
+      enableInspectionTool(myAvailableInspectionTools, new GlobalInspectionToolWrapper((GlobalInspectionTool)tool));
+    }
+    else {
+      throw new IllegalArgumentException("Unexpected inspection type: " + tool);
+    }
   }
 
   private static void enableInspectionTool(final Map<String, InspectionTool> availableLocalTools, InspectionTool wrapper) {
