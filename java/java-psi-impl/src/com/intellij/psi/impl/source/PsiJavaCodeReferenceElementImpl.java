@@ -344,8 +344,9 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       return result;
     }
 
+    @NotNull
     @Override
-    public JavaResolveResult[] resolve(final PsiJavaReference ref, final boolean incompleteCode) {
+    public JavaResolveResult[] resolve(@NotNull final PsiJavaReference ref, final boolean incompleteCode) {
       final JavaResolveResult[] result = _resolve(ref, incompleteCode);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();

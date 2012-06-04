@@ -85,8 +85,9 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
 
 
   private static final class OurResolver implements ResolveCache.PolyVariantResolver<GrSafeCastExpressionImpl> {
+    @NotNull
     @Override
-    public ResolveResult[] resolve(GrSafeCastExpressionImpl cast, boolean incompleteCode) {
+    public ResolveResult[] resolve(@NotNull GrSafeCastExpressionImpl cast, boolean incompleteCode) {
       PsiType type = cast.getOperand().getType();
       if (type == null) {
         return GroovyResolveResult.EMPTY_ARRAY;

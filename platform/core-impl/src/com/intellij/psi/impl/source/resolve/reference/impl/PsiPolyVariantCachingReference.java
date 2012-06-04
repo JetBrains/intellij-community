@@ -57,8 +57,9 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
   private static class MyResolver implements ResolveCache.PolyVariantResolver<PsiPolyVariantReference> {
     private static final MyResolver INSTANCE = new MyResolver();
 
+    @NotNull
     @Override
-    public ResolveResult[] resolve(PsiPolyVariantReference reference, boolean incompleteCode) {
+    public ResolveResult[] resolve(@NotNull PsiPolyVariantReference reference, boolean incompleteCode) {
       return ((PsiPolyVariantCachingReference)reference).resolveInner(incompleteCode);
     }
   }

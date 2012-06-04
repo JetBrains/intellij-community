@@ -362,8 +362,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   private static class OurResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
 
-    @Nullable
-    public GroovyResolveResult[] resolve(GrCodeReferenceElementImpl reference, boolean incompleteCode) {
+    @NotNull
+    public GroovyResolveResult[] resolve(@NotNull GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
       final GroovyResolveResult[] results = _resolve(reference, reference.getManager(), reference.getKind(false));
       if (results == null) return results;

@@ -49,7 +49,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     
     private final ResolveCache.Resolver RESOLVER = new ResolveCache.Resolver() {
         @Nullable
-        public PsiElement resolve(PsiReference psiReference, boolean incompleteCode) {
+        public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
             return resolveInner((XPathVariableReference)psiReference);
         }
     };

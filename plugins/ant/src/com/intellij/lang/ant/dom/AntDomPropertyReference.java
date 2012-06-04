@@ -186,7 +186,8 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   private static class MyResolver implements ResolveCache.PolyVariantResolver<AntDomPropertyReference> {
     static final MyResolver INSTANCE = new MyResolver();
     
-    public ResolveResult[] resolve(AntDomPropertyReference antDomPropertyReference, boolean incompleteCode) {
+    @NotNull
+    public ResolveResult[] resolve(@NotNull AntDomPropertyReference antDomPropertyReference, boolean incompleteCode) {
       final List<ResolveResult> result = new ArrayList<ResolveResult>();
       final AntDomProject project = antDomPropertyReference.myInvocationContextElement.getParentOfType(AntDomProject.class, true);
       if (project != null) {

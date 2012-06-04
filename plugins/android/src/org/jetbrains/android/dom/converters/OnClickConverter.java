@@ -63,13 +63,15 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
     public ResolveResult[] multiResolve(boolean incompleteCode) {
       return ResolveCache.getInstance(myElement.getProject())
         .resolveWithCaching(this, new ResolveCache.PolyVariantResolver<MyReference>() {
+          @NotNull
           @Override
-          public ResolveResult[] resolve(MyReference myReference, boolean incompleteCode) {
+          public ResolveResult[] resolve(@NotNull MyReference myReference, boolean incompleteCode) {
             return resolveInner();
           }
         }, false, incompleteCode);
     }
 
+    @NotNull
     private ResolveResult[] resolveInner() {
       final String methodName = myElement.getValue();
       if (methodName == null) {

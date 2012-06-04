@@ -112,8 +112,9 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
   }
 
   static class OurResolver implements ResolveCache.PolyVariantResolver<GrThisSuperReferenceExpressionBase> {
+    @NotNull
     @Override
-    public ResolveResult[] resolve(GrThisSuperReferenceExpressionBase ref, boolean incompleteCode) {
+    public ResolveResult[] resolve(@NotNull GrThisSuperReferenceExpressionBase ref, boolean incompleteCode) {
       final PsiElement resolved = ref.resolveInner();
       if (resolved == null) return ResolveResult.EMPTY_ARRAY;
       return new ResolveResult[]{new GroovyResolveResultImpl(resolved, true)};

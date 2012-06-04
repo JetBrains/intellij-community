@@ -199,8 +199,9 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
 
   private static final ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl> RESOLVER =
     new ResolveCache.PolyVariantResolver<GrAssignmentExpressionImpl>() {
+      @NotNull
       @Override
-      public GroovyResolveResult[] resolve(GrAssignmentExpressionImpl assignmentExpression, boolean incompleteCode) {
+      public GroovyResolveResult[] resolve(@NotNull GrAssignmentExpressionImpl assignmentExpression, boolean incompleteCode) {
         final IElementType opType = assignmentExpression.getOperationToken();
         if (opType == null || opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
 
