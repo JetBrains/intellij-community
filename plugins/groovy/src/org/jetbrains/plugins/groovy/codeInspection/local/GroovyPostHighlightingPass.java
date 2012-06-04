@@ -84,7 +84,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     myEditor = editor;
   }
 
-  public void doCollectInformation(final ProgressIndicator progress) {
+  public void doCollectInformation(@NotNull final ProgressIndicator progress) {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     final boolean deadCodeEnabled = profile.isToolEnabled(HighlightDisplayKey.find(GroovyUnusedDeclarationInspection.SHORT_NAME), myFile);
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();

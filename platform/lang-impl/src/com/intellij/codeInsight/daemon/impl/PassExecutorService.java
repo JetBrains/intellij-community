@@ -125,7 +125,7 @@ public abstract class PassExecutorService implements Disposable {
           // run all passes in sequence
           textEditorHighlightingPass = new TextEditorHighlightingPass(myProject, document, true) {
             @Override
-            public void doCollectInformation(ProgressIndicator progress) {
+            public void doCollectInformation(@NotNull ProgressIndicator progress) {
               pass.collectInformation(progress);
             }
 

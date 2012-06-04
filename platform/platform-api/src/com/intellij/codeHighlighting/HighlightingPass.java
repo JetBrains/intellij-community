@@ -16,6 +16,7 @@
 package com.intellij.codeHighlighting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.NotNull;
 
 public interface HighlightingPass {
   HighlightingPass[] EMPTY_ARRAY = new HighlightingPass[0];
@@ -27,7 +28,7 @@ public interface HighlightingPass {
    * @param progress to check for highlighting process is cancelled. Pass is to check progress.isCanceled() as often as possible and
    * throw {@link com.intellij.openapi.progress.ProcessCanceledException} if <code>true</code> is returned.
    */
-  void collectInformation(ProgressIndicator progress);
+  void collectInformation(@NotNull ProgressIndicator progress);
 
   /**
    * Called to apply information collected by {@linkplain #collectInformation(com.intellij.openapi.progress.ProgressIndicator)} to the editor.
