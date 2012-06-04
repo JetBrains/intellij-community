@@ -44,6 +44,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactProperties;
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -52,6 +55,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.compiler.artifact.AndroidApplicationArtifactProperties;
+import org.jetbrains.android.compiler.artifact.AndroidArtifactPropertiesProvider;
+import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
@@ -86,6 +92,7 @@ public class AndroidCompileUtil {
 
   @NonNls public static final String PROGUARD_CFG_FILE_NAME = "proguard-project.txt";
   @NonNls public static final String OLD_PROGUARD_CFG_FILE_NAME = "proguard.cfg";
+  public static final String UNSIGNED_SUFFIX = ".unsigned";
 
   private AndroidCompileUtil() {
   }
@@ -131,7 +138,7 @@ public class AndroidCompileUtil {
     return null;
   }
 
-  static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages, Module module) {
+  public static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages, @Nullable Module module) {
     addMessages(context, messages, null, module);
   }
 
@@ -150,7 +157,7 @@ public class AndroidCompileUtil {
   static void addMessages(final CompileContext context,
                           final Map<CompilerMessageCategory, List<String>> messages,
                           @Nullable final Map<VirtualFile, VirtualFile> presentableFilesMap,
-                          final Module module) {
+                          @Nullable final Module module) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (context.getProject().isDisposed()) return;
@@ -167,7 +174,7 @@ public class AndroidCompileUtil {
                 line = Integer.parseInt(matcher.group(2));
               }
             }
-            context.addMessage(category, '[' + module.getName() + "] " + message, url, line, -1);
+            context.addMessage(category, (module != null ? '[' + module.getName() + "] " : "") + message, url, line, -1);
           }
         }
       }
@@ -619,7 +626,22 @@ public class AndroidCompileUtil {
 
   public static boolean isReleaseBuild(@NotNull CompileContext context) {
     final Boolean value = context.getCompileScope().getUserData(RELEASE_BUILD_KEY);
-    return value != null && value.booleanValue();
+    if (value != null && value.booleanValue()) {
+      return true;
+    }
+    final Project project = context.getProject();
+    final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope(), false);
+
+    if (artifacts != null) {
+      for (Artifact artifact : artifacts) {
+        final ArtifactProperties<?> properties = artifact.getProperties(AndroidArtifactPropertiesProvider.getInstance());
+        if (properties instanceof AndroidApplicationArtifactProperties &&
+            ((AndroidApplicationArtifactProperties)properties).getSigningMode() != AndroidArtifactSigningMode.DEBUG) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static void setReleaseBuild(@NotNull CompileScope compileScope) {
@@ -668,7 +690,10 @@ public class AndroidCompileUtil {
     }
   }
 
-  private static void initializeGenSourceRoot(@NotNull Module module, @Nullable String sourceRootPath, boolean createIfNotExist, boolean exclude) {
+  private static void initializeGenSourceRoot(@NotNull Module module,
+                                              @Nullable String sourceRootPath,
+                                              boolean createIfNotExist,
+                                              boolean exclude) {
     if (sourceRootPath == null) {
       return;
     }
@@ -716,31 +741,31 @@ public class AndroidCompileUtil {
       final Resources resources = pair.getFirst();
       waitForSmartMode(project);
 
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
-              return;
-            }
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
+            return;
+          }
 
-            for (final Attr attr : resources.getAttrs()) {
-              final String name = attr.getName().getValue();
+          for (final Attr attr : resources.getAttrs()) {
+            final String name = attr.getName().getValue();
 
-              if (name != null) {
-                resourceSet.add(new ResourceEntry(ResourceType.ATTR.getName(), name));
-              }
-            }
-
-            for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
-              final String name = styleable.getName().getValue();
-
-              if (name != null) {
-                resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
-              }
+            if (name != null) {
+              resourceSet.add(new ResourceEntry(ResourceType.ATTR.getName(), name));
             }
           }
-        });
-      }
+
+          for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
+            final String name = styleable.getName().getValue();
+
+            if (name != null) {
+              resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
+            }
+          }
+        }
+      });
+    }
 
     waitForSmartMode(project);
 
@@ -928,5 +953,23 @@ public class AndroidCompileUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static String getUnsignedApkPath(@NotNull AndroidFacet facet) {
+    final String apkPath = AndroidRootUtil.getApkPath(facet);
+    return apkPath != null ? AndroidCommonUtils.addSuffixToFileName(apkPath, UNSIGNED_SUFFIX) : null;
+  }
+
+  @Nullable
+  public static <T> T handleExceptionError(@NotNull CompileContext context,
+                                           @NotNull String messagePrefix,
+                                           @NotNull Exception e) {
+    reportException(context, messagePrefix, e);
+    return null;
+  }
+
+  public static void reportException(@NotNull CompileContext context, @NotNull String messagePrefix, @NotNull Exception e) {
+    context.addMessage(CompilerMessageCategory.ERROR, messagePrefix + e.getClass().getSimpleName() + ": " + e.getMessage(), null, -1, -1);
   }
 }

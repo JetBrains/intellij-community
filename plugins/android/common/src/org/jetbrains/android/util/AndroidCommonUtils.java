@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.util;
 
+import com.android.jarutils.SignedJarBuilder;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
@@ -38,6 +39,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -89,6 +93,8 @@ public class AndroidCommonUtils {
   @NonNls public static final String ANNOTATIONS_JAR_RELATIVE_PATH = "/tools/support/annotations.jar";
 
   @NonNls public static final String PACKAGE_MANIFEST_ATTRIBUTE = "package";
+
+  @NonNls public static final String ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX = ".afp";
 
   private AndroidCommonUtils() {
   }
@@ -528,5 +534,33 @@ public class AndroidCommonUtils {
     final String a = path.substring(0, dot);
     final String b = path.substring(dot);
     return a + suffix + b;
+  }
+
+  public static void signApk(@NotNull File srcApk,
+                             @NotNull File destFile,
+                             @NotNull PrivateKey privateKey,
+                             @NotNull X509Certificate certificate)
+    throws IOException, GeneralSecurityException {
+    FileOutputStream fos = new FileOutputStream(destFile);
+    SignedJarBuilder builder = new SafeSignedJarBuilder(fos, privateKey, certificate, destFile.getPath());
+    FileInputStream fis = new FileInputStream(srcApk);
+    try {
+      builder.writeZip(fis, null);
+      builder.close();
+    }
+    finally {
+      try {
+        fis.close();
+      }
+      catch (IOException ignored) {
+      }
+      finally {
+        try {
+          fos.close();
+        }
+        catch (IOException ignored) {
+        }
+      }
+    }
   }
 }

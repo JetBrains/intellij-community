@@ -16,6 +16,7 @@
 package org.jetbrains.android.compiler;
 
 import com.intellij.compiler.CompilerIOUtil;
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +28,7 @@ import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
@@ -53,8 +55,6 @@ import java.util.*;
  */
 public class AndroidPackagingCompiler implements PackagingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidPackagingCompiler");
-
-  public static final String UNSIGNED_SUFFIX = ".unsigned";
 
   public void processOutdatedItem(CompileContext context, String url, @Nullable ValidityState state) {
   }
@@ -235,7 +235,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                     : item.getResPackagePath();
 
       final String finalPath = unsigned
-                               ? AndroidCommonUtils.addSuffixToFileName(item.getFinalPath(), UNSIGNED_SUFFIX)
+                               ? AndroidCommonUtils.addSuffixToFileName(item.getFinalPath(), AndroidCompileUtil.UNSIGNED_SUFFIX)
                                : item.getFinalPath();
 
       final String[] sourceRoots = AndroidCompileUtil.toOsPaths(item.getSourceRoots());
@@ -247,6 +247,18 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                   item.getAdditionalNativeLibs(), finalPath, unsigned, item.mySdkPath, item.getCustomKeystorePath(),
                                   new ExcludedSourcesFilter(project)));
 
+      if (messages.get(CompilerMessageCategory.ERROR).size() == 0) {
+        if (item.myReleaseBuild == unsigned) {
+          final File dst = new File(
+            AndroidCommonUtils.addSuffixToFileName(item.getFinalPath(), AndroidCommonUtils.ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX));
+          FileUtil.copy(new File(finalPath), dst);
+          CompilerUtil.refreshIOFile(dst);
+          final VirtualFile jar = JarFileSystem.getInstance().refreshAndFindFileByPath(dst.getPath() + "!/");
+          if (jar != null) {
+            jar.refresh(false, true);
+          }
+        }
+      }
       AndroidCompileUtil.addMessages(context, messages, item.myModule);
     }
     catch (final IOException e) {

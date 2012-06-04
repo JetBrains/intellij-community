@@ -18,11 +18,9 @@ package org.jetbrains.android.exportSignedPackage;
 
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
-import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 
 /**
  * @author Eugene.Kudelevsky
@@ -44,41 +42,7 @@ public abstract class ExportSignedPackageWizardStep extends StepAdapter {
 
   public abstract String getHelpId();
 
-  protected static void checkNewPassword(JPasswordField passwordField, JPasswordField confirmedPasswordField) throws CommitStepException {
-    char[] password = passwordField.getPassword();
-    char[] confirmedPassword = confirmedPasswordField.getPassword();
-    try {
-      checkPassword(password);
-      if (password.length < 6) {
-        throw new CommitStepException(AndroidBundle.message("android.export.package.incorrect.password.length"));
-      }
-      if (!Arrays.equals(password, confirmedPassword)) {
-        throw new CommitStepException(AndroidBundle.message("android.export.package.passwords.not.match.error"));
-      }
-    }
-    finally {
-      Arrays.fill(password, '\0');
-      Arrays.fill(confirmedPassword, '\0');
-    }
-  }
-
   protected abstract void commitForNext() throws CommitStepException;
-
-  protected static void checkPassword(char[] password) throws CommitStepException {
-    if (password.length == 0) {
-        throw new CommitStepException(AndroidBundle.message("android.export.package.specify.password.error"));
-      }
-  }
-
-  protected static void checkPassword(JPasswordField passwordField) throws CommitStepException {
-    char[] password = passwordField.getPassword();
-    try {
-      checkPassword(password);
-    }
-    finally {
-      Arrays.fill(password, '\0');
-    }
-  }
 
   @Override
   public Icon getIcon() {
