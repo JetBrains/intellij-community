@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.SaveFileListener;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +103,7 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
   private KeyStore checkExistingKeystoreOptionsAndCreateKeystore(File keystoreFile) throws CommitStepException {
     char[] password = myKeystorePasswordField.getPassword();
     FileInputStream fis = null;
-    checkPassword(password);
+    AndroidUtils.checkPassword(password);
     if (!keystoreFile.isFile()) {
       throw new CommitStepException(AndroidBundle.message("android.cannot.find.file.error", keystoreFile.getPath()));
     }
@@ -129,7 +130,7 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
   }
 
   private void checkNewKeystoreOptions(File keystoreFile) throws CommitStepException {
-    checkNewPassword(myKeystorePasswordField, myConfirmKeystorePasswordField);
+    AndroidUtils.checkNewPassword(myKeystorePasswordField, myConfirmKeystorePasswordField);
 
     if (keystoreFile.exists()) {
       throw new CommitStepException(AndroidBundle.message(
