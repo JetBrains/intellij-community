@@ -330,6 +330,7 @@ public class PsiUtilCore {
   @NotNull
   public static PsiElement[] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
     if (collection.isEmpty()) return PsiElement.EMPTY_ARRAY;
+    //noinspection SSBasedInspection
     return collection.toArray(new PsiElement[collection.size()]);
   }
 
