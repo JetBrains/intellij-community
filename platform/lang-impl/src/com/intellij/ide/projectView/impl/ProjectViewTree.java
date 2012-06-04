@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.tabs.FileColorManagerImpl;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -56,9 +57,12 @@ public abstract class ProjectViewTree extends DnDAwareTree {
     cellRenderer.setIconOpaque(false);
     setCellRenderer(cellRenderer);
     cellRenderer.setTransparentIconBackground(true);
+
+    setBackground(UIUtil.getTreeTextBackground());
   }
 
   public abstract DefaultMutableTreeNode getSelectedNode();
+
   public Project getProject() {
     return myProject;
   }
