@@ -862,7 +862,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
+      myTransferToEDTQueue.offer(new Runnable() {
         @Override
         public void run() {
           if (isDisposed) return;
