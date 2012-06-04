@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.codeInsight.RecursionUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class RecursiveMethodCallFoldingBuilder extends FoldingBuilderEx {
       new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-          if (isRecursiveMethodCall(expression)) {
+          if (RecursionUtil.isRecursiveMethodCall(expression)) {
             final PsiIdentifier identifier = PsiTreeUtil.getChildOfType(expression.getMethodExpression(), PsiIdentifier.class);
             if (identifier != null) {
               result.add(new FoldingDescriptor(identifier, identifier.getTextRange()));
@@ -74,24 +74,5 @@ public class RecursiveMethodCallFoldingBuilder extends FoldingBuilderEx {
     }
 
     return element.getText();
-  }
-
-  private static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall) {
-    final PsiMethod referencedMethod = methodCall.resolveMethod();
-
-    if (referencedMethod == null || !referencedMethod.isValid() || !methodCall.isValid()) {
-      return false;
-    }
-
-    final PsiFile methodCallFile = methodCall.getContainingFile();
-    final PsiFile methodFile = referencedMethod.getContainingFile();
-
-    if (methodCallFile == null || methodFile == null || !methodCallFile.equals(methodFile)) {
-      return false;
-    }
-
-    final TextRange rmRange = referencedMethod.getTextRange();
-    final int mcOffset = methodCall.getTextRange().getStartOffset();
-    return rmRange != null && rmRange.contains(mcOffset);
   }
 }
