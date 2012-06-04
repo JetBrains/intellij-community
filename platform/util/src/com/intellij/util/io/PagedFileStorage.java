@@ -73,10 +73,13 @@ public class PagedFileStorage implements Forceable {
   private final StorageLockContext myStorageLockContext;
   private int myLastPage = UNKNOWN_PAGE;
   private int myLastPage2 = UNKNOWN_PAGE;
+  private int myLastPage3 = UNKNOWN_PAGE;
   private ByteBufferWrapper myLastBuffer;
   private ByteBufferWrapper myLastBuffer2;
+  private ByteBufferWrapper myLastBuffer3;
   private int myLastChangeCount;
   private int myLastChangeCount2;
+  private int myLastChangeCount3;
   private int myStorageIndex;
 
   private static final int MAX_PAGES_COUNT = 0xFFFF;
@@ -160,9 +163,9 @@ public class PagedFileStorage implements Forceable {
   int getOffsetInPage(int addr) {
     return addr % myPageSize;
   }
-  
-  ByteBuffer getByteBuffer(int address) {
-    return getBuffer(address / myPageSize);
+
+  ByteBuffer getByteBuffer(int address, boolean modify) {
+    return getBuffer(address / myPageSize, modify);
   }
 
   public final short getShort(int addr) {
@@ -294,8 +297,10 @@ public class PagedFileStorage implements Forceable {
 
     myLastPage = UNKNOWN_PAGE;
     myLastPage2 = UNKNOWN_PAGE;
+    myLastPage3 = UNKNOWN_PAGE;
     myLastBuffer = null;
     myLastBuffer2 = null;
+    myLastBuffer3 = null;
   }
 
   public void resize(int newSize) throws IOException {
@@ -364,12 +369,16 @@ public class PagedFileStorage implements Forceable {
         if (modify) myLastBuffer.markDirty();
         return buf;
       }
-    }
-
-    if (myLastPage2 == page) {
+    } else if (myLastPage2 == page) {
       ByteBuffer buf = myLastBuffer2.getCachedBuffer();
       if (buf != null && myLastChangeCount2 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
         if (modify) myLastBuffer2.markDirty();
+        return buf;
+      }
+    } else if (myLastPage3 == page) {
+      ByteBuffer buf = myLastBuffer3.getCachedBuffer();
+      if (buf != null && myLastChangeCount3 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
+        if (modify) myLastBuffer3.markDirty();
         return buf;
       }
     }
@@ -385,9 +394,14 @@ public class PagedFileStorage implements Forceable {
       ByteBuffer buf = byteBufferWrapper.getBuffer();
 
       if (myLastPage != page) {
+        myLastPage3 = myLastPage2;
+        myLastBuffer3 = myLastBuffer2;
+        myLastChangeCount3 = myLastChangeCount2;
+
         myLastPage2 = myLastPage;
         myLastBuffer2 = myLastBuffer;
         myLastChangeCount2 = myLastChangeCount;
+
         myLastBuffer = byteBufferWrapper;
         myLastPage = page;
       } else {
@@ -443,7 +457,7 @@ public class PagedFileStorage implements Forceable {
       myDefaultStorageLockContext = new StorageLockContext(this);
 
       mySizeLimit = UPPER_LIMIT;
-      myMap = new LinkedHashMap<Integer, ByteBufferWrapper>(10) {
+      myMap = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Integer, ByteBufferWrapper> eldest) {
           return mySize > mySizeLimit;

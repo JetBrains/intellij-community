@@ -297,7 +297,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected void putMetaData(long data) throws IOException {
     lockStorage();
     try {
-      myStorage.putLong(META_DATA_OFFSET, data);
+      if (myStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myStorage.putLong(META_DATA_OFFSET, data);
     }
     finally {
       unlockStorage();
@@ -317,7 +317,7 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
   protected void putMetaData2(long data) throws IOException {
     lockStorage();
     try {
-      myStorage.putLong(META_DATA_OFFSET + 8, data);
+      if (myStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myStorage.putLong(META_DATA_OFFSET + 8, data);
     }
     finally {
       unlockStorage();

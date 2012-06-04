@@ -132,7 +132,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     assert offset + 4 < PAGE_SIZE;
 
     if (toDisk) {
-      myStorage.putInt(offset, value);
+      if (myFirstPageStart == -1 || myStorage.getInt(offset) != value) myStorage.putInt(offset, value);
     } else {
       value = myStorage.getInt(offset);
     }
@@ -255,7 +255,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private final int[] myResultBuf = new int[1];
-  
+
+  private int myExistingKeysEnumerated;
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       lockStorage();
@@ -280,7 +281,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
 
             if (myDataDescriptor.isEqual(value, candidate)) {
-              if (!saveNewValue) return indexNodeValueAddress;
+              if (!saveNewValue) {
+                ++myExistingKeysEnumerated;
+                return indexNodeValueAddress;
+              }
               existingData = candidate;
             }
 
@@ -320,6 +324,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
                             myFile +
                             ", values " +
                             valuesCount +
+                            ", existing keys enumerated:"+ myExistingKeysEnumerated +
                             ", storage size:" +
                             myStorage.length());
           btree.dumpStatistics();
