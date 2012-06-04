@@ -32,14 +32,14 @@ import java.util.List;
  * Author: dmitrylomov
  */
 public class StubSerializationHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerBase");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubSerializationHelper");
 
   private AbstractStringEnumerator myNameStorage;
 
   protected final TIntObjectHashMap<StubSerializer<? extends StubElement>> myIdToSerializer = new TIntObjectHashMap<StubSerializer<? extends StubElement>>();
   protected final TObjectIntHashMap<StubSerializer<? extends StubElement>> mySerializerToId = new TObjectIntHashMap<StubSerializer<? extends StubElement>>();
 
-  protected StubSerializationHelper(AbstractStringEnumerator nameStorage) {
+  public StubSerializationHelper(AbstractStringEnumerator nameStorage) {
     myNameStorage = nameStorage;
   }
   public void assignId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
@@ -59,7 +59,7 @@ public class StubSerializationHelper {
   }
 
   private void doSerialize(final StubElement rootStub, final StubOutputStream stream) throws IOException {
-    final StubSerializer serializer = SerializationManager.getInstance().getSerializer(rootStub);
+    final StubSerializer serializer = StubSerializationUtil.getSerializer(rootStub);
 
     DataInputOutputUtil.writeINT(stream, getClassId(serializer));
     serializer.serialize(rootStub, stream);

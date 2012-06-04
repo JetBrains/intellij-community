@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.application.ApplicationManager;
+/**
+ * Author: dmitrylomov
+ */
+public abstract class StubSerializationUtil {
+  private StubSerializationUtil() {}
 
-import java.io.InputStream;
-import java.io.OutputStream;
+  public static StubSerializer getSerializer(StubElement rootStub) {
+    if (rootStub instanceof PsiFileStub) {
+      final PsiFileStub fileStub = (PsiFileStub)rootStub;
+      return fileStub.getType();
+    }
 
-public abstract class SerializationManager {
-
-  public static SerializationManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(SerializationManager.class);
+    return rootStub.getStubType();
   }
-
-  public abstract void registerSerializer(StubSerializer<? extends StubElement> serializer);
-
-  public abstract StubSerializer getSerializer(StubElement rootStub);
-
 }
