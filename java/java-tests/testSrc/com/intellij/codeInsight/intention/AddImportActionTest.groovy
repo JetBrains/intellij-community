@@ -31,7 +31,7 @@ public class Foo {
     }
 }
 '''
-    myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
+    importClass()
     myFixture.checkResult '''import java.util.Map;
 
 public class Foo {
@@ -57,7 +57,7 @@ public class Foo {
     }
 }
 '''
-    myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
+    importClass()
     myFixture.checkResult '''import java.util.Map;
 
 public class Foo {
@@ -68,5 +68,25 @@ public class Foo {
 '''
   }
 
+  public void testStringValue() {
+    myFixture.addClass 'package java.lang; class StringValue {}'
+    myFixture.addClass 'package foo; public class StringValue {}'
+    myFixture.configureByText 'a.java', '''
+public class Foo {
+    String<caret>Value sv;
+}
+'''
+    importClass()
+    myFixture.checkResult '''import foo.*;
 
+public class Foo {
+    String<caret>Value sv;
+}
+'''
+
+  }
+
+  private def importClass() {
+    myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
+  }
 }

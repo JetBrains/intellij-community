@@ -2398,6 +2398,7 @@ public class HighlightUtil {
             QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix((PsiReferenceExpression)ref));
           }
         }
+        UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
         return info;
       }
 
