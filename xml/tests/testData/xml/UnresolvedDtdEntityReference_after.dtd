@@ -1,0 +1,2 @@
+<!ENTITY % entity <caret>>
+%entity;
