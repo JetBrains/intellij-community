@@ -22,19 +22,16 @@ import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
  * @author Danila Ponomarenko
  */
 public class RecursiveMethodCallFoldingBuilder extends FoldingBuilderEx {
-
   @NotNull
   @Override
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
@@ -42,60 +39,41 @@ public class RecursiveMethodCallFoldingBuilder extends FoldingBuilderEx {
       return FoldingDescriptor.EMPTY;
     }
     final List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
-    root.accept(new JavaRecursiveElementWalkingVisitor() {
-
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        if (isRecursiveMethodCall(expression)) {
-          result.add(new FoldingDescriptor(expression, expression.getTextRange()));
-        }
-        else {
+    root.accept(
+      new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          if (isRecursiveMethodCall(expression)) {
+            final PsiIdentifier identifier = PsiTreeUtil.getChildOfType(expression.getMethodExpression(), PsiIdentifier.class);
+            if (identifier != null) {
+              result.add(new FoldingDescriptor(identifier, identifier.getTextRange()));
+            }
+          }
           super.visitMethodCallExpression(expression);
         }
       }
-    });
+    );
 
     return result.toArray(new FoldingDescriptor[result.size()]);
   }
 
   @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
-    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
-    JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
-
-    if (element instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-      return isRecursiveMethodCall(methodCall) && settings.isCollapseRecursiveMethodCalls();
-    }
-    return false;
+    return JavaCodeFoldingSettings.getInstance().isCollapseRecursiveMethodCalls();
   }
 
-  private static final char ANTICLOCKWISE_GAPPED_CIRCLE_ARROW = '\u27F2'; //⟲
+  private static final String ANTICLOCKWISE_GAPPED_CIRCLE_ARROW = "\u27F2"; //⟲
 
   @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
-    return getPlaceholderText(node.getPsi());
-  }
+    final PsiElement element = node.getPsi();
 
-  @NotNull
-  private static String getPlaceholderText(@NotNull PsiElement element) {
-    if (element instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-      return getPlaceholderText(methodCall);
+    if (element instanceof PsiIdentifier) {
+      final PsiIdentifier identifier = (PsiIdentifier)element;
+      return ANTICLOCKWISE_GAPPED_CIRCLE_ARROW + identifier.getText();
     }
 
     return element.getText();
-  }
-
-  @NotNull
-  private static String getPlaceholderText(@NotNull PsiMethodCallExpression methodCall) {
-    return getQualifierText(methodCall) + ANTICLOCKWISE_GAPPED_CIRCLE_ARROW + methodCall.getArgumentList().getText();
-  }
-
-  @NotNull
-  private static String getQualifierText(@NotNull PsiMethodCallExpression methodCall) {
-    final PsiElement qualifier = methodCall.getMethodExpression().getQualifier();
-    return qualifier != null ? qualifier.getText() + "." : "";
   }
 
   private static boolean isRecursiveMethodCall(@NotNull PsiMethodCallExpression methodCall) {
