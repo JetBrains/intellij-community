@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,27 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 /**
- * @author ven
+ * @author Max Medvedev
  */
-public interface Instruction {
-  Iterable<? extends Instruction> successors(CallEnvironment environment);
-  Iterable<? extends Instruction> predecessors(CallEnvironment environment);
+public abstract class GotoInstruction extends InstructionImpl {
+  @NotNull private final ConditionInstruction myCondition;
 
-  Iterable<? extends Instruction> allSuccessors();
-  Iterable<? extends Instruction> allPredecessors();
-
-  int num();
+  public GotoInstruction(@Nullable PsiElement element, int num, @NotNull ConditionInstruction condition) {
+    super(element, num);
+    myCondition = condition;
+  }
 
   @NotNull
-  Iterable<? extends NegatingGotoInstruction> getNegatingGotoInstruction();
+  public ConditionInstruction getCondition() {
+    return myCondition;
+  }
 
-  @Nullable
-  PsiElement getElement();
-
+  @Override
+  protected String getElementPresentation() {
+    return " Positive goto instruction, condition=" + myCondition.num() + getElement();
+  }
 }

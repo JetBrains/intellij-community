@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
 
 /**
- * @author ven
+ * @author Max Medvedev
  */
-public interface Instruction {
-  Iterable<? extends Instruction> successors(CallEnvironment environment);
-  Iterable<? extends Instruction> predecessors(CallEnvironment environment);
-
-  Iterable<? extends Instruction> allSuccessors();
-  Iterable<? extends Instruction> allPredecessors();
-
-  int num();
-
-  @NotNull
-  Iterable<? extends NegatingGotoInstruction> getNegatingGotoInstruction();
-
-  @Nullable
-  PsiElement getElement();
-
+public class PositiveGotoInstruction extends GotoInstruction {
+  public PositiveGotoInstruction(@Nullable PsiElement element, int num, @NotNull ConditionInstruction condition) {
+    super(element, num, condition);
+  }
 }

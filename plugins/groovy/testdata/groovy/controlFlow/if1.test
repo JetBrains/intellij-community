@@ -5,12 +5,10 @@ if (true) {
   a = 2
 -----
 0(1) element: null
-1(2) element: IF statement
-2(3,5) Condition
-3(4) WRITE a
-4(8) element: Assignment expression MAYBE_RETURN
-5(6)  Negating goto instruction, condition=2
-6(7) WRITE a
-7(8) element: Assignment expression MAYBE_RETURN
-8(9) element: IF statement
-9() element: null
+1(2,4) element: IF statement
+2(3) WRITE a
+3(6) element: Assignment expression MAYBE_RETURN
+4(5) WRITE a
+5(6) element: Assignment expression MAYBE_RETURN
+6(7) element: IF statement
+7() element: null
