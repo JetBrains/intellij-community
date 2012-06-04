@@ -74,7 +74,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doCollectInformation(ProgressIndicator progress) {
+  public void doCollectInformation(@NotNull ProgressIndicator progress) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }

@@ -250,7 +250,7 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
       return ResolveCache.getInstance(myElement.getProject()).resolveWithCaching(this, new ResolveCache.Resolver() {
           @Nullable
           @Override
-          public PsiElement resolve(PsiReference reference, boolean incompleteCode) {
+          public PsiElement resolve(@NotNull PsiReference reference, boolean incompleteCode) {
             return resolveInner();
           }
         }, false, false);

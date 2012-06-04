@@ -55,9 +55,12 @@ public class ResolveCache {
   }
 
   public interface AbstractResolver<TRef extends PsiReference,TResult> {
-    TResult resolve(TRef ref, boolean incompleteCode);
+    TResult resolve(@NotNull TRef ref, boolean incompleteCode);
   }
   public interface PolyVariantResolver<T extends PsiPolyVariantReference> extends AbstractResolver<T,ResolveResult[]> {
+    @Override
+    @NotNull
+    ResolveResult[] resolve(@NotNull T t, boolean incompleteCode);
   }
 
   public interface Resolver extends AbstractResolver<PsiReference,PsiElement>{

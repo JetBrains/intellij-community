@@ -74,8 +74,9 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
 
   private static final ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl> OUR_RESOLVER =
     new ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl>() {
+      @NotNull
       @Override
-      public GroovyResolveResult[] resolve(GrUnaryExpressionImpl unary, boolean incompleteCode) {
+      public GroovyResolveResult[] resolve(@NotNull GrUnaryExpressionImpl unary, boolean incompleteCode) {
         final GrExpression operand = unary.getOperand();
         if (operand == null) return GroovyResolveResult.EMPTY_ARRAY;
 

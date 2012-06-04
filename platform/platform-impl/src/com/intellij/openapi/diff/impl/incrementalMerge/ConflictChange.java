@@ -15,17 +15,36 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 
+/**
+ * One of two conflicting changes.
+ * @see MergeConflict
+ */
 class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListener {
-  private Side myOriginalSide;
-  private MergeConflict myConflict;
 
-  public ConflictChange(MergeConflict conflict, FragmentSide mergeSide, TextRange range) {
+  private static final Logger LOG = Logger.getInstance(ConflictChange.class);
+
+  private SimpleChangeSide myOriginalSide;
+  private MergeConflict myConflict;
+  private final ChangeList myChangeList;
+  private ChangeType myType;
+  private boolean mySemiApplied;
+
+  public ConflictChange(MergeConflict conflict, FragmentSide mergeSide, TextRange range, ChangeList changeList) {
     myConflict = conflict;
-    myOriginalSide = new Side(mergeSide, new DiffRangeMarker((DocumentEx)conflict.getOriginalDocument(mergeSide), range, this));
+    myChangeList = changeList;
+    myOriginalSide = new SimpleChangeSide(mergeSide, new DiffRangeMarker((DocumentEx)conflict.getOriginalDocument(mergeSide), range, this));
+    myType = ChangeType.CONFLICT;
+  }
+
+  @Override
+  protected void changeSide(ChangeSide sideToChange, DiffRangeMarker newRange) {
+    myConflict.setRange(newRange);
   }
 
   protected void removeFromList() {
@@ -33,26 +52,57 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
     myConflict = null;
   }
 
-  public ChangeType.ChangeSide getChangeSide(FragmentSide side) {
+  public ChangeSide getChangeSide(FragmentSide side) {
     return isBranch(side) ? myOriginalSide : myConflict;
   }
 
-  private boolean isBranch(FragmentSide side) {
+  private static boolean isBranch(FragmentSide side) {
     return MergeList.BRANCH_SIDE == side;
   }
 
-  public Change.Side getOriginalSide() {
+  public SimpleChangeSide getOriginalSide() {
     return myOriginalSide;
   }
 
-  public ChangeType getType() { return ChangeType.CONFLICT; }
+  public ChangeType getType() {
+    return myType;
+  }
 
   public ChangeList getChangeList() {
     return myConflict.getMergeList().getChanges(myOriginalSide.getFragmentSide());
   }
 
+  @Override
+  public void onApplied() {
+    myType = ChangeType.deriveApplied(myType);
+    myChangeList.apply(this);
+
+    myOriginalSide.getHighlighterHolder().updateHighlighter(myOriginalSide, myType);
+    myOriginalSide.getHighlighterHolder().setActions(new AnAction[0]);
+
+    // display, what one side of the conflict was resolved to
+    myConflict.getHighlighterHolder().updateHighlighter(myConflict, myType);
+
+    // update the other variant of the conflict to point to the bottom
+    if (!mySemiApplied) {
+      ConflictChange otherChange = myConflict.getOtherChange(this);
+      LOG.assertTrue(otherChange != null, String.format("Other change is null. This change: %s Merge conflict: %s", this, myConflict));
+      otherChange.mySemiApplied = true;
+      otherChange.updateOtherSideOnConflictApply();
+      myConflict.removeOtherChange(this);
+    }
+  }
+
+  private void updateOtherSideOnConflictApply() {
+    int startOffset = myConflict.getRange().getEndOffset();
+    TextRange emptyRange = new TextRange(startOffset, startOffset);
+    myConflict = myConflict.deriveSideForNotAppliedChange(emptyRange, null, this);
+    myOriginalSide.getHighlighterHolder().updateHighlighter(myOriginalSide, myType);
+    myConflict.getHighlighterHolder().updateHighlighter(myConflict, myType);
+    myChangeList.fireOnChangeApplied();
+  }
+
   public void onRemovedFromList() {
-    myConflict.onChangeRemoved(myOriginalSide.getFragmentSide(), this);
     myOriginalSide.getRange().removeListener(this);
     myConflict = null;
     myOriginalSide = null;

@@ -55,13 +55,6 @@ public class RecursiveMethodCallFoldingBuilder extends FoldingBuilderEx {
       }
     });
 
-    Collections.sort(result, new Comparator<FoldingDescriptor>() {
-      @Override
-      public int compare(FoldingDescriptor o1, FoldingDescriptor o2) {
-        return o2.getRange().getStartOffset() - o1.getRange().getStartOffset();
-      }
-    });
-
     return result.toArray(new FoldingDescriptor[result.size()]);
   }
 

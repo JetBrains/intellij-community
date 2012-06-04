@@ -108,8 +108,9 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   private static class Resolver implements ResolveCache.PolyVariantResolver<ClsJavaCodeReferenceElementImpl> {
     public static final Resolver INSTANCE = new Resolver();
 
+    @NotNull
     @Override
-    public JavaResolveResult[] resolve(ClsJavaCodeReferenceElementImpl ref, boolean incompleteCode) {
+    public JavaResolveResult[] resolve(@NotNull ClsJavaCodeReferenceElementImpl ref, boolean incompleteCode) {
       final JavaResolveResult resolveResult = ref.advancedResolveImpl();
       return resolveResult.getElement() == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[] {resolveResult};
     }

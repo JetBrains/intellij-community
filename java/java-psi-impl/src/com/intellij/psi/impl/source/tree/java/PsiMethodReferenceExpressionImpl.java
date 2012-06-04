@@ -44,8 +44,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @Override
   public PsiType getType() {
-    // todo[r.sh]: implement
-    return null;
+    return new PsiMethodReferenceType(this);
   }
 
   @Override
@@ -102,6 +101,16 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     }
 
     return element.getManager().areElementsEquivalent(element, resolve());
+  }
+
+  @Override
+  public void accept(@NotNull final PsiElementVisitor visitor) {
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitMethodReferenceExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

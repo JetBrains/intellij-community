@@ -231,6 +231,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
    * priority: inside class C: local variable, c.method, c.property, c.getter
    * in other places: local variable, c.method, c.getter, c.property
    */
+  @NotNull
   private GroovyResolveResult[] resolveMethodOrProperty(boolean allVariants, @Nullable GrExpression upToArgument, boolean genericsMatter) {
     final String name = getReferenceName();
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
@@ -467,7 +468,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   private static final ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> POLY_RESOLVER =
     new ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl>() {
-      public GroovyResolveResult[] resolve(GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
+      @NotNull
+      public GroovyResolveResult[] resolve(@NotNull GrReferenceExpressionImpl refExpr, boolean incompleteCode) {
         return refExpr.doPolyResolve(incompleteCode, true);
       }
     };
@@ -635,6 +637,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return this;
   }
 
+  @NotNull
   private GroovyResolveResult[] doPolyResolve(boolean incompleteCode, boolean genericsMatter) {
     String name = getReferenceName();
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;

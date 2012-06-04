@@ -53,7 +53,7 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
   }
 
   @Override
-  public void doCollectInformation(ProgressIndicator progress) {
+  public void doCollectInformation(@NotNull ProgressIndicator progress) {
     final FileViewProvider viewProvider = myFile.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();
     List<LineMarkerInfo> markers = new SmartList<LineMarkerInfo>();

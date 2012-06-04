@@ -16,7 +16,7 @@
 package com.intellij.lang.java.parser.partial;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.JavaParsers;
+import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -128,7 +128,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   private static class MyTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParsers.EXPRESSION_PARSER.parse(builder);
+      JavaParser.INSTANCE.getExpressionParser().parse(builder);
     }
   }
 }

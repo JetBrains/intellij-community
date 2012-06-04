@@ -141,6 +141,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     };
     Disposer.register(project, myPassExecutorService);
     Disposer.register(project, myFileStatusMap);
+    DaemonProgressIndicator.setDebug(LOG.isDebugEnabled());
   }
 
   static boolean hasErrors(@NotNull Project project, @NotNull Document document) {
@@ -217,7 +218,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     assert array.length != 0: "Highlighting is disabled for the file "+file;
 
     final DaemonProgressIndicator progress = createUpdateProgress();
-    progress.setDebug(LOG.isDebugEnabled());
     myPassExecutorService.submitPasses(Collections.singletonMap((FileEditor)textEditor, array), progress, Job.DEFAULT_PRIORITY);
     try {
       while (progress.isRunning()) {

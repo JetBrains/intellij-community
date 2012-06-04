@@ -67,6 +67,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.GuiUtils;
@@ -142,6 +143,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final JScrollPane myScrollPane;
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
+  private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(new Throwable());
 
   static {
     ComplementaryFontsRegistry.getFontAbleToDisplay(' ', 0,0, UIManager.getFont("Label.font").getFamily()); // load costly font info
@@ -267,8 +269,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable private MouseEvent myInitialMouseEvent;
   private boolean myIgnoreMouseEventsConsecutiveToInitial;
-
-  @Nullable private String myReleasedAt = null;
 
   private EditorDropHandler myDropHandler;
 
@@ -666,15 +666,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     );
   }
 
+  public void throwDisposalError(String msg) {
+    myTraceableDisposable.throwDisposalError(msg);
+  }
   public void release() {
     assertIsDispatchThread();
     if (isReleased) {
-      LOG.error("Double release of editor:\n" +
-                EditorFactoryImpl.getCreator(this) + "\n" +
-                "First released at:  =====\n" + myReleasedAt + "\n======");
+      throwDisposalError("Double release of editor:");
     }
-
-    myReleasedAt = StringUtil.getThrowableText(new Throwable());
+    myTraceableDisposable.kill(null);
 
     isReleased = true;
     myDocument.removeDocumentListener(myHighlighter);

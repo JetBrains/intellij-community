@@ -38,18 +38,21 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
 
   public static final TextDiffType NONE = new TextDiffType(TextDiffTypeEnum.NONE, DiffBundle.message("diff.type.none.name"), null);
 
-  private final TextDiffTypeEnum myType;
   public static final List<TextDiffType> DIFF_TYPES = Arrays.asList(DELETED, CHANGED, INSERT);
   public static final List<TextDiffType> MERGE_TYPES = Arrays.asList(DELETED, CHANGED, INSERT, CONFLICT);
-  private final TextAttributesKey myAttributesKey;
-  private final String myDisplayName;
+
   public static final Convertor<TextDiffType, TextAttributesKey> ATTRIBUTES_KEY = new Convertor<TextDiffType, TextAttributesKey>() {
     public TextAttributesKey convert(TextDiffType textDiffType) {
       return textDiffType.getAttributesKey();
     }
   };
 
-  public static TextDiffType create(@NotNull final TextDiffTypeEnum type) {
+  private final TextDiffTypeEnum myType;
+  private final TextAttributesKey myAttributesKey;
+  private final String myDisplayName;
+  private final boolean myApplied;
+
+  public static TextDiffType create(@Nullable final TextDiffTypeEnum type) {
     if (TextDiffTypeEnum.INSERT.equals(type)) {
       return INSERT;
     } else if (TextDiffTypeEnum.CHANGED.equals(type)) {
@@ -59,15 +62,29 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
     } else if (TextDiffTypeEnum.CONFLICT.equals(type)) {
       return CONFLICT;
     } else {
-      // NONE
       return NONE;
     }
   }
 
-  private TextDiffType(TextDiffTypeEnum type, String displayName, TextAttributesKey attrubutesKey) {
+  /**
+   * Creates a new TextDiffType based on the given one.
+   * @param source
+   * @return
+   */
+  @NotNull
+  public static TextDiffType deriveApplied(@NotNull TextDiffType source) {
+    return new TextDiffType(source.myType, source.myDisplayName, source.myAttributesKey, true);
+  }
+
+  private TextDiffType(TextDiffTypeEnum type, String displayName, TextAttributesKey attributesKey) {
+    this(type, displayName, attributesKey, false);
+  }
+
+  private TextDiffType(TextDiffTypeEnum type, String displayName, TextAttributesKey attributesKey, boolean applied) {
     myType = type;
-    myAttributesKey = attrubutesKey;
+    myAttributesKey = attributesKey;
     myDisplayName = displayName;
+    myApplied = applied;
   }
 
   public String getDisplayName() {
@@ -76,7 +93,7 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
 
   @Nullable
   public Color getLegendColor(EditorColorsScheme colorScheme) {
-    TextAttributes attributes = getTextAttributes(colorScheme);
+    TextAttributes attributes = colorScheme.getAttributes(myAttributesKey);
     return attributes != null ? attributes.getBackgroundColor() : null;
   }
 
@@ -85,7 +102,15 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   }
 
   public TextAttributes getTextAttributes(EditorColorsScheme scheme) {
-    return scheme.getAttributes(myAttributesKey);
+    TextAttributes originalAttrs = scheme.getAttributes(myAttributesKey);
+    if (!myApplied) {
+      return originalAttrs;
+    }
+    else {
+      TextAttributes overridingAttributes = new TextAttributes();
+      overridingAttributes.setBackgroundColor(scheme.getDefaultBackground());
+      return TextAttributes.merge(originalAttrs, overridingAttributes);
+    }
   }
 
   @Nullable
@@ -104,7 +129,7 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   }
 
   public String toString(){
-    return myDisplayName;
+    return myApplied ? myDisplayName + "_applied" : myDisplayName;
   }
 
   public TextDiffTypeEnum getType() {

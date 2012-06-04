@@ -167,7 +167,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
   }
 
-  public void testDocumentFromAlienProjectDoesNotEndsUpInMyUncommittedList() throws Exception {
+  public void testDocumentFromAlienProjectDoesNotEndUpInMyUncommittedList() throws Exception {
     PsiFile file = getPsiManager().findFile(createFile());
 
     final Document document = getPsiDocumentManager().getDocument(file);

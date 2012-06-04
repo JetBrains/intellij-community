@@ -167,7 +167,7 @@ public class StubGenerator implements ClassItemGenerator {
       return Collections.emptySet();
     }
 
-    final Set<String> result = CollectionFactory.newTroveSet(ArrayUtil.EMPTY_STRING_ARRAY);
+    final Set<String> result = CollectionFactory.troveSet(ArrayUtil.EMPTY_STRING_ARRAY);
     for (PsiClassType type : chainedConstructor.getThrowsList().getReferencedTypes()) {
       StringBuilder builder = new StringBuilder();
       writeType(builder, substitutor.substitute(type), constructor, classNameProvider);

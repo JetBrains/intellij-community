@@ -51,7 +51,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.CharTable;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,9 +190,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
+    @NotNull
     private static JavaResolveResult[] _resolve(boolean incompleteCode, PsiReferenceExpressionImpl expression) {
       CompositeElement treeParent = expression.getTreeParent();
-      IElementType parentType = treeParent != null ? treeParent.getElementType() : null;
+      IElementType parentType = treeParent == null ? null : treeParent.getElementType();
+
       final JavaResolveResult[] result = expression.resolve(parentType);
 
       if (incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION && result.length == 0) {
@@ -199,7 +204,8 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
 
     @Override
-    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+    @NotNull
+    public JavaResolveResult[] resolve(@NotNull PsiJavaReference ref, boolean incompleteCode) {
       final JavaResolveResult[] result = _resolve(incompleteCode, (PsiReferenceExpressionImpl)ref);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
@@ -215,10 +221,8 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
   }
 
+  @NotNull
   private JavaResolveResult[] resolve(IElementType parentType) {
-    if (parentType == null) {
-      parentType = getTreeParent() != null ? getTreeParent().getElementType() : null;
-    }
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
       JavaResolveResult[] result = resolveToVariable();
       if (result.length > 0) {
@@ -240,6 +244,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return resolveToVariable();
   }
 
+  @NotNull
   private JavaResolveResult[] resolveToMethod() {
     final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)getParent();
     final MethodResolverProcessor processor = new MethodResolverProcessor(methodCall);
@@ -252,6 +257,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return processor.getResult();
   }
 
+  @NotNull
   private JavaResolveResult[] resolveToPackage() {
     final String packageName = getCachedTextSkipWhiteSpaceAndComments();
     final PsiManager manager = getManager();
@@ -277,6 +283,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return processor.getResult();
   }
 
+  @NotNull
   private JavaResolveResult[] resolveToVariable() {
     final VariableResolverProcessor processor = new VariableResolverProcessor(this);
     PsiScopesUtil.resolveAndWalk(processor, this, null);
@@ -309,7 +316,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return getCachedTextSkipWhiteSpaceAndComments();
   }
 
-  private final Function<PsiReferenceExpressionImpl, PsiType> ourTypeEvaluator = new TypeEvaluator();
+  private static final Function<PsiReferenceExpressionImpl, PsiType> TYPE_EVALUATOR = new TypeEvaluator();
 
   private static class TypeEvaluator implements NullableFunction<PsiReferenceExpressionImpl, PsiType> {
     @Override
@@ -365,7 +372,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
   @Override
   public PsiType getType() {
-    return JavaResolveCache.getInstance(getProject()).getType(this, ourTypeEvaluator);
+    return JavaResolveCache.getInstance(getProject()).getType(this, TYPE_EVALUATOR);
   }
 
   @Override

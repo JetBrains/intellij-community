@@ -1,0 +1,7 @@
+<!DOCTYPE document [
+  <!ELEMENT document (#PCDATA)>
+  <error><!ELEMENT document (#PCDATA)></error>
+  ]>
+<document>
+
+</document>

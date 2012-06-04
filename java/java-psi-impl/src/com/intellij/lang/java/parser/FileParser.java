@@ -30,23 +30,15 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
-
 public class FileParser {
-  public static final FileParser INSTANCE = new FileParser();
-  private final ReferenceParser myReferenceParser;
-  private final DeclarationParser myDeclarationParser;
-
   private static final TokenSet IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
     ElementType.MODIFIER_BIT_SET,
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 
-  private FileParser() {
-    this(JavaParsers.DECLARATION_PARSER, JavaParsers.REFERENCE_PARSER);
-  }
+  private final JavaParser myParser;
 
-  protected FileParser(DeclarationParser declarationParser, ReferenceParser referenceParser) {
-    myDeclarationParser = declarationParser;
-    myReferenceParser = referenceParser;
+  public FileParser(@NotNull final JavaParser javaParser) {
+    myParser = javaParser;
   }
 
   public void parse(final PsiBuilder builder) {
@@ -113,7 +105,7 @@ public class FileParser {
 
   @Nullable
   protected PsiBuilder.Marker parseInitial(PsiBuilder builder) {
-    return myDeclarationParser.parse(builder, DeclarationParser.Context.FILE);
+    return myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.FILE);
   }
 
   @Nullable
@@ -122,7 +114,7 @@ public class FileParser {
 
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
       final PsiBuilder.Marker modList = builder.mark();
-      myDeclarationParser.parseAnnotations(builder);
+      myParser.getDeclarationParser().parseAnnotations(builder);
       done(modList, JavaElementType.MODIFIER_LIST);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo();
@@ -130,7 +122,7 @@ public class FileParser {
       }
     }
 
-    final PsiBuilder.Marker ref = myReferenceParser.parseJavaCodeReference(builder, true, false, false, false, false);
+    final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false, false);
     if (ref == null) {
       statement.rollbackTo();
       return null;
@@ -186,7 +178,7 @@ public class FileParser {
     final boolean isStatic = expect(builder, JavaTokenType.STATIC_KEYWORD);
     final IElementType type = isStatic ? JavaElementType.IMPORT_STATIC_STATEMENT : JavaElementType.IMPORT_STATEMENT;
 
-    final boolean isOk = myReferenceParser.parseImportCodeReference(builder, isStatic);
+    final boolean isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
     if (isOk) {
       semicolon(builder);
     }

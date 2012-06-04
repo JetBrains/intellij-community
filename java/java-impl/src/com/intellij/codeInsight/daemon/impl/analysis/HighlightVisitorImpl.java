@@ -892,7 +892,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
   }
 
-  @Override public void visitReferenceList(PsiReferenceList list) {
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    myHolder.add(HighlightUtil.checkMethodReferencesFeature(expression));
+  }
+
+  @Override
+  public void visitReferenceList(PsiReferenceList list) {
     if (list.getFirstChild() == null) return;
     PsiElement parent = list.getParent();
     if (!(parent instanceof PsiTypeParameter)) {

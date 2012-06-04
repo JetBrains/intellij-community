@@ -132,8 +132,9 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   };
   private static final ResolveCache.PolyVariantResolver<MyReference> RESOLVER =
     new ResolveCache.PolyVariantResolver<MyReference>() {
+      @NotNull
       @Override
-      public GroovyResolveResult[] resolve(MyReference index, boolean incompleteCode) {
+      public GroovyResolveResult[] resolve(@NotNull MyReference index, boolean incompleteCode) {
         return index.getElement().resolveImpl(incompleteCode, null);
       }
     };

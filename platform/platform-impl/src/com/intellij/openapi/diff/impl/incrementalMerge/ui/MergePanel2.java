@@ -497,6 +497,13 @@ public class MergePanel2 implements DiffViewer {
   }
 
   private class DividersRepainter implements ChangeList.Listener {
+
+    @Override
+    public void onChangeApplied(ChangeList source) {
+      FragmentSide side = myMergeList.getSideOf(source);
+      myDividers[side.getIndex()].repaint();
+    }
+
     public void onChangeRemoved(ChangeList source) {
       FragmentSide side = myMergeList.getSideOf(source);
       myDividers[side.getIndex()].repaint();

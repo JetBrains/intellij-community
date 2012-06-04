@@ -80,7 +80,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doCollectInformation(ProgressIndicator progress) {
+  public void doCollectInformation(@NotNull ProgressIndicator progress) {
     myDocumentChanged = false;
 
     final FileViewProvider viewProvider = myFile.getViewProvider();

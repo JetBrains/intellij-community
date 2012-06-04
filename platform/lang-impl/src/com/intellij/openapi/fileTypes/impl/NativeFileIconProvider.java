@@ -80,10 +80,10 @@ public class NativeFileIconProvider implements FileIconProvider {
           assert SwingComponentHolder.ourFileChooser != null || !ApplicationManager.getApplication().isReadAccessAllowed();
 
           if (SystemInfo.isMac && virtualFile.isDirectory() && (flags & Iconable.ICON_FLAG_OPEN) == Iconable.ICON_FLAG_OPEN) {
-            icon = Foundation.isPackageAtPath(f) ? SwingComponentHolder.ourFileChooser.getIcon(f) : DIR_OPEN_ICON;
+            icon = Foundation.isPackageAtPath(f) ? getNativeIcon(f) : DIR_OPEN_ICON;
           }
           else {
-            icon = SwingComponentHolder.ourFileChooser.getIcon(f);
+            icon = getNativeIcon(f);
           }
         }
         catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
@@ -102,6 +102,11 @@ public class NativeFileIconProvider implements FileIconProvider {
         return icon;
       }
     });
+  }
+
+  @Nullable
+  public static Icon getNativeIcon(@Nullable File file) {
+    return file == null ? null : SwingComponentHolder.ourFileChooser.getIcon(file);
   }
 
   private static Ext getExtension(final VirtualFile file, final int flags) {

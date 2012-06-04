@@ -138,8 +138,9 @@ public class JavaExecutionUtil {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final String shortName = StringUtil.getShortName(mainClassName);
     final String packageName = StringUtil.getPackageName(mainClassName);
-    return JavaPsiFacade.getInstance(psiManager.getProject())
-      .findClass(StringUtil.getQualifiedName(packageName, shortName.replace('$', '.')), scope);
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
+    final PsiClass psiClass = psiFacade.findClass(StringUtil.getQualifiedName(packageName, shortName.replace('$', '.')), scope);
+    return psiClass == null ? psiFacade.findClass(mainClassName, scope) : psiClass;
   }
 
 

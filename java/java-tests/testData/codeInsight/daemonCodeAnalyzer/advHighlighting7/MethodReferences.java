@@ -19,8 +19,10 @@ class C {
     void m();
   }
   void simplest() { }
+  void use(Simplest s) { }
 
   void test() {
-    <error descr="Incompatible types. Found: 'null', required: 'C.Simplest'">Simplest simplest = this::simplest;</error>
+    Simplest simplest = <weak_warning descr="Method references type check is not yet implemented">this::simplest</weak_warning>;
+    use(<weak_warning descr="Method references type check is not yet implemented">this::simplest</weak_warning>);
   }
 }

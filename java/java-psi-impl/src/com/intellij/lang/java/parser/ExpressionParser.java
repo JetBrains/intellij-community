@@ -30,11 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
-
 public class ExpressionParser {
-  private final DeclarationParser myDeclarationParser;
-  private final ReferenceParser myReferenceParser;
-
   private enum ExprType {
     CONDITIONAL_OR, CONDITIONAL_AND, OR, XOR, AND, EQUALITY, RELATIONAL, SHIFT, ADDITIVE, MULTIPLICATIVE, UNARY, TYPE
   }
@@ -64,13 +60,10 @@ public class ExpressionParser {
     JavaTokenType.IDENTIFIER, TokenType.BAD_CHARACTER, JavaTokenType.COMMA, JavaTokenType.INTEGER_LITERAL, JavaTokenType.STRING_LITERAL);
   private static final TokenSet THIS_OR_SUPER = TokenSet.create(JavaTokenType.THIS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
 
-  public ExpressionParser(DeclarationParser declarationParser, ReferenceParser referenceParser) {
-    myDeclarationParser = declarationParser;
-    myReferenceParser = referenceParser;
-  }
+  private final JavaParser myParser;
 
-  public ExpressionParser() {
-    this(new DeclarationParser(), new ReferenceParser());
+  public ExpressionParser(@NotNull final JavaParser javaParser) {
+    myParser = javaParser;
   }
 
   @Nullable
@@ -171,7 +164,7 @@ public class ExpressionParser {
         return parseUnary(builder);
 
       case TYPE:
-        return myReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+        return myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
 
       default:
         assert false : "Unexpected type: " + type;
@@ -270,13 +263,14 @@ public class ExpressionParser {
       final PsiBuilder.Marker typeCast = builder.mark();
       builder.advanceLexer();
 
-      final ReferenceParser.TypeInfo typeInfo = myReferenceParser.parseTypeInfo(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+      final ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(builder,
+                                                                                            ReferenceParser.EAT_LAST_DOT |
+                                                                                            ReferenceParser.WILDCARD);
 
-      if (typeInfo == null || builder.getTokenType() != JavaTokenType.RPARENTH) {
+      if (typeInfo == null || !expect(builder, JavaTokenType.RPARENTH)) {
         typeCast.rollbackTo();
         return parsePostfix(builder);
       }
-      builder.advanceLexer();
 
       if (PREF_ARITHMETIC_OPS.contains(builder.getTokenType())) {
         if (!typeInfo.isPrimitive) {
@@ -375,7 +369,7 @@ public class ExpressionParser {
           final int offset = builder.getCurrentOffset();
           startMarker.rollbackTo();
 
-          final PsiBuilder.Marker ref = myReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
+          final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false, false);
           if (ref == null || builder.getTokenType() != JavaTokenType.DOT || builder.getCurrentOffset() != dotOffset) {
             copy.rollbackTo();
             return parsePrimary(builder, BreakPoint.P2, offset);
@@ -402,7 +396,7 @@ public class ExpressionParser {
         else {
           dotPos.drop();
           final PsiBuilder.Marker refExpr = expr.precede();
-          myReferenceParser.parseReferenceParameterList(builder, false, false);
+          myParser.getReferenceParser().parseReferenceParameterList(builder, false, false);
 
           if (!expectOrError(builder, JavaTokenType.IDENTIFIER, "expected.identifier")) {
             refExpr.done(JavaElementType.REFERENCE_EXPRESSION);
@@ -547,7 +541,7 @@ public class ExpressionParser {
       final boolean primitive = tokenType != JavaTokenType.IDENTIFIER;
       final PsiBuilder.Marker mark = builder.mark();
 
-      final ReferenceParser.TypeInfo typeInfo = myReferenceParser.parseTypeInfo(builder, 0);
+      final ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, 0);
       if (typeInfo != null && (primitive || !typeInfo.hasErrors && typeInfo.isParameterized)) {
         final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, primitive);
         if (result != null) return result;
@@ -558,7 +552,7 @@ public class ExpressionParser {
 
     PsiBuilder.Marker annotation = null;
     if (tokenType == JavaTokenType.AT) {
-      annotation = myDeclarationParser.parseAnnotations(builder);
+      annotation = myParser.getDeclarationParser().parseAnnotations(builder);
       tokenType = builder.getTokenType();
     }
 
@@ -588,7 +582,7 @@ public class ExpressionParser {
     if (tokenType == JavaTokenType.LT) {
       expr = builder.mark();
 
-      if (!myReferenceParser.parseReferenceParameterList(builder, false, false)) {
+      if (!myParser.getReferenceParser().parseReferenceParameterList(builder, false, false)) {
         expr.rollbackTo();
         return null;
       }
@@ -682,14 +676,14 @@ public class ExpressionParser {
     final PsiBuilder.Marker newExpr = (start != null ? start.precede() : builder.mark());
     builder.advanceLexer();
 
-    myReferenceParser.parseReferenceParameterList(builder, false, true);
+    myParser.getReferenceParser().parseReferenceParameterList(builder, false, true);
 
     final PsiBuilder.Marker refOrType;
     final boolean parseAnnotations = areTypeAnnotationsSupported(builder) && builder.getTokenType() == JavaTokenType.AT;
 
     final IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.IDENTIFIER || parseAnnotations) {
-      refOrType = myReferenceParser.parseJavaCodeReference(builder, true, true, parseAnnotations, true, true);
+      refOrType = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, parseAnnotations, true, true);
       if (refOrType == null) {
         error(builder, JavaErrorMessages.message("expected.identifier"));
         newExpr.done(JavaElementType.NEW_EXPRESSION);
@@ -710,7 +704,7 @@ public class ExpressionParser {
       parseArgumentList(builder);
       if (builder.getTokenType() == JavaTokenType.LBRACE) {
         final PsiBuilder.Marker classElement = refOrType.precede();
-        myDeclarationParser.parseClassBodyWithBraces(builder, false, false);
+        myParser.getDeclarationParser().parseClassBodyWithBraces(builder, false, false);
         classElement.done(JavaElementType.ANONYMOUS_CLASS);
       }
     }
@@ -761,7 +755,7 @@ public class ExpressionParser {
     final PsiBuilder.Marker expr = builder.mark();
 
     final boolean primitive = ElementType.PRIMITIVE_TYPE_BIT_SET.contains(builder.getTokenType());
-    if (myReferenceParser.parseType(builder, 0) == null) {
+    if (myParser.getReferenceParser().parseType(builder, 0) == null) {
       expr.drop();
       return null;
     }
@@ -809,7 +803,7 @@ public class ExpressionParser {
   private PsiBuilder.Marker parseMethodReference(final PsiBuilder builder, final PsiBuilder.Marker start) {
     builder.advanceLexer();
 
-    myReferenceParser.parseReferenceParameterList(builder, false, false);
+    myParser.getReferenceParser().parseReferenceParameterList(builder, false, false);
 
     if (!expect(builder, JavaTokenType.IDENTIFIER) && !expect(builder, JavaTokenType.NEW_KEYWORD)) {
       error(builder, JavaErrorMessages.message("expected.identifier"));

@@ -19,7 +19,9 @@ import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -92,15 +94,15 @@ public class DFAType {
     return true;
   }
 
-  public DFAType negate(NegatingGotoInstruction negating) {
+  public DFAType negate(@NotNull Instruction instruction) {
     final DFAType type = new DFAType(primary);
 
     for (Mixin mixin : mixins) {
       type.mixins.add(mixin);
     }
 
-    for (; negating != null; negating = negating.getNegatingGotoInstruction()) {
-      final Set<ConditionInstruction> conditionsToNegate = negating.getCondition().getDependentConditions();
+    for (NegatingGotoInstruction negation: instruction.getNegatingGotoInstruction()) {
+      final Set<ConditionInstruction> conditionsToNegate = negation.getCondition().getDependentConditions();
 
       for (ListIterator<Mixin> iterator = type.mixins.listIterator(); iterator.hasNext(); ) {
         Mixin mixin = iterator.next();

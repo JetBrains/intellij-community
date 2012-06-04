@@ -528,6 +528,15 @@ def foo(def oo) {
 ''', null)
   }
 
+  void testInstanceOfInferring6() {
+    doTest('''\
+def foo(bar) {
+  if (!(bar instanceof String) && bar instanceof Runnable) {
+    ba<caret>r
+  }
+}''', 'java.lang.Runnable')
+  }
+
   private void doTest(String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression

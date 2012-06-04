@@ -13,6 +13,10 @@
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="idea-ui" scope="TEST" />
+    <orderEntry type="module" module-name="java-impl" scope="TEST" />
+    <orderEntry type="module" module-name="ant" scope="TEST" />
+    <orderEntry type="module" module-name="xpath" scope="TEST" />
+    <orderEntry type="module" module-name="dom-impl" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

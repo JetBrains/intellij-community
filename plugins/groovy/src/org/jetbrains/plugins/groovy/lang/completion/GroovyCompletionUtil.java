@@ -448,7 +448,7 @@ public class GroovyCompletionUtil {
     return TailType.insertChar(editor, offset, ')');
   }
 
-  public static final Set<String> OPERATOR_METHOD_NAMES = CollectionFactory.newSet(
+  public static final Set<String> OPERATOR_METHOD_NAMES = CollectionFactory.hashSet(
     "plus", "minus", "multiply", "power", "div", "mod", "or", "and", "xor", "next", "previous", "getAt", "putAt", "leftShift", "rightShift",
     "isCase", "bitwiseNegate", "negative", "positive", "call"
   );

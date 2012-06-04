@@ -21,6 +21,7 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -54,7 +55,7 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
     private static final MyResolver INSTANCE = new MyResolver();
     @Override
     @Nullable
-    public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
+    public PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
       return ((CachingReference)ref).resolveInner();
     }
   }

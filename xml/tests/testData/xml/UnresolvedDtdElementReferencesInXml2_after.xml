@@ -1,0 +1,4 @@
+<!DOCTYPE name [
+<!ENTITY entity <caret>>
+]>
+<name>&entity;</name>
