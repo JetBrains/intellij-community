@@ -32,27 +32,18 @@ import java.util.List;
 import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
-
 public class StatementParser {
-  private final ExpressionParser myExpressionParser;
-  private final DeclarationParser myDeclarationParser;
-  private final ReferenceParser myReferenceParser;
-
-  public StatementParser(DeclarationParser declarationParser, ExpressionParser expressionParser, ReferenceParser referenceParser) {
-    myDeclarationParser = declarationParser;
-    myExpressionParser = expressionParser;
-    myReferenceParser = referenceParser;
-  }
-
-  public StatementParser() {
-    this(new DeclarationParser(), new ExpressionParser(), new ReferenceParser());
-  }
-
   private enum BraceMode {
     TILL_FIRST, TILL_LAST
   }
 
   private static final TokenSet TRY_CLOSERS_SET = TokenSet.create(JavaTokenType.CATCH_KEYWORD, JavaTokenType.FINALLY_KEYWORD);
+
+  private final JavaParser myParser;
+
+  public StatementParser(@NotNull final JavaParser javaParser) {
+    myParser = javaParser;
+  }
 
   @Nullable
   public PsiBuilder.Marker parseCodeBlock(final PsiBuilder builder) {
@@ -236,15 +227,15 @@ public class StatementParser {
     }
     else if (tokenType == JavaTokenType.IDENTIFIER || tokenType == JavaTokenType.AT) {
       final PsiBuilder.Marker refPos = builder.mark();
-      myDeclarationParser.parseAnnotations(builder);
+      myParser.getDeclarationParser().parseAnnotations(builder);
       skipQualifiedName(builder);
       final IElementType suspectedLT = builder.getTokenType();
       refPos.rollbackTo();
       if (suspectedLT == JavaTokenType.LT) {
         final PsiBuilder.Marker declStatement = builder.mark();
-        final PsiBuilder.Marker decl = myDeclarationParser.parse(builder, DeclarationParser.Context.CODE_BLOCK);
+        final PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
         if (decl == null) {
-          PsiBuilder.Marker marker = myReferenceParser.parseType(builder, 0);
+          PsiBuilder.Marker marker = myParser.getReferenceParser().parseType(builder, 0);
           error(builder, JavaErrorMessages.message("expected.identifier"));
           if (marker == null) builder.advanceLexer();
         }
@@ -254,7 +245,7 @@ public class StatementParser {
     }
 
     final PsiBuilder.Marker pos = builder.mark();
-    final PsiBuilder.Marker expr = myExpressionParser.parse(builder);
+    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
 
     if (expr != null) {
       int count = 1;
@@ -263,7 +254,7 @@ public class StatementParser {
       while (builder.getTokenType() == JavaTokenType.COMMA) {
         final PsiBuilder.Marker commaPos = builder.mark();
         builder.advanceLexer();
-        final PsiBuilder.Marker expr1 = myExpressionParser.parse(builder);
+        final PsiBuilder.Marker expr1 = myParser.getExpressionParser().parse(builder);
         if (expr1 == null) {
           commaPos.rollbackTo();
           break;
@@ -290,7 +281,7 @@ public class StatementParser {
       pos.drop();
     }
 
-    final PsiBuilder.Marker decl = myDeclarationParser.parse(builder, DeclarationParser.Context.CODE_BLOCK);
+    final PsiBuilder.Marker decl = myParser.getDeclarationParser().parse(builder, DeclarationParser.Context.CODE_BLOCK);
     if (decl != null) {
       final PsiBuilder.Marker statement = decl.precede();
       done(statement, JavaElementType.DECLARATION_STATEMENT);
@@ -307,7 +298,7 @@ public class StatementParser {
 
     if (expr != null) {
       final PsiBuilder.Marker statement = builder.mark();
-      myExpressionParser.parse(builder);
+      myParser.getExpressionParser().parse(builder);
       semicolon(builder);
       done(statement, JavaElementType.EXPRESSION_STATEMENT);
       return statement;
@@ -385,7 +376,7 @@ public class StatementParser {
     }
 
     final PsiBuilder.Marker afterParenth = builder.mark();
-    final PsiBuilder.Marker param = myDeclarationParser.parseParameter(builder, false, false);
+    final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, false);
     if (param == null || exprType(param) != JavaElementType.PARAMETER || builder.getTokenType() != JavaTokenType.COLON) {
       afterParenth.rollbackTo();
       return parseForLoopFromInitialization(builder, statement);
@@ -407,7 +398,7 @@ public class StatementParser {
       }
     }
     else {
-      myExpressionParser.parse(builder);
+      myParser.getExpressionParser().parse(builder);
       if (!expect(builder, JavaTokenType.SEMICOLON)) {
         error(builder, JavaErrorMessages.message("expected.semicolon"));
         if (!expect(builder, JavaTokenType.RPARENTH)) {
@@ -435,7 +426,7 @@ public class StatementParser {
   }
 
   private void parseExpressionOrExpressionList(final PsiBuilder builder) {
-    final PsiBuilder.Marker expr = myExpressionParser.parse(builder);
+    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
     if (expr == null) return;
 
     final PsiBuilder.Marker expressionStatement;
@@ -449,7 +440,7 @@ public class StatementParser {
 
       do {
         builder.advanceLexer();
-        final PsiBuilder.Marker nextExpression = myExpressionParser.parse(builder);
+        final PsiBuilder.Marker nextExpression = myParser.getExpressionParser().parse(builder);
         if (nextExpression == null) {
           error(builder, JavaErrorMessages.message("expected.expression"));
         }
@@ -465,7 +456,7 @@ public class StatementParser {
   private PsiBuilder.Marker parseForEachFromColon(PsiBuilder builder, PsiBuilder.Marker statement) {
     builder.advanceLexer();
 
-    final PsiBuilder.Marker expr = myExpressionParser.parse(builder);
+    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
     if (expr == null) {
       error(builder, JavaErrorMessages.message("expected.expression"));
     }
@@ -536,7 +527,7 @@ public class StatementParser {
     builder.advanceLexer();
 
     if (isCase) {
-      final PsiBuilder.Marker expr = myExpressionParser.parse(builder);
+      final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
       if (expr == null) {
         statement.rollbackTo();
         return null;
@@ -574,7 +565,7 @@ public class StatementParser {
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    myExpressionParser.parse(builder);
+    myParser.getExpressionParser().parse(builder);
 
     semicolon(builder);
     done(statement, JavaElementType.RETURN_STATEMENT);
@@ -586,7 +577,7 @@ public class StatementParser {
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker expr = myExpressionParser.parse(builder);
+    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
     if (expr == null) {
       error(builder, JavaErrorMessages.message("expected.expression"));
       done(statement, JavaElementType.THROW_STATEMENT);
@@ -624,7 +615,7 @@ public class StatementParser {
 
     final boolean hasResourceList = builder.getTokenType() == JavaTokenType.LPARENTH;
     if (hasResourceList) {
-      myDeclarationParser.parseResourceList(builder);
+      myParser.getDeclarationParser().parseResourceList(builder);
     }
 
     final PsiBuilder.Marker tryBlock = parseCodeBlock(builder, true);
@@ -666,7 +657,7 @@ public class StatementParser {
       return false;
     }
 
-    final PsiBuilder.Marker param = myDeclarationParser.parseParameter(builder, false, true);
+    final PsiBuilder.Marker param = myParser.getDeclarationParser().parseParameter(builder, false, true);
     if (param == null) {
       error(builder, JavaErrorMessages.message("expected.parameter"));
     }
@@ -693,7 +684,7 @@ public class StatementParser {
     final PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker expr = myExpressionParser.parse(builder);
+    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
     if (expr == null) {
       error(builder, JavaErrorMessages.message("expected.boolean.expression"));
       done(statement, JavaElementType.ASSERT_STATEMENT);
@@ -701,7 +692,7 @@ public class StatementParser {
     }
 
     if (expect(builder, JavaTokenType.COLON)) {
-      final PsiBuilder.Marker expr2 = myExpressionParser.parse(builder);
+      final PsiBuilder.Marker expr2 = myParser.getExpressionParser().parse(builder);
       if (expr2 == null) {
         error(builder, JavaErrorMessages.message("expected.expression"));
         done(statement, JavaElementType.ASSERT_STATEMENT);
@@ -729,7 +720,7 @@ public class StatementParser {
     }
 
     final PsiBuilder.Marker beforeExpr = builder.mark();
-    final PsiBuilder.Marker expr = myExpressionParser.parse(builder);
+    final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
     if (expr == null || builder.getTokenType() == JavaTokenType.SEMICOLON) {
       beforeExpr.rollbackTo();
       error(builder, JavaErrorMessages.message("expected.expression"));

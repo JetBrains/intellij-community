@@ -19,7 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.parser.FileParser;
+import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -80,7 +80,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
 
   private void doParse(final PsiBuilder builder) {
     final PsiBuilder.Marker root = builder.mark();
-    FileParser.INSTANCE.parse(builder);
+    JavaParser.INSTANCE.getFileParser().parse(builder);
     root.done(this);
   }
 

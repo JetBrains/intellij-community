@@ -153,14 +153,14 @@ public interface JavaElementType {
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-      JavaParsers.STATEMENT_PARSER.parseCodeBlockDeep(builder, true);
+      JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
       return builder.getTreeBuilt().getFirstChildNode();
     }
 
     @Override
     public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-      JavaParsers.STATEMENT_PARSER.parseCodeBlockDeep(builder, true);
+      JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
       return builder.getLightTree();
     }
 
@@ -193,7 +193,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParsers.STATEMENT_PARSER.parseStatements(builder);
+        JavaParser.INSTANCE.getStatementParser().parseStatements(builder);
       }
     };
 
@@ -208,7 +208,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParsers.EXPRESSION_PARSER.parse(builder);
+        JavaParser.INSTANCE.getExpressionParser().parse(builder);
       }
     };
 
@@ -223,7 +223,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParsers.REFERENCE_PARSER.parseJavaCodeReference(builder, false, true, false, false, false);
+        JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false, false);
       }
     };
 
@@ -238,8 +238,8 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParsers.REFERENCE_PARSER.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
-                                           ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
+        JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
+                                                                    ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
       }
     };
 
