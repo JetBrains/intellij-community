@@ -44,7 +44,7 @@ public class JarHandlerBase {
 
   protected static class EntryInfo {
     public EntryInfo(final String shortName, final EntryInfo parent, final boolean directory) {
-      this.shortName = new String(shortName);
+      this.shortName = shortName;
       this.parent = parent;
       isDirectory = directory;
     }
