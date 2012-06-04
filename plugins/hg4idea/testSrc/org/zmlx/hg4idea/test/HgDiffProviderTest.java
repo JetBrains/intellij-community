@@ -41,7 +41,7 @@ public class HgDiffProviderTest extends HgSingleUserTest {
     runHgOnProjectRepo("rename", AFILE, BFILE);
     //don't commit 
     
-    LocalFileSystem.getInstance().refresh(false);
+    refreshVfs();
     ChangeListManager.getInstance(myProject).ensureUpToDate(false);
     
     HgDiffProvider diffProvider = new HgDiffProvider(myProject);
@@ -67,7 +67,7 @@ public class HgDiffProviderTest extends HgSingleUserTest {
 
     
     
-    LocalFileSystem.getInstance().refresh(false);
+    refreshVfs();
     //ChangeListManager.getInstance(myProject).ensureUpToDate(false);
     
     HgDiffProvider diffProvider = new HgDiffProvider(myProject);
