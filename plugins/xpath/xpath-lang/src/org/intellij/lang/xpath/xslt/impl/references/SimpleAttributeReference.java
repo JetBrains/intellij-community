@@ -75,7 +75,7 @@ abstract class SimpleAttributeReference implements PsiReference {
     public final PsiElement resolve() {
         return ResolveCache.getInstance(myAttribute.getProject()).resolveWithCaching(this, new ResolveCache.Resolver() {
             @Nullable
-            public PsiElement resolve(PsiReference psiReference, boolean b) {
+            public PsiElement resolve(@NotNull PsiReference psiReference, boolean b) {
                 return resolveImpl();
             }
         }, false, false);

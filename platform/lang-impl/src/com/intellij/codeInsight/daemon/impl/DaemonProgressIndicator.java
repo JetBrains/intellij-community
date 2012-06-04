@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TraceableDisposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -25,7 +25,8 @@ import org.jetbrains.annotations.TestOnly;
  * @author cdr
  */
 public class DaemonProgressIndicator extends ProgressIndicatorBase {
-  private boolean debug;
+  private static boolean debug;
+  private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug ? new Throwable() : null);
 
   @Override
   public synchronized void stop() {
@@ -44,16 +45,12 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
 
   @Override
   public void cancel() {
-    if (debug) {
-      putUserData(KILL_TRACE, new Throwable("Daemon Progress Canceled"));
-    }
+    myTraceableDisposable.kill("Daemon Progress Canceled");
     super.cancel();
   }
 
   public void cancel(@NotNull Throwable cause) {
-    if (debug) {
-      putUserData(KILL_TRACE, new Throwable("Daemon Progress Canceled Because of", cause));
-    }
+    myTraceableDisposable.kill("Daemon Progress Canceled because of "+cause);
     super.cancel();
   }
 
@@ -78,8 +75,7 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
   }
 
   @TestOnly
-  public void setDebug(boolean debug) {
-    this.debug = debug;
+  public static void setDebug(boolean debug) {
+    DaemonProgressIndicator.debug = debug;
   }
-  private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
 }

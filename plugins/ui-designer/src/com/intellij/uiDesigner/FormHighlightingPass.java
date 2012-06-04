@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -31,7 +32,7 @@ public class FormHighlightingPass implements HighlightingPass {
     myEditor = editor;
   }
 
-  public void collectInformation(ProgressIndicator progress) {
+  public void collectInformation(@NotNull ProgressIndicator progress) {
     ErrorAnalyzer.analyzeErrors(myEditor, myEditor.getRootContainer(), progress);
   }
 

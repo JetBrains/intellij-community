@@ -139,12 +139,17 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
     if (value == null) {
       myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, null);
+      myTree.clearSelection();
     }
     else if (value instanceof RadComponent) {
       myTreeBuilder.select(value);
     }
     else {
-      myTreeBuilder.select(((Collection)value).toArray(), null);
+      Collection collection = (Collection)value;
+      myTreeBuilder.select(collection.toArray(), null);
+      if (collection.isEmpty()) {
+        myTree.clearSelection();
+      }
     }
 
     hookSelection();

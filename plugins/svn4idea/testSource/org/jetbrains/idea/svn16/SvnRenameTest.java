@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -18,7 +17,10 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author yole
@@ -82,7 +84,7 @@ public class SvnRenameTest extends SvnTestCase {
     final ProcessOutput result = runSvn("status");
     verify(result, "D child", "D child" + File.separatorChar + "grandChild", "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "D child" + File.separatorChar + "a.txt", "A + childnew");
 
-    LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
+    refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.ensureUpToDate(false);
     List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
@@ -159,7 +161,7 @@ public class SvnRenameTest extends SvnTestCase {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
 
     moveFileInCommand(grandChild, myWorkingCopyDir);
-    LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
+    refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false);
     final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
     Assert.assertEquals(listToString(changes), 2, changes.size());
@@ -195,7 +197,7 @@ public class SvnRenameTest extends SvnTestCase {
     Assert.assertTrue(new File(newChildPath, "u.txt").exists());
     Assert.assertFalse(new File(childPath, "u.txt").exists());
 
-    LocalFileSystem.getInstance().refresh(false);
+    refreshVfs();
     changeListManager.ensureUpToDate(false);
     final List<Change> changes = new ArrayList<Change>();
     changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild").findChild("a.txt")));
@@ -231,7 +233,7 @@ public class SvnRenameTest extends SvnTestCase {
                  "D child", "D child" + File.separatorChar + "a.txt", "D child" + File.separatorChar + "grandChild", "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "D + newchild" + File.separatorChar + "a.txt");
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    LocalFileSystem.getInstance().refresh(false);   // wait for end of refresh operations initiated from SvnFileSystemListener
+    refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
     changeListManager.ensureUpToDate(false);
     final List<Change> changes = new ArrayList<Change>(changeListManager.getDefaultChangeList().getChanges());
     final List<VcsException> list = SvnVcs.getInstance(myProject).getCheckinEnvironment().commit(changes, "test");

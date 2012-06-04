@@ -15,6 +15,7 @@
  */
 package com.intellij.util.continuation;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -32,6 +33,7 @@ import javax.swing.*;
  * Time: 12:14 PM
  */
 public abstract class ModalityIgnorantBackgroundableTask extends Task.Backgroundable {
+  private final static Logger LOG = Logger.getInstance("#com.intellij.util.continuation.ModalityIgnorantBackgroundableTask");
   private Consumer<Task.Backgroundable> myRunner;
   private int myCnt;
 
@@ -87,6 +89,7 @@ public abstract class ModalityIgnorantBackgroundableTask extends Task.Background
         }
       });
     } catch (final Exception e) {
+      LOG.info(e);
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {

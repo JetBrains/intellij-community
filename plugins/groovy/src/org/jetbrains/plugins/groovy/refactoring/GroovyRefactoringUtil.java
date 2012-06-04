@@ -135,7 +135,7 @@ public abstract class GroovyRefactoringUtil {
     ArrayList<PsiElement> occurrences = new ArrayList<PsiElement>();
     Comparator<PsiElement> comparator = new Comparator<PsiElement>() {
       public int compare(PsiElement element1, PsiElement element2) {
-        if (element1.equals(element2)) return 0;
+        if (element1 != null && element1.equals(element2)) return 0;
 
         if (element1 instanceof GrParameter &&
             element2 instanceof GrParameter) {

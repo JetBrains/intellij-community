@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -132,7 +133,7 @@ class InitialKeyStep extends ExportSignedPackageWizardStep {
         if (myAliasCombo.getSelectedItem() == null) {
           throw new CommitStepException(AndroidBundle.message("android.extract.package.select.key.alias.error"));
         }
-        checkPassword(password);
+        AndroidUtils.checkPassword(password);
         String alias = (String)myAliasCombo.getSelectedItem();
         loadKey(alias, password);
       }

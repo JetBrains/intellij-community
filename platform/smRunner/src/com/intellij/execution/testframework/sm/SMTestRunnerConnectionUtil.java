@@ -25,9 +25,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
-import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
-import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerNotificationsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
@@ -87,6 +85,16 @@ public class SMTestRunnerConnectionUtil {
                                                                           final RunnerSettings runnerSettings,
                                                                           final ConfigurationPerRunnerSettings configurationSettings,
                                                                           @Nullable final TestLocationProvider locator) {
+    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, runnerSettings,
+                                          configurationSettings, locator, false);
+  }
+
+  public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull final String testFrameworkName,
+                                                                          @NotNull final TestConsoleProperties consoleProperties,
+                                                                          final RunnerSettings runnerSettings,
+                                                                          final ConfigurationPerRunnerSettings configurationSettings,
+                                                                          @Nullable final TestLocationProvider locator,
+                                                                          final boolean idBasedTreeConstruction) {
     // Console
     final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
     final SMTRunnerConsoleView console =
@@ -97,7 +105,7 @@ public class SMTestRunnerConnectionUtil {
           super.attachToProcess(processHandler);
           attachEventsProcessors(consoleProperties, getResultsViewer(),
                                  getResultsViewer().getStatisticsPane(),
-                                 processHandler, testFrameworkName, locator);
+                                 processHandler, testFrameworkName, locator, idBasedTreeConstruction);
         }
       };
     console.setHelpId("reference.runToolWindow.testResultsTab");
@@ -200,15 +208,24 @@ public class SMTestRunnerConnectionUtil {
                                                        final StatisticsPanel statisticsPane,
                                                        final ProcessHandler processHandler,
                                                        @NotNull final String testFrameworkName,
-                                                       @Nullable final TestLocationProvider locator) {
+                                                       @Nullable final TestLocationProvider locator,
+                                                       boolean idBasedTreeConstruction) {
     //build messages consumer
-    final OutputToGeneralTestEventsConverter outputConsumer = consoleProperties instanceof SMCustomMessagesParsing
-                                                              ? ((SMCustomMessagesParsing)consoleProperties).createTestEventsConverter(testFrameworkName, consoleProperties)
-                                                              : new OutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
+    final OutputToGeneralTestEventsConverter outputConsumer;
+    if (consoleProperties instanceof SMCustomMessagesParsing) {
+      outputConsumer = ((SMCustomMessagesParsing)consoleProperties).createTestEventsConverter(testFrameworkName, consoleProperties);
+    }
+    else {
+      outputConsumer = new OutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
+    }
 
     //events processor
-    final GeneralToSMTRunnerEventsConvertor eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(),
-                                                                                                    testFrameworkName);
+    final GeneralTestEventsProcessor eventsProcessor;
+    if (idBasedTreeConstruction) {
+      eventsProcessor = new GeneralIdBasedToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(), testFrameworkName);
+    } else {
+      eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(), testFrameworkName);
+    }
     if (locator != null) {
       eventsProcessor.setLocator(locator);
     }

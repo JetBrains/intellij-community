@@ -61,12 +61,20 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myIsEmptyIsCached = false; // is used for separating unknown and unset values
   private boolean myIsEmpty = true;
   TestLocationProvider myCustomLocator = null;
+  private final boolean myPreservePresentableName;
 
   public SMTestProxy(final String testName, final boolean isSuite,
                      @Nullable final String locationUrl) {
+    this(testName, isSuite, locationUrl, false);
+  }
+
+  public SMTestProxy(final String testName, final boolean isSuite,
+                     @Nullable final String locationUrl,
+                     boolean preservePresentableName) {
     myName = testName;
     myIsSuite = isSuite;
     myLocationUrl = locationUrl;
+    myPreservePresentableName = preservePresentableName;
   }
 
   public void setLocator(@NotNull TestLocationProvider locator) {
@@ -470,6 +478,9 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @NotNull
   public String getPresentableName() {
+    if (myPreservePresentableName) {
+      return TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
+    }
     return TestsPresentationUtil.getPresentableName(this);
   }
 

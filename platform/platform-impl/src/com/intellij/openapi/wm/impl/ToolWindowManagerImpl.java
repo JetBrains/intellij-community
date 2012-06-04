@@ -93,7 +93,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final HashMap<String, FloatingDecorator> myId2FloatingDecorator;
   private final HashMap<String, StripeButton> myId2StripeButton;
   private final HashMap<String, FocusWatcher> myId2FocusWatcher;
-  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(CollectionFactory.<String>newTroveSet());
+  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(CollectionFactory.<String>troveSet());
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher;
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener;

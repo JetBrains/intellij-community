@@ -44,24 +44,41 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class MergeList implements ChangeList.Parent, UserDataHolder {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
-  private final Project myProject;
-  private final ChangeList[] myChanges = new ChangeList[2];
-  private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
+public class MergeList implements UserDataHolder {
+
   public static final FragmentSide BRANCH_SIDE = FragmentSide.SIDE2;
   public static final FragmentSide BASE_SIDE = FragmentSide.SIDE1;
 
   public static final DataKey<MergeList> DATA_KEY = DataKey.create("mergeList");
-  @Deprecated public static final String MERGE_LIST = DATA_KEY.getName();
+  public static final Condition<Change> NOT_CONFLICTS = new Condition<Change>() {
+    public boolean value(Change change) {
+      return !(change instanceof ConflictChange);
+    }
+  };
 
-  private MergeList(Project project, Document left, Document base, Document right) {
-    myProject = project;
-    myChanges[0] = new ChangeList(base, left, this);
-    myChanges[1] = new ChangeList(base, right, this);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeList");
+
+  @NotNull private final UserDataHolderBase myDataHolder = new UserDataHolderBase();
+  @NotNull private final ChangeList myBaseToLeftChangeList;
+  @NotNull private final ChangeList myBaseToRightChangeList;
+
+  private MergeList(@NotNull Project project, @NotNull Document left, @NotNull Document base, @NotNull Document right) {
+    myBaseToLeftChangeList = new ChangeList(base, left, project);
+    myBaseToRightChangeList = new ChangeList(base, right, project);
   }
 
-  public static MergeList create(Project project, Document left, Document base, Document right) throws FilesTooBigForDiffException {
+  @NotNull
+  public ChangeList getLeftChangeList() {
+    return myBaseToLeftChangeList;
+  }
+
+  @NotNull
+  public ChangeList getRightChangeList() {
+    return myBaseToRightChangeList;
+  }
+
+  public static MergeList create(@NotNull Project project, @NotNull Document left, @NotNull Document base,
+                                 @NotNull Document right) throws FilesTooBigForDiffException {
     MergeList mergeList = new MergeList(project, left, base, right);
     String leftText = left.getText();
     String baseText = base.getText();
@@ -72,50 +89,48 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
       "\nRight\n", rightText
     };
     ContextLogger logger = new ContextLogger(LOG, new ContextLogger.SimpleContext(data));
-    List<MergeBuilder.MergeFragment> fragmentList = processText(leftText, baseText, rightText, logger);
+    List<MergeFragment> fragmentList = processText(leftText, baseText, rightText, logger);
 
     ArrayList<Change> leftChanges = new ArrayList<Change>();
     ArrayList<Change> rightChanges = new ArrayList<Change>();
-    final int fragmentsListSize = fragmentList.size();
-    for (int i = 0; i < fragmentsListSize; i++) {
-      final MergeBuilder.MergeFragment mergeFragment = fragmentList.get(i);
-      final TextRange[] ranges = mergeFragment.getRanges();
-      logger.assertTrue(ranges[1] != null);
-      if (ranges[0] == null) {
-        if (ranges[2] == null) {
-          if (i == fragmentsListSize - 1 && ranges[1].getEndOffset() == baseText.length()) {
+    for (Iterator<MergeFragment> fragmentIterator = fragmentList.iterator(); fragmentIterator.hasNext(); ) {
+      final MergeFragment mergeFragment = fragmentIterator.next();
+      TextRange baseRange = mergeFragment.getBase();
+      TextRange leftRange = mergeFragment.getLeft();
+      TextRange rightRange = mergeFragment.getRight();
+
+      if (leftRange == null) {
+        if (rightRange == null) {
+          if (!fragmentIterator.hasNext() && baseRange.getEndOffset() == baseText.length()) {
             // the very end, both local and remote revisions does not contain latest base fragment
             final int rightTextLength = rightText.length();
             final int leftTextLength = leftText.length();
-            rightChanges.add(SimpleChange.fromRanges(ranges[1], new TextRange(rightTextLength, rightTextLength), mergeList.myChanges[1]));
-            leftChanges.add(SimpleChange.fromRanges(ranges[1], new TextRange(leftTextLength, leftTextLength), mergeList.myChanges[0]));
+            rightChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(rightTextLength, rightTextLength), mergeList.myBaseToRightChangeList));
+            leftChanges.add(SimpleChange.fromRanges(baseRange, new TextRange(leftTextLength, leftTextLength), mergeList.myBaseToLeftChangeList));
           } else {
             LOG.error("Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
           }
         } else {
-          rightChanges.add(SimpleChange.fromRanges(ranges[1], ranges[2], mergeList.myChanges[1]));
+          rightChanges.add(SimpleChange.fromRanges(baseRange, rightRange, mergeList.myBaseToRightChangeList));
         }
       }
-      else if (ranges[2] == null) {
-        if (ranges[0] == null) {
-          LOG.error("Left Text: " + leftText + "\n" + "Right Text: " + rightText + "\nBase Text: " + baseText);
-        }
-        leftChanges.add(SimpleChange.fromRanges(ranges[1], ranges[0], mergeList.myChanges[0]));
+      else if (rightRange == null) {
+        leftChanges.add(SimpleChange.fromRanges(baseRange, leftRange, mergeList.myBaseToLeftChangeList));
       }
       else {
-        Change[] changes = MergeConflict.createChanges(ranges[0], ranges[1], ranges[2], mergeList);
-        leftChanges.add(changes[0]);
-        rightChanges.add(changes[1]);
+        MergeConflict conflict = new MergeConflict(baseRange, mergeList, leftRange, rightRange);
+        assert conflict.getLeftChange() != null;
+        assert conflict.getRightChange() != null;
+        leftChanges.add(conflict.getLeftChange());
+        rightChanges.add(conflict.getRightChange());
       }
     }
-    mergeList.myChanges[0].setChanges(leftChanges);
-    mergeList.myChanges[1].setChanges(rightChanges);
+    mergeList.myBaseToLeftChangeList.setChanges(leftChanges);
+    mergeList.myBaseToRightChangeList.setChanges(rightChanges);
     return mergeList;
   }
 
-  private static List<MergeBuilder.MergeFragment> processText(String leftText,
-                                                              String baseText,
-                                                              String rightText,
+  private static List<MergeFragment> processText(String leftText, String baseText, String rightText,
                                                               ContextLogger logger) throws FilesTooBigForDiffException {
     DiffFragment[] leftFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, leftText);
     DiffFragment[] rightFragments = DiffPolicy.DEFAULT_LINES.buildFragments(baseText, rightText);
@@ -166,31 +181,29 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
   }
 
   public void setMarkups(Editor left, Editor base, Editor right) {
-    myChanges[0].setMarkup(base, left);
-    myChanges[1].setMarkup(base, right);
+    myBaseToLeftChangeList.setMarkup(base, left);
+    myBaseToRightChangeList.setMarkup(base, right);
     addActions(FragmentSide.SIDE1);
     addActions(FragmentSide.SIDE2);
   }
 
   public Iterator<Change> getAllChanges() {
-    return SequenceIterator.create(myChanges[0].getChanges().iterator(),
-                                   FilteringIterator.create(myChanges[1].getChanges().iterator(), NOT_CONFLICTS));
+    return SequenceIterator.create(myBaseToLeftChangeList.getChanges().iterator(),
+                                   FilteringIterator.create(myBaseToRightChangeList.getChanges().iterator(), NOT_CONFLICTS));
   }
 
   public void addListener(ChangeList.Listener listener) {
-    for (ChangeList changeList : myChanges) {
-      changeList.addListener(listener);
-    }
+    myBaseToLeftChangeList.addListener(listener);
+    myBaseToRightChangeList.addListener(listener);
   }
 
   public void removeListener(ChangeList.Listener listener) {
-    for (ChangeList changeList : myChanges) {
-      changeList.removeListener(listener);
-    }
+    myBaseToLeftChangeList.removeListener(listener);
+    myBaseToRightChangeList.removeListener(listener);
   }
 
   private void addActions(final FragmentSide side) {
-    ChangeList changeList = myChanges[side.getIndex()];
+    ChangeList changeList = getChanges(side);
     final FragmentSide originalSide = BRANCH_SIDE;
     for (int i = 0; i < changeList.getCount(); i++) {
       final Change change = changeList.getChange(i);
@@ -213,39 +226,37 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     Change.apply(change, BRANCH_SIDE);
   }
 
-  public ChangeList getChanges(final FragmentSide changesSide) {
-    return myChanges[changesSide.getIndex()];
+  @NotNull
+  public ChangeList getChanges(@NotNull final FragmentSide changesSide) {
+    if (changesSide == FragmentSide.SIDE1) {
+      return myBaseToLeftChangeList;
+    }
+    else {
+      return myBaseToRightChangeList;
+    }
   }
 
-  public void removeChanges(Change[] changes) {
-    for (int i = 0; i < changes.length; i++) {
-      Change change = changes[i];
-      myChanges[i].remove(change);
+  public void removeChanges(@Nullable Change leftChange, @Nullable Change rightChange) {
+    if (leftChange != null) {
+      myBaseToLeftChangeList.remove(leftChange);
+    }
+    if (rightChange != null) {
+      myBaseToRightChangeList.remove(rightChange);
     }
   }
 
   public Document getBaseDocument() {
-    Document document = myChanges[0].getDocument(BASE_SIDE);
-    LOG.assertTrue(document == myChanges[1].getDocument(BASE_SIDE));
+    Document document = myBaseToLeftChangeList.getDocument(BASE_SIDE);
+    LOG.assertTrue(document == myBaseToRightChangeList.getDocument(BASE_SIDE));
     return document;
   }
 
   @Nullable
   public static MergeList fromDataContext(DataContext dataContext) {
-    MergeList mergeList = MergeList.DATA_KEY.getData(dataContext);
+    MergeList mergeList = DATA_KEY.getData(dataContext);
     if (mergeList != null) return mergeList;
     MergePanel2 mergePanel = MergePanel2.fromDataContext(dataContext);
     return mergePanel == null ? null : mergePanel.getMergeList();
-  }
-
-  public static final Condition<Change> NOT_CONFLICTS = new Condition<Change>() {
-    public boolean value(Change change) {
-      return !(change instanceof ConflictChange);
-    }
-  };
-
-  public Project getProject() {
-    return myProject;
   }
 
   public <T> T getUserData(@NotNull Key<T> key) {
@@ -256,16 +267,19 @@ public class MergeList implements ChangeList.Parent, UserDataHolder {
     myDataHolder.putUserData(key, value);
   }
 
-  public FragmentSide getSideOf(ChangeList source) {
-    for (int i = 0; i < myChanges.length; i++) {
-      ChangeList changeList = myChanges[i];
-      if (changeList == source) return FragmentSide.fromIndex(i);
+  @NotNull
+  public FragmentSide getSideOf(@NotNull ChangeList source) {
+    if (myBaseToLeftChangeList == source) {
+      return FragmentSide.SIDE1;
     }
-    return null;
+    else {
+      return FragmentSide.SIDE2;
+    }
   }
 
   public void updateMarkup() {
-    myChanges[0].updateMarkup();
-    myChanges[1].updateMarkup();
+    myBaseToLeftChangeList.updateMarkup();
+    myBaseToRightChangeList.updateMarkup();
   }
+
 }

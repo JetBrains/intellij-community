@@ -72,7 +72,6 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
 
     gc.gridy = 2;
     myWholePanel.add(createLeftPanel(), gc);
-
   }
 
   @Nullable
@@ -103,7 +102,8 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
 
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
-    myMoveToAnotherClassCb = new JCheckBox("Move to another class", JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS);
+    myMoveToAnotherClassCb =
+      new JCheckBox("Move to another class", JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_MOVE_TO_ANOTHER_CLASS);
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
     left.add(myMoveToAnotherClassCb,
@@ -141,9 +141,15 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
         if (visibility != null) {
           PsiUtil.setModifierProperty(field, visibility, true);
         }
+        final PsiElement anchorElementIfAll = getAnchorElementIfAll();
+        PsiElement finalAnchorElement;
+        for (finalAnchorElement = anchorElementIfAll;
+             finalAnchorElement != null && finalAnchorElement.getParent() != myParentClass;
+             finalAnchorElement = finalAnchorElement.getParent()) {
+        }
+        PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
         field = BaseExpressionToFieldHandler.ConvertToFieldRunnable
-          .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, myParentClass, myParentClass,
-                       getAnchorElementIfAll(), field);
+          .appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, myParentClass, myParentClass, field, anchorMember);
         myFieldRangeStart = myEditor.getDocument().createRangeMarker(field.getTextRange());
         return field;
       }
@@ -228,7 +234,8 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
       protected void run(Result result) throws Throwable {
         if (getLocalVariable() != null) {
           final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), myParentClass, settings, true, myOccurrences);
+            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), myParentClass, settings, true,
+                                                           myOccurrences);
           fieldRunnable.run();
         }
         else {

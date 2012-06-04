@@ -15,16 +15,13 @@
  */
 package com.intellij.util.containers;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.HashMap;
 import java.util.Stack;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -33,34 +30,118 @@ public class CollectionFactory {
   private CollectionFactory() {
   }
 
-  public static <T> Set<T> newSet(T... elements) {
-    return new HashSet<T>(Arrays.asList(elements));
+  @NotNull
+  public static <T> Set<T> hashSet() {
+    return new HashSet<T>();
   }
 
-  public static <T> Set<T> newTroveSet(T... elements) {
-    return newTroveSet(Arrays.asList(elements));
+  @NotNull
+  public static <T> Set<T> hashSet(@NotNull Collection<T> elements) {
+    return new HashSet<T>(elements);
   }
 
-  public static <T> Set<T> newTroveSet(Collection<T> elements) {
+  @NotNull
+  public static <T> Set<T> hashSet(@NotNull T... elements) {
+    return hashSet(Arrays.asList(elements));
+  }
+
+  public static <T> LinkedHashSet<T> linkedHashSet() {
+    return new LinkedHashSet<T>();
+  }
+
+  @NotNull
+  public static <T> Set<T> troveSet(@NotNull T... elements) {
+    return troveSet(Arrays.asList(elements));
+  }
+
+  @NotNull
+  public static <T> Set<T> troveSet(@NotNull Collection<T> elements) {
     return new THashSet<T>(elements);
   }
 
-  public static <T> T[] ar(T... elements) {
-    return elements;
+  @NotNull
+  public static <T> TreeSet<T> treeSet() {
+    return new TreeSet<T>();
   }
 
-  public static <T,V> THashMap<T, V> newTroveMap() {
-    return new THashMap<T,V>();
+  @NotNull
+  public static <T> TreeSet<T> treeSet(@NotNull Collection<T> elements) {
+    return new TreeSet<T>(elements);
   }
 
+  @NotNull
+  public static <T> TreeSet<T> treeSet(@NotNull T... elements) {
+    return treeSet(Arrays.asList(elements));
+  }
+
+  @NotNull
+  public static <T> TreeSet<T> treeSet(@NotNull Comparator<? super T> comparator) {
+    return new TreeSet<T>(comparator);
+  }
+
+  @NotNull
+  public static <T> Set<T> unmodifiableHashSet(@NotNull T... elements) {
+    return unmodifiableHashSet(Arrays.asList(elements));
+  }
+
+  @NotNull
+  public static <T> Set<T> unmodifiableHashSet(@NotNull Collection<T> elements) {
+    return Collections.unmodifiableSet(hashSet(elements));
+  }
+
+  @NotNull
+  public static <T, V> HashMap<T, V> hashMap() {
+    return new HashMap<T, V>();
+  }
+
+  @NotNull
+  public static <T, V> TreeMap<T, V> treeMap() {
+    return new TreeMap<T, V>();
+  }
+
+  @NotNull
+  public static <T, V> THashMap<T, V> troveMap() {
+    return new THashMap<T, V>();
+  }
+
+  public static <T, V> LinkedHashMap<T, V> linkedHashMap() {
+    return new LinkedHashMap<T, V>();
+  }
+
+  @NotNull
+  public static <T, V> Map<T, V> hashMap(@NotNull final List<T> keys, @NotNull final List<V> values) {
+    if (keys.size() != values.size()) {
+      throw new IllegalArgumentException(keys + " should have same length as " + values);
+    }
+
+    final HashMap<T, V> map = new HashMap<T, V>();
+    for (int i = 0; i < keys.size(); ++i) {
+      map.put(keys.get(i), values.get(i));
+    }
+    return map;
+  }
+
+  @NotNull
   public static <T> ArrayList<T> arrayList() {
-    return Lists.newArrayList();
+    return new ArrayList<T>();
   }
 
+  @NotNull
+  public static <T> ArrayList<T> arrayList(int initialCapacity) {
+    return new ArrayList<T>(initialCapacity);
+  }
+
+  @NotNull
+  public static <T> ArrayList<T> arrayList(Collection<T> elements) {
+    return new ArrayList<T>(elements);
+  }
+
+  @NotNull
   public static <T> ArrayList<T> arrayList(T... elements) {
-    return new ArrayList<T>(Arrays.asList(elements));
+    return arrayList(Arrays.asList(elements));
   }
 
+  @NotNull
   public static <T> List<T> arrayList(@NotNull final T[] elements, final int start, final int end) {
     if (start < 0 || start > end || end > elements.length) throw new IllegalArgumentException("start:" + start + " end:" + end + " length:" + elements.length);
 
@@ -80,35 +161,13 @@ public class CollectionFactory {
     };
   }
 
+  @NotNull
   public static <T> Stack<T> stack() {
     return new Stack<T>();
   }
 
-  public static <T> Set<T> hashSet() {
-    return Sets.newHashSet();
-  }
-
-  public static <T, V> Map<T, V> hashMap() {
-    return Maps.newHashMap();
-  }
-
-  public static <T, V> Map<T, V> hashMap(@NotNull final List<T> keys, @NotNull final List<V> values) {
-    if (keys.size() != values.size()) {
-      throw new IllegalArgumentException(keys + " should have some length as " + values);
-    }
-
-    final HashMap<T,V> map = Maps.newHashMap();
-    for (int i = 0; i < keys.size(); ++i) {
-      map.put(keys.get(i), values.get(i));
-    }
-    return map;
-  }
-
-  public static <T, V> LinkedHashMap<T, V> linkedMap() {
-    return Maps.newLinkedHashMap();
-  }
-
-  public static <T> LinkedHashSet<T> linkedHashSet() {
-    return Sets.newLinkedHashSet();
+  @NotNull
+  public static <T> T[] ar(@NotNull T... elements) {
+    return elements;
   }
 }

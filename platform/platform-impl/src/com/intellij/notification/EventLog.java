@@ -73,7 +73,7 @@ public class EventLog implements Notifications {
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
-  private static final Set<String> NEW_LINES = CollectionFactory.newSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
+  private static final Set<String> NEW_LINES = CollectionFactory.hashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
 
   public EventLog() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, this);

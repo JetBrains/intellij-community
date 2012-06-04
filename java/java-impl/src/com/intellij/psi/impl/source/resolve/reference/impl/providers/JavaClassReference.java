@@ -606,8 +606,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private static class MyResolver implements ResolveCache.PolyVariantResolver<JavaClassReference> {
     private static final MyResolver INSTANCE = new MyResolver();
 
+    @NotNull
     @Override
-    public JavaResolveResult[] resolve(JavaClassReference javaClassReference, boolean incompleteCode) {
+    public JavaResolveResult[] resolve(@NotNull JavaClassReference javaClassReference, boolean incompleteCode) {
       return new JavaResolveResult[]{javaClassReference.doAdvancedResolve()};
     }
   }

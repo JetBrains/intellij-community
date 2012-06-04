@@ -15,9 +15,6 @@
  */
 package com.intellij.ui.mac;
 
-import com.apple.eawt.AppEvent;
-import com.apple.eawt.FullScreenAdapter;
-import com.apple.eawt.FullScreenUtilities;
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -36,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -150,43 +145,10 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
       if (SystemInfo.isMacOSLion) {
         if (!FULL_SCREEN_AVAILABLE) return;
 
-        FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
-          @Override
-          public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
-            myInFullScreen = true;
-
-            JRootPane rootPane = frame.getRootPane();
-            if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
-            if (Patches.APPLE_BUG_ID_10207064) {
-              // fix problem with bottom empty bar
-              // it seems like the title is still visible in fullscreen but the window itself shifted up for titlebar height
-              // and the size of the frame is still calculated to be the height of the screen which is wrong
-              // so just add these titlebar height to the frame height once again
-              Timer timer = new Timer(300, new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                  SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
-                    }
-                  });
-                }
-              });
-              timer.setRepeats(false);
-              timer.start();
-            }
-          }
-
-          @Override
-          public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-            myInFullScreen = false;
-            frame.storeFullScreenStateIfNeeded(false);
-
-            JRootPane rootPane = frame.getRootPane();
-            if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
-          }
-        });
+        try {
+          Class<?> clazz = Class.forName("com.apple.eawt.FullScreenUtilities");
+          clazz.getMethod("addFullScreenListenerTo").invoke(null, frame, new MacFullScreenListener(this, frame));
+        } catch (Exception ignored) {}
       } else {
         // toggle toolbar
         String className = "IdeaToolbar" + v;
@@ -242,5 +204,9 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
       if (window == null) return;
       invoke(window, "toggleFullScreen:", window);
     }
+  }
+
+  void setInFullScreen(boolean inFullScreen) {
+    myInFullScreen = inFullScreen;
   }
 }

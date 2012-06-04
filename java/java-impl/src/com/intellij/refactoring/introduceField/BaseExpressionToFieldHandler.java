@@ -704,7 +704,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         initializer = IntroduceVariableBase.replaceExplicitWithDiamondWhenApplicable(initializer, myType);
         
         final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, myAnchorElement);
-        final PsiClass destClass = mySettings.getDestinationClass() == null ? myParentClass : mySettings.getDestinationClass();
+        PsiClass destClass = mySettings.getDestinationClass() == null ? myParentClass : mySettings.getDestinationClass();
 
         if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, destClass.getContainingFile())) return;
 
@@ -716,7 +716,29 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                      myParentClass);
 
         setModifiers(myField, mySettings);
-        myField = appendField(initializer, initializerPlace, destClass, myParentClass, myAnchorElement, myField);
+        PsiElement finalAnchorElement = null;
+        if (destClass == myParentClass) {
+          for (finalAnchorElement = myAnchorElement;
+               finalAnchorElement != null && finalAnchorElement.getParent() != destClass;
+               finalAnchorElement = finalAnchorElement.getParent()) {
+          }
+        }
+        PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
+
+        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass()) {
+          String constantsClassName = "Constants";
+
+          int i = 1;
+          while (destClass.findInnerClassByName(constantsClassName, true) != null) {
+            constantsClassName += constantsClassName + i++;
+          }
+
+          PsiClass psiClass = JavaPsiFacade.getElementFactory(myProject).createClass(constantsClassName);
+          PsiUtil.setModifierProperty(psiClass, PsiModifier.PRIVATE, true);
+          destClass = (PsiClass)destClass.add(psiClass);
+          anchorMember = null;
+        }
+        myField = appendField(initializer, initializerPlace, destClass, myParentClass, myField, anchorMember);
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurrences, myField, mySettings.getFieldVisibility());
         }
@@ -823,18 +845,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     static PsiField appendField(final PsiExpression initializer,
                                 InitializationPlace initializerPlace, final PsiClass destClass,
                                 final PsiClass parentClass,
-                                final PsiElement anchorElement,
-                                final PsiField psiField) {
-      PsiElement finalAnchorElement = null;
-      if (destClass == parentClass) {
-        for (finalAnchorElement = anchorElement;
-             finalAnchorElement != null && finalAnchorElement.getParent() != destClass;
-             finalAnchorElement = finalAnchorElement.getParent()) {
-
-        }
-      }
-      PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
-
+                                final PsiField psiField,
+                                final PsiMember anchorMember) {
+      
       if ((anchorMember instanceof PsiField) &&
           anchorMember.hasModifierProperty(PsiModifier.STATIC) == psiField.hasModifierProperty(PsiModifier.STATIC)) {
         return (PsiField)destClass.addBefore(psiField, anchorMember);

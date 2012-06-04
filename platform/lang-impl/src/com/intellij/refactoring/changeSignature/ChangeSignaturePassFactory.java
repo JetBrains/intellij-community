@@ -74,7 +74,7 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
     }
 
     @Override
-    public void doCollectInformation(ProgressIndicator progress) {
+    public void doCollectInformation(@NotNull ProgressIndicator progress) {
       myRange = null;
       final ChangeSignatureGestureDetector detector = ChangeSignatureGestureDetector.getInstance(myProject);
       final ChangeInfo changeInfo = detector.getInitialChangeInfo(myFile);

@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.util.containers.CollectionFactory.arrayList;
-import static com.intellij.util.containers.CollectionFactory.newTroveMap;
+import static com.intellij.util.containers.CollectionFactory.troveMap;
 
 /**
  * @author cdr
@@ -70,12 +70,12 @@ class UpdateFoldRegionsOperation implements Runnable {
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    Map<TextRange,Boolean> rangeToExpandStatusMap = newTroveMap();
+    Map<TextRange,Boolean> rangeToExpandStatusMap = troveMap();
 
     removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
 
-    Map<FoldRegion, Boolean> shouldExpand = newTroveMap();
-    Map<FoldingGroup, Boolean> groupExpand = newTroveMap();
+    Map<FoldRegion, Boolean> shouldExpand = troveMap();
+    Map<FoldingGroup, Boolean> groupExpand = troveMap();
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);

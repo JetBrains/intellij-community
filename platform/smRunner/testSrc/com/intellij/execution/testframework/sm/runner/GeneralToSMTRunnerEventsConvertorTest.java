@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.Marker;
+import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
@@ -125,7 +126,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnTestFailure() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "", false, null, null);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, null, null));
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -136,7 +137,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnTestComparisionFailure() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "", false, "actual", "expected");
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, "actual", "expected"));
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -147,8 +148,8 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnTestFailure_Twice() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "", false, null, null);
-    myEventsProcessor.onTestFailure("some_test", "", "", false, null, null);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, null, null));
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, null, null));
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(1, myEventsProcessor.getFailedTestsSet().size());
@@ -156,7 +157,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
    public void testOnTestError() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure("some_test", "", "", true, null, null);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", true, null, null));
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -167,7 +168,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnTestIgnored() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestIgnored("some_test", "", null);
+    myEventsProcessor.onTestIgnored(new TestIgnoredEvent("some_test", "", null));
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
@@ -180,7 +181,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
-    myEventsProcessor.onTestFinished("some_test", 10);
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("some_test", 10));
 
     assertEquals(0, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(0, myEventsProcessor.getFailedTestsSet().size());
@@ -224,8 +225,8 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnFinishedTesting_WithFailure() {
     onTestStarted("test");
-    myEventsProcessor.onTestFailure("test", "", "", false, null, null);
-    myEventsProcessor.onTestFinished("test", 10);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("test", "", "", false, null, null));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -240,8 +241,8 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnFinishedTesting_WithError() {
     onTestStarted("test");
-    myEventsProcessor.onTestFailure("test", "", "", true, null, null);
-    myEventsProcessor.onTestFinished("test", 10);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("test", "", "", true, null, null));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -256,8 +257,8 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   public void testOnFinishedTesting_WithIgnored() {
     onTestStarted("test");
-    myEventsProcessor.onTestIgnored("test", "", null);
-    myEventsProcessor.onTestFinished("test", 10);
+    myEventsProcessor.onTestIgnored(new TestIgnoredEvent("test", "", null));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -302,18 +303,18 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals("suite3", test2.getParent().getName());
     assertEquals("suite2", test2.getParent().getParent().getName());
 
-    myEventsProcessor.onTestFinished("test2", 10);
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test2", 10));
 
     //check that after finishing suite (suite3), current will be parent of finished suite (i.e. suite2)
-    myEventsProcessor.onSuiteFinished("suite3");
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite3"));
     onTestStarted("test3");
     final SMTestProxy test3 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test3"));
     assertEquals("suite2", test3.getParent().getName());
 
     //clean up
-    myEventsProcessor.onSuiteFinished("suite2");
-    myEventsProcessor.onSuiteFinished("suite1");
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite2"));
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite1"));
   }
 
   public void testOnSuiteStarted_WithLocation() {
@@ -336,17 +337,17 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   public void testConcurrentSuite_intersected() {
-    myEventsProcessor.onSuiteStarted("suite1", null);
-    myEventsProcessor.onTestStarted("suite2.test1", null);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite1", null));
+    myEventsProcessor.onTestStarted(new TestStartedEvent("suite2.test1", null));
 
     final SMTestProxy test1 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("suite2.test1"));
 
-    myEventsProcessor.onSuiteFinished("suite1");
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite1"));
 
-    myEventsProcessor.onSuiteStarted("suite2", null);
-    myEventsProcessor.onTestFinished("suite2.test1", 10);
-    myEventsProcessor.onSuiteFinished("suite2");
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite2", null));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("suite2.test1", 10));
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite2"));
 
     assertEquals("suite1", test1.getParent().getName());
 
@@ -371,7 +372,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   private void onTestStarted(final String testName, @Nullable final String locationUrl) {
-    myEventsProcessor.onTestStarted(testName, locationUrl);
+    myEventsProcessor.onTestStarted(new TestStartedEvent(testName, locationUrl));
     myResultsViewer.performUpdate();
   }
 
@@ -380,7 +381,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   private void onTestSuiteStarted(final String suiteName, @Nullable final String locationUrl) {
-    myEventsProcessor.onSuiteStarted(suiteName, locationUrl);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent(suiteName, locationUrl));
     myResultsViewer.performUpdate();
   }
 }

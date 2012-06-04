@@ -244,4 +244,16 @@ public class X {
       super.f(x);
     }
   }
+
+  void plusSupportedInFlags(@MagicConstant(flags ={Const.X, Const.Y, Const.Z}) int x) {
+    ////////////// GOOD
+    plusSupportedInFlags(Const.X + Const.Y);
+    plusSupportedInFlags(Const.Z + Const.X + Const.Y);
+    plusSupportedInFlags(Const.Z + (Const.X + Const.Y));
+
+    int ix = Const.X + Const.Y;
+    plusSupportedInFlags(ix);
+    plusSupportedInFlags(0);
+    plusSupportedInFlags(-1);
+  }
 }

@@ -4,7 +4,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgVcs;
@@ -98,7 +97,7 @@ public class HgHistoryTest extends HgSingleUserTest {
     runHgOnProjectRepo("rename", AFILE, BFILE);
     //don't commit 
 
-    LocalFileSystem.getInstance().refresh(false);
+    refreshVfs();
     ChangeListManager.getInstance(myProject).ensureUpToDate(false);
     
     final VcsHistorySession session = getHistorySession(BFILE);

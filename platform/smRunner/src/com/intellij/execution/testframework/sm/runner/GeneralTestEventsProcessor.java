@@ -15,8 +15,10 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
+import com.intellij.testIntegration.TestLocationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,33 +31,23 @@ import org.jetbrains.annotations.Nullable;
  * and name of test method
  */
 public interface GeneralTestEventsProcessor extends Disposable {
+  void onStartTesting();
+
   void onTestsCountInSuite(final int count);
 
-  void onTestStarted(@NotNull final String testName,
-                     @Nullable final String locationUrl);
+  void onTestStarted(@NotNull TestStartedEvent testStartedEvent);
 
-  void onTestFinished(@NotNull final String testName,
-                      final int duration);
+  void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent);
 
-  void onTestFailure(@NotNull final String testName,
-                     @NotNull final String localizedMessage,
-                     @Nullable final String stackTrace,
-                     final boolean testError,
-                     @Nullable final String comparisionFailureActualText,
-                     @Nullable final String comparisionFailureExpectedText);
+  void onTestFailure(@NotNull TestFailedEvent testFailedEvent);
 
-  void onTestIgnored(@NotNull final String testName,
-                     @NotNull final String ignoreComment,
-                     @Nullable final String stackTrace);
+  void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent);
 
-  void onTestOutput(@NotNull final String testName,
-                    @NotNull final String text,
-                    final boolean stdOut);
+  void onTestOutput(@NotNull TestOutputEvent testOutputEvent);
 
-  void onSuiteStarted(@NotNull final String suiteName,
-                      @Nullable final String locationUrl);
+  void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent);
 
-  void onSuiteFinished(@NotNull final String suiteName);
+  void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent);
 
   void onUncapturedOutput(@NotNull final String text,
                           final Key outputType);
@@ -76,4 +68,10 @@ public interface GeneralTestEventsProcessor extends Disposable {
   void onCustomProgressTestStarted();
   void onCustomProgressTestFailed();
   void onTestsReporterAttached();
+
+  void setLocator(@NotNull TestLocationProvider locator);
+
+  void addEventsListener(@NotNull SMTRunnerEventsListener viewer);
+
+  void onFinishTesting();
 }

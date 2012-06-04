@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.integrate.AlienDirtyScope;
 import org.junit.Assert;
@@ -34,7 +33,7 @@ public class SvnDeleteTest extends SvnTestCase {
     deleteFileInCommand(dir);
     verify(runSvn("status"), "D child", "D child" + File.separatorChar + "a.txt");
 
-    LocalFileSystem.getInstance().refresh(false);
+    refreshVfs();
 
     final AlienDirtyScope dirtyScope = new AlienDirtyScope();
     dirtyScope.addDir(new FilePathImpl(myWorkingCopyDir));

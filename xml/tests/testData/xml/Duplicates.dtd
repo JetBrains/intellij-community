@@ -1,0 +1,3 @@
+<!ELEMENT document EMPTY>
+<!ELEMENT <error>document2</error> EMPTY>
+<!ELEMENT <error>document2</error> EMPTY>

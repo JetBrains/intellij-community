@@ -15,7 +15,9 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.util.Key;
+import com.intellij.testIntegration.TestLocationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,46 +26,46 @@ import org.jetbrains.annotations.Nullable;
 */
 public class MockGeneralTestEventsProcessorAdapter implements GeneralTestEventsProcessor {
   private final StringBuilder myOutputBuffer = new StringBuilder();
+
+  @Override
+  public void onStartTesting() {
+  }
+
   @Override
   public void onTestsCountInSuite(int count) {
   }
 
   @Override
-  public void onTestStarted(@NotNull String testName, @Nullable String locationUrl) {
+  public void onTestStarted(@NotNull TestStartedEvent testStartedEvent) {
   }
 
   @Override
-  public void onTestFinished(@NotNull String testName, int duration) {
+  public void onTestFinished(@NotNull TestFinishedEvent testFinishedEvent) {
   }
 
   @Override
-  public void onTestFailure(@NotNull String testName,
-                            @NotNull String localizedMessage,
-                            @Nullable String stackTrace,
-                            boolean testError,
-                            @Nullable String comparisionFailureActualText,
-                            @Nullable String comparisionFailureExpectedText) {
+  public void onTestFailure(@NotNull TestFailedEvent testFailedEvent) {
   }
 
   @Override
-  public void onTestIgnored(@NotNull String testName, @NotNull String ignoreComment, @Nullable String stackTrace) {
+  public void onTestIgnored(@NotNull TestIgnoredEvent testIgnoredEvent) {
   }
 
   @Override
-  public void onTestOutput(@NotNull String testName, @NotNull String text, boolean stdOut) {
+  public void onTestOutput(@NotNull TestOutputEvent testOutputEvent) {
   }
 
   @Override
-  public void onSuiteStarted(@NotNull String suiteName, @Nullable String locationUrl) {
+  public void onSuiteStarted(@NotNull TestSuiteStartedEvent suiteStartedEvent) {
   }
 
   @Override
-  public void onSuiteFinished(@NotNull String suiteName) {
+  public void onSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent) {
   }
 
   @Override
   public void onUncapturedOutput(@NotNull String text, Key outputType) {
-    myOutputBuffer.append("[").append(outputType.toString()).append("]"+ text);
+    myOutputBuffer.append("[").append(outputType.toString()).append("]").append(text);
   }
 
   @Override
@@ -84,6 +86,18 @@ public class MockGeneralTestEventsProcessorAdapter implements GeneralTestEventsP
 
   @Override
   public void onTestsReporterAttached() {
+  }
+
+  @Override
+  public void setLocator(@NotNull TestLocationProvider locator) {
+  }
+
+  @Override
+  public void addEventsListener(@NotNull SMTRunnerEventsListener viewer) {
+  }
+
+  @Override
+  public void onFinishTesting() {
   }
 
   @Override

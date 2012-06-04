@@ -198,7 +198,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
   private static class MyResolver implements ResolveCache.Resolver {
     static final MyResolver INSTANCE = new MyResolver();
     
-    public PsiElement resolve(PsiReference psiReference, boolean incompleteCode) {
+    public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
       final TargetResolver.Result result = ((AntDomTargetReference)psiReference).doResolve(psiReference.getCanonicalText());
       if (result == null) {
         return null;

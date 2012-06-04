@@ -32,9 +32,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Contributor-based goto model
@@ -51,7 +54,13 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   }
 
   public ListCellRenderer getListCellRenderer() {
-    return new NavigationItemListCellRenderer();
+    return new NavigationItemListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(component) : component;
+      }
+    };
   }
 
   public String[] getNames(final boolean checkBoxState) {

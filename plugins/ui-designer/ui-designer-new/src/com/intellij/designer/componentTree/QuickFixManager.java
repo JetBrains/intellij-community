@@ -61,6 +61,10 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Co
   @Override
   protected Rectangle getErrorBounds() {
     ComponentTree component = (ComponentTree)myComponent;
-    return component.getPathBounds(component.getSelectionPath());
+    Rectangle bounds = component.getPathBounds(component.getSelectionPath());
+    if (bounds != null) {
+      bounds.x += ICON.getIconWidth();
+    }
+    return bounds;
   }
 }

@@ -302,7 +302,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
     }
 
     @Override
-    public void doCollectInformation(ProgressIndicator progress) {
+    public void doCollectInformation(@NotNull ProgressIndicator progress) {
       ensureIndexIsUpToDate(myDetectors);
     }
 

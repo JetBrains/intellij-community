@@ -37,7 +37,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
   }
 
   public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
-    Set<XmlTag> set = CollectionFactory.newTroveSet();
+    Set<XmlTag> set = CollectionFactory.troveSet();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
       set.addAll(qname.getTagsGetter().fun(handler));
     }

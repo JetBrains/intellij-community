@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimedReference;
 import gnu.trove.THashMap;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.SoftReference;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,7 +44,7 @@ public class JarHandlerBase {
 
   protected static class EntryInfo {
     public EntryInfo(final String shortName, final EntryInfo parent, final boolean directory) {
-      this.shortName = new String(shortName);
+      this.shortName = shortName;
       this.parent = parent;
       isDirectory = directory;
     }
