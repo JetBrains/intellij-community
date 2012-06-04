@@ -75,6 +75,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   @Override
   @NotNull
   public UsageView createUsageView(@NotNull UsageTarget[] targets, @NotNull Usage[] usages, @NotNull UsageViewPresentation presentation, Factory<UsageSearcher> usageSearcherFactory) {
+    mySearchHasBeenCancelled = false;
     UsageViewImpl usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
     appendUsages(usages, usageView);
     usageView.setSearchInProgress(false);

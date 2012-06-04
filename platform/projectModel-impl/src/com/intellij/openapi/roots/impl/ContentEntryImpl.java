@@ -43,9 +43,9 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.SimpleContentEntryImpl");
   @NotNull private final VirtualFilePointer myRoot;
   @NonNls public static final String ELEMENT_NAME = "content";
-  private final LinkedHashSet<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
-  private final TreeSet<ExcludeFolder> myExcludeFolders = new TreeSet<ExcludeFolder>(ContentFolderComparator.INSTANCE);
-  private final TreeSet<ExcludedOutputFolder> myExcludedOutputFolders = new TreeSet<ExcludedOutputFolder>(ContentFolderComparator.INSTANCE);
+  private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
+  private final Set<ExcludeFolder> myExcludeFolders = new TreeSet<ExcludeFolder>(ContentFolderComparator.INSTANCE);
+  private final Set<ExcludedOutputFolder> myExcludedOutputFolders = new TreeSet<ExcludedOutputFolder>(ContentFolderComparator.INSTANCE);
   @NonNls public static final String URL_ATTRIBUTE = "url";
 
   ContentEntryImpl(@NotNull VirtualFile file, @NotNull RootModelImpl m) {
@@ -72,16 +72,15 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   private void initSourceFolders(@NotNull Element e) throws InvalidDataException {
-    mySourceFolders.clear();
     for (Object child : e.getChildren(SourceFolderImpl.ELEMENT_NAME)) {
-      mySourceFolders.add(new SourceFolderImpl((Element)child, this));
+      addSourceFolder(new SourceFolderImpl((Element)child, this));
     }
   }
 
   private void initExcludeFolders(@NotNull Element e) throws InvalidDataException {
-    myExcludeFolders.clear();
     for (Object child : e.getChildren(ExcludeFolderImpl.ELEMENT_NAME)) {
-      myExcludeFolders.add(new ExcludeFolderImpl((Element)child, this));
+      ExcludeFolderImpl excludeFolder = new ExcludeFolderImpl((Element)child, this);
+      addExcludeFolder(excludeFolder);
     }
   }
 
@@ -178,6 +177,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   private SourceFolder addSourceFolder(SourceFolderImpl f) {
     mySourceFolders.add(f);
+    Disposer.register(this, f); //rewire source folder dispose parent from rootmodel to this content root
     return f;
   }
 
@@ -185,13 +185,21 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   public void removeSourceFolder(@NotNull SourceFolder sourceFolder) {
     assert !isDisposed();
     assertCanRemoveFrom(sourceFolder, mySourceFolders);
+    doRemove(sourceFolder);
+  }
+
+  private void doRemove(SourceFolder sourceFolder) {
     mySourceFolders.remove(sourceFolder);
+    Disposer.dispose((Disposable)sourceFolder);
   }
 
   @Override
   public void clearSourceFolders() {
     assert !isDisposed();
     getRootModel().assertWritable();
+    for (SourceFolder folder : mySourceFolders) {
+      Disposer.dispose((Disposable)folder);
+    }
     mySourceFolders.clear();
   }
 
@@ -223,16 +231,21 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     assert !isDisposed();
     assertCanRemoveFrom(excludeFolder, myExcludeFolders);
     myExcludeFolders.remove(excludeFolder);
+    Disposer.dispose((Disposable)excludeFolder);
   }
 
   @Override
   public void clearExcludeFolders() {
     assert !isDisposed();
     getRootModel().assertWritable();
+    for (ExcludeFolder excludeFolder : myExcludeFolders) {
+      Disposer.dispose((Disposable)excludeFolder);
+    }
     myExcludeFolders.clear();
   }
 
   private ExcludeFolder addExcludeFolder(ExcludeFolder f) {
+    Disposer.register(this, (Disposable)f);
     myExcludeFolders.add(f);
     return f;
   }
@@ -263,14 +276,14 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     for (final SourceFolder sourceFolder : mySourceFolders) {
       if (sourceFolder instanceof ClonableContentFolder) {
         ContentFolder folder = ((ClonableContentFolder)sourceFolder).cloneFolder(cloned);
-        cloned.mySourceFolders.add((SourceFolder)folder);
+        cloned.addSourceFolder((SourceFolderImpl)folder);
       }
     }
 
     for (final ExcludeFolder excludeFolder : myExcludeFolders) {
       if (excludeFolder instanceof ClonableContentFolder) {
         ContentFolder folder = ((ClonableContentFolder)excludeFolder).cloneFolder(cloned);
-        cloned.myExcludeFolders.add((ExcludeFolder)folder);
+        cloned.addExcludeFolder((ExcludeFolder)folder);
       }
     }
 
@@ -282,18 +295,6 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
 
     return cloned;
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
-    for (final Object mySourceFolder : mySourceFolders) {
-      ContentFolder contentFolder = (ContentFolder)mySourceFolder;
-      Disposer.dispose((Disposable)contentFolder);
-    }
-    for (final ExcludeFolder excludeFolder : myExcludeFolders) {
-      Disposer.dispose((Disposable)excludeFolder);
-    }
   }
 
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
@@ -317,18 +318,6 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     }
   }
 
-  //private static final class ContentFolderComparator implements Comparator<ContentFolder> {
-  //  public static final ContentFolderComparator INSTANCE = new ContentFolderComparator();
-  //
-  //  public int compare(ContentFolder o1, ContentFolder o2) {
-  //    if (o1 instanceof ContentFolderBaseImpl && o2 instanceof ContentFolderBaseImpl) {
-  //      ((ContentFolderBaseImpl)o1).compareTo((ContentFolderBaseImpl)o2);
-  //    }
-  //    int i = o1.getUrl().compareTo(o2.getUrl());
-  //    if (i != 0) return i;
-  //    return System.identityHashCode(o1) - System.identityHashCode(o2);
-  //  }
-  //}
   private static final class ContentFolderComparator implements Comparator<ContentFolder> {
     public static final ContentFolderComparator INSTANCE = new ContentFolderComparator();
 

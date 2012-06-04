@@ -88,6 +88,15 @@ public abstract class AbstractVcsTestCase {
     return result;
   }
 
+  protected static void refreshVfs() {
+    UsefulTestCase.edt(new Runnable() {
+      @Override
+      public void run() {
+        LocalFileSystem.getInstance().refresh(false);
+      }
+    });
+  }
+
   protected void initProject(final File clientRoot, String testName) throws Exception {
     String name = getClass().getName() + "." + testName;
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);

@@ -51,7 +51,7 @@ public class MavenResumeAction extends AnAction {
 
   private static final Logger LOG = Logger.getInstance(MavenResumeAction.class);
 
-  private static final Set<String> PARAMS_DISABLING_RESUME = CollectionFactory.newSet("-rf", "-resume-from", "-pl", "-projects", "-am",
+  private static final Set<String> PARAMS_DISABLING_RESUME = CollectionFactory.hashSet("-rf", "-resume-from", "-pl", "-projects", "-am",
                                                                                       "-also-make", "-amd", "-also-make-dependents");
 
   public static final int STATE_INITIAL = 0;

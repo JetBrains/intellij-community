@@ -70,13 +70,12 @@
               <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.stash.tooltip"/>
             </properties>
           </component>
-          <component id="d7fb3" class="javax.swing.JRadioButton" binding="myShelveRadioButton" default-binding="true">
+          <component id="d7fb3" class="javax.swing.JRadioButton" binding="myShelveRadioButton" custom-create="true" default-binding="true">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.shelve"/>
-              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.shelve.tooltip"/>
+              <selected value="false"/>
             </properties>
           </component>
         </children>

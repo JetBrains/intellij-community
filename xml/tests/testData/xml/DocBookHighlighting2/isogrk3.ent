@@ -1,0 +1,84 @@
+
+<!--
+     File isogrk3.ent produced by the XSL script entities.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to David Carlisle
+     via the public W3C list www-math@w3.org.
+
+     The numeric character values assigned to each entity
+     (should) match the Unicode assignments in Unicode 4.0.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+
+<!-- 
+     Version: $Id: isogrk3.ent,v 1.2 2003/12/08 15:14:43 davidc Exp $
+
+       Public identifier: ISO 8879:1986//ENTITIES Greek Symbols//EN//XML
+       System identifier: http://www.w3.org/2003/entities/iso8879/isogrk3.ent
+
+     The public identifier should always be used verbatim.
+     The system identifier may be changed to suit local requirements.
+
+     Typical invocation:
+
+       <!ENTITY % isogrk3 PUBLIC
+         "ISO 8879:1986//ENTITIES Greek Symbols//EN//XML"
+         "http://www.w3.org/2003/entities/iso8879/isogrk3.ent"
+       >
+       %isogrk3;
+
+-->
+
+<!ENTITY alpha            "&#x003B1;" ><!--GREEK SMALL LETTER ALPHA -->
+<!ENTITY beta             "&#x003B2;" ><!--GREEK SMALL LETTER BETA -->
+<!ENTITY chi              "&#x003C7;" ><!--GREEK SMALL LETTER CHI -->
+<!ENTITY Delta            "&#x00394;" ><!--GREEK CAPITAL LETTER DELTA -->
+<!ENTITY delta            "&#x003B4;" ><!--GREEK SMALL LETTER DELTA -->
+<!ENTITY epsi             "&#x003F5;" ><!--GREEK LUNATE EPSILON SYMBOL -->
+<!ENTITY epsis            "&#x003F5;" ><!--GREEK LUNATE EPSILON SYMBOL -->
+<!ENTITY epsiv            "&#x003B5;" ><!--GREEK SMALL LETTER EPSILON -->
+<!ENTITY eta              "&#x003B7;" ><!--GREEK SMALL LETTER ETA -->
+<!ENTITY Gamma            "&#x00393;" ><!--GREEK CAPITAL LETTER GAMMA -->
+<!ENTITY gamma            "&#x003B3;" ><!--GREEK SMALL LETTER GAMMA -->
+<!ENTITY gammad           "&#x003DD;" ><!--GREEK SMALL LETTER DIGAMMA -->
+<!ENTITY iota             "&#x003B9;" ><!--GREEK SMALL LETTER IOTA -->
+<!ENTITY kappa            "&#x003BA;" ><!--GREEK SMALL LETTER KAPPA -->
+<!ENTITY kappav           "&#x003F0;" ><!--GREEK KAPPA SYMBOL -->
+<!ENTITY Lambda           "&#x0039B;" ><!--GREEK CAPITAL LETTER LAMDA -->
+<!ENTITY lambda           "&#x003BB;" ><!--GREEK SMALL LETTER LAMDA -->
+<!ENTITY mu               "&#x003BC;" ><!--GREEK SMALL LETTER MU -->
+<!ENTITY nu               "&#x003BD;" ><!--GREEK SMALL LETTER NU -->
+<!ENTITY Omega            "&#x003A9;" ><!--GREEK CAPITAL LETTER OMEGA -->
+<!ENTITY omega            "&#x003C9;" ><!--GREEK SMALL LETTER OMEGA -->
+<!ENTITY Phi              "&#x003A6;" ><!--GREEK CAPITAL LETTER PHI -->
+<!ENTITY phis             "&#x003D5;" ><!--GREEK PHI SYMBOL -->
+<!ENTITY phiv             "&#x003C6;" ><!--GREEK SMALL LETTER PHI -->
+<!ENTITY Pi               "&#x003A0;" ><!--GREEK CAPITAL LETTER PI -->
+<!ENTITY pi               "&#x003C0;" ><!--GREEK SMALL LETTER PI -->
+<!ENTITY piv              "&#x003D6;" ><!--GREEK PI SYMBOL -->
+<!ENTITY Psi              "&#x003A8;" ><!--GREEK CAPITAL LETTER PSI -->
+<!ENTITY psi              "&#x003C8;" ><!--GREEK SMALL LETTER PSI -->
+<!ENTITY rho              "&#x003C1;" ><!--GREEK SMALL LETTER RHO -->
+<!ENTITY rhov             "&#x003F1;" ><!--GREEK RHO SYMBOL -->
+<!ENTITY Sigma            "&#x003A3;" ><!--GREEK CAPITAL LETTER SIGMA -->
+<!ENTITY sigma            "&#x003C3;" ><!--GREEK SMALL LETTER SIGMA -->
+<!ENTITY sigmav           "&#x003C2;" ><!--GREEK SMALL LETTER FINAL SIGMA -->
+<!ENTITY tau              "&#x003C4;" ><!--GREEK SMALL LETTER TAU -->
+<!ENTITY Theta            "&#x00398;" ><!--GREEK CAPITAL LETTER THETA -->
+<!ENTITY thetas           "&#x003B8;" ><!--GREEK SMALL LETTER THETA -->
+<!ENTITY thetav           "&#x003D1;" ><!--GREEK THETA SYMBOL -->
+<!ENTITY Upsi             "&#x003D2;" ><!--GREEK UPSILON WITH HOOK SYMBOL -->
+<!ENTITY upsi             "&#x003C5;" ><!--GREEK SMALL LETTER UPSILON -->
+<!ENTITY Xi               "&#x0039E;" ><!--GREEK CAPITAL LETTER XI -->
+<!ENTITY xi               "&#x003BE;" ><!--GREEK SMALL LETTER XI -->
+<!ENTITY zeta             "&#x003B6;" ><!--GREEK SMALL LETTER ZETA -->

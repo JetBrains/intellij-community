@@ -40,4 +40,9 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
   @NotNull
   @Override
   public abstract SingleEntryIndexer<V> getIndexer();
+
+  @Override
+  public boolean isKeyHighlySelective() {
+    return true;
+  }
 }

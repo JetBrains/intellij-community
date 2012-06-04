@@ -260,6 +260,9 @@ public abstract class RadComponent {
   public void copyTo(Element parentElement) throws Exception {
   }
 
+  public void morphingTo(MetaModel target) throws Exception {
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Utils

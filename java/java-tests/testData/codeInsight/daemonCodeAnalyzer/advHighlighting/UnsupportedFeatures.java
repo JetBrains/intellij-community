@@ -37,6 +37,8 @@ class UnsupportedFeatures {
     catch (<error descr="Multi-catches are not supported at this language level">FileNotFoundException | IOException e</error>) { e.printStackTrace(); }
 
     try <error descr="Try-with-resources are not supported at this language level">(Reader r = new FileReader("/dev/null"))</error> { }
+
+    I i = <error descr="Method references are not supported at this language level">UnsupportedFeatures::m</error>;
   }
 
   interface I {

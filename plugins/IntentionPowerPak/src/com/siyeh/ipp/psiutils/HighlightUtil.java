@@ -15,7 +15,14 @@
  */
 package com.siyeh.ipp.psiutils;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.MacroCallNode;
+import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.application.Application;
@@ -27,11 +34,16 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -117,5 +129,33 @@ public class HighlightUtil {
       builder.append(element.getText());
     }
     return builder;
+  }
+
+  public static void showRenameTemplate(PsiElement context, PsiNameIdentifierOwner element) {
+    context = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(context);
+    final Query<PsiReference> query = ReferencesSearch.search(element, element.getUseScope());
+    final Collection<PsiReference> references = query.findAll();
+    final Project project = context.getProject();
+    final FileEditorManager fileEditorManager =
+      FileEditorManager.getInstance(project);
+    final Editor editor = fileEditorManager.getSelectedTextEditor();
+    if (editor == null) {
+      return;
+    }
+    final TemplateBuilderImpl builder = new TemplateBuilderImpl(context);
+    final Expression macroCallNode = new MacroCallNode(
+      new SuggestVariableNameMacro());
+    final PsiElement identifier = element.getNameIdentifier();
+    builder.replaceElement(identifier, "PATTERN", macroCallNode, true);
+    for (PsiReference reference : references) {
+      builder.replaceElement(reference, "PATTERN", "PATTERN", false);
+    }
+    final Template template = builder.buildInlineTemplate();
+    final TextRange textRange = context.getTextRange();
+    final int startOffset = textRange.getStartOffset();
+    editor.getCaretModel().moveToOffset(startOffset);
+    final TemplateManager templateManager =
+      TemplateManager.getInstance(project);
+    templateManager.startTemplate(editor, template);
   }
 }

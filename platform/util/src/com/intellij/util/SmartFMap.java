@@ -41,35 +41,41 @@ public class SmartFMap<K,V> implements Map<K,V> {
   }
 
   public SmartFMap<K, V> plus(@NotNull K key, V value) {
-    if (myMap instanceof Map) {
-      THashMap<K, V> newMap = new THashMap<K, V>((Map<K, V>)myMap);
+    return new SmartFMap<K, V>(doPlus(myMap, key, value, false));
+  }
+
+  private static Object doPlus(Object oldMap, Object key, Object value, boolean inPlace) {
+    if (oldMap instanceof Map) {
+      Map newMap = inPlace ? (Map)oldMap : new THashMap((Map)oldMap);
       newMap.put(key, value);
-      return new SmartFMap<K, V>(newMap);
+      return newMap;
     }
 
-    Object[] array = (Object[])myMap;
+    Object[] array = (Object[])oldMap;
     for (int i = 0; i < array.length; i += 2) {
       if (key.equals(array[i])) {
-        Object[] newArray = new Object[array.length];
-        System.arraycopy(array, 0, newArray, 0, array.length);
+        Object[] newArray = inPlace ? array : new Object[array.length];
+        if (!inPlace) {
+          System.arraycopy(array, 0, newArray, 0, array.length);
+        }
         newArray[i + 1] = value;
-        return new SmartFMap<K, V>(newArray);
+        return newArray;
       }
     }
     if (array.length == 2 * ARRAY_THRESHOLD) {
-      THashMap<K, V> map = new THashMap<K, V>();
+      THashMap map = new THashMap();
       for (int i = 0; i < array.length; i += 2) {
-        map.put((K)array[i], (V)array[i + 1]);
+        map.put(array[i], array[i + 1]);
       }
       map.put(key, value);
-      return new SmartFMap<K, V>(map);
+      return map;
     }
 
     Object[] newArray = new Object[array.length + 2];
     System.arraycopy(array, 0, newArray, 0, array.length);
     newArray[array.length] = key;
     newArray[array.length + 1] = value;
-    return new SmartFMap<K, V>(newArray);
+    return newArray;
   }
 
   public SmartFMap<K, V> minus(@NotNull K key) {
@@ -156,16 +162,21 @@ public class SmartFMap<K,V> implements Map<K,V> {
   @Override
   @Nullable
   public V get(Object key) {
+    return (V)doGet(myMap, key);
+  }
+
+  @Nullable
+  private static Object doGet(Object map, Object key) {
     if (key == null) {
       return null;
     }
-    if (myMap instanceof Map) {
-      return ((Map<K, V>)myMap).get(key);
+    if (map instanceof Map) {
+      return ((Map)map).get(key);
     }
-    Object[] array = (Object[])myMap;
+    Object[] array = (Object[])map;
     for (int i = 0; i < array.length; i += 2) {
       if (key.equals(array[i])) {
-        return (V)array[i + 1];
+        return array[i + 1];
       }
     }
     return null;

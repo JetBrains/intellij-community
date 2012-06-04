@@ -17,14 +17,13 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.ContextLogger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 class MergeBuilder {
-  //private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeBuilder");
   private final ContextLogger LOG;
   private final int[] myProcessed = new int[]{0, 0, 0};
   private final ArrayList<MergeFragment> myResult = new ArrayList<MergeFragment>();
@@ -55,7 +54,7 @@ class MergeBuilder {
     LOG.assertTrue(myPairs[0].getBase() == myPairs[1].getBase());
     LOG.assertTrue(myPairs[0].getBase() > myProcessed[1]);
     addMergeFragment(myPairs[0].processVersion(myProcessed),
-                     proccesBaseChange(myPairs[0]),
+                     processBaseChange(myPairs[0]),
                      myPairs[1].processVersion(myProcessed));
     skipProcessed();
   }
@@ -108,7 +107,7 @@ class MergeBuilder {
     skipProcessed();
   }
 
-  private TextRange proccesBaseChange(EqualPair workingPair) {
+  private TextRange processBaseChange(EqualPair workingPair) {
     int base = workingPair.getBase();
     TextRange change = new TextRange(myProcessed[1], base);
     int otherBase = myPairs[workingPair.getSide().otherSide().getIndex()].getBase();
@@ -131,8 +130,8 @@ class MergeBuilder {
     skipProcessed();
   }
 
-  private void addMergeFragment(TextRange left, TextRange base, TextRange right) {
-    myResult.add(new MergeFragment(new TextRange[]{left, base, right}));
+  private void addMergeFragment(@Nullable TextRange left, TextRange base, @Nullable TextRange right) {
+    myResult.add(new MergeFragment(left, base, right));
   }
 
   private void skipProcessed() {
@@ -149,10 +148,14 @@ class MergeBuilder {
   }
 
   public List<MergeFragment> finish(int leftLength, int baseLength, int rightLength) {
-    int[] lengths = new int[]{leftLength, baseLength, rightLength};
-    if (isProcessedUpto(lengths)) return myResult;
+    int[] lengths = new int[]{ leftLength, baseLength, rightLength };
+    if (isProcessedUpto(lengths)) {
+      return myResult;
+    }
     int[] afterEnds = new int[3];
-    for (int i = 0; i < lengths.length; i++) afterEnds[i] = lengths[i] + 1;
+    for (int i = 0; i < lengths.length; i++) {
+      afterEnds[i] = lengths[i] + 1;
+    }
     FragmentSide notProcessedSide = getNotProcessedSide();
     if (notProcessedSide == null) {
       addTailChange(lengths);
@@ -160,17 +163,15 @@ class MergeBuilder {
     }
     myPairs[notProcessedSide.getIndex()].grow(1);
     FragmentSide processedSide = notProcessedSide.otherSide();
-    add(createRange(lengths, afterEnds, 1),
-        createRange(lengths, afterEnds, processedSide.getMergeIndex()), processedSide);
-    if (!isProcessedUpto(afterEnds))
-      add(createRange(lengths, afterEnds, 1),
-          createRange(lengths, afterEnds, notProcessedSide.getMergeIndex()),
-          notProcessedSide);
+    add(createRange(lengths, afterEnds, 1), createRange(lengths, afterEnds, processedSide.getMergeIndex()), processedSide);
+    if (!isProcessedUpto(afterEnds)) {
+      add(createRange(lengths, afterEnds, 1), createRange(lengths, afterEnds, notProcessedSide.getMergeIndex()), notProcessedSide);
+    }
     LOG.assertTrue(isProcessedUpto(afterEnds));
     return myResult;
   }
 
-  private TextRange createRange(int[] starts, int[] ends, int column) {
+  private static TextRange createRange(int[] starts, int[] ends, int column) {
     return new TextRange(starts[column], ends[column]);
   }
 
@@ -180,9 +181,10 @@ class MergeBuilder {
       if (i != 1 && myProcessed[i] == lengths[i]) tailChange[i] = null;
       else tailChange[i] = new TextRange(myProcessed[i], lengths[i]);
     }
-    myResult.add(new MergeFragment(tailChange));
+    myResult.add(new MergeFragment(tailChange[0], tailChange[1], tailChange[2]));
   }
 
+  @Nullable
   private FragmentSide getNotProcessedSide() {
     EqualPair left = myPairs[0];
     EqualPair right = myPairs[1];
@@ -263,57 +265,6 @@ class MergeBuilder {
 
     public void grow(int delta) {
       myLength += delta;
-    }
-  }
-
-  public static class MergeFragment {
-    private final TextRange[] myRanges;
-
-    public MergeFragment(TextRange[] ranges) {
-      myRanges = ranges;
-    }
-
-    public TextRange[] getRanges() {
-      return myRanges;
-    }
-
-    public boolean equals(Object obj) {
-      if (!(obj instanceof MergeFragment)) return false;
-      MergeFragment other = (MergeFragment)obj;
-      for (int i = 0; i < myRanges.length; i++) {
-        TextRange range = myRanges[i];
-        if (!Comparing.equal(range, other.myRanges[i])) return false;
-      }
-      return true;
-    }
-
-    public int hashCode() {
-      int result = 0;
-      for (int i = 0; i < myRanges.length; i++) {
-        TextRange range = myRanges[i];
-        result ^= range == null ? i : range.hashCode();
-      }
-      return result;
-    }
-
-    public String toString() {
-      StringBuffer buffer = new StringBuffer();
-      buffer.append("<");
-      for (int i = 0; i < myRanges.length; i++) {
-        TextRange range = myRanges[i];
-        buffer.append(range != null ? range.toString() : "-----");
-        if (i != myRanges.length - 1) buffer.append(", ");
-      }
-      buffer.append(">");
-      return buffer.toString();
-    }
-
-    public static MergeFragment notConflict(TextRange baseChange, TextRange versionChange, FragmentSide versionSide) {
-      TextRange[] ranges = new TextRange[3];
-      ranges[1] = baseChange;
-      ranges[versionSide.getMergeIndex()] = versionChange;
-      ranges[versionSide.otherSide().getMergeIndex()] = null;
-      return new MergeFragment(ranges);
     }
   }
 }

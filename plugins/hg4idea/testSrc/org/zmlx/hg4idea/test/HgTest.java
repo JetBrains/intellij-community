@@ -18,10 +18,8 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
-import com.intellij.testFramework.TestClientRunner;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -176,7 +174,7 @@ public abstract class HgTest extends AbstractVcsTestCase {
   protected VirtualFile makeFile(File file) throws IOException {
     file.createNewFile();
     VcsDirtyScopeManager.getInstance(myProject).fileDirty(myWorkingCopyDir);
-    LocalFileSystem.getInstance().refresh(false);
+    refreshVfs();
     return VcsUtil.getVirtualFile(file);
   }
 

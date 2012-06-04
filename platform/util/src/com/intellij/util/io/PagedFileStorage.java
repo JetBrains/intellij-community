@@ -405,9 +405,11 @@ public class PagedFileStorage implements Forceable {
 
   public void force() {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
-    myStorageLockContext.myStorageLock.flushBuffersForOwner(myStorageIndex, myStorageLockContext);
+    if (isDirty) {
+      myStorageLockContext.myStorageLock.flushBuffersForOwner(myStorageIndex, myStorageLockContext);
+      isDirty = false;
+    }
 
-    isDirty = false;
     if (IOStatistics.DEBUG) {
       long finished = System.currentTimeMillis();
       if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
@@ -527,9 +529,7 @@ public class PagedFileStorage implements Forceable {
       }
       ++myMappingChangeCount;
       int min = Math.min((int)(owner.length() - off), owner.myPageSize);
-      ByteBufferWrapper wrapper = min != owner.myPageSize ?  // last, non aligned buffer allocate directly, it is much faster to unmap it during resize
-                                  ByteBufferWrapper.readWriteDirect(owner.myFile, off, min):
-                                  ByteBufferWrapper.readWrite(owner.myFile, off, min);
+      ByteBufferWrapper wrapper = ByteBufferWrapper.readWriteDirect(owner.myFile, off, min);
       IOException oome = null;
       while (true) {
         try {

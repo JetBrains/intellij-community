@@ -1,0 +1,4 @@
+<!ELEMENT aaa >
+<!ELEMENT name (aaa)>
+<!ENTITY entity <caret>>
+<!ELEMENT name2 (&entity;)>

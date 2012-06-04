@@ -53,7 +53,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   }
 
   @Override
-  public final void doCollectInformation(final ProgressIndicator progress) {
+  public final void doCollectInformation(@NotNull final ProgressIndicator progress) {
     myFinished = false;
     collectInformationWithProgress(progress);
     repaintTrafficIcon();
@@ -130,7 +130,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
 
     @Override
-    public void doCollectInformation(final ProgressIndicator progress) {
+    public void doCollectInformation(@NotNull final ProgressIndicator progress) {
     }
 
     @Override

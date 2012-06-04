@@ -15,13 +15,16 @@ import com.intellij.util.descriptors.ConfigFileMetaData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+
 /**
  * @author nik
  */
 public class ConfigFileImpl implements ConfigFile {
   @NotNull private ConfigFileInfo myInfo;
   private final VirtualFilePointer myFilePointer;
-  private volatile PsiFile myPsiFile;
+  private volatile Reference<PsiFile> myPsiFile;
   private final ConfigFileContainerImpl myContainer;
   private final Project myProject;
   private long myModificationCount;
@@ -68,7 +71,8 @@ public class ConfigFileImpl implements ConfigFile {
   @Override
   @Nullable
   public PsiFile getPsiFile() {
-    PsiFile psiFile = myPsiFile;
+    Reference<PsiFile> ref = myPsiFile;
+    PsiFile psiFile = ref == null ? null : ref.get();
 
     if (psiFile != null && psiFile.isValid()) {
       return psiFile;
@@ -79,7 +83,7 @@ public class ConfigFileImpl implements ConfigFile {
 
     psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
 
-    myPsiFile = psiFile;
+    myPsiFile = new SoftReference<PsiFile>(psiFile);
 
     return psiFile;
   }

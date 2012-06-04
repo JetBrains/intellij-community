@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Set;
 
 public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBase {
-  private static final Set<Character> NATURAL = CollectionFactory.newTroveSet('(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'');
-  private static final Set<Character> SENTENCE_END = CollectionFactory.newTroveSet('.', '!', '?');
+  private static final Set<Character> NATURAL = CollectionFactory.troveSet('(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'');
+  private static final Set<Character> SENTENCE_END = CollectionFactory.troveSet('.', '!', '?');
 
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiPlainText || e instanceof PsiComment;

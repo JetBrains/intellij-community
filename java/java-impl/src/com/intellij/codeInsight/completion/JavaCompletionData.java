@@ -22,7 +22,9 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
@@ -44,10 +46,11 @@ import org.jetbrains.annotations.NonNls;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
 
-public class JavaCompletionData extends JavaAwareCompletionData{
+public class JavaCompletionData extends JavaAwareCompletionData {
+  private static final @NonNls String[] BLOCK_FINALIZERS = {"{", "}", ";", ":", "else"};
 
-  private static final @NonNls String[] ourBlockFinalizers = {"{", "}", ";", ":", "else"};
   private static final PsiElementPattern<PsiElement,?> AFTER_DOT = psiElement().afterLeaf(".");
+
   public static final LeftNeighbour INSTANCEOF_PLACE = new LeftNeighbour(new OrFilter(
       new ReferenceOnFilter(new ClassFilter(PsiVariable.class)),
       new TextFilter(PsiKeyword.THIS),
@@ -57,16 +60,19 @@ public class JavaCompletionData extends JavaAwareCompletionData{
           new ParentElementFilter(new ClassFilter(PsiExpression.class)),
           new ClassFilter(PsiExpression.class))))),
       new AndFilter(new TextFilter("]"), new ParentElementFilter(new ClassFilter(PsiArrayAccessExpression.class)))));
+
   public static final PsiJavaElementPattern.Capture<PsiElement> VARIABLE_AFTER_FINAL =
-    PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.FINAL).inside(PsiDeclarationStatement.class);
+    psiElement().afterLeaf(PsiKeyword.FINAL).inside(PsiDeclarationStatement.class);
+
   public static final LeftNeighbour AFTER_TRY_BLOCK = new LeftNeighbour(new AndFilter(
     new TextFilter("}"),
     new ParentElementFilter(new AndFilter(
       new LeftNeighbour(new TextFilter(PsiKeyword.TRY)),
       new ParentElementFilter(new ClassFilter(PsiTryStatement.class)))
     )));
+
   public static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_PARAMETER_LIST =
-    PsiJavaPatterns.psiElement().withParent(
+    psiElement().withParent(
       psiElement(PsiJavaCodeReferenceElement.class).insideStarting(
         psiElement().withTreeParent(
           psiElement(PsiParameterList.class).andNot(psiElement(PsiAnnotationParameterList.class)))));
@@ -86,7 +92,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       new LeftNeighbour(
           new OrFilter(
               new AndFilter (
-                  new TextFilter(ourBlockFinalizers),
+                  new TextFilter(BLOCK_FINALIZERS),
                   new NotFilter (
                     new SuperParentFilter(new ClassFilter(PsiAnnotation.class))
                   )
@@ -109,14 +115,14 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     START_OF_CODE_FRAGMENT
   );
 
-  static final ElementPattern<PsiElement> START_SWITCH = psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchStatement.class));
+  static final ElementPattern<PsiElement> START_SWITCH =
+    psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchStatement.class));
 
   private static final ElementPattern<PsiElement> SUPER_OR_THIS_PATTERN =
     and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
         not(psiElement().afterLeaf(PsiKeyword.CASE)),
         not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.THIS, PsiKeyword.SUPER))),
         not(START_SWITCH));
-
 
   public static final AndFilter CLASS_START = new AndFilter(
     new OrFilter(
@@ -135,14 +141,16 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     PsiKeyword.CHAR, PsiKeyword.BYTE
   };
 
-  final static ElementFilter CLASS_BODY = new OrFilter(
+  private static final ElementFilter CLASS_BODY = new OrFilter(
     new AfterElementFilter(new TextFilter("{")),
     new ScopeFilter(new ClassFilter(JspClassLevelDeclarationStatement.class)));
+
   public static final ElementPattern<PsiElement> START_FOR =
     psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class,
                                                                                     PsiExpressionStatement.class, PsiForStatement.class);
   private static final PsiJavaElementPattern.Capture<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass()));
+
   public static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
     psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
       not(
@@ -312,7 +320,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     }
   }
 
-  protected void initVariantsInMethodScope() {
+  private void initVariantsInMethodScope() {
 // Completion for classes in method throws section
 // position
     {
@@ -653,7 +661,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     return false;
   }
 
-  private static LookupElement createKeyword(PsiElement position, String keyword) {
+  protected static LookupElement createKeyword(PsiElement position, String keyword) {
     return BasicExpressionCompletionContributor.createKeywordLookupItem(position, keyword);
   }
 
@@ -694,7 +702,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
     return false;
   }
 
-  private static class OverrideableSpace extends TailTypeDecorator<LookupElement> {
+  protected static class OverrideableSpace extends TailTypeDecorator<LookupElement> {
     private final TailType myTail;
 
     public OverrideableSpace(LookupElement keyword, TailType tail) {

@@ -34,15 +34,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -53,7 +50,6 @@ public class EditorFactoryImpl extends EditorFactory {
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
   private final List<Editor> myEditors = new ArrayList<Editor>();
-  private static final Key<String> EDITOR_CREATOR = new Key<String>("Editor creator");
 
   public EditorFactoryImpl(ProjectManager projectManager) {
     projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
@@ -94,7 +90,7 @@ public class EditorFactoryImpl extends EditorFactory {
       final Editor editor = myEditors.get(i);
       if (editor.getProject() == project || editor.getProject() == null) {
         try {
-          LOG.error(notReleasedError(editor));
+          throwNotReleasedError(editor);
         }
         finally {
           releaseEditor(editor);
@@ -104,21 +100,16 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @NonNls
-  public static String notReleasedError(@NotNull Editor editor) {
-    final String creator = getCreator(editor);
-    if (creator == null) {
-      return "Editor of " + editor.getClass() +
-                " and the following text hasn't been released:\n" + editor.getDocument().getText();
+  public static void throwNotReleasedError(@NotNull Editor editor) {
+    if (editor instanceof EditorImpl) {
+      ((EditorImpl)editor).throwDisposalError("Editor of " + editor.getClass() + " hasn't been released:");
     }
     else {
-      return "Editor of " + editor.getClass() + " hasn't been released:\n" + creator;
+      throw new RuntimeException("Editor of " + editor.getClass() +
+                                 " and the following text hasn't been released:\n" + editor.getDocument().getText());
     }
   }
 
-  @Nullable
-  static String getCreator(@NotNull Editor editor) {
-    return editor.getUserData(EDITOR_CREATOR);
-  }
 
   @Override
   public void disposeComponent() {
@@ -195,11 +186,7 @@ public class EditorFactoryImpl extends EditorFactory {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of Editor's:" + myEditors.size());
-      //Thread.dumpStack();
     }
-
-    String text = StringUtil.getThrowableText(new RuntimeException("Editor created"));
-    editor.putUserData(EDITOR_CREATOR, text);
 
     return editor;
   }
@@ -210,7 +197,6 @@ public class EditorFactoryImpl extends EditorFactory {
       ((EditorImpl)editor).release();
     }
     finally {
-      editor.putUserData(EDITOR_CREATOR, null);
       myEditors.remove(editor);
       myEditorFactoryEventDispatcher.getMulticaster().editorReleased(new EditorFactoryEvent(this, editor));
 

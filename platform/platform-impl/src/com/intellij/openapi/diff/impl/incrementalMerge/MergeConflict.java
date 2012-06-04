@@ -15,25 +15,49 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.RangeInvalidListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.MergeConflict");
-  private final Change.HighlighterHolder myCommonHighlighterHolder = new Change.HighlighterHolder();
-  private final MergeList myMergeList;
-  private final DiffRangeMarker myCommonRange;
-  private ConflictChange[] myChanges;
+/**
+ * Represents a merge conflict, i.e. two {@link ConflictChange conflicting changes}, one from left, another from right.
+ */
+class MergeConflict extends ChangeSide implements DiffRangeMarker.RangeInvalidListener {
 
-  private MergeConflict(TextRange commonRange, MergeList mergeList) {
+  @NotNull private final MergeList myMergeList;
+  @NotNull private DiffRangeMarker myCommonRange;
+  @Nullable private ConflictChange myLeftChange;
+  @Nullable private ConflictChange myRightChange;
+  @NotNull private final ChangeHighlighterHolder myCommonHighlighterHolder;
+
+  MergeConflict(TextRange commonRange, MergeList mergeList, TextRange leftMarker, TextRange rightMarker) {
     myCommonRange = new DiffRangeMarker((DocumentEx)mergeList.getBaseDocument(),commonRange, this);
     myMergeList = mergeList;
+    myCommonHighlighterHolder = new ChangeHighlighterHolder();
+    myLeftChange = new ConflictChange(this, FragmentSide.SIDE1, leftMarker, mergeList.getLeftChangeList());
+    myRightChange = new ConflictChange(this, FragmentSide.SIDE2, rightMarker, mergeList.getRightChangeList());
   }
 
-  public Change.HighlighterHolder getHighlighterHolder() {
+  private MergeConflict(TextRange commonRange, MergeList mergeList, ChangeHighlighterHolder highlighterHolder,
+                        ConflictChange leftChange, ConflictChange rightChange) {
+    myCommonRange = new DiffRangeMarker((DocumentEx)mergeList.getBaseDocument(),commonRange, this);
+    myMergeList = mergeList;
+    myCommonHighlighterHolder = highlighterHolder;
+    myLeftChange = leftChange;
+    myRightChange = rightChange;
+  }
+
+  public MergeConflict deriveSideForNotAppliedChange(TextRange baseRange, @Nullable ConflictChange originalChange, ConflictChange otherChange) {
+    ChangeHighlighterHolder highlighterHolder = new ChangeHighlighterHolder();
+    MergeConflict mergeConflict = new MergeConflict(baseRange, myMergeList, highlighterHolder, originalChange, otherChange);
+    highlighterHolder.highlight(mergeConflict, myCommonHighlighterHolder.getEditor(), ChangeType.CONFLICT);
+    return mergeConflict;
+  }
+
+  public ChangeHighlighterHolder getHighlighterHolder() {
     return myCommonHighlighterHolder;
   }
 
@@ -41,25 +65,57 @@ class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.Ran
     return myCommonRange;
   }
 
-  public static Change[] createChanges(TextRange leftMarker, TextRange baseMarker, TextRange rightMarker, MergeList mergeList) {
-    MergeConflict conflict = new MergeConflict(baseMarker, mergeList);
-    return conflict.createChanges(leftMarker, rightMarker);
+  @Nullable
+  public ConflictChange getLeftChange() {
+    return myLeftChange;
   }
 
-  private Change[] createChanges(TextRange leftMarker, TextRange rightMarker) {
-    LOG.assertTrue(myChanges == null);
-    myChanges = new ConflictChange[]{new ConflictChange(this, FragmentSide.SIDE1, leftMarker),
-                                     new ConflictChange(this, FragmentSide.SIDE2, rightMarker)};
-    return myChanges;
+  @Nullable
+  public ConflictChange getRightChange() {
+    return myRightChange;
+  }
+
+  @Nullable
+  ConflictChange getOtherChange(ConflictChange change) {
+    if (change == myLeftChange) {
+      return myRightChange;
+    }
+    else if (change == myRightChange) {
+      return myLeftChange;
+    }
+    else {
+      throw new IllegalStateException("Unexpected change: " + change);
+    }
   }
 
   public void conflictRemoved() {
-    for (ConflictChange change : myChanges) {
+    removeHighlighters(myLeftChange);
+    removeHighlighters(myRightChange);
+    myCommonHighlighterHolder.removeHighlighters();
+    myMergeList.removeChanges(myLeftChange, myRightChange);
+    myCommonRange.removeListener(this);
+  }
+
+  public void setRange(DiffRangeMarker range) {
+    myCommonRange = range;
+  }
+
+  public void removeOtherChange(ConflictChange change) {
+    if (change == myLeftChange) {
+      myRightChange = null;
+    }
+    else if (change == myRightChange) {
+      myLeftChange = null;
+    }
+    else {
+      throw new IllegalStateException("Unexpected change: " + change);
+    }
+  }
+
+  private static void removeHighlighters(@Nullable ConflictChange change) {
+    if (change != null) {
       change.getOriginalSide().getHighlighterHolder().removeHighlighters();
     }
-    myCommonHighlighterHolder.removeHighlighters();
-    myMergeList.removeChanges(myChanges);
-    myCommonRange.removeListener(this);
   }
 
   public Document getOriginalDocument(FragmentSide mergeSide) {
@@ -70,12 +126,9 @@ class MergeConflict extends ChangeType.ChangeSide implements DiffRangeMarker.Ran
     conflictRemoved();
   }
 
-  public void onChangeRemoved(FragmentSide mergeSide, ConflictChange conflictChange) {
-    LOG.assertTrue(myChanges[mergeSide.getIndex()] == conflictChange);
-    myChanges[mergeSide.getIndex()] = null;
-  }
-
+  @NotNull
   public MergeList getMergeList() {
     return myMergeList;
   }
+
 }

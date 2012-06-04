@@ -16,7 +16,7 @@
 package com.intellij.lang.java.parser.partial;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.JavaParsers;
+import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 
 public class StatementParserTest extends JavaParsingTestCase {
@@ -154,7 +154,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   private static class MyBlockTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParsers.STATEMENT_PARSER.parseCodeBlockDeep(builder, true);
+      JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
     }
   }
 
@@ -164,7 +164,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   private static class MyStatementsTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParsers.STATEMENT_PARSER.parseStatements(builder);
+      JavaParser.INSTANCE.getStatementParser().parseStatements(builder);
     }
   }
 }

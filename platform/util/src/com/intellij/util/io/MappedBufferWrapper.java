@@ -16,16 +16,12 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
-import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * @author max
@@ -81,19 +77,7 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
       return false;
     }
 
-    return AccessController.doPrivileged(new PrivilegedAction<Object>() {
-      @Nullable
-      public Object run() {
-        try {
-          Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
-          if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
-          return null;
-        }
-        catch (Exception e) {
-          return buffer;
-        }
-      }
-    }) == null;
+    return DirectBufferWrapper.disposeDirectBuffer((DirectBuffer)buffer);
   }
 
   private static boolean tryForce(MappedByteBuffer buffer) {

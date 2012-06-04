@@ -111,8 +111,11 @@ public class UsedIconsListingAction extends AnAction {
       MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
     }
 
-    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    PsiClass javaeeIcons = JavaPsiFacade.getInstance(project).findClass("com.intellij.javaee.oss.JavaeeIcons", GlobalSearchScope.allScope(project));
+    MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
 
+    final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
 
     PsiClass allIcons =
       JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons", GlobalSearchScope.allScope(project));
@@ -168,7 +171,7 @@ public class UsedIconsListingAction extends AnAction {
       }
     }
 
-    if (false /*do replacements*/) {
+    if (true /*do replacements*/) {
       ArrayList<String> sorted = new ArrayList<String>(answer);
       Collections.sort(sorted);
 

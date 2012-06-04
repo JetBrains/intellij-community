@@ -91,7 +91,20 @@ public class AsyncProcessIcon extends AnimatedIcon {
   }
 
   public static class Big extends AsyncProcessIcon {
-    private static final Icon[] BIG_ICONS = findIcons("/process/big/step_", null);
+    private static final Icon[] BIG_ICONS = {
+      AllIcons.Process.Big.Step_1,
+      AllIcons.Process.Big.Step_2,
+      AllIcons.Process.Big.Step_3,
+      AllIcons.Process.Big.Step_4,
+      AllIcons.Process.Big.Step_5,
+      AllIcons.Process.Big.Step_6,
+      AllIcons.Process.Big.Step_7,
+      AllIcons.Process.Big.Step_8,
+      AllIcons.Process.Big.Step_9,
+      AllIcons.Process.Big.Step_10,
+      AllIcons.Process.Big.Step_11,
+      AllIcons.Process.Big.Step_12
+    };
     private static final Icon BIG_PASSIVE_ICON = AllIcons.Process.Big.Step_passive;
 
     public Big(@NonNls final String name) {

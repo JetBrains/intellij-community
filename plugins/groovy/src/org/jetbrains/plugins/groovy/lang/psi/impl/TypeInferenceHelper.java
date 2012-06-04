@@ -34,7 +34,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.InstanceOfInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -150,9 +153,8 @@ public class TypeInferenceHelper {
     for (int defIndex : varDefs.toArray()) {
       DFAType defType = getDefinitionType(flow[defIndex], flow, scope);
 
-      final NegatingGotoInstruction negating = instruction.getNegatingGotoInstruction();
       if (defType != null) {
-        defType = defType.negate(negating);
+        defType = defType.negate(instruction);
       }
 
       if (defType != null) {

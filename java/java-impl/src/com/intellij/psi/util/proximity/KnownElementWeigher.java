@@ -75,6 +75,7 @@ public class KnownElementWeigher extends ProximityWeigher {
     @NonNls final String qname = element.getQualifiedName();
     if (qname != null) {
       String pkg = StringUtil.getPackageName(qname);
+      if (qname.equals(CommonClassNames.JAVA_LANG_OBJECT)) return 5;
       if (pkg.equals("java.lang")) return 7;
       if (pkg.equals("java.util")) return 6;
 

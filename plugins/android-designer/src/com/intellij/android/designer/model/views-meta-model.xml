@@ -108,6 +108,8 @@
     <palette title="Button" icon="/com/intellij/android/designer/icons/Button.png"
              tooltip="Represents a push-button widget."/>
 
+    <morphing to="RadioButton CheckBox ToggleButton"/>
+
     <properties
         inplace="text"
         important="onClick"

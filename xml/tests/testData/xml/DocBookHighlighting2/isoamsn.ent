@@ -1,0 +1,103 @@
+
+<!--
+     File isoamsn.ent produced by the XSL script entities.xsl
+     from input data in unicode.xml.
+
+     Please report any errors to David Carlisle
+     via the public W3C list www-math@w3.org.
+
+     The numeric character values assigned to each entity
+     (should) match the Unicode assignments in Unicode 4.0.
+
+     References to the VARIANT SELECTOR 1 character (&#x0FE00;)
+     should match the uses listed in Unicode Technical Report 25.
+
+     Entity names in this file are derived from files carrying the
+     following notice:
+
+     (C) International Organization for Standardization 1986
+     Permission to copy in any form is granted for use with
+     conforming SGML systems and applications as defined in
+     ISO 8879, provided this notice is included in all copies.
+
+-->
+
+
+<!-- 
+     Version: $Id: isoamsn.ent,v 1.2 2003/12/08 15:14:43 davidc Exp $
+
+       Public identifier: ISO 8879:1986//ENTITIES Added Math Symbols: Negated Relations//EN//XML
+       System identifier: http://www.w3.org/2003/entities/iso8879/isoamsn.ent
+
+     The public identifier should always be used verbatim.
+     The system identifier may be changed to suit local requirements.
+
+     Typical invocation:
+
+       <!ENTITY % isoamsn PUBLIC
+         "ISO 8879:1986//ENTITIES Added Math Symbols: Negated Relations//EN//XML"
+         "http://www.w3.org/2003/entities/iso8879/isoamsn.ent"
+       >
+       %isoamsn;
+
+-->
+
+<!ENTITY gnap             "&#x02A8A;" ><!--GREATER-THAN AND NOT APPROXIMATE -->
+<!ENTITY gnE              "&#x02269;" ><!--GREATER-THAN BUT NOT EQUAL TO -->
+<!ENTITY gne              "&#x02A88;" ><!--GREATER-THAN AND SINGLE-LINE NOT EQUAL TO -->
+<!ENTITY gnsim            "&#x022E7;" ><!--GREATER-THAN BUT NOT EQUIVALENT TO -->
+<!ENTITY gvnE             "&#x02269;&#x0FE00;" ><!--GREATER-THAN BUT NOT EQUAL TO - with vertical stroke -->
+<!ENTITY lnap             "&#x02A89;" ><!--LESS-THAN AND NOT APPROXIMATE -->
+<!ENTITY lnE              "&#x02268;" ><!--LESS-THAN BUT NOT EQUAL TO -->
+<!ENTITY lne              "&#x02A87;" ><!--LESS-THAN AND SINGLE-LINE NOT EQUAL TO -->
+<!ENTITY lnsim            "&#x022E6;" ><!--LESS-THAN BUT NOT EQUIVALENT TO -->
+<!ENTITY lvnE             "&#x02268;&#x0FE00;" ><!--LESS-THAN BUT NOT EQUAL TO - with vertical stroke -->
+<!ENTITY nap              "&#x02249;" ><!--NOT ALMOST EQUAL TO -->
+<!ENTITY ncong            "&#x02247;" ><!--NEITHER APPROXIMATELY NOR ACTUALLY EQUAL TO -->
+<!ENTITY nequiv           "&#x02262;" ><!--NOT IDENTICAL TO -->
+<!ENTITY ngE              "&#x02267;&#x00338;" ><!--GREATER-THAN OVER EQUAL TO with slash -->
+<!ENTITY nge              "&#x02271;" ><!--NEITHER GREATER-THAN NOR EQUAL TO -->
+<!ENTITY nges             "&#x02A7E;&#x00338;" ><!--GREATER-THAN OR SLANTED EQUAL TO with slash -->
+<!ENTITY ngt              "&#x0226F;" ><!--NOT GREATER-THAN -->
+<!ENTITY nlE              "&#x02266;&#x00338;" ><!--LESS-THAN OVER EQUAL TO with slash -->
+<!ENTITY nle              "&#x02270;" ><!--NEITHER LESS-THAN NOR EQUAL TO -->
+<!ENTITY nles             "&#x02A7D;&#x00338;" ><!--LESS-THAN OR SLANTED EQUAL TO with slash -->
+<!ENTITY nlt              "&#x0226E;" ><!--NOT LESS-THAN -->
+<!ENTITY nltri            "&#x022EA;" ><!--NOT NORMAL SUBGROUP OF -->
+<!ENTITY nltrie           "&#x022EC;" ><!--NOT NORMAL SUBGROUP OF OR EQUAL TO -->
+<!ENTITY nmid             "&#x02224;" ><!--DOES NOT DIVIDE -->
+<!ENTITY npar             "&#x02226;" ><!--NOT PARALLEL TO -->
+<!ENTITY npr              "&#x02280;" ><!--DOES NOT PRECEDE -->
+<!ENTITY npre             "&#x02AAF;&#x00338;" ><!--PRECEDES ABOVE SINGLE-LINE EQUALS SIGN with slash -->
+<!ENTITY nrtri            "&#x022EB;" ><!--DOES NOT CONTAIN AS NORMAL SUBGROUP -->
+<!ENTITY nrtrie           "&#x022ED;" ><!--DOES NOT CONTAIN AS NORMAL SUBGROUP OR EQUAL -->
+<!ENTITY nsc              "&#x02281;" ><!--DOES NOT SUCCEED -->
+<!ENTITY nsce             "&#x02AB0;&#x00338;" ><!--SUCCEEDS ABOVE SINGLE-LINE EQUALS SIGN with slash -->
+<!ENTITY nsim             "&#x02241;" ><!--NOT TILDE -->
+<!ENTITY nsime            "&#x02244;" ><!--NOT ASYMPTOTICALLY EQUAL TO -->
+<!ENTITY nsmid            "&#x02224;" ><!--DOES NOT DIVIDE -->
+<!ENTITY nspar            "&#x02226;" ><!--NOT PARALLEL TO -->
+<!ENTITY nsub             "&#x02284;" ><!--NOT A SUBSET OF -->
+<!ENTITY nsubE            "&#x02AC5;&#x00338;" ><!--SUBSET OF ABOVE EQUALS SIGN with slash -->
+<!ENTITY nsube            "&#x02288;" ><!--NEITHER A SUBSET OF NOR EQUAL TO -->
+<!ENTITY nsup             "&#x02285;" ><!--NOT A SUPERSET OF -->
+<!ENTITY nsupE            "&#x02AC6;&#x00338;" ><!--SUPERSET OF ABOVE EQUALS SIGN with slash -->
+<!ENTITY nsupe            "&#x02289;" ><!--NEITHER A SUPERSET OF NOR EQUAL TO -->
+<!ENTITY nVDash           "&#x022AF;" ><!--NEGATED DOUBLE VERTICAL BAR DOUBLE RIGHT TURNSTILE -->
+<!ENTITY nVdash           "&#x022AE;" ><!--DOES NOT FORCE -->
+<!ENTITY nvDash           "&#x022AD;" ><!--NOT TRUE -->
+<!ENTITY nvdash           "&#x022AC;" ><!--DOES NOT PROVE -->
+<!ENTITY prnap            "&#x02AB9;" ><!--PRECEDES ABOVE NOT ALMOST EQUAL TO -->
+<!ENTITY prnE             "&#x02AB5;" ><!--PRECEDES ABOVE NOT EQUAL TO -->
+<!ENTITY prnsim           "&#x022E8;" ><!--PRECEDES BUT NOT EQUIVALENT TO -->
+<!ENTITY scnap            "&#x02ABA;" ><!--SUCCEEDS ABOVE NOT ALMOST EQUAL TO -->
+<!ENTITY scnE             "&#x02AB6;" ><!--SUCCEEDS ABOVE NOT EQUAL TO -->
+<!ENTITY scnsim           "&#x022E9;" ><!--SUCCEEDS BUT NOT EQUIVALENT TO -->
+<!ENTITY subnE            "&#x02ACB;" ><!--SUBSET OF ABOVE NOT EQUAL TO -->
+<!ENTITY subne            "&#x0228A;" ><!--SUBSET OF WITH NOT EQUAL TO -->
+<!ENTITY supnE            "&#x02ACC;" ><!--SUPERSET OF ABOVE NOT EQUAL TO -->
+<!ENTITY supne            "&#x0228B;" ><!--SUPERSET OF WITH NOT EQUAL TO -->
+<!ENTITY vsubnE           "&#x02ACB;&#x0FE00;" ><!--SUBSET OF ABOVE NOT EQUAL TO - variant with stroke through bottom members -->
+<!ENTITY vsubne           "&#x0228A;&#x0FE00;" ><!--SUBSET OF WITH NOT EQUAL TO - variant with stroke through bottom members -->
+<!ENTITY vsupnE           "&#x02ACC;&#x0FE00;" ><!--SUPERSET OF ABOVE NOT EQUAL TO - variant with stroke through bottom members -->
+<!ENTITY vsupne           "&#x0228B;&#x0FE00;" ><!--SUPERSET OF WITH NOT EQUAL TO - variant with stroke through bottom members -->

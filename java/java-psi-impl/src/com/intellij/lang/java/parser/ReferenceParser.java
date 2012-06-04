@@ -30,10 +30,7 @@ import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 import static com.intellij.util.BitUtil.isSet;
 
-
 public class ReferenceParser {
-  private final DeclarationParser myDeclarationParser;
-
   public static final int EAT_LAST_DOT = 0x01;
   public static final int ELLIPSIS = 0x02;
   public static final int WILDCARD = 0x04;
@@ -51,12 +48,10 @@ public class ReferenceParser {
 
   private static final TokenSet WILDCARD_KEYWORD_SET = TokenSet.create(JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
 
-  public ReferenceParser(DeclarationParser declarationParser) {
-    myDeclarationParser = declarationParser;
-  }
+  private final JavaParser myParser;
 
-  public ReferenceParser() {
-    this(new DeclarationParser());
+  public ReferenceParser(@NotNull final JavaParser javaParser) {
+    myParser = javaParser;
   }
 
   @Nullable
@@ -67,7 +62,8 @@ public class ReferenceParser {
 
   @Nullable
   public TypeInfo parseTypeInfo(final PsiBuilder builder, final int flags) {
-    final TypeInfo typeInfo = parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), false, isSet(flags, DIAMONDS), isSet(flags, ELLIPSIS));
+    final TypeInfo typeInfo = parseTypeInfo(builder, isSet(flags, EAT_LAST_DOT), isSet(flags, WILDCARD), false, isSet(flags, DIAMONDS),
+                                            isSet(flags, ELLIPSIS));
 
     if (typeInfo != null && isSet(flags, DISJUNCTIONS) && builder.getTokenType() == JavaTokenType.OR) {
       typeInfo.marker = typeInfo.marker.precede();
@@ -87,8 +83,8 @@ public class ReferenceParser {
   }
 
   @Nullable
-  private TypeInfo parseTypeInfo(final PsiBuilder builder,
-                                 final boolean eatLastDot, final boolean wildcard, final boolean badWildcard, final boolean diamonds, final boolean ellipsis) {
+  private TypeInfo parseTypeInfo(final PsiBuilder builder, final boolean eatLastDot, final boolean wildcard, final boolean badWildcard,
+                                 final boolean diamonds, final boolean ellipsis) {
     if (builder.getTokenType() == null) return null;
 
     final TypeInfo typeInfo = new TypeInfo();
@@ -96,7 +92,7 @@ public class ReferenceParser {
     final boolean annotationsSupported = areTypeAnnotationsSupported(builder);
     PsiBuilder.Marker type = builder.mark();
     if (annotationsSupported) {
-      myDeclarationParser.parseAnnotations(builder);
+      myParser.getDeclarationParser().parseAnnotations(builder);
     }
 
     final IElementType tokenType = builder.getTokenType();
@@ -125,7 +121,7 @@ public class ReferenceParser {
     while (true) {
       type.done(JavaElementType.TYPE);
       if (annotationsSupported) {
-        myDeclarationParser.parseAnnotations(builder);
+        myParser.getDeclarationParser().parseAnnotations(builder);
       }
 
       final PsiBuilder.Marker bracket = builder.mark();
@@ -193,7 +189,7 @@ public class ReferenceParser {
     PsiBuilder.Marker refElement = builder.mark();
 
     if (annotations) {
-      myDeclarationParser.parseAnnotations(builder);
+      myParser.getDeclarationParser().parseAnnotations(builder);
     }
 
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
@@ -344,7 +340,7 @@ public class ReferenceParser {
   public PsiBuilder.Marker parseTypeParameter(final PsiBuilder builder) {
     final PsiBuilder.Marker param = builder.mark();
 
-    myDeclarationParser.parseAnnotations(builder);
+    myParser.getDeclarationParser().parseAnnotations(builder);
 
     final boolean wild = expect(builder, JavaTokenType.QUEST);
     if (!wild && !expect(builder, JavaTokenType.IDENTIFIER)) {

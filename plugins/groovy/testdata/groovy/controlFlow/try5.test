@@ -12,20 +12,18 @@ fScript.previewTask(taskName)
 -----
 0(1) element: null
 1(2) element: IF statement
-2(3) Condition
-3(4,6) READ ddd
-4(5) READ fXRec
-5(18) element: RETURN statement
-6(7)  Negating goto instruction, condition=2
-7(8) element: IF statement
-8(9) WRITE fScript
-9(11) element: Open block
-10(13) element: Finally clause
-11(10,12)  CALL 10
-12(14) AFTER CALL 11
-13(12)  RETURN
-14(15) READ fScript
-15(16) READ taskName
-16(17) ARGUMENT element: Reference expression
-17(18) element: Method call MAYBE_RETURN
-18() element: null
+2(3,5) READ ddd
+3(4) READ fXRec
+4(16) element: RETURN statement
+5(6) element: IF statement
+6(7) WRITE fScript
+7(9) element: Open block
+8(11) element: Finally clause
+9(8,10)  CALL 8
+10(12) AFTER CALL 9
+11(10)  RETURN
+12(13) READ fScript
+13(14) READ taskName
+14(15) ARGUMENT element: Reference expression
+15(16) element: Method call MAYBE_RETURN
+16() element: null

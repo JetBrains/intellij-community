@@ -55,13 +55,15 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
     PsiClass psiClass = null;
     PsiElement element = location.getPsiElement();
     while (element != null) {
-      if (element instanceof PsiClass) {
+      if (element instanceof PsiClass && isTestNGClass(psiClass)) {
         psiClass = (PsiClass)element;
         break;
       }
       else if (element instanceof PsiMember) {
         psiClass = ((PsiMember)element).getContainingClass();
-        break;
+        if (isTestNGClass(psiClass)) {
+          break;
+        }
       }
       else if (element instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
@@ -72,7 +74,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
       }
       element = element.getParent();
     }
-    if (psiClass == null || !PsiClassUtil.isRunnableClass(psiClass, true, false) || !TestNGUtil.hasTest(psiClass)) return null;
+    if (!isTestNGClass(psiClass)) return null;
 
     myPsiElement = psiClass;
     final Project project = location.getProject();
@@ -82,16 +84,23 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.setClassConfiguration(psiClass);
 
-    final PsiMethod method = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiMethod.class, false);
-    if (method != null && TestNGUtil.hasTest(method)) {
-      configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
-      myPsiElement = method;
+    PsiMethod method = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiMethod.class, false);
+    while (method != null) {
+      if (TestNGUtil.hasTest(method)) {
+        configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
+        myPsiElement = method;
+      }
+      method = PsiTreeUtil.getParentOfType(method, PsiMethod.class);
     }
 
     configuration.restoreOriginalModule(originalModule);
     settings.setName(configuration.getName());
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;
+  }
+
+  private static boolean isTestNGClass(PsiClass psiClass) {
+    return psiClass != null && PsiClassUtil.isRunnableClass(psiClass, true, false) && TestNGUtil.hasTest(psiClass);
   }
 
   public int compareTo(Object o) {

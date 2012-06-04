@@ -144,7 +144,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return DependencyScope.COMPILE;
   }
 
-  public void fireLibraryRenamed(LibraryImpl library) {
+  public void fireLibraryRenamed(@NotNull LibraryImpl library) {
     myDispatcher.getMulticaster().afterLibraryRenamed(library);
   }
 

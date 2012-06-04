@@ -131,7 +131,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           IndexInfrastructure.getStorageFile(indexKey),
           extension.getKeyDescriptor(),
           new StubIdExternalizer(),
-          extension.getCacheSize()
+          extension.getCacheSize(),
+          extension.isKeyHighlySelective()
         );
         final MemoryIndexStorage<K, int[]> memStorage = new MemoryIndexStorage<K, int[]>(storage);
         myIndices.put(indexKey, new MyIndex<K>(memStorage));

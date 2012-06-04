@@ -62,7 +62,6 @@ import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -182,6 +181,7 @@ public abstract class ChooseByNameBase {
     myInitialText = initialText;
     myProvider = provider;
     myInitialIndex = initialIndex;
+    mySearchInAnyPlace = Registry.is("ide.goto.middle.matching");
   }
 
   public boolean isPreselectInitialText() {
@@ -197,7 +197,7 @@ public abstract class ChooseByNameBase {
   }
 
   public boolean isSearchInAnyPlace() {
-    return PlatformUtils.isCidr() || mySearchInAnyPlace;
+    return mySearchInAnyPlace;
   }
 
   public void setSearchInAnyPlace(boolean searchInAnyPlace) {
@@ -394,23 +394,26 @@ public abstract class ChooseByNameBase {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowFindUsagesAction(){
       @Override
-      public PsiElement[] getElements() {
-        if (myListModel == null) return PsiElement.EMPTY_ARRAY;
+      public PsiElement[][] getElements() {
+        if (myListModel == null) return new PsiElement[][] {PsiElement.EMPTY_ARRAY, PsiElement.EMPTY_ARRAY};
         final Object[] objects = myListModel.toArray();
-        final List<PsiElement> psiElements = new ArrayList<PsiElement>(objects.length);
+        final List<PsiElement> prefixMatchElements = new ArrayList<PsiElement>(objects.length);
+        final List<PsiElement> nonPrefixMatchElements = new ArrayList<PsiElement>(objects.length);
+        List<PsiElement> curElements = prefixMatchElements;
         for (Object object : objects) {
           if (object instanceof PsiElement) {
-            psiElements.add((PsiElement)object);
+            curElements.add((PsiElement)object);
           }
           else if (object instanceof DataProvider) {
             final PsiElement psi = LangDataKeys.PSI_ELEMENT.getData((DataProvider)object);
             if (psi != null) {
-              psiElements.add(psi);
+              curElements.add(psi);
             }
           }
-          
+          else if (object == NON_PREFIX_SEPARATOR)
+            curElements = nonPrefixMatchElements;
         }
-        return PsiUtilCore.toPsiElementArray(psiElements);
+        return new PsiElement[][]{PsiUtilCore.toPsiElementArray(prefixMatchElements), PsiUtilCore.toPsiElementArray(nonPrefixMatchElements)};
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
@@ -581,6 +584,15 @@ public abstract class ChooseByNameBase {
             }
             break;
         }
+
+        if (myList.getSelectedValue() == NON_PREFIX_SEPARATOR) {
+          if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_PAGE_UP) {
+            ListScrollingUtil.moveUp(myList, e.getModifiersEx());
+          }
+          else {
+            ListScrollingUtil.moveDown(myList, e.getModifiersEx());
+          }
+        }
       }
     });
 
@@ -604,13 +616,18 @@ public abstract class ChooseByNameBase {
         }
 
         if (e.getClickCount() == 2) {
-          if (myList.getSelectedValue() == EXTRA_ELEM) {
-            myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
-            rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current(), e);
-            e.consume();
-          }
-          else {
-            doClose(true);
+          int selectedIndex = myList.getSelectedIndex();
+          Rectangle selectedCellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
+
+          if (selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
+            if (myList.getSelectedValue() == EXTRA_ELEM) {
+              myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
+              rebuildList(selectedIndex, REBUILD_DELAY, null, ModalityState.current(), e);
+              e.consume();
+            }
+            else {
+              doClose(true);
+            }
           }
         }
       }
@@ -619,10 +636,18 @@ public abstract class ChooseByNameBase {
     myList.setFont(editorFont);
 
     myList.addListSelectionListener(new ListSelectionListener() {
+      private int myPreviousSelectionIndex = 0;
+
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        choosenElementMightChange();
-        updateDocumentation();
+        if (myList.getSelectedValue() != NON_PREFIX_SEPARATOR) {
+          myPreviousSelectionIndex = myList.getSelectedIndex();
+          choosenElementMightChange();
+          updateDocumentation();
+        }
+        else {
+          myList.setSelectedIndex(myPreviousSelectionIndex);
+        }
       }
     });
 
@@ -1020,7 +1045,7 @@ public abstract class ChooseByNameBase {
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
       final Object modelElement = myListModel.getElementAt(i);
-      String text = EXTRA_ELEM.equals(modelElement) ? null : myModel.getFullName(modelElement);
+      String text = EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement) ? null : myModel.getFullName(modelElement);
       if (text != null) {
         String shortName = myModel.getElementName(modelElement);
         int match = shortName != null && matcher instanceof MinusculeMatcher
@@ -1032,6 +1057,10 @@ public abstract class ChooseByNameBase {
           bestMatch = match;
         }
       }
+    }
+
+    if (bestPosition < count - 1 && myListModel.getElementAt(bestPosition) == NON_PREFIX_SEPARATOR) {
+      bestPosition ++;
     }
 
     return bestPosition;
@@ -1171,6 +1200,7 @@ public abstract class ChooseByNameBase {
     if (myListIsUpToDate) {
       List<Object> values = new ArrayList<Object>(Arrays.asList(myList.getSelectedValues()));
       values.remove(EXTRA_ELEM);
+      values.remove(NON_PREFIX_SEPARATOR);
       return values;
     }
 
@@ -1368,6 +1398,7 @@ public abstract class ChooseByNameBase {
   }
 
   private static final String EXTRA_ELEM = "...";
+  static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
 
   private class CalcElementsThread implements Runnable {
     private final String myPattern;
@@ -1545,20 +1576,25 @@ public abstract class ChooseByNameBase {
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();
-      final String pattern = myFindUsagesTitle + " \'" + myTextField.getText().trim() + "\'";
-      presentation.setCodeUsagesString(pattern);
-      presentation.setTabName(pattern);
-      presentation.setTabText(pattern);
-      presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(pattern.toLowerCase()));
-      final PsiElement[] elements = getElements();
-      final Set<PsiElement> els = new LinkedHashSet<PsiElement>();
-      Collections.addAll(els, elements);
+      final String prefixPattern = myFindUsagesTitle + " \'" + myTextField.getText().trim() + "\'";
+      final String nonPrefixPattern = myFindUsagesTitle + " \'*" + myTextField.getText().trim() + "*\'";
+      presentation.setCodeUsagesString(prefixPattern);
+      presentation.setDynamicUsagesString(nonPrefixPattern);
+      presentation.setTabName(prefixPattern);
+      presentation.setTabText(prefixPattern);
+      presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(prefixPattern.toLowerCase()));
+      final PsiElement[][] elements = getElements();
+      final Set<PsiElement> prefixEls = new LinkedHashSet<PsiElement>();
+      final Set<PsiElement> nonPrefixEls = new LinkedHashSet<PsiElement>();
+      Collections.addAll(prefixEls, elements[0]);
+      Collections.addAll(nonPrefixEls, elements[1]);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final String text = myTextField.getText();
         final boolean checkboxState = myCheckBox.isSelected();
-        final LinkedHashSet<Object> elementsArray = new LinkedHashSet<Object>();
+        final LinkedHashSet<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
+        final LinkedHashSet<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
         hideHint();
-        ProgressManager.getInstance().run(new Task.Modal(myProject, pattern, true){
+        ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true){
           private ChooseByNameBase.CalcElementsThread myCalcElementsThread;
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
@@ -1574,25 +1610,44 @@ public abstract class ChooseByNameBase {
                   }
                 };
 
-                myCalcElementsThread.addElementsByPattern(text, elementsArray, new Computable<Boolean>() {
+                boolean anyPlace = isSearchInAnyPlace();
+                setSearchInAnyPlace(false);
+                myCalcElementsThread.addElementsByPattern(text, prefixMatchElementsArray, new Computable<Boolean>() {
                   @Override
                   @NotNull
                   public Boolean compute() {
                     return false;
                   }
                 });
+                setSearchInAnyPlace(anyPlace);
+
+                if (anyPlace) {
+                  myCalcElementsThread.addElementsByPattern(text, nonPrefixMatchElementsArray, new Computable<Boolean>() {
+                    @Override
+                    @NotNull
+                    public Boolean compute() {
+                      return false;
+                    }
+                  });
+                  nonPrefixMatchElementsArray.removeAll(prefixMatchElementsArray);
+                }
               }
             });
           }
 
           @Override
           public void onSuccess() {
-            for (Object o : elementsArray) {
+            for (Object o : prefixMatchElementsArray) {
               if (o instanceof PsiElement) {
-                els.add((PsiElement)o);
+                prefixEls.add((PsiElement)o);
               }
             }
-            showUsageView(els, presentation);
+            for (Object o : nonPrefixMatchElementsArray) {
+              if (o instanceof PsiElement) {
+                nonPrefixEls.add((PsiElement)o);
+              }
+            }
+            showUsageView(prefixEls, nonPrefixEls, presentation);
           }
 
           @Override
@@ -1604,17 +1659,30 @@ public abstract class ChooseByNameBase {
         });
       } else {
         hideHint();
-        showUsageView(els, presentation);
+        showUsageView(prefixEls, nonPrefixEls, presentation);
       }
     }
 
-    private void showUsageView(@NotNull Set<PsiElement> elements,
+    private void showUsageView(@NotNull Set<PsiElement> prefixMatchElements,
+                               @NotNull Set<PsiElement> nonPrefixMatchElements,
                                @NotNull UsageViewPresentation presentation) {
       final List<PsiElement> targets = new ArrayList<PsiElement>();
       final List<Usage> usages = new ArrayList<Usage>();
-      for (PsiElement element : elements) {
+      for (PsiElement element : prefixMatchElements) {
         if (element.getTextRange() != null) {
           usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element)));
+        } else {
+          targets.add(element);
+        }
+      }
+      for (PsiElement element : nonPrefixMatchElements) {
+        if (element.getTextRange() != null) {
+          usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element) {
+            @Override
+            public boolean isDynamicUsage() {
+              return true;
+            }
+          }));
         } else {
           targets.add(element);
         }
@@ -1631,10 +1699,10 @@ public abstract class ChooseByNameBase {
         e.getPresentation().setVisible(false);
         return;
       }
-      final PsiElement[] elements = getElements();
-      e.getPresentation().setEnabled(elements != null && elements.length > 0);
+      final PsiElement[][] elements = getElements();
+      e.getPresentation().setEnabled(elements != null && elements[0].length + elements[1].length > 0);
     }
 
-    public abstract PsiElement[] getElements();
+    public abstract PsiElement[][] getElements();
   }
 }

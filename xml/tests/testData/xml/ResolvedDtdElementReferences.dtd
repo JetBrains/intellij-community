@@ -1,0 +1,2 @@
+<!ELEMENT aaa EMPTY>
+<!ELEMENT name (aaa)>
