@@ -110,11 +110,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   @Nullable
   public RepositoryLocation getLocationFor(final FilePath root) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    String[] urls = SvnUtil.getLocationsForModule(myVcs, root.getIOFile(), progress);
-    if (urls.length == 1) {
-      return new SvnRepositoryLocation(urls [0]);
-    }
-    return null;
+    final String url = SvnUtil.getExactLocation(myVcs, root.getIOFile(), progress);
+    return url == null ? null : new SvnRepositoryLocation(url);
   }
 
   public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {

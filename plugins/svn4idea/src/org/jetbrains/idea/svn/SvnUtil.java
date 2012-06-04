@@ -147,6 +147,20 @@ public class SvnUtil {
     }
   }
 
+  public static String getExactLocation(final SvnVcs vcs, File path, ProgressIndicator progress) {
+    try {
+      SVNWCClient wcClient = vcs.createWCClient();
+      SVNInfo info = wcClient.doInfo(path, SVNRevision.UNDEFINED);
+      if (info != null && info.getURL() != null) {
+        return info.getURL().toString();
+      }
+    }
+    catch (SVNException e) {
+      //
+    }
+    return null;
+  }
+
   public static String[] getLocationsForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
     LocationsCrawler crawler = new LocationsCrawler(vcs);
     crawlWCRoots(vcs.getProject(), path, crawler, progress);
