@@ -22,6 +22,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
@@ -174,8 +175,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnTestStdOutput() {
     startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stdout2", true);
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout2", true));
 
     assertStdOutput(myMockResetablePrinter, "stdout1 stdout2");
   }
@@ -183,8 +184,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnTestStdErr() {
     startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
-    myEventsProcessor.onTestOutput("my_test", "stderr2", false);
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr2", false));
 
     assertStdErr(myMockResetablePrinter, "stderr1 stderr2");
   }
@@ -192,10 +193,10 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnTestMixedStd() {
     startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
-    myEventsProcessor.onTestOutput("my_test", "stdout2", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr2", false);
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout2", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr2", false));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 stdout2", "stderr1 stderr2", "");
   }
@@ -203,9 +204,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnFailure() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestFailure("my_test", "error msg", "method1:1\nmethod2:2", false, null, null);
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("my_test", "error msg", "method1:1\nmethod2:2", false, null, null));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "\nerror msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
 
@@ -215,9 +216,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
-    myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
-    myEventsProcessor.onTestFailure("my_test2", "error msg", "method1:1\nmethod2:2", false, null, null);
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stderr1 ", false));
+    myEventsProcessor.onTestFailure(new TestFailedEvent("my_test2", "error msg", "method1:1\nmethod2:2", false, null, null));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
@@ -228,9 +229,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnFailure_EmptyStacktrace() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestFailure("my_test", "error msg", "\n\n", false, null, null);
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("my_test", "error msg", "\n\n", false, null, null));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "\nerror msg\nstderr1 ", "");
 
@@ -242,9 +243,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnFailure_Comparision_Strings() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestFailure("my_test", "error msg", "method1:1\nmethod2:2", false, "actual", "expected");
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("my_test", "error msg", "method1:1\nmethod2:2", false, "actual", "expected"));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResetablePrinter,
                      // std out
@@ -281,10 +282,10 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnFailure_Comparision_MultilineTexts() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestFailure("my_test", "error msg", "method1:1\nmethod2:2", false,
-                                    "this is:\nactual", "this is:\nexpected");
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("my_test", "error msg", "method1:1\nmethod2:2", false,
+                                    "this is:\nactual", "this is:\nexpected"));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "\nerror msg \n" +
                                                          "\n" +
@@ -304,9 +305,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
  public void testProcessor_OnError() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestFailure("my_test", "error msg", "method1:1\nmethod2:2", true, null, null);
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("my_test", "error msg", "method1:1\nmethod2:2", true, null, null));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "\nerror msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
 
@@ -316,9 +317,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
-    myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
-    myEventsProcessor.onTestFailure("my_test2", "error msg", "method1:1\nmethod2:2", true, null, null);
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stderr1 ", false));
+    myEventsProcessor.onTestFailure(new TestFailedEvent("my_test2", "error msg", "method1:1\nmethod2:2", true, null, null));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
@@ -330,8 +331,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
     myEventsProcessor.onError("error msg", "method1:1\nmethod2:2", true);
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "\nerror msg\nmethod1:1\nmethod2:2\nstderr1 ", "");
 
@@ -342,13 +343,13 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                                                "method1:1\n" +
                                                "method2:2\n" +
                                                "stderr1 ", "");
-    myEventsProcessor.onTestFinished("my_test", 1);
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("my_test", 1));
     myTest1.setFinished();
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
-    myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stderr1 ", false));
     myEventsProcessor.onError("error msg", "method1:1\nmethod2:2", true);
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 \nerror msg\nmethod1:1\nmethod2:2\n", "");
@@ -360,7 +361,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_Suite_OnErrorMsg() {
     myEventsProcessor.onError("error msg:root", "method1:1\nmethod2:2", true);
 
-    myEventsProcessor.onSuiteStarted("suite", null);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));
     final SMTestProxy suite = myEventsProcessor.getCurrentSuite();
     suite.setPrinter(myMockResetablePrinter);
     myEventsProcessor.onError("error msg:suite", "method1:1\nmethod2:2", true);
@@ -391,9 +392,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnIgnored() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestIgnored("my_test", "ignored msg", null);
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+    myEventsProcessor.onTestIgnored(new TestIgnoredEvent("my_test", "ignored msg", null));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
@@ -403,9 +404,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
-    myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
-    myEventsProcessor.onTestIgnored("my_test2", "ignored msg", null);
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stderr1 ", false));
+    myEventsProcessor.onTestIgnored(new TestIgnoredEvent("my_test2", "ignored msg", null));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
@@ -416,9 +417,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testProcessor_OnIgnored_WithStacktrace() {
     final SMTestProxy myTest1 = startTestWithPrinter("my_test");
 
-    myEventsProcessor.onTestIgnored("my_test", "ignored2 msg", "method1:1\nmethod2:2");
-    myEventsProcessor.onTestOutput("my_test", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test", "stderr1 ", false);
+    myEventsProcessor.onTestIgnored(new TestIgnoredEvent("my_test", "ignored2 msg", "method1:1\nmethod2:2"));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
     assertAllOutputs(myMockResetablePrinter, "stdout1 ",
                      "\nmethod1:1\nmethod2:2\nstderr1 ",
@@ -433,9 +434,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
-    myEventsProcessor.onTestOutput("my_test2", "stdout1 ", true);
-    myEventsProcessor.onTestOutput("my_test2", "stderr1 ", false);
-    myEventsProcessor.onTestIgnored("my_test2", "ignored msg", "method1:1\nmethod2:2");
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stdout1 ", true));
+    myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stderr1 ", false));
+    myEventsProcessor.onTestIgnored(new TestIgnoredEvent("my_test2", "ignored msg", "method1:1\nmethod2:2"));
 
     assertAllOutputs(myMockResetablePrinter,
                      "stdout1 ",
@@ -465,7 +466,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testOnUncapturedOutput_SomeSuite() {
     myEventsProcessor.onStartTesting();
 
-    myEventsProcessor.onSuiteStarted("my suite", null);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("my suite", null));
     final SMTestProxy mySuite = myEventsProcessor.getCurrentSuite();
     assertTrue(mySuite != myRootSuite);
     mySuite.setPrinter(myMockResetablePrinter);
@@ -476,7 +477,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   public void testOnUncapturedOutput_SomeTest() {
     myEventsProcessor.onStartTesting();
 
-    myEventsProcessor.onSuiteStarted("my suite", null);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("my suite", null));
     startTestWithPrinter("my test");
 
     assertOnUncapturedOutput();
@@ -514,9 +515,9 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myConsole.attachToProcess(null);
 
     myEventsProcessor.onStartTesting();
-    myEventsProcessor.onSuiteStarted("suite", null);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));
     final SMTestProxy suite = myEventsProcessor.getCurrentSuite();
-    myEventsProcessor.onSuiteFinished("suite");
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite"));
     myEventsProcessor.onUncapturedOutput("preved", ProcessOutputTypes.STDOUT);
     myEventsProcessor.onFinishTesting();
 
@@ -536,7 +537,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   }
 
   private SMTestProxy startTestWithPrinter(final String testName) {
-    myEventsProcessor.onTestStarted(testName, null);
+    myEventsProcessor.onTestStarted(new TestStartedEvent(testName, null));
     final SMTestProxy proxy =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName(testName));
     proxy.setPrinter(myMockResetablePrinter);

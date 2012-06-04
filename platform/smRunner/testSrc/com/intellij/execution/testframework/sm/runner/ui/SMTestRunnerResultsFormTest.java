@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -226,24 +227,24 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleProperties, true);
 
     myEventsProcessor.onStartTesting();
-    myEventsProcessor.onSuiteStarted("suite", null);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onTestStarted("test_failed", null);
+    myEventsProcessor.onTestStarted(new TestStartedEvent("test_failed", null));
     myResultsViewer.performUpdate();
-    myEventsProcessor.onTestFailure("test_failed", "", "", false, null, null);
+    myEventsProcessor.onTestFailure(new TestFailedEvent("test_failed", "", "", false, null, null));
     myResultsViewer.performUpdate();
-    myEventsProcessor.onTestFinished("test_failed", 10);
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test_failed", 10));
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onTestStarted("test", null);
+    myEventsProcessor.onTestStarted(new TestStartedEvent("test", null));
     myResultsViewer.performUpdate();
     assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
 
-    myEventsProcessor.onTestFinished("test", 10);
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10));
     assertEquals(2, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
 
-    myEventsProcessor.onSuiteFinished("suite");
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite"));
     myEventsProcessor.onFinishTesting();
 
     assertEquals(1, myTreeModel.getChildCount(myTreeModel.getChild(myTreeModel.getRoot(), 0)));
@@ -251,27 +252,27 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
 
   public void testExpandIfOnlyOneRootChild() throws InterruptedException {
     myEventsProcessor.onStartTesting();
-    myEventsProcessor.onSuiteStarted("suite1", null);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite1", null));
     myResultsViewer.performUpdate();
-    myEventsProcessor.onSuiteStarted("suite2", null);
-    myResultsViewer.performUpdate();
-
-    myEventsProcessor.onTestStarted("test_failed", null);
-    myResultsViewer.performUpdate();
-    myEventsProcessor.onTestFailure("test_failed", "", "", false, null, null);
-    myResultsViewer.performUpdate();
-    myEventsProcessor.onTestFinished("test_failed", 10);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite2", null));
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onTestStarted("test", null);
+    myEventsProcessor.onTestStarted(new TestStartedEvent("test_failed", null));
+    myResultsViewer.performUpdate();
+    myEventsProcessor.onTestFailure(new TestFailedEvent("test_failed", "", "", false, null, null));
+    myResultsViewer.performUpdate();
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test_failed", 10));
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onTestFinished("test", 10);
+    myEventsProcessor.onTestStarted(new TestStartedEvent("test", null));
     myResultsViewer.performUpdate();
 
-    myEventsProcessor.onSuiteFinished("suite2");
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10));
     myResultsViewer.performUpdate();
-    myEventsProcessor.onSuiteFinished("suite1");
+
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite2"));
+    myResultsViewer.performUpdate();
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite1"));
     myResultsViewer.performUpdate();
     myEventsProcessor.onFinishTesting();
     myResultsViewer.performUpdate();
