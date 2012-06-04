@@ -357,38 +357,12 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         }
       }
     });
-    myFileTypeComboBox.setKeySelectionManager(new JComboBox.KeySelectionManager() {
-      private static final int TIMEOUT = 1000;  // ms
-      private final StringBuilder myPrefix = new StringBuilder();
-      private long myTimeStamp = 0;
-
+    new ComboboxSpeedSearch(myFileTypeComboBox) {
       @Override
-      public int selectionForKey(char ch, ComboBoxModel model) {
-        final long now = System.currentTimeMillis();
-        if (now - myTimeStamp > TIMEOUT) {
-          myPrefix.delete(0, myPrefix.length());
-        }
-        myTimeStamp = now;
-
-        if (Character.isLetterOrDigit(ch)) {
-          myPrefix.append(ch);
-        }
-        else if (ch == '\b') {
-          myPrefix.delete(0, myPrefix.length());
-          return 0;
-        }
-
-        final String prefix = myPrefix.toString().toLowerCase();
-        for (int i = 0, size = model.getSize(); i < size; i++) {
-          final SourceWrapper item = (SourceWrapper)model.getElementAt(i);
-          if (item.getText().toLowerCase().startsWith(prefix)) {
-            return i;
-          }
-        }
-
-        return -1;
+      protected String getElementText(Object element) {
+        return element instanceof SourceWrapper? ((SourceWrapper)element).getText() : null;
       }
-    });
+    };
     myFileTypeComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -460,8 +434,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myTextPanel.setLayout(new BorderLayout());
     myTextPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
+    final String text = myCurrentFile == null ? settings.text : myInitText;
     final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
-    String text = myCurrentFile == null ? settings.text : myInitText;
     try {
       myEditor.getDocument().setText(text);
       myEditor.getSelectionModel().setSelection(0, text.length());
