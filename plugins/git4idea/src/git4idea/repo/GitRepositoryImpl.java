@@ -61,7 +61,8 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    * If you need to have an instance of GitRepository for a repository outside the project, use
    * {@link #getLightInstance(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project, com.intellij.openapi.Disposable)}.
    */
-  private GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  private GitRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project, @NotNull Disposable parentDisposable,
+                            final boolean light) {
     myRootDir = rootDir;
     myProject = project;
     Disposer.register(parentDisposable, this);
@@ -71,12 +72,16 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
 
     myReader = new GitRepositoryReader(VfsUtil.virtualToIoFile(myGitDir));
 
-    myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
-    Disposer.register(this, myUntrackedFilesHolder);
-
     myMessageBus = project.getMessageBus();
     myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
-    update(TrackedTopic.ALL);
+    if (! light) {
+      myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
+      Disposer.register(this, myUntrackedFilesHolder);
+
+      update(TrackedTopic.ALL);
+    } else {
+      myUntrackedFilesHolder = null;
+    }
   }
 
   /**
@@ -86,7 +91,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    */
   @NotNull
   public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    return new GitRepositoryImpl(root, project, parentDisposable);
+    return new GitRepositoryImpl(root, project, parentDisposable, true);
   }
 
   /**
@@ -94,7 +99,7 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
    * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
    */
   public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, project, parentDisposable);
+    GitRepositoryImpl repository = new GitRepositoryImpl(root, project, parentDisposable, false);
     repository.myUntrackedFilesHolder.setupVfsListener(project);
     repository.setupUpdater();
     return repository;
