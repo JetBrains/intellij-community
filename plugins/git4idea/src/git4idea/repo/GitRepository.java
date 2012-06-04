@@ -172,7 +172,8 @@ public final class GitRepository implements Disposable {
    * If you need to have an instance of GitRepository for a repository outside the project, use
    * {@link #getLightInstance(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project, com.intellij.openapi.Disposable)}.
    */
-  private GitRepository(@NotNull VirtualFile rootDir, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  private GitRepository(@NotNull VirtualFile rootDir, @NotNull Project project, @NotNull Disposable parentDisposable,
+                        final boolean light) {
     myRootDir = rootDir;
     myProject = project;
     Disposer.register(parentDisposable, this);
@@ -181,13 +182,17 @@ public final class GitRepository implements Disposable {
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
     
     myReader = new GitRepositoryReader(VfsUtil.virtualToIoFile(myGitDir));
-    
-    myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
-    Disposer.register(this, myUntrackedFilesHolder);
 
     myMessageBus = project.getMessageBus();
     myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
-    update(TrackedTopic.ALL);
+    if (! light) {
+      myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
+      Disposer.register(this, myUntrackedFilesHolder);
+
+      update(TrackedTopic.ALL);
+    } else {
+      myUntrackedFilesHolder = null;
+    }
   }
 
   /**
@@ -197,7 +202,7 @@ public final class GitRepository implements Disposable {
    */
   @NotNull
   public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    return new GitRepository(root, project, parentDisposable);
+    return new GitRepository(root, project, parentDisposable, true);
   }
 
   /**
@@ -205,7 +210,7 @@ public final class GitRepository implements Disposable {
    * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
    */
   public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    GitRepository repository = new GitRepository(root, project, parentDisposable);
+    GitRepository repository = new GitRepository(root, project, parentDisposable, false);
     repository.myUntrackedFilesHolder.setupVfsListener(project);
     repository.setupUpdater();
     return repository;
@@ -242,6 +247,9 @@ public final class GitRepository implements Disposable {
 
   @NotNull
   public GitUntrackedFilesHolder getUntrackedFilesHolder() {
+    if (myUntrackedFilesHolder == null) {
+      throw new IllegalStateException("Using untracked files holder with light git repository instance " + this);
+    }
     return myUntrackedFilesHolder;
   }
 

@@ -71,8 +71,12 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, true, false, true));
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+    final Project finalProject = project;
+
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, true, false, true);
+    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, descriptor);
     if (virtualFiles.length == 0) return;
     if (virtualFiles.length > MAX_REPOS) {
       VcsBalloonProblemNotifier.showOverVersionControlView(project, "Too many roots (more than " + MAX_REPOS +
@@ -105,13 +109,12 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
       }
 
       final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-      final Project finalProject = project;
 
       final Runnable showContent = new Runnable() {
         @Override
         public void run() {
           ContentManager cm = window.getContentManager();
-          if (checkForProjectScope(cm, project, correctRoots)) return;
+          if (checkForProjectScope(cm, finalProject, correctRoots)) return;
 
           int cnt = 0;
           Content[] contents = cm.getContents();
@@ -122,7 +125,7 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
               List<VirtualFile> roots = ((MyContentComponent)component).getRoots();
               if (Comparing.equal(roots, correctRoots)) {
                 cm.setSelectedContent(content);
-                alreadyOpened(project);
+                alreadyOpened(finalProject);
                 return;
               }
             }
@@ -251,6 +254,10 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
       GitVcs vcs = GitVcs.getInstance(myProject);
       if (vcs == null) { return; }
       myVersion = vcs.getVersion();
+      if (myVersion.isNull()) {
+        vcs.checkVersion();
+        myVersion = vcs.getVersion();
+      }
     }
   }
 

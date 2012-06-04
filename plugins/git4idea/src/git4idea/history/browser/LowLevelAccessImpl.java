@@ -115,13 +115,14 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   // uses cached version
   public CachedRefs getRefs() throws VcsException {
     final CachedRefs refs = new CachedRefs();
-    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
+    GitRepository repository = myProject == null || myProject.isDefault() ? null : GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
     if (repository == null) {
       final File child = new File(myRoot.getPath(), ".git");
       if (! child.exists()) {
         throw new VcsException("No git repository in " + myRoot.getPath());
       }
       repository = GitRepository.getLightInstance(myRoot, myProject, myProject);
+      repository.update(GitRepository.TrackedTopic.BRANCHES);
       repository.getBranches();
     }
     GitBranchesCollection branches = repository.getBranches();

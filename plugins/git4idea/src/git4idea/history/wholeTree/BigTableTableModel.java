@@ -444,7 +444,9 @@ public class BigTableTableModel extends AbstractTableModel {
   }
   
   public int getLastForRoot(final VirtualFile root) {
-    return myRepoIdxMap.get(root).last();
+    final TreeSet<Integer> integers = myRepoIdxMap.get(root);
+    if (integers.isEmpty()) return -1;
+    return integers.last();
   }
 
   @Override
