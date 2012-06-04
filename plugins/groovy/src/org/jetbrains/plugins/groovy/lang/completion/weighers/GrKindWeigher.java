@@ -41,7 +41,7 @@ import java.util.Set;
  */
 public class GrKindWeigher extends CompletionWeigher {
   private static final Set<String> TRASH_CLASSES = new HashSet<String>(10);
-  private static final Set<String> PRIORITY_KEYWORDS = CollectionFactory.newSet(
+  private static final Set<String> PRIORITY_KEYWORDS = CollectionFactory.hashSet(
     PsiKeyword.RETURN, PsiKeyword.INSTANCEOF, "in",
     PsiKeyword.PRIVATE, PsiKeyword.PROTECTED, PsiKeyword.PUBLIC, PsiKeyword.STATIC, "def",
     PsiKeyword.TRUE,  PsiKeyword.FALSE, PsiKeyword.NULL);

@@ -42,6 +42,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,7 +72,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doCollectInformation(final ProgressIndicator progress) {
+  public void doCollectInformation(@NotNull final ProgressIndicator progress) {
     if (!CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
       return;
     }

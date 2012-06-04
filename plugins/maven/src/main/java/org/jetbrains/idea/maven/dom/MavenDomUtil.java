@@ -58,7 +58,7 @@ import java.util.regex.Pattern;
 public class MavenDomUtil {
 
   // see http://maven.apache.org/settings.html
-  private static final Set<String> SUBTAGS_IN_SETTINGS_FILE = CollectionFactory.newSet("localRepository", "interactiveMode",
+  private static final Set<String> SUBTAGS_IN_SETTINGS_FILE = CollectionFactory.hashSet("localRepository", "interactiveMode",
                                                                                        "usePluginRegistry", "offline", "pluginGroups",
                                                                                        "servers", "mirrors", "proxies", "profiles",
                                                                                        "activeProfiles");

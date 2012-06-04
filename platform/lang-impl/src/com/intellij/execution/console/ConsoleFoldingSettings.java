@@ -70,7 +70,7 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
   }
 
   private void writeDiff(List<String> added, List<String> removed, boolean negated) {
-    Set<String> baseline = CollectionFactory.newTroveSet();
+    Set<String> baseline = CollectionFactory.troveSet();
     for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
       if (regexp.negate == negated) {
         baseline.add(regexp.substring);

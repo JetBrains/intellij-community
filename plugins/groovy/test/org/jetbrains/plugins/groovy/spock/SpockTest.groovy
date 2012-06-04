@@ -190,7 +190,7 @@ class FooSpec extends spock.lang.Specification {
 
     assertNotNull(lookupElements);
 
-    Set<String> missedVariants = CollectionFactory.newSet(expectedVariants);
+    Set<String> missedVariants = CollectionFactory.hashSet(expectedVariants);
 
     for (LookupElement lookupElement : lookupElements) {
       missedVariants.remove(lookupElement.getLookupString());

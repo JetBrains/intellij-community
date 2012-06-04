@@ -96,7 +96,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         if (description == null) {
           return super.getAllLookupStrings();
         }
-        return CollectionFactory.newSet(getLookupString(), description);
+        return CollectionFactory.hashSet(getLookupString(), description);
       }
     };
   }

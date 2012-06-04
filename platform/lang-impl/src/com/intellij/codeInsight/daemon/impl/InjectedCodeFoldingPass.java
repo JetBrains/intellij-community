@@ -40,7 +40,7 @@ class InjectedCodeFoldingPass extends TextEditorHighlightingPass implements Dumb
   }
 
   @Override
-  public void doCollectInformation(ProgressIndicator progress) {
+  public void doCollectInformation(@NotNull ProgressIndicator progress) {
     boolean firstTime = CodeFoldingPass.isFirstTime(myFile, myEditor, THE_FIRST_TIME_KEY);
     Runnable runnable = FoldingUpdate.updateInjectedFoldRegions(myEditor, myFile, firstTime);
     synchronized (this) {
