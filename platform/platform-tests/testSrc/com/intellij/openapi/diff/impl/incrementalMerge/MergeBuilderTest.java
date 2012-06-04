@@ -46,14 +46,14 @@ public class MergeBuilderTest extends TestCase {
     TextRange version = new TextRange(0, 1);
     addLeft(base, version);
     addRight(base, version);
-    CHECK.compareAll(new MergeBuilder.MergeFragment[]{
+    CHECK.compareAll(new MergeFragment[]{
       fragment(new TextRange(0, 0), new TextRange(0, 1), new TextRange(0, 0)),
       fragment(new TextRange(1, 2), new TextRange(2, 2), new TextRange(1, 2))
     }, finish(2, 2, 2));
   }
 
-  private MergeBuilder.MergeFragment fragment(TextRange left, TextRange base, TextRange right) {
-    return new MergeBuilder.MergeFragment(new TextRange[]{left, base, right});
+  private MergeFragment fragment(TextRange left, TextRange base, TextRange right) {
+    return new MergeFragment(left, base, right);
   }
 
   public void testHeadInsert() {
@@ -73,7 +73,7 @@ public class MergeBuilderTest extends TestCase {
   public void testNotAllignedConflict() {
     addLeft(new TextRange(1, 3), new TextRange(0, 2));
     addRight(new TextRange(2, 4), new TextRange(1, 3));
-    CHECK.compareAll(new MergeBuilder.MergeFragment[]{
+    CHECK.compareAll(new MergeFragment[]{
       fragment(new TextRange(0, 1), new TextRange(0, 2), new TextRange(0, 1)),
       fragment(new TextRange(2, 3), new TextRange(3, 4), null)
     }, finish(3, 4, 3));
@@ -86,7 +86,7 @@ public class MergeBuilderTest extends TestCase {
     addRight(new TextRange(4, 5), new TextRange(3, 4));
     addRight(new TextRange(6, 7), new TextRange(5, 6));
     addLeft(new TextRange(9, 10), new TextRange(9, 10));
-    CHECK.compareAll(new MergeBuilder.MergeFragment[]{
+    CHECK.compareAll(new MergeFragment[]{
       fragment(new TextRange(0, 1), new TextRange(0, 1), TextRange.EMPTY_RANGE),
       fragment(null, new TextRange(2, 3), new TextRange(1, 1)),
       fragment(null, new TextRange(4, 4), new TextRange(2, 3)),
@@ -100,7 +100,7 @@ public class MergeBuilderTest extends TestCase {
     addRight(new TextRange(0, 2), new TextRange(0, 2));
     addLeft(new TextRange(3, 5), new TextRange(1, 3));
     addRight(new TextRange(4, 5), new TextRange(2, 3));
-    CHECK.compareAll(new MergeBuilder.MergeFragment[]{
+    CHECK.compareAll(new MergeFragment[]{
       fragment(new TextRange(1, 2), new TextRange(1, 4), new TextRange(1, 2))
     }, finish(3, 5, 3));
   }
@@ -113,7 +113,7 @@ public class MergeBuilderTest extends TestCase {
     myMergeBuilder.add(base, left, FragmentSide.SIDE1);
   }
 
-  private List<MergeBuilder.MergeFragment> finish(int left, int base, int right) {
+  private List<MergeFragment> finish(int left, int base, int right) {
     return myMergeBuilder.finish(left, base, right);
   }
 
