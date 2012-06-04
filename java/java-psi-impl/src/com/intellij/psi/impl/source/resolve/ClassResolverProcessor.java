@@ -26,7 +26,6 @@ import com.intellij.psi.scope.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -153,7 +152,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       }
     }
 
-    boolean infoAccessible = info.isAccessible() && !otherClass.hasModifierProperty(PsiModifier.PRIVATE);
+    boolean infoAccessible = info.isAccessible() && isAccessible(otherClass);
     if (infoAccessible && !accessible) {
       return Domination.DOMINATED_BY;
     }
@@ -182,6 +181,21 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
 
     return Domination.EQUAL;
+  }
+
+  private boolean isAccessible(PsiClass otherClass) {
+    if (otherClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+      final PsiClass containingClass = otherClass.getContainingClass();
+      PsiClass containingPlaceClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class, false);
+      while (containingPlaceClass != null) {
+        if (containingClass == containingPlaceClass) {
+          return true;
+        }
+        containingPlaceClass = PsiTreeUtil.getParentOfType(containingPlaceClass, PsiClass.class);
+      }
+      return false;
+    }
+    return true;
   }
 
   private boolean isAmbiguousInherited(PsiClass containingClass1) {
@@ -213,7 +227,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
         for (int i = myCandidates.size()-1; i>=0; i--) {
           ClassCandidateInfo info = myCandidates.get(i);
 
-          Domination domination = dominates(aClass, accessible && !aClass.hasModifierProperty(PsiModifier.PRIVATE), fqName, info);
+          Domination domination = dominates(aClass, accessible && isAccessible(aClass), fqName, info);
           if (domination == Domination.DOMINATED_BY) {
             return true;
           }

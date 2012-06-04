@@ -1,3 +1,5 @@
+import java.io.*;
+
 public class Main {
     static interface A
     {
@@ -80,4 +82,17 @@ class BAO {
         void foo(){}
     }
 
+}
+
+class WithFileInputStream {
+  private static final Runnable runn = new Runnable() {
+    public void run() {
+      new FileInputStream("path");
+    }
+  };
+  
+  private static class FileInputStream {
+    private FileInputStream(String str) {
+    }
+  }
 }
