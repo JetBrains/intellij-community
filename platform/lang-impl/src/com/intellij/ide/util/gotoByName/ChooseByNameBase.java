@@ -410,8 +410,9 @@ public abstract class ChooseByNameBase {
               curElements.add(psi);
             }
           }
-          else if (object == NON_PREFIX_SEPARATOR)
+          else if (object == NON_PREFIX_SEPARATOR) {
             curElements = nonPrefixMatchElements;
+          }
         }
         return new PsiElement[][]{PsiUtilCore.toPsiElementArray(prefixMatchElements), PsiUtilCore.toPsiElementArray(nonPrefixMatchElements)};
       }
@@ -1398,7 +1399,12 @@ public abstract class ChooseByNameBase {
   }
 
   private static final String EXTRA_ELEM = "...";
-  static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
+  public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
+
+  public static Component renderNonPrefixSeparatorComponent(Component component) {
+    component.setFont(component.getFont().deriveFont(Font.PLAIN, component.getFont().getSize() - 2));
+    return component;
+  }
 
   private class CalcElementsThread implements Runnable {
     private final String myPattern;

@@ -17,6 +17,7 @@ package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -81,6 +82,11 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
       icon.setForeground(fg);
       right.add(icon, BorderLayout.EAST);
       panel.add(right, BorderLayout.EAST);
+    }
+    else {
+      // E.g. "..." item
+      Component component = super.getListCellRendererComponent(list, value, index, sel, focus);
+      return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(component) : component;
     }
 
     return panel;
