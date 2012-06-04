@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
@@ -112,11 +111,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   @Nullable
   public RepositoryLocation getLocationFor(final FilePath root) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    String[] urls = SvnUtil.getLocationsForModule(myVcs, root.getIOFile(), progress);
-    if (urls.length == 1) {
-      return new SvnRepositoryLocation(urls [0]);
-    }
-    return null;
+    final String url = SvnUtil.getExactLocation(myVcs, root.getIOFile(), progress);
+    return url == null ? null : new SvnRepositoryLocation(url);
   }
 
   public RepositoryLocation getLocationFor(final FilePath root, final String repositoryPath) {
