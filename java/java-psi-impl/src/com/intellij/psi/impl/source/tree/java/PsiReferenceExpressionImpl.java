@@ -491,7 +491,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       throw new IncorrectOperationException();
     }
     final String oldRefName = oldIdentifier.getText();
-    if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName)) return this;
+    if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName) || Comparing.strEqual(oldRefName, newElementName)) return this;
     PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
