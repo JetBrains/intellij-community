@@ -55,9 +55,9 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
 
-  private PsiMethod myValuesMethod = null;
-  private PsiMethod myValueOfMethod = null;
-  private volatile String myCachedForLongName = null;
+  private volatile PsiMethod myValuesMethod;
+  private volatile PsiMethod myValueOfMethod;
+  private volatile String myCachedName;
   @NonNls private static final String VALUES_METHOD = "values";
   @NonNls private static final String VALUE_OF_METHOD = "valueOf";
 
@@ -81,7 +81,9 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   private void dropCaches() {
     myInnersCache.dropCaches();
-    myCachedForLongName = null;
+    myCachedName = null;
+    myValueOfMethod = null;
+    myValuesMethod = null;
   }
 
   @Override
@@ -147,13 +149,18 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public String getName() {
+    String name = myCachedName;
+    if (name != null) return name;
     final PsiClassStub stub = getStub();
-    if (stub != null) {
-      return stub.getName();
+    if (stub == null) {
+      PsiIdentifier identifier = getNameIdentifier();
+      name = identifier == null ? null : identifier.getText();
     }
-
-    PsiIdentifier identifier = getNameIdentifier();
-    return identifier != null ? identifier.getText() : null;
+    else {
+      name = stub.getName();
+    }
+    myCachedName = name;
+    return name;
   }
 
   @Override
@@ -470,24 +477,16 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       String name = getName();
       if (name != null) {
         try {
-          if (myValuesMethod == null || myValueOfMethod == null || !name.equals(myCachedForLongName)) {
-            myCachedForLongName = name;
-            PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-            final PsiMethod valuesMethod = elementFactory.createMethodFromText("public static " + name + "[] values() {}", this);
-            myValuesMethod = new LightMethod(getManager(), valuesMethod, this);
-            final PsiMethod valueOfMethod = elementFactory.createMethodFromText("public static " + name + " valueOf(String name) throws IllegalArgumentException {}", this);
-            myValueOfMethod = new LightMethod(getManager(), valueOfMethod, this);
-          }
           final NameHint nameHint = processor.getHint(NameHint.KEY);
           final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
           if (nameHint == null || VALUES_METHOD.equals(nameHint.getName(state))) {
             if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-              if (!processor.execute(myValuesMethod, ResolveState.initial())) return false;
+              if (!processor.execute(getValuesMethod(), ResolveState.initial())) return false;
             }
           }
           if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName(state))) {
             if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-              if (!processor.execute(myValueOfMethod, ResolveState.initial())) return false;
+              if (!processor.execute(getValueOfMethod(), ResolveState.initial())) return false;
             }
           }
         }
@@ -687,6 +686,23 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Nullable
   public PsiMethod getValuesMethod() {
-    return myValuesMethod;
+    PsiMethod method = myValuesMethod;
+    if (method == null && isEnum() && getName() != null) {
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      final PsiMethod valuesMethod = elementFactory.createMethodFromText("public static " + getName() + "[] values() {}", this);
+      myValuesMethod = method = new LightMethod(getManager(), valuesMethod, this);
+    }
+    return method;
+  }
+
+  @Nullable
+  public PsiMethod getValueOfMethod() {
+    PsiMethod method = myValueOfMethod;
+    if (method == null && isEnum() && getName() != null) {
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      final PsiMethod valuesMethod = elementFactory.createMethodFromText("public static " + getName() + " valueOf(String name) throws IllegalArgumentException {}", this);
+      myValueOfMethod = method = new LightMethod(getManager(), valuesMethod, this);
+    }
+    return method;
   }
 }
