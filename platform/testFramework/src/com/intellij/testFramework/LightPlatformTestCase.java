@@ -68,13 +68,12 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -289,6 +288,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         startupManager.startCacheUpdate();
       }
     }.execute().throwException();
+    // project creation may make a lot of pointers, do not regard them as leak
+    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).storePointers();
   }
 
   protected static Module createMainModule(final ModuleType moduleType) {
@@ -319,6 +320,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     myThreadTracker = new ThreadTracker();
     DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
+    ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
+    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
+    filePointerManager.storePointers();
   }
 
   public static void doSetup(final LightProjectDescriptor descriptor,
@@ -453,6 +457,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     checkForSettingsDamage();
+    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     doTearDown(getProject(), ourApplication, true);
 
     try {
@@ -461,6 +466,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     finally {
       myThreadTracker.checkLeak();
       ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
+      filePointerManager.assertPointersAreDisposed();
     }
   }
 
@@ -549,18 +555,19 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     CompositeException result = new CompositeException();
     final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     if (allEditors.length > 0) {
-      String fail = null;
       for (Editor editor : allEditors) {
-        fail = EditorFactoryImpl.notReleasedError(editor);
         try {
-          EditorFactory.getInstance().releaseEditor(editor);
+          EditorFactoryImpl.throwNotReleasedError(editor);
         }
         catch (Throwable e) {
           result.add(e);
         }
+        finally {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
       }
       try {
-        fail("Unreleased editors: " + allEditors.length + "\n"+fail);
+        fail("Unreleased editors: " + allEditors.length);
       }
       catch (Throwable e) {
         result.add(e);
