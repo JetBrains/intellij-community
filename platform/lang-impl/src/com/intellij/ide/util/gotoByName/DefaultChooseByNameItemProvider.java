@@ -80,6 +80,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
         }
       });
       sortNamesList(namePattern, additionalNamesList);
+      namesList.add(ChooseByNameBase.NON_PREFIX_SEPARATOR);
       namesList.addAll(additionalNamesList);
     }
 
@@ -88,10 +89,15 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
 
     List<Object> sameNameElements = new SmartList<Object>();
+    boolean previousElemSeparator = false;
 
     for (String name : namesList) {
       if (cancelled.compute()) {
         throw new ProcessCanceledException();
+      }
+      if (name == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
+        previousElemSeparator = true;
+        continue;
       }
       final Object[] elements = base.getModel().getElementsByName(name, everywhere, namePattern);
       if (elements.length > 1) {
@@ -103,11 +109,15 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
         }
         sortByProximity(base, sameNameElements);
         for (Object element : sameNameElements) {
+          if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
           if (!consumer.process(element)) return;
+          previousElemSeparator = false;
         }
       }
       else if (elements.length == 1 && matchesQualifier(elements[0], qualifierPattern, base)) {
+        if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
         if (!consumer.process(elements[0])) return;
+        previousElemSeparator = false;
       }
     }
   }
