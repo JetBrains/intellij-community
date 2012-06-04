@@ -141,6 +141,9 @@ public class GitRepositoryImpl implements GitRepository, Disposable {
   @Override
   @NotNull
   public GitUntrackedFilesHolder getUntrackedFilesHolder() {
+    if (myUntrackedFilesHolder == null) {
+      throw new IllegalStateException("Using untracked files holder with light git repository instance " + this);
+    }
     return myUntrackedFilesHolder;
   }
 
