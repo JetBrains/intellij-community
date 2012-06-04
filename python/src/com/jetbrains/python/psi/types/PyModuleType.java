@@ -139,8 +139,11 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
     if (!ResolveImportUtil.isAbsoluteImportEnabledFor(element)) {
-      final PyQualifiedName absoluteQName = ResolveImportUtil.findCanonicalImportPath(element, null);
-      final PsiFile file = element.getContainingFile();
+      PsiFile file = element.getContainingFile();
+      if (file != null) {
+        file = file.getOriginalFile();
+      }
+      final PyQualifiedName absoluteQName = ResolveImportUtil.findShortestImportableQName(file);
       if (file != null && absoluteQName != null) {
         final PyQualifiedName prefixQName = PyUtil.isPackage(file) ? absoluteQName : absoluteQName.removeLastComponent();
         if (prefixQName.getComponentCount() > 0) {
