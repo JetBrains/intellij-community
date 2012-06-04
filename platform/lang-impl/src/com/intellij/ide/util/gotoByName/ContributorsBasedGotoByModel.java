@@ -58,12 +58,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-        if (value == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
-          component.setFont(component.getFont().deriveFont(Font.BOLD, component.getFont().getSize() - 2));
-        }
-
-        return component;
+        return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(component) : component;
       }
     };
   }

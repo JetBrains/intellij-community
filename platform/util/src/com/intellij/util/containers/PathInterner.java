@@ -22,9 +22,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -174,6 +172,16 @@ public class PathInterner {
       myIdxToSeq.add(null);
     }
 
+    public List<String> getAllPaths() {
+      ArrayList<String> result = new ArrayList<String>(myIdxToSeq.size() - 1);
+      for (SubstringWrapper[] wrappers : myIdxToSeq) {
+        if (wrappers != null) {
+          result.add(PathInterner.restorePath(wrappers));
+        }
+      }
+      return result;
+    }
+
     public int addPath(String path) {
       PathInterner.SubstringWrapper[] seq = myInterner.internParts(path, true);
       if (!mySeqToIdx.containsKey(seq)) {
@@ -216,6 +224,10 @@ public class PathInterner {
       myMap.put(myInterner.internParts(path, true), value);
     }
 
+
+    public Iterable<T> values() {
+      return myMap.values();
+    }
   }
 
 }
