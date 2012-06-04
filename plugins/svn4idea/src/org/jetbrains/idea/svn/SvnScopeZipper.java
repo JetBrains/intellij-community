@@ -45,9 +45,9 @@ public class SvnScopeZipper implements Runnable {
       if (file.isDirectory()) {
         final VirtualFile vFile = file.getVirtualFile();
         // todo take care about this 'not valid' - right now keeping things as they used to be
+        final MyDirNonRecursive me = createOrGet(file);
+        me.setInterestedInParent(true);
         if (vFile != null && vFile.isValid()) {
-          final MyDirNonRecursive me = createOrGet(file);
-          me.setInterestedInParent(true);
           for (VirtualFile child : vFile.getChildren()) {
             me.add(new FilePathImpl(child));
           }
