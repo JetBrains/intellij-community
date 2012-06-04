@@ -17,24 +17,27 @@
 package org.jetbrains.android.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.util.PairFunction;
 import org.jetbrains.android.exportSignedPackage.CheckModulePanel;
-import org.jetbrains.android.exportSignedPackage.ExportSignedPackageWizard;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class ExportSignedPackageAction extends AnAction {
+  static final String HIDE_EXPORT_ACTIONS_PROPERTY = "ANDROID_HIDE_EXPORT_ACTIONS";
+
   public ExportSignedPackageAction() {
     super(AndroidBundle.message("android.export.signed.package.action.text"));
   }
@@ -43,11 +46,18 @@ public class ExportSignedPackageAction extends AnAction {
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null && AndroidUtils.getApplicationFacets(project).size() > 0);
+
+    final String hide = PropertiesComponent.getInstance().getValue(HIDE_EXPORT_ACTIONS_PROPERTY);
+    if (Boolean.parseBoolean(hide)) {
+      e.getPresentation().setVisible(false);
+    }
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    showNotification(true);
+
+    /*final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
 
     List<AndroidFacet> facets = AndroidUtils.getApplicationFacets(project);
@@ -56,7 +66,32 @@ public class ExportSignedPackageAction extends AnAction {
       if (!checkFacet(facets.get(0))) return;
     }
     ExportSignedPackageWizard wizard = new ExportSignedPackageWizard(project, facets, true);
-    wizard.show();
+    wizard.show();*/
+  }
+
+  static void showNotification(boolean signed) {
+    final String doNotShowStr = PropertiesComponent.getInstance().getValue(HIDE_EXPORT_ACTIONS_PROPERTY);
+    final boolean doNotShow = Boolean.parseBoolean(doNotShowStr);
+
+    if (!doNotShow) {
+      final boolean[] hide = {false};
+      final int result = Messages.showCheckboxMessageDialog(
+        "There is no 'Export package' wizard since IDEA 12. Instead, please open\n" +
+        "'File | Project Structure | Artifacts' and create new 'Android Application' artifact",
+        signed ? "Export Signed Package" : "Export Unsigned Package",
+        new String[]{CommonBundle.getOkButtonText()}, "Hide 'Export package' actions in the menu", false, 0, 0,
+        Messages.getInformationIcon(), new PairFunction<Integer, JCheckBox, Integer>() {
+        @Override
+        public Integer fun(Integer integer, JCheckBox checkBox) {
+          hide[0] = checkBox.isSelected();
+          return integer;
+        }
+      });
+
+      if (result == Messages.OK && hide[0]) {
+        PropertiesComponent.getInstance().setValue(HIDE_EXPORT_ACTIONS_PROPERTY, Boolean.toString(true));
+      }
+    }
   }
 
   private static boolean checkFacet(final AndroidFacet facet) {
