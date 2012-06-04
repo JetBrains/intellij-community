@@ -218,7 +218,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
 
-      if (languageLevel.isPy3K()) {
+      if (languageLevel.isAtLeast(LanguageLevel.PYTHON30) && languageLevel.isOlderThan(LanguageLevel.PYTHON33)) {
         final String text = node.getText();
         if (text.startsWith("u") || text.startsWith("U")) {
           len = appendLanguageLevel(message, len, languageLevel);
