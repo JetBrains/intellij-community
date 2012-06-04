@@ -34,7 +34,7 @@ public class NewKeyStoreDialog extends DialogWrapper {
     super(project);
     myProject = project;
     myKeyStorePathField.setText(defaultKeyStorePath);
-    setTitle("Create New Key Store");
+    setTitle("New Key Store");
     myNewKeyForm = new MyNewKeyForm();
     myNewKeyPanel.add(myNewKeyForm.getContentPanel(), BorderLayout.CENTER);
 
