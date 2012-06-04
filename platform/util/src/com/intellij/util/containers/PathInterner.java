@@ -188,10 +188,14 @@ public class PathInterner {
         return PathInterner.restorePath(myIdxToSeq.get(idx));
       }
       catch (IndexOutOfBoundsException e) {
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException("Illegal index: " + idx);
       }
     }
 
+    public int getExistingPathIndex(String path) {
+      PathInterner.SubstringWrapper[] key = myInterner.internParts(path, false);
+      return key != null && mySeqToIdx.containsKey(key) ? mySeqToIdx.get(key) : 0;
+    }
     public boolean containsPath(String path) {
       PathInterner.SubstringWrapper[] key = myInterner.internParts(path, false);
       return key != null && mySeqToIdx.containsKey(key);
