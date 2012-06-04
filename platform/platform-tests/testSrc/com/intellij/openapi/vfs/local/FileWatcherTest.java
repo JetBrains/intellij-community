@@ -475,7 +475,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private void delete(@NotNull final File file) throws IOException {
     final VirtualFile vFile = myFileSystem.findFileByIoFile(file);
     if (vFile != null) {
-      @SuppressWarnings("deprecation") final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
       try {
         vFile.delete(this);
       }
