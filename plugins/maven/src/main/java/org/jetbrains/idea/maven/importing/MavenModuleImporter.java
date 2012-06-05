@@ -17,10 +17,7 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -188,7 +185,7 @@ public class MavenModuleImporter {
           rootType = OrderRootType.SOURCES;
         }
         else if ("javadoc".equals(classifier)) {
-          rootType = OrderRootType.DOCUMENTATION;
+          rootType = JavadocOrderRootType.getInstance();
         }
 
         String filePath = artifactElement.getChildTextTrim("file");
