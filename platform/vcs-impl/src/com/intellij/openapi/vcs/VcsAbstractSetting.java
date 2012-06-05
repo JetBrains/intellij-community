@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.vcs;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 
 public class VcsAbstractSetting {
@@ -34,7 +34,9 @@ public class VcsAbstractSetting {
   }
 
   public void addApplicableVcs(AbstractVcs vcs) {
-    myApplicable.add(vcs);
+    if (vcs != null) {
+      myApplicable.add(vcs);
+    }
   }
 
   public boolean isApplicableTo(Collection<AbstractVcs> vcs) {
