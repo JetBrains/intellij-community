@@ -26,7 +26,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
-public class InlineMethodDialog extends InlineOptionsDialog {
+public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
   private final PsiJavaCodeReferenceElement myReferenceElement;
   private final Editor myEditor;
@@ -72,7 +72,10 @@ public class InlineMethodDialog extends InlineOptionsDialog {
   }
 
   protected void doAction() {
-    invokeRefactoring(new InlineMethodProcessor(getProject(), myMethod, myReferenceElement, myEditor, isInlineThisOnly()));
+    super.doAction();
+    invokeRefactoring(
+      new InlineMethodProcessor(getProject(), myMethod, myReferenceElement, myEditor, isInlineThisOnly(), isSearchInCommentsAndStrings(),
+                                isSearchForTextOccurrences()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();
@@ -90,5 +93,25 @@ public class InlineMethodDialog extends InlineOptionsDialog {
 
   protected boolean isInlineThis() {
     return JavaRefactoringSettings.getInstance().INLINE_METHOD_THIS;
+  }
+
+  @Override
+  protected boolean isSearchInCommentsAndStrings() {
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD;
+  }
+
+  @Override
+  protected void saveSearchInCommentsAndStrings(boolean searchInComments) {
+    JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = searchInComments;
+  }
+
+  @Override
+  protected boolean isSearchForTextOccurrences() {
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD;
+  }
+
+  @Override
+  protected void saveSearchInTextOccurrences(boolean searchInTextOccurrences) {
+    JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_METHOD = searchInTextOccurrences;
   }
 }

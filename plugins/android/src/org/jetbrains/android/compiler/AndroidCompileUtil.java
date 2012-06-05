@@ -55,9 +55,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.android.compiler.artifact.AndroidApplicationArtifactProperties;
-import org.jetbrains.android.compiler.artifact.AndroidArtifactPropertiesProvider;
-import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
+import org.jetbrains.android.compiler.artifact.*;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
@@ -868,13 +866,35 @@ public class AndroidCompileUtil {
 
   @Nullable
   public static ProguardRunningOptions getProguardConfigFilePathIfShouldRun(@NotNull AndroidFacet facet, CompileContext context) {
-    final String path = context.getCompileScope().getUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY);
+    // wizard
+    String path = context.getCompileScope().getUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY);
     if (path != null) {
       final Boolean includeSystemProguardFile = context.getCompileScope().
         getUserData(AndroidProguardCompiler.INCLUDE_SYSTEM_PROGUARD_FILE);
       return new ProguardRunningOptions(path, Boolean.TRUE.equals(includeSystemProguardFile));
     }
+    
+    // artifact
+    final Project project = context.getProject();
+    final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope(), false);
 
+    for (Artifact artifact : artifacts) {
+      if (artifact.getArtifactType() instanceof AndroidApplicationArtifactType &&
+          facet.equals(AndroidArtifactUtil.getPackagedFacet(project, artifact))) {
+        final ArtifactProperties<?> properties = artifact.getProperties(AndroidArtifactPropertiesProvider.getInstance());
+        
+        if (properties instanceof AndroidApplicationArtifactProperties) {
+          final AndroidApplicationArtifactProperties p = (AndroidApplicationArtifactProperties)properties;
+          
+          if (p.isRunProGuard()) {
+            path = FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(p.getProGuardCfgFileUrl()));
+            return new ProguardRunningOptions(path, p.isIncludeSystemProGuardCfgFile());
+          }
+        }
+      }
+    }
+
+    // facet
     final AndroidFacetConfiguration configuration = facet.getConfiguration();
     if (configuration.RUN_PROGUARD) {
       final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);

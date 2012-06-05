@@ -15,7 +15,8 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lexer.JavaLexer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -23,8 +24,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJavaToken {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsIdentifierImpl");
-
   private final PsiElement myParent;
   private final String myText;
 
@@ -54,9 +53,21 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
     return myParent;
   }
 
+  private boolean isCorrectName(String name) {
+    if (name == null) return false;
+
+    return StringUtil.isJavaIdentifier(name) && !JavaLexer.isKeyword(name, ((PsiJavaFile)getContainingFile()).getLanguageLevel());
+  }
+
   @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer){
-    buffer.append(getText());
+    String original = getText();
+    if (isCorrectName(original)) {
+      buffer.append(original);
+    }
+    else {
+      buffer.append("$$").append(original).append(" /* Real name is '").append(original).append("' */");
+    }
   }
 
   @Override

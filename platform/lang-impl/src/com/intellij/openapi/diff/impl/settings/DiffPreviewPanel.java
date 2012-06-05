@@ -35,6 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -91,7 +92,7 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   }
 
-  public void setMergeRequest(Project project) throws FilesTooBigForDiffException {
+  public void setMergeRequest(@Nullable Project project) throws FilesTooBigForDiffException {
     getMergePanel().setDiffRequest(new SampleMerge(project));
   }
 
@@ -119,7 +120,7 @@ public class DiffPreviewPanel implements PreviewPanel {
   }
 
   public static class SampleMerge extends DiffRequest {
-    public SampleMerge(Project project) {
+    public SampleMerge(@Nullable Project project) {
       super(project);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,11 +22,13 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RadioUpDownListener;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -37,7 +38,6 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   protected boolean myInvokedOnReference;
   protected final PsiElement myElement;
   private final JLabel myNameLabel = new JLabel();
-  protected JPanel myOptionsPanel;
 
   protected InlineOptionsDialog(Project project, boolean canBeParent, PsiElement element) {
     super(project, canBeParent);
@@ -54,9 +54,9 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   }
 
   protected JComponent createCenterPanel() {
-    myOptionsPanel = new JPanel();
-    myOptionsPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
-    myOptionsPanel.setLayout(new BoxLayout(myOptionsPanel, BoxLayout.Y_AXIS));
+    JPanel optionsPanel = new JPanel();
+    optionsPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
+    optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
 
     myRbInlineAll = new JRadioButton();
     myRbInlineAll.setText(getInlineAllText());
@@ -64,8 +64,8 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     myRbInlineThisOnly = new JRadioButton();
     myRbInlineThisOnly.setText(getInlineThisText());
 
-    myOptionsPanel.add(myRbInlineAll);
-    myOptionsPanel.add(myRbInlineThisOnly);
+    optionsPanel.add(myRbInlineAll);
+    optionsPanel.add(myRbInlineThisOnly);
     ButtonGroup bg = new ButtonGroup();
     bg.add(myRbInlineAll);
     bg.add(myRbInlineThisOnly);
@@ -105,7 +105,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
         }
       }
     );
-    return myOptionsPanel;
+    return optionsPanel;
   }
 
   protected abstract String getNameLabelText();

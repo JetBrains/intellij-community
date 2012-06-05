@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.generation;
 
-import com.intellij.lang.Commenter;
-import org.jetbrains.annotations.Nullable;
-
-/**
- * @author oleg
+/*
+ * @author max
  */
-public interface IndentedCommenter extends Commenter {
-  /**
-   * Used to override CodeStyleSettings#LINE_COMMENT_AT_FIRST_COLUMN option
-   * @return true or false to override, null to use settings option
-   */
-  @Nullable
-  Boolean forceIndentedLineComment();
-  
+package com.intellij.psi.impl.compiled;
+
+public class OutOfOrderInnerClassException extends RuntimeException {
+
+  @Override
+  public Throwable fillInStackTrace() {
+    return this;
+  }
 }

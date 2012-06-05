@@ -870,6 +870,7 @@
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.LiteralSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.DocCommentSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.ListSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.VarargsSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.CodeBlockOrInitializerSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.FinallyBlockSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.MethodOrClassSelectioner"/>

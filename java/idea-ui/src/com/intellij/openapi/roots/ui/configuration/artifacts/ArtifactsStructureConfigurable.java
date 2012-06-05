@@ -296,6 +296,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
       actualType = type;
     }
     final ModifiableArtifact artifact = myPackagingEditorContext.getOrCreateModifiableArtifactModel().addArtifact(name, actualType, configuration.getRootElement());
+    artifactTemplate.setUpArtifact(artifact, configuration);
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 

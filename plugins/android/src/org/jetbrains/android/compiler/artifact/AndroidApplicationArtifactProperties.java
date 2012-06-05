@@ -1,8 +1,10 @@
 package org.jetbrains.android.compiler.artifact;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -14,6 +16,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +42,31 @@ public class AndroidApplicationArtifactProperties extends ArtifactProperties<And
   private String myKeyAlias = "";
   private String myKeyPassword = "";
 
+  private boolean myRunProGuard;
+  private String myProGuardCfgFileUrl = "";
+  private boolean myIncludeSystemProGuardCfgFile;
+
   @Override
   public void onBuildFinished(@NotNull Artifact artifact, @NotNull CompileContext context) {
     if (!(artifact.getArtifactType() instanceof AndroidApplicationArtifactType) ||
         mySigningMode != AndroidArtifactSigningMode.RELEASE_SIGNED) {
       return;
     }
-    final String errorPrefix = "[Artifact '" + artifact.getName() + "'] ";
-    final Pair<PrivateKey, X509Certificate> pair = getPrivateKeyAndCertificate(context, errorPrefix);
+
+    final AndroidFacet facet = AndroidArtifactUtil.getPackagedFacet(context.getProject(), artifact);
+    if (facet == null) {
+      return;
+    }
+    final String messagePrefix = "[Artifact '" + artifact.getName() + "'] ";
+
+    final Module module = facet.getModule();
+    final AndroidPlatform platform = AndroidPlatform.getInstance(module);
+    if (platform == null) {
+      context.addMessage(CompilerMessageCategory.ERROR, messagePrefix +
+                         AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
+      return;
+    }
+    final Pair<PrivateKey, X509Certificate> pair = getPrivateKeyAndCertificate(context, messagePrefix);
     if (pair == null) {
       return;
     }
@@ -64,11 +85,26 @@ public class AndroidApplicationArtifactProperties extends ArtifactProperties<And
       return;
     }
 
+    final String zipAlignPath =
+      FileUtil.toSystemDependentName(platform.getSdkData().getLocation() + '/' + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN));
+    final boolean runZipAlign = new File(zipAlignPath).isFile();
+
     File tmpDir = null;
     try {
       tmpDir = FileUtil.createTempDirectory("android_artifact", "tmp");
       final File tmpArtifact = new File(tmpDir, "tmpArtifact.apk");
-      FileUtil.copy(artifactFile, tmpArtifact);
+
+      if (runZipAlign) {
+        final String errorMessage = AndroidArtifactUtil.executeZipAlign(zipAlignPath, artifactFile, tmpArtifact);
+        if (errorMessage != null) {
+          context.addMessage(CompilerMessageCategory.ERROR, messagePrefix + "zip-align: " + errorMessage, null, -1, -1);
+          return;
+        }
+      }
+      else {
+        context.addMessage(CompilerMessageCategory.WARNING, messagePrefix + AndroidBundle.message("cannot.find.zip.align"), null, -1, -1);
+        FileUtil.copy(artifactFile, tmpArtifact);
+      }
 
       if (!FileUtil.delete(artifactFile)) {
         context.addMessage(CompilerMessageCategory.ERROR, "Cannot delete file " + artifactFile.getPath(), null, -1, -1);
@@ -91,7 +127,7 @@ public class AndroidApplicationArtifactProperties extends ArtifactProperties<And
 
   @Override
   public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
-    return new AndroidArtifactPropertiesEditor(this, context.getProject());
+    return new AndroidArtifactPropertiesEditor(context.getArtifact(), this, context.getProject());
   }
 
   @Override
@@ -246,5 +282,29 @@ public class AndroidApplicationArtifactProperties extends ArtifactProperties<And
   @Transient
   public void setPlainKeyPassword(@NotNull String password) {
     myKeyPassword = new String(new Base64().encode(password.getBytes()));
+  }
+
+  public boolean isRunProGuard() {
+    return myRunProGuard;
+  }
+
+  public String getProGuardCfgFileUrl() {
+    return myProGuardCfgFileUrl;
+  }
+
+  public boolean isIncludeSystemProGuardCfgFile() {
+    return myIncludeSystemProGuardCfgFile;
+  }
+
+  public void setRunProGuard(boolean runProGuard) {
+    myRunProGuard = runProGuard;
+  }
+
+  public void setProGuardCfgFileUrl(String proGuardCfgFileUrl) {
+    myProGuardCfgFileUrl = proGuardCfgFileUrl;
+  }
+
+  public void setIncludeSystemProGuardCfgFile(boolean includeSystemProGuardCfgFile) {
+    myIncludeSystemProGuardCfgFile = includeSystemProGuardCfgFile;
   }
 }

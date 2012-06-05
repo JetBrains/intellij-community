@@ -550,13 +550,10 @@ public class FindUsagesManager implements JDOMExternalizable {
 
     final FileSearchScope direction = dir;
 
-    final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(project);
-    usageViewManager.setCurrentSearchCancelled(false);
     final Usage[] foundUsage = {null};
     usageSearcher.generate(new Processor<Usage>() {
       @Override
       public boolean process(Usage usage) {
-        if (usageViewManager.searchHasBeenCancelled()) return false;
 
         usagesWereFound[0] = true;
 

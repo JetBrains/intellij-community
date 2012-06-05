@@ -65,7 +65,7 @@ public class ChooseKeyDialog extends DialogWrapper {
     myCreateNewKeyRadioButton.setSelected(!useExisting);
     UIUtil.setEnabled(myNewKeyPanel, !useExisting, true);
 
-    setTitle("Create New Key");
+    setTitle("Choose Key");
     init();
   }
 

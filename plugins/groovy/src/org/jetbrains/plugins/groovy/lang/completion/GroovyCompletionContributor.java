@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -638,7 +639,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
     if (context.getCompletionType() == CompletionType.BASIC && context.getFile() instanceof GroovyFile) {
       PsiElement position = context.getFile().findElementAt(context.getStartOffset());
-      if (position != null && position.getParent() instanceof GrVariable && position == ((GrVariable)position.getParent()).getNameIdentifierGroovy()) {
+      if (position != null &&
+          position.getParent() instanceof GrVariable &&
+          position == ((GrVariable)position.getParent()).getNameIdentifierGroovy() ||
+
+          position != null &&
+          position.getParent() instanceof GrAnnotationNameValuePair &&
+          position == ((GrAnnotationNameValuePair)position.getParent()).getNameIdentifierGroovy()) {
+
         context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
       }
       else if (semicolonNeeded(context)) {

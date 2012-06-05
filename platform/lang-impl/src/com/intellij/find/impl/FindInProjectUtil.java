@@ -226,9 +226,7 @@ public class FindInProjectUtil {
       int count = 0;
       final boolean[] warningShown = {false};
 
-      final UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
       for (final PsiFile psiFile : psiFiles) {
-        usageViewManager.checkSearchCanceled();
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         final int index = i++;
         if (virtualFile == null) continue;
@@ -588,10 +586,8 @@ public class FindInProjectUtil {
 
     Project project = psiFile.getProject();
 
-    UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
     FindManager findManager = FindManager.getInstance(project);
     while (offset < textLength) {
-      usageViewManager.checkSearchCanceled();
       FindResult result = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
       if (!result.isStringFound()) break;
 
@@ -601,7 +597,9 @@ public class FindInProjectUtil {
         if (!((LocalSearchScope)customScope).containsRange(psiFile, range)) break;
       }
       UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
-      if (!consumer.process(info)) break;
+      if (!consumer.process(info)){
+        throw new ProcessCanceledException();
+      }
       count++;
 
       final int prevOffset = offset;

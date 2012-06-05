@@ -3,7 +3,7 @@ class A {
   String field;
 
   static class Foo {
-      private Object field<caret>;
+      private final Object field<caret>;
 
       Foo() {
           field;

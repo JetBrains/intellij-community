@@ -34,7 +34,7 @@ public abstract class DiffRequest {
   @NonNls private static final String COMMON_DIFF_GROUP_KEY = "DiffWindow";
 
   private String myGroupKey = COMMON_DIFF_GROUP_KEY;
-  private final Project myProject;
+  @Nullable private final Project myProject;
   private ToolbarAddons myToolbarAddons = ToolbarAddons.NOTHING;
   private Factory<JComponent> myBottomComponentFactory = null;
   private final HashSet myHints = new HashSet();
@@ -42,7 +42,7 @@ public abstract class DiffRequest {
   private Runnable myOnOkRunnable;
   private final List<Pair<String, DiffRequest>> myAdditional;
 
-  protected DiffRequest(Project project) {
+  protected DiffRequest(@Nullable Project project) {
     myProject = project;
     myGenericData = new HashMap<String, Object>(2);
     myAdditional = new ArrayList<Pair<String, DiffRequest>>(0);
@@ -57,9 +57,18 @@ public abstract class DiffRequest {
     }
   }
 
-  public String getGroupKey() { return myGroupKey; }
-  public void setGroupKey(@NonNls String groupKey) { myGroupKey = groupKey; }
-  public Project getProject() { return myProject; }
+  public String getGroupKey() {
+    return myGroupKey;
+  }
+
+  public void setGroupKey(@NonNls String groupKey) {
+    myGroupKey = groupKey;
+  }
+
+  @Nullable
+  public Project getProject() {
+    return myProject;
+  }
 
   public boolean isSafeToCallFromUpdate() {
     return true;
@@ -161,7 +170,7 @@ public abstract class DiffRequest {
   /**
    * <B>Work in progress. Don't rely on this functionality</B><br>
    */
-  public static interface ToolbarAddons {
+  public interface ToolbarAddons {
     /**
      * Does nothing
      */

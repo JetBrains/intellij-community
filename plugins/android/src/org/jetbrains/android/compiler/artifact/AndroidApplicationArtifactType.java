@@ -3,6 +3,9 @@ package org.jetbrains.android.compiler.artifact;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -13,6 +16,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -90,6 +94,26 @@ public class AndroidApplicationArtifactType extends ArtifactType {
         AndroidApplicationArtifactType.this.createRootElement(facet.getModule().getName());
       rootElement.addFirstChild(new AndroidFinalPackageElement(myContext.getProject(), facet));
       return new NewArtifactConfiguration(rootElement, facet.getModule().getName(), AndroidApplicationArtifactType.this);
+    }
+
+    @Override
+    public void setUpArtifact(@NotNull Artifact artifact, @NotNull NewArtifactConfiguration configuration) {
+      final AndroidFacet facet = AndroidArtifactUtil.getPackagedFacet(myContext.getProject(), artifact);
+
+      if (facet != null) {
+        final ArtifactProperties<?> properties = artifact.getProperties(AndroidArtifactPropertiesProvider.getInstance());
+
+        if (properties instanceof AndroidApplicationArtifactProperties) {
+          final AndroidApplicationArtifactProperties p = (AndroidApplicationArtifactProperties)properties;
+
+          final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
+          if (proguardCfgFile != null) {
+            p.setProGuardCfgFileUrl(proguardCfgFile.getUrl());
+          }
+
+          p.setIncludeSystemProGuardCfgFile(facet.getConfiguration().isIncludeSystemProguardCfgPath());
+        }
+      }
     }
   }
 }

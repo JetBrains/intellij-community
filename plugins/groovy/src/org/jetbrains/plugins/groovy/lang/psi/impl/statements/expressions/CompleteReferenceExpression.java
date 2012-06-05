@@ -36,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -66,11 +68,27 @@ public class CompleteReferenceExpression {
   }
 
   public static void processVariants(PrefixMatcher matcher, Consumer<Object> consumer, GrReferenceExpressionImpl refExpr, CompletionParameters parameters) {
+    processRefInAnnotation(consumer, refExpr);
+
     final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher, parameters);
     getVariantsImpl(refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (Object o : GroovyCompletionUtil.getCompletionVariants(candidates)) {
       consumer.consume(o);
+    }
+  }
+
+  private static void processRefInAnnotation(Consumer<Object> consumer, GrReferenceExpressionImpl refExpr) {
+    if (refExpr.getParent() instanceof GrAnnotationNameValuePair) {
+      PsiElement parent = refExpr.getParent().getParent();
+      if (!(parent instanceof GrAnnotation)) {
+        parent = parent.getParent();
+      }
+      if (parent instanceof GrAnnotation) {
+        for (Object result : GroovyCompletionUtil.getAnnotationCompletionResults((GrAnnotation)parent)) {
+          consumer.consume(result);
+        }
+      }
     }
   }
 

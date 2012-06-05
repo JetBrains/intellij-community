@@ -69,7 +69,7 @@ public class FileListeningTest extends IntegrationTestCase {
     String dir2 = createDirectoryExternally("dir/subdir/subdir2");
     String f2 = createFileExternally("dir/subdir/subdir2/f.txt");
 
-    LocalFileSystem.getInstance().refresh(false);
+    myRoot.refresh(false, true);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
     assertEquals(changes.toString(), 4, changes.size());

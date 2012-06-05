@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -247,11 +248,17 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }, new Condition<Object>() {
       @Override
       public boolean value(Object o) {
-        return isDisposed || project.isDisposed() || com.intellij.usages.UsageViewManager.getInstance(project).searchHasBeenCancelled();
+        return isDisposed || project.isDisposed() || searchHasBeenCancelled();
       }
     },200);
   }
 
+  protected boolean searchHasBeenCancelled() {
+    return false;
+  }
+  
+  protected void setCurrentSearchCancelled(boolean flag){}
+  
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
     if (myUsagePreviewPanel != null) {
@@ -650,14 +657,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       public void run(@NotNull final ProgressIndicator indicator) {
         setSearchInProgress(true);
         final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(myProject);
-        usageViewManager.setCurrentSearchCancelled(false);
+        setCurrentSearchCancelled(false);
 
         myChangesDetected = false;
         UsageSearcher usageSearcher = myUsageSearcherFactory.create();
         usageSearcher.generate(new Processor<Usage>() {
           @Override
           public boolean process(final Usage usage) {
-            if (usageViewManager.searchHasBeenCancelled()) return false;
+            if (searchHasBeenCancelled()) return false;
             if (tooManyUsages.get() == 1) {
               try {
                 waitWhileUserClick.await(1, TimeUnit.SECONDS);
@@ -671,7 +678,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             if (incrementCounter) {
               final int usageCount = usageCountWithoutDefinition.incrementAndGet();
               if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
-                ((UsageViewManagerImpl)usageViewManager).showTooManyUsagesWarning(indicator, waitWhileUserClick, usageCountWithoutDefinition.get());
+                ((UsageViewManagerImpl)usageViewManager)
+                  .showTooManyUsagesWarning(indicator, waitWhileUserClick, usageCountWithoutDefinition.get(), UsageViewImpl.this);
               }
               appendUsage(usage);
             }
@@ -835,8 +843,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @Override
   public void close() {
-    // todo ? crazyness
-    com.intellij.usages.UsageViewManager.getInstance(myProject).setCurrentSearchCancelled(true);
     UsageViewManager.getInstance(myProject).closeContent(myContent);
   }
 
