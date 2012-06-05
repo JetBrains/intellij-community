@@ -77,7 +77,7 @@ public class ExportSignedPackageAction extends AnAction {
       final boolean[] hide = {false};
       final int result = Messages.showCheckboxMessageDialog(
         "There is no 'Export package' wizard since IDEA 12. Instead, please open\n" +
-        "'File | Project Structure | Artifacts' and create new 'Android Application' artifact",
+        "'File | Project Structure | Artifacts' and create new 'Android Application' artifact.",
         signed ? "Export Signed Package" : "Export Unsigned Package",
         new String[]{CommonBundle.getOkButtonText()}, "Hide 'Export package' actions in the menu", false, 0, 0,
         Messages.getInformationIcon(), new PairFunction<Integer, JCheckBox, Integer>() {
