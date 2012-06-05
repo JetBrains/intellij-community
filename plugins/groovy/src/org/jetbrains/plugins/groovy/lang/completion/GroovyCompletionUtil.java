@@ -39,6 +39,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -66,6 +68,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -292,6 +295,10 @@ public class GroovyCompletionUtil {
 
   private static LookupElementBuilder setTailText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
+      PsiClass aClass = ((PsiMethod)element).getContainingClass();
+      if (aClass != null && aClass.isAnnotationType()) {
+        return builder;
+      }
       builder = builder.withTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS,
                                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
     }
@@ -487,5 +494,22 @@ public class GroovyCompletionUtil {
 
     final IElementType t = pprev.getNode().getElementType();
     return t == mLT || t == mCOMMA;
+  }
+
+  public static Object[] getAnnotationCompletionResults(GrAnnotation anno) {
+    if (anno != null) {
+      GrCodeReferenceElement ref = anno.getClassReference();
+      PsiElement resolved = ref.resolve();
+      if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
+        PsiMethod[] methods = ((PsiClass)resolved).getMethods();
+        Object[] result = new Object[methods.length];
+        for (int i = 0; i < methods.length; i++) {
+          result[i] = createCompletionVariant(new GroovyResolveResultImpl(methods[i], true));
+        }
+        return result;
+      }
+    }
+
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

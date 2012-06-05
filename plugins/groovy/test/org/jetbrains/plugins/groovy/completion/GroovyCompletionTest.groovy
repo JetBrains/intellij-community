@@ -1326,4 +1326,58 @@ print map.metc<caret>
     myFixture.complete(CompletionType.BASIC);
     assertEmpty myFixture.getLookupElements()
   }
+
+  void testAnnotationCompletion0() {
+    myFixture.configureByText('_.groovy', '''\
+@interface A {
+  String fooo()
+}
+
+@A(foo<caret>)
+def bar(){}''')
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.checkResult('''\
+@interface A {
+  String fooo()
+}
+
+@A(fooo = <caret>)
+def bar(){}''')
+  }
+
+  void testAnnotationCompletion1() {
+    myFixture.configureByText('_.groovy', '''\
+@interface A {
+  String fooo()
+}
+
+def abcde() {}
+
+@A(abc<caret>)
+def bar(){}''')
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.checkResult('''\
+@interface A {
+  String fooo()
+}
+
+def abcde() {}
+
+@A(abcde()<caret>)
+def bar(){}''')
+  }
+
+  void testAnnotationCompletion2() {
+    myFixture.configureByText('_.groovy', '''\
+@interface A {
+  String fooo()
+  String fooo1()
+}
+
+@A(foo<caret> = 'a')
+def bar(){}''')
+    myFixture.complete(CompletionType.BASIC)
+    assertOrderedEquals(myFixture.lookupElementStrings, ['fooo', 'fooo1'])
+  }
+
 }
