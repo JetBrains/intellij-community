@@ -19,11 +19,9 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -69,7 +67,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final T mySource;
   private PsiModifierListStub myModList;
   private PsiClassStub myResult;
-  private JavaLexer myLexer;
 
   public StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access) {
     super(Opcodes.ASM4);
@@ -106,7 +103,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     LanguageLevel languageLevel = convertFromVersion(version);
-    myLexer = new JavaLexer(languageLevel);
 
     ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -320,13 +316,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
   }
 
-  private boolean isCorrectName(String name) {
-    if (name == null) return false;
-
-    myLexer.start(name);
-    if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
-    myLexer.advance();
-    return myLexer.getTokenType() == null;
+  private static boolean isCorrectName(String name) {
+    return name != null;
   }
 
   @Override
