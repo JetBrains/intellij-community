@@ -62,7 +62,7 @@ public class MergeList implements UserDataHolder {
   @NotNull private final ChangeList myBaseToLeftChangeList;
   @NotNull private final ChangeList myBaseToRightChangeList;
 
-  private MergeList(@NotNull Project project, @NotNull Document left, @NotNull Document base, @NotNull Document right) {
+  private MergeList(@Nullable Project project, @NotNull Document left, @NotNull Document base, @NotNull Document right) {
     myBaseToLeftChangeList = new ChangeList(base, left, project);
     myBaseToRightChangeList = new ChangeList(base, right, project);
   }
@@ -77,7 +77,7 @@ public class MergeList implements UserDataHolder {
     return myBaseToRightChangeList;
   }
 
-  public static MergeList create(@NotNull Project project, @NotNull Document left, @NotNull Document base,
+  public static MergeList create(@Nullable Project project, @NotNull Document left, @NotNull Document base,
                                  @NotNull Document right) throws FilesTooBigForDiffException {
     MergeList mergeList = new MergeList(project, left, base, right);
     String leftText = left.getText();
