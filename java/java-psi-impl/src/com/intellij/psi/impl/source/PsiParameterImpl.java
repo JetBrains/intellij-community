@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,13 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
 
     myCachedType = null;
-    return JavaSharedImplUtil.getType(this);
+
+    final PsiTypeElement typeElement = getTypeElement();
+    if (typeElement == null && isLambdaParameter()) {
+      return new PsiLambdaParameterType(this);
+    }
+
+    return JavaSharedImplUtil.getType(typeElement, getNameIdentifier(), this);
   }
 
   @Override
@@ -134,13 +140,21 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
         return null;
       }
     }
-    PsiTypeElement typeElement = getTypeElement();
-    PsiIdentifier nameIdentifier = getNameIdentifier();
-    return JavaSharedImplUtil.getTypeNoResolve(typeElement, nameIdentifier, this);
+
+    final PsiTypeElement typeElement = getTypeElement();
+    if (typeElement == null && isLambdaParameter()) {
+      return new PsiLambdaParameterType(this);
+    }
+
+    return JavaSharedImplUtil.getTypeNoResolve(typeElement, getNameIdentifier(), this);
+  }
+
+  private boolean isLambdaParameter() {
+    final PsiElement parent = getParent();
+    return parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression;
   }
 
   @Override
-  @NotNull
   public PsiTypeElement getTypeElement() {
     return (PsiTypeElement)getNode().findChildByRoleAsPsiElement(ChildRole.TYPE);
   }
@@ -233,7 +247,8 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     }
 
     myCachedType = null;
-    return SourceTreeToPsiMap.psiToTreeNotNull(getTypeElement()).findChildByType(JavaTokenType.ELLIPSIS) != null;
+    final PsiTypeElement typeElement = getTypeElement();
+    return typeElement != null && SourceTreeToPsiMap.psiToTreeNotNull(typeElement).findChildByType(JavaTokenType.ELLIPSIS) != null;
   }
 
   @Override

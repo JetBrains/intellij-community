@@ -43,6 +43,8 @@ public class DeclarationParser {
     JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD);
   private static final TokenSet APPEND_TO_METHOD_SET = TokenSet.create(
     JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.THROWS_KEYWORD);
+  private static final TokenSet PARAM_LIST_STOPPERS = TokenSet.create(
+    JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW);
 
   private static final String WHITESPACES = "\n\r \t";
   private static final String LINE_ENDS = "\n\r";
@@ -456,19 +458,28 @@ public class DeclarationParser {
 
   @NotNull
   public PsiBuilder.Marker parseParameterList(final PsiBuilder builder) {
-    return parseElementList(builder, false);
+    return parseElementList(builder, ListType.NORMAL);
   }
 
   @NotNull
   public PsiBuilder.Marker parseResourceList(final PsiBuilder builder) {
-    return parseElementList(builder, true);
+    return parseElementList(builder, ListType.RESOURCE);
   }
 
   @NotNull
-  private PsiBuilder.Marker parseElementList(final PsiBuilder builder, final boolean resources) {
-    assert builder.getTokenType() == JavaTokenType.LPARENTH : builder.getTokenType();
+  public PsiBuilder.Marker parseLambdaParameterList(final PsiBuilder builder, final boolean typed) {
+    return parseElementList(builder, typed ? ListType.LAMBDA_TYPED : ListType.LAMBDA_UNTYPED);
+  }
+
+  private enum ListType { NORMAL, RESOURCE, LAMBDA_TYPED, LAMBDA_UNTYPED }
+
+  @NotNull
+  private PsiBuilder.Marker parseElementList(final PsiBuilder builder, final ListType type) {
+    final boolean lambda = (type == ListType.LAMBDA_TYPED || type == ListType.LAMBDA_UNTYPED);
+    final boolean resources = (type == ListType.RESOURCE);
     final PsiBuilder.Marker elementList = builder.mark();
-    builder.advanceLexer();
+    final boolean leftParenth = expect(builder, JavaTokenType.LPARENTH);
+    assert lambda || leftParenth : builder.getTokenType();
 
     final IElementType delimiter = resources ? JavaTokenType.SEMICOLON : JavaTokenType.COMMA;
     final String noDelimiterMsg = resources ? "expected.semicolon" : "expected.comma";
@@ -480,10 +491,11 @@ public class DeclarationParser {
     boolean noElements = true;
     while (true) {
       final IElementType tokenType = builder.getTokenType();
-      if (tokenType == null || tokenType == JavaTokenType.RPARENTH || tokenType == JavaTokenType.LBRACE) {
+      if (tokenType == null || PARAM_LIST_STOPPERS.contains(tokenType)) {
         final boolean noLastElement = !delimiterExpected && (!noElements && !resources || noElements && resources);
         if (noLastElement) {
-          error(builder, JavaErrorMessages.message("expected.identifier.or.type"));
+          final String key = lambda ? "expected.parameter" : "expected.identifier.or.type";
+          error(builder, JavaErrorMessages.message(key));
         }
         if (tokenType == JavaTokenType.RPARENTH) {
           if (invalidElements != null) {
@@ -498,7 +510,9 @@ public class DeclarationParser {
               invalidElements.error(errorMessage);
             }
             invalidElements = null;
-            error(builder, JavaErrorMessages.message("expected.rparen"));
+            if (leftParenth) {
+              error(builder, JavaErrorMessages.message("expected.rparen"));
+            }
           }
         }
         break;
@@ -516,7 +530,9 @@ public class DeclarationParser {
         }
       }
       else {
-        final PsiBuilder.Marker listElement = resources ? parseResource(builder) : parseParameter(builder, true, false);
+        final PsiBuilder.Marker listElement = resources ? parseResource(builder) :
+                                              lambda ? parseLambdaParameter(builder, type == ListType.LAMBDA_TYPED) :
+                                              parseParameter(builder, true, false);
         if (listElement != null) {
           delimiterExpected = true;
           if (invalidElements != null) {
@@ -562,36 +578,45 @@ public class DeclarationParser {
 
   @Nullable
   public PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis, final boolean disjunctiveType) {
-    return parseListElement(builder, ellipsis, disjunctiveType, false);
+    return parseListElement(builder, true, ellipsis, disjunctiveType, false);
   }
 
   @Nullable
   public PsiBuilder.Marker parseResource(final PsiBuilder builder) {
-    return parseListElement(builder, false, false, true);
+    return parseListElement(builder, true, false, false, true);
+  }
+
+  @Nullable
+  public PsiBuilder.Marker parseLambdaParameter(final PsiBuilder builder, final boolean typed) {
+    return parseListElement(builder, typed, true, false, false);
   }
 
   @Nullable
   private PsiBuilder.Marker parseListElement(final PsiBuilder builder,
-                                                    final boolean ellipsis,
-                                                    final boolean disjunctiveType,
-                                                    final boolean resource) {
+                                             final boolean typed,
+                                             final boolean ellipsis,
+                                             final boolean disjunctiveType,
+                                             final boolean resource) {
     final PsiBuilder.Marker param = builder.mark();
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
 
-    int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
-    if (ellipsis) flags |= ReferenceParser.ELLIPSIS;
-    if (disjunctiveType) flags |= ReferenceParser.DISJUNCTIONS;
-    final ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, flags);
+    ReferenceParser.TypeInfo typeInfo = null;
+    if (typed) {
+      int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
+      if (ellipsis) flags |= ReferenceParser.ELLIPSIS;
+      if (disjunctiveType) flags |= ReferenceParser.DISJUNCTIONS;
+      typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
-    if (typeInfo == null) {
-      if (modListInfo.second) {
-        param.rollbackTo();
-        return null;
-      }
-      else {
-        error(builder, JavaErrorMessages.message("expected.type"));
-        emptyElement(builder, JavaElementType.TYPE);
+      if (typeInfo == null) {
+        if (modListInfo.second) {
+          param.rollbackTo();
+          return null;
+        }
+        else {
+          error(builder, JavaErrorMessages.message("expected.type"));
+          emptyElement(builder, JavaElementType.TYPE);
+        }
       }
     }
 

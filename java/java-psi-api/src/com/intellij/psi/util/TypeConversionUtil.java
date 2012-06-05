@@ -644,6 +644,7 @@ public class TypeConversionUtil {
 
     // todo[r.sh] implement
     if (right instanceof PsiMethodReferenceType && left instanceof PsiClassType) return true;
+    if (right instanceof PsiLambdaExpressionType && left instanceof PsiClassType) return true;
 
     if (left instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)left).getConjuncts();

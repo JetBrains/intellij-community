@@ -56,8 +56,4 @@ public class PsiTypeVisitor<A> {
   public A visitDiamondType(PsiDiamondType diamondType) {
     return visitType(diamondType);
   }
-
-  public A visitMethodReferenceType(PsiMethodReferenceType methodReferenceType) {
-    return visitType(methodReferenceType);
-  }
 }

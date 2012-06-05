@@ -1,0 +1,16 @@
+PsiJavaFile:LambdaExpression3.java
+  PsiLambdaExpression:(p) -> { }
+    PsiParameterList:(p)
+      PsiJavaToken:LPARENTH('(')
+      PsiParameter:p
+        PsiModifierList:
+          <empty list>
+        PsiIdentifier:p('p')
+      PsiJavaToken:RPARENTH(')')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiWhiteSpace(' ')
+    PsiCodeBlock
+      PsiJavaToken:LBRACE('{')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:RBRACE('}')

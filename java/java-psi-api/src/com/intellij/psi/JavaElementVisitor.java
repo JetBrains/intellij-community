@@ -375,4 +375,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitPolyadicExpression(PsiPolyadicExpression expression) {
     visitExpression(expression);
   }
+
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    visitExpression(expression);
+  }
 }

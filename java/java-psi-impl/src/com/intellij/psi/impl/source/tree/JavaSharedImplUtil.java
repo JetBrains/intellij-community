@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,30 +32,10 @@ import org.jetbrains.annotations.NotNull;
 public class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaSharedImplUtil");
 
-  private JavaSharedImplUtil() {
-  }
-
-  public static PsiType getType(PsiVariable variable) {
-    PsiTypeElement typeElement = variable.getTypeElement();
-    PsiIdentifier nameIdentifier = variable.getNameIdentifier();
-    return getType(typeElement, nameIdentifier, variable);
-  }
+  private JavaSharedImplUtil() { }
 
   public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
-    int cStyleArrayCount = 0;
-    ASTNode name = SourceTreeToPsiMap.psiElementToTree(anchor);
-    for (ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()) {
-      IElementType i = child.getElementType();
-      if (i == JavaTokenType.LBRACKET) {
-        cStyleArrayCount++;
-      }
-      else if (i != JavaTokenType.RBRACKET && i != TokenType.WHITE_SPACE &&
-               i != JavaTokenType.C_STYLE_COMMENT &&
-               i != JavaDocElementType.DOC_COMMENT &&
-               i != JavaTokenType.END_OF_LINE_COMMENT) {
-        break;
-      }
-    }
+    int cStyleArrayCount = countBrackets(anchor);
     PsiType type;
     if (typeElement instanceof PsiTypeElementImpl) {
       type = ((PsiTypeElementImpl)typeElement).getDetachedType(context);
@@ -63,33 +43,34 @@ public class JavaSharedImplUtil {
     else {
       type = typeElement.getType();
     }
-
     for (int i = 0; i < cStyleArrayCount; i++) {
       type = type.createArrayType();
     }
     return type;
   }
+
   public static PsiType getTypeNoResolve(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
+    int cStyleArrayCount = countBrackets(anchor);
+    PsiType type = typeElement.getTypeNoResolve(context);
+    for (int i = 0; i < cStyleArrayCount; i++) {
+      type = type.createArrayType();
+    }
+    return type;
+  }
+
+  private static int countBrackets(PsiElement anchor) {
     int cStyleArrayCount = 0;
-    ASTNode name = SourceTreeToPsiMap.psiElementToTree(anchor);
+    ASTNode name = SourceTreeToPsiMap.psiToTreeNotNull(anchor);
     for (ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
       if (i == JavaTokenType.LBRACKET) {
         cStyleArrayCount++;
       }
-      else if (i != JavaTokenType.RBRACKET && i != TokenType.WHITE_SPACE &&
-               i != JavaTokenType.C_STYLE_COMMENT &&
-               i != JavaDocElementType.DOC_COMMENT &&
-               i != JavaTokenType.END_OF_LINE_COMMENT) {
+      else if (i != JavaTokenType.RBRACKET && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(i)) {
         break;
       }
     }
-    PsiType type = typeElement.getTypeNoResolve(context);
-
-    for (int i = 0; i < cStyleArrayCount; i++) {
-      type = type.createArrayType();
-    }
-    return type;
+    return cStyleArrayCount;
   }
 
   public static void normalizeBrackets(PsiVariable variable) {

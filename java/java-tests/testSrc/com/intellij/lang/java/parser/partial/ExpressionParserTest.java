@@ -122,6 +122,19 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testMethodRef4() { doParserTest("int[]::clone"); }
   public void testMethodRef5() { doParserTest("(f ? list.map(String::length) : Collections.emptyList())::iterator"); }
 
+  public void testLambdaExpression0() { doParserTest("p -> 42"); }
+  public void testLambdaExpression1() { doParserTest("p -> "); }
+  public void testLambdaExpression2() { doParserTest("p -> {"); }
+  public void testLambdaExpression3() { doParserTest("(p) -> { }"); }
+  public void testLambdaExpression4() { doParserTest("(p, v) -> null"); }
+  public void testLambdaExpression5() { doParserTest("(p, v -> null"); }
+  public void testLambdaExpression6() { doParserTest("(p, v, -> null"); }
+  public void testLambdaExpression7() { doParserTest("(p -> null)"); }
+  public void testLambdaExpression8() { doParserTest("(I)(p) -> null"); }
+  public void testLambdaExpression9() { doParserTest("(I)p -> null"); }
+  public void testLambdaExpression10() { doParserTest("(I)(p -> null)"); }
+  public void testLambdaExpression11() { doParserTest("() -> { }"); }
+
   private void doParserTest(@NonNls final String text) {
     doParserTest(text, new MyTestParser());
   }

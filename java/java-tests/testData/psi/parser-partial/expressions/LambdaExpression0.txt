@@ -1,0 +1,12 @@
+PsiJavaFile:LambdaExpression0.java
+  PsiLambdaExpression:p -> 42
+    PsiParameterList:p
+      PsiParameter:p
+        PsiModifierList:
+          <empty list>
+        PsiIdentifier:p('p')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiWhiteSpace(' ')
+    PsiLiteralExpression:42
+      PsiJavaToken:INTEGER_LITERAL('42')

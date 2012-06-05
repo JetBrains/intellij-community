@@ -158,6 +158,7 @@ public class ReplaceExpressionUtil {
              i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION ||
              i == JavaElementType.JAVA_CODE_REFERENCE ||
              i == JavaElementType.METHOD_REF_EXPRESSION ||
+             i == JavaElementType.LAMBDA_EXPRESSION ||
              i == JavaElementType.EMPTY_EXPRESSION) {
       return 14;
     }

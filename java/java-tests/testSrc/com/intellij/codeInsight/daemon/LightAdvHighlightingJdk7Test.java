@@ -146,4 +146,5 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testClassLiteral() throws Exception { doTest(false, false); }
   public void testExtensionMethods() throws Exception { doTest(false, false); }
   public void testMethodReferences() throws Exception { doTest(false, true, false); }
+  public void testLambdaExpressions() throws Exception { doTest(false, true, false); }
 }

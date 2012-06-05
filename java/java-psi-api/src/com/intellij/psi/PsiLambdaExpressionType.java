@@ -20,19 +20,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A type which represents a function denoted by a method reference.
+ * A type which represents a function denoted by a lambda expression.
  */
-public class PsiMethodReferenceType extends PsiType {
-  private final PsiMethodReferenceExpression myReference;
+public class PsiLambdaExpressionType extends PsiType {
+  private final PsiLambdaExpression myExpression;
 
-  public PsiMethodReferenceType(@NotNull final PsiMethodReferenceExpression reference) {
+  public PsiLambdaExpressionType(PsiLambdaExpression expression) {
     super(PsiAnnotation.EMPTY_ARRAY);
-    myReference = reference;
+    myExpression = expression;
   }
 
   @Override
   public String getPresentableText() {
-    return "<method reference>";
+    return "<lambda expression>";
   }
 
   @Override
@@ -42,12 +42,12 @@ public class PsiMethodReferenceType extends PsiType {
 
   @Override
   public String getInternalCanonicalText() {
-    return getPresentableText();
+    return getCanonicalText();
   }
 
   @Override
   public boolean isValid() {
-    return myReference.isValid();
+    return myExpression.isValid();
   }
 
   @Override

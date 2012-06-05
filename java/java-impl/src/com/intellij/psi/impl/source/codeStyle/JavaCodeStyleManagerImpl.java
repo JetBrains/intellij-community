@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,11 @@ import java.util.*;
 public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl");
 
-  @NonNls private static final String IMPL_TYPNAME_SUFFIX = "Impl";
+  @NonNls private static final String IMPL_SUFFIX = "Impl";
   @NonNls private static final String GET_PREFIX = "get";
   @NonNls private static final String IS_PREFIX = "is";
   @NonNls private static final String FIND_PREFIX = "find";
   @NonNls private static final String CREATE_PREFIX = "create";
-  @NonNls private static final String WITH_PREFIX = "with";
   @NonNls private static final String SET_PREFIX = "set";
 
   private final Project myProject;
@@ -72,9 +71,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     CheckUtil.checkWritable(element);
     if (!SourceTreeToPsiMap.hasTreeElement(element)) return element;
 
-    return SourceTreeToPsiMap.treeElementToPsi(
-      new ReferenceAdjuster(myProject).process((TreeElement)element.getNode(), (flags & DO_NOT_ADD_IMPORTS) == 0,
-                                               (flags & UNCOMPLETE_CODE) != 0));
+    final boolean addImports = (flags & DO_NOT_ADD_IMPORTS) == 0;
+    final boolean incompleteCode = (flags & UNCOMPLETE_CODE) != 0;
+    final TreeElement reference = new ReferenceAdjuster(myProject).process((TreeElement)element.getNode(), addImports, incompleteCode);
+    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
   }
 
   @Override
@@ -88,7 +88,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
-    return SourceTreeToPsiMap.treeElementToPsi(new ReferenceAdjuster(true, true).process((TreeElement)element.getNode(), false, false));
+    final TreeElement reference = new ReferenceAdjuster(true, true).process((TreeElement)element.getNode(), false, false);
+    return SourceTreeToPsiMap.treeToPsiNotNull(reference);
   }
 
   @Override
@@ -117,10 +118,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public void removeRedundantImports(@NotNull final PsiJavaFile file) throws IncorrectOperationException {
-    final Collection<PsiImportStatementBase> redundants = findRedundantImports(file);
-    if (redundants == null) return;
+    final Collection<PsiImportStatementBase> redundant = findRedundantImports(file);
+    if (redundant == null) return;
 
-    for (final PsiImportStatementBase importStatement : redundants) {
+    for (final PsiImportStatementBase importStatement : redundant) {
       final PsiJavaCodeReferenceElement ref = importStatement.getImportReference();
       //Do not remove non-resolving refs
       if (ref == null || ref.resolve() == null) {
@@ -140,20 +141,21 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if( imports.length == 0 ) return null;
 
     Set<PsiImportStatementBase> allImports = new THashSet<PsiImportStatementBase>(Arrays.asList(imports));
-    final Collection<PsiImportStatementBase> redundants;
+    final Collection<PsiImportStatementBase> redundant;
     if (JspPsiUtil.isInJspFile(file)) {
       // remove only duplicate imports
-      redundants = new THashSet<PsiImportStatementBase>(TObjectHashingStrategy.IDENTITY);
-      ContainerUtil.addAll(redundants, imports);
-      redundants.removeAll(allImports);
+      @SuppressWarnings("unchecked") final TObjectHashingStrategy<PsiImportStatementBase> strategy = TObjectHashingStrategy.IDENTITY;
+      redundant = new THashSet<PsiImportStatementBase>(strategy);
+      ContainerUtil.addAll(redundant, imports);
+      redundant.removeAll(allImports);
       for (PsiImportStatementBase importStatement : imports) {
         if (importStatement instanceof JspxImportStatement && ((JspxImportStatement)importStatement).isForeignFileImport()) {
-          redundants.remove(importStatement);
+          redundant.remove(importStatement);
         }
       }
     }
     else {
-      redundants = allImports;
+      redundant = allImports;
       final List<PsiFile> roots = file.getViewProvider().getAllFiles();
       for (PsiElement root : roots) {
         root.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -164,7 +166,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                 final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
                 if (resolveScope instanceof PsiImportStatementBase) {
                   final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)resolveScope;
-                  redundants.remove(importStatementBase);
+                  redundant.remove(importStatementBase);
                 }
               }
             }
@@ -183,7 +185,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         });
       }
     }
-    return redundants;
+    return redundant;
   }
 
   @Override
@@ -334,9 +336,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   private void suggestNamesForCollectionInheritors(final PsiType type,
                                                    final VariableKind variableKind,
-                                                   Collection<String> suggestions, boolean correctKeywords) {
+                                                   final Collection<String> suggestions,
+                                                   final boolean correctKeywords) {
     PsiType componentType = PsiUtil.extractIterableTypeParameter(type, false);
-    if( componentType == null ) {
+    if (componentType == null) {
       return;
     }
     String typeName = normalizeTypeName(getTypeName(componentType));
@@ -347,12 +350,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Nullable
   private static String normalizeTypeName(String typeName) {
-    if( typeName == null )
-    {
+    if (typeName == null) {
       return null;
     }
-    if (typeName.endsWith(IMPL_TYPNAME_SUFFIX) && typeName.length() > IMPL_TYPNAME_SUFFIX.length()) {
-      return typeName.substring(0, typeName.length() - IMPL_TYPNAME_SUFFIX.length());
+    if (typeName.endsWith(IMPL_SUFFIX) && typeName.length() > IMPL_SUFFIX.length()) {
+      return typeName.substring(0, typeName.length() - IMPL_SUFFIX.length());
     }
     return typeName;
   }
@@ -363,47 +365,27 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType)type;
       final String className = classType.getClassName();
-      if (className != null) {
-        return className;
-      }
-      else {
-        final PsiClass aClass = classType.resolve();
-        if (aClass instanceof PsiAnonymousClass) {
-          return ((PsiAnonymousClass)aClass).getBaseClassType().getClassName();
-        }
-        else {
-          return null;
-        }
-      }
+      if (className != null) return className;
+      final PsiClass aClass = classType.resolve();
+      return aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassType().getClassName() : null;
+    }
+    else if (type instanceof PsiPrimitiveType) {
+      return type.getPresentableText();
+    }
+    else if (type instanceof PsiWildcardType) {
+      return getTypeName(((PsiWildcardType)type).getExtendsBound());
+    }
+    else if (type instanceof PsiIntersectionType) {
+      return getTypeName(((PsiIntersectionType)type).getRepresentative());
+    }
+    else if (type instanceof PsiCapturedWildcardType) {
+      return getTypeName(((PsiCapturedWildcardType)type).getWildcard());
+    }
+    else if (type instanceof PsiDisjunctionType) {
+      return getTypeName(((PsiDisjunctionType)type).getLeastUpperBound());
     }
     else {
-      if (type instanceof PsiPrimitiveType) {
-        return type.getPresentableText();
-      }
-      else {
-        if (type instanceof PsiWildcardType) {
-          return getTypeName(((PsiWildcardType)type).getExtendsBound());
-        }
-        else {
-          if (type instanceof PsiIntersectionType) {
-            return getTypeName(((PsiIntersectionType)type).getRepresentative());
-          }
-          else {
-            if (type instanceof PsiCapturedWildcardType) {
-              return getTypeName(((PsiCapturedWildcardType)type).getWildcard());
-            }
-            else {
-              if (type instanceof PsiDisjunctionType) {
-                return getTypeName(((PsiDisjunctionType)type).getLeastUpperBound());
-              }
-              else {
-                LOG.error("Unknown type:" + type);
-                return null;
-              }
-            }
-          }
-        }
-      }
+      return null;
     }
   }
 
@@ -411,65 +393,39 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private static String getLongTypeName(PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClass aClass = ((PsiClassType)type).resolve();
-      if( aClass == null )
-      {
+      if (aClass == null) {
         return null;
       }
-      if (aClass instanceof PsiAnonymousClass) {
+      else if (aClass instanceof PsiAnonymousClass) {
         PsiClass baseClass = ((PsiAnonymousClass)aClass).getBaseClassType().resolve();
-        if( baseClass == null )
-        {
-          return null;
-        }
-        return baseClass.getQualifiedName();
-      }
-      return aClass.getQualifiedName();
-    }
-    else {
-      if (type instanceof PsiArrayType) {
-        return getLongTypeName(((PsiArrayType)type).getComponentType()) + "[]";
+        return baseClass != null ? baseClass.getQualifiedName() : null;
       }
       else {
-        if (type instanceof PsiPrimitiveType) {
-          return type.getPresentableText();
-        }
-        else {
-          if (type instanceof PsiWildcardType) {
-            final PsiType bound = ((PsiWildcardType)type).getBound();
-            if (bound != null) {
-              return getLongTypeName(bound);
-            }
-            else {
-              return CommonClassNames.JAVA_LANG_OBJECT;
-            }
-          }
-          else {
-            if (type instanceof PsiCapturedWildcardType) {
-              final PsiType bound = ((PsiCapturedWildcardType)type).getWildcard().getBound();
-              if (bound != null) {
-                return getLongTypeName(bound);
-              }
-              else {
-                return CommonClassNames.JAVA_LANG_OBJECT;
-              }
-            }
-            else {
-              if (type instanceof PsiIntersectionType) {
-                return getLongTypeName(((PsiIntersectionType)type).getRepresentative());
-              }
-              else {
-                if (type instanceof PsiDisjunctionType) {
-                  return getLongTypeName(((PsiDisjunctionType)type).getLeastUpperBound());
-                }
-                else {
-                  LOG.error("Unknown type:" + type);
-                  return null;
-                }
-              }
-            }
-          }
-        }
+        return aClass.getQualifiedName();
       }
+    }
+    else if (type instanceof PsiArrayType) {
+      return getLongTypeName(((PsiArrayType)type).getComponentType()) + "[]";
+    }
+    else if (type instanceof PsiPrimitiveType) {
+      return type.getPresentableText();
+    }
+    else if (type instanceof PsiWildcardType) {
+      final PsiType bound = ((PsiWildcardType)type).getBound();
+      return bound != null ? getLongTypeName(bound) : CommonClassNames.JAVA_LANG_OBJECT;
+    }
+    else if (type instanceof PsiCapturedWildcardType) {
+      final PsiType bound = ((PsiCapturedWildcardType)type).getWildcard().getBound();
+      return bound != null ? getLongTypeName(bound) : CommonClassNames.JAVA_LANG_OBJECT;
+    }
+    else if (type instanceof PsiIntersectionType) {
+      return getLongTypeName(((PsiIntersectionType)type).getRepresentative());
+    }
+    else if (type instanceof PsiDisjunctionType) {
+      return getLongTypeName(((PsiDisjunctionType)type).getLeastUpperBound());
+    }
+    else {
+      return null;
     }
   }
 
@@ -701,10 +657,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             break;
           }
         }
-        PsiParameter[] parms = method.getParameterList().getParameters();
-        if (index < parms.length) {
-          String name = parms[index].getName();
-          if (name != null && TypeConversionUtil.areTypesAssignmentCompatible(subst.substitute(parms[index].getType()), expr)) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (index < parameters.length) {
+          String name = parameters[index].getName();
+          if (name != null && TypeConversionUtil.areTypesAssignmentCompatible(subst.substitute(parameters[index].getType()), expr)) {
             name = variableNameToPropertyName(name, VariableKind.PARAMETER);
             String[] names = getSuggestionsByName(name, variableKind, false, correctKeywords);
             if (expressions.length == 1) {
@@ -760,6 +716,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           buffer.append(Character.toLowerCase(c));
         continue;
         }
+        //noinspection AssignmentToForLoopParameter
         i++;
         if (i < name.length()) {
           c = name.charAt(i);

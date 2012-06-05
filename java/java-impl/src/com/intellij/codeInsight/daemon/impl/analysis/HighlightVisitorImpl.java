@@ -234,7 +234,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkPolyadicOperatorApplicable(expression));
   }
 
-  @Override public void visitBreakStatement(PsiBreakStatement statement) {
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    myHolder.add(HighlightUtil.checkLambdaFeature(expression));
+  }
+
+  @Override
+  public void visitBreakStatement(PsiBreakStatement statement) {
     super.visitBreakStatement(statement);
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkLabelDefined(statement.getLabelIdentifier(), statement.findExitedStatement()));

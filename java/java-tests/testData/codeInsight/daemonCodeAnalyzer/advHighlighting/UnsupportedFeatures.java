@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import java.io.*;
 import java.util.*;
 
@@ -38,7 +39,8 @@ class UnsupportedFeatures {
 
     try <error descr="Try-with-resources are not supported at this language level">(Reader r = new FileReader("/dev/null"))</error> { }
 
-    I i = <error descr="Method references are not supported at this language level">UnsupportedFeatures::m</error>;
+    I i1 = <error descr="Method references are not supported at this language level">UnsupportedFeatures::m</error>;
+    I i2 = <error descr="Lambda expressions are not supported at this language level">() -> { }</error>;
   }
 
   interface I {

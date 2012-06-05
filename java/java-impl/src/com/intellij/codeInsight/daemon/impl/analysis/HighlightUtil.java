@@ -2540,7 +2540,8 @@ public class HighlightUtil {
     BIN_LITERALS(LanguageLevel.JDK_1_7, "feature.binary.literals"),
     UNDERSCORES(LanguageLevel.JDK_1_7, "feature.underscores.in.literals"),
     EXTENSION_METHODS(LanguageLevel.JDK_1_8, "feature.extension.methods"),
-    METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references");
+    METHOD_REFERENCES(LanguageLevel.JDK_1_8, "feature.method.references"),
+    LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions");
 
     private final LanguageLevel level;
     private final String key;
@@ -2615,6 +2616,15 @@ public class HighlightUtil {
     if (info != null) return info;
     // todo[r.sh] stub; remove after implementing support in TypeConversionUtil
     final String message = "Method references type check is not yet implemented";
+    return HighlightInfo.createHighlightInfo(HighlightInfoType.WEAK_WARNING, expression, message);
+  }
+
+  @Nullable
+  public static HighlightInfo checkLambdaFeature(final PsiLambdaExpression expression) {
+    final HighlightInfo info = checkFeature(expression, Feature.LAMBDA_EXPRESSIONS);
+    if (info != null) return info;
+    // todo[r.sh] stub; remove after implementing support in TypeConversionUtil
+    final String message = "Lambda expressions type check is not yet implemented";
     return HighlightInfo.createHighlightInfo(HighlightInfoType.WEAK_WARNING, expression, message);
   }
 }

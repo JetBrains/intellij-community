@@ -514,6 +514,19 @@ public class ExpressionParser {
 
     if (tokenType == JavaTokenType.LPARENTH) {
       final PsiBuilder.Marker parenth = builder.mark();
+
+      final IElementType nextToken1 = builder.lookAhead(1);
+      final IElementType nextToken2 = builder.lookAhead(2);
+      if (nextToken1 == JavaTokenType.IDENTIFIER) {
+        if (nextToken2 == JavaTokenType.COMMA ||
+            nextToken2 == JavaTokenType.RPARENTH && builder.lookAhead(3) == JavaTokenType.ARROW) {
+          return parseLambdaExpression(builder, parenth, false);
+        }
+      }
+      else if (nextToken1 == JavaTokenType.RPARENTH && nextToken2 == JavaTokenType.ARROW) {
+        return parseLambdaExpression(builder, parenth, false);
+      }
+
       builder.advanceLexer();
 
       final PsiBuilder.Marker inner = parse(builder);
@@ -554,6 +567,10 @@ public class ExpressionParser {
     }
 
     if (tokenType == JavaTokenType.IDENTIFIER) {
+      if (builder.lookAhead(1) == JavaTokenType.ARROW) {
+        return parseLambdaExpression(builder, builder.mark(), false);
+      }
+
       final PsiBuilder.Marker refExpr;
       if (annotation != null) {
         final PsiBuilder.Marker refParam = annotation.precede();
@@ -807,6 +824,32 @@ public class ExpressionParser {
     }
 
     start.done(JavaElementType.METHOD_REF_EXPRESSION);
+    return start;
+  }
+
+  @NotNull
+  private PsiBuilder.Marker parseLambdaExpression(final PsiBuilder builder, final PsiBuilder.Marker start, final boolean typed) {
+    myParser.getDeclarationParser().parseLambdaParameterList(builder, typed);
+    return parseLambdaExpressionFromArrow(builder, start);
+  }
+
+  @NotNull
+  private PsiBuilder.Marker parseLambdaExpressionFromArrow(final PsiBuilder builder, final PsiBuilder.Marker start) {
+    builder.advanceLexer();
+
+    final PsiBuilder.Marker body;
+    if (builder.getTokenType() == JavaTokenType.LBRACE) {
+      body = myParser.getStatementParser().parseCodeBlock(builder);
+    }
+    else {
+      body = parse(builder);
+    }
+
+    if (body == null) {
+      builder.error(JavaErrorMessages.message("expected.lbrace"));
+    }
+
+    start.done(JavaElementType.LAMBDA_EXPRESSION);
     return start;
   }
 
