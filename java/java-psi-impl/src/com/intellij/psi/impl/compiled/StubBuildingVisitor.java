@@ -275,6 +275,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public void visitOuterClass(final String owner, final String name, final String desc) {
+    if (myParent instanceof PsiFileStub) {
+      throw new OutOfOrderInnerClassException();
+    }
   }
 
   @Override
@@ -296,7 +299,16 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if ((access & Opcodes.ACC_SYNTHETIC) != 0) return;
     if (!isCorrectName(innerName)) return;
 
-    if (innerName == null || outerName == null || !getClassName(outerName).equals(myResult.getQualifiedName())) return;
+    if (innerName == null || outerName == null) return;
+    if ((getClassName(outerName) + "." + innerName).equals(myResult.getQualifiedName())) {
+      // Our result is inner class
+
+      if (myParent instanceof PsiFileStub) {
+        throw new OutOfOrderInnerClassException();
+      }
+    }
+
+    if (!getClassName(outerName).equals(myResult.getQualifiedName())) return;
 
     final T innerSource = myInnersStrategy.findInnerClass(innerName, mySource);
     if (innerSource == null) return;

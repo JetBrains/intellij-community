@@ -40,9 +40,15 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
     final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("do.not.know.yet", true);
     try {
       final ClassReader reader = new ClassReader(bytes);
+
       final StubBuildingVisitor<VirtualFile> classVisitor =
         new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0);
-      reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
+      try {
+        reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
+      }
+      catch (OutOfOrderInnerClassException e) {
+        return null;
+      }
 
       @SuppressWarnings("unchecked") final PsiClassStub<PsiClass> result = (PsiClassStub<PsiClass>)classVisitor.getResult();
       if (result == null) return null;
@@ -63,40 +69,16 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
 
   @Override
   public boolean isInnerClass(VirtualFile file) {
-    return isInner(file.getNameWithoutExtension(), new ParentDirectory(file));
-  }
+    String name = file.getNameWithoutExtension();
+    int len = name.length();
+    int idx = name.indexOf('$');
 
-  static boolean isInner(final String name, final Directory directory) {
-    return isInner(name, 0, directory);
-  }
-
-  private static boolean isInner(final String name, final int from, final Directory directory) {
-    final int index = name.indexOf('$', from);
-    return index != -1 && (containsPart(directory, name, index) || isInner(name, index + 1, directory));
-  }
-
-  private static boolean containsPart(Directory directory, String name, int endIndex) {
-    return endIndex > 0 && directory.contains(name.substring(0, endIndex));
-  }
-
-  interface Directory {
-    boolean contains(String name);
-  }
-
-  private static class ParentDirectory implements Directory {
-    private final VirtualFile myDirectory;
-    private final String myExtension;
-
-    private ParentDirectory(final VirtualFile file) {
-      myDirectory = file.getParent();
-      myExtension = file.getExtension();
+    while (idx > 0) {
+      if (idx + 1 < len && Character.isDigit(name.charAt(idx + 1))) return true;
+      idx = name.indexOf('$', idx + 1);
     }
 
-    @Override
-    public boolean contains(final String name) {
-      final String fullName = myExtension == null ? name : name + "." + myExtension;
-      return myDirectory != null && myDirectory.findChild(fullName) != null;
-    }
+    return false;
   }
 
   private static class VirtualFileInnerClassStrategy implements InnerClassSourceStrategy<VirtualFile> {
