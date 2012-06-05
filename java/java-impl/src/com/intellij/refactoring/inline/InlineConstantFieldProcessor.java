@@ -105,7 +105,13 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       usages.add(info);
     }
     if (mySearchInCommentsAndStrings || mySearchForTextOccurrences) {
-      TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new NonCodeUsageInfoFactory(myField, myField.getName());
+      TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new NonCodeUsageInfoFactory(myField, myField.getName()){
+        @Override
+        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+          if (PsiTreeUtil.isAncestor(myField, usage, false)) return null;
+          return super.createUsageInfo(usage, startOffset, endOffset);
+        }
+      };
       if (mySearchInCommentsAndStrings) {
         String stringToSearch =
           ElementDescriptionUtil.getElementDescription(myField, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);

@@ -131,16 +131,22 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
 
     if (mySearchInComments || mySearchForTextOccurrences) {
-      
+      final NonCodeUsageInfoFactory infoFactory = new NonCodeUsageInfoFactory(myMethod, myMethod.getName()) {
+        @Override
+        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+          if (PsiTreeUtil.isAncestor(myMethod, usage, false)) return null;
+          return super.createUsageInfo(usage, startOffset, endOffset);
+        }
+      };
       if (mySearchInComments) {
         String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-        TextOccurrencesUtil.addUsagesInStringsAndComments(myMethod, stringToSearch, usages, new NonCodeUsageInfoFactory(myMethod, myMethod.getName()));
+        TextOccurrencesUtil.addUsagesInStringsAndComments(myMethod, stringToSearch, usages, infoFactory);
       }
 
       if (mySearchForTextOccurrences) {
         String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.NON_JAVA);
         TextOccurrencesUtil
-          .addTextOccurences(myMethod, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, new NonCodeUsageInfoFactory(myMethod, myMethod.getName()));
+          .addTextOccurences(myMethod, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, infoFactory);
       }
     }
 
