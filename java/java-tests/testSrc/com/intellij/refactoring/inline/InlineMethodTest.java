@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightRefactoringTestCase;
 import com.intellij.refactoring.MockInlineMethodOptions;
 import com.intellij.refactoring.util.InlineUtil;
@@ -174,7 +175,17 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInlineAnonymousClassWithPrivateMethodInside() throws Exception {
     doTest();
   }
-  
+
+  public void testMethodUsedInJavadoc() throws Exception {
+    try {
+      doTest();
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Inlined method is used in javadoc", e.getMessage());
+    }
+  }
+
   public void testInlineRunnableRun() throws Exception {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);

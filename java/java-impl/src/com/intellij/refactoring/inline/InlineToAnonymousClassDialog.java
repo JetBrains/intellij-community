@@ -24,17 +24,12 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
-import javax.swing.*;
-import java.awt.*;
-
 /**
  * @author yole
  */
-public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
+public class InlineToAnonymousClassDialog extends InlineOptionsWithSearchSettingsDialog {
   private final PsiClass myClass;
   private final PsiCall myCallToInline;
-  private JCheckBox myCbSearchInComments;
-  private JCheckBox myCbSearchTextOccurences;
 
   protected InlineToAnonymousClassDialog(Project project, PsiClass psiClass, final PsiCall callToInline, boolean isInvokeOnReference) {
     super(project, true, psiClass);
@@ -66,38 +61,30 @@ public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
     return false;
   }
 
-  protected JComponent createCenterPanel() {
-    JComponent optionsPanel = super.createCenterPanel();
+  @Override
+  protected boolean isSearchInCommentsAndStrings() {
+    return JavaRefactoringSettings.getInstance().INLINE_CLASS_SEARCH_IN_COMMENTS;
+  }
 
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints();
-    gbc.fill = GridBagConstraints.HORIZONTAL;
-    gbc.weightx = 1.0;
-    panel.add(optionsPanel, gbc);
-
-    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
-    myCbSearchInComments = new JCheckBox(RefactoringBundle.message("search.in.comments.and.strings"),
-                                         settings.INLINE_CLASS_SEARCH_IN_COMMENTS);
-    myCbSearchTextOccurences = new JCheckBox(RefactoringBundle.message("search.for.text.occurrences"),
-                                             settings.INLINE_CLASS_SEARCH_IN_NON_JAVA);
-    gbc.gridy = 1;
-    panel.add(myCbSearchInComments, gbc);
-    gbc.gridy = 2;
-    panel.add(myCbSearchTextOccurences, gbc);
-    return panel;
+  @Override
+  protected boolean isSearchForTextOccurrences() {
+    return JavaRefactoringSettings.getInstance().INLINE_CLASS_SEARCH_IN_NON_JAVA;
   }
 
   protected void doAction() {
-    final boolean searchInComments = myCbSearchInComments.isSelected();
-    final boolean searchInNonJava = myCbSearchTextOccurences.isSelected();
-
-    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
-    settings.INLINE_CLASS_SEARCH_IN_COMMENTS = searchInComments;
-    settings.INLINE_CLASS_SEARCH_IN_NON_JAVA = searchInNonJava;
-
+    super.doAction();
     invokeRefactoring(new InlineToAnonymousClassProcessor(getProject(), myClass, myCallToInline, isInlineThisOnly(),
-                                                          searchInComments, searchInNonJava));
+                                                          isSearchInCommentsAndStrings(), isSearchForTextOccurrences()));
+  }
+
+  @Override
+  protected void saveSearchInCommentsAndStrings(boolean searchInComments) {
+    JavaRefactoringSettings.getInstance().INLINE_CLASS_SEARCH_IN_COMMENTS = searchInComments;
+  }
+  
+  @Override
+  protected void saveSearchInTextOccurrences(boolean searchInTextOccurrences) {
+    JavaRefactoringSettings.getInstance().INLINE_CLASS_SEARCH_IN_NON_JAVA = searchInTextOccurrences;
   }
 
   protected void doHelpAction() {
