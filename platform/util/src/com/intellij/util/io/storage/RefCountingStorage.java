@@ -60,7 +60,7 @@ public class RefCountingStorage extends AbstractStorage {
     }
   });
 
-  private static final int MAX_PENDING_WRITE_SIZE = 5 * 1024 * 1024;
+  private static final int MAX_PENDING_WRITE_SIZE = 2 * 1024 * 1024;
 
   public RefCountingStorage(String path) throws IOException {
     super(path);
@@ -101,11 +101,12 @@ public class RefCountingStorage extends AbstractStorage {
       super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
       // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams
       this.buf = compressedData;
+      this.len = -1; // ensure one time fill
     }
 
     @Override
     protected void fill() throws IOException {
-      if (len > 0) throw new EOFException();
+      if (len >= 0) throw new EOFException();
       len = buf.length;
       inf.setInput(buf, 0, len);
     }
@@ -169,7 +170,7 @@ public class RefCountingStorage extends AbstractStorage {
       }
 
       if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
-        flushPendingWrites();
+        flushPendingWrites();   // we do it under lock to ensure normally only one thread will bulky flush stuff
       }
     }
   }
@@ -184,12 +185,16 @@ public class RefCountingStorage extends AbstractStorage {
           return null;
         }
       });
+      if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {  // we do it under lock to ensure normally only one thread will bulky flush stuff
+        flushPendingWrites();
+      }
     }
   }
 
 
   private void write(BufferExposingByteArrayOutputStream zippedBytes, int record, boolean fixedSize) throws IOException {
     synchronized (myLock) {
+      if (!myPendingWriteRequests.containsKey(record)) return; // some thread helped us
       super.writeBytes(record, new ByteSequence(zippedBytes.getInternalBuffer(), 0, zippedBytes.size()), fixedSize);
       myPendingWriteRequestsSize -= zippedBytes.size();
       myPendingWriteRequests.remove(record);
@@ -280,7 +285,8 @@ public class RefCountingStorage extends AbstractStorage {
   private void flushPendingWrites() {
     for(Map.Entry<Integer, Callable> entry: myPendingWriteRequests.entrySet()) {
       try {
-        entry.getValue().call();
+        Callable value = entry.getValue();
+        if (value != null) value.call();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -295,6 +301,7 @@ public class RefCountingStorage extends AbstractStorage {
         throw new RuntimeException(e);
       }
     }
+
     flushPendingWrites();
   }
 }
