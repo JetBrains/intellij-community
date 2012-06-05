@@ -52,12 +52,6 @@ public abstract class UsageViewManager {
                                 @NotNull UsageViewPresentation presentation,
                                 UsageViewStateListener listener);
 
-  public abstract void setCurrentSearchCancelled(boolean flag);
-
-  public abstract boolean searchHasBeenCancelled();
-
-  public abstract void checkSearchCanceled() throws ProcessCanceledException;
-
   public interface UsageViewStateListener {
     void usageViewCreated(UsageView usageView);
     void findingUsagesFinished(final UsageView usageView);
