@@ -1487,7 +1487,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void allowTreeAccessForFile(final VirtualFile file) {
+  public void allowTreeAccessForFile(@NotNull final VirtualFile file) {
     myJavaFilesFilter.allowTreeAccessForFile(file);
   }
 

@@ -142,7 +142,8 @@ public class PsiManagerImpl extends PsiManagerEx {
     return false;
   }
 
-  public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {
+  @TestOnly
+  public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter) {
     // Find something to ensure there's no changed files waiting to be processed in repository indices.
     myAssertOnFileLoadingFilter = filter;
   }

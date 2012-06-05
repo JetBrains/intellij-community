@@ -17,11 +17,11 @@ package com.intellij.testFramework;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -43,7 +43,7 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
     return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS) && !file.getName().equals("package-info.java");
   }
 
-  public void allowTreeAccessForFile(VirtualFile file) {
+  public void allowTreeAccessForFile(@NotNull VirtualFile file) {
     myAddedClasses.add(file);
   }
 
