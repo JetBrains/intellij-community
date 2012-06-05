@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,11 +54,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private final CopyOnWriteArrayList<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createEmptyCOWList();
 
   private AnimatedScrollingRunnable myCurrentAnimationRequest = null;
-  private boolean myAnimationDisabled = false;
+  private boolean                   myAnimationDisabled       = false;
   private final DocumentAdapter myDocumentListener;
   private int myAccumulatedXOffset = -1;
   private int myAccumulatedYOffset = -1;
   private boolean myAccumulateViewportChanges;
+  private boolean myViewportPositioned;
 
   public ScrollingModelImpl(EditorImpl editor) {
     myEditor = editor;
@@ -70,6 +71,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       public void stateChanged(ChangeEvent event) {
         Rectangle viewRect = getVisibleArea();
         VisibleAreaEvent visibleAreaEvent = new VisibleAreaEvent(myEditor, myLastViewRect, viewRect);
+        if (!myViewportPositioned && viewRect.height > 0) {
+          myViewportPositioned = true;
+          if (adjustVerticalOffsetIfNecessary()) {
+            return;
+          }
+        }
         myLastViewRect = viewRect;
         for (VisibleAreaListener listener : myVisibleAreaListeners) {
           listener.visibleAreaChanged(visibleAreaEvent);
@@ -84,6 +91,26 @@ public class ScrollingModelImpl implements ScrollingModelEx {
       }
     };
     myEditor.getDocument().addDocumentListener(myDocumentListener);
+  }
+
+  /**
+   * Corrects viewport position if necessary on initial editor showing.
+   *
+   * @return    <code>true</code> if the vertical viewport position has been adjusted; <code>false</code> otherwise
+   */
+  private boolean adjustVerticalOffsetIfNecessary() {
+    // There is a possible case that the editor is configured to show virtual space at file bottom and requested position is located
+    // somewhere around. We don't want to position viewport in a way that most of its area is used to represent that virtual empty space.
+    // So, we tweak vertical offset if necessary.
+    int maxY = Math.max(myEditor.getLineHeight(), myEditor.getDocument().getLineCount() * myEditor.getLineHeight());
+    int minPreferredY = maxY - getVisibleArea().height * 2 / 3;
+    final int currentOffset = getVerticalScrollOffset();
+    int offsetToUse = Math.min(minPreferredY, currentOffset);
+    if (offsetToUse != currentOffset) {
+      scrollToOffsets(getHorizontalScrollOffset(), offsetToUse);
+      return true;
+    }
+    return false; 
   }
 
   @Override
