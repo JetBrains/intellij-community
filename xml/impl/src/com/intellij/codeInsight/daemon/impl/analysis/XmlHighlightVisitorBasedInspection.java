@@ -89,7 +89,7 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Xml Highlighting";
+    return "XML highlighting";
   }
 
   @NotNull
