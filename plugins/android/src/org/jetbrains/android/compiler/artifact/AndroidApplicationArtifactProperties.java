@@ -42,6 +42,10 @@ public class AndroidApplicationArtifactProperties extends ArtifactProperties<And
   private String myKeyAlias = "";
   private String myKeyPassword = "";
 
+  private boolean myRunProGuard;
+  private String myProGuardCfgFileUrl = "";
+  private boolean myIncludeSystemProGuardCfgFile;
+
   @Override
   public void onBuildFinished(@NotNull Artifact artifact, @NotNull CompileContext context) {
     if (!(artifact.getArtifactType() instanceof AndroidApplicationArtifactType) ||
@@ -123,7 +127,7 @@ public class AndroidApplicationArtifactProperties extends ArtifactProperties<And
 
   @Override
   public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
-    return new AndroidArtifactPropertiesEditor(this, context.getProject());
+    return new AndroidArtifactPropertiesEditor(context.getArtifact(), this, context.getProject());
   }
 
   @Override
@@ -278,5 +282,29 @@ public class AndroidApplicationArtifactProperties extends ArtifactProperties<And
   @Transient
   public void setPlainKeyPassword(@NotNull String password) {
     myKeyPassword = new String(new Base64().encode(password.getBytes()));
+  }
+
+  public boolean isRunProGuard() {
+    return myRunProGuard;
+  }
+
+  public String getProGuardCfgFileUrl() {
+    return myProGuardCfgFileUrl;
+  }
+
+  public boolean isIncludeSystemProGuardCfgFile() {
+    return myIncludeSystemProGuardCfgFile;
+  }
+
+  public void setRunProGuard(boolean runProGuard) {
+    myRunProGuard = runProGuard;
+  }
+
+  public void setProGuardCfgFileUrl(String proGuardCfgFileUrl) {
+    myProGuardCfgFileUrl = proGuardCfgFileUrl;
+  }
+
+  public void setIncludeSystemProGuardCfgFile(boolean includeSystemProGuardCfgFile) {
+    myIncludeSystemProGuardCfgFile = includeSystemProGuardCfgFile;
   }
 }
