@@ -99,7 +99,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   protected void showSavedChanges() {
-    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next(), new HashSet<VirtualFile>());
+    GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next());
   }
 
   @Override
@@ -216,8 +216,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               if (event.getDescription().equals("saver")) {
                 // we don't use #showSavedChanges to specify unmerged root first
-                GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next(),
-                                                   new HashSet<VirtualFile>());
+                GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<VirtualFile>(myStashedRoots), myStashedRoots.iterator().next()
+                );
               } else if (event.getDescription().equals("resolve")) {
                 mergeNoProceed();
               }
