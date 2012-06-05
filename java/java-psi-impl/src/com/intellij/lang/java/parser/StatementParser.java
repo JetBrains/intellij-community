@@ -147,7 +147,7 @@ public class StatementParser {
           return;
         }
         else if (braceMode == BraceMode.TILL_LAST) {
-          if (nextTokenType(builder) == null) {
+          if (builder.lookAhead(1) == null) {
             return;
           }
         }
@@ -288,7 +288,7 @@ public class StatementParser {
       return statement;
     }
 
-    if (lookAhead(builder, JavaTokenType.IDENTIFIER, JavaTokenType.COLON)) {
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER && builder.lookAhead(1) == JavaTokenType.COLON) {
       final PsiBuilder.Marker statement = builder.mark();
       advance(builder, 2);
       parseStatement(builder);
@@ -309,7 +309,7 @@ public class StatementParser {
 
   private static void skipQualifiedName(final PsiBuilder builder) {
     if (!expect(builder, JavaTokenType.IDENTIFIER)) return;
-    while (lookAhead(builder, JavaTokenType.DOT, JavaTokenType.IDENTIFIER)) {
+    while (builder.getTokenType() == JavaTokenType.DOT && builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
       advance(builder, 2);
     }
   }

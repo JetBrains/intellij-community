@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 import static com.intellij.util.BitUtil.isSet;
 
@@ -317,7 +316,7 @@ public class ReferenceParser {
     if (!expect(builder, JavaTokenType.GT)) {
       // hack for completion
       if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
-        if (nextTokenType(builder) == JavaTokenType.GT) {
+        if (builder.lookAhead(1) == JavaTokenType.GT) {
           final PsiBuilder.Marker errorElement = builder.mark();
           builder.advanceLexer();
           errorElement.error(JavaErrorMessages.message("unexpected.identifier"));

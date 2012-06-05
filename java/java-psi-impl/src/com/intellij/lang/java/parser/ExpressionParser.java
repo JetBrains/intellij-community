@@ -59,6 +59,8 @@ public class ExpressionParser {
   private static final TokenSet ARGS_LIST_CONTINUE = TokenSet.create(
     JavaTokenType.IDENTIFIER, TokenType.BAD_CHARACTER, JavaTokenType.COMMA, JavaTokenType.INTEGER_LITERAL, JavaTokenType.STRING_LITERAL);
   private static final TokenSet THIS_OR_SUPER = TokenSet.create(JavaTokenType.THIS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
+  private static final TokenSet TYPE_START = TokenSet.orSet(
+    ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
 
   private final JavaParser myParser;
 
@@ -263,20 +265,16 @@ public class ExpressionParser {
       final PsiBuilder.Marker typeCast = builder.mark();
       builder.advanceLexer();
 
-      final ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(builder,
-                                                                                            ReferenceParser.EAT_LAST_DOT |
-                                                                                            ReferenceParser.WILDCARD);
-
+      final ReferenceParser.TypeInfo typeInfo =
+        myParser.getReferenceParser().parseTypeInfo(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
       if (typeInfo == null || !expect(builder, JavaTokenType.RPARENTH)) {
         typeCast.rollbackTo();
         return parsePostfix(builder);
       }
 
-      if (PREF_ARITHMETIC_OPS.contains(builder.getTokenType())) {
-        if (!typeInfo.isPrimitive) {
-          typeCast.rollbackTo();
-          return parsePostfix(builder);
-        }
+      if (PREF_ARITHMETIC_OPS.contains(builder.getTokenType()) && !typeInfo.isPrimitive) {
+        typeCast.rollbackTo();
+        return parsePostfix(builder);
       }
 
       final PsiBuilder.Marker expr = parseUnary(builder);
@@ -537,13 +535,12 @@ public class ExpressionParser {
       return parseArrayInitializer(builder);
     }
 
-    if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(tokenType) || tokenType == JavaTokenType.IDENTIFIER) {
-      final boolean primitive = tokenType != JavaTokenType.IDENTIFIER;
+    if (TYPE_START.contains(tokenType)) {
       final PsiBuilder.Marker mark = builder.mark();
 
       final ReferenceParser.TypeInfo typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, 0);
-      if (typeInfo != null && (primitive || !typeInfo.hasErrors && typeInfo.isParameterized)) {
-        final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, primitive);
+      if (typeInfo != null && (typeInfo.isPrimitive || !typeInfo.hasErrors && typeInfo.isParameterized)) {
+        final PsiBuilder.Marker result = continueClassAccessOrMethodReference(builder, mark, typeInfo.isPrimitive);
         if (result != null) return result;
       }
 

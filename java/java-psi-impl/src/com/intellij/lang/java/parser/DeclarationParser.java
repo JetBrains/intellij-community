@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 public class DeclarationParser {
@@ -386,7 +385,7 @@ public class DeclarationParser {
         isEmpty = false;
       }
       else if (tokenType == JavaTokenType.AT) {
-        if (ElementType.KEYWORD_BIT_SET.contains(nextTokenType(builder))) {
+        if (ElementType.KEYWORD_BIT_SET.contains(builder.lookAhead(1))) {
           break;
         }
         parseAnnotation(builder);
