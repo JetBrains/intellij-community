@@ -101,6 +101,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   // sorts and modifies results of resolveInner
 
+  @NotNull
   private ResolveResult[] multiResolveInner() {
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
@@ -589,8 +590,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     private static final int MAX_NESTING_LEVEL = 30;
 
-    @Nullable
-    public ResolveResult[] resolve(final PyReferenceImpl ref, final boolean incompleteCode) {
+    @NotNull
+    public ResolveResult[] resolve(@NotNull final PyReferenceImpl ref, final boolean incompleteCode) {
       if (myNesting.get().getAndIncrement() >= MAX_NESTING_LEVEL) {
         System.out.println("Stack overflow pending");
       }

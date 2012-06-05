@@ -1,8 +1,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyYieldExpression;
@@ -24,7 +24,13 @@ public class PyYieldExpressionImpl extends PyElementImpl implements PyYieldExpre
 
   @Override
   public PyExpression getExpression() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    final PyExpression[] expressions = PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
+    return (expressions != null && expressions.length > 0) ? expressions[0] : null;
+  }
+
+  @Override
+  public boolean isDelegating() {
+    return getNode().findChildByType(PyTokenTypes.FROM_KEYWORD) != null;
   }
 
   @Override
