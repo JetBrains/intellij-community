@@ -47,11 +47,9 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
       @Override
       public boolean add(@Nullable HighlightInfo info) {
         if (info != null) {
-          ProblemHighlightType problemHighlightType = HighlightInfo.convertType(info.type);
           GlobalInspectionUtil.createProblem(
             file,
-            info.description,
-            problemHighlightType,
+            info,
             new TextRange(info.startOffset, info.endOffset),
             null,
             manager,

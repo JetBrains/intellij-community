@@ -19,6 +19,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -108,10 +109,10 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       if (element == null) {
         element = file;
       }
+      
       GlobalInspectionUtil.createProblem(
         element,
-        info.description,
-        HighlightInfo.convertType(info.type),
+        info,
         range.shiftRight(-element.getNode().getStartOffset()),
         info.getProblemGroup(),
         manager,
