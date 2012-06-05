@@ -84,7 +84,9 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   @Override
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
     MyInputValidator validator = new MyInputValidator(project, directory);
-    Messages.showInputDialog(project, AndroidBundle.message("new.file.dialog.text"), getCommandName(), Messages.getQuestionIcon(), "", validator);
+    Messages.showInputDialog(project, AndroidBundle.message("new.file.dialog.text"),
+                             AndroidBundle.message("new.typed.resource.dialog.title", myResourcePresentableName),
+                             Messages.getQuestionIcon(), "", validator);
     return validator.getCreatedElements();
   }
 
