@@ -22,7 +22,7 @@ import com.intellij.android.designer.model.RadViewComponent;
  */
 public class RadRadioGroupLayout extends RadLinearLayout {
   @Override
-  protected boolean isHorizontal() {
+  public boolean isHorizontal() {
     return "horizontal".equals(((RadViewComponent)myContainer).getTag().getAttributeValue("android:orientation"));
   }
 }

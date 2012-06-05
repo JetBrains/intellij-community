@@ -54,7 +54,7 @@ public class RadTableRowLayout extends RadLinearLayout {
   }
 
   @Override
-  protected boolean isHorizontal() {
+  public boolean isHorizontal() {
     return true;
   }
 

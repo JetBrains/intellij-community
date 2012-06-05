@@ -56,7 +56,7 @@ public class RadViewContainer extends RadViewComponent {
   }
 
   @Override
-  public void morphingTo(MetaModel target) throws Exception {
-    // TODO: Auto-generated method stub
+  public RadComponent morphingTo(MetaModel target) throws Exception {
+    return ComponentMorphingTool.convert(this, target);
   }
 }

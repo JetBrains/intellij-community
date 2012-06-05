@@ -253,17 +253,7 @@ public class RadViewComponent extends RadVisualComponent {
   }
 
   @Override
-  public void morphingTo(final MetaModel target) throws Exception {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myTag.setName(target.getTag());
-      }
-    });
-
-    setMetaModel(target);
-
-    PropertyParser propertyParser = getRoot().getClientProperty(PropertyParser.KEY);
-    propertyParser.load(this);
+  public RadComponent morphingTo(MetaModel target) throws Exception {
+    return new ComponentMorphingTool(this, this, target, null).result();
   }
 }
