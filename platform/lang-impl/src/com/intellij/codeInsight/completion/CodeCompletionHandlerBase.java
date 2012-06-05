@@ -774,6 +774,16 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
+  private static boolean isCopyUpToDate(Document document, @NotNull PsiFile file) {
+    if (!file.isValid()) {
+      return false;
+    }
+    // the psi file cache might have been cleared by some external activity,
+    // in which case PSI-document sync may stop working
+    PsiFile current = PsiDocumentManager.getInstance(file.getProject()).getPsiFile(document);
+    return current != null && current.getViewProvider().getPsi(file.getLanguage()) == file;
+  }
+
   private static PsiFile createFileCopy(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
@@ -782,7 +792,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       final SoftReference<Pair<PsiFile, Document>> reference = file.getUserData(FILE_COPY_KEY);
       if (reference != null) {
         final Pair<PsiFile, Document> pair = reference.get();
-        if (pair != null && pair.first.isValid() && pair.first.getClass().equals(file.getClass())) {
+        if (pair != null && pair.first.getClass().equals(file.getClass()) && isCopyUpToDate(pair.second, pair.first)) {
           final PsiFile copy = pair.first;
           if (copy.getModificationStamp() > file.getModificationStamp()) {
             ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
