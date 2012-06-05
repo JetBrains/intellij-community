@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -314,13 +315,14 @@ class Bar implements Intf {
 class BarImpl extends Bar {}
 """
     def facade = JavaPsiFacade.getInstance(getProject())
-    assertOneElement(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("Foo"), true))
+    def allScope = GlobalSearchScope.allScope(project)
+    assertOneElement(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("Foo", allScope), true))
 
-    GrTypeDefinition barClass = facade.findClass("Bar")
+    GrTypeDefinition barClass = facade.findClass("Bar", allScope) as GrTypeDefinition
     assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(barClass, true))
     assertTrue "bar" in OverrideImplementUtil.getMethodsToOverrideImplement(barClass, false).collect { ((PsiMethod) it.element).name }
 
-    assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl"), true))
+    assertEmpty(OverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl", allScope), true))
 
     def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).targets
     assertEquals Arrays.toString(implementations), 3, implementations.size()
@@ -332,7 +334,7 @@ class BarImpl extends Bar {}
   l.ea<caret>ch { it.substring(1) }
 }
 """
-    PsiMethod method = resolveReference().navigationElement
+    PsiMethod method = resolveReference().navigationElement as PsiMethod
     assertEquals "each", method.name
     assertEquals "groovypp.util.Iterations", method.containingClass.qualifiedName
   }
@@ -342,7 +344,7 @@ class BarImpl extends Bar {}
 Integer[] a = []
 a.fol<caret>dLeft(2, { a, b -> a+b })
 """
-    PsiMethod method = resolveReference().navigationElement
+    PsiMethod method = resolveReference().navigationElement as PsiMethod
     assertEquals "foldLeft", method.name
     assertEquals "groovypp.util.Iterations", method.containingClass.qualifiedName
   }
