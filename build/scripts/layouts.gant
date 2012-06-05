@@ -59,6 +59,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           "instrumentation-util",
           "platform-main",
           "java-psi-impl",
+          "java-indexing-impl",
           "java-impl",
           "compiler-impl",
           "debugger-impl",
@@ -530,6 +531,7 @@ def layout_core_upsource(String home, String target) {
       module("java-psi-impl")
       module("projectModel-api")
       module("projectModel-impl")
+      module("java-indexing-impl")
     }
 
     jar("annotations.jar") {
