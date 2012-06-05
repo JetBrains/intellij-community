@@ -85,7 +85,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
       final PsiElement referenceNameElement = reference.getReferenceNameElement();
       problems.add(manager.createProblemDescriptor(referenceNameElement != null ? referenceNameElement : reference,
                                                    cannotResolveSymbolMessage("<code>" + reference.getText() + "</code>"),
-                                                   !isOnTheFly || classesToImport.isEmpty() ? null : new AddImportFix(classesToImport),
+                                                   !isOnTheFly || classesToImport.isEmpty() ? null : new AddQualifierFix(classesToImport),
                                                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, isOnTheFly));
     }
 
@@ -213,29 +213,29 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     return HighlightDisplayLevel.ERROR;
   }
 
-  private class AddImportFix implements LocalQuickFix{
-    private final List<PsiClass> myClassesToImport;
+  private class AddQualifierFix implements LocalQuickFix{
+    private final List<PsiClass> originalClasses;
 
-    public AddImportFix(final List<PsiClass> classesToImport) {
-      myClassesToImport = classesToImport;
+    public AddQualifierFix(final List<PsiClass> originalClasses) {
+      this.originalClasses = originalClasses;
     }
 
     @NotNull
     public String getName() {
-      return QuickFixBundle.message("import.class.fix");
+      return QuickFixBundle.message("add.qualifier");
     }
 
     @NotNull
     public String getFamilyName() {
-      return QuickFixBundle.message("import.class.fix");
+      return QuickFixBundle.message("add.qualifier");
     }
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
-        Collections.sort(myClassesToImport, new PsiProximityComparator(referenceElement.getElement()));
-        final JList list = new JBList(myClassesToImport.toArray(new PsiClass[myClassesToImport.size()]));
+        Collections.sort(originalClasses, new PsiProximityComparator(referenceElement.getElement()));
+        final JList list = new JBList(originalClasses.toArray(new PsiClass[originalClasses.size()]));
         list.setCellRenderer(new FQNameCellRenderer());
         final Runnable runnable = new Runnable() {
           public void run() {
@@ -244,7 +244,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
             if (index < 0) return;
             new WriteCommandAction(project, element.getContainingFile()){
               protected void run(final Result result) throws Throwable {
-                final PsiClass psiClass = myClassesToImport.get(index);
+                final PsiClass psiClass = originalClasses.get(index);
                 if (psiClass.isValid()) {
                   PsiDocumentManager.getInstance(project).commitAllDocuments();
                   referenceElement.bindToElement(psiClass);
@@ -258,7 +258,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
           @Override
           public void run(DataContext dataContext) {
             new PopupChooserBuilder(list).
-              setTitle(QuickFixBundle.message("class.to.import.chooser.title")).
+              setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
               setItemChoosenCallback(runnable).
               createPopup().
               showInBestPositionFor(dataContext);
