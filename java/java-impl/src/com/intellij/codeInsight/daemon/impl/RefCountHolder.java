@@ -99,7 +99,7 @@ public class RefCountHolder {
   public static RefCountHolder startUsing(@NotNull PsiFile file) {
     Pair<RefCountHolder, HolderReference> pair = getInstance(file);
     HolderReference reference = pair.second;
-    reference.makeHardReachable(true);
+    reference.makeHardReachable(true); // make sure RefCountHolder won't be gced during highlighting
     return pair.first;
   }
   @NotNull
@@ -127,7 +127,7 @@ public class RefCountHolder {
     myDclsUsedMap.put(result,Boolean.TRUE);
   }
 
-  public void registerReference(@NotNull PsiJavaReference ref, JavaResolveResult resolveResult) {
+  public void registerReference(@NotNull PsiJavaReference ref, @NotNull JavaResolveResult resolveResult) {
     assertIsAnalyzing();
     PsiElement refElement = resolveResult.getElement();
     PsiFile psiFile = refElement == null ? null : refElement.getContainingFile();
@@ -142,11 +142,11 @@ public class RefCountHolder {
     }
   }
 
-  private void registerImportStatement(@NotNull PsiReference ref, PsiImportStatementBase importStatement) {
+  private void registerImportStatement(@NotNull PsiReference ref, @NotNull PsiImportStatementBase importStatement) {
     myImportStatements.put(ref, importStatement);
   }
 
-  public boolean isRedundant(PsiImportStatementBase importStatement) {
+  public boolean isRedundant(@NotNull PsiImportStatementBase importStatement) {
     assertIsRetrieving();
     return !myImportStatements.containsValue(importStatement);
   }
@@ -227,7 +227,7 @@ public class RefCountHolder {
     return true;
   }
 
-  public boolean isReferencedForRead(PsiElement element) {
+  public boolean isReferencedForRead(@NotNull PsiElement element) {
     assertIsRetrieving();
     LOG.assertTrue(element instanceof PsiVariable);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
@@ -249,7 +249,7 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean isReferencedForWrite(PsiElement element) {
+  public boolean isReferencedForWrite(@NotNull PsiElement element) {
     assertIsRetrieving();
     LOG.assertTrue(element instanceof PsiVariable);
     List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
@@ -271,7 +271,7 @@ public class RefCountHolder {
     if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
       return false;
     }
-
+    boolean finished = false;
     try {
       if (dirtyScope != null) {
         if (dirtyScope.equals(file.getTextRange())) {
@@ -283,15 +283,16 @@ public class RefCountHolder {
       }
 
       analyze.run();
+      finished = true;
     }
     finally {
-      boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, State.READY);
+      boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, finished ? State.READY : State.VIRGIN);
       assert set : myState.get();
     }
     return true;
   }
 
-  public boolean retrieveUnusedReferencesInfo(Runnable analyze) {
+  public boolean retrieveUnusedReferencesInfo(@NotNull Runnable analyze) {
     if (!myState.compareAndSet(State.READY, State.BEING_USED_BY_PHP)) {
       return false;
     }
@@ -306,10 +307,12 @@ public class RefCountHolder {
   }
 
   private void assertIsAnalyzing() {
-    assert myState.get() == State.BEING_WRITTEN_BY_GHP : myState.get();
+    State state = myState.get();
+    assert state == State.BEING_WRITTEN_BY_GHP : state;
   }
   private void assertIsRetrieving() {
-    assert myState.get() == State.BEING_USED_BY_PHP : myState.get();
+    State state = myState.get();
+    assert state == State.BEING_USED_BY_PHP : state;
   }
 
 }
