@@ -683,6 +683,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
                                                          final boolean focusEditor,
                                                          @Nullable final HistoryEntry entry,
                                                          boolean current) {
+    return openFileImpl4(window, file, focusEditor, entry, current, -1);
+  }
+
+  @NotNull
+  Pair<FileEditor[], FileEditorProvider[]> openFileImpl4(@NotNull final EditorWindow window,
+                                                         @NotNull final VirtualFile file,
+                                                         final boolean focusEditor,
+                                                         @Nullable final HistoryEntry entry,
+                                                         boolean current,
+                                                         int index) {
     // Open file
     FileEditor[] editors;
     FileEditorProvider[] providers;
@@ -748,6 +758,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
       // After that we have to select opened editor.
       newSelectedComposite = new EditorWithProviderComposite(file, editors, providers, this);
+
+      if (index >= 0) {
+        newSelectedComposite.getFile().putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
+      }
     }
 
     window.setEditor(newSelectedComposite, focusEditor);

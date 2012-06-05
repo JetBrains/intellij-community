@@ -331,6 +331,7 @@
             <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
           </group>
           <separator/>
+          <action id="ReopenClosedTab" class="com.intellij.openapi.fileEditor.impl.ReopenClosedTabAction" />
           <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="AllIcons.Actions.SplitVertically"/>
           <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="AllIcons.Actions.SplitHorizontally"/>
           <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
@@ -422,6 +423,7 @@
       <separator/>
       <reference ref="NextTab"/>
       <reference ref="PreviousTab"/>
+      <reference ref="ReopenClosedTab"/>
       <separator/>
       <reference ref="Unsplit"/>
       <reference ref="UnsplitAll"/>
