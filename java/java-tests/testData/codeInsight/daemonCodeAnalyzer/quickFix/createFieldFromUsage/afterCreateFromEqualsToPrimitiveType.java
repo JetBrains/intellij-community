@@ -1,6 +1,6 @@
 // "Create Field 'VAR'" "true"
 class A {
-    private Integer VAR<caret>;
+    private final Integer VAR<caret>;
 
     public IDEA16027() {
     VAR.equals(5);
