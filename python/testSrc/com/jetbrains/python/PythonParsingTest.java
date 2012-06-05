@@ -318,6 +318,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // PY-6702
+  public void testYieldFrom() {
+    doTest(LanguageLevel.PYTHON33);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

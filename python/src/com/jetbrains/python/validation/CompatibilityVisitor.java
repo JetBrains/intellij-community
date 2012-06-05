@@ -460,6 +460,20 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                           len, node, null);
   }
 
+  @Override
+  public void visitPyYieldExpression(PyYieldExpression node) {
+    super.visitPyYieldExpression(node);
+    if (!node.isDelegating()) {
+      return;
+    }
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON33)) {
+        registerProblem(node, "Python versions < 3.3 do not support this syntax. Delegating to a subgenerator is available since " +
+                              "Python 3.3; use explicit iteration over subgenerator instead.");
+      }
+    }
+  }
+
   private boolean shouldBeCompatibleWithPy3() {
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)
         || myVersionsToProcess.contains(LanguageLevel.PYTHON32))

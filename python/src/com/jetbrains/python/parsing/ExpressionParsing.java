@@ -531,6 +531,9 @@ public class ExpressionParsing extends Parsing {
     if (myBuilder.getTokenType() == PyTokenTypes.YIELD_KEYWORD) {
       PsiBuilder.Marker yieldExpr = myBuilder.mark();
       myBuilder.advanceLexer();
+      if (myBuilder.getTokenType() == PyTokenTypes.FROM_KEYWORD) {
+        myBuilder.advanceLexer();
+      }
       parseTupleExpression(false, isTargetExpression, false);
       yieldExpr.done(PyElementTypes.YIELD_EXPRESSION);
       return true;

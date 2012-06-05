@@ -8,4 +8,6 @@ import org.jetbrains.annotations.Nullable;
 public interface PyYieldExpression extends PyExpression {
   @Nullable
   PyExpression getExpression();
+
+  boolean isDelegating();
 }
