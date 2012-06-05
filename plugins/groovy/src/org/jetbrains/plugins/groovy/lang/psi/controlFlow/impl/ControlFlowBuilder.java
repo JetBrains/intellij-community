@@ -247,7 +247,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     Set<String> names = new HashSet<String>();
 
-    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(closure.getControlFlow());
+    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(closure.getControlFlow(), false);
     for (ReadWriteVariableInstruction read : reads) {
       names.add(read.getVariableName());
     }
@@ -1019,7 +1019,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final Set<String> vars = new HashSet<String>();
     typeDefinition.acceptChildren(new GroovyRecursiveElementVisitor() {
       private void collectVars(Instruction[] flow) {
-        ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow);
+        ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, false);
         for (ReadWriteVariableInstruction instruction : reads) {
           vars.add(instruction.getVariableName());
         }
