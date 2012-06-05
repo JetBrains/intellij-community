@@ -13,14 +13,6 @@ public class ReturnAnnotator extends PyAnnotator {
       getHolder().createErrorAnnotation(node, "'return' outside of function");
       return;
     }
-    if (node.getExpression() != null) {
-      YieldVisitor visitor = new YieldVisitor();
-      function.acceptChildren(visitor);
-      if (visitor.haveYield()) {
-        getHolder().createErrorAnnotation(node, "'return' with argument inside generator");
-      }
-    }
-
   }
 
   public void visitPyYieldExpression(final PyYieldExpression node) {
@@ -32,31 +24,5 @@ public class ReturnAnnotator extends PyAnnotator {
       getHolder().createErrorAnnotation(node, "'yield' not allowed in a 'try' block with a 'finally' clause");
     }
     */
-  }
-
-
-  private static class YieldVisitor extends PyElementVisitor {
-    private boolean _haveYield = false;
-
-    public boolean haveYield() {
-      return _haveYield;
-    }
-
-    @Override
-    public void visitPyYieldExpression(final PyYieldExpression node) {
-      _haveYield = true;
-    }
-
-    @Override
-    public void visitPyElement(final PyElement node) {
-      if (!_haveYield) {
-        node.acceptChildren(this);
-      }
-    }
-
-    @Override
-    public void visitPyFunction(final PyFunction node) {
-      // do not go to nested functions
-    }
   }
 }

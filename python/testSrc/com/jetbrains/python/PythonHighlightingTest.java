@@ -147,6 +147,16 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON30, true, false);
   }
 
+  // PY-6703
+  public void testUnicode33() {
+    doTest(LanguageLevel.PYTHON33, true, false);
+  }
+
+  // PY-6702
+  public void testYieldFromBefore33() {
+    doTest(LanguageLevel.PYTHON32, true, false);
+  }
+
   public void testYieldInNestedFunction() {
     // highlight func declaration first, lest we get an "Extra fragment highlighted" error.
     EditorColorsManager manager = EditorColorsManager.getInstance();

@@ -218,7 +218,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
 
-      if (languageLevel.isPy3K()) {
+      if (languageLevel.isAtLeast(LanguageLevel.PYTHON30) && languageLevel.isOlderThan(LanguageLevel.PYTHON33)) {
         final String text = node.getText();
         if (text.startsWith("u") || text.startsWith("U")) {
           len = appendLanguageLevel(message, len, languageLevel);
@@ -460,6 +460,67 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                           len, node, null);
   }
 
+  @Override
+  public void visitPyYieldExpression(PyYieldExpression node) {
+    super.visitPyYieldExpression(node);
+    if (!node.isDelegating()) {
+      return;
+    }
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON33)) {
+        registerProblem(node, "Python versions < 3.3 do not support this syntax. Delegating to a subgenerator is available since " +
+                              "Python 3.3; use explicit iteration over subgenerator instead.");
+      }
+    }
+  }
+
+  @Override
+  public void visitPyReturnStatement(PyReturnStatement node) {
+    boolean allowed = true;
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON33)) {
+        allowed = false;
+        break;
+      }
+    }
+    if (allowed) {
+      return;
+    }
+    final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
+    if (function != null && node.getExpression() != null) {
+      final YieldVisitor visitor = new YieldVisitor();
+      function.acceptChildren(visitor);
+      if (visitor.haveYield()) {
+        registerProblem(node, "Python versions < 3.3 do not allow 'return' with argument inside generator.");
+      }
+    }
+  }
+
+
+  private static class YieldVisitor extends PyElementVisitor {
+    private boolean _haveYield = false;
+
+    public boolean haveYield() {
+      return _haveYield;
+    }
+
+    @Override
+    public void visitPyYieldExpression(final PyYieldExpression node) {
+      _haveYield = true;
+    }
+
+    @Override
+    public void visitPyElement(final PyElement node) {
+      if (!_haveYield) {
+        node.acceptChildren(this);
+      }
+    }
+
+    @Override
+    public void visitPyFunction(final PyFunction node) {
+      // do not go to nested functions
+    }
+  }
   private boolean shouldBeCompatibleWithPy3() {
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)
         || myVersionsToProcess.contains(LanguageLevel.PYTHON32))

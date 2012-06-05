@@ -223,7 +223,14 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       statements.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyYieldExpression(PyYieldExpression node) {
-          types.add(node.getType(context));
+          final PyType type = node.getType(context);
+          if (node.isDelegating() && type instanceof PyCollectionType) {
+            final PyCollectionType collectionType = (PyCollectionType)type;
+            types.add(collectionType.getElementType(context));
+          }
+          else {
+            types.add(type);
+          }
         }
       });
       final int n = types.size();
