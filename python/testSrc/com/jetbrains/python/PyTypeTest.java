@@ -340,6 +340,28 @@ public class PyTypeTest extends PyTestCase {
     assertNull(actual);
   }
 
+  // PY-6702
+  public void testYieldFromType() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
+    try {
+      doTest("str or int or float",
+             "def subgen():\n" +
+             "    for i in [1, 2, 3]:\n" +
+             "        yield i\n" +
+             "\n" +
+             "def gen():\n" +
+             "    yield 'foo'\n" +
+             "    yield from subgen()\n" +
+             "    yield 3.14\n" +
+             "\n" +
+             "for expr in gen():\n" +
+             "    pass\n");
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
