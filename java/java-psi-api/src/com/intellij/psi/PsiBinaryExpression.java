@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.psi.tree.IElementType;
  * Represents a Java binary expression (addition, multiplication and so on).
  * N.B Please use {@link PsiPolyadicExpression} instead as a more general form of an infix operator-expression.
  */
-public interface PsiBinaryExpression extends PsiExpression, PsiPolyadicExpression {
+public interface PsiBinaryExpression extends PsiPolyadicExpression {
   /**
    * Returns the left operand of the expression.
    *
