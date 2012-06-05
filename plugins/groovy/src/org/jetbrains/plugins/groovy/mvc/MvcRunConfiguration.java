@@ -226,7 +226,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   protected MvcCommandLineState createCommandLineState(@NotNull ExecutionEnvironment environment, Module module) {
-    return new MvcCommandLineState(environment, module, false);
+    return new MvcCommandLineState(environment, cmdLine, module, false);
   }
 
   public SettingsEditor<? extends MvcRunConfiguration> getConfigurationEditor() {
@@ -240,7 +240,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
 
     protected final Module myModule;
 
-    public MvcCommandLineState(@NotNull ExecutionEnvironment environment, Module module, boolean forTests) {
+    public MvcCommandLineState(@NotNull ExecutionEnvironment environment, String cmdLine, Module module, boolean forTests) {
       super(environment);
       myModule = module;
       myForTests = forTests;
