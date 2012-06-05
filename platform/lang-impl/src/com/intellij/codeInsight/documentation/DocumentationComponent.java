@@ -328,7 +328,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   @Override
   public Object getData(@NonNls String dataId) {
     if (DocumentationManager.SELECTED_QUICK_DOC_TEXT.getName().equals(dataId)) {
-      return myEditorPane.getSelectedText();
+      // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
+      // with raw white spaces. See IDEA-86633 for more details.
+      return myEditorPane.getSelectedText().replace((char)160, ' ');
     }
      
     return null;
