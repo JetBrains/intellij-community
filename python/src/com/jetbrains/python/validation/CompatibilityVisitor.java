@@ -474,6 +474,53 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
+  @Override
+  public void visitPyReturnStatement(PyReturnStatement node) {
+    boolean allowed = true;
+    for (LanguageLevel level : myVersionsToProcess) {
+      if (level.isOlderThan(LanguageLevel.PYTHON33)) {
+        allowed = false;
+        break;
+      }
+    }
+    if (allowed) {
+      return;
+    }
+    final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
+    if (function != null && node.getExpression() != null) {
+      final YieldVisitor visitor = new YieldVisitor();
+      function.acceptChildren(visitor);
+      if (visitor.haveYield()) {
+        registerProblem(node, "Python versions < 3.3 do not allow 'return' with argument inside generator.");
+      }
+    }
+  }
+
+
+  private static class YieldVisitor extends PyElementVisitor {
+    private boolean _haveYield = false;
+
+    public boolean haveYield() {
+      return _haveYield;
+    }
+
+    @Override
+    public void visitPyYieldExpression(final PyYieldExpression node) {
+      _haveYield = true;
+    }
+
+    @Override
+    public void visitPyElement(final PyElement node) {
+      if (!_haveYield) {
+        node.acceptChildren(this);
+      }
+    }
+
+    @Override
+    public void visitPyFunction(final PyFunction node) {
+      // do not go to nested functions
+    }
+  }
   private boolean shouldBeCompatibleWithPy3() {
     if (myVersionsToProcess.contains(LanguageLevel.PYTHON30) || myVersionsToProcess.contains(LanguageLevel.PYTHON31)
         || myVersionsToProcess.contains(LanguageLevel.PYTHON32))
