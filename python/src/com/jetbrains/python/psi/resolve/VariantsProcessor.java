@@ -9,6 +9,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -48,7 +49,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
   }
 
 
-  public boolean execute(PsiElement element, ResolveState substitutor) {
+  public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
     if (myNodeFilter != null && !myNodeFilter.value(element)) return true; // skip whatever the filter rejects
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
@@ -129,7 +130,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
   }
 
   @Nullable
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }
 

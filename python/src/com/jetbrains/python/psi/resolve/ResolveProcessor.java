@@ -48,7 +48,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
     return PyUtil.nvl(myName) + ", " + PyUtil.nvl(myResult);
   }
 
-  public boolean execute(PsiElement element, ResolveState substitutor) {
+  public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
     if (element instanceof PyFile) {
       final VirtualFile file = ((PyFile)element).getVirtualFile();
       if (file != null) {
@@ -139,7 +139,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
   }
 
   @Nullable
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }
 

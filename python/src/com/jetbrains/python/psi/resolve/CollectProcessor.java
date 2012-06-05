@@ -18,14 +18,14 @@ public class CollectProcessor implements PyClassScopeProcessor {
     myResult = new ArrayList<PsiElement>();
   }
 
-  public boolean execute(final PsiElement element, final ResolveState state) {
+  public boolean execute(@NotNull final PsiElement element, final ResolveState state) {
     if (myTargetTokenSet.contains(element.getNode().getElementType())) {
       myResult.add(element);
     }
     return true; // collect till we drop
   }
 
-  public <T> T getHint(final Key<T> hintKey) {
+  public <T> T getHint(@NotNull final Key<T> hintKey) {
     return null;
   }
 

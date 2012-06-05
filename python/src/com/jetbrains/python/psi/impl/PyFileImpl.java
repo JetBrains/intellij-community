@@ -326,7 +326,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
     PsiScopeProcessor wrapper = new PsiScopeProcessor() {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (!processor.execute(element, state)) return false;
         if (remainingDunderAll != null && element instanceof PyElement) {
           remainingDunderAll.remove(((PyElement) element).getName());
@@ -335,7 +335,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
 
       @Override
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return processor.getHint(hintKey);
       }
 

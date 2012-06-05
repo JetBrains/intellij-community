@@ -34,7 +34,7 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
     mySeenNames = new HashSet<String>();
   }
 
-  public boolean execute(final PsiElement element, final ResolveState state) {
+  public boolean execute(@NotNull final PsiElement element, final ResolveState state) {
     if (element instanceof PyAssignmentStatement) {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)element;
       for (PyExpression ex : assignment.getTargets()) {
@@ -69,7 +69,7 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
     return myResult;
   }
 
-  public <T> T getHint(final Key<T> hintKey) {
+  public <T> T getHint(@NotNull final Key<T> hintKey) {
     return null;
   }
 
