@@ -160,7 +160,7 @@ public class RenameWrongRefFix implements IntentionAction {
         }
 
         @Override
-        public boolean execute(PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, ResolveState state) {
           if (element instanceof PsiNamedElement
               && element instanceof PsiModifierListOwner
               && myFilterMethods == element instanceof PsiMethod) {

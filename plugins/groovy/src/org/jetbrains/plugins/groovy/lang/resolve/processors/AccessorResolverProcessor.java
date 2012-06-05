@@ -56,7 +56,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     };
   }
 
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (mySearchForGetter) {
       if (element instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)element, myPropertyName)) {
         return addAccessor((PsiMethod)element, state);

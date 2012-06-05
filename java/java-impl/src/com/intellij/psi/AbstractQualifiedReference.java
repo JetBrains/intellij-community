@@ -247,7 +247,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     private final Set<ResolveResult> myResults = new LinkedHashSet<ResolveResult>();
 
     @Override
-    public boolean execute(final PsiElement element, final ResolveState state) {
+    public boolean execute(@NotNull final PsiElement element, final ResolveState state) {
       if (isFound()) return false;
       process(element);
       return true;

@@ -86,7 +86,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
 
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (myStopExecuting) {
       return false;
     }

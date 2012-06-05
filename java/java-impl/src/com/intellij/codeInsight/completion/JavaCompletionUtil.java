@@ -389,7 +389,7 @@ public class JavaCompletionUtil {
   public static PsiType getQualifiedMemberReferenceType(@Nullable PsiType qualifierType, @NotNull final PsiMember member) {
     final Ref<PsiSubstitutor> subst = Ref.create(PsiSubstitutor.EMPTY);
     class MyProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element == member) {
           subst.set(state.get(PsiSubstitutor.KEY));
         }
@@ -407,7 +407,7 @@ public class JavaCompletionUtil {
       }
 
       @Override
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return hintKey == NameHint.KEY || hintKey == ElementClassHint.KEY ? (T)this : null;
       }
     }

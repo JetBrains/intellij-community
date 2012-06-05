@@ -2053,7 +2053,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     @Override
-    public boolean execute(PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, ResolveState state) {
       if (myBorderPassed) {
         return false;
       }

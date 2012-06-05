@@ -16,10 +16,11 @@
 package com.intellij.psi.scope;
 
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseScopeProcessor implements PsiScopeProcessor {
   @Override
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }
 

@@ -18,6 +18,7 @@ package com.intellij.psi.scope;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiScopeProcessor {
@@ -30,10 +31,10 @@ public interface PsiScopeProcessor {
    * @param state    current state of resolver.
    * @return false to stop processing.
    */
-  boolean execute(PsiElement element, ResolveState state);
+  boolean execute(@NotNull PsiElement element, ResolveState state);
 
   @Nullable
-  <T> T getHint(Key<T> hintKey);
+  <T> T getHint(@NotNull Key<T> hintKey);
 
   void handleEvent(Event event, @Nullable Object associated);
 }

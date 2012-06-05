@@ -48,7 +48,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   }
 
   @Override
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (myCachedResult != null && myCachedResult.length == 1 && myCachedResult[0].isAccessible()) {
       return false;
     }
@@ -103,7 +103,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   }
 
   @Override
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == NameHint.KEY) {
       //noinspection unchecked
       return myName != null ? (T)this : null;

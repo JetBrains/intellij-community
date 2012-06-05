@@ -162,7 +162,7 @@ public class MacroUtil {
 
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor(prefix, true, list) {
-      public boolean execute(PsiElement pe, ResolveState state) {
+      public boolean execute(@NotNull PsiElement pe, ResolveState state) {
         if (pe instanceof PsiVariable) {
           //exclude variables that are initialized in 'place'
           final PsiExpression initializer = ((PsiVariable)pe).getInitializer();

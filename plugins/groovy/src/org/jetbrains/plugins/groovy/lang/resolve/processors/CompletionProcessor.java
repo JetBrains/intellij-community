@@ -34,7 +34,7 @@ public class CompletionProcessor extends ResolverProcessor {
     super(name, resolveTargets, place, PsiType.EMPTY_ARRAY);
   }
 
-  public boolean execute(PsiElement element, ResolveState substitutor) {
+  public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
       return true;
     }

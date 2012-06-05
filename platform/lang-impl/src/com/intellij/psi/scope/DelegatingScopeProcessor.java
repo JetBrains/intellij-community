@@ -3,6 +3,7 @@ package com.intellij.psi.scope;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,13 +17,13 @@ public abstract class DelegatingScopeProcessor implements PsiScopeProcessor {
   }
 
   @Override
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     return myDelegate.execute(element, state);
   }
 
   @Override
   @Nullable
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     return myDelegate.getHint(hintKey);
   }
 

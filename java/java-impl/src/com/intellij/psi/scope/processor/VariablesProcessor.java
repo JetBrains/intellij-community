@@ -24,6 +24,7 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -52,7 +53,7 @@ public abstract class VariablesProcessor extends BaseScopeProcessor implements E
 
   /** Always return true since we wanna get all vars in scope */
   @Override
-  public boolean execute(PsiElement pe, ResolveState state){
+  public boolean execute(@NotNull PsiElement pe, ResolveState state){
     if(pe instanceof PsiVariable){
       final PsiVariable pvar = (PsiVariable)pe;
       if(!myStaticSensitiveFlag || !myStaticScopeFlag || pvar.hasModifierProperty(PsiModifier.STATIC)){
@@ -79,7 +80,7 @@ public abstract class VariablesProcessor extends BaseScopeProcessor implements E
   }
 
   @Override
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
       return (T)this;
     }
