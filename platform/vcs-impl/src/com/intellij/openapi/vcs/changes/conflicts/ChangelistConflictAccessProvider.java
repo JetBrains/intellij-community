@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.readOnlyHandler.WritingAccessProvider;
+import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ import java.util.Collections;
 /**
  * @author Dmitry Avdeev
  */
-public class ChangelistConflictAccessProvider implements WritingAccessProvider {
+public class ChangelistConflictAccessProvider extends WritingAccessProvider {
 
   private final Project myProject;
   private final ChangeListManagerImpl myManager;
@@ -43,6 +43,7 @@ public class ChangelistConflictAccessProvider implements WritingAccessProvider {
   }
 
   @NotNull
+  @Override
   public Collection<VirtualFile> requestWriting(VirtualFile... files) {
     ChangelistConflictTracker.Options options = myManager.getConflictTracker().getOptions();
     if (!options.TRACKING_ENABLED || !options.SHOW_DIALOG) {
@@ -77,5 +78,10 @@ public class ChangelistConflictAccessProvider implements WritingAccessProvider {
       }
     }
     return denied;
+  }
+
+  @Override
+  public boolean isPotentiallyWritable(@NotNull final VirtualFile file) {
+    return true;
   }
 }

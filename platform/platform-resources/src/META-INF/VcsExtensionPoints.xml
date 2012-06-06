@@ -31,7 +31,7 @@
                   interface="com.intellij.vcsUtil.VcsSelectionProvider"/>
 
   <!--<extensionPoint name="writingAccessProvider"-->
-                  <!--interface="com.intellij.openapi.vcs.readOnlyHandler.WritingAccessProvider"-->
+                  <!--interface="com.intellij.openapi.vfs.WritingAccessProvider"-->
                   <!--area="IDEA_PROJECT"/>-->
   
   <extensionPoint name="vcs.fileStatusProvider"

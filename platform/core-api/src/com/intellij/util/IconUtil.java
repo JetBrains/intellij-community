@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
@@ -114,7 +115,8 @@ public class IconUtil {
           icon = patcher.patchIcon(icon, file, flags, project);
         }
 
-        if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 && !file.isWritable()) {
+        if ((flags & Iconable.ICON_FLAG_READ_STATUS) != 0 &&
+            (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
           icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
         }
         if (file.isSymLink()) {
