@@ -6,5 +6,5 @@ import org.jetbrains.jps.model.JpsElementType;
 /**
  * @author nik
  */
-public class JpsTypedDataKind<T extends JpsElementType> extends JpsElementKind<JpsTypedDataImpl<T>> {
+public class JpsTypedDataKind<T extends JpsElementType<?>> extends JpsElementKind<JpsTypedDataImpl<T>> {
 }

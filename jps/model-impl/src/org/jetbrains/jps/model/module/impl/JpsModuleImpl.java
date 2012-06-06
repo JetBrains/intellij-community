@@ -11,14 +11,14 @@ import java.util.List;
  * @author nik
  */
 public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, JpsProjectImpl> implements JpsModule {
-  private static final JpsTypedDataKind<JpsModuleType> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleType>();
+  private static final JpsTypedDataKind<JpsModuleType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleType<?>>();
   private static final JpsElementKind<JpsUrlListImpl> CONTENT_ROOTS_KIND = new JpsElementKind<JpsUrlListImpl>();
   private static final JpsElementKind<JpsUrlListImpl> EXCLUDED_ROOTS_KIND = new JpsElementKind<JpsUrlListImpl>();
   public static final JpsElementKind<JpsDependenciesListImpl> DEPENDENCIES_LIST_KIND = new JpsElementKind<JpsDependenciesListImpl>();
 
   public JpsModuleImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsModuleType type, @NotNull String name, JpsElementCollectionImpl<JpsModuleImpl> parent) {
     super(model, eventDispatcher, name, parent);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleType>(type, eventDispatcher, this));
+    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleType<?>>(type, eventDispatcher, this));
     myContainer.setChild(CONTENT_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, this));
     myContainer.setChild(EXCLUDED_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, this));
     myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl(model, eventDispatcher, this));

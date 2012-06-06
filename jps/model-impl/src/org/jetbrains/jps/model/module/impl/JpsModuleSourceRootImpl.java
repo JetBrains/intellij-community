@@ -12,14 +12,14 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  * @author nik
  */
 public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSourceRootImpl> implements JpsModuleSourceRoot {
-  private static final JpsTypedDataKind<JpsModuleSourceRootType> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleSourceRootType>();
+  private static final JpsTypedDataKind<JpsModuleSourceRootType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleSourceRootType<?>>();
   private String myUrl;
 
   public JpsModuleSourceRootImpl(JpsModel model, JpsEventDispatcher eventDispatcher,
                                  String url,
                                  JpsModuleSourceRootType type, JpsParentElement parent) {
     super(model, eventDispatcher, parent);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleSourceRootType>(type, eventDispatcher, this));
+    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleSourceRootType<?>>(type, eventDispatcher, this));
     myUrl = url;
   }
 

@@ -7,7 +7,7 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public class JpsTypedDataImpl<T extends JpsElementType> extends JpsElementBase<JpsTypedDataImpl<T>> {
+public class JpsTypedDataImpl<T extends JpsElementType<?>> extends JpsElementBase<JpsTypedDataImpl<T>> {
   private final T myType;
   private JpsElementProperties myProperties;
 
