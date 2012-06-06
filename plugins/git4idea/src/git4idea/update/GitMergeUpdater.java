@@ -113,7 +113,7 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("Conflict detected");
       final boolean allMerged =
         new MyConflictResolver(myProject, myGit, merger, myRoot).merge();
-      return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
+      return allMerged ? GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS : GitUpdateResult.INCOMPLETE;
     }
     else if (error == MergeError.LOCAL_CHANGES) {
       LOG.info("Local changes would be overwritten by merge");

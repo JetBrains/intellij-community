@@ -98,7 +98,7 @@ public class ChangeType {
     int length = text.length();
     int start = changeSide.getStart();
     int end = start + length;
-    RangeHighlighter highlighter = markup.addRangeHighlighter(start, end, LAYER, diffType, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter highlighter = markup.addRangeHighlighter(start, end, LAYER, diffType, HighlighterTargetArea.EXACT_RANGE, myApplied);
 
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
@@ -111,7 +111,7 @@ public class ChangeType {
       end--;
     }
 
-    highlighter = markup.addRangeHighlighter(start, end, LAYER, TextDiffType.NONE, HighlighterTargetArea.EXACT_RANGE);
+    highlighter = markup.addRangeHighlighter(start, end, LAYER, TextDiffType.NONE, HighlighterTargetArea.EXACT_RANGE, myApplied);
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
       highlighter.setLineSeparatorColor(separatorColor);
@@ -122,8 +122,8 @@ public class ChangeType {
   }
 
   @Nullable
-  private static RangeHighlighter addLine(ChangeHighlighterHolder markup, int line, TextDiffType type, SeparatorPlacement placement) {
-    RangeHighlighter highlighter = markup.addLineHighlighter(line, LAYER, type);
+  private RangeHighlighter addLine(ChangeHighlighterHolder markup, int line, TextDiffType type, SeparatorPlacement placement) {
+    RangeHighlighter highlighter = markup.addLineHighlighter(line, LAYER, type, myApplied);
     if (highlighter == null) {
       return null;
     }

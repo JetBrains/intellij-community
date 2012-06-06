@@ -390,26 +390,10 @@ public class GitUnstashDialog extends DialogWrapper {
     return myStashList;
   }
 
-  /**
-   * Show unstash dialog and process its result
-   *
-   * @param project       the context project
-   * @param gitRoots      the git roots
-   * @param defaultRoot   the default git root
-   * @param affectedRoots the affected roots
-   */
-  public static void showUnstashDialog(Project project,
-                                       List<VirtualFile> gitRoots,
-                                       VirtualFile defaultRoot,
-                                       Set<VirtualFile> affectedRoots) {
-    GitUnstashDialog d = new GitUnstashDialog(project, gitRoots, defaultRoot);
-    d.show();
-    if (!d.isOK()) {
-      return;
-    }
-    VirtualFile root = d.getGitRoot();
-    affectedRoots.add(root);
-    GitLineHandler h = d.handler();
+  @Override
+  protected void doOKAction() {
+    VirtualFile root = getGitRoot();
+    GitLineHandler h = handler();
     final AtomicBoolean conflict = new AtomicBoolean();
 
     h.addLineListener(new GitLineHandlerAdapter() {
@@ -423,11 +407,17 @@ public class GitUnstashDialog extends DialogWrapper {
     root.refresh(true, true);
 
     if (conflict.get()) {
-      boolean conflictsResolved = new UnstashConflictResolver(project, root, d.getSelectedStash()).merge();
+      boolean conflictsResolved = new UnstashConflictResolver(myProject, root, getSelectedStash()).merge();
       LOG.info("loadRoot " + root + ", conflictsResolved: " + conflictsResolved);
     } else if (rc != 0) {
-      GitUIUtil.showOperationErrors(project, h.errors(), h.printableCommandLine());
+      GitUIUtil.showOperationErrors(myProject, h.errors(), h.printableCommandLine());
     }
+    super.doOKAction();
+  }
+
+  public static void showUnstashDialog(Project project, List<VirtualFile> gitRoots, VirtualFile defaultRoot) {
+    new GitUnstashDialog(project, gitRoots, defaultRoot).show();
+    // d is not modal=> everything else in doOKAction.
   }
 
   private static class UnstashConflictResolver extends GitConflictResolver {

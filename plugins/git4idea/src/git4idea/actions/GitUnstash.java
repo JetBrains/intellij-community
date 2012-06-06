@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +49,11 @@ public class GitUnstash extends GitRepositoryAction {
                          final List<VcsException> exceptions) throws VcsException {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification("Can not unstash changes now")) return;
-    GitUnstashDialog.showUnstashDialog(project, gitRoots, defaultRoot, affectedRoots);
+    GitUnstashDialog.showUnstashDialog(project, gitRoots, defaultRoot);
+  }
+
+  @Override
+  protected boolean executeFinalTasksSynchronously() {
+    return false;
   }
 }
