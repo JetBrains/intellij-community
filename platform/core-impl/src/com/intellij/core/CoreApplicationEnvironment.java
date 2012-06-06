@@ -108,7 +108,8 @@ public class CoreApplicationEnvironment {
                                                          }
                               )
     );
-    registerApplicationComponent(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
+    //registerApplicationComponent(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
+    myApplication.registerService(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
 
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
     myApplication.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
