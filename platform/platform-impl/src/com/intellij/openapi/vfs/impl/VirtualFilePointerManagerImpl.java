@@ -275,7 +275,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       if (!left.isEmpty()) {
         VirtualFilePointerImpl p = left.get(0).leaf;
         try {
-          p.throwDisposalError("Not disposed pointer: "+p.getUrlNoUpdate());
+          p.throwDisposalError("Not disposed pointer: "+p);
         }
         finally {
           for (FilePointerPartNode pair : left) {
@@ -308,7 +308,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     try {
       for (VirtualFilePointerImpl pointer : pointers) {
         if (!myStoredPointers.contains(pointer)) {
-          pointer.throwDisposalError("Virtual pointer hasn't been disposed: "+pointer.getUrlNoUpdate());
+          pointer.throwDisposalError("Virtual pointer hasn't been disposed: "+pointer);
         }
       }
     }
