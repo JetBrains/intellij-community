@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -274,6 +275,15 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     super.dispose();
   }
 
+  public void queueTypeAheadDone(final ActionCallback done) {
+    queue(new AfterModelUpdate(ID.TYPE_AHEAD_FINISHED) {
+      @Override
+      protected void after() {
+        done.setDone();
+      }
+    });
+  }
+
   private abstract class AfterModelUpdate extends Update {
     private AfterModelUpdate(ID id) {
       super(id.name(), id.getPriority());
@@ -298,7 +308,8 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     SCROLL_TO_VISIBLE(4),
     SHOW_HINT(4),
     REQUEST_FOCUS(4),
-    NAVIGATE_INSIDE(4);
+    NAVIGATE_INSIDE(4),
+    TYPE_AHEAD_FINISHED(5);
 
     private final int myPriority;
 
