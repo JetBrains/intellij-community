@@ -197,12 +197,13 @@ public class FSRecords implements Forceable {
           throw new IOException("Corruption marker file found");
         }
 
-        myNames = new PersistentStringEnumerator(namesFile);
+        PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLock(false).myDefaultStorageLockContext;
+        myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
         myAttributes = new Storage(attributesFile.getCanonicalPath());
         myContents = new RefCountingStorage(contentsFile.getCanonicalPath());
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         assert aligned; // for performance
-        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, new PagedFileStorage.StorageLock(false),
+        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
                                              PagedFileStorage.BUFFER_SIZE, aligned);
 
         if (myRecords.length() == 0) {

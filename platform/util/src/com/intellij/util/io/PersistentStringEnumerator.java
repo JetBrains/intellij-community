@@ -33,19 +33,32 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
   @Nullable private final Lock[] myStripeLocks;
 
   public PersistentStringEnumerator(@NotNull final File file) throws IOException {
-    this(file, 1024 * 4);
+    this(file, null);
+  }
+
+  public PersistentStringEnumerator(@NotNull final File file, @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
+    this(file, 1024 * 4, storageLockContext);
   }
 
   public PersistentStringEnumerator(@NotNull final File file, boolean cacheLastMappings) throws IOException {
-    this(file, 1024 * 4, cacheLastMappings);
+    this(file, 1024 * 4, cacheLastMappings, null);
   }
 
   public PersistentStringEnumerator(@NotNull final File file, final int initialSize) throws IOException {
-    this(file, initialSize, false);
+    this(file, initialSize, null);
   }
 
-  private PersistentStringEnumerator(@NotNull final File file, final int initialSize, boolean cacheLastMappings) throws IOException {
-    super(file, new EnumeratorStringDescriptor(), initialSize);
+  public PersistentStringEnumerator(@NotNull final File file,
+                                    final int initialSize,
+                                    @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    this(file, initialSize, false, lockContext);
+  }
+
+  private PersistentStringEnumerator(@NotNull final File file,
+                                     final int initialSize,
+                                     boolean cacheLastMappings,
+                                     @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    super(file, new EnumeratorStringDescriptor(), initialSize, lockContext);
     if (cacheLastMappings) {
       myIdToStringCache = new SLRUMap[STRIPE_COUNT];
       myHashcodeToIdCache = new SLRUMap[STRIPE_COUNT];

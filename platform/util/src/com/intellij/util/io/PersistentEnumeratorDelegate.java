@@ -28,7 +28,14 @@ public class PersistentEnumeratorDelegate<Data> implements Closeable, Forceable 
   @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
 
   public PersistentEnumeratorDelegate(@NotNull final File file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
-    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<Data>(file, dataDescriptor, initialSize) :
+    this(file, dataDescriptor, initialSize, null);
+  }
+
+  public PersistentEnumeratorDelegate(@NotNull final File file,
+                                      @NotNull KeyDescriptor<Data> dataDescriptor,
+                                      final int initialSize,
+                                      @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    myEnumerator = useBtree() ? new PersistentBTreeEnumerator<Data>(file, dataDescriptor, initialSize, lockContext) :
                    new PersistentEnumerator<Data>(file, dataDescriptor, initialSize);
   }
 
