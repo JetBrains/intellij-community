@@ -145,6 +145,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
     // required invokeLater since in current call sequence KeyboardFocusManager is not initialized yet
     // but future focused component
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         processFocusLost(e);

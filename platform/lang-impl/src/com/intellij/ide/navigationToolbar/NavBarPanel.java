@@ -139,7 +139,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return myPresentation;
   }
 
-  public void setContextComponent(Component contextComponent) {
+  public void setContextComponent(@Nullable Component contextComponent) {
     myContextComponent = contextComponent;
   }
 
