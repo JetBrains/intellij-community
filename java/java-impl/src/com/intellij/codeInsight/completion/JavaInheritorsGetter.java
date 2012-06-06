@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -154,14 +155,15 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   private static boolean areInferredTypesApplicable(@NotNull PsiType[] types, PsiElement originalPosition) {
-    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiNewExpression.class);
-    if (newExpression != null) {
-      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiMethodCallExpression.class);
-      if (methodCallExpression != null &&
-          ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), newExpression) > -1) {
+    final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiMethodCallExpression.class);
+    if (methodCallExpression != null) {
+      final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(originalPosition, PsiNewExpression.class);
+      if (newExpression != null && ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), newExpression) > -1 ||
+          Comparing.equal(originalPosition.getParent(), methodCallExpression.getArgumentList())) {
         final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
-        PsiMethod method = (PsiMethod)resolveResult.getElement();
-        return method == null || PsiUtil.getApplicabilityLevel(method, resolveResult.getSubstitutor(), types, PsiUtil.getLanguageLevel(originalPosition))
+        final PsiMethod method = (PsiMethod)resolveResult.getElement();
+        return method == null ||
+               PsiUtil.getApplicabilityLevel(method, resolveResult.getSubstitutor(), types, PsiUtil.getLanguageLevel(originalPosition))
                != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
       }
     }
