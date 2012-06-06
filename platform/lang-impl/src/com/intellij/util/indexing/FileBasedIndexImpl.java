@@ -386,9 +386,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
 
+    MapIndexStorage<K, V> storage = null;
+
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(
+        storage = new MapIndexStorage<K, V>(
           IndexInfrastructure.getStorageFile(name),
           extension.getKeyDescriptor(),
           extension.getValueExternalizer(),
@@ -413,8 +415,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
         break;
       }
-      catch (IOException e) {
+      catch (Exception e) {
         LOG.info(e);
+        try {
+          if (storage != null) storage.close();
+          storage = null;
+        } catch (Exception ex) {}
+
         FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
         IndexInfrastructure.rewriteVersion(versionFile, version);
       }
@@ -467,7 +474,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   @NotNull
-  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final ID<K, V> indexId, @NotNull final FileBasedIndexExtension<K, V> extension, @NotNull final MemoryIndexStorage<K, V> storage) throws IOException {
+  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final ID<K, V> indexId, @NotNull final FileBasedIndexExtension<K, V> extension, @NotNull final MemoryIndexStorage<K, V> storage) throws StorageException, IOException {
     final MapReduceIndex<K, V, FileContent> index;
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
       final UpdatableIndex<K, V, FileContent> custom = ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(indexId, this, storage);
