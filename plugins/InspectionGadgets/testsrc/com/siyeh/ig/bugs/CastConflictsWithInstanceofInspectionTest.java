@@ -38,6 +38,10 @@ public class CastConflictsWithInstanceofInspectionTest extends IGInspectionTestC
   public void testPolyadic() throws Exception {
     doTest();
   }
+  
+  public void testNotOr() throws Exception {
+    doTest();
+  }
 
   private void doTest() throws Exception {
     doTest("com/siyeh/igtest/bugs/castConflictingInstanceof/" + getTestName(true), new CastConflictsWithInstanceofInspection());

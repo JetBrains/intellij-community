@@ -113,6 +113,9 @@ public class InstanceOfUtils {
       }
       else if (tokenType == JavaTokenType.OROR) {
         for (PsiExpression operand : expression.getOperands()) {
+          if (operand instanceof PsiPrefixExpression && ((PsiPrefixExpression)operand).getOperationTokenType() == JavaTokenType.EXCL) {
+            inElse = true;
+          }
           checkExpression(operand);
         }
         if (inElse && conflictingInstanceof != null) {
@@ -125,8 +128,7 @@ public class InstanceOfUtils {
     public void visitIfStatement(PsiIfStatement ifStatement) {
       final PsiStatement branch = ifStatement.getElseBranch();
       inElse = branch != null &&
-               PsiTreeUtil.isAncestor(branch, referenceExpression,
-                                      true);
+               PsiTreeUtil.isAncestor(branch, referenceExpression, true);
       if (inElse) {
         if (branch instanceof PsiBlockStatement) {
           final PsiBlockStatement blockStatement =
@@ -161,8 +163,7 @@ public class InstanceOfUtils {
     }
 
     @Override
-    public void visitConditionalExpression(
-      PsiConditionalExpression expression) {
+    public void visitConditionalExpression(PsiConditionalExpression expression) {
       final PsiExpression elseExpression =
         expression.getElseExpression();
       inElse = elseExpression != null &&
