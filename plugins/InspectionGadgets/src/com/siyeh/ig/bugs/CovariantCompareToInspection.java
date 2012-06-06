@@ -76,42 +76,34 @@ public class CovariantCompareToInspection extends BaseInspection {
       }
       final PsiMethod[] methods = aClass.findMethodsByName(
         HardcodedMethodConstants.COMPARE_TO, false);
-      for (PsiMethod compareToMethod : methods) {
-        if (isNonVariantCompareTo(compareToMethod)) {
-          return;
-        }
-      }
       final Project project = method.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final GlobalSearchScope scope = method.getResolveScope();
-      final PsiClass comparableClass =
-        psiFacade.findClass(CommonClassNames.JAVA_LANG_COMPARABLE,
-                            scope);
+      final PsiClass comparableClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_COMPARABLE, scope);
+      PsiType substitutedTypeParam = null;
       if (comparableClass != null &&
           comparableClass.getTypeParameters().length == 1) {
-        final PsiSubstitutor superSubstitutor =
-          TypeConversionUtil.getClassSubstitutor(comparableClass,
-                                                 aClass, PsiSubstitutor.EMPTY);
+        final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(comparableClass, aClass, PsiSubstitutor.EMPTY);
         //null iff aClass is not inheritor of comparableClass
         if (superSubstitutor != null) {
-          final PsiType substituted =
-            superSubstitutor.substitute(
-              comparableClass.getTypeParameters()[0]);
-          if (paramType.equals(substituted)) {
-            return;
-          }
+           substitutedTypeParam = superSubstitutor.substitute(comparableClass.getTypeParameters()[0]);
+        }
+      }
+      for (PsiMethod compareToMethod : methods) {
+        if (isNonVariantCompareTo(compareToMethod, substitutedTypeParam)) {
+          return;
         }
       }
       registerMethodError(method);
     }
 
-    private static boolean isNonVariantCompareTo(PsiMethod method) {
+    private static boolean isNonVariantCompareTo(PsiMethod method, PsiType substitutedTypeParam) {
       final PsiManager manager = method.getManager();
       final Project project = method.getProject();
       final PsiClassType objectType = PsiType.getJavaLangObject(
         manager, GlobalSearchScope.allScope(project));
-      return MethodUtils.methodMatches(method, null, PsiType.INT,
-                                       HardcodedMethodConstants.COMPARE_TO, objectType);
+      return MethodUtils.methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, objectType) ||
+             (substitutedTypeParam != null && MethodUtils.methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, substitutedTypeParam));
     }
   }
 }
