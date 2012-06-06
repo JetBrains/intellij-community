@@ -31,7 +31,6 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.List;
 
-@Bombed(month = Calendar.APRIL, day=1, user="anton")
 public class MiscImportingTest extends MavenImportingTestCase {
   private int beforeRootsChangedCount;
   private int rootsChangedCount;
