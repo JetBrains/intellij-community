@@ -27,7 +27,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
   private final PsiType[] myParameterTypes;
   protected final PsiTypeParameter[] myTypeParameters;
 
-  protected MethodSignatureBase(PsiSubstitutor substitutor, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters) {
+  protected MethodSignatureBase(@NotNull PsiSubstitutor substitutor, @NotNull PsiType[] parameterTypes, @NotNull PsiTypeParameter[] typeParameters) {
     mySubstitutor = substitutor;
     myParameterTypes = parameterTypes.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[parameterTypes.length];
     for (int i = 0; i < parameterTypes.length; i++) {

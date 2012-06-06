@@ -26,10 +26,10 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   private final boolean myIsRaw;
 
   protected MethodSignatureBackedByPsiMethod(@NotNull PsiMethod method,
-                                             PsiSubstitutor substitutor,
+                                             @NotNull PsiSubstitutor substitutor,
                                              boolean isRaw,
-                                             PsiType[] parameterTypes,
-                                             PsiTypeParameter[] methodTypeParameters) {
+                                             @NotNull PsiType[] parameterTypes,
+                                             @NotNull PsiTypeParameter[] methodTypeParameters) {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
     if (!method.isValid()) {
@@ -67,11 +67,11 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return myMethod;
   }
 
-  public static MethodSignatureBackedByPsiMethod create(PsiMethod method, PsiSubstitutor substitutor) {
+  public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     return create(method, substitutor, PsiUtil.isRawSubstitutor(method, substitutor));
   }
 
-  public static MethodSignatureBackedByPsiMethod create(PsiMethod method, PsiSubstitutor substitutor, boolean isRaw) {
+  public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean isRaw) {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiType[] parameterTypes = new PsiType[parameters.length];
