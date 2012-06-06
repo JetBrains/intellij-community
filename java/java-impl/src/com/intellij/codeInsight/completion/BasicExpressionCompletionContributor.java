@@ -108,7 +108,7 @@ public class BasicExpressionCompletionContributor {
     }
 
     PsiScopesUtil.treeWalkUp(new BaseScopeProcessor() {
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiLocalVariable) {
           if (!matcher.prefixMatches(((PsiLocalVariable)element).getName())) {
             return true;

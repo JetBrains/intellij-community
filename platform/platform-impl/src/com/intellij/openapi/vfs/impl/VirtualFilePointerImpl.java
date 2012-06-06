@@ -83,7 +83,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   private void checkDisposed() {
     if (isDisposed()) {
-      throwDisposalError("Already disposed: URL=" + getUrlNoUpdate());
+      throwDisposalError("Already disposed: URL='" + this+"'");
     }
   }
 
@@ -102,7 +102,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   public void dispose() {
     checkDisposed();
     if (myNode.incrementUsageCount(-1) == 0) {
-      kill(null);
+      kill("URL when die: "+ toString());
       VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
       if (pointerManager instanceof VirtualFilePointerManagerImpl) {
         ((VirtualFilePointerManagerImpl)pointerManager).removeNode(myNode, myListener); // remove from the tree

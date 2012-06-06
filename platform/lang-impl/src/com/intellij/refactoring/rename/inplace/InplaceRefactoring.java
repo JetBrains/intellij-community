@@ -716,10 +716,14 @@ public abstract class InplaceRefactoring {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
         myInsertedName = value != null ? value.toString() : null;
 
+        TextRange range = templateState.getCurrentVariableRange();
         final int currentOffset = myEditor.getCaretModel().getOffset();
+        if (range == null && myRenameOffset != null) {
+          range = new TextRange(myRenameOffset.getStartOffset(), myRenameOffset.getEndOffset());  
+        }
         myBeforeRevert =
-          myRenameOffset != null && myRenameOffset.getEndOffset() >= currentOffset && myRenameOffset.getStartOffset() <= currentOffset
-          ? myEditor.getDocument().createRangeMarker(myRenameOffset.getStartOffset(), currentOffset)
+          range != null && range.getEndOffset() >= currentOffset && range.getStartOffset() <= currentOffset
+          ? myEditor.getDocument().createRangeMarker(range.getStartOffset(), currentOffset)
           : null;
         if (myBeforeRevert != null) {
           myBeforeRevert.setGreedyToRight(true);

@@ -102,7 +102,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       final Ref<Boolean> conflict = new Ref<Boolean>(Boolean.FALSE);
       PsiScopesUtil.walkChildrenScopes(this, new BaseScopeProcessor() {
         @Override
-        public boolean execute(PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, ResolveState state) {
           if (element instanceof PsiLocalVariable) {
             final PsiLocalVariable variable = (PsiLocalVariable)element;
             final String name = variable.getName();

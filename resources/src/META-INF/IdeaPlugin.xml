@@ -1252,6 +1252,8 @@
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
 
     <psi.referenceContributor language="JAVA" implementation="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceContributor"/>
+
+    <writingAccessProvider implementation="com.intellij.refactoring.util.ClsElementWritingAccessProvider"/>
   </extensions>
 
   <actions>

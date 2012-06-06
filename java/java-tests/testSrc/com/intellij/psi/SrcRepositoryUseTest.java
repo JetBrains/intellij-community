@@ -29,6 +29,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings("ConstantConditions")
 @PlatformTestCase.WrapInCommand
 public class SrcRepositoryUseTest extends PsiTestCase{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.SrcRepositoryUseTest");
@@ -501,8 +502,9 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     setupLoadingFilter();
 
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass2", GlobalSearchScope.allScope(myProject));
-
-    PsiParameterList list = aClass.getMethods()[0].getParameterList();
+    assertNotNull(aClass);
+    PsiMethod[] methods = aClass.getMethods();
+    PsiParameterList list = methods[0].getParameterList();
 
     PsiParameter[] parms = list.getParameters();
     assertEquals(5, parms.length);

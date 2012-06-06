@@ -295,12 +295,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     PsiModifierList modifierList = parm.getModifierList();
     PsiModifierList newMList = newParam.getModifierList();
     if (modifierList != null && newMList != null) {
-      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-        newMList.add(factory.createAnnotationFromText(annotation.getText(), newParam));
-      }
-      for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
-        newMList.setModifierProperty(m, parm.hasModifierProperty(m));
-      }
+      newMList.replace(modifierList);
     }
   }
 

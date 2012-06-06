@@ -107,8 +107,8 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
               final String method = ((TestResultMessage)result).getMethod();
               if (method != null) {
                 final PsiMethod[] psiMethods = psiClass.findMethodsByName(method, false);
-                for (PsiMethod psiMethod : psiMethods) {
-                  psiMethod.navigate(true);
+                if (psiMethods.length > 0) {
+                  psiMethods[0].navigate(true);
                   return;
                 }
               }

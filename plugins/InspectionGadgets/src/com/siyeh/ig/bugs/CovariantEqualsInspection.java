@@ -63,7 +63,7 @@ public class CovariantEqualsInspection extends BaseInspection {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
+      if (aClass == null || aClass.isInterface()) {
         return;
       }
       final PsiMethod[] methods = aClass.getMethods();

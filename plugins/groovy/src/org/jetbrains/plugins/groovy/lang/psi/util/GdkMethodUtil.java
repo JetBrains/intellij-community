@@ -105,7 +105,7 @@ public class GdkMethodUtil {
                                                @NotNull PsiClass categoryClass) {
     final DelegatingScopeProcessor delegate = new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiMethod) {
           if (!((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) return true;
           final PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();

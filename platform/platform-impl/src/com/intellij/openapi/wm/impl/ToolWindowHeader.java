@@ -550,11 +550,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   }
 
   private static String getToolTipTextByAction(AnAction action) {
-    String text = action.getTemplatePresentation().getText();
-    final String shortcutForAction = KeymapUtil.getFirstKeyboardShortcutText(action);
-    if (shortcutForAction.length() > 0) {
-      text += "  " + shortcutForAction;
-    }
+    String text = AnAction.createTooltipText(action.getTemplatePresentation().getText(), action);
 
     if (action instanceof HideAction) {
       text += String.format(" (Click with %s to Hide Side)", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));

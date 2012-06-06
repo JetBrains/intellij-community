@@ -193,7 +193,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
   }
 
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     //noinspection SuspiciousMethodCalls
     if (myNonInitializedFields.contains(element)) {
       return true;
@@ -294,7 +294,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   @Override
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
       return (T)this;
     }

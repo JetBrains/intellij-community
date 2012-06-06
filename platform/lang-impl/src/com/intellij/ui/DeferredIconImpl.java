@@ -30,6 +30,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -45,16 +46,16 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private volatile boolean myIsScheduled = false;
   private T myParam;
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
-  private boolean myNeedReadAction;
+  private final boolean myNeedReadAction;
   private boolean myDone;
 
   private IconListener<T> myEvalListener;
 
-  public DeferredIconImpl(Icon baseIcon, T param, Function<T, Icon> evaluator) {
+  public DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator) {
     this(baseIcon, param, true, evaluator);
   }
 
-  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, Function<T, Icon> evaluator) {
+  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<T, Icon> evaluator) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myEvaluator = evaluator;
@@ -65,6 +66,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     return icon != null ? icon : EMPTY_ICON;
   }
 
+  @Override
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
     if (!(myDelegateIcon instanceof DeferredIconImpl && ((DeferredIconImpl)myDelegateIcon).myDelegateIcon instanceof DeferredIconImpl)) {
       myDelegateIcon.paintIcon(c, g, x, y); //SOE protection
@@ -116,6 +118,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
       }
 
       JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+        @Override
         public void run() {
           int oldWidth = myDelegateIcon.getIconWidth();
           final Icon result = evaluate();
@@ -125,6 +128,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               setDone(result);
 
@@ -177,9 +181,11 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     myParam = null;
   }
 
+  @Override
   public Icon evaluate() {
     final Icon[] evaluated = new Icon[1];
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         try {
           evaluated[0] = nonNull(myEvaluator.fun(myParam));
@@ -226,10 +232,12 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     }
   }
 
+  @Override
   public int getIconWidth() {
     return myDelegateIcon.getIconWidth();
   }
 
+  @Override
   public int getIconHeight() {
     return myDelegateIcon.getIconHeight();
   }
@@ -245,6 +253,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     public void pushDirtyComponent(final Component c, final Rectangle rec) {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           for (RepaintRequest each : myQueue) {
             Rectangle r = each.getRectangle();

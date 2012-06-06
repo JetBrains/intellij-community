@@ -46,6 +46,10 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testDiamondNotCollapsedNotApplicable() throws Exception {
+    doTest();
+  }
+
   public void testDiamondNotCollapsedInCaseOfAnonymousClasses() throws Exception {
     doTest();
   }

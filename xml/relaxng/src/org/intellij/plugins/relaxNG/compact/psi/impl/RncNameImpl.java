@@ -152,7 +152,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
       myKind = kind;
     }
 
-    public boolean execute(PsiElement element, ResolveState substitutor) {
+    public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
       final ASTNode node = element.getNode();
       if (node == null) return true;
 

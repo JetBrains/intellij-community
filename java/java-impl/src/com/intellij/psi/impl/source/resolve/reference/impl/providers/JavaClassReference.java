@@ -110,12 +110,12 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       }
       processorToUse = new PsiScopeProcessor() {
         @Override
-        public boolean execute(PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, ResolveState state) {
           return !(element instanceof PsiClass || element instanceof PsiPackage) || processor.execute(element, state);
         }
 
         @Override
-        public <V> V getHint(Key<V> hintKey) {
+        public <V> V getHint(@NotNull Key<V> hintKey) {
           return processor.getHint(hintKey);
         }
 

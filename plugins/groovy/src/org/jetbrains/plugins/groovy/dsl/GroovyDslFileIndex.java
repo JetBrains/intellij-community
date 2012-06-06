@@ -235,7 +235,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
     final DelegatingScopeProcessor nameChecker = new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
           return processor.execute(element, state);
         }

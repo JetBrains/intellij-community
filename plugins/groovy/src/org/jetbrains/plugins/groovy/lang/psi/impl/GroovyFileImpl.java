@@ -146,7 +146,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     final String expectedName = ResolveUtil.getNameHint(processor);
 
     PsiScopeProcessor importProcessor = !processClasses || expectedName == null ? processor : new DelegatingScopeProcessor(processor) {
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         return isImplicitlyImported(element, expectedName) || super.execute(element, state);
       }
     };
@@ -245,7 +245,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     final DelegatingScopeProcessor packageSkipper = new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiPackage) return true;
         return super.execute(element, state);
       }
@@ -276,7 +276,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     PsiPackage aPackage = facade.findPackage(packageName);
     if (aPackage != null && !aPackage.processDeclarations(new DelegatingScopeProcessor(processor) {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiPackage) return true;
         return super.execute(element, state);
       }

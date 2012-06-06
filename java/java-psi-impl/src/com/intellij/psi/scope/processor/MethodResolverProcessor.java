@@ -21,6 +21,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 public class MethodResolverProcessor extends MethodCandidatesProcessor {
   private boolean myStopAcceptingCandidates = false;
@@ -51,7 +52,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
   }
 
   @Override
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     return !myStopAcceptingCandidates && super.execute(element, state);
   }
 }

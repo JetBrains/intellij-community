@@ -274,7 +274,7 @@ public class JavaI18nUtil extends I18nUtil {
 
   private static void addAvailableMethodsOfType(final PsiClassType type, final PsiLiteralExpression context, final Collection<String> result) {
     PsiScopesUtil.treeWalkUp(new PsiScopeProcessor() {
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
           PsiType returnType = method.getReturnType();
@@ -286,7 +286,7 @@ public class JavaI18nUtil extends I18nUtil {
         return true;
       }
 
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return null;
       }
 

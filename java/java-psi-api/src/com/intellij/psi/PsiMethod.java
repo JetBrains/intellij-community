@@ -47,9 +47,11 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   /**
    * Returns the return type of the method.
+   *
    * @return the method return type, or null if the method is a constructor.
    */
-  @Nullable PsiType getReturnType();
+  @Nullable
+  PsiType getReturnType();
 
   /**
    * Returns the type element for the return type of the method.
@@ -64,21 +66,24 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the parameter list instance.
    */
-  @NotNull PsiParameterList getParameterList();
+  @NotNull
+  PsiParameterList getParameterList();
 
   /**
    * Returns the list of thrown exceptions for the method.
    *
    * @return the list of thrown exceptions instance.
    */
-  @NotNull PsiReferenceList getThrowsList();
+  @NotNull
+  PsiReferenceList getThrowsList();
 
   /**
    * Returns the body of the method.
    *
    * @return the method body, or null if the method belongs to a compiled class.
    */
-  @Nullable PsiCodeBlock getBody();
+  @Nullable
+  PsiCodeBlock getBody();
 
   /**
    * Checks if the method is a constructor.
@@ -101,7 +106,8 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    * @param substitutor the substitutor.
    * @return the method signature instance.
    */
-  @NotNull MethodSignature getSignature(@NotNull PsiSubstitutor substitutor);
+  @NotNull
+  MethodSignature getSignature(@NotNull PsiSubstitutor substitutor);
 
   /**
    * Returns the name identifier for the method.
@@ -109,7 +115,8 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    * @return the name identifier instance.
    */
   @Override
-  @Nullable PsiIdentifier getNameIdentifier();
+  @Nullable
+  PsiIdentifier getNameIdentifier();
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
@@ -120,7 +127,8 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull PsiMethod[] findSuperMethods();
+  @NotNull
+  PsiMethod[] findSuperMethods();
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
@@ -131,10 +139,11 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    * overridden method is returned.
    *
    * @param checkAccess if false, the super methods are searched even if this method
-   * is private. If true, an empty result list is returned for private methods.
+   *                    is private. If true, an empty result list is returned for private methods.
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull PsiMethod[] findSuperMethods(boolean checkAccess);
+  @NotNull
+  PsiMethod[] findSuperMethods(boolean checkAccess);
 
   /**
    * Searches the superclasses and base interfaces of the specified class to find
@@ -145,7 +154,8 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    * @param parentClass the class to search for super methods.
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull PsiMethod[] findSuperMethods(PsiClass parentClass);
+  @NotNull
+  PsiMethod[] findSuperMethods(PsiClass parentClass);
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
@@ -155,36 +165,43 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    * overrides another method, only the directly overridden method is returned.
    *
    * @param checkAccess if false, the super methods are searched even if this method
-   * is private. If true, an empty result list is returned for private methods.
+   *                    is private. If true, an empty result list is returned for private methods.
    * @return the array of matching method signatures, or an empty array if no methods are found.
    */
-  @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess);
+  @NotNull
+  List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess);
 
   /**
    * Returns the method in the deepest base superclass or interface of the containing class which
    * this method overrides or implements.
    *
    * @return the overridden or implemented method, or null if this method does not override
-   * or implement any other method.
+   *         or implement any other method.
    * @deprecated use {@link #findDeepestSuperMethods()} instead
    */
-  @Nullable PsiMethod findDeepestSuperMethod();
+  @Nullable
+  PsiMethod findDeepestSuperMethod();
 
-  @NotNull PsiMethod[] findDeepestSuperMethods();
+  @NotNull
+  PsiMethod[] findDeepestSuperMethods();
 
   @Override
-  @NotNull PsiModifierList getModifierList();
+  @NotNull
+  PsiModifierList getModifierList();
 
   @Override
-  @NotNull @NonNls
+  @NotNull
+  @NonNls
   String getName();
 
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
-  @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature();
+  @NotNull
+  HierarchicalMethodSignature getHierarchicalMethodSignature();
 
-  @Nullable PsiMethodReceiver getMethodReceiver();
+  @Nullable
+  PsiMethodReceiver getMethodReceiver();
 
   @Nullable
   PsiType getReturnTypeNoResolve();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.readOnlyHandler;
+package com.intellij.refactoring.util;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WritingAccessProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
- * @author Dmitry Avdeev
+ * User: ksafonov
  */
-public interface WritingAccessProvider {
+public class ClsElementWritingAccessProvider extends WritingAccessProvider {
 
-  ExtensionPointName<WritingAccessProvider> EP_NAME = ExtensionPointName.create("com.intellij.writingAccessProvider");
-
-  /**
-   * @param files files to be checked
-   * @return set of files that cannot be accessed
-   */
   @NotNull
-  Collection<VirtualFile> requestWriting(VirtualFile... files);
+  @Override
+  public Collection<VirtualFile> requestWriting(final VirtualFile... files) {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public boolean isPotentiallyWritable(@NotNull final VirtualFile file) {
+    // TODO make library class files readonly not by their file type but by location in library roots
+    return file.getFileType() != JavaClassFileType.INSTANCE;
+  }
 }

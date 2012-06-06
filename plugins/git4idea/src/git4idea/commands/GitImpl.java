@@ -339,14 +339,14 @@ public class GitImpl implements Git {
     }
   }
 
-  private GitCommandResult run(@NotNull GitLineHandler handler) {
+  private static GitCommandResult run(@NotNull GitLineHandler handler) {
     return run(handler, false);
   } 
 
   /**
    * Runs the given {@link GitLineHandler} in the current thread and returns the {@link GitCommandResult}.
    */
-  private GitCommandResult run(@NotNull GitLineHandler handler, boolean remote) {
+  private static GitCommandResult run(@NotNull GitLineHandler handler, boolean remote) {
     handler.setNoSSH(!remote);
 
     final List<String> errorOutput = new ArrayList<String>();
@@ -387,7 +387,7 @@ public class GitImpl implements Git {
   /**
    * Check if the line looks line an error message
    */
-  private boolean isError(String text) {
+  private static boolean isError(String text) {
     for (String indicator : ERROR_INDICATORS) {
       if (text.startsWith(indicator.toLowerCase())) {
         return true;
@@ -397,8 +397,9 @@ public class GitImpl implements Git {
   }
 
   // could be upper-cased, so should check case-insensitively
-  private final String[] ERROR_INDICATORS = {
-    "error", "fatal", "Cannot apply", "Could not", "Interactive rebase already started", "refusing to pull", "cannot rebase:", "conflict"
+  public static final String[] ERROR_INDICATORS = {
+    "error", "fatal", "Cannot apply", "Could not", "Interactive rebase already started", "refusing to pull", "cannot rebase:", "conflict",
+    "unable"
   };
 
 }

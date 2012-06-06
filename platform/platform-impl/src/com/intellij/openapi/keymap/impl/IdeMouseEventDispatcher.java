@@ -24,6 +24,9 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -123,6 +126,18 @@ public final class IdeMouseEventDispatcher {
    */
   public boolean dispatchMouseEvent(MouseEvent e) {
     boolean ignore = false;
+    Component c = e.getComponent();
+
+    //frame activation by mouse click
+    if (e.getID() == MOUSE_PRESSED && c instanceof IdeFrame && !c.hasFocus()) {
+      IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+      if (focusManager instanceof FocusManagerImpl) {
+        Component at = SwingUtilities.getDeepestComponentAt(c, e.getX(), e.getY());
+        if (at != null && at.isFocusable()) {
+          ((FocusManagerImpl)focusManager).setLastFocusedAtDeactivation((IdeFrame)c, at);
+        }
+      }
+    }
 
     if (SystemInfo.isLinux && e.isPopupTrigger() && e.getButton() != 3) {
       // we can do better than silly triggering popup on everything but left click
@@ -158,23 +173,21 @@ public final class IdeMouseEventDispatcher {
       }
     }
 
-
-    Component component = e.getComponent();
-    if (component == null) {
+    if (c == null) {
       throw new IllegalStateException("component cannot be null");
     }
-    component = SwingUtilities.getDeepestComponentAt(component, e.getX(), e.getY());
+    c = SwingUtilities.getDeepestComponentAt(c, e.getX(), e.getY());
 
-    if (component instanceof IdeGlassPaneImpl) {
-      component = ((IdeGlassPaneImpl)component).getTargetComponentFor(e);
+    if (c instanceof IdeGlassPaneImpl) {
+      c = ((IdeGlassPaneImpl)c).getTargetComponentFor(e);
     }
 
-    if (component == null) { // do nothing if component doesn't contains specified point
+    if (c == null) { // do nothing if component doesn't contains specified point
       return false;
     }
 
-    if (isHorizontalScrolling(component, e)) {
-      boolean done = doHorizontalScrolling(component, (MouseWheelEvent)e);
+    if (isHorizontalScrolling(c, e)) {
+      boolean done = doHorizontalScrolling(c, (MouseWheelEvent)e);
       if (done) return true;
     }
 
@@ -186,12 +199,12 @@ public final class IdeMouseEventDispatcher {
     }
 
     final MouseShortcut shortcut = new MouseShortcut(e.getButton(), e.getModifiersEx(), e.getClickCount());
-    fillActionsList(component, shortcut, IdeKeyEventDispatcher.isModalContext(component));
+    fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (actionManager != null) {
       AnAction[] actions = myActions.toArray(new AnAction[myActions.size()]);
       for (AnAction action : actions) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(component);
+        DataContext dataContext = DataManager.getInstance().getDataContext(c);
         Presentation presentation = myPresentationFactory.getPresentation(action);
         AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation,
                                                       ActionManager.getInstance(),
@@ -200,9 +213,9 @@ public final class IdeMouseEventDispatcher {
 
         if (presentation.isEnabled()) {
           actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
-          final Component c = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+          final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
-          if (c != null && !c.isShowing()) continue;
+          if (context != null && !context.isShowing()) continue;
 
           action.actionPerformed(actionEvent);
           e.consume();

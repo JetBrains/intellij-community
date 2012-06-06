@@ -395,7 +395,7 @@ public class CompleteReferenceExpression {
     }
 
     @Override
-    public boolean execute(PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, ResolveState state) {
       if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) return true;
 
       PsiNamedElement namedElement = (PsiNamedElement)element;

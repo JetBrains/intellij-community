@@ -36,7 +36,7 @@ public class PropertyResolverProcessor extends ResolverProcessor {
   }
 
   @Override
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() != null) {
       return true;
     }

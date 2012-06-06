@@ -358,7 +358,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void renameElement(PsiElement element, String newName);
 
-  void allowTreeAccessForFile(VirtualFile file);
+  void allowTreeAccessForFile(@NotNull VirtualFile file);
 
   void allowTreeAccessForAllFiles();
 

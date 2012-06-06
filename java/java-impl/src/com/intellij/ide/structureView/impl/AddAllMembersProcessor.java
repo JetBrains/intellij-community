@@ -21,6 +21,7 @@ import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
     myPsiClass = psiClass;
   }
 
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     PsiMember member = (PsiMember)element;
     if (!isInteresting(element)) return true;
     if (myPsiClass.isInterface() && isObjectMember(element)) return true;

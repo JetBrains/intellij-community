@@ -67,4 +67,9 @@ public class CompletionExtender extends ListExpandableItemsHandler {
   protected boolean isPaintBorder() {
     return false;
   }
+
+  @Override
+  protected boolean isPopup() {
+    return false;
+  }
 }

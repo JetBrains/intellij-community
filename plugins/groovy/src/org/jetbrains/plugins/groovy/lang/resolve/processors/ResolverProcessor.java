@@ -68,7 +68,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     myTypeArguments = typeArguments;
   }
 
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (element instanceof PsiLocalVariableImpl) { //todo a better hack
       return true; // the debugger creates a Java code block context and our expressions to evaluate resolve there
     }
@@ -159,7 +159,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   @SuppressWarnings({"unchecked"})
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     if ((NameHint.KEY == hintKey && myName != null) || ClassHint.KEY == hintKey || ElementClassHint.KEY == hintKey) {
       return (T) this;
     }

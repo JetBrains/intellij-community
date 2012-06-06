@@ -36,6 +36,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -190,6 +191,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
         };
         if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
           initInspectionProfilesRunnable.run();
+          UIUtil.dispatchAllInvocationEvents(); //do not restart daemon in the middle of the test
         } else {
           app.executeOnPooledThread(initInspectionProfilesRunnable);
         }
