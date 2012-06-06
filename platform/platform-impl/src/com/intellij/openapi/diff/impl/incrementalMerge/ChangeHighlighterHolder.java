@@ -82,11 +82,7 @@ class ChangeHighlighterHolder {
   }
 
   @Nullable
-  public RangeHighlighter addRangeHighlighter(int start,
-                                              int end,
-                                              int layer,
-                                              TextDiffType type,
-                                              HighlighterTargetArea targetArea,
+  public RangeHighlighter addRangeHighlighter(int start, int end, int layer, TextDiffType type, HighlighterTargetArea targetArea,
                                               boolean applied) {
     if (getMarkupModel().getDocument().getTextLength() == 0) return null;
     TextAttributes attributes = type.getTextAttributes(myEditor);

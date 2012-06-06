@@ -77,7 +77,7 @@ public class ChangeList {
   public Project getProject() { return myProject; }
 
   public List<Change> getChanges() {
-    return Collections.unmodifiableList(myChanges);
+    return new ArrayList<Change>(myChanges);
   }
 
   public static ChangeList build(Document base, Document version, Project project) throws FilesTooBigForDiffException {
