@@ -310,6 +310,15 @@ public class FileStructurePopup implements Disposable {
                       @Override
                       public void run() {
                         myTree.repaint();
+                        if (myFilteringStructure.getRootElement().getChildren().length == 0) {
+                          for (JCheckBox box : myCheckBoxes.values()) {
+                            if (!box.isSelected()) {
+                              box.doClick();
+                              filter = "";
+                              break;
+                            }
+                          }
+                        }
                         //if (mySpeedSearch.isPopupActive()) {
                         //  mySpeedSearch.refreshSelection();
                         //}
