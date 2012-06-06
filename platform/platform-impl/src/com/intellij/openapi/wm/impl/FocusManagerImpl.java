@@ -902,6 +902,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     return ref != null ? ref.get() : null;
   }
 
+  public void setLastFocusedAtDeactivation(IdeFrame frame, Component c) {
+    myLastFocusedAtDeactivation.put(frame, new WeakReference<Component>(c));
+  }
+
   @Override
   public void toFront(JComponent c) {
     assertDispatchThread();
