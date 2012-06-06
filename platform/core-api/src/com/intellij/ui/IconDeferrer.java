@@ -21,6 +21,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -29,5 +30,5 @@ public abstract class IconDeferrer {
     return ServiceManager.getService(IconDeferrer.class);
   }
 
-  public abstract <T> Icon defer(Icon base, T param, Function<T, Icon> f);
+  public abstract <T> Icon defer(Icon base, T param, @NotNull Function<T, Icon> f);
 }
