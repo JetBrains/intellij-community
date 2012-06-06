@@ -180,12 +180,17 @@ public class PersistentHashMapValueStorage {
           }
         }
 
+        if (prevChunkAddress >= chunk) throw new PersistentEnumeratorBase.CorruptedException(myFile);
+
         chunk = prevChunkAddress;
         chunkCount++;
         if (result.length > mySize) {
           throw new PersistentEnumeratorBase.CorruptedException(myFile);
         }
       }
+    } catch (OutOfMemoryError error) {
+      result = null;
+      throw new PersistentEnumeratorBase.CorruptedException(myFile);
     }
     finally {
       if (readerHandle != null) {
