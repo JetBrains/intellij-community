@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,6 +46,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.settings.GitPushSettings;
 import git4idea.update.GitUpdateProcess;
+import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -546,12 +548,31 @@ public final class GitPusher {
   
   private boolean update(@NotNull Collection<GitRepository> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
     GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ? GitUpdateProcess.UpdateMethod.MERGE : GitUpdateProcess.UpdateMethod.REBASE;
-    boolean updateResult = new GitUpdateProcess(myProject, myProgressIndicator, new HashSet<GitRepository>(rootsToUpdate),
+    GitUpdateResult updateResult = new GitUpdateProcess(myProject, myProgressIndicator, new HashSet<GitRepository>(rootsToUpdate),
                                                 UpdatedFiles.create()).update(um);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);
     }
-    return updateResult;
+    if (updateResult == GitUpdateResult.SUCCESS) {
+      return true;
+    }
+    else if (updateResult == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS || updateResult == GitUpdateResult.INCOMPLETE) {
+      String title = "Push cancelled";
+      String description;
+      if (updateResult == GitUpdateResult.INCOMPLETE) {
+        description = "Push has been cancelled, because not all conflicts were resolved during update.<br/>" +
+                      "Resolve the conflicts and invoke push again.";
+      }
+      else {
+        description = "Push has been cancelled, because there were conflicts during update.<br/>" +
+                      "Check that conflicts were resolved correctly, and invoke push again.";
+      }
+      new Notification(GitVcs.MINOR_NOTIFICATION.getDisplayId(), title, description, NotificationType.WARNING).notify(myProject);
+      return false;
+    }
+    else {
+      return false;
+    }
   }
 
 }
