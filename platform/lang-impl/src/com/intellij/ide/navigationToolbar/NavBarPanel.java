@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -122,8 +123,11 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
     };
 
+    final ActionCallback typeAheadDone = new ActionCallback();
+    IdeFocusManager.getInstance(project).typeAheadUntil(typeAheadDone);
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
+    myUpdateQueue.queueTypeAheadDone(typeAheadDone);
     Disposer.register(project, this);
   }
 
