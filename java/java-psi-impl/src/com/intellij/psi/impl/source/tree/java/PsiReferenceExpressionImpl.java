@@ -51,10 +51,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,12 +191,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     private static JavaResolveResult[] _resolve(boolean incompleteCode, PsiReferenceExpressionImpl expression) {
       CompositeElement treeParent = expression.getTreeParent();
       IElementType parentType = treeParent == null ? null : treeParent.getElementType();
-
+      expression.resolveAllQualifiers();
       final JavaResolveResult[] result = expression.resolve(parentType);
 
       if (incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION && result.length == 0) {
         return expression.resolve(JavaElementType.REFERENCE_EXPRESSION);
       }
+
       return result;
     }
 
@@ -219,6 +217,38 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       }
       return result;
     }
+  }
+
+  private void resolveAllQualifiers() {
+    // to avoid SOE
+    PsiElement qualifier = getQualifier();
+    if (qualifier == null) return;
+    final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
+    //resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode)
+    qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        if (!(expression instanceof PsiReferenceExpressionImpl) || resolveCache.isCached(expression, true, false)) {
+          return;
+        }
+        visitElement(expression);
+      }
+
+      @Override
+      protected void elementFinished(PsiElement element) {
+        if (!(element instanceof PsiReferenceExpressionImpl)) return;
+        PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
+        //IElementType type = expression.getTreeParent().getElementType();
+        //expression.resolve();
+        ResolveResult[] results = resolveCache.resolveWithCaching(expression, OurGenericsResolver.INSTANCE, false, false);
+        //System.out.println("resolveWithCaching "+element);
+        //if (!resolveCache.isCached(expression, element.isPhysical(), false)) {
+        //  assert resolveCache.isCached(expression, element.isPhysical(), false);
+        //}
+        assert results != null;
+      }
+    });
+    int i = 0;
   }
 
   @NotNull
@@ -414,7 +444,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       private final Set<String> myVarNames = new THashSet<String>();
 
       @Override
-      public boolean execute(final PsiElement element, final ResolveState state) {
+      public boolean execute(@NotNull final PsiElement element, final ResolveState state) {
         if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
           myVarNames.add(((PsiVariable) element).getName());
         }
