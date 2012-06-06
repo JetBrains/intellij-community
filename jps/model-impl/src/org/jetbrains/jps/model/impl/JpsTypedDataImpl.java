@@ -21,7 +21,8 @@ public class JpsTypedDataImpl<T extends JpsElementType<?>> extends JpsElementBas
                           JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
     super(original, eventDispatcher, parent);
     myType = original.getType();
-    myProperties = createCopy(original.getType(), original.myProperties);
+    final JpsElementType<?> type = original.getType();
+    myProperties = createCopy(type, original.myProperties);
   }
 
   @Nullable
