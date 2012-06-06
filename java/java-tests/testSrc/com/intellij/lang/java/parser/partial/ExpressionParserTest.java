@@ -135,6 +135,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testLambdaExpression10() { doParserTest("(I)(p -> null)"); }
   public void testLambdaExpression11() { doParserTest("() -> { }"); }
 
+  public void testAmbiguousLambdaExpression() { doParserTest("f( (x) < y , z > (w) -> v )"); }
+
   private void doParserTest(@NonNls final String text) {
     doParserTest(text, new MyTestParser());
   }
