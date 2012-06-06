@@ -63,22 +63,24 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       if (child instanceof ASTNodeBuilder.ASTUnparsedNodeMarker) {
         ASTNodeBuilder.ASTUnparsedNodeMarker nodeMarker = (ASTNodeBuilder.ASTUnparsedNodeMarker)child;
         final ASTNodeBuilder nodeBuilder = nodeMarker.getBuilder();
-        final int endLexemIndex = nodeMarker.getEndLexemIndex();
+        final int endLexemeIndex = nodeMarker.getEndLexemeIndex();
         boolean seenNew = false;
 
-        for(int i = nodeMarker.getStartLexemIndex(); i < endLexemIndex; ++i) {
+        for (int i = nodeMarker.getStartLexemeIndex(); i < endLexemeIndex; ++i) {
           final IElementType type = nodeBuilder.getElementType(i);
           if (type == JavaTokenType.NEW_KEYWORD) {
             seenNew = true;
-          } else if (seenNew && type == JavaTokenType.LBRACE) {
+          }
+          else if (seenNew && type == JavaTokenType.LBRACE) {
             return false;
-          } else if (seenNew && type == JavaTokenType.SEMICOLON) {
+          }
+          else if (seenNew && type == JavaTokenType.SEMICOLON) {
             seenNew = false;
-          } else if (type == JavaTokenType.AT || // local vars can be annotated and we have them in stubs!
-                     type == JavaTokenType.CLASS_KEYWORD || // local classes
-                     type == JavaTokenType.INTERFACE_KEYWORD ||
-                     type == JavaTokenType.ENUM_KEYWORD
-                    ) {
+          }
+          else if (type == JavaTokenType.AT || // local vars can be annotated and we have them in stubs!
+                   type == JavaTokenType.CLASS_KEYWORD || // local classes
+                   type == JavaTokenType.INTERFACE_KEYWORD ||
+                   type == JavaTokenType.ENUM_KEYWORD) {
             return false;
           }
         }

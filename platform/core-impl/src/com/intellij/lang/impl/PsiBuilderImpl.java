@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -34,6 +31,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
@@ -267,8 +265,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   }
 
   @Override
-  public IElementType getElementType(int lexemIndex) {
-    return lexemIndex < myLexemeCount && lexemIndex >= 0 ? myLexTypes[lexemIndex] : null;
+  public IElementType getElementType(int lexemeIndex) {
+    return lexemeIndex < myLexemeCount && lexemeIndex >= 0 ? myLexTypes[lexemeIndex] : null;
   }
 
   public abstract static class ProductionMarker extends Node {
@@ -555,12 +553,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     }
 
     @Override
-    public int getStartLexemIndex() {
+    public int getStartLexemeIndex() {
       return myStartIndex;
     }
 
     @Override
-    public int getEndLexemIndex() {
+    public int getEndLexemeIndex() {
       return myEndIndex;
     }
 
@@ -911,7 +909,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
     ((StartMarker)marker).myDoneMarker.myCollapse = true;
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls", "ThrowableResultOfMethodCallIgnored"})
   private void doValidityChecks(final Marker marker, @Nullable final Marker before) {
     final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
     if (doneMarker != null) {
@@ -969,8 +967,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       return buildTree();
     }
     finally {
-      for (int i = 0, myProductionSize = myProduction.size(); i < myProductionSize; i++) {
-        ProductionMarker marker = myProduction.get(i);
+      for (ProductionMarker marker : myProduction) {
         if (marker instanceof StartMarker) {
           START_MARKERS.recycle((StartMarker)marker);
         }
@@ -1009,6 +1006,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
 
   private ASTNode createRootAST(final StartMarker rootMarker) {
     final IElementType type = rootMarker.getTokenType();
+    @SuppressWarnings("NullableProblems")
     final ASTNode rootNode = type instanceof ILazyParseableElementType ?
                              ASTFactory.lazy((ILazyParseableElementType)type, null) : createComposite(rootMarker);
     if (myCharTable == null) {
@@ -1162,7 +1160,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   }
 
   private final class RelativeTokenTypesView extends AbstractList<IElementType> {
-    private int start, size;
+    private int start;
+    private int size;
 
     private void configure(int _start, int _end) {
       size = _end - _start;
@@ -1369,12 +1368,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
                n2 instanceof Token && ((Token)n2).myBuilder.myWhitespaces.contains(n2.getTokenType());
       }
 
-      return derefToken(n1.getElementType()) == derefToken(n2.getTokenType());
+      return dereferenceToken(n1.getElementType()) == dereferenceToken(n2.getTokenType());
     }
 
-    public static IElementType derefToken(IElementType probablyWrapper) {
+    public static IElementType dereferenceToken(IElementType probablyWrapper) {
       if (probablyWrapper instanceof TokenWrapper) {
-        return derefToken(((TokenWrapper)probablyWrapper).getDelegate());
+        return dereferenceToken(((TokenWrapper)probablyWrapper).getDelegate());
       }
       return probablyWrapper;
     }
@@ -1538,9 +1537,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       return curToken;
     }
 
-    private void insertLeaf(IElementType type, PsiBuilderImpl builder, int startLexemIndex, int endLexemIndex) {
-      final int start = builder.myLexStarts[startLexemIndex];
-      final int end = builder.myLexStarts[endLexemIndex];
+    private void insertLeaf(IElementType type, PsiBuilderImpl builder, int startLexemeIndex, int endLexemeIndex) {
+      final int start = builder.myLexStarts[startLexemeIndex];
+      final int end = builder.myLexStarts[endLexemeIndex];
       if (start > end || ((start == end) && !(type instanceof ILeafElementType))) return;
 
       final Token lexeme;
@@ -1548,8 +1547,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
         lexeme = myLazyPool.alloc();
         LazyParseableToken lazyParseableToken = (LazyParseableToken)lexeme;
         lazyParseableToken.myParent = this;
-        lazyParseableToken.myStartIndex = startLexemIndex;
-        lazyParseableToken.myEndIndex = endLexemIndex;
+        lazyParseableToken.myStartIndex = startLexemeIndex;
+        lazyParseableToken.myEndIndex = endLexemeIndex;
       }
       else {
         lexeme = myPool.alloc();
