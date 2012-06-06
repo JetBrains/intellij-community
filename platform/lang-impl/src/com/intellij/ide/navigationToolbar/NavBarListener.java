@@ -21,6 +21,9 @@ import com.intellij.ide.actions.CutAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -48,7 +51,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class NavBarListener extends WolfTheProblemSolver.ProblemListener
-  implements ActionListener, FocusListener, FileStatusListener, AnActionListener,
+  implements ActionListener, FocusListener, FileStatusListener, AnActionListener, FileEditorManagerListener,
              PsiTreeChangeListener, ModuleRootListener, NavBarModelListener, PropertyChangeListener, KeyListener {
   private static final String LISTENER = "NavBarListener";
   private static final String BUS = "NavBarMessageBus";
@@ -70,6 +73,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
     connection.subscribe(NavBarModelListener.NAV_BAR, listener);
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
     panel.putClientProperty(BUS, connection);
     panel.addKeyListener(listener);
   }
@@ -290,6 +294,18 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     }
   }
 
+  @Override
+  public void fileOpened(final FileEditorManager manager, final VirtualFile file) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (myPanel.hasFocus()) {
+          manager.openFile(file, true);
+        }
+      }
+    });
+  }
+
   //---- Ignored
   @Override
   public void keyTyped(KeyEvent e) {}
@@ -326,4 +342,10 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   @Override
   public void childRemoved(@NotNull PsiTreeChangeEvent event) {}
+
+  @Override
+  public void fileClosed(FileEditorManager source, VirtualFile file) {}
+
+  @Override
+  public void selectionChanged(FileEditorManagerEvent event) {}
 }
