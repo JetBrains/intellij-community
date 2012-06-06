@@ -29,7 +29,7 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
 
   void removeSourceRoot(@NotNull JpsModuleSourceRootType rootType, @NotNull String url);
 
-  DependenciesList getDependenciesList();
+  JpsDependenciesList getDependenciesList();
 
   @NotNull
   JpsElementContainer getContainer();
@@ -38,4 +38,7 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   JpsModuleReference createReference(JpsParentElement parent);
 
   void delete();
+
+  @NotNull
+  JpsSdkReferencesTable getSdkReferencesTable();
 }

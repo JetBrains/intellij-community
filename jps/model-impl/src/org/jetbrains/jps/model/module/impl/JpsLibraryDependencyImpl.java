@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency;
 public class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
   public static final JpsElementKind<JpsLibraryReference> LIBRARY_REFERENCE_KIND = new JpsElementKind<JpsLibraryReference>();
 
-  public JpsLibraryDependencyImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsLibrary library, JpsParentElement parent) {
+  public JpsLibraryDependencyImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsLibrary library, JpsDependenciesListImpl parent) {
     super(model, eventDispatcher, parent);
     myContainer.setChild(LIBRARY_REFERENCE_KIND, library.createReference(parent));
   }

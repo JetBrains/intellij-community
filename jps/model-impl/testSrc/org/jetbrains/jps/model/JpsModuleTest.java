@@ -1,10 +1,7 @@
 package org.jetbrains.jps.model;
 
 import org.jetbrains.jps.model.impl.JpsProjectImpl;
-import org.jetbrains.jps.model.java.JpsJavaLibraryType;
-import org.jetbrains.jps.model.java.JpsJavaModuleType;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
@@ -64,6 +61,24 @@ public class JpsModuleTest extends JpsModelTestCase {
     assertSame(dep, assertInstanceOf(dependencies.get(1), JpsModuleDependency.class).getModuleReference().resolve());
   }
 
+  public void testChangeElementInModifiableModel() {
+    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
+    final JpsModule dep = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "dep");
+    final JpsLibrary library = myModel.getProject().addLibrary(JpsJavaLibraryType.INSTANCE, "l");
+    module.getDependenciesList().addLibraryDependency(library);
+    myDispatcher.clear();
+
+    final JpsModel modifiableModel = myModel.createModifiableModel(new TestJpsEventDispatcher());
+    final JpsModule m = modifiableModel.getProject().getModules().get(0);
+    assertEquals("m", m.getName());
+    m.getDependenciesList().getDependencies().get(0).remove();
+    m.getDependenciesList().addModuleDependency(dep);
+    modifiableModel.commit();
+    assertSame(library, assertOneElement(myDispatcher.retrieveRemoved(JpsLibraryDependency.class)).getLibraryReference().resolve());
+    assertSame(dep, assertOneElement(myDispatcher.retrieveAdded(JpsModuleDependency.class)).getModuleReference().resolve());
+    assertSame(dep, assertInstanceOf(assertOneElement(module.getDependenciesList().getDependencies()), JpsModuleDependency.class).getModuleReference().resolve());
+  }
+
   public void testCreateReferenceByModule() {
     final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
     final JpsModuleReference reference = module.createReference(myModel.getProject());
@@ -79,5 +94,15 @@ public class JpsModuleTest extends JpsModelTestCase {
 
     final JpsModule module = project.addModule(JpsJavaModuleType.INSTANCE, "m");
     assertSame(module, reference.resolve());
+  }
+
+  public void testSdkDependency() {
+    JpsLibrary sdk = myModel.getGlobal().addLibrary(JpsJavaSdkType.INSTANCE, "sdk");
+    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
+    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk);
+    module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
+
+    final JpsSdkDependency dependency = assertInstanceOf(assertOneElement(module.getDependenciesList().getDependencies()), JpsSdkDependency.class);
+    assertSame(sdk, dependency.resolveSdk());
   }
 }

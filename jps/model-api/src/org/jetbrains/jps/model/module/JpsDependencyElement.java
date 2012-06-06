@@ -6,4 +6,5 @@ import org.jetbrains.jps.model.JpsElement;
  * @author nik
  */
 public interface JpsDependencyElement extends JpsElement {
+  void remove();
 }

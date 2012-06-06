@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleDependencyImpl> implements JpsModuleDependency {
   private static final JpsElementKind<JpsModuleReference> MODULE_REFERENCE_KIND = new JpsElementKind<JpsModuleReference>();
 
-  public JpsModuleDependencyImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsModule module, JpsParentElement parent) {
+  public JpsModuleDependencyImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsModule module, JpsDependenciesListImpl parent) {
     super(model, eventDispatcher, parent);
     myContainer.setChild(MODULE_REFERENCE_KIND, module.createReference(this));
   }

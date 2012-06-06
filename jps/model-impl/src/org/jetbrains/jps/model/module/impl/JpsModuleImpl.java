@@ -14,15 +14,16 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
   private static final JpsTypedDataKind<JpsModuleType> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleType>();
   private static final JpsElementKind<JpsUrlListImpl> CONTENT_ROOTS_KIND = new JpsElementKind<JpsUrlListImpl>();
   private static final JpsElementKind<JpsUrlListImpl> EXCLUDED_ROOTS_KIND = new JpsElementKind<JpsUrlListImpl>();
-  public static final JpsElementKind<DependenciesListImpl> DEPENDENCIES_LIST_KIND = new JpsElementKind<DependenciesListImpl>();
+  public static final JpsElementKind<JpsDependenciesListImpl> DEPENDENCIES_LIST_KIND = new JpsElementKind<JpsDependenciesListImpl>();
 
   public JpsModuleImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsModuleType type, @NotNull String name, JpsElementCollectionImpl<JpsModuleImpl> parent) {
     super(model, eventDispatcher, name, parent);
     myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleType>(type, eventDispatcher, this));
-    myContainer.setChild(CONTENT_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, parent));
-    myContainer.setChild(EXCLUDED_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, parent));
-    myContainer.setChild(DEPENDENCIES_LIST_KIND, new DependenciesListImpl(model, eventDispatcher, this));
+    myContainer.setChild(CONTENT_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, this));
+    myContainer.setChild(EXCLUDED_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, this));
+    myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl(model, eventDispatcher, this));
     myContainer.setChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
+    myContainer.setChild(JpsSdkReferencesTableImpl.KIND, new JpsSdkReferencesTableImpl(model, eventDispatcher, this));
   }
 
   public JpsModuleImpl(JpsModuleImpl original, JpsEventDispatcher eventDispatcher, JpsModel model, JpsParentElement parent) {
@@ -81,9 +82,16 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
     }
   }
 
+  @NotNull
   @Override
-  public DependenciesList getDependenciesList() {
+  public JpsDependenciesList getDependenciesList() {
     return myContainer.getChild(DEPENDENCIES_LIST_KIND);
+  }
+
+  @Override
+  @NotNull
+  public JpsSdkReferencesTable getSdkReferencesTable() {
+    return myContainer.getChild(JpsSdkReferencesTableImpl.KIND);
   }
 
   @Override
