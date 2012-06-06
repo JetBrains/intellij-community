@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -287,11 +288,7 @@ public class DeleteHandler {
   public static boolean shouldEnableDeleteAction(PsiElement[] elements) {
     if (elements == null || elements.length == 0) return false;
     for (PsiElement element : elements) {
-      PsiFile file = element.getContainingFile();
-      if (file == null) {
-        return false;
-      }
-      VirtualFile virtualFile = file.getVirtualFile();
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
       if (virtualFile == null) {
         return false;
       }
