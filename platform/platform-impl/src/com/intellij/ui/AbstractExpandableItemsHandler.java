@@ -89,7 +89,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     myComponent.addFocusListener(
       new FocusAdapter() {
         public void focusLost(FocusEvent e) {
-          hideHint();
+          onFocusLost();
         }
 
         public void focusGained(FocusEvent e) {
@@ -134,6 +134,12 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         }
       }
     );
+
+
+  }
+
+  protected void onFocusLost() {
+    hideHint();
   }
 
   @Override
@@ -160,7 +166,7 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     handleMouseEvent(e, true);
   }
 
-  private void handleMouseEvent(MouseEvent e, boolean forceUpdate) {
+  protected void handleMouseEvent(MouseEvent e, boolean forceUpdate) {
     KeyType selected = getCellKeyForPoint(e.getPoint());
     if (forceUpdate || !Comparing.equal(myKey, selected)) {
       handleSelectionChange(selected, true);
@@ -307,19 +313,29 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     g.translate(-(visibleRect.x + visibleRect.width - cellBounds.x), 0);
     doPaintTooltipImage(renderer, cellBounds, height, g, key);
 
-    // paint border
-    g.translate((visibleRect.x + visibleRect.width - cellBounds.x), 0);
-    g.setColor(Color.GRAY);
-    int rightX = myImage.getWidth() - 1;
-    final int h = myImage.getHeight();
-    UIUtil.drawLine(g, 0, 0, rightX, 0);
-    UIUtil.drawLine(g, rightX, 0, rightX, h);
-    UIUtil.drawLine(g, 0, h - 1, rightX, h - 1);
+
+    if (isPaintBorder()) {
+      g.translate((visibleRect.x + visibleRect.width - cellBounds.x), 0);
+      g.setColor(getBorderColor());
+      int rightX = myImage.getWidth() - 1;
+      final int h = myImage.getHeight();
+      UIUtil.drawLine(g, 0, 0, rightX, 0);
+      UIUtil.drawLine(g, rightX, 0, rightX, h);
+      UIUtil.drawLine(g, 0, h - 1, rightX, h - 1);
+    }
 
     g.dispose();
     myRendererPane.remove(renderer);
 
     return new Point(visibleRect.x + visibleRect.width, cellBounds.y);
+  }
+
+  protected boolean isPaintBorder() {
+    return true;
+  }
+
+  protected Color getBorderColor() {
+    return Color.GRAY;
   }
 
   protected BufferedImage createImage(final int height, final int width) {
