@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -335,10 +336,11 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     if (typeDefinition instanceof GroovyScriptClass) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
       final String name = typeDefinition.getName();
-      result.add(factory.createConstructorFromText(name, new String[]{"groovy.lang.Binding"}, new String[]{"binding"}, "{super(binding);}",
-                                                   typeDefinition));
-      result.add(
-        factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{super();}", typeDefinition));
+      GrTypeDefinition tempClass = factory.createTypeDefinition("class " + name + " extends groovy.lang.Script {\n" +
+                                                                "  def " + name + "(groovy.lang.Binding binding){ super(binding);}\n" +
+                                                                "  def " + name + "(){super();}\n" +
+                                                                "}");
+      ContainerUtil.addAll(result, tempClass.getCodeConstructors());
     }
     return result;
   }

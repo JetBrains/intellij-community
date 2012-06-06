@@ -46,6 +46,8 @@ import java.util.List;
 
 public class BookmarksAction extends AnAction implements DumbAware, MasterDetailPopupBuilder.Delegate {
 
+  private JBPopup myPopup;
+
   @Override
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -59,6 +61,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
+    if (myPopup != null && myPopup.isVisible()) return;
 
     final DefaultListModel model = buildModel(project);
 
@@ -72,13 +75,13 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     actions.add(new MoveBookmarkUpAction(project, list));
     actions.add(new MoveBookmarkDownAction(project, list));
 
-    final JBPopup popup = new MasterDetailPopupBuilder(project).
+    myPopup = new MasterDetailPopupBuilder(project).
       setActionsGroup(actions).
       setList(list).
       setDelegate(this).createMasterDetailPopup();
 
-    editDescriptionAction.setPopup(popup);
-    popup.showCenteredInCurrentWindow(project);
+    editDescriptionAction.setPopup(myPopup);
+    myPopup.showCenteredInCurrentWindow(project);
   }
 
   @Override

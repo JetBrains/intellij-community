@@ -132,7 +132,7 @@
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"
                     serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.CacheLoader"/>
 
-    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn"/>
+    <vcs name="svn" vcsClass="org.jetbrains.idea.svn.SvnVcs" displayName="Subversion" administrativeAreaName=".svn, _svn" crawlUpToCheckUnderVcs="true"/>
 
     <ComponentRoamingType component="SvnConfiguration" type="DISABLED"/>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>

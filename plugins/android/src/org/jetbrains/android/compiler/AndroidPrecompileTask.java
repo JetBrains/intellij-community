@@ -17,6 +17,8 @@ package org.jetbrains.android.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
@@ -32,20 +34,29 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactProperties;
+import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.android.compiler.artifact.AndroidApplicationArtifactProperties;
+import org.jetbrains.android.compiler.artifact.AndroidArtifactPropertiesProvider;
+import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
+import org.jetbrains.android.compiler.artifact.AndroidArtifactUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -55,10 +66,13 @@ public class AndroidPrecompileTask implements CompileTask {
 
   @Override
   public boolean execute(CompileContext context) {
+    if (!checkArtifacts(context)) {
+      return false;
+    }
     checkAndroidDependencies(context);
 
     final Project project = context.getProject();
-    
+
     ExcludedEntriesConfiguration configuration =
       ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
 
@@ -107,6 +121,114 @@ public class AndroidPrecompileTask implements CompileTask {
     return true;
   }
 
+  private static boolean checkArtifacts(@NotNull CompileContext context) {
+    final Project project = context.getProject();
+    if (!ProjectFacetManager.getInstance(project).hasFacets(AndroidFacet.ID)) {
+      return true;
+    }
+
+    final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope(), false);
+    if (artifacts == null) {
+      return true;
+    }
+    final Set<Artifact> debugArtifacts = new HashSet<Artifact>();
+    final Set<Artifact> releaseArtifacts = new HashSet<Artifact>();
+    final Map<AndroidFacet, List<Artifact>> facet2artifacts = new HashMap<AndroidFacet, List<Artifact>>();
+
+    for (final Artifact artifact : artifacts) {
+      final ArtifactProperties<?> properties = artifact.getProperties(AndroidArtifactPropertiesProvider.getInstance());
+      if (properties instanceof AndroidApplicationArtifactProperties) {
+        final AndroidArtifactSigningMode mode = ((AndroidApplicationArtifactProperties)properties).getSigningMode();
+        if (mode == AndroidArtifactSigningMode.DEBUG) {
+          debugArtifacts.add(artifact);
+        }
+        else {
+          releaseArtifacts.add(artifact);
+        }
+      }
+
+      final AndroidFacet facet = ApplicationManager.getApplication().runReadAction(new Computable<AndroidFacet>() {
+        @Nullable
+        @Override
+        public AndroidFacet compute() {
+          return AndroidArtifactUtil.getPackagedFacet(project, artifact);
+        }
+      });
+      if (facet != null) {
+        List<Artifact> list = facet2artifacts.get(facet);
+        if (list == null) {
+          list = new ArrayList<Artifact>();
+          facet2artifacts.put(facet, list);
+        }
+        list.add(artifact);
+      }
+    }
+    boolean success = true;
+
+    if (debugArtifacts.size() > 0 && releaseArtifacts.size() > 0) {
+      final String message = "Cannot build debug and release Android artifacts in the same session\n" +
+                             "Debug artifacts: " + toString(debugArtifacts) + "\n" +
+                             "Release artifacts: " + toString(releaseArtifacts);
+      context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      success = false;
+    }
+
+    if (releaseArtifacts.size() > 0 &&
+        CompileStepBeforeRun.getRunConfiguration(context) != null) {
+      final String message = "Cannot build release Android artifacts in the 'make before run' session\n" +
+                             "Release artifacts: " + toString(releaseArtifacts);
+      context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      success = false;
+    }
+
+    for (Map.Entry<AndroidFacet, List<Artifact>> entry : facet2artifacts.entrySet()) {
+      final List<Artifact> list = entry.getValue();
+      final String moduleName = entry.getKey().getModule().getName();
+
+      if (list.size() > 1) {
+        final Artifact firstArtifact = list.get(0);
+        final Object[] firstArtifactProGuardOptions = getProGuardOptions(firstArtifact);
+
+        for (int i = 1; i < list.size(); i++) {
+          final Artifact artifact = list.get(i);
+          if (!Arrays.equals(getProGuardOptions(artifact), firstArtifactProGuardOptions)) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Artifacts related to the same module '" +
+                                                              moduleName +
+                                                              "' have different ProGuard options: " +
+                                                              firstArtifact.getName() +
+                                                              ", " +
+                                                              artifact.getName(), null, -1, -1);
+            success = false;
+            break;
+          }
+        }
+      }
+    }
+
+    return success;
+  }
+
+  @NotNull
+  private static Object[] getProGuardOptions(@NotNull Artifact artifact) {
+    final ArtifactProperties<?> properties = artifact.getProperties(AndroidArtifactPropertiesProvider.getInstance());
+    if (properties instanceof AndroidApplicationArtifactProperties) {
+      final AndroidApplicationArtifactProperties p = (AndroidApplicationArtifactProperties)properties;
+      return new Object[] {p.isRunProGuard(), p.getProGuardCfgFileUrl(), p.isIncludeSystemProGuardCfgFile()};
+    }
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  private static String toString(Collection<Artifact> artifacts) {
+    final StringBuilder result = new StringBuilder();
+    for (Artifact artifact : artifacts) {
+      if (result.length() > 0) {
+        result.append(", ");
+      }
+      result.append(artifact.getName());
+    }
+    return result.toString();
+  }
+
   private static void checkAndroidDependencies(@NotNull CompileContext context) {
     for (Module module : context.getCompileScope().getAffectedModules()) {
       final AndroidFacet facet = AndroidFacet.getInstance(module);
@@ -142,7 +264,7 @@ public class AndroidPrecompileTask implements CompileTask {
       }
     }
   }
-  
+
   private static void clearResCache(@NotNull AndroidFacet facet, @NotNull CompileContext context) {
     final Module module = facet.getModule();
 

@@ -125,6 +125,10 @@ public abstract class MavenImporter {
                                Map<MavenProject, String> mavenProjectToModuleName,
                                List<MavenProjectsProcessorTask> postTasks);
 
+  public boolean processChangedModulesOnly() {
+    return true;
+  }
+
   public void collectSourceFolders(MavenProject mavenProject, List<String> result) {
   }
 

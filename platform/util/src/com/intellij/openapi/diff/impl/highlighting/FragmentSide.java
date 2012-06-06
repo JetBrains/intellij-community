@@ -17,72 +17,79 @@ package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.ex.DiffFragment;
+import org.jetbrains.annotations.NotNull;
 
-import java.security.InvalidParameterException;
+public enum FragmentSide {
 
-public abstract class FragmentSide {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.highlighting.FragmentSide");
+  SIDE1(0, 0) {
+    @Override
+    public String getText(DiffFragment fragment) {
+      return fragment.getText1();
+    }
+
+    @Override
+    protected DiffFragment createDiffFragment(String text, String otherText) {
+      return new DiffFragment(text, otherText);
+    }
+
+    @Override
+    public FragmentSide otherSide() {
+      return SIDE2;
+    }
+  },
+
+  SIDE2(1, 2) {
+    @Override
+    public String getText(DiffFragment fragment) {
+      return fragment.getText2();
+    }
+
+    @Override
+    protected DiffFragment createDiffFragment(String text, String otherText) {
+      return new DiffFragment(otherText, text);
+    }
+
+    @Override
+    public FragmentSide otherSide() {
+      return SIDE1;
+    }
+  };
+
+  private static final Logger LOG = Logger.getInstance(FragmentSide.class);
+
+  private final int myIndex;
+  private final int myMergeIndex;
+
+  FragmentSide(int index, int mergeIndex) {
+    myIndex = index;
+    myMergeIndex = mergeIndex;
+  }
+
+  public DiffFragment createFragment(String text, String otherText, boolean modified) {
+    DiffFragment fragment = createDiffFragment(text, otherText);
+    if (!fragment.isOneSide()) fragment.setModified(modified);
+    return fragment;
+  }
+
   public abstract String getText(DiffFragment fragment);
-  public abstract DiffFragment createFragment(String text, String otherText, boolean modified);
   public abstract FragmentSide otherSide();
-  public abstract int getIndex();
-  public abstract int getMergeIndex();
+  protected abstract DiffFragment createDiffFragment(String text, String otherText);
+
+  public int getIndex() {
+    return myIndex;
+  }
+
+  public int getMergeIndex() {
+    return myMergeIndex;
+  }
 
   public String getOtherText(DiffFragment fragment) {
     return otherSide().getText(fragment);
   }
 
-  public InvalidParameterException invalidException() {
-    return new InvalidParameterException(String.valueOf(this));
+  public IllegalArgumentException invalidException() {
+    return new IllegalArgumentException(String.valueOf(this));
   }
-
-  public static final FragmentSide SIDE1 = new FragmentSide() {
-    public String getText(DiffFragment fragment) {
-      return fragment.getText1();
-    }
-
-    public DiffFragment createFragment(String text, String otherText, boolean modified) {
-      DiffFragment fragment = new DiffFragment(text, otherText);
-      if (!fragment.isOneSide()) fragment.setModified(modified);
-      return fragment;
-    }
-
-    public FragmentSide otherSide() {
-      return SIDE2;
-    }
-
-    public int getIndex() {
-      return 0;
-    }
-
-    public int getMergeIndex() {
-      return 0;
-    }
-  };
-
-  public static final FragmentSide SIDE2 = new FragmentSide() {
-    public String getText(DiffFragment fragment) {
-      return fragment.getText2();
-    }
-
-    public DiffFragment createFragment(String text, String otherText, boolean modified) {
-      DiffFragment fragment = new DiffFragment(otherText, text);
-      if (!fragment.isOneSide()) fragment.setModified(modified);
-      return fragment;
-    }
-
-    public FragmentSide otherSide() {
-      return SIDE1;
-    }
-
-    public int getIndex() {
-      return 1;
-    }
-
-    public int getMergeIndex() {
-      return 2;
-    }
-  };
 
   public static FragmentSide chooseSide(DiffFragment oneSide) {
     LOG.assertTrue(oneSide.isOneSide());
@@ -90,11 +97,14 @@ public abstract class FragmentSide {
     return oneSide.getText1() == null ? SIDE2 : SIDE1;
   }
 
+  @NotNull
   public static FragmentSide fromIndex(int index) {
-    switch (index) {
-      case 0: return SIDE1;
-      case 1: return SIDE2;
-      default: throw new InvalidParameterException(String.valueOf(index));
+    for (FragmentSide side : FragmentSide.values()) {
+      if (side.getIndex() == index) {
+        return side;
+      }
     }
+    throw new IllegalArgumentException(String.valueOf(index));
   }
+
 }

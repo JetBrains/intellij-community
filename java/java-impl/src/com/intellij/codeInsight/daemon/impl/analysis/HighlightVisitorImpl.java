@@ -234,7 +234,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkPolyadicOperatorApplicable(expression));
   }
 
-  @Override public void visitBreakStatement(PsiBreakStatement statement) {
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    myHolder.add(HighlightUtil.checkLambdaFeature(expression));
+  }
+
+  @Override
+  public void visitBreakStatement(PsiBreakStatement statement) {
     super.visitBreakStatement(statement);
     if (!myHolder.hasErrorResults()) {
       myHolder.add(HighlightUtil.checkLabelDefined(statement.getLabelIdentifier(), statement.findExitedStatement()));
@@ -892,7 +898,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
   }
 
-  @Override public void visitReferenceList(PsiReferenceList list) {
+  @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    myHolder.add(HighlightUtil.checkMethodReferencesFeature(expression));
+  }
+
+  @Override
+  public void visitReferenceList(PsiReferenceList list) {
     if (list.getFirstChild() == null) return;
     PsiElement parent = list.getParent();
     if (!(parent instanceof PsiTypeParameter)) {

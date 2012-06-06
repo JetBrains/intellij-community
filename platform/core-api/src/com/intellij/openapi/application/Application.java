@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -324,13 +324,11 @@ public interface Application extends ComponentManager {
   boolean isActive();
 
   /**
-   * @deprecated use {@link #runReadAction(Runnable)} instead
    * Returns lock used for read operations, should be closed in finally block
    */
   AccessToken acquireReadActionLock();
 
   /**
-   * @deprecated use {@link #runWriteAction(Runnable)} instead
    * Returns lock used for write operations, should be closed in finally block
    */
   AccessToken acquireWriteActionLock(@Nullable Class marker);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.*;
+import com.intellij.util.CharTable;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +63,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
+public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
   private volatile String myCachedQName = null;
@@ -108,7 +111,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
     else {
       PsiManagerEx manager = getManager();
-      PsiReferenceExpression classRef = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceExpression(qualifierClass);
+      PsiReferenceExpression classRef = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceExpression(
+        qualifierClass);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, treeCharTab, manager);
       addInternal(dot, dot, SourceTreeToPsiMap.psiElementToTree(getParameterList()), Boolean.TRUE);
@@ -122,7 +126,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     final String qualifiedName  = qualifierClass.getQualifiedName();
     final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
     if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand()) {
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
+      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass,
+                                                                                                                            staticName));
     } else {
       for (PsiJavaCodeReferenceElement ref : refs) {
         final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
@@ -130,7 +135,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
           importStatement.delete();
         }
       }
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, "*"));
+      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass,
+                                                                                                                            "*"));
     }
   }
 
@@ -175,16 +181,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  public PsiReference getReference() {
-    return this;
-  }
-
-  @Override
-  public PsiElement resolve() {
-    return advancedResolve(false).getElement();
-  }
-
-  @Override
   public void clearCaches() {
     myCachedQName = null;
     myCachedTextSkipWhiteSpaceAndComments = null;
@@ -194,9 +190,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiJavaReference> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
+    @NotNull
     private static JavaResolveResult[] _resolve(boolean incompleteCode, PsiReferenceExpressionImpl expression) {
       CompositeElement treeParent = expression.getTreeParent();
-      IElementType parentType = treeParent != null ? treeParent.getElementType() : null;
+      IElementType parentType = treeParent == null ? null : treeParent.getElementType();
+
       final JavaResolveResult[] result = expression.resolve(parentType);
 
       if (incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION && result.length == 0) {
@@ -206,7 +204,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
 
     @Override
-    public JavaResolveResult[] resolve(PsiJavaReference ref, boolean incompleteCode) {
+    @NotNull
+    public JavaResolveResult[] resolve(@NotNull PsiJavaReference ref, boolean incompleteCode) {
       final JavaResolveResult[] result = _resolve(incompleteCode, (PsiReferenceExpressionImpl)ref);
       if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
         final PsiType[] parameters = ((PsiJavaCodeReferenceElement)ref).getTypeParameters();
@@ -222,10 +221,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
+  @NotNull
   private JavaResolveResult[] resolve(IElementType parentType) {
-    if (parentType == null) {
-      parentType = getTreeParent() != null ? getTreeParent().getElementType() : null;
-    }
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
       JavaResolveResult[] result = resolveToVariable();
       if (result.length > 0) {
@@ -247,6 +244,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return resolveToVariable();
   }
 
+  @NotNull
   private JavaResolveResult[] resolveToMethod() {
     final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)getParent();
     final MethodResolverProcessor processor = new MethodResolverProcessor(methodCall);
@@ -259,6 +257,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return processor.getResult();
   }
 
+  @NotNull
   private JavaResolveResult[] resolveToPackage() {
     final String packageName = getCachedTextSkipWhiteSpaceAndComments();
     final PsiManager manager = getManager();
@@ -284,6 +283,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return processor.getResult();
   }
 
+  @NotNull
   private JavaResolveResult[] resolveToVariable() {
     final VariableResolverProcessor processor = new VariableResolverProcessor(this);
     PsiScopesUtil.resolveAndWalk(processor, this, null);
@@ -316,19 +316,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return getCachedTextSkipWhiteSpaceAndComments();
   }
 
-  @Override
-  public String getQualifiedName() {
-    return getCanonicalText();
-  }
-
-  @Override
-  public String getReferenceName() {
-    PsiElement element = getReferenceNameElement();
-    if (element == null) return null;
-    return element.getText();
-  }
-
-  private final Function<PsiReferenceExpressionImpl, PsiType> ourTypeEvaluator = new TypeEvaluator();
+  private static final Function<PsiReferenceExpressionImpl, PsiType> TYPE_EVALUATOR = new TypeEvaluator();
 
   private static class TypeEvaluator implements NullableFunction<PsiReferenceExpressionImpl, PsiType> {
     @Override
@@ -384,7 +372,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   @Override
   public PsiType getType() {
-    return JavaResolveCache.getInstance(getProject()).getType(this, ourTypeEvaluator);
+    return JavaResolveCache.getInstance(getProject()).getType(this, TYPE_EVALUATOR);
   }
 
   @Override
@@ -409,20 +397,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     // optimization: methodCallExpression should resolve to a method
     if (parentIsMethodCall != resolvingToMethod) return false;
 
-    return element.getManager().areElementsEquivalent(element, resolve());
-  }
-
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    //this reference's variants are rather obtained with processVariants()
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
-  public boolean isSoft() {
-    return false;
+    return super.isReferenceTo(element);
   }
 
   @Override
@@ -435,7 +410,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
     filter.addFilter(ElementClassFilter.VARIABLE);
 
-    FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor) {
+    FilterScopeProcessor filterProcessor = new FilterScopeProcessor<CandidateInfo>(filter, processor) {
       private final Set<String> myVarNames = new THashSet<String>();
 
       @Override
@@ -454,7 +429,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
 
     };
-    PsiScopesUtil.resolveAndWalk(proc, this, null, true);
+    PsiScopesUtil.resolveAndWalk(filterProcessor, this, null, true);
   }
 
   private static boolean seemsScrambled(PsiClass element) {
@@ -470,21 +445,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
-    final JavaResolveResult[] results = multiResolve(incompleteCode);
-    if (results.length == 1) return results[0];
-    return JavaResolveResult.EMPTY;
-  }
-
-  @Override
   public PsiElement getReferenceNameElement() {
     return findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
-  }
-
-  @Override
-  public PsiReferenceParameterList getParameterList() {
-    return (PsiReferenceParameterList)findChildByRoleAsPsiElement(ChildRole.REFERENCE_PARAMETER_LIST);
   }
 
   @Override
@@ -529,7 +491,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       throw new IncorrectOperationException();
     }
     final String oldRefName = oldIdentifier.getText();
-    if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName)) return this;
+    if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName) || Comparing.strEqual(oldRefName, newElementName)) return this;
     PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
@@ -685,20 +647,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  public PsiElement getElement() {
-    return this;
-  }
-
-  @Override
-  @NotNull
-  public PsiType[] getTypeParameters() {
-    final PsiReferenceParameterList parameterList = getParameterList();
-    if (parameterList == null) return PsiType.EMPTY_ARRAY;
-    return parameterList.getTypeArguments();
-  }
-
-
-  @Override
   public String getClassNameText() {
     String cachedQName = myCachedQName;
     if (cachedQName == null) {
@@ -744,4 +692,3 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return whiteSpaceAndComments;
   }
 }
-

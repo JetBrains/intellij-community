@@ -42,8 +42,9 @@ import java.util.Set;
  */
 public abstract class AbstractQualifiedReference<T extends AbstractQualifiedReference<T>> extends ASTWrapperPsiElement implements PsiPolyVariantReference, PsiQualifiedReference {
   private static final ResolveCache.PolyVariantResolver<AbstractQualifiedReference> MY_RESOLVER = new ResolveCache.PolyVariantResolver<AbstractQualifiedReference>() {
+    @NotNull
     @Override
-    public ResolveResult[] resolve(final AbstractQualifiedReference expression, final boolean incompleteCode) {
+    public ResolveResult[] resolve(@NotNull final AbstractQualifiedReference expression, final boolean incompleteCode) {
       return expression.resolveInner();
     }
   };

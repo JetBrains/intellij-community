@@ -1,0 +1,4 @@
+<a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="test.xsd">
+  <b></b>
+  <<caret>
+</a>

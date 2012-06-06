@@ -37,6 +37,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -85,10 +86,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole, coyote
@@ -711,6 +709,49 @@ public class AndroidUtils {
           }
         }
       }
+    }
+    return result;
+  }
+
+  public static void checkNewPassword(JPasswordField passwordField, JPasswordField confirmedPasswordField) throws CommitStepException {
+    char[] password = passwordField.getPassword();
+    char[] confirmedPassword = confirmedPasswordField.getPassword();
+    try {
+      checkPassword(password);
+      if (password.length < 6) {
+        throw new CommitStepException(AndroidBundle.message("android.export.package.incorrect.password.length"));
+      }
+      if (!Arrays.equals(password, confirmedPassword)) {
+        throw new CommitStepException(AndroidBundle.message("android.export.package.passwords.not.match.error"));
+      }
+    }
+    finally {
+      Arrays.fill(password, '\0');
+      Arrays.fill(confirmedPassword, '\0');
+    }
+  }
+
+  public static void checkPassword(char[] password) throws CommitStepException {
+    if (password.length == 0) {
+        throw new CommitStepException(AndroidBundle.message("android.export.package.specify.password.error"));
+      }
+  }
+
+  public static void checkPassword(JPasswordField passwordField) throws CommitStepException {
+    char[] password = passwordField.getPassword();
+    try {
+      checkPassword(password);
+    }
+    finally {
+      Arrays.fill(password, '\0');
+    }
+  }
+
+  @NotNull
+  public static <T> List<T> toList(@NotNull Enumeration<T> enumeration) {
+    final List<T> result = new ArrayList<T>();
+    while (enumeration.hasMoreElements()) {
+      result.add(enumeration.nextElement());
     }
     return result;
   }

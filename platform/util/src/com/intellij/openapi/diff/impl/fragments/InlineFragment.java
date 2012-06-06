@@ -42,7 +42,7 @@ public class InlineFragment implements Fragment {
   public TextRange getRange(FragmentSide side) {
     if (side == FragmentSide.SIDE1) return myRange1;
     if (side == FragmentSide.SIDE2) return myRange2;
-    throw new InvalidParameterException(String.valueOf(side));
+    throw new IllegalArgumentException(String.valueOf(side));
   }
 
   public Fragment shift(TextRange range1, TextRange range2, int startingLine1, int startingLine2) {

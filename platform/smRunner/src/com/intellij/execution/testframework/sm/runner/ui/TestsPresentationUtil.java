@@ -226,6 +226,18 @@ public class TestsPresentationUtil {
     return presentationCandidate;
   }
 
+  @NotNull
+  public static String getPresentableNameTrimmedOnly(@NotNull SMTestProxy testProxy) {
+    String name = testProxy.getName();
+    if (name != null) {
+      name = name.trim();
+    }
+    if (name == null || name.isEmpty()) {
+      name = NO_NAME_TEST;
+    }
+    return name;
+  }
+
   @Nullable
   private static Icon getIcon(final SMTestProxy testProxy,
                               final TestConsoleProperties consoleProperties) {

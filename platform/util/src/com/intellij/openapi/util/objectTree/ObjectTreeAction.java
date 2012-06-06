@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.util.objectTree;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface ObjectTreeAction<T> {
 
-  void execute(T each);
+  void execute(@NotNull T each);
 
-  void beforeTreeExecution(T parent);
+  void beforeTreeExecution(@NotNull T parent);
 
 }

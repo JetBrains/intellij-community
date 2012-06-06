@@ -657,20 +657,8 @@ public class GenericsHighlightUtil {
       return false;
     }
 
-    if (rType instanceof PsiDisjunctionType || lType instanceof PsiDisjunctionType) {
-      return false;
-    }
+    if (!(lType instanceof PsiClassType) || !(rType instanceof PsiClassType)) return false;
 
-    if (lType instanceof PsiCapturedWildcardType || rType instanceof PsiCapturedWildcardType) {
-      return false;
-    }
-
-    if (lType instanceof PsiWildcardType || rType instanceof PsiWildcardType) return false;
-
-    boolean isValidType = lType instanceof PsiClassType && rType instanceof PsiClassType;
-    if (!isValidType) {
-      LOG.error("Invalid types: rType =" + rType + ", lType=" + lType);
-    }
     PsiClassType.ClassResolveResult lResolveResult = ((PsiClassType)lType).resolveGenerics();
     PsiClassType.ClassResolveResult rResolveResult = ((PsiClassType)rType).resolveGenerics();
     PsiClass lClass = lResolveResult.getElement();

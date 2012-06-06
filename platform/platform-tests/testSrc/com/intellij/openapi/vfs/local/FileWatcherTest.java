@@ -351,7 +351,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 */
 
-  public void testSubst() throws Exception {
+  public void _testSubst() throws Exception {
     if (!SystemInfo.isWindows) {
       System.out.println("Ignored: Windows required");
       return;
@@ -475,7 +475,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private void delete(@NotNull final File file) throws IOException {
     final VirtualFile vFile = myFileSystem.findFileByIoFile(file);
     if (vFile != null) {
-      @SuppressWarnings("deprecation") final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
       try {
         vFile.delete(this);
       }

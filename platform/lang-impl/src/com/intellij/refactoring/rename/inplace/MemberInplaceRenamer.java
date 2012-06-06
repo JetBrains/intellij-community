@@ -206,10 +206,6 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
-        if (myBeforeRevert != null) {
-          myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
-          myBeforeRevert.dispose();
-        }
       }
     }
   }
@@ -219,13 +215,30 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     final RenameProcessor
       renameProcessor = new RenameProcessor(myProject, element, newName,
                                             elementProcessor.isToSearchInComments(element),
-                                            elementProcessor.isToSearchForTextOccurrences(element));
+                                            elementProcessor.isToSearchForTextOccurrences(element)){
+      @Override
+      public void doRun() {
+        try {
+          super.doRun();
+        }
+        finally {
+          restoreCaretOffsetAfterRename();
+        }
+      }
+    };
     for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
       if (factory.getOptionName() != null && factory.isApplicable(element)) {
         renameProcessor.addRenamerFactory(factory);
       }
     }
     renameProcessor.run();
+  }
+
+  protected void restoreCaretOffsetAfterRename() {
+    if (myBeforeRevert != null) {
+      myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+      myBeforeRevert.dispose();
+    }
   }
 
   @Override

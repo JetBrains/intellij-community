@@ -16,16 +16,12 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
-import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 /**
  * @author max
@@ -48,7 +44,7 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
     MappedByteBuffer buffer = myBuffer;
     myBuffer = null;
-    if (!clean(buffer)) {
+    if (!clean(buffer, isDirty())) {
       LOG.error("Unmapping failed for: " + myFile);
     }
 
@@ -74,26 +70,14 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
     return buffer;
   }
 
-  private static boolean clean(final MappedByteBuffer buffer) {
+  private static boolean clean(final MappedByteBuffer buffer, boolean dirty) {
     if (buffer == null) return true;
 
-    if (!tryForce(buffer)) {
+    if (dirty && !tryForce(buffer)) {
       return false;
     }
 
-    return AccessController.doPrivileged(new PrivilegedAction<Object>() {
-      @Nullable
-      public Object run() {
-        try {
-          Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
-          if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
-          return null;
-        }
-        catch (Exception e) {
-          return buffer;
-        }
-      }
-    }) == null;
+    return DirectBufferWrapper.disposeDirectBuffer((DirectBuffer)buffer);
   }
 
   private static boolean tryForce(MappedByteBuffer buffer) {
@@ -117,8 +101,8 @@ public abstract class MappedBufferWrapper extends ByteBufferWrapper {
   @Override
   public void flush() {
     final MappedByteBuffer buffer = myBuffer;
-    if (buffer != null) {
-      tryForce(buffer);
+    if (buffer != null && isDirty()) {
+      if(tryForce(buffer)) myDirty = false;
     }
   }
 }

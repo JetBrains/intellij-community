@@ -226,8 +226,9 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   private static final class OurGenericsResolver implements ResolveCache.PolyVariantResolver<PsiImportStaticReferenceElementImpl> {
     private static final OurGenericsResolver INSTANCE = new OurGenericsResolver();
 
+    @NotNull
     @Override
-    public JavaResolveResult[] resolve(final PsiImportStaticReferenceElementImpl referenceElement, final boolean incompleteCode) {
+    public JavaResolveResult[] resolve(@NotNull final PsiImportStaticReferenceElementImpl referenceElement, final boolean incompleteCode) {
       final PsiElement qualifier = referenceElement.getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) return JavaResolveResult.EMPTY_ARRAY;
       final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();

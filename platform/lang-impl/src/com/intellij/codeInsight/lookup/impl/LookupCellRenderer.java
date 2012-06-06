@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author peter
@@ -68,15 +70,13 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final SimpleColoredComponent myNameComponent;
   private final SimpleColoredComponent myTailComponent;
   private final SimpleColoredComponent myTypeLabel;
-  private final JPanel myPanel;
+  private final LookupPanel myPanel;
+  private final Map<Integer, Boolean> mySelected = new HashMap<Integer, Boolean>();
 
   private static final String ELLIPSIS = "\u2026";
-  private final boolean myFullSize;
   private int myMaxWidth = -1;
 
-  public LookupCellRenderer(LookupImpl lookup, boolean fullSize) {
-    myFullSize = fullSize;
-
+  public LookupCellRenderer(LookupImpl lookup) {
     EditorColorsScheme scheme = lookup.getEditor().getColorsScheme();
     myNormalFont = scheme.getFont(EditorFontType.PLAIN);
     myBoldFont = scheme.getFont(EditorFontType.BOLD);
@@ -124,7 +124,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color background = isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
 
     int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
-    final LookupElementPresentation presentation = new RealLookupElementPresentation(myFullSize ? getMaxWidth() : allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
+    final LookupElementPresentation presentation = new RealLookupElementPresentation(isSelected ? getMaxWidth() : allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
     if (item.isValid()) {
       item.renderElement(presentation);
     } else {
@@ -139,13 +139,37 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
-      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, myFullSize ? getMaxWidth() : allowedWidth, isSelected);
+      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected);
     }
 
     myTailComponent.clear();
     myTailComponent.setBackground(background);
-    if (myFullSize || allowedWidth >= 0) {
-      setTailTextLabel(isSelected, presentation, foreground, myFullSize ? getMaxWidth() : allowedWidth);
+    if (isSelected || allowedWidth >= 0) {
+      setTailTextLabel(isSelected, presentation, foreground, isSelected ? getMaxWidth() : allowedWidth);
+    }
+
+    if (mySelected.containsKey(index)) {
+      if (!isSelected && mySelected.get(index)) {
+        myPanel.setUpdateExtender(true);
+      }
+    }
+    mySelected.put(index, isSelected);
+
+    final double w = myNameComponent.getPreferredSize().getWidth() +
+                     myTailComponent.getPreferredSize().getWidth() +
+                     myTypeLabel.getPreferredSize().getWidth();
+
+    myPanel.removeAll();
+    if (isSelected && w > list.getWidth()) {
+      myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.X_AXIS));
+      myPanel.add(myNameComponent);
+      myPanel.add(myTailComponent);
+      myPanel.add(myTypeLabel);
+    } else {
+      myPanel.setLayout(new BorderLayout());
+      myPanel.add(myNameComponent, BorderLayout.WEST);
+      myPanel.add(myTailComponent, BorderLayout.CENTER);
+      myPanel.add(myTypeLabel, BorderLayout.EAST);
     }
 
     return myPanel;
@@ -327,12 +351,6 @@ public class LookupCellRenderer implements ListCellRenderer {
     return RealLookupElementPresentation.calculateWidth(p, myNormalMetrics, myBoldMetrics) + AFTER_TAIL + AFTER_TYPE;
   }
 
-  public LookupCellRenderer createExtenderRenderer() {
-    LookupCellRenderer renderer = new LookupCellRenderer(myLookup, true);
-    renderer.myEmptyIcon = myEmptyIcon;
-    return renderer;
-  }
-
   public int getIconIndent() {
     return myNameComponent.getIconTextGap() + myEmptyIcon.getIconWidth();
   }
@@ -350,8 +368,13 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   private class LookupPanel extends JPanel {
+    boolean myUpdateExtender;
     public LookupPanel() {
       super(new BorderLayout());
+    }
+
+    public void setUpdateExtender(boolean updateExtender) {
+      myUpdateExtender = updateExtender;
     }
 
     public void paint(Graphics g){
@@ -359,6 +382,9 @@ public class LookupCellRenderer implements ListCellRenderer {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
       }
       super.paint(g);
+      //if (myUpdateExtender) {
+      //  myLookup.updateExtender();
+      //}
     }
   }
 }

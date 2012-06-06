@@ -24,6 +24,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -74,6 +75,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     }
   }
 
+  @NotNull
   public JavaResolveResult[] getResult() {
     if (myCachedResult == null) {
       final List<CandidateInfo> conflicts = getResults();

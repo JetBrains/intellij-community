@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,16 +32,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -48,7 +49,7 @@ import java.awt.event.KeyEvent;
 public class GroovyCreateClassDialog extends DialogWrapper {
   private JPanel myContentPane;
   private JLabel myInformationLabel;
-  private MySizeTextField myPackageTextField;
+  private EditorTextField myPackageTextField;
   private JButton myPackageChooseButton;
   private PsiDirectory myTargetDirectory;
   private final Project myProject;
@@ -86,26 +87,18 @@ public class GroovyCreateClassDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myPackageTextField = new MySizeTextField();
+    myPackageTextField = new EditorTextField();
     myPackageChooseButton = new FixedSizeButton(myPackageTextField);
-  }
-
-  public static class MySizeTextField extends JTextField {
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-      FontMetrics fontMetrics = getFontMetrics(getFont());
-      size.width = fontMetrics.charWidth('a') * 40;
-      return size;
-    }
   }
 
   @Nullable
   protected JComponent createCenterPanel() {
-
     myPackageTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(DocumentEvent e) {
-        getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isQualifiedName(getPackageName()) ||
-            "".equals(getPackageName()));
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myProject).getNameHelper();
+        String packageName = getPackageName();
+        getOKAction().setEnabled(nameHelper.isQualifiedName(packageName) || packageName != null && packageName.isEmpty());
       }
     });
 

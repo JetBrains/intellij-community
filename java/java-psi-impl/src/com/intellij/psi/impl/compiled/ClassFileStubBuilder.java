@@ -16,10 +16,11 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
 
@@ -29,11 +30,7 @@ import com.intellij.util.cls.ClsFormatException;
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   @Override
   public boolean acceptsFile(final VirtualFile file) {
-    final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
-    for (ClsStubBuilderFactory factory : factories) {
-      if (!factory.isInnerClass(file)) return true;
-    }
-    return false;
+    return true;
   }
 
   @Override
@@ -42,7 +39,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
       for (ClsStubBuilderFactory factory : factories) {
         if (!factory.isInnerClass(file) && factory.canBeProcessed(file, content)) {
-          return factory.buildFileStub(file, content);
+          PsiFileStub stub = factory.buildFileStub(file, content);
+          if (stub != null) return stub;
         }
       }
       return null;

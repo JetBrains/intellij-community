@@ -46,6 +46,7 @@ import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -1591,7 +1592,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       storeDefaultIndices(data);
 
       final Dimension size = info.getComponent().getSize();
-      final Image image = myTabs.getComponentImage(info);
+      final Image image = JBTabsImpl.getComponentImage(info);
       if (component instanceof Grid) {
         info.setHidden(true);
       }

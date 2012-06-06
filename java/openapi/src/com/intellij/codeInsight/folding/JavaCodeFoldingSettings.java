@@ -62,4 +62,7 @@ public abstract class JavaCodeFoldingSettings {
 
   public abstract boolean isCollapseEndOfLineComments();
   public abstract void setCollapseEndOfLineComments(boolean value);
+
+  public abstract boolean isCollapseRecursiveMethodCalls();
+  public abstract void setCollapseRecursiveMethodCalls(boolean value);
 }

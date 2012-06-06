@@ -25,7 +25,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
-public class InlineFieldDialog extends InlineOptionsDialog {
+public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
   private final PsiReferenceExpression myReferenceExpression;
 
@@ -65,8 +65,31 @@ public class InlineFieldDialog extends InlineOptionsDialog {
     return JavaRefactoringSettings.getInstance().INLINE_FIELD_THIS;
   }
 
+  @Override
+  protected boolean isSearchInCommentsAndStrings() {
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD;
+  }
+
+  @Override
+  protected void saveSearchInCommentsAndStrings(boolean searchInComments) {
+    JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = searchInComments;
+  }
+
+  @Override
+  protected boolean isSearchForTextOccurrences() {
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD;
+  }
+
+  @Override
+  protected void saveSearchInTextOccurrences(boolean searchInTextOccurrences) {
+    JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD = searchInTextOccurrences;
+  }
+
   protected void doAction() {
-    invokeRefactoring(new InlineConstantFieldProcessor(myField, getProject(), myReferenceExpression, isInlineThisOnly()));
+    super.doAction();
+    invokeRefactoring(
+      new InlineConstantFieldProcessor(myField, getProject(), myReferenceExpression, isInlineThisOnly(), isSearchInCommentsAndStrings(),
+                                       isSearchForTextOccurrences()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_FIELD_THIS = isInlineThisOnly();

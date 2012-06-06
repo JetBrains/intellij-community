@@ -15,20 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -60,7 +60,7 @@ import static com.intellij.refactoring.introduceField.IntroduceFieldHandler.REFA
 
 public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduceDialog<GrIntroduceFieldSettings>, GrIntroduceFieldSettings {
   private JPanel myContentPane;
-  private TextFieldWithAutoCompletion<String> myNameField;
+  private NameSuggestionsField myNameField;
   private JRadioButton myPrivateRadioButton;
   private JRadioButton myProtectedRadioButton;
   private JRadioButton myPublicRadioButton;
@@ -131,13 +131,9 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       myReplaceAllOccurrencesCheckBox.setVisible(false);
     }
 
-    myNameField.addDocumentListener(new DocumentListener() {
+    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
-      @Override
-      public void documentChanged(DocumentEvent event) {
+      public void dataChanged() {
         validateOKAction();
       }
     });
@@ -265,11 +261,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       list.add(var.getName());
     }
     ContainerUtil.addAll(list, possibleNames);
-    myNameField = TextFieldWithAutoCompletion.create(myContext.getProject(), list, null, true);
-    if (list.size()>0) {
-      myNameField.setText(list.get(0));
-      myNameField.selectAll();
-    }
+    myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(list), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
     if (expression == null) {
       myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType()
@@ -319,7 +311,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   @Override
   @NotNull
   public String getName() {
-    return myNameField.getText().trim();
+    return myNameField.getEnteredName();
   }
 
   @Override

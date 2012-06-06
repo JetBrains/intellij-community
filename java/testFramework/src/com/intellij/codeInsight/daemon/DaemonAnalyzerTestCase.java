@@ -57,8 +57,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -197,7 +195,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     ((StartupManagerImpl)StartupManager.getInstance(getProject())).checkCleared();
     ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest(!LightPlatformTestCase.isLight(getProject()));
     super.tearDown();
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
+    //((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).assertPointersDisposed();
   }
 
   protected void enableInspectionTool(InspectionProfileEntry tool){
@@ -333,8 +331,13 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  protected Collection<HighlightInfo> highlightErrors() {
-    return filter(doHighlighting(), HighlightSeverity.ERROR);
+  protected List<HighlightInfo> highlightErrors() {
+    return doHighlighting(HighlightSeverity.ERROR);
+  }
+
+  @NotNull
+  protected List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
+    return filter(doHighlighting(), minSeverity);
   }
 
   @NotNull

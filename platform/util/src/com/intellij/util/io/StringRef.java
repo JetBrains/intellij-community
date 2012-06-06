@@ -43,9 +43,10 @@ public class StringRef {
   }
 
   public String getString() {
+    String name = this.name;
     if (name == null) {
       try {
-        name = store.valueOf(id);
+        this.name = name = store.valueOf(id);
       }
       catch (IOException e) {
         store.markCorrupted();
@@ -58,7 +59,7 @@ public class StringRef {
   public void writeTo(DataOutput out, AbstractStringEnumerator store) throws IOException {
     int nameId = getId(store);
     out.writeByte(nameId & 0xFF);
-    DataInputOutputUtil.writeINT(out, (nameId >> 8));
+    DataInputOutputUtil.writeINT(out, nameId >> 8);
   }
 
   public int getId(AbstractStringEnumerator store) {

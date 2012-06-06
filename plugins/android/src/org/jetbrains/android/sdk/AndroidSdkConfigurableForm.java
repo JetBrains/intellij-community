@@ -16,7 +16,6 @@
 package org.jetbrains.android.sdk;
 
 import com.android.sdklib.IAndroidTarget;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -24,6 +23,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -67,6 +67,9 @@ class AndroidSdkConfigurableForm {
       public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof IAndroidTarget) {
           setText(AndroidSdkUtils.getTargetPresentableName((IAndroidTarget)value));
+        }
+        else if (value == null) {
+          setText("<html><font color='red'>[none]</font></html>");
         }
       }
     });
@@ -142,10 +145,11 @@ class AndroidSdkConfigurableForm {
         IAndroidTarget target = (IAndroidTarget)myBuildTargetsModel.getElementAt(i);
         if (buildTarget.hashString().equals(target.hashString())) {
           myBuildTargetComboBox.setSelectedIndex(i);
-          break;
+          return;
         }
       }
     }
+    myBuildTargetComboBox.setSelectedItem(null);
   }
 
   private void updateJdks() {

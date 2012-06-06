@@ -49,6 +49,9 @@ public abstract class ArtifactTemplate {
     return new NewArtifactConfiguration(createRootElement(name), name, null);
   }
 
+  public void setUpArtifact(@NotNull Artifact artifact, @NotNull NewArtifactConfiguration configuration) {
+  }
+
   public static class NewArtifactConfiguration {
     private final CompositePackagingElement<?> myRootElement;
     private final String myArtifactName;

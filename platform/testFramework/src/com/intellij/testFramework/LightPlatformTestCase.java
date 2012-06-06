@@ -22,12 +22,10 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ToolsImpl;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -70,13 +68,12 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -92,7 +89,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableFileSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -234,7 +230,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           throw new RuntimeException(e);
         }
 
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).registerIndexableSet(new IndexableFileSet() {
+        FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
           @Override
           public boolean isInSet(@NotNull final VirtualFile file) {
             return ourSourceRoot != null && file.getFileSystem() == ourSourceRoot.getFileSystem() && ourProject.isOpen();
@@ -292,6 +288,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         startupManager.startCacheUpdate();
       }
     }.execute().throwException();
+    // project creation may make a lot of pointers, do not regard them as leak
+    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).storePointers();
   }
 
   protected static Module createMainModule(final ModuleType moduleType) {
@@ -322,6 +320,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     myThreadTracker = new ThreadTracker();
     DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
+    ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
+    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
+    filePointerManager.storePointers();
   }
 
   public static void doSetup(final LightProjectDescriptor descriptor,
@@ -335,7 +336,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
 
     ProjectManagerEx projectManagerEx = ProjectManagerEx.getInstanceEx();
-    projectManagerEx.setCurrentTestProject(ourProject);
+    projectManagerEx.openTestProject(ourProject);
 
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).clearUncommitedDocuments();
 
@@ -404,8 +405,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     catch (Exception e) {
 
     }
-    assertTrue("open: "+getProject().isOpen()+"; disposed:"+getProject().isDisposed()+"; startup passed:"+ passed+"; testProjectIsOurProject:"+(getProject() == projectManagerEx
-      .getCurrentTestProject())+"; all open projects: "+
+    assertTrue("open: "+getProject().isOpen()+"; disposed:"+getProject().isDisposed()+"; startup passed:"+ passed+"; all open projects: "+
                Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
@@ -425,12 +425,19 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected void enableInspectionTool(LocalInspectionTool tool){
-    enableInspectionTool(new LocalInspectionToolWrapper(tool));
-  }
-
-  protected void enableInspectionTool(InspectionTool tool){
-    enableInspectionTool(myAvailableInspectionTools, tool);
+  protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
+    if (tool instanceof InspectionTool) {
+      enableInspectionTool(myAvailableInspectionTools, (InspectionTool)tool);
+    }
+    else if (tool instanceof LocalInspectionTool) {
+      enableInspectionTool(myAvailableInspectionTools, new LocalInspectionToolWrapper((LocalInspectionTool)tool));
+    }
+    else if (tool instanceof GlobalInspectionTool) {
+      enableInspectionTool(myAvailableInspectionTools, new GlobalInspectionToolWrapper((GlobalInspectionTool)tool));
+    }
+    else {
+      throw new IllegalArgumentException("Unexpected inspection type: " + tool);
+    }
   }
 
   private static void enableInspectionTool(final Map<String, InspectionTool> availableLocalTools, InspectionTool wrapper) {
@@ -450,6 +457,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     checkForSettingsDamage();
+    VirtualFilePointerManagerImpl filePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     doTearDown(getProject(), ourApplication, true);
 
     try {
@@ -458,10 +466,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     finally {
       myThreadTracker.checkLeak();
       ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).checkInjectorsAreDisposed();
+      filePointerManager.assertPointersAreDisposed();
     }
   }
 
-  public static void doTearDown(final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
+  public static void doTearDown(@NotNull final Project project, IdeaTestApplication application, boolean checkForEditors) throws Exception {
     DocumentCommitThread.getInstance().clearQueue();
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     checkAllTimersAreDisposed();
@@ -526,7 +535,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest();
 
-    ProjectManagerEx.getInstanceEx().setCurrentTestProject(null);
+    ProjectManagerEx.getInstanceEx().closeTestProject(project);
     application.setDataProvider(null);
     ourTestCase = null;
     ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
@@ -546,18 +555,19 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     CompositeException result = new CompositeException();
     final Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     if (allEditors.length > 0) {
-      String fail = null;
       for (Editor editor : allEditors) {
-        fail = EditorFactoryImpl.notReleasedError(editor);
         try {
-          EditorFactory.getInstance().releaseEditor(editor);
+          EditorFactoryImpl.throwNotReleasedError(editor);
         }
         catch (Throwable e) {
           result.add(e);
         }
+        finally {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
       }
       try {
-        fail("Unreleased editors: " + allEditors.length + "\n"+fail);
+        fail("Unreleased editors: " + allEditors.length);
       }
       catch (Throwable e) {
         result.add(e);
@@ -705,7 +715,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ApplicationManager.getApplication().assertWriteAccessAllowed();
       ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
       final VirtualFile projFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
-      final File projectFile = projFile == null ? null : VfsUtil.virtualToIoFile(projFile);
+      final File projectFile = projFile == null ? null : VfsUtilCore.virtualToIoFile(projFile);
       if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
 
       if (projectFile != null) {
@@ -783,7 +793,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       final String[] myUrls = mySdk.getRootProvider().getUrls(OrderRootType.CLASSES);
       final String[] newUrls = newSdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-      return CollectionFactory.newSet(myUrls).equals(CollectionFactory.newSet(newUrls));
+      return CollectionFactory.hashSet(myUrls).equals(CollectionFactory.hashSet(newUrls));
     }
 
   }

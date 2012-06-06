@@ -17,6 +17,8 @@ package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -66,7 +68,12 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
       myTargetsNode.add(targetNode);
       myTargetNodes[i] = targetNode;
     }
-    myRootNode.addNode(myTargetsNode);
+    myRootNode.addNode(myTargetsNode, new Consumer<Runnable>() {
+      @Override
+      public void consume(Runnable runnable) {
+        UIUtil.invokeLaterIfNeeded(runnable);
+      }
+    });
   }
 
   public UsageNode getFirstUsageNode() {

@@ -43,7 +43,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
-
 public class JavaParserUtil {
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");

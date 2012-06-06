@@ -87,7 +87,7 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
     
     static final MyResolver INSTANCE = new MyResolver();
     
-    public PsiElement resolve(PsiReference psiReference, boolean incompleteCode) {
+    public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
       final PsiElement element = psiReference.getElement();
       if (element == null) {
         return null;

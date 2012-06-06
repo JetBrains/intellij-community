@@ -3,14 +3,12 @@ package org.jetbrains.android.inspections.lint;
 import com.android.tools.lint.checks.TypographyDetector;
 import com.android.tools.lint.detector.api.Issue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -27,7 +25,7 @@ class TypographyQuickFix implements AndroidLintQuickFix {
   }
 
   @Override
-  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @Nullable Editor editor) {
+  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull AndroidQuickfixContexts.Context context) {
     final XmlTag tag = PsiTreeUtil.getParentOfType(startElement, XmlTag.class);
     if (tag == null) {
       return;
@@ -44,11 +42,11 @@ class TypographyQuickFix implements AndroidLintQuickFix {
 
           for (TypographyDetector.ReplaceEdit edit : edits) {
             String with = edit.replaceWith;
-            
+
             if (ApplicationManager.getApplication().isUnitTestMode()) {
               with = with.replace('\u2013', '~').replace('\u2018', '{').replace('\u2019', '}');
             }
-            
+
             builder.replace(edit.offset, edit.offset + edit.length, with);
           }
 
@@ -62,7 +60,9 @@ class TypographyQuickFix implements AndroidLintQuickFix {
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement startElement, @NotNull PsiElement endElement, boolean inBatchMode) {
+  public boolean isApplicable(@NotNull PsiElement startElement,
+                              @NotNull PsiElement endElement,
+                              @NotNull AndroidQuickfixContexts.ContextType contextType) {
     return PsiTreeUtil.getParentOfType(startElement, XmlTag.class) != null;
   }
 

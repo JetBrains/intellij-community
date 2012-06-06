@@ -669,13 +669,13 @@
 
   <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 
-  <toolWindow id="Project" anchor="left" icon="/general/toolWindowProject.png"
+  <toolWindow id="Project" anchor="left" icon="AllIcons.General.ToolWindowProject"
               factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
-  <toolWindow id="TODO" anchor="bottom" icon="/general/toolWindowTodo.png"
+  <toolWindow id="TODO" anchor="bottom" icon="AllIcons.General.ToolWindowTodo"
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
-  <toolWindow id="Structure" anchor="left" icon="/general/toolWindowStructure.png" secondary="true"
+  <toolWindow id="Structure" anchor="left" icon="AllIcons.General.ToolWindowStructure" secondary="true"
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
-  <toolWindow id="Favorites" anchor="left" icon="/general/toolWindowFavorites.png" secondary="true"
+  <toolWindow id="Favorites" anchor="left" icon="AllIcons.General.ToolWindowFavorites" secondary="true"
               factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory"/>
 
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>

@@ -16,10 +16,15 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.Nullable;
+import sun.misc.Cleaner;
+import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 public abstract class DirectBufferWrapper extends ByteBufferWrapper {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.DirectBufferWrapper");
@@ -48,7 +53,25 @@ public abstract class DirectBufferWrapper extends ByteBufferWrapper {
 
   @Override
   public void unmap() {
-    flush();
+    if (isDirty()) flush();
+    if (myBuffer != null) disposeDirectBuffer((DirectBuffer)myBuffer);
     myBuffer = null;
   }
+
+ static boolean disposeDirectBuffer(final DirectBuffer buffer) {
+    return AccessController.doPrivileged(new PrivilegedAction<Object>() {
+      @Nullable
+      public Object run() {
+        try {
+          Cleaner cleaner = buffer.cleaner();
+          if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
+          return null;
+        }
+        catch (Exception e) {
+          return buffer;
+        }
+      }
+    }) == null;
+  }
+
 }

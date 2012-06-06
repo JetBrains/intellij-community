@@ -20,8 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 
 public class PrintAction extends AnAction implements DumbAware {
@@ -42,8 +41,8 @@ public class PrintAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    if(psiElement instanceof PsiDirectory) {
+    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    if(file != null && file.isDirectory()) {
       presentation.setEnabled(true);
       return;
     }

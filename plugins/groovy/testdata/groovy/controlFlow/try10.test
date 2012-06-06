@@ -10,15 +10,13 @@ cde
 1(3) element: Open block
 2(5) element: Finally clause
 3(2,4)  CALL 2
-4(13) AFTER CALL 3
+4(11) AFTER CALL 3
 5(6) element: For statement
 6(7) element: Block statement
 7(8) element: IF statement
-8(9) Condition
-9(10,12) READ abc
-10(11)  Negating goto instruction, condition=8
-11(5) element: IF statement
-12(4)  RETURN
-13(14) READ cde
-14(15) element: Reference expression MAYBE_RETURN
-15() element: null
+8(9,10) READ abc
+9(5) element: IF statement
+10(4)  RETURN
+11(12) READ cde
+12(13) element: Reference expression MAYBE_RETURN
+13() element: null

@@ -15,122 +15,56 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ListExpandableItemsHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class CompletionExtender extends LightweightHint {
-  private LookupElement myElement;
-  private LookupImpl myLookup;
-  private int myIndex;
+public class CompletionExtender extends ListExpandableItemsHandler {
 
-  public CompletionExtender(@NotNull LookupElement element, @NotNull LookupImpl lookup) {
-    super(createComponent(element, lookup));
-    setForceHideShadow(true);
-    myElement = element;
-    myLookup = lookup;
-    myIndex = myLookup.getList().getSelectedIndex();
-    myLookup.getComponent().addComponentListener(new ComponentAdapter() {
+  public CompletionExtender(@NotNull final JList list) {
+    super(list);
+    list.addComponentListener(new ComponentAdapter() {
       @Override
-      public void componentResized(ComponentEvent e) {
-        recalculateLocation();
-      }
+      public void componentShown(ComponentEvent e) {
+        if (myComponent.getParent() != null && myComponent.getParent().getParent() instanceof JScrollPane) {
+          final JScrollBar verticalScrollBar = ((JScrollPane)myComponent.getParent().getParent()).getVerticalScrollBar();
+          final JScrollBar horizontalScrollBar = ((JScrollPane)myComponent.getParent().getParent()).getVerticalScrollBar();
+          final AdjustmentListener listener = new AdjustmentListener() {
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+              updateCurrentSelection();
+            }
+          };
+          if (verticalScrollBar != null) verticalScrollBar.addAdjustmentListener(listener);
+          if (horizontalScrollBar != null) horizontalScrollBar.addAdjustmentListener(listener);
 
-      @Override
-      public void componentMoved(ComponentEvent e) {
-        recalculateLocation();
+          list.removeComponentListener(this);
+        }
       }
     });
   }
-
-  public LookupElement getLookupElement() {
-    return myElement;
-  }
-
-  public boolean sameAsFor(LookupElement item) {
-    return getLookupElement().equals(item)
-           && myIndex == myLookup.getList().getSelectedIndex();
-  }
-
-  private static JComponent createComponent(LookupElement element, LookupImpl lookup) {
-    final LookupCellRenderer renderer = ((LookupCellRenderer)lookup.getList().getCellRenderer()).createExtenderRenderer();
-    final JComponent component = (JComponent)renderer.getListCellRendererComponent(lookup.getList(), element,
-                                                                                   lookup.getList().getSelectedIndex(),
-                                                                                   true, false);
-    component.setSize(component.getPreferredSize());
-    return component;
-  }
-
-  public boolean show() {
-    if (SystemInfo.isUnix) {
-      //TODO[kb]: fix shadow. This hint is always heavyweight window and has a shadow
-      hide();
-      return false;
-    }
-    if (!checkComponentBounds()) {
-      hide();
-      return false;
-    }
-    final JList list = myLookup.getList();
-    if (getComponent().getWidth() > list.getWidth()) {
-      final JComponent rootPane = myLookup.myLayeredPane;
-
-      final Point p = list.getLocationOnScreen();
-      p.y += list.indexToLocation(list.getSelectedIndex()).y;
-      SwingUtilities.convertPointFromScreen(p, rootPane);
-
-      if (rootPane != null) {
-        final HintHint hint = new HintHint();
-        show(rootPane, p.x, p.y, null, hint);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean checkComponentBounds() {
-    final Dimension size = getComponent().getPreferredSize();
-    final JList list = myLookup.getList();
-    final Point p = list.getLocationOnScreen();
-    p.y += list.indexToLocation(list.getSelectedIndex()).y;
-    final Rectangle rectangle = new Rectangle(p, size);
-    return !ScreenUtil.isOutsideOnTheRightOFScreen(rectangle);
-  }
-
-  void recalculateLocation() {
-    if (!isVisible()) return;
-    final JList list = myLookup.getList();
-    final Point p = list.getLocationOnScreen();
-    final Point point = list.indexToLocation(list.getSelectedIndex());
-    if (point != null) {
-      p.y += point.y;
-      final JComponent rootPane = UIUtil.getRootPane(myLookup.getEditor().getContentComponent());
-      if (rootPane != null) {
-        SwingUtilities.convertPointFromScreen(p, rootPane);
-        setLocation(new RelativePoint(rootPane, p));
-        return;
-      }
-    }
-    hide();
+  @Override
+  protected void handleSelectionChange(Integer selected, boolean processIfUnfocused) {
+    super.handleSelectionChange(myComponent.getSelectedIndex(), true);
   }
 
   @Override
-  public void hide() {
-    super.hide();
-    myLookup = null;
-    myElement = null;
+  protected void onFocusLost() {
+    //don't hide hint
+  }
+
+  @Override
+  protected void handleMouseEvent(MouseEvent e, boolean forceUpdate) {
+    // don't show or hide hint on mouse events
+  }
+
+  @Override
+  protected boolean isPaintBorder() {
+    return false;
   }
 }

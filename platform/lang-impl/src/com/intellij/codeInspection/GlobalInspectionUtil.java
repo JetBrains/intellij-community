@@ -16,12 +16,18 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Maxim.Mossienko
@@ -46,15 +52,22 @@ public class GlobalInspectionUtil {
     return message + LOC_MARKER;
   }
 
-  public static void createProblem(PsiElement elt, String message, ProblemHighlightType problemHighlightType, TextRange range,
+  public static void createProblem(PsiElement elt, HighlightInfo info, TextRange range,
                                    @Nullable String problemGroup,
                                    InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor,
                                    GlobalInspectionContext globalContext) {
-    ProblemDescriptor descriptor = manager.createProblemDescriptor(
-      elt,
-      range,
-      createInspectionMessage(message),
-      problemHighlightType, false);
+    List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+    if (info.quickFixActionRanges != null) {
+      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRange : info.quickFixActionRanges) {
+        final IntentionAction action = actionRange.getFirst().getAction();
+        if (action instanceof LocalQuickFix) {
+          fixes.add((LocalQuickFix)action);
+        }
+      }
+    }
+    ProblemDescriptor descriptor = manager.createProblemDescriptor(elt, range, createInspectionMessage(info.description),
+                                                                   HighlightInfo.convertType(info.type), false,
+                                                                   fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]));
     descriptor.setProblemGroup(problemGroup);
     problemDescriptionsProcessor.addProblemElement(
       retrieveRefElement(elt, globalContext),

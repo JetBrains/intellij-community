@@ -908,7 +908,7 @@ class Fopppp {
 class Instantiation {}
 '''
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings[0] == 'instanceof'
+    assertEquals 'instanceof', myFixture.lookupElementStrings[0]
   }
 
   public void testForFinal() {
@@ -1003,7 +1003,7 @@ while(true) {
 
     myFixture.configureByText "a.groovy", "def foo(stryng) { println str<caret> }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings[0] == 'stryng'
+    assertEquals 'stryng', myFixture.lookupElementStrings[0]
   }
 
   private def caseSensitiveNone() {
@@ -1077,13 +1077,13 @@ class X {
   public void testInitializerMatters() throws Exception {
     myFixture.configureByText("a.groovy", "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ["foo"]
+    assertOrderedEquals(myFixture.lookupElementStrings, ["foo"])
   }
 
   public void testFieldInitializerMatters() throws Exception {
     myFixture.configureByText("a.groovy", "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ["foo"]
+    assertOrderedEquals(myFixture.lookupElementStrings, ["foo"])
   }
 
   public void testAccessStaticViaInstanceSecond() throws Exception {
@@ -1096,7 +1096,7 @@ public class KeyVO {
     myFixture.complete(CompletionType.BASIC, 1)
     assert !myFixture.lookupElementStrings
     myFixture.complete(CompletionType.BASIC, 2)
-    assert myFixture.lookupElementStrings == ["foo"]
+    assertOrderedEquals(myFixture.lookupElementStrings, ["foo"])
   }
 
   public void testNoRepeatingModifiers() {
@@ -1118,11 +1118,11 @@ public class KeyVO {
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.groovy', 'Util.<caret>'
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings[0..1] == ['Util.bar', 'Util.foo']
+    assertOrderedEquals myFixture.lookupElementStrings[0..1] , ['Util.bar', 'Util.foo']
 
     def presentation = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
-    assert 'Util.bar' == presentation.itemText
-    assert '() (bar)' == presentation.tailText
+    assertEquals 'Util.bar', presentation.itemText
+    assertEquals '() (bar)', presentation.tailText
     assert !presentation.tailGrayed
 
     myFixture.type 'f\n'
@@ -1326,4 +1326,58 @@ print map.metc<caret>
     myFixture.complete(CompletionType.BASIC);
     assertEmpty myFixture.getLookupElements()
   }
+
+  void testAnnotationCompletion0() {
+    myFixture.configureByText('_.groovy', '''\
+@interface A {
+  String fooo()
+}
+
+@A(foo<caret>)
+def bar(){}''')
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.checkResult('''\
+@interface A {
+  String fooo()
+}
+
+@A(fooo = <caret>)
+def bar(){}''')
+  }
+
+  void testAnnotationCompletion1() {
+    myFixture.configureByText('_.groovy', '''\
+@interface A {
+  String fooo()
+}
+
+def abcde() {}
+
+@A(abc<caret>)
+def bar(){}''')
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.checkResult('''\
+@interface A {
+  String fooo()
+}
+
+def abcde() {}
+
+@A(abcde()<caret>)
+def bar(){}''')
+  }
+
+  void testAnnotationCompletion2() {
+    myFixture.configureByText('_.groovy', '''\
+@interface A {
+  String fooo()
+  String fooo1()
+}
+
+@A(foo<caret> = 'a')
+def bar(){}''')
+    myFixture.complete(CompletionType.BASIC)
+    assertOrderedEquals(myFixture.lookupElementStrings, ['fooo', 'fooo1'])
+  }
+
 }

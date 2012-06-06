@@ -51,7 +51,7 @@ public class ExistingModuleLoader extends ModuleBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ExistingModuleLoader");
 
   @NotNull
-  public Module createModule(ModifiableModuleModel moduleModel)
+  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     LOG.assertTrue(getName() != null);
 

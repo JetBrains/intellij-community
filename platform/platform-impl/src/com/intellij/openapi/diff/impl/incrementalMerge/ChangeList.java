@@ -33,17 +33,18 @@ import java.util.*;
 
 public class ChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ChangeList");
-  private static final Comparator<Change> CHANGE_ORDER = new SimpleChange.ChangeOrder(FragmentSide.SIDE1);
+  public static final Comparator<Change> CHANGE_ORDER = new SimpleChange.ChangeOrder(FragmentSide.SIDE1);
 
+  private final Project myProject;
   private final Document[] myDocuments = new Document[2];
-  private final Parent myParent;
   private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
   private ArrayList<Change> myChanges;
+  private ArrayList<Change> myAppliedChanges;
 
-  public ChangeList(Document base, Document version, Parent parent) {
+  public ChangeList(Document base, Document version, Project project) {
     myDocuments[0] = base;
     myDocuments[1] = version;
-    myParent = parent;
+    myProject = project;
   }
 
   public void addListener(Listener listener) {
@@ -70,16 +71,17 @@ public class ChangeList {
       LOG.assertTrue(change.isValid());
     }
     myChanges = new ArrayList<Change>(changes);
+    myAppliedChanges = new ArrayList<Change>();
   }
 
-  public Project getProject() { return myParent.getProject(); }
+  public Project getProject() { return myProject; }
 
   public List<Change> getChanges() {
     return Collections.unmodifiableList(myChanges);
   }
 
-  public static ChangeList build(Document base, Document version, Parent parent) throws FilesTooBigForDiffException {
-    ChangeList result = new ChangeList(base, version, parent);
+  public static ChangeList build(Document base, Document version, Project project) throws FilesTooBigForDiffException {
+    ChangeList result = new ChangeList(base, version, project);
     ArrayList<Change> changes = result.buildChanges();
     Collections.sort(changes, CHANGE_ORDER);
     result.setChanges(changes);
@@ -187,13 +189,26 @@ public class ChangeList {
   }
 
   public LineBlocks getLineBlocks() {
-    return LineBlocks.fromChanges(myChanges);
+    ArrayList<Change> changes = new ArrayList<Change>(myChanges);
+    changes.addAll(myAppliedChanges);
+    return LineBlocks.fromChanges(changes);
   }
 
   public void remove(Change change) {
-    LOG.assertTrue(myChanges.remove(change), change);
+    if (change.getType().isApplied()) {
+      LOG.assertTrue(myAppliedChanges.remove(change), change);
+    }
+    else {
+      LOG.assertTrue(myChanges.remove(change), change);
+    }
     change.onRemovedFromList();
     fireOnChangeRemoved();
+  }
+
+  public void apply(Change change) {
+    LOG.assertTrue(myChanges.remove(change), change);
+    myAppliedChanges.add(change);
+    fireOnChangeApplied();
   }
 
   private void fireOnChangeRemoved() {
@@ -203,11 +218,15 @@ public class ChangeList {
     }
   }
 
-  public interface Parent {
-    Project getProject();
+  void fireOnChangeApplied() {
+    Listener[] listeners = myListeners.toArray(new Listener[myListeners.size()]);
+    for (Listener listener : listeners) {
+      listener.onChangeApplied(this);
+    }
   }
 
   public interface Listener {
     void onChangeRemoved(ChangeList source);
+    void onChangeApplied(ChangeList source);
   }
 }

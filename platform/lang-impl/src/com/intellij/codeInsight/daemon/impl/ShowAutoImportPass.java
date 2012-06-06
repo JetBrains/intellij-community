@@ -62,7 +62,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doCollectInformation(ProgressIndicator progress) {
+  public void doCollectInformation(@NotNull ProgressIndicator progress) {
   }
 
   @Override

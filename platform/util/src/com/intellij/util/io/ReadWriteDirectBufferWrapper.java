@@ -23,7 +23,6 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-// todo: find a way to determine a buffer was updated (perhaps in PagedFileStorage?)
 public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   @NonNls private static final String RW = "rw";
 
@@ -55,7 +54,7 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   @Override
   public void flush() {
     final ByteBuffer buffer = getCachedBuffer();
-    if (buffer == null) return;
+    if (buffer == null || !isDirty()) return;
 
     try {
       final RandomAccessFile file = new RandomAccessFile(myFile, RW);

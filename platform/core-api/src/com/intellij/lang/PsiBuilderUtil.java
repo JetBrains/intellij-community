@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,33 +19,22 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
 
-
 public class PsiBuilderUtil {
   private PsiBuilderUtil() { }
 
   /**
-   * Returns type of next token.
-   *
-   * @param builder PSI builder to operate on.
-   * @return type of next token or null, if the builder is at the end of token stream
+   * @deprecated use {@linkplain PsiBuilder#lookAhead(int)} (to remove in IDEA 13)
    */
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public static IElementType nextTokenType(final PsiBuilder builder) {
-    if (builder.getTokenType() == null) return null;
-    final PsiBuilder.Marker sp = builder.mark();
-    builder.advanceLexer();
-    final IElementType result = builder.getTokenType();
-    sp.rollbackTo();
-    return result;
+    return builder.lookAhead(1);
   }
 
   /**
-   * Checks if tokens in token stream form expected sequence.
-   *
-   * @param builder PSI builder to operate on.
-   * @param tokenTypes expected elements.
-   * @return true if tokens form expected sequence, false otherwise
+   * @deprecated use {@linkplain PsiBuilder#lookAhead(int)} (to remove in IDEA 13)
    */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean lookAhead(final PsiBuilder builder, final IElementType... tokenTypes) {
     if (tokenTypes.length == 0) return true;
 

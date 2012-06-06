@@ -16,57 +16,35 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
-
-public class VirtualFilePointerImpl extends UserDataHolderBase implements VirtualFilePointerEx, Disposable {
+class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFilePointer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
 
-  private volatile Pair<VirtualFile, String> myFileAndUrl; // must not be both null
-  private final VirtualFileManager myVirtualFileManager;
   private final VirtualFilePointerListener myListener;
-  private volatile boolean disposed = false;
-  volatile int useCount;
-  private volatile long myLastUpdated = -1;
+  private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
 
-  private static final Key<Throwable> CREATE_TRACE = Key.create("CREATION_TRACE");
-  private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
-  private static final boolean TRACE_CREATION = /*true || */LOG.isDebugEnabled();
+  volatile FilePointerPartNode myNode; // null means disposed
 
-  VirtualFilePointerImpl(VirtualFile file,
-                         @NotNull String url,
-                         @NotNull VirtualFileManager virtualFileManager,
-                         VirtualFilePointerListener listener,
-                         @NotNull Disposable parentDisposable) {
-    myFileAndUrl = Pair.create(file, url);
-    myVirtualFileManager = virtualFileManager;
+  VirtualFilePointerImpl(VirtualFilePointerListener listener, @NotNull Disposable parentDisposable, Pair<VirtualFile, String> fileAndUrl) {
+    super(TRACE_CREATION ? new Throwable("parent = '" + parentDisposable + "' (" + parentDisposable.getClass() + "); URL="+fileAndUrl) : null);
     myListener = listener;
-    useCount = 0;
-    if (TRACE_CREATION) {
-      putUserData(CREATE_TRACE, new Throwable("parent = '"+parentDisposable+"' ("+parentDisposable.getClass()+")"));
-    }
   }
 
   @Override
   @NotNull
   public String getFileName() {
-    Pair<VirtualFile, String> result = update();
-    if (result == null) {
-      checkDisposed();
-      return "";
-    }
+    checkDisposed();
+    Pair<VirtualFile, String> result = myNode.update();
     VirtualFile file = result.first;
     if (file != null) {
       return file.getName();
@@ -78,28 +56,22 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
 
   @Override
   public VirtualFile getFile() {
-    Pair<VirtualFile, String> result = update();
-    if (result == null) {
-      checkDisposed();
-      return null;
-    }
+    checkDisposed();
+    Pair<VirtualFile, String> result = myNode.update();
     return result.first;
   }
 
   @Override
   @NotNull
   public String getUrl() {
-    return getUrlFromPair(update());
-  }
-
-  private String getUrlNoUpdate() {
-    return getUrlFromPair(myFileAndUrl);
+    if (isDisposed()) return "";
+    Pair<VirtualFile, String> update = myNode.update();
+    return update.second;
   }
 
   @NotNull
-  private static String getUrlFromPair(Pair<VirtualFile, String> fileAndUrl) {
-    String url = fileAndUrl.second;
-    return url != null ? url : fileAndUrl.first.getUrl();
+  String getUrlNoUpdate() {
+    return isDisposed() ? "" : myNode.myFileAndUrl.second;
   }
 
   @Override
@@ -110,97 +82,16 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
   }
 
   private void checkDisposed() {
-    if (disposed) {
-      throw new MyException("Already disposed: URL=" + toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
+    if (isDisposed()) {
+      throwDisposalError("Already disposed: URL=" + getUrlNoUpdate());
     }
   }
 
-  public void throwNotDisposedError(String msg) throws RuntimeException {
-    throw new MyException(msg + ": URL=" + toString(), getUserData(CREATE_TRACE), null);
-  }
-
-  public int incrementUsageCount() {
-    return ++useCount;
-  }
-
-  private static class MyException extends RuntimeException {
-    private final Throwable e1;
-    private final Throwable e2;
-
-    private MyException(String message, Throwable e1, Throwable e2) {
-      super(message);
-      this.e1 = e1;
-      this.e2 = e2;
-    }
-
-    @Override
-    public void printStackTrace(PrintStream s) {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      PrintWriter writer = new PrintWriter(s);
-      printStackTrace(writer);
-      writer.flush();
-    }
-
-    @Override
-    public void printStackTrace(PrintWriter s) {
-      super.printStackTrace(s);
-      if (e1 != null) {
-        s.println("--------------Creation trace: ");
-        e1.printStackTrace(s);
-      }
-      if (e2 != null) {
-        s.println("--------------Kill trace: ");
-        e2.printStackTrace(s);
-      }
-    }
-  }
 
   @Override
   public boolean isValid() {
-    Pair<VirtualFile, String> result = update();
+    Pair<VirtualFile, String> result = isDisposed() ? null : myNode.update();
     return result != null && result.first != null;
-  }
-
-  @Nullable
-  public Pair<VirtualFile, String> update() {
-    if (disposed) return null;
-
-    long lastUpdated = myLastUpdated;
-    Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
-    VirtualFile file = fileAndUrl.first;
-    String url = fileAndUrl.second;
-    long fsModCount = myVirtualFileManager.getModificationCount();
-    if (lastUpdated == fsModCount) return fileAndUrl;
-
-    // 1. reset invalid file, restore URL if needed
-    if (file != null && !file.isValid()) {
-      if (url == null) {
-        url = file.getUrl();
-      }
-      file = null;
-    }
-
-    // 2. restore file, reset URL if it differs
-    if (file == null) {
-      LOG.assertTrue(url != null, "Both file & URL are null");
-      file = myVirtualFileManager.findFileByUrl(url);
-      if (file != null && url.equals(file.getUrl())) {
-        url = null;
-      }
-    }
-
-    // 3. reset invalid file, restore URL if needed
-    if (file != null && !file.exists()) {
-      if (url == null) {
-        url = file.getUrl();
-      }
-      file = null;
-    }
-
-    Pair<VirtualFile, String> result = Pair.create(file, url);
-    myFileAndUrl = result;
-    myLastUpdated = fsModCount;
-    return result;
   }
 
   @Override
@@ -208,23 +99,23 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     return getUrlNoUpdate();
   }
 
-  @Override
   public void dispose() {
-    if (disposed) {
-      throw new MyException("Punching the dead horse: URL=" + toString(), getUserData(CREATE_TRACE), getUserData(KILL_TRACE));
-    }
-    if (--useCount == 0) {
-      if (TRACE_CREATION) {
-        putUserData(KILL_TRACE, new Throwable());
+    checkDisposed();
+    if (myNode.incrementUsageCount(-1) == 0) {
+      kill(null);
+      VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
+      if (pointerManager instanceof VirtualFilePointerManagerImpl) {
+        ((VirtualFilePointerManagerImpl)pointerManager).removeNode(myNode, myListener); // remove from the tree
       }
-      disposed = true;
-
-      final Pair<VirtualFile, String> pair = myFileAndUrl;
-      ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(pair.first, pair.second, myListener);
+      myNode = null;
     }
   }
 
   public boolean isDisposed() {
-    return disposed;
+    return myNode == null;
+  }
+
+  VirtualFilePointerListener getListener() {
+    return myListener;
   }
 }

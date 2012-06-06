@@ -33,15 +33,14 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +73,15 @@ public class EditorWindow {
   private boolean myIsDisposed = false;
   private static final Icon PIN_ICON = AllIcons.Nodes.TabPin;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
+  private Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>(UISettings.getInstance().EDITOR_TAB_LIMIT) {
+    @Override
+    public void push(Pair<String, Integer> pair) {
+      if (size() >= UISettings.getInstance().EDITOR_TAB_LIMIT) {
+        remove(0);
+      }
+      super.push(pair);
+    }
+  };
 
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
@@ -264,6 +272,21 @@ public class EditorWindow {
     closeFile(file, unsplit, true);
   }
 
+  public boolean hasClosedTabs() {
+    return !myRemovedTabs.empty();
+  }
+
+  public void restoreClosedTab() {
+    assert hasClosedTabs() : "Nothing to restore";
+
+    final Pair<String, Integer> info = myRemovedTabs.pop();
+    final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
+    final Integer second = info.getSecond();
+    if (file != null) {
+      getManager().openFileImpl4(this, file, true, null, true, second == null ? -1 : second.intValue());
+    }
+  }
+
   public void closeFile(final VirtualFile file, final boolean unsplit, final boolean transferFocus) {
     final FileEditorManagerImpl editorManager = getManager();
     editorManager.runChange(new FileEditorManagerChange() {
@@ -282,6 +305,7 @@ public class EditorWindow {
             final int componentIndex = findComponentIndex(editor.getComponent());
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
+              myRemovedTabs.push(Pair.create(file.getUrl(), componentIndex));
               final ActionCallback removeTab = myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus);
               final Runnable disposer = new Runnable() {
                 public void run() {

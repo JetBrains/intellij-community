@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -82,7 +83,12 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder>
    */
   @NonNls
   protected final String getTestDataPath() {
-    return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
+    String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : PathManager.getHomePath();
+    return path.replace(File.separatorChar, '/') + getBasePath();
+  }
+
+  protected boolean isCommunity() {
+    return false;
   }
 
   protected Project getProject() {

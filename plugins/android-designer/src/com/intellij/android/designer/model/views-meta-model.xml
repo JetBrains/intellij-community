@@ -82,6 +82,8 @@
     <palette title="TextView" icon="/com/intellij/android/designer/icons/TextView.png"
              tooltip="Displays text to the user and optionally allows them to edit it."/>
 
+    <morphing to="EditText ImageView CheckedTextView"/>
+
     <properties
         inplace="text"
         important="text hint textColor typeface textStyle gravity editable enabled"
@@ -107,6 +109,8 @@
 
     <palette title="Button" icon="/com/intellij/android/designer/icons/Button.png"
              tooltip="Represents a push-button widget."/>
+
+    <morphing to="RadioButton CheckBox ToggleButton ZoomButton ImageButton TextView EditText"/>
 
     <properties
         inplace="text"
@@ -159,6 +163,8 @@
     <palette title="RadioButton" icon="/com/intellij/android/designer/icons/RadioButton.png"
              tooltip="A radio button is a two-states button that can be either checked or unchecked."/>
 
+    <morphing to="Button CheckBox ToggleButton ZoomButton ImageButton TextView EditText"/>
+
     <creation>
       <![CDATA[
           <RadioButton
@@ -175,6 +181,8 @@
         tag="CheckBox">
 
     <presentation title=" - &quot;%text%&quot;"/>
+
+    <morphing to="Button RadioButton ToggleButton ZoomButton ImageButton TextView EditText"/>
 
     <palette title="CheckBox" icon="/com/intellij/android/designer/icons/CheckBox.png"
              tooltip="A checkbox is a specific type of two-states button that can be either checked or unchecked."/>
@@ -199,6 +207,8 @@
     <palette title="ToggleButton" icon="/com/intellij/android/designer/icons/ToggleButton.png"
              tooltip="Displays checked/unchecked states as a button with a 'light' indicator and by default accompanied with the text 'ON' or 'OFF'. "/>
 
+    <morphing to="Button RadioButton CheckBox ZoomButton ImageButton TextView EditText"/>
+
     <properties important="textOn textOff disabledAlpha"/>
 
     <creation>
@@ -220,6 +230,8 @@
 
     <palette title="CheckedTextView" icon="/com/intellij/android/designer/icons/CheckedTextView.png"
              tooltip="An extension to TextView that supports the Checkable interface."/>
+
+    <morphing to="TextView EditText ImageView"/>
 
     <properties inplace="text checked" important="checked checkMark"/>
 
@@ -243,6 +255,8 @@
     <palette title="EditText" icon="/com/intellij/android/designer/icons/EditText.png"
              tooltip="EditText is a thin veneer over TextView that configures itself to be editable."/>
 
+    <morphing to="TextView CheckedTextView ImageView SearchView"/>
+
     <creation>
       <![CDATA[
           <EditText
@@ -262,6 +276,8 @@
 
     <palette title="AutoCompleteTextView" icon="/com/intellij/android/designer/icons/AutoCompleteTextView.png"
              tooltip="An editable text view that shows completion suggestions automatically while the user is typing."/>
+
+    <morphing to="TextView CheckedTextView EditText MultiAutoCompleteTextView ImageView SearchView"/>
 
     <properties inplace="text inputType"/>
 
@@ -284,6 +300,8 @@
 
     <palette title="MultiAutoCompleteTextView" icon="/com/intellij/android/designer/icons/MultiAutoCompleteTextView.png"
              tooltip="An editable text view, extending AutoCompleteTextView, that can show completion suggestions for the substring of the text where the user is typing instead of necessarily for the entire thing."/>
+
+    <morphing to="TextView CheckedTextView EditText AutoCompleteTextView ImageView SearchView"/>
 
     <creation>
       <![CDATA[
@@ -323,6 +341,8 @@
     <palette title="AnalogClock" icon="/com/intellij/android/designer/icons/AnalogClock.png"
              tooltip="This widget display an analogic clock with two hands for hours and minutes."/>
 
+    <morphing to="DigitalClock"/>
+
     <creation>
       <![CDATA[
           <AnalogClock
@@ -339,6 +359,8 @@
 
     <palette title="DigitalClock" icon="/com/intellij/android/designer/icons/DigitalClock.png"
              tooltip="Like AnalogClock, but digital. Shows seconds."/>
+
+    <morphing to="AnalogClock"/>
 
     <creation>
       <![CDATA[
@@ -428,6 +450,8 @@
     <palette title="ProgressBar" icon="/com/intellij/android/designer/icons/ProgressBar.png"
              tooltip="Visual indicator of progress in some operation."/>
 
+    <morphing to="SeekBar RatingBar"/>
+
     <properties inplace="max progress indeterminate"
                 important="max progress indeterminate"/>
 
@@ -448,6 +472,8 @@
     <palette title="SeekBar" icon="/com/intellij/android/designer/icons/SeekBar.png"
              tooltip="A SeekBar is an extension of ProgressBar that adds a draggable thumb."/>
 
+    <morphing to="ProgressBar RatingBar"/>
+
     <creation>
       <![CDATA[
           <SeekBar
@@ -464,6 +490,8 @@
 
     <palette title="RatingBar" icon="/com/intellij/android/designer/icons/RatingBar.png"
              tooltip="A RatingBar is an extension of SeekBar and ProgressBar that shows a rating in stars."/>
+
+    <morphing to="ProgressBar SeekBar"/>
 
     <properties inplace="numStars rating stepSize"
                 important="numStars rating stepSize"
@@ -486,6 +514,8 @@
     <palette title="ImageView" icon="/com/intellij/android/designer/icons/ImageView.png"
              tooltip="Displays an arbitrary image, such as an icon."/>
 
+    <morphing to="TextView EditText CheckedTextView"/>
+
     <properties inplace="src"
                 important="src"/>
 
@@ -506,6 +536,8 @@
     <palette title="ImageButton" icon="/com/intellij/android/designer/icons/ImageButton.png"
              tooltip="Displays a button with an image (instead of text) that can be pressed or clicked by the user."/>
 
+    <morphing to="Button RadioButton CheckBox ToggleButton ZoomButton TextView EditText"/>
+
     <creation>
       <![CDATA[
           <ImageButton
@@ -522,6 +554,8 @@
 
     <palette title="ZoomButton" icon="/com/intellij/android/designer/icons/ZoomButton.png"
              tooltip="ZoomButton"/>
+
+    <morphing to="Button RadioButton CheckBox ToggleButton ImageButton TextView EditText"/>
 
     <creation>
       <![CDATA[
@@ -636,6 +670,8 @@
     <palette title="DatePicker" icon="/com/intellij/android/designer/icons/DatePicker.png"
              tooltip="This class is a widget for selecting a date."/>
 
+    <morphing to="TimePicker CalendarView"/>
+
     <properties important="startYear endYear spinnersShown calendarViewShown minDate maxDate layout"/>
 
     <creation>
@@ -654,6 +690,8 @@
 
     <palette title="CalendarView" icon="/com/intellij/android/designer/icons/CalendarView.png"
              tooltip="This class is a calendar widget for displaying and selecting dates."/>
+
+    <morphing to="DatePicker TimePicker"/>
 
     <properties
         important="firstDayOfWeek showWeekNumber minDate maxDate shownWeekCount weekDayTextAppearance dateTextAppearance"/>
@@ -674,6 +712,8 @@
 
     <palette title="TimePicker" icon="/com/intellij/android/designer/icons/TimePicker.png"
              tooltip="A view for selecting the time of day, in either 24 hour or AM/PM mode."/>
+
+    <morphing to="DatePicker CalendarView"/>
 
     <properties inplace="layout"
                 important="layout"/>
@@ -754,6 +794,8 @@
     <palette title="ListView" icon="/com/intellij/android/designer/icons/ListView.png"
              tooltip="A view that shows items in a vertically scrolling list. The items come from the ListAdapter associated with this view."/>
 
+    <morphing to="ExpandableListView GridView"/>
+
     <properties important="entries divider dividerHeight headerDividersEnabled footerDividersEnabled overScrollHeader overScrollFooter"/>
 
     <creation>
@@ -773,6 +815,8 @@
     <palette title="ExpandableListView" icon="/com/intellij/android/designer/icons/ExpandableListView.png"
              tooltip="A view that shows items in a vertically scrolling two-level list. This differs from the ListView by allowing two levels: groups which can individually be expanded to show its children."/>
 
+    <morphing to="ListView GridView"/>
+
     <properties important="groupIndicator childIndicator indicatorLeft indicatorRight childIndicatorLeft childIndicatorRight childDivider"/>
 
     <creation>
@@ -791,6 +835,8 @@
 
     <palette title="GridView" icon="/com/intellij/android/designer/icons/GridView.png"
              tooltip="A view that shows items in two-dimensional scrolling grid. The items in the grid come from the ListAdapter associated with this view."/>
+
+    <morphing to="ListView ExpandableListView"/>
 
     <properties inplace="numColumns"
                 important="horizontalSpacing verticalSpacing stretchMode columnWidth numColumns gravity"/>
@@ -822,13 +868,15 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.scroll.RadScrollViewComponent"
-        layout="com.intellij.android.designer.model.scroll.RadScrollViewLayout"
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        layout="com.intellij.android.designer.model.RadSingleChildrenViewLayout"
         class="android.widget.ScrollView"
         tag="ScrollView">
 
     <palette title="ScrollView" icon="/com/intellij/android/designer/icons/ScrollView.png"
              tooltip="Layout container for a view hierarchy that can be scrolled by the user, allowing it to be larger than the physical display. ScrollView only supports vertical scrolling."/>
+
+    <morphing to="HorizontalScrollView"/>
 
     <properties inplace="fillViewport"
                 important="fillViewport"/>
@@ -843,13 +891,15 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.scroll.RadScrollViewComponent"
-        layout="com.intellij.android.designer.model.scroll.RadScrollViewLayout"
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        layout="com.intellij.android.designer.model.RadSingleChildrenViewLayout"
         class="android.widget.HorizontalScrollView"
         tag="HorizontalScrollView">
 
     <palette title="HorizontalScrollView" icon="/com/intellij/android/designer/icons/HorizontalScrollView.png"
              tooltip="Layout container for a view hierarchy that can be scrolled by the user, allowing it to be larger than the physical display."/>
+
+    <morphing to="ScrollView"/>
 
     <properties inplace="fillViewport"
                 important="fillViewport"/>
@@ -1063,6 +1113,8 @@
     <palette title="RadioGroup" icon="/com/intellij/android/designer/icons/RadioGroup.png"
              tooltip="This class is used to create a multiple-exclusion scope for a set of radio buttons. Checking one radio button that belongs to a radio group unchecks any previously checked radio button within the same group."/>
 
+    <morphing to="LinearLayout FrameLayout TableLayout GridLayout RelativeLayout"/>
+
     <properties inplace="orientation checkedButton"
                 important="orientation checkedButton"
                 top="gravity orientation"/>
@@ -1230,6 +1282,8 @@
     <palette title="LinearLayout" icon="/com/intellij/android/designer/icons/LinearLayout.png"
              tooltip="A Layout that arranges its children in a single column or a single row."/>
 
+    <morphing to="FrameLayout RadioGroup TableLayout GridLayout RelativeLayout"/>
+
     <properties inplace="orientation"
                 important="orientation gravity baselineAligned measureWithLargestChild showDividers"
                 expert="layout:gravity.fill layout:gravity.clip layout:gravity.start layout:gravity.end"
@@ -1255,6 +1309,8 @@
     <palette title="FrameLayout" icon="/com/intellij/android/designer/icons/FrameLayout.png"
              tooltip="FrameLayout is designed to block out an area on the screen to display a single item."/>
 
+    <morphing to="LinearLayout RadioGroup TableLayout GridLayout RelativeLayout"/>
+
     <properties important="foreground foregroundGravity"
                 expert="layout:gravity.fill layout:gravity.clip layout:gravity.start layout:gravity.end"
         />
@@ -1277,6 +1333,8 @@
     <palette title="AbsoluteLayout" icon="/com/intellij/android/designer/icons/AbsoluteLayout.png"
              tooltip="A layout that lets you specify exact locations (x/y coordinates) of its children. Absolute layouts are less flexible and harder to maintain than other types of layouts without absolute positioning."/>
 
+    <morphing to="RelativeLayout FrameLayout TableLayout GridLayout"/>
+
     <creation>
       <![CDATA[
           <AbsoluteLayout
@@ -1296,6 +1354,8 @@
 
     <palette title="TableLayout" icon="/com/intellij/android/designer/icons/TableLayout.png"
              tooltip="A layout that arranges its children into rows and columns. A TableLayout consists of a number of TableRow objects, each defining a row (actually, you can have other children, which will be explained below). TableLayout containers do not display border lines for their rows, columns, or cells. Each row has zero or more cells; each cell can hold one View object. The table has as many columns as the row with the most cells. A table can leave cells empty. Cells can span columns, as they can in HTML."/>
+
+    <morphing to="RelativeLayout GridLayout FrameLayout"/>
 
     <creation>
       <![CDATA[
@@ -1336,6 +1396,8 @@
                 expert="layout:gravity.clip layout:gravity.start layout:gravity.end"
         />
 
+    <morphing to="TableLayout RelativeLayout FrameLayout"/>
+
     <palette title="GridLayout" icon="/com/intellij/android/designer/icons/GridLayout.png"
              tooltip="A layout that places its children in a rectangular grid."/>
 
@@ -1356,6 +1418,8 @@
 
     <properties inplace="gravity"
                 important="gravity"/>
+
+    <morphing to="GridLayout TableLayout FrameLayout"/>
 
     <palette title="RelativeLayout" icon="/com/intellij/android/designer/icons/RelativeLayout.png"
              tooltip="A Layout where the positions of the children can be described in relation to each other or to the parent."/>

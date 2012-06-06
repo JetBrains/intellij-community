@@ -16,7 +16,7 @@
 package com.intellij.lang.java.parser.partial;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.JavaParsers;
+import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParsingTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -111,8 +111,29 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testQualifiedSuperMethodCall1() { doParserTest("d.super(0)"); }
   public void testSuperMethodCallTypeParameterList() { doParserTest("super()"); }
   public void testPrimitiveClassObjectAccess() { doParserTest("int.class"); }
+  public void testPrimitiveFieldAccess() { doParserTest("int.x"); }
   public void testChainedClassObjectAccess() { doParserTest("A.class.B.class"); }
   public void testChainedThisObjectAccess() { doParserTest("A.this.B.this"); }
+
+  public void testMethodRef0() { doParserTest("a.b.C::m"); }
+  public void testMethodRef1() { doParserTest("a.b.C<T>::new"); }
+  public void testMethodRef2() { doParserTest("C::<T>m"); }
+  public void testMethodRef3() { doParserTest("a[i]::m"); }
+  public void testMethodRef4() { doParserTest("int[]::clone"); }
+  public void testMethodRef5() { doParserTest("(f ? list.map(String::length) : Collections.emptyList())::iterator"); }
+
+  public void testLambdaExpression0() { doParserTest("p -> 42"); }
+  public void testLambdaExpression1() { doParserTest("p -> "); }
+  public void testLambdaExpression2() { doParserTest("p -> {"); }
+  public void testLambdaExpression3() { doParserTest("(p) -> { }"); }
+  public void testLambdaExpression4() { doParserTest("(p, v) -> null"); }
+  public void testLambdaExpression5() { doParserTest("(p, v -> null"); }
+  public void testLambdaExpression6() { doParserTest("(p, v, -> null"); }
+  public void testLambdaExpression7() { doParserTest("(p -> null)"); }
+  public void testLambdaExpression8() { doParserTest("(I)(p) -> null"); }
+  public void testLambdaExpression9() { doParserTest("(I)p -> null"); }
+  public void testLambdaExpression10() { doParserTest("(I)(p -> null)"); }
+  public void testLambdaExpression11() { doParserTest("() -> { }"); }
 
   private void doParserTest(@NonNls final String text) {
     doParserTest(text, new MyTestParser());
@@ -120,7 +141,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   private static class MyTestParser implements TestParser {
     @Override
     public void parse(final PsiBuilder builder) {
-      JavaParsers.EXPRESSION_PARSER.parse(builder);
+      JavaParser.INSTANCE.getExpressionParser().parse(builder);
     }
   }
 }

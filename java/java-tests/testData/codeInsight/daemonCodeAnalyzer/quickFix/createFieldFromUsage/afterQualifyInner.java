@@ -1,6 +1,6 @@
 // "Create Field 'field'" "true"
 class A{
-    private Outer.Inner field<caret>;
+    private final Outer.Inner field<caret>;
 
     {
         Outer.f(field);

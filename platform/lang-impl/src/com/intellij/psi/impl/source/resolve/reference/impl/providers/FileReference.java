@@ -139,6 +139,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return innerResolve(getFileReferenceSet().isCaseSensitive());
   }
 
+  @NotNull
   protected ResolveResult[] innerResolve(boolean caseSensitive) {
     final String referenceText = getText();
     if (referenceText.isEmpty() && myIndex == 0) {
@@ -586,8 +587,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   static class MyResolver implements ResolveCache.PolyVariantResolver<FileReference> {
     static final MyResolver INSTANCE = new MyResolver();
 
+    @NotNull
     @Override
-    public ResolveResult[] resolve(FileReference ref, boolean incompleteCode) {
+    public ResolveResult[] resolve(@NotNull FileReference ref, boolean incompleteCode) {
       return ref.innerResolve(ref.getFileReferenceSet().isCaseSensitive());
     }
   }

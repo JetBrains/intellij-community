@@ -38,6 +38,7 @@ public class DesignerActionPanel implements DataProvider {
   private final DefaultActionGroup myStaticGroup = new DefaultActionGroup();
   private final DefaultActionGroup myDynamicGroup = new DefaultActionGroup();
   private final DefaultActionGroup myPopupGroup = new DefaultActionGroup();
+  private final DefaultActionGroup myDynamicPopupGroup = new DefaultActionGroup();
   private JComponent myToolbar;
   private final DesignerEditorPanel myDesigner;
   private final CommonEditActionsProvider myCommonEditActionsProvider;
@@ -84,6 +85,8 @@ public class DesignerActionPanel implements DataProvider {
     myPopupGroup.addSeparator();
     myPopupGroup.add(selectParent);
     myPopupGroup.add(selectAllAction);
+    myPopupGroup.addSeparator();
+    myPopupGroup.add(myDynamicPopupGroup);
 
     designer.getSurfaceArea().addSelectionListener(new ComponentSelectionListener() {
       @Override
@@ -144,10 +147,12 @@ public class DesignerActionPanel implements DataProvider {
   private void updateSelectionActions(List<RadComponent> selection) {
     boolean update = isVisible(myDynamicGroup);
 
-    for (AnAction action : myDynamicGroup.getChildActionsOrStubs()) {
-      action.unregisterCustomShortcutSet(myShortcuts);
+    if (myDynamicGroup.getChildrenCount() > 0) {
+      for (AnAction action : myDynamicGroup.getChildActionsOrStubs()) {
+        action.unregisterCustomShortcutSet(myShortcuts);
+      }
+      myDynamicGroup.removeAll();
     }
-    myDynamicGroup.removeAll();
 
     for (RadComponent parent : RadComponent.getParents(selection)) {
       parent.getLayout().addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
@@ -162,7 +167,11 @@ public class DesignerActionPanel implements DataProvider {
     }
   }
 
-  public ActionGroup getPopupActions() {
+  public ActionGroup getPopupActions(EditableArea area) {
+    if (myDynamicPopupGroup.getChildrenCount() > 0) {
+      myDynamicPopupGroup.removeAll();
+    }
+    MorphingAction.fill(myDesigner, myDynamicPopupGroup, area);
     return myPopupGroup;
   }
 

@@ -63,7 +63,7 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
   @Nullable
   public VirtualFile markDirty() {
     synchronized (lock) {
-      myRelPathsToEntries.clear();
+      myRelPathsToEntries = null;
       myJarFile.set(null);
 
       final NewVirtualFile root = (NewVirtualFile)

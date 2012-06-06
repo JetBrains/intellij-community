@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -335,21 +336,23 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     final JPanel rgbPanel = new JPanel();
     rgbPanel.setLayout(new BoxLayout(rgbPanel, BoxLayout.X_AXIS));
-    myR_after.setPreferredSize(new Dimension(14, -1));
-    myG_after.setPreferredSize(new Dimension(14, -1));
-    myB_after.setPreferredSize(new Dimension(14, -1));
+    if (!UIUtil.isUnderAquaLookAndFeel()) {
+      myR_after.setPreferredSize(new Dimension(14, -1));
+      myG_after.setPreferredSize(new Dimension(14, -1));
+      myB_after.setPreferredSize(new Dimension(14, -1));
+    }
     rgbPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     rgbPanel.add(myR);
     rgbPanel.add(myRed);
-    rgbPanel.add(myR_after);
+    if (!UIUtil.isUnderAquaLookAndFeel()) rgbPanel.add(myR_after);
     rgbPanel.add(Box.createHorizontalStrut(2));
     rgbPanel.add(myG);
     rgbPanel.add(myGreen);
-    rgbPanel.add(myG_after);
+    if (!UIUtil.isUnderAquaLookAndFeel()) rgbPanel.add(myG_after);
     rgbPanel.add(Box.createHorizontalStrut(2));
     rgbPanel.add(myB);
     rgbPanel.add(myBlue);
-    rgbPanel.add(myB_after);
+    if (!UIUtil.isUnderAquaLookAndFeel()) rgbPanel.add(myB_after);
     rgbPanel.add(Box.createHorizontalStrut(2));
     rgbPanel.add(myFormat);
 
@@ -358,7 +361,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     final JPanel hexPanel = new JPanel();
     hexPanel.setLayout(new BoxLayout(hexPanel, BoxLayout.X_AXIS));
     hexPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    hexPanel.add(new JLabel("Hex:"));
+    hexPanel.add(new JLabel("#"));
     hexPanel.add(myHex);
 
     result.add(hexPanel, BorderLayout.EAST);

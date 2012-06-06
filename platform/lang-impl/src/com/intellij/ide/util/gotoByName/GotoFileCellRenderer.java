@@ -42,13 +42,19 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
 
   public GotoFileCellRenderer(int maxSize) {
     myMaxWidth = maxSize;
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
-    setFont(editorFont);
   }
 
   public String getElementText(PsiFile element) {
     return element.getName();
+  }
+
+  @Override
+  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+    setFont(editorFont);
+    return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(component) : component;
   }
 
   protected String getContainerText(PsiFile element, String name) {

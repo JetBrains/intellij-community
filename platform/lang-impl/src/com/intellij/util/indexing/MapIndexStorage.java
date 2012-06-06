@@ -49,16 +49,27 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
 
   private final Lock l = new ReentrantLock();
   private final DataExternalizer<Value> myDataExternalizer;
+  private boolean myHighKeySelectivity;
 
   public MapIndexStorage(@NotNull File storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
-                         final int cacheSize) throws IOException {
+                         final int cacheSize
+  ) throws IOException {
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, false);
+  }
+
+  public MapIndexStorage(@NotNull File storageFile,
+                         @NotNull KeyDescriptor<Key> keyDescriptor,
+                         @NotNull DataExternalizer<Value> valueExternalizer,
+                         final int cacheSize,
+                         boolean highKeySelectivity) throws IOException {
 
     myStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
     myDataExternalizer = valueExternalizer;
+    myHighKeySelectivity = highKeySelectivity;
     initMapAndCache();
   }
 
@@ -230,7 +241,20 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
     try {
       myMap.markDirty();
-      read(key).addValue(inputId, value);
+      if (!myHighKeySelectivity) {
+        read(key).addValue(inputId, value);
+        return;
+      }
+
+      ChangeTrackingValueContainer<Value> cached = myCache.getIfCached(key);
+      if (cached != null) {
+        cached.addValue(inputId, value);
+        return;
+      }
+      // do not pollute the cache with highly selective data
+      ChangeTrackingValueContainer<Value> valueContainer = new ChangeTrackingValueContainer<Value>(null);
+      valueContainer.addValue(inputId, value);
+      myMap.put(key, valueContainer);
     }
     catch (IOException e) {
       throw new StorageException(e);

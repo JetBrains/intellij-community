@@ -795,7 +795,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
   public void testNoClassLiteral() throws Exception {
     doActionTest();
-    assertStringItems("Object.class", "getClass", "forName", "forName");
+    assertStringItems("Object.class", "forName", "forName", "getClass");
   }
 
   public void testClassLiteralInAnno2() throws Throwable {

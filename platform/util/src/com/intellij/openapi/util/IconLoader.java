@@ -31,8 +31,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.lang.ref.Reference;
+import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.*;
+import java.util.Map;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
@@ -72,6 +73,19 @@ public final class IconLoader {
       callerClass = Reflection.getCallerClass(1);
     }
     return getIcon(path, callerClass);
+  }
+
+  @Nullable
+  private static Icon getReflectiveIcon(String path) {
+    try {
+      Class cur = Class.forName("com.intellij.icons." + path.substring(0, path.lastIndexOf('.')).replace('.', '$'));
+      Field field = cur.getField(path.substring(path.lastIndexOf('.') + 1));
+
+      return (Icon)field.get(null);
+    }
+    catch (Exception e) {
+      return null;
+    }
   }
 
   @Nullable
@@ -117,7 +131,10 @@ public final class IconLoader {
     return findIcon(path, aClass, false);
   }
 
+  @Nullable
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass, boolean computeNow) {
+    if (path.startsWith("AllIcons.")) return getReflectiveIcon(path);
+
     final ByClass icon = new ByClass(aClass, path);
 
     if (computeNow || !Registry.is("ide.lazyIconLoading", true)) {
@@ -140,6 +157,7 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(final String path, final ClassLoader aClassLoader) {
+    if (path.startsWith("AllIcons.")) return getReflectiveIcon(path);
     if (!path.startsWith("/")) return null;
 
     final URL url = aClassLoader.getResource(path.substring(1));

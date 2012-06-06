@@ -28,11 +28,10 @@ import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.roots.libraries.*;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -53,7 +52,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
+public class LibraryImpl extends TraceableDisposable implements LibraryEx.ModifiableModelEx, LibraryEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.impl.LibraryImpl");
   @NonNls public static final String LIBRARY_NAME_ATTR = "name";
   @NonNls public static final String LIBRARY_TYPE_ATTR = "type";
@@ -73,32 +72,51 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private final ModifiableRootModel myRootModel;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
-  private final JarDirectoryWatcher myRootsWatcher = JarDirectoryWatcherFactory.getInstance().createWatcher(myJarDirectories,
-                                                                                                            myRootProvider);
+  private final JarDirectoryWatcher myRootsWatcher = JarDirectoryWatcherFactory.getInstance().createWatcher(myJarDirectories, myRootProvider);
 
   LibraryImpl(LibraryTable table, Element element, ModifiableRootModel rootModel) throws InvalidDataException {
-    myLibraryTable = table;
-    myRootModel = rootModel;
-    mySource = null;
-    readName(element);
+    this(table, rootModel, null, element.getAttributeValue(LIBRARY_NAME_ATTR),
+         (PersistentLibraryKind<?>)LibraryKind.findById(element.getAttributeValue(LIBRARY_TYPE_ATTR)));
     readProperties(element);
     myJarDirectories.readExternal(element);
-    //init roots depends on my hashcode, hashcode depends on jardirectories and name
-    myRoots = initRoots();
     readRoots(element);
     myRootsWatcher.updateWatchedRoots();
   }
 
   LibraryImpl(String name, @Nullable final PersistentLibraryKind<?> kind, LibraryTable table, ModifiableRootModel rootModel) {
-    myName = name;
-    myLibraryTable = table;
-    myRootModel = rootModel;
-    myKind = kind;
+    this(table, rootModel, null, name, kind);
     if (kind != null) {
       myProperties = kind.createDefaultProperties();
     }
+  }
+
+  private LibraryImpl(@NotNull LibraryImpl from, LibraryImpl newSource, ModifiableRootModel rootModel) {
+    this(from.myLibraryTable, rootModel, newSource, from.myName, from.myKind);
+    assert !from.isDisposed();
+    if (from.myKind != null && from.myProperties != null) {
+      myProperties = myKind.createDefaultProperties();
+      //noinspection unchecked
+      myProperties.loadState(from.myProperties.getState());
+    }
+    for (OrderRootType rootType : getAllRootTypes()) {
+      final VirtualFilePointerContainer thisContainer = myRoots.get(rootType);
+      final VirtualFilePointerContainer thatContainer = from.myRoots.get(rootType);
+      thisContainer.addAll(thatContainer);
+    }
+    myJarDirectories.copyFrom(from.myJarDirectories);
+  }
+
+  // primary
+  private LibraryImpl(LibraryTable table, ModifiableRootModel rootModel, LibraryImpl newSource, String name, @Nullable final PersistentLibraryKind<?> kind) {
+    super(new Throwable());
+    myLibraryTable = table;
+    myRootModel = rootModel;
+    mySource = newSource;
+    myKind = kind;
+    myName = name;
+    //init roots depends on my myKind
     myRoots = initRoots();
-    mySource = null;
+    Disposer.register(this, myRootsWatcher);
   }
 
   private Set<OrderRootType> getAllRootTypes() {
@@ -110,32 +128,13 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     return rootTypes;
   }
 
-  private LibraryImpl(LibraryImpl from, LibraryImpl newSource, ModifiableRootModel rootModel) {
-    assert !from.isDisposed();
-    myRootModel = rootModel;
-    myName = from.myName;
-    myKind = from.myKind;
-    if (from.myKind != null && from.myProperties != null) {
-      myProperties = myKind.createDefaultProperties();
-      //noinspection unchecked
-      myProperties.loadState(from.myProperties.getState());
-    }
-    myRoots = initRoots();
-    mySource = newSource;
-    myLibraryTable = from.myLibraryTable;
-    for (OrderRootType rootType : getAllRootTypes()) {
-      final VirtualFilePointerContainer thisContainer = myRoots.get(rootType);
-      final VirtualFilePointerContainer thatContainer = from.myRoots.get(rootType);
-      thisContainer.addAll(thatContainer);
-    }
-    myJarDirectories.copyFrom(from.myJarDirectories);
-  }
-
   @Override
   public void dispose() {
-    assert !isDisposed();
-    Disposer.dispose(myRootsWatcher);
+    if (isDisposed()) {
+      throwDisposalError("Already disposed:");
+    }
     myDisposed = true;
+    kill(null);
   }
 
   @Override
@@ -221,7 +220,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         invalidPaths.add(pointer.getUrl());
       }
     }
-    return invalidPaths != null ? invalidPaths : Collections.<String>emptyList();
+    return invalidPaths == null ? Collections.<String>emptyList() : invalidPaths;
   }
 
   @Override

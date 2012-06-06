@@ -27,6 +27,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,14 +36,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AddTypeCastFix implements IntentionAction {
+public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final PsiType myType;
-  private final PsiExpression myExpression;
 
   public AddTypeCastFix(PsiType type, PsiExpression expression) {
+    super(expression);
     myType = type;
-    myExpression = expression;
   }
 
   @Override
@@ -58,14 +59,21 @@ public class AddTypeCastFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myType.isValid() && myExpression.isValid() && myExpression.getManager().isInProject(myExpression);
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return myType.isValid() && startElement.isValid() && startElement.getManager().isInProject(startElement);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    addTypeCast(project, myExpression, myType);
+    addTypeCast(project, (PsiExpression)startElement, myType);
   }
 
   private static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) throws IncorrectOperationException {

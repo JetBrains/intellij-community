@@ -363,7 +363,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public boolean hasDifferences() {
-    return getLineBlocks().getCount() > 0;
+    return getLineBlocks().getCount() > 0 || myNotCalculateDiffPanel != null;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -482,7 +482,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       return myLeftSide;
     }
     if (side == FragmentSide.SIDE2) return myRightSide;
-    throw new InvalidParameterException(String.valueOf(side));
+    throw new IllegalArgumentException(String.valueOf(side));
   }
 
   public LineBlocks getLineBlocks() { return myLineBlocks; }

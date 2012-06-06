@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,6 +104,8 @@ public interface JavaElementType {
   IElementType INSTANCE_OF_EXPRESSION = new JavaCompositeElementType("INSTANCE_OF_EXPRESSION", PsiInstanceOfExpressionImpl.class);
   IElementType CLASS_OBJECT_ACCESS_EXPRESSION = new JavaCompositeElementType("CLASS_OBJECT_ACCESS_EXPRESSION", PsiClassObjectAccessExpressionImpl.class);
   IElementType EMPTY_EXPRESSION = new JavaCompositeElementType("EMPTY_EXPRESSION", PsiEmptyExpressionImpl.class, true);
+  IElementType METHOD_REF_EXPRESSION = new JavaCompositeElementType("METHOD_REF_EXPRESSION", PsiMethodReferenceExpressionImpl.class);
+  IElementType LAMBDA_EXPRESSION = new JavaCompositeElementType("LAMBDA_EXPRESSION", PsiLambdaExpressionImpl.class);
   IElementType EXPRESSION_LIST = new JavaCompositeElementType("EXPRESSION_LIST", PsiExpressionListImpl.class, true);
   IElementType EMPTY_STATEMENT = new JavaCompositeElementType("EMPTY_STATEMENT", PsiEmptyStatementImpl.class);
   IElementType BLOCK_STATEMENT = new JavaCompositeElementType("BLOCK_STATEMENT", PsiBlockStatementImpl.class);
@@ -152,14 +154,14 @@ public interface JavaElementType {
     @Override
     public ASTNode parseContents(final ASTNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-      JavaParsers.STATEMENT_PARSER.parseCodeBlockDeep(builder, true);
+      JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
       return builder.getTreeBuilt().getFirstChildNode();
     }
 
     @Override
     public FlyweightCapableTreeStructure<LighterASTNode> parseContents(final LighterLazyParseableNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
-      JavaParsers.STATEMENT_PARSER.parseCodeBlockDeep(builder, true);
+      JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
       return builder.getLightTree();
     }
 
@@ -192,7 +194,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParsers.STATEMENT_PARSER.parseStatements(builder);
+        JavaParser.INSTANCE.getStatementParser().parseStatements(builder);
       }
     };
 
@@ -207,7 +209,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParsers.EXPRESSION_PARSER.parse(builder);
+        JavaParser.INSTANCE.getExpressionParser().parse(builder);
       }
     };
 
@@ -222,7 +224,7 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParsers.REFERENCE_PARSER.parseJavaCodeReference(builder, false, true, false, false, false);
+        JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, false, false);
       }
     };
 
@@ -237,8 +239,8 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParsers.REFERENCE_PARSER.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
-                                           ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
+        JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
+                                                                    ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
       }
     };
 

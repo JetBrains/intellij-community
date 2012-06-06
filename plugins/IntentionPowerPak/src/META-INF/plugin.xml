@@ -370,7 +370,7 @@
       <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.concatenation.MakeAppendChainIntoAppendSequenceIntention</className>
+      <className>com.siyeh.ipp.concatenation.MakeCallChainIntoCallSequenceIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>

@@ -34,4 +34,8 @@ public interface StubIndexExtension<Key, Psi extends PsiElement> {
 
   @NotNull
   KeyDescriptor<Key> getKeyDescriptor();
+
+  int getCacheSize();
+
+  boolean isKeyHighlySelective();
 }

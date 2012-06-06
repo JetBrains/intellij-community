@@ -107,15 +107,15 @@
       <action id="EditorStartNewLineBefore" class="com.intellij.openapi.editor.actions.StartNewLineBeforeAction"/>
     </group>
 
-    <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="/actions/expandall.png"/>
-    <action id="CollapseAll" class="com.intellij.ide.actions.CollapseAllAction" icon="/actions/collapseall.png"/>
-    <action id="ExportToTextFile" class="com.intellij.ide.actions.ExportToTextFileAction" icon="/actions/export.png"/>
+    <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="AllIcons.Actions.Expandall"/>
+    <action id="CollapseAll" class="com.intellij.ide.actions.CollapseAllAction" icon="AllIcons.Actions.Collapseall"/>
+    <action id="ExportToTextFile" class="com.intellij.ide.actions.ExportToTextFileAction" icon="AllIcons.Actions.Export"/>
     <action id="ExpandTreeNode" class="com.intellij.ide.actions.tree.ExpandTreeNodeAction"/>
     <action id="CollapseTreeNode" class="com.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
     <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
 
-    <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="/actions/moveDown.png"/>
-    <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="/actions/moveUp.png"/>
+    <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="AllIcons.Actions.MoveDown"/>
+    <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="AllIcons.Actions.MoveUp"/>
 
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
 
@@ -130,32 +130,32 @@
 
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
 
-    <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction" icon="/general/reopenRecentProject.png"/>
+    <action id="WelcomeScreen.ReopenRecent" class="com.intellij.openapi.wm.impl.welcomeScreen.RecentProjectsAction" icon="AllIcons.General.ReopenRecentProject"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project"/>
-          <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="/actions/menu-open.png"/>
+          <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
           <group id="$LRU" class="com.intellij.ide.actions.RecentProjectsGroup" popup="true"/>
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
         </group>
         <separator/>
         <group id="FileMainSettingsGroup">
-          <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
+          <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.IdeOptions"/>
           <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
              <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
              <group id="FileSettingsGroup"/>
           </group>
         </group>
         <separator/>
-        <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
+        <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.Menu_saveall"/>
         <group id="ExportImportGroup">
           <action id="ExportSettings" class="com.intellij.ide.actions.ExportSettingsAction"/>
           <action id="ImportSettings" class="com.intellij.ide.actions.ImportSettingsAction"/>
         </group>
         <separator/>
-        <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
+        <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Sync"/>
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
         
         <group id="ChangeFileEncodingGroup" popup="true" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
@@ -168,14 +168,14 @@
 
       <!-- Edit -->
       <group id="EditMenu" popup="true">
-        <action id="$Undo" class="com.intellij.ide.actions.UndoAction" icon="/actions/undo.png"/>
-        <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="/actions/redo.png"/>
+        <action id="$Undo" class="com.intellij.ide.actions.UndoAction" icon="AllIcons.Actions.Undo"/>
+        <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="AllIcons.Actions.Redo"/>
         <separator/>
         <group id="CutCopyPasteGroup">
-          <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="/actions/menu-cut.png"/>
-          <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="/actions/copy.png"/>
+          <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="AllIcons.Actions.Menu_cut"/>
+          <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="AllIcons.Actions.Copy"/>
           <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
-          <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="/actions/menu-paste.png"/>
+          <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="AllIcons.Actions.Menu_paste"/>
           <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction"/>
           <reference ref="EditorPasteSimple"/>
         </group>
@@ -184,8 +184,8 @@
         </group>
         <separator/>
         <group id="FindMenuGroup" popup="true">
-          <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="/actions/menu-find.png"/>
-          <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="/actions/menu-replace.png"/>
+          <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="AllIcons.Actions.Menu_find"/>
+          <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="AllIcons.Actions.Menu_replace"/>
           <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction"/>
           <action id="FindPrevious" class="com.intellij.ide.actions.SearchBackAction"/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
@@ -259,7 +259,7 @@
           <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
           <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
           <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
-          <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction" icon="/actions/toggleSoftWrap.png"/>
+          <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction" icon="AllIcons.Actions.ToggleSoftWrap"/>
         </group>
 
         <!-- Mac OS Lion: In native apps toggle full screen mode is the last action in "View" menu -->
@@ -273,12 +273,12 @@
       <group id="GoToMenu" popup="true">
         <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction"/>
         <separator/>
-        <action id="Back" class="com.intellij.ide.actions.BackAction" icon="/actions/back.png"/>
-        <action id="Forward" class="com.intellij.ide.actions.ForwardAction" icon="/actions/forward.png"/>
+        <action id="Back" class="com.intellij.ide.actions.BackAction" icon="AllIcons.Actions.Back"/>
+        <action id="Forward" class="com.intellij.ide.actions.ForwardAction" icon="AllIcons.Actions.Forward"/>
         <action id="JumpToLastChange" class="com.intellij.ide.actions.JumpToLastEditAction"/>
         <separator/>
-        <action id="PreviousOccurence" class="com.intellij.ide.actions.PreviousOccurenceAction" icon="/actions/previousOccurence.png"/>
-        <action id="NextOccurence" class="com.intellij.ide.actions.NextOccurenceAction" icon="/actions/nextOccurence.png"/>
+        <action id="PreviousOccurence" class="com.intellij.ide.actions.PreviousOccurenceAction" icon="AllIcons.Actions.PreviousOccurence"/>
+        <action id="NextOccurence" class="com.intellij.ide.actions.NextOccurenceAction" icon="AllIcons.Actions.NextOccurence"/>
         <separator/>
       </group>
 
@@ -331,8 +331,9 @@
             <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>
           </group>
           <separator/>
-          <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="/actions/splitVertically.png"/>
-          <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="/actions/splitHorizontally.png"/>
+          <action id="ReopenClosedTab" class="com.intellij.openapi.fileEditor.impl.ReopenClosedTabAction" />
+          <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="AllIcons.Actions.SplitVertically"/>
+          <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="AllIcons.Actions.SplitHorizontally"/>
           <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
           <action id="Unsplit" class="com.intellij.ide.actions.UnsplitAction"/>
           <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
@@ -357,7 +358,7 @@
       <group id="HelpMenu" popup="true">
         <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
         <separator/>
-        <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="/actions/menu-help.png"/>
+        <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Menu_help"/>
         <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
         <action id="ProductivityGude" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
         <separator/>
@@ -366,7 +367,7 @@
         <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
         <separator/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
-        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"/>
+        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction" icon="AllIcons.General.DefaultKeymap"/>
         <action id="Help.JetBrainsTV" class="com.intellij.openapi.wm.impl.welcomeScreen.JetBrainsTvAction"/>
         <separator/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
@@ -422,6 +423,7 @@
       <separator/>
       <reference ref="NextTab"/>
       <reference ref="PreviousTab"/>
+      <reference ref="ReopenClosedTab"/>
       <separator/>
       <reference ref="Unsplit"/>
       <reference ref="UnsplitAll"/>
@@ -432,9 +434,9 @@
 
     <group id="WelcomeScreen.Documentation">
       <action id="WelcomeScreen.ReadHelp" class="com.intellij.openapi.wm.impl.welcomeScreen.ReadHelpAction"
-        icon="/general/readHelp.png"/>
+        icon="AllIcons.General.ReadHelp"/>
       <action id="WelcomeScreen.ShowTips" class="com.intellij.ide.actions.ShowTipsAction"
-        icon="/general/tipsOfTheDay.png"/>
+        icon="AllIcons.General.TipsOfTheDay"/>
       <reference ref="Help.KeymapReference"/>
     </group>
 
@@ -453,22 +455,22 @@
 
     <group id="FileChooserToolbar">
       <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
-        icon="/nodes/homeFolder.png"/>
+        icon="AllIcons.Nodes.HomeFolder"/>
       <action id="FileChooser.GotoProject" class="com.intellij.openapi.fileChooser.actions.GotoProjectDirectory"
-        icon="/nodes/ideaProject.png"/>
+        icon="AllIcons.Nodes.IdeaProject"/>
       <separator/>
       <action id="FileChooser.NewFile" class="com.intellij.openapi.fileChooser.actions.NewFileAction"
-        icon="/actions/new.png"/>
+        icon="AllIcons.Actions.New"/>
       <action id="FileChooser.NewFolder" class="com.intellij.openapi.fileChooser.actions.NewFolderAction"
-        icon="/actions/newFolder.png"/>
+        icon="AllIcons.Actions.NewFolder"/>
       <action id="FileChooser.Delete" class="com.intellij.openapi.fileChooser.actions.FileDeleteAction"
-        icon="/actions/delete.png"/>
+        icon="AllIcons.Actions.Delete"/>
       <separator/>
       <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
-        icon="/actions/sync.png"/>
+        icon="AllIcons.Actions.Sync"/>
       <separator/>
       <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
-        icon="/actions/showHiddens.png"/>
+        icon="AllIcons.Actions.ShowHiddens"/>
     </group>
 
     <group id="DiffPanel.Toolbar">
@@ -496,8 +498,8 @@
     <group id="Console.HistoryActions">
       <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-      <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="/actions/consoleHistory.png"/>
-      <action id="Console.History.BrowseTW" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="RecentFiles" icon="/actions/consoleHistory.png"/>
+      <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ConsoleHistory"/>
+      <action id="Console.History.BrowseTW" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="RecentFiles" icon="AllIcons.Actions.ConsoleHistory"/>
     </group>
 
     <group id="Internal" text="Internal Actions" internal="true" popup="true">
@@ -539,9 +541,9 @@
     </group>
 
     <group id="DirDiffMenu">
-      <action id="DirDiffMenu.SetCopyToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToRight" text="Set Copy to Right" icon="/vcs/arrow_right.png"/>
-      <action id="DirDiffMenu.SetCopyToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToLeft" text="Set Copy to Left" icon="/vcs/arrow_left.png"/>
-      <action id="DirDiffMenu.SetDelete" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDelete" text="Set Delete" icon="/vcs/remove.png"/>
+      <action id="DirDiffMenu.SetCopyToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToRight" text="Set Copy to Right" icon="AllIcons.Vcs.Arrow_right"/>
+      <action id="DirDiffMenu.SetCopyToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToLeft" text="Set Copy to Left" icon="AllIcons.Vcs.Arrow_left"/>
+      <action id="DirDiffMenu.SetDelete" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDelete" text="Set Delete" icon="AllIcons.Vcs.Remove"/>
       <action id="DirDiffMenu.SetNoOperation" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetNoOperation" text="Set Do Nothing"/>
       <separator/>
       <action id="DirDiffMenu.SetDefault" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDefault" text="Set Default"/>
@@ -554,6 +556,6 @@
     <action id="IncrementWindowHeight" class="com.intellij.ide.actions.WindowAction$IncrementHeight" use-shortcut-of="ResizeToolWindowDown"/>
     <action id="DecrementWindowHeight" class="com.intellij.ide.actions.WindowAction$DecrementHeight" use-shortcut-of="ResizeToolWindowUp"/>
 
-    <action id="ExportTestResults" class="com.intellij.execution.testframework.export.ExportTestResultsAction" icon="/actions/export.png"/>
+    <action id="ExportTestResults" class="com.intellij.execution.testframework.export.ExportTestResultsAction" icon="AllIcons.Actions.Export"/>
   </actions>
 </component>

@@ -167,7 +167,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
             final Annotation annotation = createAnnotation(holder, message, range, displayLevel);
 
             for (AndroidLintQuickFix fix : inspection.getQuickFixes(message)) {
-              if (fix.isApplicable(startElement, endElement, false)) {
+              if (fix.isApplicable(startElement, endElement, AndroidQuickfixContexts.EditorContext.TYPE)) {
                 annotation.registerFix(new MyFixingIntention(fix, startElement, endElement));
               }
             }
@@ -278,7 +278,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myQuickFix.apply(myStartElement, myEndElement, editor);
+      myQuickFix.apply(myStartElement, myEndElement, AndroidQuickfixContexts.EditorContext.getInstance(editor) );
     }
 
     @Override

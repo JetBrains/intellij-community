@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io.storage;
 
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -38,17 +39,28 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
-  private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<Integer, Future<?>>();
-  private int myPendingWriteRequestsSize;
-  private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+  private final Map<Integer, Future<?>> myPendingZipRequests = new ConcurrentHashMap<Integer, Future<?>>();
+  private int myPendingZipRequestsSize;
+  private final ThreadPoolExecutor myPendingZipRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
     @Override
     public Thread newThread(Runnable runnable) {
-      return new Thread(runnable, "RefCountingStorage write content helper");
+      return new Thread(runnable, "Ref Counter Storage Zipper");
     }
   });
 
   private final boolean myDoNotZipCaches = Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue();
-  private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
+  private static final int MAX_PENDING_ZIP_SIZE = 20 * 1024 * 1024;
+
+  private final Map<Integer, Callable> myPendingWriteRequests = new ConcurrentHashMap<Integer, Callable>();
+  private int myPendingWriteRequestsSize;
+  private final LowMemoryWatcher myPendingWritesFlusher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      flushPendingWrites(); // only pending writes
+    }
+  });
+
+  private static final int MAX_PENDING_WRITE_SIZE = 2 * 1024 * 1024;
 
   public RefCountingStorage(String path) throws IOException {
     super(path);
@@ -89,11 +101,12 @@ public class RefCountingStorage extends AbstractStorage {
       super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
       // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams
       this.buf = compressedData;
+      this.len = -1; // ensure one time fill
     }
 
     @Override
     protected void fill() throws IOException {
-      if (len > 0) throw new EOFException();
+      if (len >= 0) throw new EOFException();
       len = buf.length;
       inf.setInput(buf, 0, len);
     }
@@ -106,10 +119,20 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   private void waitForPendingWriteForRecord(int record) {
-    Future<?> future = myPendingWriteRequests.get(record);
+    Future<?> future = myPendingZipRequests.get(record);
     if (future != null) {
       try {
         future.get();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    Callable action = myPendingWriteRequests.get(record);
+    if (action != null) {
+      try {
+        action.call();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -133,22 +156,52 @@ public class RefCountingStorage extends AbstractStorage {
     waitForPendingWriteForRecord(record);
 
     synchronized (myLock) {
-      myPendingWriteRequestsSize += bytes.getLength();
-      if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
-        zipAndWrite(bytes, record, fixedSize);
+      myPendingZipRequestsSize += bytes.getLength();
+      if (myPendingZipRequestsSize > MAX_PENDING_ZIP_SIZE) {
+        scheduleZippedContentToWrite(zip(bytes, record), record, fixedSize);
       } else {
-        myPendingWriteRequests.put(record, myPendingWriteRequestsExecutor.submit(new Callable<Object>() {
+        myPendingZipRequests.put(record, myPendingZipRequestsExecutor.submit(new Callable<Object>() {
           @Override
           public Object call() throws IOException {
-            zipAndWrite(bytes, record, fixedSize);
+            scheduleZippedContentToWrite(zip(bytes, record), record, fixedSize);
             return null;
           }
         }));
       }
+
+      if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
+        flushPendingWrites();   // we do it under lock to ensure normally only one thread will bulky flush stuff
+      }
     }
   }
 
-  private void zipAndWrite(ByteSequence bytes, int record, boolean fixedSize) throws IOException {
+  private void scheduleZippedContentToWrite(final BufferExposingByteArrayOutputStream outputStream, final int record, final boolean fixedSize) {
+    synchronized (myLock) {
+      myPendingWriteRequestsSize += outputStream.size();
+      myPendingWriteRequests.put(record, new Callable<Object>() {
+        @Override
+        public Void call() throws Exception {
+          write(outputStream, record, fixedSize);
+          return null;
+        }
+      });
+      if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {  // we do it under lock to ensure normally only one thread will bulky flush stuff
+        flushPendingWrites();
+      }
+    }
+  }
+
+
+  private void write(BufferExposingByteArrayOutputStream zippedBytes, int record, boolean fixedSize) throws IOException {
+    synchronized (myLock) {
+      if (!myPendingWriteRequests.containsKey(record)) return; // some thread helped us
+      super.writeBytes(record, new ByteSequence(zippedBytes.getInternalBuffer(), 0, zippedBytes.size()), fixedSize);
+      myPendingWriteRequestsSize -= zippedBytes.size();
+      myPendingWriteRequests.remove(record);
+    }
+  }
+
+  private BufferExposingByteArrayOutputStream zip(ByteSequence bytes, int record) throws IOException {
     BufferExposingByteArrayOutputStream s = new BufferExposingByteArrayOutputStream();
     DeflaterOutputStream out = new DeflaterOutputStream(s);
     try {
@@ -157,16 +210,11 @@ public class RefCountingStorage extends AbstractStorage {
     finally {
       out.close();
     }
-
     synchronized (myLock) {
-      doWrite(record, fixedSize, s);
-      myPendingWriteRequestsSize -= bytes.getLength();
-      myPendingWriteRequests.remove(record);
+      myPendingZipRequestsSize -= bytes.getLength();
+      myPendingZipRequests.remove(record);
     }
-  }
-
-  private void doWrite(int record, boolean fixedSize, BufferExposingByteArrayOutputStream s) throws IOException {
-    super.writeBytes(record, new ByteSequence(s.getInternalBuffer(), 0, s.size()), fixedSize);
+    return s;
   }
 
   @Override
@@ -207,40 +255,53 @@ public class RefCountingStorage extends AbstractStorage {
 
   @Override
   public void force() {
-    flushPendingWrites();
+    flushAllPendingWrites();
     super.force();
   }
 
   @Override
   public boolean isDirty() {
-    return myPendingWriteRequests.size() > 0 || super.isDirty();
+    return myPendingZipRequests.size() > 0 || myPendingWriteRequests.size() > 0 || super.isDirty();
   }
 
   @Override
   public boolean flushSome() {
-    flushPendingWrites();
+    flushAllPendingWrites();
     return super.flushSome();
   }
 
   @Override
   public void dispose() {
-    flushPendingWrites();
+    flushAllPendingWrites();
     super.dispose();
   }
 
   @Override
   public void checkSanity(int record) {
-    flushPendingWrites();
+    flushAllPendingWrites();
     super.checkSanity(record);
   }
 
   private void flushPendingWrites() {
-    for(Map.Entry<Integer, Future<?>> entry:myPendingWriteRequests.entrySet()) {
+    for(Map.Entry<Integer, Callable> entry: myPendingWriteRequests.entrySet()) {
+      try {
+        Callable value = entry.getValue();
+        if (value != null) value.call();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  private void flushAllPendingWrites() {
+    for(Map.Entry<Integer, Future<?>> entry: myPendingZipRequests.entrySet()) {
       try {
         entry.getValue().get();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
+
+    flushPendingWrites();
   }
 }

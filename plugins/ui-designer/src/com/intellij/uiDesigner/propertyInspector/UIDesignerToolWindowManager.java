@@ -17,6 +17,7 @@
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -231,7 +232,12 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
     }
 
     public void fileClosed(FileEditorManager source, VirtualFile file) {
-      processFileEditorChange(getActiveFormFileEditor());
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          processFileEditorChange(getActiveFormFileEditor());
+        }
+      });
     }
 
     public void selectionChanged(FileEditorManagerEvent event) {

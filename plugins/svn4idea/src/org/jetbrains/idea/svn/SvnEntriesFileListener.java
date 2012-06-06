@@ -17,8 +17,13 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -26,10 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class SvnEntriesFileListener extends VirtualFileAdapter {
   private final Project myProject;
@@ -79,8 +81,27 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
     if (isWcDbFile(file)) {
       LOG.debug("wc.db had changed");
       // all that we have now? or all?
-      final List<File> affectedPaths = myChangeListManager.getAffectedPaths();
-      myDirtyScopeManager.filePathsDirty(ObjectsConvertor.convert(affectedPaths, ObjectsConvertor.FILE_FILEPATH, ObjectsConvertor.NOT_NULL), null);
+      final List<LocalChangeList> listsCopy = myChangeListManager.getChangeListsCopy();
+      final Set<FilePath> affectedPaths = new HashSet<FilePath>();
+      for (LocalChangeList list : listsCopy) {
+        final Collection<Change> changes = list.getChanges();
+        for (Change change : changes) {
+          if (change.isMoved() || change.isRenamed()) {
+            final FilePath before = change.getBeforeRevision().getFile();
+            final FilePath after = change.getAfterRevision().getFile();
+            ((FilePathImpl) before).setIsDirectory(after.isDirectory());
+            affectedPaths.add(before);
+            affectedPaths.add(after);
+          } else {
+            if (change.getBeforeRevision() != null) {
+              affectedPaths.add(change.getBeforeRevision().getFile());
+            } else {
+              affectedPaths.add(change.getAfterRevision().getFile());
+            }
+          }
+        }
+      }
+      myDirtyScopeManager.filePathsDirty(affectedPaths, null);
       return;
     }
     if (isEntriesFile(file) && file.getParent() != null) {

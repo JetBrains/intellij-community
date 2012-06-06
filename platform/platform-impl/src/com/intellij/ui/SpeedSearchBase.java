@@ -133,6 +133,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected abstract Object[] getAllElements();
 
+  @Nullable
   protected abstract String getElementText(Object element);
 
   protected int getElementCount() {

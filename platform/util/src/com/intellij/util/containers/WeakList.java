@@ -102,6 +102,15 @@ public class WeakList<T> extends UnsafeWeakList<T> {
     }
   }
 
+  public List<T> copyAndClear() {
+    synchronized (myArray) {
+      List<T> result = new ArrayList<T>(myArray.size());
+      myArray.toStrongCollection(result);
+      clear();
+      return result;
+    }
+  }
+
   private class MySyncIterator extends MyIterator {
     protected void findNext() {
       synchronized (myArray) {

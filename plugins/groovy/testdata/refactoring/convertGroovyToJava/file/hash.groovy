@@ -1,5 +1,6 @@
 class BigInteger {
   BigInteger(int i, byte[] arr) {}
+  String toString(int radix) {""}
 }
 
 class NoSuchAlgorithmException extends Exception {}

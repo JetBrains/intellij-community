@@ -700,7 +700,12 @@ public class EditorUtil {
         first = new LogicalPosition(line, 0);
         break;
       }
-      line = document.getLineNumber(foldRegion.getStartOffset());
+      final int foldEndLine = document.getLineNumber(foldRegion.getStartOffset());
+      if (foldEndLine <= line) {
+        first = new LogicalPosition(line, 0);
+        break;
+      }
+      line = foldEndLine;
     }
     
 
@@ -715,7 +720,12 @@ public class EditorUtil {
         second = new LogicalPosition(line + 1, 0);
         break;
       }
-      line = document.getLineNumber(foldRegion.getEndOffset());
+      final int foldEndLine = document.getLineNumber(foldRegion.getStartOffset());
+      if (foldEndLine <= line) {
+        first = new LogicalPosition(line + 1, 0);
+        break;
+      }
+      line = foldEndLine;
     }
     
     if (second.line >= document.getLineCount()) {

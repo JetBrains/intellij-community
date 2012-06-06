@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,6 +157,8 @@ public class ReplaceExpressionUtil {
              i == JavaElementType.ARRAY_ACCESS_EXPRESSION ||
              i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION ||
              i == JavaElementType.JAVA_CODE_REFERENCE ||
+             i == JavaElementType.METHOD_REF_EXPRESSION ||
+             i == JavaElementType.LAMBDA_EXPRESSION ||
              i == JavaElementType.EMPTY_EXPRESSION) {
       return 14;
     }

@@ -37,7 +37,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
@@ -106,13 +106,27 @@ public class UsedIconsListingAction extends AnAction {
 
     PsiMethod getIconMethod = iconLoader.findMethodsByName("getIcon", false)[0];
     PsiMethod findIconMethod = iconLoader.findMethodsByName("findIcon", false)[0];
-    MethodReferencesSearch.search(getIconMethod, false).forEach(consumer);
-    MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
+    if (false) {
+      MethodReferencesSearch.search(getIconMethod, false).forEach(consumer);
+      MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
+    }
+
+    PsiClass javaeeIcons = JavaPsiFacade.getInstance(project).findClass("com.intellij.javaee.oss.JavaeeIcons", GlobalSearchScope.allScope(project));
+    MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
+
+    PsiClass allIcons =
+      JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons", GlobalSearchScope.allScope(project));
+
+    final HashMap<String, String> mappings = new HashMap<String, String>();
+    collectFields(allIcons, "", mappings);
+
+    final List<XmlAttribute> victims = new ArrayList<XmlAttribute>();
 
     PsiSearchHelper.SERVICE.getInstance(project).processAllFilesWithWordInText(
-      "action",
+      "icon",
       new DelegatingGlobalSearchScope(GlobalSearchScope.projectScope(project)) {
         @Override
         public boolean contains(VirtualFile file) {
@@ -123,57 +137,63 @@ public class UsedIconsListingAction extends AnAction {
       new Processor<PsiFile>() {
         @Override
         public boolean process(PsiFile file) {
-          if (file instanceof XmlFile) {
-            processTag(((XmlFile)file).getRootTag());
-          }
-          return true;
-        }
+          file.accept(new XmlRecursiveElementVisitor() {
+            @Override
+            public void visitXmlTag(XmlTag tag) {
+              super.visitXmlTag(tag);
 
-        private void processTag(XmlTag tag) {
-          if ("action".equals(tag.getLocalName())) {
-            String icon = tag.getAttributeValue("icon");
-            if (icon != null) {
-              answer.add(icon);
+              String icon = tag.getAttributeValue("icon");
+              if (icon != null) {
+                answer.add(icon);
+                if (mappings.containsKey(icon)) {
+                  victims.add(tag.getAttribute("icon"));
+                }
+              }
             }
-          }
-          else {
-            for (XmlTag sub : tag.getSubTags()) {
-              processTag(sub);
-            }
-          }
+          });
+          return true;
         }
       },
 
       true
     );
 
-    ArrayList<String> sorted = new ArrayList<String>(answer);
-    Collections.sort(sorted);
-
-    for (String icon : sorted) {
-      System.out.println(icon);
+    for (final XmlAttribute victim : victims) {
+      String value = victim.getValue();
+      final String replacement = mappings.get(value);
+      if (replacement != null) {
+        new WriteCommandAction<Void>(project, victim.getContainingFile()) {
+          @Override
+          protected void run(Result<Void> result) throws Throwable {
+            victim.setValue(replacement);
+          }
+        }.execute();
+      }
     }
 
-    PsiClass allIcons =
-      JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons", GlobalSearchScope.allScope(project));
+    if (true /*do replacements*/) {
+      ArrayList<String> sorted = new ArrayList<String>(answer);
+      Collections.sort(sorted);
 
-    HashMap<String, String> mappings = new HashMap<String, String>();
-    collectFields(allIcons, "", mappings);
+      for (String icon : sorted) {
+        System.out.println(icon);
+      }
 
-    final JVMElementFactory factory = JVMElementFactories.getFactory(JavaLanguage.INSTANCE, project);
-    for (Map.Entry<String, Collection<PsiCallExpression>> entry : calls.entrySet()) {
-      String path = entry.getKey();
-      final String replacement = mappings.get(path);
-      if (replacement != null) {
-        for (final PsiCallExpression call : entry.getValue()) {
-          new WriteCommandAction(project, call.getContainingFile()) {
-            @Override
-            protected void run(Result result) throws Throwable {
-              JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-              PsiElement expr = factory.createExpressionFromText("com.intellij.icons." + replacement, call);
-              styleManager.shortenClassReferences(call.replace(expr));
-            }
-          }.execute();
+      final JVMElementFactory factory = JVMElementFactories.getFactory(JavaLanguage.INSTANCE, project);
+      for (Map.Entry<String, Collection<PsiCallExpression>> entry : calls.entrySet()) {
+        String path = entry.getKey();
+        final String replacement = mappings.get(path);
+        if (replacement != null) {
+          for (final PsiCallExpression call : entry.getValue()) {
+            new WriteCommandAction(project, call.getContainingFile()) {
+              @Override
+              protected void run(Result result) throws Throwable {
+                JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+                PsiElement expr = factory.createExpressionFromText("com.intellij.icons." + replacement, call);
+                styleManager.shortenClassReferences(call.replace(expr));
+              }
+            }.execute();
+          }
         }
       }
     }

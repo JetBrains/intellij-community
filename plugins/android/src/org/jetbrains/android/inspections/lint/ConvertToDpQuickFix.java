@@ -3,7 +3,6 @@ package org.jetbrains.android.inspections.lint;
 import com.android.resources.Density;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -11,7 +10,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,12 +22,12 @@ import java.util.regex.Pattern;
 class ConvertToDpQuickFix implements AndroidLintQuickFix {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.inspections.lint.ConvertToDpQuickFix");
   private static final Pattern PX_ATTR_VALUE_PATTERN = Pattern.compile("(\\d+)px");
-  
+
   private static int ourPrevDpi = Density.DEFAULT_DENSITY;
 
   @Override
-  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @Nullable Editor editor) {
-    if (editor == null) {
+  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull AndroidQuickfixContexts.Context context) {
+    if (context instanceof AndroidQuickfixContexts.BatchContext) {
       return;
     }
     final XmlTag tag = PsiTreeUtil.getParentOfType(startElement, XmlTag.class);
@@ -42,7 +40,7 @@ class ConvertToDpQuickFix implements AndroidLintQuickFix {
     }
 
     final String[] densityPresentableNames = new String[densities.size()];
-    
+
     String defaultValue = null;
     String initialValue = null;
 
@@ -54,7 +52,7 @@ class ConvertToDpQuickFix implements AndroidLintQuickFix {
       if (dpi == 0) {
         continue;
       }
-      
+
       if (dpi == ourPrevDpi) {
         initialValue = densityPresentableNames[i];
       }
@@ -69,9 +67,9 @@ class ConvertToDpQuickFix implements AndroidLintQuickFix {
     if (initialValue == null) {
       return;
     }
-    
+
     final int dpi;
-    
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       dpi = Density.DEFAULT_DENSITY;
     }
@@ -115,8 +113,11 @@ class ConvertToDpQuickFix implements AndroidLintQuickFix {
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement startElement, @NotNull PsiElement endElement, boolean inBatchMode) {
-    return !inBatchMode && PsiTreeUtil.getParentOfType(startElement, XmlTag.class) != null;
+  public boolean isApplicable(@NotNull PsiElement startElement,
+                              @NotNull PsiElement endElement,
+                              @NotNull AndroidQuickfixContexts.ContextType contextType) {
+    return contextType != AndroidQuickfixContexts.BatchContext.TYPE &&
+           PsiTreeUtil.getParentOfType(startElement, XmlTag.class) != null;
   }
 
   @NotNull

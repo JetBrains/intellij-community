@@ -6,26 +6,6 @@ import javax.swing.*;
 
 public class AllIcons {
   
-  public static class _cvs {
-    public static final Icon CheckOut = IconLoader.getIcon("/_cvs/checkOut.png"); 
-    public static final Icon Cvs = IconLoader.getIcon("/_cvs/cvs.png"); 
-    public static final Icon HideMissing = IconLoader.getIcon("/_cvs/hideMissing.png"); 
-    public static final Icon HideUnknown = IconLoader.getIcon("/_cvs/hideUnknown.png"); 
-    public static final Icon HideUptodate = IconLoader.getIcon("/_cvs/hideUptodate.png"); 
-    public static final Icon Missing = IconLoader.getIcon("/_cvs/missing.png"); 
-    public static final Icon ShowAsTree = IconLoader.getIcon("/_cvs/showAsTree.png"); 
-    public static final Icon TestInProgress1 = IconLoader.getIcon("/_cvs/testInProgress1.png"); 
-    public static final Icon TestInProgress2 = IconLoader.getIcon("/_cvs/testInProgress2.png"); 
-    public static final Icon TestInProgress3 = IconLoader.getIcon("/_cvs/testInProgress3.png"); 
-    public static final Icon TestInProgress4 = IconLoader.getIcon("/_cvs/testInProgress4.png"); 
-    public static final Icon TestInProgress5 = IconLoader.getIcon("/_cvs/testInProgress5.png"); 
-    public static final Icon TestInProgress6 = IconLoader.getIcon("/_cvs/testInProgress6.png"); 
-    public static final Icon TestInProgress7 = IconLoader.getIcon("/_cvs/testInProgress7.png"); 
-    public static final Icon TestInProgress8 = IconLoader.getIcon("/_cvs/testInProgress8.png"); 
-    public static final Icon Unknown = IconLoader.getIcon("/_cvs/unknown.png"); 
-
-  }
-  
   public static class Actions {
     public static final Icon AddFacesSupport = IconLoader.getIcon("/actions/addFacesSupport.png"); 
     public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.png"); 
@@ -155,6 +135,7 @@ public class AllIcons {
     public static final Icon Search = IconLoader.getIcon("/actions/search.png"); 
     public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.png"); 
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); 
+    public static final Icon ShowAsTree = IconLoader.getIcon("/actions/showAsTree.png"); 
     public static final Icon ShowChangesOnly = IconLoader.getIcon("/actions/showChangesOnly.png"); 
     public static final Icon ShowHiddens = IconLoader.getIcon("/actions/showHiddens.png"); 
     public static final Icon ShowImportStatements = IconLoader.getIcon("/actions/showImportStatements.png"); 

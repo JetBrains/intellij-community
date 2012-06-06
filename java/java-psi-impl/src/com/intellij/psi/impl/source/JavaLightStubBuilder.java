@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.ASTNodeBuilder;
-import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
@@ -31,7 +29,6 @@ import com.intellij.psi.stubs.LightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
-
 
 public class JavaLightStubBuilder extends LightStubBuilder {
   @Override
@@ -53,20 +50,17 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   @Override
   public boolean skipChildProcessingWhenBuildingStubs(final IElementType nodeType, final IElementType childType) {
-    return childType == JavaElementType.PARAMETER && nodeType != JavaElementType.PARAMETER_LIST;
+    return childType == JavaElementType.PARAMETER && nodeType != JavaElementType.PARAMETER_LIST ||
+           childType == JavaElementType.PARAMETER_LIST && nodeType == JavaElementType.LAMBDA_EXPRESSION;
   }
 
-  static int totalMethods;
-  static int nonexpandedMethods;
-
   @Override
-  public boolean skipChildProcessingWhenBuildingStubs(LightStubBuilder builder,
-                                                       LighterAST tree,
-                                                       LighterASTNode parent,
-                                                       LighterASTNode child) {
+  public boolean skipChildProcessingWhenBuildingStubs(final LightStubBuilder builder,
+                                                      final LighterAST tree,
+                                                      final LighterASTNode parent,
+                                                      final LighterASTNode child) {
     if (child.getTokenType() == JavaElementType.CODE_BLOCK) {
       if (child instanceof ASTNodeBuilder.ASTUnparsedNodeMarker) {
-        ++totalMethods;
         ASTNodeBuilder.ASTUnparsedNodeMarker nodeMarker = (ASTNodeBuilder.ASTUnparsedNodeMarker)child;
         final ASTNodeBuilder nodeBuilder = nodeMarker.getBuilder();
         final int endLexemIndex = nodeMarker.getEndLexemIndex();
@@ -89,7 +83,6 @@ public class JavaLightStubBuilder extends LightStubBuilder {
           }
         }
 
-        ++nonexpandedMethods;
         return true;
       }
     }

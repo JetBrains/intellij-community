@@ -59,7 +59,7 @@ import java.util.regex.Pattern;
 public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create(MavenResourceCompiler.class.getSimpleName() + ".FILES_TO_DELETE");
 
-  private static final Set<String> DEFAULT_NON_FILTERED_EXTENSIONS = CollectionFactory.newSet("jpg", "jpeg", "gif", "bmp", "png");
+  private static final Set<String> DEFAULT_NON_FILTERED_EXTENSIONS = CollectionFactory.hashSet("jpg", "jpeg", "gif", "bmp", "png");
 
   private Map<String, Set<String>> myOutputItemsCache = new THashMap<String, Set<String>>();
 

@@ -30,43 +30,29 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
-import static com.intellij.lang.PsiBuilderUtil.nextTokenType;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 public class DeclarationParser {
-  private final ExpressionParser myExpressionParser;
-  private final StatementParser myStatementParser;
-  private final ReferenceParser myReferenceParser;
-
   public enum Context {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
   }
 
-  private static final TokenSet AFTER_END_DECLARATION_SET = TokenSet.create(JavaElementType.FIELD, JavaElementType.METHOD);
+  private static final TokenSet AFTER_END_DECLARATION_SET = TokenSet.create(
+    JavaElementType.FIELD, JavaElementType.METHOD);
   private static final TokenSet BEFORE_LBRACE_ELEMENTS_SET = TokenSet.create(
     JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD);
   private static final TokenSet APPEND_TO_METHOD_SET = TokenSet.create(
     JavaTokenType.IDENTIFIER, JavaTokenType.COMMA, JavaTokenType.THROWS_KEYWORD);
+  private static final TokenSet PARAM_LIST_STOPPERS = TokenSet.create(
+    JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW);
 
   private static final String WHITESPACES = "\n\r \t";
   private static final String LINE_ENDS = "\n\r";
 
-  public DeclarationParser() {
-    myReferenceParser = new ReferenceParser(this);
-    myExpressionParser = new ExpressionParser(this, myReferenceParser);
-    myStatementParser = new StatementParser(this, myExpressionParser, myReferenceParser);
-  }
+  private final JavaParser myParser;
 
-  public ReferenceParser getReferenceParser() {
-    return myReferenceParser;
-  }
-
-  public ExpressionParser getExpressionParser() {
-    return myExpressionParser;
-  }
-
-  public StatementParser getStatementParser() {
-    return myStatementParser;
+  public DeclarationParser(@NotNull final JavaParser javaParser) {
+    myParser = javaParser;
   }
 
   public void parseClassBodyWithBraces(final PsiBuilder builder, final boolean isAnnotation, final boolean isEnum) {
@@ -96,9 +82,10 @@ public class DeclarationParser {
       return null;
     }
 
-    myReferenceParser.parseTypeParameters(builder);
-    myReferenceParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
-    myReferenceParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
+    final ReferenceParser refParser = myParser.getReferenceParser();
+    refParser.parseTypeParameters(builder);
+    refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
+    refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
 
     if (builder.getTokenType() != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
@@ -173,7 +160,7 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       if (builder.getTokenType() == JavaTokenType.LPARENTH) {
-        myExpressionParser.parseArgumentList(builder);
+        myParser.getExpressionParser().parseArgumentList(builder);
       }
       else {
         emptyElement(builder, JavaElementType.EXPRESSION_LIST);
@@ -225,7 +212,7 @@ public class DeclarationParser {
       }
 
       // adding a reference, not simple tokens allows "Browse ..." to work well
-      final PsiBuilder.Marker ref = myReferenceParser.parseJavaCodeReference(builder, true, true, false, false, false);
+      final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, false, false, false);
       if (ref == null) {
         builder.advanceLexer();
       }
@@ -281,7 +268,7 @@ public class DeclarationParser {
 
     PsiBuilder.Marker typeParams = null;
     if (builder.getTokenType() == JavaTokenType.LT) {
-      typeParams = myReferenceParser.parseTypeParameters(builder);
+      typeParams = myParser.getReferenceParser().parseTypeParameters(builder);
     }
 
     if (context == Context.FILE) {
@@ -322,7 +309,7 @@ public class DeclarationParser {
         return modList;
       }
 
-      final PsiBuilder.Marker codeBlock = myStatementParser.parseCodeBlock(builder);
+      final PsiBuilder.Marker codeBlock = myParser.getStatementParser().parseCodeBlock(builder);
       assert codeBlock != null : builder.getOriginalText();
 
       if (typeParams != null) {
@@ -377,7 +364,7 @@ public class DeclarationParser {
 
   @NotNull
   private PsiBuilder.Marker parseTypeNotNull(final PsiBuilder builder) {
-    final PsiBuilder.Marker type = myReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+    final PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
     assert type != null : builder.getOriginalText();
     return type;
   }
@@ -400,7 +387,7 @@ public class DeclarationParser {
         isEmpty = false;
       }
       else if (tokenType == JavaTokenType.AT) {
-        if (ElementType.KEYWORD_BIT_SET.contains(nextTokenType(builder))) {
+        if (ElementType.KEYWORD_BIT_SET.contains(builder.lookAhead(1))) {
           break;
         }
         parseAnnotation(builder);
@@ -432,7 +419,8 @@ public class DeclarationParser {
       }
     }
 
-    myReferenceParser.parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, JavaElementType.THROWS_LIST, JavaTokenType.COMMA);
+    myParser.getReferenceParser()
+      .parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, JavaElementType.THROWS_LIST, JavaTokenType.COMMA);
 
     final boolean hasDefault = expect(builder, JavaTokenType.DEFAULT_KEYWORD);
     if (hasDefault && anno) {
@@ -461,7 +449,7 @@ public class DeclarationParser {
       error(builder, JavaErrorMessages.message("expected.lbrace"));
     }
     if (!expect(builder, JavaTokenType.SEMICOLON) && builder.getTokenType() == JavaTokenType.LBRACE) {
-      myStatementParser.parseCodeBlock(builder);
+      myParser.getStatementParser().parseCodeBlock(builder);
     }
 
     done(declaration, anno ? JavaElementType.ANNOTATION_METHOD : JavaElementType.METHOD);
@@ -470,19 +458,28 @@ public class DeclarationParser {
 
   @NotNull
   public PsiBuilder.Marker parseParameterList(final PsiBuilder builder) {
-    return parseElementList(builder, false);
+    return parseElementList(builder, ListType.NORMAL);
   }
 
   @NotNull
   public PsiBuilder.Marker parseResourceList(final PsiBuilder builder) {
-    return parseElementList(builder, true);
+    return parseElementList(builder, ListType.RESOURCE);
   }
 
   @NotNull
-  private PsiBuilder.Marker parseElementList(final PsiBuilder builder, final boolean resources) {
-    assert builder.getTokenType() == JavaTokenType.LPARENTH : builder.getTokenType();
+  public PsiBuilder.Marker parseLambdaParameterList(final PsiBuilder builder, final boolean typed) {
+    return parseElementList(builder, typed ? ListType.LAMBDA_TYPED : ListType.LAMBDA_UNTYPED);
+  }
+
+  private enum ListType { NORMAL, RESOURCE, LAMBDA_TYPED, LAMBDA_UNTYPED }
+
+  @NotNull
+  private PsiBuilder.Marker parseElementList(final PsiBuilder builder, final ListType type) {
+    final boolean lambda = (type == ListType.LAMBDA_TYPED || type == ListType.LAMBDA_UNTYPED);
+    final boolean resources = (type == ListType.RESOURCE);
     final PsiBuilder.Marker elementList = builder.mark();
-    builder.advanceLexer();
+    final boolean leftParenth = expect(builder, JavaTokenType.LPARENTH);
+    assert lambda || leftParenth : builder.getTokenType();
 
     final IElementType delimiter = resources ? JavaTokenType.SEMICOLON : JavaTokenType.COMMA;
     final String noDelimiterMsg = resources ? "expected.semicolon" : "expected.comma";
@@ -494,10 +491,11 @@ public class DeclarationParser {
     boolean noElements = true;
     while (true) {
       final IElementType tokenType = builder.getTokenType();
-      if (tokenType == null || tokenType == JavaTokenType.RPARENTH || tokenType == JavaTokenType.LBRACE) {
+      if (tokenType == null || PARAM_LIST_STOPPERS.contains(tokenType)) {
         final boolean noLastElement = !delimiterExpected && (!noElements && !resources || noElements && resources);
         if (noLastElement) {
-          error(builder, JavaErrorMessages.message("expected.identifier.or.type"));
+          final String key = lambda ? "expected.parameter" : "expected.identifier.or.type";
+          error(builder, JavaErrorMessages.message(key));
         }
         if (tokenType == JavaTokenType.RPARENTH) {
           if (invalidElements != null) {
@@ -512,7 +510,9 @@ public class DeclarationParser {
               invalidElements.error(errorMessage);
             }
             invalidElements = null;
-            error(builder, JavaErrorMessages.message("expected.rparen"));
+            if (leftParenth) {
+              error(builder, JavaErrorMessages.message("expected.rparen"));
+            }
           }
         }
         break;
@@ -530,7 +530,9 @@ public class DeclarationParser {
         }
       }
       else {
-        final PsiBuilder.Marker listElement = resources ? parseResource(builder) : parseParameter(builder, true, false);
+        final PsiBuilder.Marker listElement = resources ? parseResource(builder) :
+                                              lambda ? parseLambdaParameter(builder, type == ListType.LAMBDA_TYPED) :
+                                              parseParameter(builder, true, false);
         if (listElement != null) {
           delimiterExpected = true;
           if (invalidElements != null) {
@@ -558,12 +560,14 @@ public class DeclarationParser {
       }
 
       // adding a reference, not simple tokens allows "Browse .." to work well
-      final PsiBuilder.Marker ref = myReferenceParser.parseJavaCodeReference(builder, true, true, false, false, false);
+      final PsiBuilder.Marker ref = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, false, false, false);
       if (ref == null && builder.getTokenType() != null) {
         builder.advanceLexer();
       }
     }
 
+    // todo: false positive
+    //noinspection ConstantConditions
     if (invalidElements != null) {
       invalidElements.error(errorMessage);
     }
@@ -574,36 +578,45 @@ public class DeclarationParser {
 
   @Nullable
   public PsiBuilder.Marker parseParameter(final PsiBuilder builder, final boolean ellipsis, final boolean disjunctiveType) {
-    return parseListElement(builder, ellipsis, disjunctiveType, false);
+    return parseListElement(builder, true, ellipsis, disjunctiveType, false);
   }
 
   @Nullable
   public PsiBuilder.Marker parseResource(final PsiBuilder builder) {
-    return parseListElement(builder, false, false, true);
+    return parseListElement(builder, true, false, false, true);
+  }
+
+  @Nullable
+  public PsiBuilder.Marker parseLambdaParameter(final PsiBuilder builder, final boolean typed) {
+    return parseListElement(builder, typed, true, false, false);
   }
 
   @Nullable
   private PsiBuilder.Marker parseListElement(final PsiBuilder builder,
-                                                    final boolean ellipsis,
-                                                    final boolean disjunctiveType,
-                                                    final boolean resource) {
+                                             final boolean typed,
+                                             final boolean ellipsis,
+                                             final boolean disjunctiveType,
+                                             final boolean resource) {
     final PsiBuilder.Marker param = builder.mark();
 
     final Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
 
-    int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
-    if (ellipsis) flags |= ReferenceParser.ELLIPSIS;
-    if (disjunctiveType) flags |= ReferenceParser.DISJUNCTIONS;
-    final ReferenceParser.TypeInfo typeInfo = myReferenceParser.parseTypeInfo(builder, flags);
+    ReferenceParser.TypeInfo typeInfo = null;
+    if (typed) {
+      int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
+      if (ellipsis) flags |= ReferenceParser.ELLIPSIS;
+      if (disjunctiveType) flags |= ReferenceParser.DISJUNCTIONS;
+      typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
-    if (typeInfo == null) {
-      if (modListInfo.second) {
-        param.rollbackTo();
-        return null;
-      }
-      else {
-        error(builder, JavaErrorMessages.message("expected.type"));
-        emptyElement(builder, JavaElementType.TYPE);
+      if (typeInfo == null) {
+        if (modListInfo.second) {
+          param.rollbackTo();
+          return null;
+        }
+        else {
+          error(builder, JavaErrorMessages.message("expected.type"));
+          emptyElement(builder, JavaElementType.TYPE);
+        }
       }
     }
 
@@ -621,7 +634,7 @@ public class DeclarationParser {
     }
 
     if (expectOrError(builder, JavaTokenType.EQ, "expected.eq")) {
-      if (myExpressionParser.parse(builder) == null) {
+      if (myParser.getExpressionParser().parse(builder) == null) {
         error(builder, JavaErrorMessages.message("expected.expression"));
       }
     }
@@ -659,7 +672,7 @@ public class DeclarationParser {
       }
 
       if (expect(builder, JavaTokenType.EQ)) {
-        final PsiBuilder.Marker expr = myExpressionParser.parse(builder);
+        final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
         if (expr != null) {
           shouldRollback = false;
         }
@@ -756,7 +769,7 @@ public class DeclarationParser {
     final PsiBuilder.Marker anno = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker classRef = myReferenceParser.parseJavaCodeReference(builder, true, false, false, false, false);
+    final PsiBuilder.Marker classRef = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false, false);
     if (classRef == null) {
       error(builder, JavaErrorMessages.message("expected.class.reference"));
     }
@@ -860,7 +873,7 @@ public class DeclarationParser {
       result = parseAnnotationArrayInitializer(builder);
     }
     else {
-      result = myExpressionParser.parseConditional(builder);
+      result = myParser.getExpressionParser().parseConditional(builder);
     }
 
     if (result == null) {

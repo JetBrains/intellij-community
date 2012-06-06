@@ -1,6 +1,5 @@
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.Pair;
@@ -93,14 +92,9 @@ public class IncProjectBuilder {
 
   public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild, boolean forceCleanCaches)
     throws RebuildRequestedException {
-    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Forceable() {
+    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Runnable() {
       @Override
-      public boolean isDirty() {
-        return true; // always perform flush when not enough memory
-      }
-
-      @Override
-      public void force() {
+      public void run() {
         myProjectDescriptor.dataManager.flush(false);
         myTimestamps.force();
       }

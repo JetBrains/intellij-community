@@ -74,6 +74,7 @@ public class PsiElementResolveResult implements ResolveResult{
            (myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText());
   }
 
+  @NotNull
   public static ResolveResult[] createResults(@Nullable Collection<? extends PsiElement> elements) {
     if (elements == null || elements.isEmpty()) return EMPTY_ARRAY;
 
@@ -85,6 +86,7 @@ public class PsiElementResolveResult implements ResolveResult{
     return results;
   }
 
+  @NotNull
   public static ResolveResult[] createResults(@Nullable PsiElement[] elements) {
     if (elements == null || elements.length == 0) return EMPTY_ARRAY;
 

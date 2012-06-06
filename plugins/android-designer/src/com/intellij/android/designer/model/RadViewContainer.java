@@ -18,6 +18,7 @@ package com.intellij.android.designer.model;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.ICaption;
 import com.intellij.designer.designSurface.StaticDecorator;
+import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -52,5 +53,10 @@ public class RadViewContainer extends RadViewComponent {
   public ICaption getCaption() {
     RadLayout layout = getLayout();
     return layout == null ? null : layout.getCaption(this);
+  }
+
+  @Override
+  public RadComponent morphingTo(MetaModel target) throws Exception {
+    return ComponentMorphingTool.convert(this, target);
   }
 }

@@ -18,13 +18,18 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+
+import java.util.Collection;
 
 /**
  * @author ven
@@ -37,14 +42,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   }
 
   public void inlineElement(Project project, Editor editor, PsiElement element) {
-    PsiField field = (PsiField) element;
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
-
-    if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-      String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
-      return;
-    }
+    final PsiField field = (PsiField) element;
 
     if (!field.hasInitializer()) {
       String message = RefactoringBundle.message("no.initializer.present.for.the.field");
@@ -64,15 +62,35 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
       return;
     }
 
+    if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+      final Ref<Boolean> hasWriteUsages = new Ref<Boolean>(false);
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
+        public void run() {
+          for (PsiReference reference : ReferencesSearch.search(field)) {
+            final PsiElement referenceElement = reference.getElement();
+            if (!(referenceElement instanceof PsiExpression && PsiUtil.isAccessedForReading((PsiExpression)referenceElement))) {
+              hasWriteUsages.set(true);
+              break;
+            }
+          }
+        }
+      }, "Check if inline is possible...", true, project)) {
+        return;
+      }
+      if (hasWriteUsages.get()) {
+        String message = RefactoringBundle.message("0.refactoring.is.supported.only.for.final.fields", REFACTORING_NAME);
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_FIELD);
+        return;
+      }
+    }
+
     PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (reference != null && !field.equals(reference.resolve())) {
       reference = null;
     }
 
-    final boolean invokedOnReference = (reference != null);
-    if (!invokedOnReference) {
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
-    }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
     PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
     dialog.show();

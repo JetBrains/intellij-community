@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,10 +154,10 @@ public class LightStubBuilder implements StubBuilder {
     return skipChildProcessingWhenBuildingStubs(parent != null ? parent.getElementType() : null, childType);
   }
 
-  public boolean skipChildProcessingWhenBuildingStubs(LightStubBuilder builder,
-                                                       LighterAST tree,
-                                                       final LighterASTNode parent,
-                                                       final LighterASTNode child) {
+  public boolean skipChildProcessingWhenBuildingStubs(final LightStubBuilder builder,
+                                                      final LighterAST tree,
+                                                      final LighterASTNode parent,
+                                                      final LighterASTNode child) {
     return false;
   }
 

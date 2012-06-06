@@ -1067,10 +1067,10 @@
 
     <group id="Groovy.Dynamic.Toolbar">
       <action id="Groovy.Dynamic.Remove" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.RemoveDynamicAction"
-              icon="/general/remove.png" text="Remove" description="Remove dynamic element"/>
+              icon="AllIcons.General.Remove" text="Remove" description="Remove dynamic element"/>
       <separator/>
-      <action id="Groovy.Dynamic.ExpandAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ExpandAllAction" icon="/actions/expandall.png" text="Expand all" description="Collapse all"/>
-      <action id="Groovy.Dynamic.CollapseAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.CollapseAllAction" icon="/actions/collapseall.png" text="Collapse all" description="Collapse all"/>
+      <action id="Groovy.Dynamic.ExpandAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ExpandAllAction" icon="AllIcons.Actions.Expandall" text="Expand all" description="Collapse all"/>
+      <action id="Groovy.Dynamic.CollapseAll" class="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.CollapseAllAction" icon="AllIcons.Actions.Collapseall" text="Collapse all" description="Collapse all"/>
     </group>
 
       

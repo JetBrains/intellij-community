@@ -19,12 +19,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
-   *
-   */
+ *
+ */
 
 public class MethodOrClassSelectioner extends BasicSelectioner {
   @Override
@@ -69,16 +72,32 @@ public class MethodOrClassSelectioner extends BasicSelectioner {
     }
 
     if (e instanceof PsiClass) {
-      int start = CodeBlockOrInitializerSelectioner.findOpeningBrace(children);
-      // in non-Java PsiClasses, there can be no opening brace
-      if (start != 0) {
-        int end = CodeBlockOrInitializerSelectioner.findClosingBrace(children, start);
-
-        result.addAll(expandToWholeLine(editorText, new TextRange(start, end)));
-      }
+      result.addAll(selectWithTypeParameters((PsiClass)e));
+      result.addAll(selectBetweenBracesLines(children, editorText));
     }
 
 
     return result;
+  }
+
+  private static Collection<TextRange> selectWithTypeParameters(@NotNull PsiClass psiClass) {
+    final PsiIdentifier identifier = psiClass.getNameIdentifier();
+    final PsiTypeParameterList list = psiClass.getTypeParameterList();
+    if (identifier != null && list != null) {
+      return Collections.singletonList(new TextRange(identifier.getTextRange().getStartOffset(), list.getTextRange().getEndOffset()));
+    }
+    return Collections.emptyList();
+  }
+
+  private static Collection<TextRange> selectBetweenBracesLines(@NotNull PsiElement[] children,
+                                                                @NotNull CharSequence editorText) {
+    int start = CodeBlockOrInitializerSelectioner.findOpeningBrace(children);
+    // in non-Java PsiClasses, there can be no opening brace
+    if (start != 0) {
+      int end = CodeBlockOrInitializerSelectioner.findClosingBrace(children, start);
+
+      return expandToWholeLine(editorText, new TextRange(start, end));
+    }
+    return Collections.emptyList();
   }
 }

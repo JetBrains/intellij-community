@@ -19,11 +19,9 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.lexer.JavaLexer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -69,7 +67,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final T mySource;
   private PsiModifierListStub myModList;
   private PsiClassStub myResult;
-  private JavaLexer myLexer;
 
   public StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access) {
     super(Opcodes.ASM4);
@@ -106,7 +103,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     LanguageLevel languageLevel = convertFromVersion(version);
-    myLexer = new JavaLexer(languageLevel);
 
     ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
@@ -275,6 +271,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   public void visitOuterClass(final String owner, final String name, final String desc) {
+    if (myParent instanceof PsiFileStub) {
+      throw new OutOfOrderInnerClassException();
+    }
   }
 
   @Override
@@ -296,7 +295,16 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if ((access & Opcodes.ACC_SYNTHETIC) != 0) return;
     if (!isCorrectName(innerName)) return;
 
-    if (innerName == null || outerName == null || !getClassName(outerName).equals(myResult.getQualifiedName())) return;
+    if (innerName == null || outerName == null) return;
+    if ((getClassName(outerName) + "." + innerName).equals(myResult.getQualifiedName())) {
+      // Our result is inner class
+
+      if (myParent instanceof PsiFileStub) {
+        throw new OutOfOrderInnerClassException();
+      }
+    }
+
+    if (!getClassName(outerName).equals(myResult.getQualifiedName())) return;
 
     final T innerSource = myInnersStrategy.findInnerClass(innerName, mySource);
     if (innerSource == null) return;
@@ -308,13 +316,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
   }
 
-  private boolean isCorrectName(String name) {
-    if (name == null) return false;
-
-    myLexer.start(name);
-    if (myLexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
-    myLexer.advance();
-    return myLexer.getTokenType() == null;
+  private static boolean isCorrectName(String name) {
+    return name != null;
   }
 
   @Override

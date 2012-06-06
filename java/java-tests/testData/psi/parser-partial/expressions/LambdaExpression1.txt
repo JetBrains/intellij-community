@@ -1,0 +1,12 @@
+PsiJavaFile:LambdaExpression1.java
+  PsiLambdaExpression:p ->
+    PsiParameterList:p
+      PsiParameter:p
+        PsiModifierList:
+          <empty list>
+        PsiIdentifier:p('p')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiErrorElement:'{' expected
+      <empty list>
+  PsiWhiteSpace(' ')

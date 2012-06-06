@@ -350,7 +350,8 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
 
   @Override
   public void configureAnnotations() {
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(ADDITIONAL_ANNOTATIONS, "Do not check if annotated by", true);
+    final ArrayList<String> list = new ArrayList<String>(ADDITIONAL_ANNOTATIONS);
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Do not check if annotated by", true);
     new DialogWrapper(myProject) {
       {
         init();
@@ -360,6 +361,13 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
       @Override
       protected JComponent createCenterPanel() {
         return listPanel;
+      }
+
+      @Override
+      protected void doOKAction() {
+        ADDITIONAL_ANNOTATIONS.clear();
+        ADDITIONAL_ANNOTATIONS.addAll(list);
+        super.doOKAction();
       }
     }.show();
   }

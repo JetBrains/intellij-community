@@ -22,10 +22,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
-import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.refactoring.ui.NameSuggestionsField;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
@@ -48,7 +50,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   private final int myOccurrencesCount;
   private final GrIntroduceVariableHandler.Validator myValidator;
 
-  private TextFieldWithAutoCompletion<String> myNameField;
+  private NameSuggestionsField myNameField;
   private JCheckBox myCbIsFinal;
   private JCheckBox myCbReplaceAllOccurrences;
   private GrTypeComboBox myTypeComboBox;
@@ -142,7 +144,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   @Nullable
   protected String getEnteredName() {
-    return myNameField.getText().trim();
+    return myNameField.getEnteredName();
   }
 
   protected boolean isReplaceAllOccurrences() {
@@ -158,17 +160,10 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return myTypeComboBox.getSelectedType();
   }
 
-  private TextFieldWithAutoCompletion<String> setUpNameComboBox() {
+  private NameSuggestionsField setUpNameComboBox() {
     List<String> possibleNames = Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(myExpression, myValidator));
 
-    TextFieldWithAutoCompletion<String> result = TextFieldWithAutoCompletion.create(myProject, possibleNames, null, true);
-
-    if (possibleNames.size() > 0) {
-      result.setText(possibleNames.get(0));
-      result.selectAll();
-    }
-
-    return result;
+    return new NameSuggestionsField(ArrayUtil.toStringArray(possibleNames), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
   public JComponent getPreferredFocusedComponent() {

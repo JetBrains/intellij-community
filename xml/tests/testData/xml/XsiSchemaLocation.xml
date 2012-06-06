@@ -1,0 +1,4 @@
+<rap xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="myschema <error>http://www.inversoft.com/schemas/rap/rap-config-1.0.xsd</error>"
+    xsi:noNamespaceSchemaLocation="<error>http://www.inversoft.com/schemas/rap/rap-config-1.0.xsd</error>">
+</rap>

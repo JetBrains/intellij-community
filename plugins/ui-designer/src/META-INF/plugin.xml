@@ -155,11 +155,11 @@
     <group id="GuiDesigner.MainToolbarActions">
       <separator/>
       <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction"
-              icon="/actions/preview.png"/>
+              icon="AllIcons.Actions.Preview"/>
       <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction"
               icon="/com/intellij/uiDesigner/icons/dataBindingWizard.png"/>
       <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"
-              icon="/actions/refresh.png"/>
+              icon="AllIcons.Actions.Refresh"/>
       <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>
       <separator/>
 

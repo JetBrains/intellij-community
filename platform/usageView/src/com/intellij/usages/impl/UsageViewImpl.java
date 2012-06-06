@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -34,7 +35,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -47,6 +48,7 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -237,20 +239,26 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       });
     }
-    myTransferToEDTQueue = new TransferToEDTQueue<Usage>("Insert usages", new Processor<Usage>() {
+    myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("Insert usages", new Processor<Runnable>() {
       @Override
-      public boolean process(Usage usage) {
-        appendUsage(usage);
+      public boolean process(Runnable runnable) {
+        runnable.run();
         return true;
       }
     }, new Condition<Object>() {
       @Override
       public boolean value(Object o) {
-        return isDisposed || project.isDisposed() || com.intellij.usages.UsageViewManager.getInstance(project).searchHasBeenCancelled();
+        return isDisposed || project.isDisposed() || searchHasBeenCancelled();
       }
     },200);
   }
 
+  protected boolean searchHasBeenCancelled() {
+    return false;
+  }
+  
+  protected void setCurrentSearchCancelled(boolean flag){}
+  
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
     if (myUsagePreviewPanel != null) {
@@ -649,14 +657,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       public void run(@NotNull final ProgressIndicator indicator) {
         setSearchInProgress(true);
         final com.intellij.usages.UsageViewManager usageViewManager = com.intellij.usages.UsageViewManager.getInstance(myProject);
-        usageViewManager.setCurrentSearchCancelled(false);
+        setCurrentSearchCancelled(false);
 
         myChangesDetected = false;
         UsageSearcher usageSearcher = myUsageSearcherFactory.create();
         usageSearcher.generate(new Processor<Usage>() {
           @Override
           public boolean process(final Usage usage) {
-            if (usageViewManager.searchHasBeenCancelled()) return false;
+            if (searchHasBeenCancelled()) return false;
             if (tooManyUsages.get() == 1) {
               try {
                 waitWhileUserClick.await(1, TimeUnit.SECONDS);
@@ -670,9 +678,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             if (incrementCounter) {
               final int usageCount = usageCountWithoutDefinition.incrementAndGet();
               if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
-                ((UsageViewManagerImpl)usageViewManager).showTooManyUsagesWarning(indicator, waitWhileUserClick, usageCountWithoutDefinition.get());
+                ((UsageViewManagerImpl)usageViewManager)
+                  .showTooManyUsagesWarning(indicator, waitWhileUserClick, usageCountWithoutDefinition.get(), UsageViewImpl.this);
               }
-              appendUsageLater(usage);
+              appendUsage(usage);
             }
             ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
             return indicator == null || !indicator.isCanceled();
@@ -699,10 +708,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private final TransferToEDTQueue<Usage> myTransferToEDTQueue;
-  public void appendUsageLater(@NotNull Usage usage) {
-    myTransferToEDTQueue.offer(usage);
-  }
+  private final TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   public void drainQueuedUsageNodes() {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -718,6 +724,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     doAppendUsage(usage);
   }
 
+  @Nullable
   public UsageNode doAppendUsage(@NotNull Usage usage) {
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -725,7 +732,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       // because the view is built incrementally, the usage may be already invalid, so need to filter such cases
       return null;
     }
-    UsageNode node = myBuilder.appendUsage(usage);
+    UsageNode node = myBuilder.appendUsage(usage, new Consumer<Runnable>() {
+      @Override
+      public void consume(Runnable runnable) {
+        myTransferToEDTQueue.offer(runnable);
+      }
+    });
     myUsageNodes.put(usage, node == null ? NULL_NODE : node);
     return node;
   }
@@ -831,8 +843,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @Override
   public void close() {
-    // todo ? crazyness
-    com.intellij.usages.UsageViewManager.getInstance(myProject).setCurrentSearchCancelled(true);
     UsageViewManager.getInstance(myProject).closeContent(myContent);
   }
 
@@ -858,7 +868,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
+      myTransferToEDTQueue.offer(new Runnable() {
         @Override
         public void run() {
           if (isDisposed) return;
@@ -934,7 +944,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     final Set<VirtualFile> readOnlyUsages = getReadOnlyUsagesFiles();
 
     return readOnlyUsages.isEmpty() ||
-           !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyUsages)).hasReadonlyFiles();
+           !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtilCore.toVirtualFileArray(readOnlyUsages)).hasReadonlyFiles();
   }
 
   @NotNull

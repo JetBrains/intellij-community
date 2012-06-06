@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NonNls;
@@ -72,50 +71,37 @@ public abstract class BaseCompleteMacro extends Macro {
     final Editor editor = context.getEditor();
 
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    new WriteCommandAction.Simple(project, psiFile) {
-        public void run() {
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-        }
-      }.execute();
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      getCompletionHandler().invoke(project, editor, psiFile);
-      return;
-    }
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    Runnable runnable = new Runnable() {
+      @Override
       public void run() {
-        if (project.isDisposed()) return;
+        if (project.isDisposed() || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
 
-        CommandProcessor.getInstance().executeCommand(
-            project, new Runnable() {
-            public void run() {
-              if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                getCompletionHandler().invoke(project, editor, psiFile);
-              }
+        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          public void run() {
+            getCompletionHandler().invoke(project, editor, psiFile);
+            Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
 
-              final LookupManager lookupManager = LookupManager.getInstance(project);
-              Lookup lookup = lookupManager.getActiveLookup();
-
-              if (lookup != null) {
-                lookup.addLookupListener(new MyLookupListener(context));
-              }
-              else {
-                TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-                if (templateState != null) {
-                  TextRange range = templateState.getCurrentVariableRange();
-                  if (range != null && range.getLength() > 0/* && TemplateEditorUtil.getOffset(editor) == range.getEndOffset()*/) {
-                    templateState.nextTab();
-                  }
+            if (lookup != null) {
+              lookup.addLookupListener(new MyLookupListener(context));
+            }
+            else {
+              TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+              if (templateState != null) {
+                TextRange range = templateState.getCurrentVariableRange();
+                if (range != null && range.getLength() > 0/* && TemplateEditorUtil.getOffset(editor) == range.getEndOffset()*/) {
+                  templateState.nextTab();
                 }
               }
             }
-          },
-            "",
-            null
-        );
+          }
+        }, "", null);
       }
-    });
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
   }
 
   private static class MyLookupListener extends LookupAdapter {
@@ -128,6 +114,11 @@ public abstract class BaseCompleteMacro extends Macro {
     public void itemSelected(LookupEvent event) {
       LookupElement item = event.getItem();
       if (item == null) return;
+
+      char c = event.getCompletionChar();
+      if (c != Lookup.REPLACE_SELECT_CHAR && c != Lookup.NORMAL_SELECT_CHAR && c != Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+        return;
+      }
 
       for(TemplateCompletionProcessor processor: Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {
         if (!processor.nextTabOnItemSelected(myContext, item)) {

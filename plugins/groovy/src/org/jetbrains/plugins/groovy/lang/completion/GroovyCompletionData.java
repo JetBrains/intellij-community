@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -79,7 +80,11 @@ public class GroovyCompletionData {
     if (parent instanceof GrLiteral) {
       return;
     }
-    
+
+    if (parent instanceof GrExpression && parent.getParent() instanceof GrAnnotationNameValuePair) {
+      return;
+    }
+
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&", "@", "*.", "?.").accepts(position)) {
       if (suggestPackage(position)) {
         result.addElement(keyword(PsiKeyword.PACKAGE, TailType.INSERT_SPACE));

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -23,26 +24,42 @@ import org.jetbrains.annotations.NotNull;
 
 class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListener{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.Change");
-  private final ChangeType myType;
-  private final Side[] mySides;
+  private ChangeType myType;
+  private final SimpleChangeSide[] mySides;
   private final ChangeList myChangeList;
 
   public SimpleChange(ChangeType type, @NotNull TextRange range1, @NotNull TextRange range2, ChangeList changeList) {
-    mySides = new Side[]{createSide(changeList, range1, FragmentSide.SIDE1),
+    mySides = new SimpleChangeSide[]{createSide(changeList, range1, FragmentSide.SIDE1),
                          createSide(changeList, range2, FragmentSide.SIDE2)};
     myType = type;
     myChangeList = changeList;
   }
 
-  private Change.Side createSide(ChangeList changeList, TextRange range1, FragmentSide side) {
-    return new Change.Side(side, new DiffRangeMarker((DocumentEx)changeList.getDocument(side), range1, this));
+  private SimpleChangeSide createSide(ChangeList changeList, TextRange range1, FragmentSide side) {
+    return new SimpleChangeSide(side, new DiffRangeMarker((DocumentEx)changeList.getDocument(side), range1, this));
+  }
+
+  /**
+   * Changes the given Side of a Change to a new text range.
+   * @param sideToChange Side to be changed.
+   * @param newRange     New change range.
+   */
+  @Override
+  protected void changeSide(ChangeSide sideToChange, DiffRangeMarker newRange) {
+    for (int i = 0; i < mySides.length; i++) {
+      SimpleChangeSide side = mySides[i];
+      if (side.equals(sideToChange)) {
+        mySides[i] = new SimpleChangeSide(sideToChange, newRange);
+        break;
+      }
+    }
   }
 
   protected void removeFromList() {
     myChangeList.remove(this);
   }
 
-  public ChangeType.ChangeSide getChangeSide(FragmentSide side) {
+  public ChangeSide getChangeSide(FragmentSide side) {
     return mySides[side.getIndex()];
   }
 
@@ -54,9 +71,20 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
     return myChangeList;
   }
 
+  @Override
+  public void onApplied() {
+    myType = ChangeType.deriveApplied(myType);
+    for (SimpleChangeSide side : mySides) {
+      ChangeHighlighterHolder highlighterHolder = side.getHighlighterHolder();
+      highlighterHolder.setActions(new AnAction[0]);
+      highlighterHolder.updateHighlighter(side, myType);
+    }
+    myChangeList.apply(this);
+  }
+
   public void onRemovedFromList() {
     for (int i = 0; i < mySides.length; i++) {
-      Change.Side side = mySides[i];
+      SimpleChangeSide side = mySides[i];
       side.getRange().removeListener(this);
       side.getHighlighterHolder().removeHighlighters();
       mySides[i] = null;

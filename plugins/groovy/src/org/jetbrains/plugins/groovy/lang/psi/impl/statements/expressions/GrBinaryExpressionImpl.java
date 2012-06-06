@@ -44,8 +44,9 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
 
   private static final ResolveCache.PolyVariantResolver<GrBinaryExpressionImpl> RESOLVER =
     new ResolveCache.PolyVariantResolver<GrBinaryExpressionImpl>() {
+      @NotNull
       @Override
-      public GroovyResolveResult[] resolve(GrBinaryExpressionImpl binary, boolean incompleteCode) {
+      public GroovyResolveResult[] resolve(@NotNull GrBinaryExpressionImpl binary, boolean incompleteCode) {
         final IElementType opType = binary.getOperationTokenType();
 
         final PsiType lType = binary.getLeftOperand().getType();

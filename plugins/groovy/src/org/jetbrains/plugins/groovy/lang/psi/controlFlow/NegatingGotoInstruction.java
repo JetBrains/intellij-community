@@ -19,26 +19,17 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 /**
  * @author Max Medvedev
  */
-public class NegatingGotoInstruction extends InstructionImpl {
-  @NotNull private final ConditionInstruction myCondition;
-
+public class NegatingGotoInstruction extends GotoInstruction {
   public NegatingGotoInstruction(@Nullable PsiElement element, int num, @NotNull ConditionInstruction condition) {
-    super(element, num);
-    myCondition = condition;
-  }
-
-  @NotNull
-  public ConditionInstruction getCondition() {
-    return myCondition;
+    super(element, num, condition);
   }
 
   @Override
   protected String getElementPresentation() {
-    return " Negating goto instruction, condition=" + myCondition.num();
+    return " Negating goto instruction, condition=" + getCondition().num() + getElement();
   }
 }

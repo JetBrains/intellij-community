@@ -26,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public final class ObjectTree<T> {
@@ -62,7 +60,7 @@ public final class ObjectTree<T> {
     return myExecutedNodes;
   }
 
-  public final void register(T parent, T child) {
+  public final void register(@NotNull T parent, @NotNull T child) {
     synchronized (treeLock) {
       final ObjectNode<T> childNode = getOrCreateNodeFor(child);
       checkValid(childNode, child);
@@ -83,7 +81,7 @@ public final class ObjectTree<T> {
     }
   }
 
-  private void checkValid(ObjectNode<T> childNode, T child) {
+  private void checkValid(ObjectNode<T> childNode, @NotNull T child) {
     boolean childIsInTree = childNode != null && childNode.getParent() != null;
     if (!childIsInTree) return;
 
@@ -96,6 +94,7 @@ public final class ObjectTree<T> {
     }
   }
 
+  @NotNull
   private ObjectNode<T> getOrCreateNodeFor(@NotNull T parentObject) {
     final ObjectNode<T> parentNode = getNode(parentObject);
 
@@ -127,7 +126,9 @@ public final class ObjectTree<T> {
     }
   }
 
-  static <T> void executeActionWithRecursiveGuard(@NotNull T object, @NotNull final ObjectTreeAction<T> action, List<T> recursiveGuard) {
+  static <T> void executeActionWithRecursiveGuard(@NotNull T object,
+                                                  @NotNull List<T> recursiveGuard,
+                                                  @NotNull final ObjectTreeAction<T> action) {
     synchronized (recursiveGuard) {
       if (ArrayUtil.indexOf(recursiveGuard, object, Equality.IDENTITY) != -1) return;
       recursiveGuard.add(object);
@@ -146,7 +147,7 @@ public final class ObjectTree<T> {
   }
 
   private void executeUnregistered(@NotNull final T object, @NotNull final ObjectTreeAction<T> action) {
-    executeActionWithRecursiveGuard(object, action, myExecutedUnregisteredNodes);
+    executeActionWithRecursiveGuard(object, myExecutedUnregisteredNodes, action);
   }
 
   public final void executeChildAndReplace(@NotNull T toExecute, @NotNull T toReplace, boolean disposeTree, @NotNull ObjectTreeAction<T> action) {
@@ -169,7 +170,7 @@ public final class ObjectTree<T> {
   }
 
   @TestOnly
-  public void assertNoReferenceKeptInTree(T disposable) {
+  public void assertNoReferenceKeptInTree(@NotNull T disposable) {
     Collection<ObjectNode<T>> nodes = myObject2NodeMap.values();
     for (ObjectNode<T> node : nodes) {
       node.assertNoReferencesKept(disposable);
@@ -229,25 +230,26 @@ public final class ObjectTree<T> {
     myObject2NodeMap.clear();
   }
 
-  public THashSet<T> getRootObjects() {
+  @NotNull
+  public Set<T> getRootObjects() {
     return myRootObjects;
   }
 
-  public void addListener(ObjectTreeListener listener) {
+  public void addListener(@NotNull ObjectTreeListener listener) {
     myListeners.add(listener);
   }
 
-  public void removeListener(ObjectTreeListener listener) {
+  public void removeListener(@NotNull ObjectTreeListener listener) {
     myListeners.remove(listener);
   }
 
-  void fireRegistered(Object object) {
+  void fireRegistered(@NotNull Object object) {
     for (ObjectTreeListener each : myListeners) {
       each.objectRegistered(object);
     }
   }
 
-  void fireExecuted(Object object) {
+  void fireExecuted(@NotNull Object object) {
     for (ObjectTreeListener each : myListeners) {
       each.objectExecuted(object);
     }
@@ -262,10 +264,13 @@ public final class ObjectTree<T> {
     synchronized (treeLock) {
       ObjectNode<T> parentNode = getNode(parentDisposable);
       if (parentNode == null) return null;
-      for (ObjectNode<T> node : parentNode.getChildren()) {
-        T nodeObject = node.getObject();
-        if (nodeObject.equals(object)) {
-          return (D)nodeObject;
+      LinkedHashSet<ObjectNode<T>> children = parentNode.myChildren;
+      if (children != null) {
+        for (ObjectNode<T> node : children) {
+          T nodeObject = node.getObject();
+          if (nodeObject.equals(object)) {
+            return (D)nodeObject;
+          }
         }
       }
       return null;

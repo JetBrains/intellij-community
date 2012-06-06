@@ -171,11 +171,11 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, errorDescription);
+      final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, errorDescription);
       for(ErrorQuickFixProvider provider: Extensions.getExtensions(ErrorQuickFixProvider.EP_NAME)) {
-        provider.registerErrorQuickFix(element, highlightInfo);
+        provider.registerErrorQuickFix(element, info);
       }
-      return highlightInfo;
+      return info;
     }
     int offset = range.getStartOffset();
     PsiFile containingFile = element.getContainingFile();

@@ -182,10 +182,11 @@ class IntToIntBtree {
     int index = myAccessNodeView.locate(key, true);
 
     if (index < 0) {
+      ++count;
       myAccessNodeView.insert(key, value);
     } else {
-      ++count;
       myAccessNodeView.setAddressAt(index, value);
+      if (!myAccessNodeView.myIsDirty) myAccessNodeView.markDirty();
     }
   }
 
@@ -243,6 +244,7 @@ class IntToIntBtree {
     protected int myAddressInBuffer;
     protected ByteBuffer myBuffer;
     protected boolean myHasFullPagesAlongPath;
+    protected boolean myIsDirty;
 
     public BtreePage(IntToIntBtree btree) {
       this.btree = btree;
@@ -259,7 +261,8 @@ class IntToIntBtree {
     protected void syncWithStore() {
       PagedFileStorage pagedFileStorage = btree.storage.getPagedFileStorage();
       myAddressInBuffer = pagedFileStorage.getOffsetInPage(address);
-      myBuffer = pagedFileStorage.getByteBuffer(address);
+      myBuffer = pagedFileStorage.getByteBuffer(address, false);
+      myIsDirty = false; // we will mark dirty on child count change, attrs change or existing key put
       doInitFlags(myBuffer.getInt(myAddressInBuffer));
     }
 
@@ -272,6 +275,12 @@ class IntToIntBtree {
       if (flag) b |= mask;
       else b &= ~mask;
       myBuffer.put(myAddressInBuffer, b);
+      if (!myIsDirty) markDirty();
+    }
+
+    void markDirty() {
+      btree.storage.getPagedFileStorage().getByteBuffer(address, true);
+      myIsDirty = true;
     }
 
     protected final short getChildrenCount() {
@@ -281,6 +290,7 @@ class IntToIntBtree {
     protected final void setChildrenCount(short value) {
       myChildrenCount = value;
       myBuffer.putShort(myAddressInBuffer + 1, value);
+      if (!myIsDirty) markDirty();
     }
 
     protected final void setNextPage(int nextPage) {
@@ -686,7 +696,6 @@ class IntToIntBtree {
         btree.root.setAddressAt(0, -address);
         btree.root.setAddressAt(1, -newIndexNode.address);
 
-
         if (doSanityCheck) {
           btree.root.dump("New root");
           dump("First child");
@@ -952,7 +961,6 @@ class IntToIntBtree {
           hashSetState(index, HASH_FULL);
           setAddressAt(index, newValueId);
           setChildrenCount((short)(recordCount + 1));
-
           return;
         }
       }

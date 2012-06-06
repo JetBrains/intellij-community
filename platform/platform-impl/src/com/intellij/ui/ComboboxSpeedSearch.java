@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 11-Jul-2006
- * Time: 13:56:13
- */
 package com.intellij.ui;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @author Anna.Kozlova
+ * @since 11-Jul-2006
+ */
 public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
-  public ComboboxSpeedSearch(JComboBox comboBox) {
+  public ComboboxSpeedSearch(@NotNull final JComboBox comboBox) {
     super(comboBox);
+    removeKeyStroke(comboBox.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT), KeyStroke.getKeyStroke(' ', 0));
+  }
+
+  private static void removeKeyStroke(@Nullable InputMap map, KeyStroke ks) {
+    while (map != null) {
+      map.remove(ks);
+      map = map.getParent();
+    }
   }
 
   protected void selectElement(Object element, String selectedText) {
@@ -40,7 +48,7 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
   protected Object[] getAllElements() {
     ListModel model = myComponent.getModel();
     Object[] elements = new Object[model.getSize()];
-    for(int i = 0; i < elements.length; i++){
+    for (int i = 0; i < elements.length; i++) {
       elements[i] = model.getElementAt(i);
     }
     return elements;

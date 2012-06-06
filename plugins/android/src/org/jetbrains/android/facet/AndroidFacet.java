@@ -479,9 +479,13 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
             final Sdk newSdk = ModuleRootManager.getInstance(getModule()).getSdk();
             if (newSdk != null && newSdk.getSdkType() instanceof AndroidSdkType && !newSdk.equals(myPrevSdk)) {
-              myPrevSdk = newSdk;
               androidPlatformChanged();
+
+              synchronized (myDirtyModes) {
+                myDirtyModes.addAll(Arrays.asList(AndroidAutogeneratorMode.values()));
+              }
             }
+            myPrevSdk = newSdk;
 
             PsiDocumentManager.getInstance(getModule().getProject()).commitAllDocuments();
 

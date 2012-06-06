@@ -1,0 +1,11 @@
+PsiJavaFile:MethodRef4.java
+  PsiMethodReferenceExpression:int[]::clone
+    PsiTypeElement:int[]
+      PsiTypeElement:int
+        PsiKeyword:int('int')
+      PsiJavaToken:LBRACKET('[')
+      PsiJavaToken:RBRACKET(']')
+    PsiJavaToken:DOUBLE_COLON('::')
+    PsiReferenceParameterList
+      <empty list>
+    PsiIdentifier:clone('clone')

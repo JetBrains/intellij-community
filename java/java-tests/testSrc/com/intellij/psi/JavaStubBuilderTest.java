@@ -221,6 +221,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     doTest("class C { {\n" +
            "  new O.P() { };\n" +
            "  X.new Y() { };\n" +
+           "  f(p -> new R() { });\n" +
            "} }",
 
            "PsiJavaFileStub []\n" +
@@ -233,7 +234,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    CLASS_INITIALIZER:PsiClassInitializerStub\n" +
            "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=O.P]\n" +
-           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Y inqualifnew]\n");
+           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Y inqualifnew]\n" +
+           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=R]\n");
   }
 
   public void testEnums() {

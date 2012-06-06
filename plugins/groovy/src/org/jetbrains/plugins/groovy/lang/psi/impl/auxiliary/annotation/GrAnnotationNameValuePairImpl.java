@@ -17,18 +17,18 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
@@ -80,7 +80,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
   }
 
   public PsiReference getReference() {
-    return this;
+    return getNameIdentifierGroovy() == null ? null : this;
   }
 
   public PsiElement getElement() {
@@ -89,10 +89,8 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   public TextRange getRangeInElement() {
     PsiElement nameId = getNameIdentifierGroovy();
-    if (nameId != null) {
-      return nameId.getTextRange().shiftRight(-getTextRange().getStartOffset());
-    }
-    return TextRange.EMPTY_RANGE;
+    assert nameId != null;
+    return nameId.getTextRange().shiftRight(-getTextRange().getStartOffset());
   }
 
   @Nullable
@@ -152,16 +150,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public Object[] getVariants() {
-    GrAnnotation anno = getAnnotation();
-    if (anno != null) {
-      GrCodeReferenceElement ref = anno.getClassReference();
-      PsiElement resolved = ref.resolve();
-      if (resolved instanceof PsiClass && ((PsiClass) resolved).isAnnotationType()) {
-        return ((PsiClass) resolved).getMethods();
-      }
-    }
-
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return GroovyCompletionUtil.getAnnotationCompletionResults(getAnnotation());
   }
 
   public boolean isSoft() {

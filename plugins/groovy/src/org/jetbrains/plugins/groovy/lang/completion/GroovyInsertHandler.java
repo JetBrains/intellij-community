@@ -30,7 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -72,13 +72,21 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
       assert elementAt != null;
       PsiElement parent = elementAt.getParent();
-      if (parent instanceof GrReferenceExpression &&
-          ((GrReferenceExpression)parent).getDotTokenType() == GroovyElementTypes.mMEMBER_POINTER) {
+      if (parent instanceof GrReferenceExpression && ((GrReferenceExpression)parent).getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER) {
         return;
       }
 
-      if (parent instanceof GrAnnotationNameValuePair || parent != null && parent.getParent() instanceof GrAnnotationNameValuePair) {
-        document.insertString(offset, " = ");
+      CharSequence charsSequence = document.getCharsSequence();
+      if (isAnnotationNameValuePair(obj, parent)) {
+        int endOffset = offset;
+        if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
+          endOffset = CharArrayUtil.shiftForward(charsSequence, offset, " \t");
+          if (charsSequence.length() > endOffset && charsSequence.charAt(endOffset) == '=') {
+            endOffset++;
+            endOffset = CharArrayUtil.shiftForward(charsSequence, endOffset, " \t");
+          }
+        }
+        document.replaceString(offset, endOffset, " = ");
         caretModel.moveToOffset(offset + 3);
         return;
       }
@@ -89,8 +97,8 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
         if ((context.getCompletionChar() != '(' && context.getCompletionChar() != ' ') && 
             TypesUtil.isClassType(parameters[0].getType(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
           int afterBrace;
-          final int nonWs = CharArrayUtil.shiftForward(document.getCharsSequence(), offset, " \t");
-          if (nonWs < document.getTextLength() && document.getCharsSequence().charAt(nonWs) == '{') {
+          final int nonWs = CharArrayUtil.shiftForward(charsSequence, offset, " \t");
+          if (nonWs < document.getTextLength() && charsSequence.charAt(nonWs) == '{') {
             afterBrace = nonWs + 1;
           } else {
             document.insertString(offset, " {}");
@@ -150,6 +158,18 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     if (obj instanceof PsiPackage) {
       AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
     }
+  }
+
+  private static boolean isAnnotationNameValuePair(Object obj, PsiElement parent) {
+    if (parent instanceof GrAnnotationNameValuePair || parent != null && parent.getParent() instanceof GrAnnotationNameValuePair) {
+      if (obj instanceof PsiMethod) {
+        PsiClass aClass = ((PsiMethod)obj).getContainingClass();
+        if (aClass != null && aClass.isAnnotationType()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static void handleOverwrite(final int offset, final Document document) {

@@ -80,9 +80,11 @@ public class FirstInBranch implements Runnable {
         final SVNLogClient logClient = ApplicationManager.getApplication().runReadAction(new Computable<SVNLogClient>() {
           @Override
           public SVNLogClient compute() {
+            if (myVcs.getProject().isDisposed()) return null;
             return myVcs.createLogClient();
           }
         });
+        if (logClient == null) return;
         final long start1 = getStart(logClient, branchURL);
         if (start1 > 0) {
           final SVNRevision start1Rev = SVNRevision.create(start1);

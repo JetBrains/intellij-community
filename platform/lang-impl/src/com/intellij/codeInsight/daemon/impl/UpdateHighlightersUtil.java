@@ -650,7 +650,7 @@ public class UpdateHighlightersUtil {
         info.highlighter.dispose();
       }
     }
-    
+
     assertMarkupConsistent(markup, project);
 
     if (!toRemove.isEmpty()) {

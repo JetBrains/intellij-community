@@ -70,4 +70,8 @@ public abstract class FileBasedIndexExtension<K, V> {
   public Collection<FileType> getFileTypesWithSizeLimitNotApplicable() {
     return Collections.emptyList();
   }
+
+  public boolean isKeyHighlySelective() {
+    return false;
+  }
 }

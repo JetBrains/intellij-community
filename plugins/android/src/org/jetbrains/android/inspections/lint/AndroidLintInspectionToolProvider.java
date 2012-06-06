@@ -245,7 +245,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
     }
 
     @NotNull
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.content.description"),
                                  LintConstants.ATTR_CONTENT_DESCRIPTION, null)
@@ -381,7 +381,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{new AddMissingPrefixQuickFix()};
     }
   }
@@ -417,7 +417,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new InefficientWeightQuickFix()
       };
@@ -437,7 +437,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.set.baseline.attribute"),
                                  LintConstants.ATTR_BASELINE_ALIGNED, "false")
@@ -482,7 +482,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{new RemoveAttributeQuickFix()};
     }
   }
@@ -506,7 +506,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{new ConvertToDpQuickFix()};
     }
   }
@@ -518,7 +518,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{new SetScrollViewSizeQuickFix()};
     }
   }
@@ -530,7 +530,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.permission.attribute"),
                                  LintConstants.ATTR_PERMISSION, null)
@@ -563,7 +563,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{
         new SetAttributeQuickFix(AndroidBundle.message("android.lint.inspections.add.input.type.attribute"),
                                  LintConstants.ATTR_INPUT_TYPE, null)
@@ -636,7 +636,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[]{new RemoveUselessViewQuickFix(myIssue)};
     }
   }
@@ -648,7 +648,7 @@ public class AndroidLintInspectionToolProvider implements InspectionToolProvider
 
     @NotNull
     @Override
-    protected AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
+    public AndroidLintQuickFix[] getQuickFixes(@NotNull String message) {
       return new AndroidLintQuickFix[] {new TypographyQuickFix(myIssue, message)};
     }
   }

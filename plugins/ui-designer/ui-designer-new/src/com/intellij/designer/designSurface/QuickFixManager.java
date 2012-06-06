@@ -54,7 +54,9 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Co
   protected Rectangle getErrorBounds() {
     List<RadComponent> selection = myDesigner.getSurfaceArea().getSelection();
     if (selection.size() == 1) {
-      return selection.get(0).getBounds(myComponent);
+      Rectangle bounds = selection.get(0).getBounds(myComponent);
+      bounds.x -= ICON.getIconWidth() - 5;
+      return bounds;
     }
 
     return null;

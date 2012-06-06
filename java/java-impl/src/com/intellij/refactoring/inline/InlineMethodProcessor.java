@@ -31,6 +31,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -42,7 +43,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
+import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -64,6 +67,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private PsiJavaCodeReferenceElement myReference;
   private final Editor myEditor;
   private final boolean myInlineThisOnly;
+  private final boolean mySearchInComments;
+  private final boolean mySearchForTextOccurrences;
 
   private final PsiManager myManager;
   private final PsiElementFactory myFactory;
@@ -80,11 +85,23 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                @Nullable PsiJavaCodeReferenceElement reference,
                                Editor editor,
                                boolean isInlineThisOnly) {
+    this(project, method, reference, editor, isInlineThisOnly, false, false);
+  }
+
+  public InlineMethodProcessor(@NotNull Project project,
+                               @NotNull PsiMethod method,
+                               @Nullable PsiJavaCodeReferenceElement reference,
+                               Editor editor,
+                               boolean isInlineThisOnly,
+                               boolean searchInComments,
+                               boolean searchForTextOccurrences) {
     super(project);
     myMethod = method;
     myReference = reference;
     myEditor = editor;
     myInlineThisOnly = isInlineThisOnly;
+    mySearchInComments = searchInComments;
+    mySearchForTextOccurrences = searchForTextOccurrences;
 
     myManager = PsiManager.getInstance(myProject);
     myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
@@ -113,7 +130,35 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
+    if (mySearchInComments || mySearchForTextOccurrences) {
+      final NonCodeUsageInfoFactory infoFactory = new NonCodeUsageInfoFactory(myMethod, myMethod.getName()) {
+        @Override
+        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+          if (PsiTreeUtil.isAncestor(myMethod, usage, false)) return null;
+          return super.createUsageInfo(usage, startOffset, endOffset);
+        }
+      };
+      if (mySearchInComments) {
+        String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(myMethod, stringToSearch, usages, infoFactory);
+      }
+
+      if (mySearchForTextOccurrences) {
+        String stringToSearch = ElementDescriptionUtil.getElementDescription(myMethod, NonCodeSearchDescriptionLocation.NON_JAVA);
+        TextOccurrencesUtil
+          .addTextOccurences(myMethod, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, infoFactory);
+      }
+    }
+
     return usages.toArray(new UsageInfo[usages.size()]);
+  }
+
+  @Override
+  protected boolean isPreviewUsages(UsageInfo[] usages) {
+    for (UsageInfo usage : usages) {
+      if (usage instanceof NonCodeUsageInfo) return true;
+    }
+    return super.isPreviewUsages(usages);
   }
 
   protected void refreshElements(PsiElement[] elements) {
@@ -136,6 +181,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           .message("inlined.method.implements.method.from.0", method.getContainingClass().getQualifiedName()) : RefactoringBundle
           .message("inlined.method.overrides.method.from.0", method.getContainingClass().getQualifiedName());
         conflicts.putValue(method, message);
+      }
+
+      for (UsageInfo info : usagesIn) {
+        final PsiElement element = info.getElement();
+        if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myMethod, element, false)) {
+          conflicts.putValue(element, "Inlined method is used in javadoc");
+        }
       }
     }
 

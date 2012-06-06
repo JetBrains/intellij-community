@@ -15,8 +15,10 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.UpdateMethod;
+import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
 
@@ -93,4 +95,9 @@ public class GitUpdateOptionsPanel {
     UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myStashRadioButton, myShelveRadioButton);
   }
 
+  private void createUIComponents() {
+    myShelveRadioButton = new JRadioButton(GitBundle.message("update.options.save.shelve"));
+    myShelveRadioButton.setToolTipText(GitBundle.message("update.options.save.shelve.tooltip",
+                                                         ApplicationNamesInfo.getInstance().getFullProductName()));
+  }
 }

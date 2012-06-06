@@ -56,7 +56,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   }
 
   @Override
-  public final void collectInformation(ProgressIndicator progress) {
+  public final void collectInformation(@NotNull ProgressIndicator progress) {
     if (!isValid()) return; //Document has changed.
     myDumb = DumbService.getInstance(myProject).isDumb();
     doCollectInformation(progress);
@@ -103,7 +103,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     doApplyInformationToEditor();
   }
 
-  public abstract void doCollectInformation(ProgressIndicator progress);
+  public abstract void doCollectInformation(@NotNull ProgressIndicator progress);
   public abstract void doApplyInformationToEditor();
 
   public final int getId() {

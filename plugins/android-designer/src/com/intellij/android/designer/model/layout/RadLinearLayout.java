@@ -58,7 +58,7 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     return LAYOUT_PARAMS;
   }
 
-  protected boolean isHorizontal() {
+  public boolean isHorizontal() {
     return !"vertical".equals(((RadViewComponent)myContainer).getTag().getAttributeValue("android:orientation"));
   }
 

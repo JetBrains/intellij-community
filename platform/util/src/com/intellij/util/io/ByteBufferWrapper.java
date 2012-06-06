@@ -27,6 +27,7 @@ public abstract class ByteBufferWrapper {
   protected final File myFile;
   protected final long myPosition;
   protected final long myLength;
+  protected volatile boolean myDirty;
 
   protected ByteBufferWrapper(final File file, final long offset, final long length) {
     myFile = file;
@@ -36,6 +37,14 @@ public abstract class ByteBufferWrapper {
 
   @Nullable
   public abstract ByteBuffer getCachedBuffer();
+
+  public final void markDirty() {
+    if (!myDirty) myDirty = true;
+  }
+
+  public final boolean isDirty() {
+    return myDirty;
+  }
 
   public abstract ByteBuffer getBuffer() throws IOException;
 
@@ -50,6 +59,10 @@ public abstract class ByteBufferWrapper {
   public static ByteBufferWrapper readWrite(final File file, final int offset, final int length) {
     return NO_MMAP ? new ReadWriteDirectBufferWrapper(file, offset, length)
                    : new ReadWriteMappedBufferWrapper(file, offset, length);
+  }
+
+  public static ByteBufferWrapper readWriteDirect(final File file, final int offset, final int length) {
+    return new ReadWriteDirectBufferWrapper(file, offset, length);
   }
 
   public static ByteBufferWrapper readOnly(final File file, final int offset) {

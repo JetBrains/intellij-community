@@ -34,9 +34,9 @@
                   <text resource-bundle="org/jetbrains/plugins/groovy/codeInspection/GroovyInspectionBundle" key="destination.package"/>
                 </properties>
               </component>
-              <component id="f6348" class="org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateClassDialog$MySizeTextField" binding="myPackageTextField" custom-create="true">
+              <component id="f6348" class="com.intellij.ui.EditorTextField" binding="myPackageTextField" custom-create="true">
                 <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
               </component>
@@ -50,7 +50,7 @@
               </component>
               <component id="a6ccf" class="javax.swing.JButton" binding="myPackageChooseButton" custom-create="true">
                 <constraints>
-                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text value=""/>

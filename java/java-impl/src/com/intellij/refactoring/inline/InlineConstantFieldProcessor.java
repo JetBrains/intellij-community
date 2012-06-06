@@ -20,14 +20,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -35,7 +36,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author ven
@@ -45,12 +48,25 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private PsiField myField;
   private final PsiReferenceExpression myRefExpr;
   private final boolean myInlineThisOnly;
+  private boolean mySearchInCommentsAndStrings;
+  private boolean mySearchForTextOccurrences;
 
   public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
+    this(field, project, ref, isInlineThisOnly, false, false);
+  }
+
+  public InlineConstantFieldProcessor(PsiField field,
+                                      Project project,
+                                      PsiReferenceExpression ref,
+                                      boolean isInlineThisOnly,
+                                      boolean searchInCommentsAndStrings,
+                                      boolean searchForTextOccurrences) {
     super(project);
     myField = field;
     myRefExpr = ref;
     myInlineThisOnly = isInlineThisOnly;
+    mySearchInCommentsAndStrings = searchInCommentsAndStrings;
+    mySearchForTextOccurrences = searchForTextOccurrences;
   }
 
   @NotNull
@@ -62,7 +78,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
     for (UsageInfo info : usages) {
-      if (info instanceof UsageFromJavaDoc) return true;
+      if (info instanceof NonCodeUsageInfo) return true;
     }
     return false;
   }
@@ -77,19 +93,38 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
 
-    PsiReference[] refs = ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false).toArray(new PsiReference[0]);
-    UsageInfo[] infos = new UsageInfo[refs.length];
-    for (int i = 0; i < refs.length; i++) {
-      PsiElement element = refs[i].getElement();
+    List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    for (PsiReference ref : ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false)) {
+      PsiElement element = ref.getElement();
       UsageInfo info = new UsageInfo(element);
 
       if (!(element instanceof PsiExpression) && PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class) == null) {
         info = new UsageFromJavaDoc(element);
       }
 
-      infos[i] = info;
+      usages.add(info);
     }
-    return infos;
+    if (mySearchInCommentsAndStrings || mySearchForTextOccurrences) {
+      TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new NonCodeUsageInfoFactory(myField, myField.getName()){
+        @Override
+        public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
+          if (PsiTreeUtil.isAncestor(myField, usage, false)) return null;
+          return super.createUsageInfo(usage, startOffset, endOffset);
+        }
+      };
+      if (mySearchInCommentsAndStrings) {
+        String stringToSearch =
+          ElementDescriptionUtil.getElementDescription(myField, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(myField, stringToSearch, usages, nonCodeUsageFactory);
+      }
+
+      if (mySearchForTextOccurrences) {
+        String stringToSearch = ElementDescriptionUtil.getElementDescription(myField, NonCodeSearchDescriptionLocation.NON_JAVA);
+        TextOccurrencesUtil
+          .addTextOccurences(myField, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
+      }
+    }
+    return usages.toArray(new UsageInfo[usages.size()]);
   }
 
   protected void refreshElements(PsiElement[] elements) {
@@ -105,6 +140,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     initializer = normalize ((PsiExpression)initializer.copy());
     for (UsageInfo info : usages) {
       if (info instanceof UsageFromJavaDoc) continue;
+      if (info instanceof NonCodeUsageInfo) continue;
       final PsiElement element = info.getElement();
       try {
         if (element instanceof PsiExpression) {
@@ -231,6 +267,17 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
           String message = RefactoringBundle.message("0.will.not.be.accessible.from.1.after.inlining", RefactoringUIUtil.getDescription(member, true),
                                                      RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
           conflicts.putValue(member, message);
+        }
+      }
+    }
+
+    if (!myInlineThisOnly) {
+      for (UsageInfo info : usagesIn) {
+        if (info instanceof UsageFromJavaDoc) {
+          final PsiElement element = info.getElement();
+          if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myField, element, false)) {
+            conflicts.putValue(element, "Inlined method is used in javadoc");
+          }
         }
       }
     }

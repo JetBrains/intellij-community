@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -43,8 +44,14 @@ import java.util.List;
 public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7";
 
-  private void doTest(boolean checkWarnings, boolean checkInfos) throws Exception {
+  private void doTest(boolean checkWarnings, boolean checkInfos, InspectionProfileEntry... tools) throws Exception {
+    for (InspectionProfileEntry tool : tools) { enableInspectionTool(tool); }
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
+  }
+
+  private void doTest(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, InspectionProfileEntry... tools) throws Exception {
+    for (InspectionProfileEntry tool : tools) { enableInspectionTool(tool); }
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkWeakWarnings, checkInfos);
   }
 
   @Override
@@ -92,59 +99,27 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDynamicallyAddIgnoredAnnotations() throws Exception {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint extension = new EntryPoint() {
-      @NotNull
-      @Override
-      public String getDisplayName() {
-        return "duh";
-      }
-
-      @Override
-      public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) {
-        return false;
-      }
-
-      @Override
-      public boolean isEntryPoint(PsiElement psiElement) {
-        return false;
-      }
-
-      @Override
-      public boolean isSelected() {
-        return false;
-      }
-
-      @Override
-      public void setSelected(boolean selected) {
-
-      }
-
-      @Override
-      public void readExternal(Element element) {
-
-      }
-
-      @Override
-      public void writeExternal(Element element) {
-
-      }
-
-      @Override
-      public String[] getIgnoreAnnotations() {
-        return new String[]{"MyAnno"};
-      }
+      @NotNull @Override public String getDisplayName() { return "duh"; }
+      @Override public boolean isEntryPoint(RefElement refElement, PsiElement psiElement) { return false; }
+      @Override public boolean isEntryPoint(PsiElement psiElement) { return false; }
+      @Override public boolean isSelected() { return false; }
+      @Override public void setSelected(boolean selected) { }
+      @Override public void readExternal(Element element) { }
+      @Override public void writeExternal(Element element) { }
+      @Override public String[] getIgnoreAnnotations() { return new String[]{"MyAnno"}; }
     };
 
     UnusedDeclarationInspection deadCodeInspection = new UnusedDeclarationInspection();
     enableInspectionTool(deadCodeInspection);
 
     doTest(true, false);
-    List<HighlightInfo> infos = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
     assertEquals(2, infos.size()); // unused class and unused method
 
     try {
       point.registerExtension(extension);
 
-      infos = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.WARNING);
+      infos = doHighlighting(HighlightSeverity.WARNING);
       HighlightInfo info = assertOneElement(infos);
       assertEquals("Class 'WithMain' is never used", info.description);
     }
@@ -156,32 +131,20 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testNumericLiterals() throws Exception { doTest(false, false); }
   public void testMultiCatch() throws Exception { doTest(false, false); }
   public void testTryWithResources() throws Exception { doTest(false, false); }
-
-  public void testTryWithResourcesWarn() throws Exception {
-    enableInspectionTool(new DefUseInspection());
-    doTest(true, false);
-  }
-
+  public void testTryWithResourcesWarn() throws Exception { doTest(true, false, new DefUseInspection()); }
   public void testSafeVarargsApplicability() throws Exception { doTest(true, false); }
   public void testUncheckedGenericsArrayCreation() throws Exception { doTest(true, false); }
   public void testPreciseRethrow() throws Exception { doTest(false, false); }
   public void testImprovedCatchAnalysis() throws Exception { doTest(true, false); }
   public void testJavacQuirks() throws Exception { doTest(true, false); }
   public void testPolymorphicTypeCast() throws Exception { doTest(true, false); }
-
-  public void testErasureClashConfusion() throws Exception {
-    enableInspectionTool(new UnusedDeclarationInspection());
-    doTest(true, false);
-  }
-
-  public void testUnused() throws Exception {
-    enableInspectionTool(new UnusedDeclarationInspection());
-    doTest(true, false);
-  }
-
+  public void testErasureClashConfusion() throws Exception { doTest(true, false, new UnusedDeclarationInspection()); }
+  public void testUnused() throws Exception { doTest(true, false, new UnusedDeclarationInspection()); }
   public void testSuperBound() throws Exception { doTest(false, false); }
   public void testExtendsBound() throws Exception { doTest(false, false); }
   public void testIDEA84533() throws Exception { doTest(false, false); }
   public void testClassLiteral() throws Exception { doTest(false, false); }
   public void testExtensionMethods() throws Exception { doTest(false, false); }
+  public void testMethodReferences() throws Exception { doTest(false, true, false); }
+  public void testLambdaExpressions() throws Exception { doTest(false, true, false); }
 }

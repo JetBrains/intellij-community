@@ -64,12 +64,30 @@ public abstract class MetaManager {
       Element rootElement = document.getRootElement();
       ClassLoader classLoader = getClass().getClassLoader();
 
+      Map<MetaModel, List<String>> modelToMorphing = new HashMap<MetaModel, List<String>>();
+
       for (Object element : rootElement.getChildren(META)) {
-        loadModel(classLoader, (Element)element);
+        loadModel(classLoader, (Element)element, modelToMorphing);
       }
 
       for (Object element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
         loadGroup(name, (Element)element);
+      }
+
+      for (Map.Entry<MetaModel, List<String>> entry : modelToMorphing.entrySet()) {
+        MetaModel meta = entry.getKey();
+        List<MetaModel> morphingModels = new ArrayList<MetaModel>();
+
+        for (String tag : entry.getValue()) {
+          MetaModel morphingModel = myTag2Model.get(tag);
+          if (morphingModel != null) {
+            morphingModels.add(morphingModel);
+          }
+        }
+
+        if (!morphingModels.isEmpty()) {
+          meta.setMorphingModels(morphingModels);
+        }
       }
     }
     catch (Throwable e) {
@@ -78,7 +96,7 @@ public abstract class MetaManager {
   }
 
   @SuppressWarnings("unchecked")
-  private void loadModel(ClassLoader classLoader, Element element) throws Exception {
+  private void loadModel(ClassLoader classLoader, Element element, Map<MetaModel, List<String>> modelToMorphing) throws Exception {
     String modelValue = element.getAttributeValue("model");
     Class<RadComponent> model = modelValue == null ? null : (Class<RadComponent>)classLoader.loadClass(modelValue);
     String target = element.getAttributeValue("class");
@@ -143,6 +161,11 @@ public abstract class MetaManager {
       if (deprecated != null) {
         meta.setDeprecatedProperties(StringUtil.split(deprecated.getValue(), " "));
       }
+    }
+
+    Element morphing = element.getChild("morphing");
+    if (morphing != null) {
+      modelToMorphing.put(meta, StringUtil.split(morphing.getAttribute("to").getValue(), " "));
     }
 
     if (tag != null) {

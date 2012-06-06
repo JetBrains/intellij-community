@@ -80,16 +80,8 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NonNls private static final String ROOT_ELEMENT = "root";
   private final ProjectRootManagerImpl myProjectRootManager;
-  // have to register all child disposables using this fake object since all clients call just ModifiableModel.dispose()
-  private final List<Disposable> myModelComponents = Collections.synchronizedList(new ArrayList<Disposable>());
-  private final Disposable myDisposable = new Disposable() {
-    @Override
-    public void dispose() {
-      for (Disposable component : myModelComponents) {
-        Disposer.dispose(component);
-      }
-    }
-  };
+  // have to register all child disposables using this fake object since all clients just call ModifiableModel.dispose()
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   RootModelImpl(@NotNull ModuleRootManagerImpl moduleRootManager, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
     myModuleRootManager = moduleRootManager;
@@ -205,7 +197,8 @@ public class RootModelImpl implements ModifiableRootModel {
     final Set<ContentEntry> thatContent = rootModel.myContent;
     for (ContentEntry contentEntry : thatContent) {
       if (contentEntry instanceof ClonableContentEntry) {
-        myContent.add(((ClonableContentEntry)contentEntry).cloneEntry(this));
+        ContentEntry cloned = ((ClonableContentEntry)contentEntry).cloneEntry(this);
+        myContent.add(cloned);
       }
     }
 
@@ -393,14 +386,14 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Override
-  public void removeContentEntry(ContentEntry entry) {
+  public void removeContentEntry(@NotNull ContentEntry entry) {
     assertWritable();
     LOG.assertTrue(myContent.contains(entry));
     myContent.remove(entry);
   }
 
   @Override
-  public void addOrderEntry(OrderEntry entry) {
+  public void addOrderEntry(@NotNull OrderEntry entry) {
     assertWritable();
     LOG.assertTrue(!myOrderEntries.contains(entry));
     myOrderEntries.add(entry);
@@ -408,7 +401,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @NotNull
   @Override
-  public LibraryOrderEntry addLibraryEntry(Library library) {
+  public LibraryOrderEntry addLibraryEntry(@NotNull Library library) {
     assertWritable();
     final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(library, this, myProjectRootManager);
     assert libraryOrderEntry.isValid();
@@ -458,7 +451,7 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Override
-  public void removeOrderEntry(OrderEntry entry) {
+  public void removeOrderEntry(@NotNull OrderEntry entry) {
     assertWritable();
     removeOrderEntryInternal(entry);
   }
@@ -530,7 +523,8 @@ public class RootModelImpl implements ModifiableRootModel {
     if (areContentEntriesChanged()) {
       getSourceModel().myContent.clear();
       for (ContentEntry contentEntry : myContent) {
-        getSourceModel().myContent.add(((ClonableContentEntry)contentEntry).cloneEntry(getSourceModel()));
+        ContentEntry cloned = ((ClonableContentEntry)contentEntry).cloneEntry(getSourceModel());
+        getSourceModel().myContent.add(cloned);
       }
     }
 
@@ -655,7 +649,7 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Override
-  public void setInvalidSdk(String jdkName, String jdkType) {
+  public void setInvalidSdk(@NotNull String jdkName, String jdkType) {
     assertWritable();
     replaceEntryOfType(JdkOrderEntry.class, new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager));
   }
@@ -901,7 +895,6 @@ public class RootModelImpl implements ModifiableRootModel {
     myExtensions.clear();
     myWritable = false;
     myDisposed = true;
-    myModelComponents.clear();
   }
 
   @Override
@@ -1129,6 +1122,6 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   void registerOnDispose(@NotNull Disposable disposable) {
-    myModelComponents.add(disposable);
+    Disposer.register(myDisposable, disposable);
   }
 }

@@ -617,7 +617,7 @@ public class MavenProject {
 
   @NotNull
   public Set<String> getSupportedPackagings() {
-    Set<String> result = CollectionFactory.newSet(MavenConstants.TYPE_POM,
+    Set<String> result = CollectionFactory.hashSet(MavenConstants.TYPE_POM,
                                                   MavenConstants.TYPE_JAR,
                                                   "ejb", "ejb-client", "war", "ear", "bundle", "maven-plugin");
     for (MavenImporter each : getSuitableImporters()) {

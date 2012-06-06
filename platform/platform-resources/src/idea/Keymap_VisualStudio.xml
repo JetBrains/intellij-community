@@ -170,6 +170,9 @@
     <action id="ViewBreakpoints">
       <keyboard-shortcut first-keystroke="alt F9"/>
     </action>
+    <action id="EditBreakpoint">
+      <keyboard-shortcut first-keystroke="alt F9"/>
+    </action>
     <action id="TypeHierarchy">
       <keyboard-shortcut first-keystroke="alt H"/>
     </action>

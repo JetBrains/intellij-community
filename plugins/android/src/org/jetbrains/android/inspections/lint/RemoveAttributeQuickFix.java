@@ -1,19 +1,17 @@
 package org.jetbrains.android.inspections.lint;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
  */
 class RemoveAttributeQuickFix implements AndroidLintQuickFix {
   @Override
-  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @Nullable Editor editor) {
+  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull AndroidQuickfixContexts.Context context) {
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(startElement, XmlAttribute.class);
     if (attribute != null) {
       attribute.getParent().setAttribute(attribute.getName(), null);
@@ -21,7 +19,9 @@ class RemoveAttributeQuickFix implements AndroidLintQuickFix {
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement startElement, @NotNull PsiElement endElement, boolean inBatchMode) {
+  public boolean isApplicable(@NotNull PsiElement startElement,
+                              @NotNull PsiElement endElement,
+                              @NotNull AndroidQuickfixContexts.ContextType contextType) {
     return PsiTreeUtil.getParentOfType(startElement, XmlAttribute.class) != null;
   }
 

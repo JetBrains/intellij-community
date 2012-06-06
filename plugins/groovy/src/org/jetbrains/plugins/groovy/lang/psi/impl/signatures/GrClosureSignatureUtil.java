@@ -639,6 +639,7 @@ public class GrClosureSignatureUtil {
     final HashMap<GrExpression, Pair<PsiParameter, PsiType>> result = new HashMap<GrExpression, Pair<PsiParameter, PsiType>>();
     for (int i = 0; i < argInfos.length; i++) {
       ArgInfo<PsiElement> info = argInfos[i];
+      if (info == null) continue;
       for (PsiElement arg : info.args) {
         if (arg instanceof GrNamedArgument) {
           arg = ((GrNamedArgument)arg).getExpression();
@@ -719,12 +720,17 @@ public class GrClosureSignatureUtil {
 
     for (; i < innerMap.length; i++) {
       final ArgInfo<InnerArg> innerArg = innerMap[i];
-      List<PsiElement> argList = new ArrayList<PsiElement>();
-      for (InnerArg arg : innerArg.args) {
-        argList.addAll(arg.list);
+      if (innerArg == null) {
+        map[i] = null;
       }
-      boolean multiArg = innerArg.isMultiArg || argList.size() > 1;
-      map[i] = new ArgInfo<PsiElement>(argList, multiArg);
+      else {
+        List<PsiElement> argList = new ArrayList<PsiElement>();
+        for (InnerArg arg : innerArg.args) {
+          argList.addAll(arg.list);
+        }
+        boolean multiArg = innerArg.isMultiArg || argList.size() > 1;
+        map[i] = new ArgInfo<PsiElement>(argList, multiArg);
+      }
     }
 
     return map;

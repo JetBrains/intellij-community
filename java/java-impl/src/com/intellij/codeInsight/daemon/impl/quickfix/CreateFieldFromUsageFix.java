@@ -66,7 +66,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     PsiClass parentClass;
     do {
       enclosingContext = PsiTreeUtil.getParentOfType(enclosingContext == null ? myReferenceExpression : enclosingContext, PsiMethod.class,
-                                    PsiField.class, PsiClassInitializer.class);
+                                                     PsiField.class, PsiClassInitializer.class);
       parentClass = enclosingContext == null ? null : enclosingContext.getContainingClass();
     }
     while (parentClass instanceof PsiAnonymousClass);
@@ -102,6 +102,10 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     if (shouldCreateStaticMember(myReferenceExpression, targetClass)) {
       PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+    }
+
+    if (shouldCreateFinalMember(myReferenceExpression, targetClass)) {
+      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
     }
 
     if (createConstantField()) {
@@ -144,6 +148,22 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
         }
       }
     });
+  }
+
+  private static boolean shouldCreateFinalMember(@NotNull PsiReferenceExpression ref, @NotNull PsiClass targetClass) {
+    if (!PsiTreeUtil.isAncestor(targetClass, ref, true)) {
+      return false;
+    }
+    final PsiElement element = PsiTreeUtil.getParentOfType(ref, PsiClassInitializer.class, PsiMethod.class);
+    if (element instanceof PsiClassInitializer){
+      return true;
+    }
+
+    if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
+      return true;
+    }
+
+    return false;
   }
 
   @Override

@@ -45,6 +45,7 @@ public class MetaModel {
   private List<String> myImportantProperties = Collections.emptyList();
   private List<String> myExpertProperties = Collections.emptyList();
   private List<String> myDeprecatedProperties = Collections.emptyList();
+  private List<MetaModel> myMorphingModels = Collections.emptyList();
 
   public MetaModel(Class<RadComponent> model, String target, String tag) {
     myModel = model;
@@ -115,6 +116,14 @@ public class MetaModel {
   public void setPaletteItem(@NotNull Item paletteItem) {
     myPaletteItem = paletteItem;
     myPaletteItem.setMetaModel(this);
+  }
+
+  public List<MetaModel> getMorphingModels() {
+    return myMorphingModels;
+  }
+
+  public void setMorphingModels(List<MetaModel> morphingModels) {
+    myMorphingModels = morphingModels;
   }
 
   public List<String> getInplaceProperties() {

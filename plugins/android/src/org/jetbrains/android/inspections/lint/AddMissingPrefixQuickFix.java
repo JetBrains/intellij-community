@@ -2,7 +2,6 @@ package org.jetbrains.android.inspections.lint;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,7 +11,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
@@ -21,14 +19,14 @@ import java.util.Collections;
  */
 class AddMissingPrefixQuickFix implements AndroidLintQuickFix {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.inspections.lint.AddMissingPrefixQuickFix");
-  
+
   @Override
-  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @Nullable Editor editor) {
+  public void apply(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull AndroidQuickfixContexts.Context context) {
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(startElement, XmlAttribute.class, false);
     if (attribute == null) {
       return;
     }
-    
+
     final XmlTag tag = attribute.getParent();
     if (tag == null) {
       LOG.debug("tag is null");
@@ -40,17 +38,17 @@ class AddMissingPrefixQuickFix implements AndroidLintQuickFix {
     if (androidNsPrefix == null) {
       final PsiFile file = tag.getContainingFile();
       final XmlExtension extension = XmlExtension.getExtension(file);
-      
+
       if (extension == null) {
         LOG.debug("Cannot get XmlExtension for file + " + file);
         return;
       }
-      
+
       if (!(file instanceof XmlFile)) {
         LOG.debug(file + " is not XmlFile");
         return;
       }
-      
+
       final XmlFile xmlFile = (XmlFile)file;
       final String defaultPrefix = "android";
       extension.insertNamespaceDeclaration(xmlFile, null, Collections.singleton(SdkConstants.NS_RESOURCES), defaultPrefix, null);
@@ -60,7 +58,9 @@ class AddMissingPrefixQuickFix implements AndroidLintQuickFix {
   }
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement startElement, @NotNull PsiElement endElement, boolean inBatchMode) {
+  public boolean isApplicable(@NotNull PsiElement startElement,
+                              @NotNull PsiElement endElement,
+                              @NotNull AndroidQuickfixContexts.ContextType contextType) {
     return PsiTreeUtil.getParentOfType(startElement, XmlAttribute.class, false) != null;
   }
 

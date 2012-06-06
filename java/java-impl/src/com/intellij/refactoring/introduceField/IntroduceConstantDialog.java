@@ -37,6 +37,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -129,7 +130,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     init();
 
     myVPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
-    myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClass));
+    myIntroduceEnumConstantCb.setEnabled(isSuitableForEnumConstant());
     updateVisibilityPanel();
     updateButtons();
   }
@@ -324,7 +325,13 @@ class IntroduceConstantDialog extends DialogWrapper {
     final String targetClassName = getTargetClassName();
     myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
     updateVisibilityPanel();
-    myIntroduceEnumConstantCb.setEnabled(EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClass));
+    myIntroduceEnumConstantCb.setEnabled(isSuitableForEnumConstant());
+  }
+
+  private boolean isSuitableForEnumConstant() {
+    return EnumConstantsUtil.isSuitableForEnumConstant(getSelectedType(), myTargetClass) && PsiTreeUtil
+                                                                                              .getParentOfType(myInitializerExpression,
+                                                                                                               PsiEnumConstant.class) == null;
   }
 
   private void enableEnumDependant(boolean enable) {

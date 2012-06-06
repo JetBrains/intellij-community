@@ -127,6 +127,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
                                                      "  \t  \tdarkcyan \t#008b8b \t0,139,139\n" +
                                                      "  \t  \tdarkgoldenrod \t#b8860b \t184,134,11\n" +
                                                      "  \t  \tdarkgray \t#a9a9a9 \t169,169,169\n" +
+                                                     "  \t  \tdarkgrey \t#a9a9a9 \t169,169,169\n" +
                                                      "  \t  \tdarkgreen \t#006400 \t0,100,0\n" +
                                                      "  \t  \tdarkkhaki \t#bdb76b \t189,183,107\n" +
                                                      "  \t  \tdarkmagenta \t#8b008b \t139,0,139\n" +
@@ -138,11 +139,13 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
                                                      "  \t  \tdarkseagreen \t#8fbc8f \t143,188,143\n" +
                                                      "  \t  \tdarkslateblue \t#483d8b \t72,61,139\n" +
                                                      "  \t  \tdarkslategray \t#2f4f4f \t47,79,79\n" +
+                                                     "  \t  \tdarkslategrey \t#2f4f4f \t47,79,79\n" +
                                                      "  \t  \tdarkturquoise \t#00ced1 \t0,206,209\n" +
                                                      "  \t  \tdarkviolet \t#9400d3 \t148,0,211\n" +
                                                      "  \t  \tdeeppink \t#ff1493 \t255,20,147\n" +
                                                      "  \t  \tdeepskyblue \t#00bfff \t0,191,255\n" +
                                                      "  \t  \tdimgray \t#696969 \t105,105,105\n" +
+                                                     "  \t  \tdimgrey \t#696969 \t105,105,105\n" +
                                                      "  \t  \tdodgerblue \t#1e90ff \t30,144,255\n" +
                                                      "  \t  \tfirebrick \t#b22222 \t178,34,34\n" +
                                                      "  \t  \tfloralwhite \t#fffaf0 \t255,250,240\n" +
@@ -171,12 +174,14 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
                                                      "  \t  \tlightcyan \t#e0ffff \t224,255,255\n" +
                                                      "  \t  \tlightgoldenrodyellow \t#fafad2 \t250,250,210\n" +
                                                      "  \t  \tlightgray \t#d3d3d3 \t211,211,211\n" +
+                                                     "  \t  \tlightgrey \t#d3d3d3 \t211,211,211\n" +
                                                      "  \t  \tlightgreen \t#90ee90 \t144,238,144\n" +
                                                      "  \t  \tlightpink \t#ffb6c1 \t255,182,193\n" +
                                                      "  \t  \tlightsalmon \t#ffa07a \t255,160,122\n" +
                                                      "  \t  \tlightseagreen \t#20b2aa \t32,178,170\n" +
                                                      "  \t  \tlightskyblue \t#87cefa \t135,206,250\n" +
                                                      "  \t  \tlightslategray \t#778899 \t119,136,153\n" +
+                                                     "  \t  \tlightslategrey \t#778899 \t119,136,153\n" +
                                                      "  \t  \tlightsteelblue \t#b0c4de \t176,196,222\n" +
                                                      "  \t  \tlightyellow \t#ffffe0 \t255,255,224\n" +
                                                      "  \t  \tlime \t#00ff00 \t0,255,0\n" +
@@ -229,6 +234,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
                                                      "  \t  \tskyblue \t#87ceeb \t135,206,235\n" +
                                                      "  \t  \tslateblue \t#6a5acd \t106,90,205\n" +
                                                      "  \t  \tslategray \t#708090 \t112,128,144\n" +
+                                                     "  \t  \tslategrey \t#708090 \t112,128,144\n" +
                                                      "  \t  \tsnow \t#fffafa \t255,250,250\n" +
                                                      "  \t  \tspringgreen \t#00ff7f \t0,255,127\n" +
                                                      "  \t  \tsteelblue \t#4682b4 \t70,130,180\n" +

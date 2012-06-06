@@ -59,6 +59,7 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   }
 
   public abstract DefaultMutableTreeNode getSelectedNode();
+
   public Project getProject() {
     return myProject;
   }

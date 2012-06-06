@@ -546,7 +546,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
 
     private static class MyResolver implements ResolveCache.Resolver {
       static MyResolver INSTANCE = new MyResolver(); 
-      public PsiElement resolve(PsiReference ref, boolean incompleteCode) {
+      public PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
         return ((TypeOrElementOrAttributeReference)ref).resolveInner();
       }
     }

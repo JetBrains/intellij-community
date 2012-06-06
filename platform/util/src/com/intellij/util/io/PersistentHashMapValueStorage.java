@@ -186,6 +186,9 @@ public class PersistentHashMapValueStorage {
           throw new PersistentEnumeratorBase.CorruptedException(myFile);
         }
       }
+    } catch (OutOfMemoryError error) {
+      result = null;
+      throw new PersistentEnumeratorBase.CorruptedException(myFile);
     }
     finally {
       if (readerHandle != null) {

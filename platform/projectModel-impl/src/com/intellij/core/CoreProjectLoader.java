@@ -22,10 +22,13 @@ import com.intellij.openapi.components.impl.stores.DirectoryStorageData;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.fs.FileSystem;
@@ -41,7 +44,8 @@ import java.io.IOException;
  * @author yole
  */
 public class CoreProjectLoader {
-  public static void loadProject(MockProject project, @NotNull VirtualFile virtualFile) throws IOException, JDOMException {
+  public static void loadProject(MockProject project, @NotNull VirtualFile virtualFile)
+    throws IOException, JDOMException, InvalidDataException {
     if (virtualFile.isDirectory() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) {
       project.setBaseDir(virtualFile);
       loadDirectoryProject(project, virtualFile);
@@ -52,7 +56,8 @@ public class CoreProjectLoader {
     }
   }
 
-  private static void loadDirectoryProject(Project project, VirtualFile projectDir) throws IOException, JDOMException {
+  private static void loadDirectoryProject(Project project, VirtualFile projectDir) throws IOException, JDOMException,
+                                                                                           InvalidDataException {
     VirtualFile dotIdea = projectDir.findChild(Project.DIRECTORY_STORE_FOLDER);
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
     StorageData storageData = loadStorageFile(project, modulesXml);
@@ -62,6 +67,14 @@ public class CoreProjectLoader {
     }
     final CoreModuleManager moduleManager = (CoreModuleManager)ModuleManager.getInstance(project);
     moduleManager.loadState(moduleManagerState);
+
+    VirtualFile miscXml = dotIdea.findChild("misc.xml");
+    storageData = loadStorageFile(project, miscXml);
+    final Element projectRootManagerState = storageData.getState("ProjectRootManager");
+    if (projectRootManagerState == null) {
+      throw new JDOMException("cannot find ProjectRootManager state in misc.xml");
+    }
+    ((ProjectRootManagerImpl) ProjectRootManager.getInstance(project)).readExternal(projectRootManagerState);
 
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
