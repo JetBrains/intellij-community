@@ -16,9 +16,7 @@
 
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.PsiCopyPasteManager;
+import com.intellij.ide.*;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
@@ -377,8 +375,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public AnAction[] getTitleActions() {
     return new AnAction[]{
-      ExpandAllAction.createHeaderAction(getTree()),
-      CollapseAllAction.createHeaderAction(getTree())
+      CommonActionsManager.getInstance().createCollapseAllHeaderAction(getTree()),
+      CommonActionsManager.getInstance().createExpandAllHeaderAction(getTree()),
     };
   }
 

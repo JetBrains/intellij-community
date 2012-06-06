@@ -24,13 +24,6 @@ import javax.swing.*;
 
 public class CollapseAllAction extends AnAction implements DumbAware {
 
-  public static CollapseAllAction createHeaderAction(JTree tree) {
-    CollapseAllAction action = new CollapseAllAction(tree);
-    action.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-    action.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
-    return action;
-  }
-
   protected JTree myTree;
 
   public CollapseAllAction(JTree tree) {

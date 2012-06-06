@@ -35,10 +35,12 @@ public abstract class CommonActionsManager {
   @Deprecated
   public abstract AnAction createExpandAllAction(TreeExpander expander);
   public abstract AnAction createExpandAllAction(TreeExpander expander, JComponent component);
+  public abstract AnAction createExpandAllHeaderAction(JTree tree);
 
   @Deprecated
   public abstract AnAction createCollapseAllAction(TreeExpander expander);
   public abstract AnAction createCollapseAllAction(TreeExpander expander, JComponent component);
+  public abstract AnAction createCollapseAllHeaderAction(JTree tree);
 
   public abstract AnAction createHelpAction(String helpId);
 
@@ -46,7 +48,7 @@ public abstract class CommonActionsManager {
    * Installs autoscroll capability support to JTree passed. Toggle action returned.
    * @param project
    * @return toggle action to be inserted to appropriate toolbar
-   * @param tree should provide DataContstants.NAVIGATABLE for handler to work on
+   * @param tree should provide DataConstants.NAVIGATABLE for handler to work on
    * @param optionProvider get/set API to externalizable property.
    */
   public abstract AnAction installAutoscrollToSourceHandler(Project project, JTree tree, AutoScrollToSourceOptionProvider optionProvider);

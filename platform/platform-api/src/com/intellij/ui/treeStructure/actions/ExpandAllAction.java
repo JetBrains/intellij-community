@@ -23,13 +23,6 @@ import javax.swing.*;
 
 public class ExpandAllAction extends AnAction {
 
-  public static ExpandAllAction createHeaderAction(JTree tree) {
-    ExpandAllAction action = new ExpandAllAction(tree);
-    action.getTemplatePresentation().setIcon(AllIcons.General.ExpandAll);
-    action.getTemplatePresentation().setHoveredIcon(AllIcons.General.ExpandAllHover);
-    return action;
-  }
-
   protected JTree myTree;
 
   public ExpandAllAction(JTree tree) {
