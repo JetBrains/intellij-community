@@ -34,6 +34,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,7 +203,10 @@ public class XmlCompletionData extends CompletionData {
       if (tag != null) {
         containingFile = (XmlFile)tag.getContainingFile();
         descriptorFile = findDescriptorFile(tag, containingFile);
-      } else {
+      }
+
+      boolean isHtml5 = false;
+      if (tag == null || (isHtml5 = HtmlUtil.isHtml5Context(tag))) {  // Html5 RNG does not have entities
         final XmlDocument document = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
 
         if (document != null) {
@@ -211,7 +215,7 @@ public class XmlCompletionData extends CompletionData {
           final FileType ft = containingFile.getFileType();
 
           if(ft != StdFileTypes.XML) {
-            final String namespace = ft == StdFileTypes.XHTML || ft == StdFileTypes.JSPX ? XmlUtil.XHTML_URI:XmlUtil.HTML_URI;
+            final String namespace = ft == StdFileTypes.XHTML || ft == StdFileTypes.JSPX || isHtml5? XmlUtil.XHTML_URI:XmlUtil.HTML_URI;
             final XmlNSDescriptor nsDescriptor = document.getDefaultNSDescriptor(namespace, true);
 
             if (nsDescriptor != null) {
