@@ -10,10 +10,10 @@ import java.util.List;
  */
 public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Self extends JpsNamedElementReferenceBase<T, Self>> extends JpsCompositeElementBase<Self> implements JpsElementReference<T> {
   private static final JpsElementKind<JpsElementReference<? extends JpsCompositeElement>> PARENT_REFERENCE_KIND = new JpsElementKind<JpsElementReference<? extends JpsCompositeElement>>();
-  private final JpsElementCollectionKind<? extends T> myCollectionKind;
+  private final JpsElementCollectionKind myCollectionKind;
   protected final String myElementName;
 
-  protected JpsNamedElementReferenceBase(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, @NotNull JpsElementCollectionKind<? extends T> kind, @NotNull String elementName,
+  protected JpsNamedElementReferenceBase(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, @NotNull JpsElementCollectionKind kind, @NotNull String elementName,
                                          @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference, JpsParentElement parent) {
     super(model, eventDispatcher, parent);
     myCollectionKind = kind;
@@ -34,10 +34,11 @@ public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Se
     final JpsCompositeElement parent = myContainer.getChild(PARENT_REFERENCE_KIND).resolve();
     if (parent == null) return null;
 
-    final List<? extends T> elements = parent.getContainer().getChild(myCollectionKind).getElements();
-    for (T element : elements) {
-      if (element.getName().equals(myElementName)) {
-        return element;
+    JpsElementCollectionImpl child = (JpsElementCollectionImpl)parent.getContainer().getChild(myCollectionKind);
+    List elements = child.getElements();
+    for (Object element : elements) {
+      if (((T)element).getName().equals(myElementName)) {
+        return (T)element;
       }
     }
     return null;
