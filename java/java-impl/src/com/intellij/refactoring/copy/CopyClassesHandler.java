@@ -100,7 +100,19 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         }
       }
     }
-    return result.isEmpty() ? null : result;
+    if (result.isEmpty()) {
+      return null;
+    }
+    else {
+      boolean hasClasses = false;
+      for (PsiClass[] classes : result.values()) {
+        if (classes != null) {
+          hasClasses = true;
+          break;
+        }
+      }
+      return hasClasses ? result : null;
+    }
   }
 
   @Nullable
