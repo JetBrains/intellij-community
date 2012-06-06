@@ -1,0 +1,2 @@
+def x = a <spot>&&</spot> b
+def y = c <spot>||</spot> d

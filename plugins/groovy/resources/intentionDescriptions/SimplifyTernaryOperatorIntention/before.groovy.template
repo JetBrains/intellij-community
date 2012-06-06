@@ -1,0 +1,2 @@
+def x = a <spot>?</spot> b : false
+def y = c <spot>?</spot> true : d
