@@ -269,7 +269,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     myShortcutSet = shortcutSet;
   }
 
-  public static String createTooltipText(@Nullable String s, AnAction action) {
+  public static String createTooltipText(String s, AnAction action) {
     String toolTipText = s != null ? s : "";
     while (StringUtil.endsWithChar(toolTipText, '.')) {
       toolTipText = toolTipText.substring(0, toolTipText.length() - 1);
