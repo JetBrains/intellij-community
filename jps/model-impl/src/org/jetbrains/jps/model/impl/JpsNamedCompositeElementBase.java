@@ -33,7 +33,7 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
 
   public void applyChanges(@NotNull Self modified) {
     super.applyChanges(modified);
-    setName(((JpsNamedCompositeElementBase)modified).myName);
+    setName(modified.getName());
   }
 
   @Override
