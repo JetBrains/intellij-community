@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model;
 
+import com.intellij.android.designer.model.morphing.RelativeLayout;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
@@ -97,7 +98,15 @@ public class ComponentMorphingTool {
       "com.intellij.android.designer.model.morphing." + component.getMetaModel().getTag());
     Object sourceConverter = sourceConverterClass.newInstance();
 
-    Method method = sourceConverterClass.getMethod(target.getTag(), RadViewComponent.class, MetaModel.class);
-    return (RadViewComponent)method.invoke(sourceConverter, component, target);
+    try {
+      Method method = sourceConverterClass.getMethod(target.getTag(), RadViewComponent.class, MetaModel.class);
+      return (RadViewComponent)method.invoke(sourceConverter, component, target);
+    }
+    catch (NoSuchMethodException e) {
+      if ("RelativeLayout".equals(target.getTag())) {
+        return RelativeLayout.RelativeLayout(component, target);
+      }
+      throw e;
+    }
   }
 }
