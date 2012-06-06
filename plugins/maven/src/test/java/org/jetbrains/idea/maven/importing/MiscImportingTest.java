@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -28,7 +27,6 @@ import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.List;
 
 public class MiscImportingTest extends MavenImportingTestCase {
