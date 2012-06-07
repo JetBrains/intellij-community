@@ -9,7 +9,7 @@ import org.jetbrains.jps.model.module.JpsModule;
  * @author nik
  */
 public class JavaModuleExtensionKind extends JpsElementKind<JavaModuleExtensionImpl> implements JpsElementFactory<JavaModuleExtensionImpl> {
-  public static final JavaModuleExtensionKind INSTANCE = new JavaModuleExtensionKind();
+  private static final JavaModuleExtensionKind INSTANCE = new JavaModuleExtensionKind();
 
   @NotNull
   @Override
