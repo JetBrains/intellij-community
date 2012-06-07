@@ -50,9 +50,13 @@ public class BasePathMacroManager extends PathMacroManager {
     addFileHierarchyReplacements(result, f.getParent(), macro + "/..");
 
     final String path = FileUtil.toSystemIndependentName(f.getCanonicalPath());
-    String s = macro;
-    if (StringUtil.endsWithChar(path, '/')) s += "/";
-    result.put(s, path);
+    if (StringUtil.endsWithChar(path, '/')) {
+      result.put(macro + "/", path);
+      result.put(macro, path.substring(0, path.length()-1));
+    }
+    else {
+      result.put(macro, path);
+    }
   }
 
   protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result, String macroName, @Nullable String path, @Nullable String stopAt) {
@@ -64,17 +68,14 @@ public class BasePathMacroManager extends PathMacroManager {
     while (dir != null && dir.getParent() != null) {
       path = FileUtil.toSystemIndependentName(dir.getCanonicalPath());
 
-      String s = macro;
-      if (StringUtil.endsWithChar(path, '/')) s += "/";
-
-      putIfAbsent(result, "file:" + path, "file:" + s, check);
-      putIfAbsent(result, "file:/" + path, "file:/" + s, check);
-      putIfAbsent(result, "file://" + path, "file://" + s, check);
-      putIfAbsent(result, "jar:" + path, "jar:" + s, check);
-      putIfAbsent(result, "jar:/" + path, "jar:/" + s, check);
-      putIfAbsent(result, "jar://" + path, "jar://" + s, check);
+      putIfAbsent(result, "file:" + path, "file:" + macro, check);
+      putIfAbsent(result, "file:/" + path, "file:/" + macro, check);
+      putIfAbsent(result, "file://" + path, "file://" + macro, check);
+      putIfAbsent(result, "jar:" + path, "jar:" + macro, check);
+      putIfAbsent(result, "jar:/" + path, "jar:/" + macro, check);
+      putIfAbsent(result, "jar://" + path, "jar://" + macro, check);
       if (!path.equalsIgnoreCase("e:/") && !path.equalsIgnoreCase("r:/") && !path.equalsIgnoreCase("p:/")) {
-        putIfAbsent(result, path, s, check);
+        putIfAbsent(result, path, macro, check);
       }
 
       if (dir.getPath().equals(stopAt)) {
@@ -84,6 +85,22 @@ public class BasePathMacroManager extends PathMacroManager {
       macro += "/..";
       check = true;
       dir = dir.getParent();
+    }
+  }
+
+  private static void putIfAbsent(final ReplacePathToMacroMap result,
+                                  @NonNls final String pathWithPrefix,
+                                  @NonNls final String substitutionWithPrefix,
+                                  final boolean check) {
+    if (check && result.get(pathWithPrefix) != null)
+      return;
+
+    if (StringUtil.endsWithChar(pathWithPrefix, '/')) {
+      result.put(pathWithPrefix, substitutionWithPrefix + "/");
+      result.put(pathWithPrefix.substring(0, pathWithPrefix.length()-1), substitutionWithPrefix);
+    }
+    else {
+      result.put(pathWithPrefix, substitutionWithPrefix);
     }
   }
 
@@ -135,14 +152,6 @@ public class BasePathMacroManager extends PathMacroManager {
     }
 
     return myPathMacros;
-  }
-
-  protected static void putIfAbsent(final ReplacePathToMacroMap result,
-                                    @NonNls final String pathWithPrefix,
-                                    @NonNls final String substitutionWithPrefix,
-                                    final boolean check) {
-    if (check && result.get(pathWithPrefix) != null) return;
-    result.put(pathWithPrefix, substitutionWithPrefix);
   }
 
   private class MyTrackingPathMacroSubstitutor implements TrackingPathMacroSubstitutor {
