@@ -40,7 +40,7 @@ import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
   private final Map<Integer, Future<?>> myPendingZipRequests = new ConcurrentHashMap<Integer, Future<?>>();
-  private int myPendingZipRequestsSize;
+  private volatile int myPendingZipRequestsSize;
   private final ThreadPoolExecutor myPendingZipRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
     @Override
     public Thread newThread(Runnable runnable) {
@@ -52,13 +52,27 @@ public class RefCountingStorage extends AbstractStorage {
   private static final int MAX_PENDING_ZIP_SIZE = 20 * 1024 * 1024;
 
   private final Map<Integer, Callable> myPendingWriteRequests = new ConcurrentHashMap<Integer, Callable>();
-  private int myPendingWriteRequestsSize;
+  private volatile int myPendingWriteRequestsSize;
   private final LowMemoryWatcher myPendingWritesFlusher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
       flushPendingWrites(); // only pending writes
     }
   });
+
+  //private static class WriteRequest {
+  //  final byte[] content;
+  //  final int length;
+  //  final int recordId;
+  //  final boolean fixedSize;
+  //
+  //  WriteRequest(byte[] _content, int _length, int _recordId, boolean _fixedSize) {
+  //    content = _content;
+  //    length = _length;
+  //    recordId = _recordId;
+  //    fixedSize = _fixedSize;
+  //  }
+  //}
 
   private static final int MAX_PENDING_WRITE_SIZE = 2 * 1024 * 1024;
 
@@ -81,18 +95,15 @@ public class RefCountingStorage extends AbstractStorage {
   private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
     waitForPendingWriteForRecord(record);
 
-    synchronized (myLock) {
-
-      byte[] result = super.readBytes(record);
-      InflaterInputStream in = new CustomInflaterInputStream(result);
-      try {
-        final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-        StreamUtil.copyStreamContent(in, outputStream);
-        return outputStream;
-      }
-      finally {
-        in.close();
-      }
+    byte[] result = super.readBytes(record);
+    InflaterInputStream in = new CustomInflaterInputStream(result);
+    try {
+      final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
+      StreamUtil.copyStreamContent(in, outputStream);
+      return outputStream;
+    }
+    finally {
+      in.close();
     }
   }
 
@@ -119,20 +130,32 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   private void waitForPendingWriteForRecord(int record) {
-    Future<?> future = myPendingZipRequests.get(record);
-    if (future != null) {
+    waitForZipToFinish(record);
+
+    Callable action;
+    synchronized (myLock) {
+      action = myPendingWriteRequests.get(record);
+    }
+    if (action != null) {
       try {
-        future.get();
+        action.call();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
+  }
 
-    Callable action = myPendingWriteRequests.get(record);
-    if (action != null) {
+  private void waitForZipToFinish(int record) {
+    Future<?> future;
+
+    synchronized (myLock) {
+      future = myPendingZipRequests.get(record);
+    }
+
+    if (future != null) {
       try {
-        action.call();
+        future.get();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
@@ -153,11 +176,11 @@ public class RefCountingStorage extends AbstractStorage {
       return;
     }
 
-    waitForPendingWriteForRecord(record);
-
     synchronized (myLock) {
+      waitForPendingWriteForRecord(record); // ensure previous write was completed
       myPendingZipRequestsSize += bytes.getLength();
-      if (myPendingZipRequestsSize > MAX_PENDING_ZIP_SIZE) {
+
+      if (myPendingZipRequestsSize > MAX_PENDING_ZIP_SIZE) { // help async thread
         scheduleZippedContentToWrite(zip(bytes, record), record, fixedSize);
       } else {
         myPendingZipRequests.put(record, myPendingZipRequestsExecutor.submit(new Callable<Object>() {
@@ -196,8 +219,8 @@ public class RefCountingStorage extends AbstractStorage {
     synchronized (myLock) {
       if (!myPendingWriteRequests.containsKey(record)) return; // some thread helped us
       super.writeBytes(record, new ByteSequence(zippedBytes.getInternalBuffer(), 0, zippedBytes.size()), fixedSize);
-      myPendingWriteRequestsSize -= zippedBytes.size();
       myPendingWriteRequests.remove(record);
+      myPendingWriteRequestsSize -= zippedBytes.size();
     }
   }
 
@@ -211,8 +234,8 @@ public class RefCountingStorage extends AbstractStorage {
       out.close();
     }
     synchronized (myLock) {
-      myPendingZipRequestsSize -= bytes.getLength();
       myPendingZipRequests.remove(record);
+      myPendingZipRequestsSize -= bytes.getLength();
     }
     return s;
   }
@@ -261,7 +284,7 @@ public class RefCountingStorage extends AbstractStorage {
 
   @Override
   public boolean isDirty() {
-    return myPendingZipRequests.size() > 0 || myPendingWriteRequests.size() > 0 || super.isDirty();
+    return myPendingZipRequestsSize > 0 || myPendingWriteRequestsSize > 0 || super.isDirty();
   }
 
   @Override
