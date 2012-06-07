@@ -635,6 +635,10 @@
       <className>com.intellij.codeInsight.intention.impl.AddOverrideAnnotationAction</className>
       <category>Declaration</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.IntroduceVariableAction</className>
+      <category>Declaration</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
