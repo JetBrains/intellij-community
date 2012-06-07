@@ -176,6 +176,10 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testFieldReferenceInInnerClassJavadoc() throws Throwable {
+    doTest();
+  }
+
   public void testShortenClassReference() throws Throwable { doTest(); }
   public void testQualifiedClassReference() throws Throwable {
     configureByFile(getTestName(false) + ".java");
