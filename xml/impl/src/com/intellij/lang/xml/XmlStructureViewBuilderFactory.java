@@ -36,29 +36,27 @@ import org.jetbrains.annotations.Nullable;
 public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
   @Nullable
   public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
-    if (psiFile instanceof XmlFile) {
-      StructureViewBuilder builder = getStructureViewBuilderForExtensions(psiFile);
-      if (builder != null) {
-        return builder;
-      }
-
-      for (XmlStructureViewBuilderProvider xmlStructureViewBuilderProvider : getStructureViewBuilderProviders()) {
-        final StructureViewBuilder structureViewBuilder = xmlStructureViewBuilderProvider.createStructureViewBuilder((XmlFile)psiFile);
-        if (structureViewBuilder != null) {
-          return structureViewBuilder;
-        }
-      }
-
-      return new TreeBasedStructureViewBuilder() {
-        @NotNull
-        public StructureViewModel createStructureViewModel() {
-          return new XmlStructureViewTreeModel((XmlFile)psiFile);
-        }
-      };
-    }
-    else {
+    if (!(psiFile instanceof XmlFile)) {
       return null;
     }
+    StructureViewBuilder builder = getStructureViewBuilderForExtensions(psiFile);
+    if (builder != null) {
+      return builder;
+    }
+
+    for (XmlStructureViewBuilderProvider xmlStructureViewBuilderProvider : getStructureViewBuilderProviders()) {
+      final StructureViewBuilder structureViewBuilder = xmlStructureViewBuilderProvider.createStructureViewBuilder((XmlFile)psiFile);
+      if (structureViewBuilder != null) {
+        return structureViewBuilder;
+      }
+    }
+
+    return new TreeBasedStructureViewBuilder() {
+      @NotNull
+      public StructureViewModel createStructureViewModel() {
+        return new XmlStructureViewTreeModel((XmlFile)psiFile);
+      }
+    };
   }
 
   private static XmlStructureViewBuilderProvider[] getStructureViewBuilderProviders() {
