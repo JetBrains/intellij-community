@@ -504,10 +504,16 @@ public abstract class MvcFramework {
     final File grailsWorkDir = getSdkWorkDir(module);
     if (grailsWorkDir == null) return null;
 
+    final String applicationName = getApplicationName(module);
+    if (applicationName == null) return null;
+
+    return new File(grailsWorkDir, "projects/" + applicationName + "/plugins");
+  }
+
+  public String getApplicationName(Module module) {
     final VirtualFile root = findAppRoot(module);
     if (root == null) return null;
-
-    return new File(grailsWorkDir, "projects/" + root.getName() + "/plugins");
+    return root.getName();
   }
 
   protected abstract String getCommonPluginSuffix();

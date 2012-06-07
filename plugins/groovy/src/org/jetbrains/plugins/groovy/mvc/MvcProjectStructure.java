@@ -32,23 +32,22 @@ public abstract class MvcProjectStructure {
   protected final Module myModule;
   private final boolean myAuxModule;
   private final String myUserHomeSdkRoot;
-  private final String mySdkWorkDir;
+  private final String mySdkWorkDirPath;
 
   public MvcProjectStructure(Module module, boolean auxModule, String userHomeSdkRoot, final File sdkWorkDir) {
     myAuxModule = auxModule;
     myModule = module;
     myUserHomeSdkRoot = userHomeSdkRoot;
     final VirtualFile sdkWorkDirVFile = MvcModuleStructureUtil.refreshAndFind(sdkWorkDir);
-    mySdkWorkDir = sdkWorkDirVFile == null ? "" : sdkWorkDirVFile.getPath() + "/";
+    mySdkWorkDirPath = sdkWorkDirVFile == null ? "" : sdkWorkDirVFile.getPath() + "/";
   }
-
 
   public boolean isValidContentRoot(@NotNull VirtualFile file) {
     if (file.getPath().startsWith(myUserHomeSdkRoot)) {
       if (!myAuxModule) {
         return false;
       }
-      if (!file.getPath().startsWith(mySdkWorkDir)) {
+      if (!file.getPath().startsWith(mySdkWorkDirPath)) {
         return false;
       }
     }
