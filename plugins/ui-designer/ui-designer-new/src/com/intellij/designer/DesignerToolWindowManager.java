@@ -52,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 /**
  * @author Alexander Lobas
@@ -61,6 +63,7 @@ public final class DesignerToolWindowManager implements ProjectComponent {
   private final Project myProject;
   private final FileEditorManager myFileEditorManager;
   private ToolWindow myToolWindow;
+  private Splitter myToolWindowPanel;
   private ComponentTree myComponentTree;
   private ComponentTreeBuilder myTreeBuilder;
   private PropertyTablePanel myPropertyTablePanel;
@@ -206,10 +209,19 @@ public final class DesignerToolWindowManager implements ProjectComponent {
 
     myPropertyTablePanel = new PropertyTablePanel();
 
-    // TODO: auto change orientation: IF (width < height) vertical ELSE horizontal
-    Splitter toolWindowPanel = new Splitter(true, 0.42f);
-    toolWindowPanel.setFirstComponent(treeScrollPane);
-    toolWindowPanel.setSecondComponent(myPropertyTablePanel);
+    myToolWindowPanel = new Splitter(true, 0.42f);
+    myToolWindowPanel.setFirstComponent(treeScrollPane);
+    myToolWindowPanel.setSecondComponent(myPropertyTablePanel);
+    myToolWindowPanel.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        Dimension size = myToolWindowPanel.getSize();
+        boolean newVertical = size.width < size.height;
+        if (myToolWindowPanel.getOrientation() != newVertical) {
+          myToolWindowPanel.setOrientation(newVertical);
+        }
+      }
+    });
 
     myToolWindow =
       ToolWindowManager.getInstance(myProject)
@@ -220,7 +232,7 @@ public final class DesignerToolWindowManager implements ProjectComponent {
 
     ContentManager contentManager = myToolWindow.getContentManager();
     Content content =
-      contentManager.getFactory().createContent(toolWindowPanel, DesignerBundle.message("designer.toolwindow.title"), false);
+      contentManager.getFactory().createContent(myToolWindowPanel, DesignerBundle.message("designer.toolwindow.title"), false);
     content.setCloseable(false);
     content.setPreferredFocusableComponent(myComponentTree);
     contentManager.addContent(content);
