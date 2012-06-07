@@ -12,7 +12,11 @@ import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.ToggleModelAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +37,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   private TreeSelectionListener myTreeSelectionListener;
 
   public TrackCoverageAction(TestConsoleProperties properties) {
-    super("Show coverage per test", "Show coverage per test", TestsUIUtil.loadIcon("trackCoverage"), properties,
+    super("Show coverage per test", "Show coverage per test", AllIcons.RunConfigurations.TrackCoverage, properties,
           TestConsoleProperties.TRACK_CODE_COVERAGE);
     myProperties = properties;
 
