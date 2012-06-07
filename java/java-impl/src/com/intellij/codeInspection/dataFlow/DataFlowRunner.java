@@ -39,12 +39,14 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.*;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
   private static final Key<Integer> TOO_EXPENSIVE_SIZE = Key.create("TOO_EXPENSIVE_SIZE");
-  private static final long ourTimeLimit = 1000;
+  public static final long ourTimeLimit = 1000 * 1000 * 1000; //1 sec in nanoseconds
 
   private Instruction[] myInstructions;
   private DfaVariableValue[] myFields;
@@ -121,10 +123,11 @@ public class DataFlowRunner {
 
       long timeLimit = ourTimeLimit;
       final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-      final long before = System.currentTimeMillis();
+      ThreadMXBean tm = ManagementFactory.getThreadMXBean();
+      final long before = tm.getCurrentThreadUserTime();
       int count = 0;
       while (!queue.isEmpty()) {
-        if (count % 50 == 0 && !unitTestMode && System.currentTimeMillis() - before > timeLimit) {
+        if (count % 50 == 0 && !unitTestMode && tm.getCurrentThreadUserTime() - before > timeLimit) {
           psiBlock.putUserData(TOO_EXPENSIVE_SIZE, psiBlock.getText().hashCode());
           return RunnerResult.TOO_COMPLEX;
         }
