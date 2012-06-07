@@ -23,5 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class CustomImplementationFileBasedIndexExtension<K, V, I> extends FileBasedIndexExtension<K, V> {
   @NotNull
-  public abstract UpdatableIndex<K, V, I> createIndexImplementation(final ID<K, V> indexId, @NotNull FileBasedIndex owner, @NotNull IndexStorage<K, V> storage);
+  public abstract UpdatableIndex<K, V, I> createIndexImplementation(final ID<K, V> indexId, @NotNull FileBasedIndex owner, @NotNull IndexStorage<K, V> storage)
+    throws StorageException;
 }

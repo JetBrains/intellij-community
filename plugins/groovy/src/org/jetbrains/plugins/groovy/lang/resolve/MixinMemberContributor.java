@@ -69,7 +69,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     for (PsiClass mixin : mixins) {
       if (!mixin.processDeclarations(new DelegatingScopeProcessor(processor) {
         @Override
-        public boolean execute(PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, ResolveState state) {
           if (isCategoryMethod(element, qualifierType, state.get(PsiSubstitutor.KEY))) {
             return super.execute(GrGdkMethodImpl.createGdkMethod((PsiMethod)element, false), state);
           }

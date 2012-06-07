@@ -151,7 +151,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     }
 
     @Override
-    public boolean execute(PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, ResolveState state) {
       if (element instanceof PsiMethod || element instanceof PsiField) {
         String propertyName;
         PsiType type;
@@ -186,7 +186,7 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
     }
 
     @Override
-    public <T> T getHint(Key<T> hintKey) {
+    public <T> T getHint(@NotNull Key<T> hintKey) {
       if ((NameHint.KEY == hintKey && myNameHint != null) || ClassHint.KEY == hintKey || ElementClassHint.KEY == hintKey) {
         //noinspection unchecked
         return (T) this;

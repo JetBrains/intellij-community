@@ -62,7 +62,18 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       @Override
       public void actionPerformed(ActionEvent e) {
         final PluginManagerConfigurable configurable = createAvailableConfigurable();
-        new SingleConfigurableEditor(myActionsPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false).show();
+        final SingleConfigurableEditor configurableEditor =
+          new SingleConfigurableEditor(myActionsPanel, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable), false) {
+            {
+              setOKButtonText(CommonBundle.getCloseButtonText());
+            }
+
+            @Override
+            protected Action[] createActions() {
+              return new Action[]{getOKAction()};
+            }
+          };
+        configurableEditor.show();
       }
     });
     myActionsPanel.add(button);

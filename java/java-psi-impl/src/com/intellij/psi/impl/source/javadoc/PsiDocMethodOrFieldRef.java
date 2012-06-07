@@ -253,10 +253,11 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     @NotNull
     public PsiElement[] getVariants(){
       final List<PsiModifierListOwner> vars = new ArrayList<PsiModifierListOwner>();
-      final PsiElement scope = getScope();
-      if (scope != null) {
+      PsiClass scope = getScope();
+      while (scope != null) {
         ContainerUtil.addAll(vars, getAllMethods(scope, PsiDocMethodOrFieldRef.this));
         ContainerUtil.addAll(vars, getAllVariables(scope, PsiDocMethodOrFieldRef.this));
+        scope = scope.getContainingClass();
       }
       return vars.toArray(new PsiModifierListOwner[vars.size()]);
     }

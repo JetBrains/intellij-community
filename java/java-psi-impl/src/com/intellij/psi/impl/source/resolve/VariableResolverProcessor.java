@@ -29,6 +29,7 @@ import com.intellij.psi.scope.conflictResolvers.JavaVariableConflictResolver;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik, dsl
@@ -91,7 +92,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   @Override
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName, myPlace))) {
       super.execute(element, state);
       return myResults.isEmpty();
@@ -101,7 +102,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   @Override
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
       return (T)this;
     }

@@ -23,6 +23,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -66,7 +67,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
   }
 
   @Override
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (myFilter.isAcceptable(element, myCurrentDeclarationHolder)) {
       if (myProcessor != null) {
         return myProcessor.execute(element, state);
@@ -82,7 +83,7 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor {
   }
 
   @Override
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     if (myProcessor != null) {
       return myProcessor.getHint(hintKey);
     }

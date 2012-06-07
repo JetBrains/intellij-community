@@ -34,7 +34,7 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
   private PsiElement myCurrentFileContext = null;
 
   @Override
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY) {
       //noinspection unchecked
       return (T)this;
@@ -50,7 +50,7 @@ public class SymbolCollectingProcessor extends BaseScopeProcessor implements Ele
   }
 
   @Override
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (element instanceof PsiNamedElement) {
       PsiNamedElement named = (PsiNamedElement)element;
       String name = named.getName();

@@ -149,6 +149,10 @@ public class ResolveCache {
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
+   public <T extends PsiPolyVariantReference> boolean isCached(@NotNull T ref, boolean physical, boolean incompleteCode) {
+     return getCached(ref, myPolyVariantResolveMaps, physical, incompleteCode) != null;
+  }
+
   public PsiElement resolveWithCaching(@NotNull PsiReference ref,
                                        @NotNull Resolver resolver,
                                        boolean needToPreventRecursion,

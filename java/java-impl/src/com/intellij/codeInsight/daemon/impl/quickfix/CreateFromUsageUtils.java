@@ -514,7 +514,7 @@ public class CreateFromUsageUtils {
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor("", true, list){
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if(!(element instanceof PsiField) ||
            JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible((PsiField)element, expression, null)) {
           return super.execute(element, state);

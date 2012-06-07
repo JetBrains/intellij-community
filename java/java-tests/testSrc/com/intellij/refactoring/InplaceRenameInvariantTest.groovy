@@ -34,7 +34,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
    }
    """
 
-    doTestPositionInvariance(text, false)
+    doTestPositionInvariance(text, false, false)
   }
 
   public void "test middle caret position"() {
@@ -44,7 +44,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     }
     """
 
-    doTestPositionInvariance(text, false)
+    doTestPositionInvariance(text, false, false)
   }
 
   public void "test end caret position"() {
@@ -54,7 +54,18 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     }
     """
 
-    doTestPositionInvariance(text, false)
+    doTestPositionInvariance(text, false, false)
+  }
+
+  public void "test end caret position typing"() {
+    def text = """\
+       class Test {
+         Test<caret> myTest;
+       }
+     }
+     """
+
+    doTestPositionInvariance(text, false, false)
   }
 
 
@@ -65,7 +76,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
      }
      """
 
-    doTestPositionInvariance(text, true)
+    doTestPositionInvariance(text, true, false)
   }
 
   public void "test middle caret position preselect"() {
@@ -75,7 +86,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
       }
       """
 
-    doTestPositionInvariance(text, true)
+    doTestPositionInvariance(text, true, false)
   }
 
   public void "test end caret position preselect"() {
@@ -85,10 +96,10 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
       }
       """
 
-    doTestPositionInvariance(text, true)
+    doTestPositionInvariance(text, true, false)
   }
 
-  private doTestPositionInvariance(String text, final boolean preselect) {
+  private doTestPositionInvariance(String text, final boolean preselect, final boolean checkTyping) {
     configure text
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project)
     def oldPreselectSetting = myEditor.settings.preselectRename
@@ -104,6 +115,11 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
 
 
       handler.doRename(element, editor, null);
+      
+      if (checkTyping){
+        type '1'
+        offset++
+      }
 
       assertEquals(offset, myEditor.caretModel.offset)
     }

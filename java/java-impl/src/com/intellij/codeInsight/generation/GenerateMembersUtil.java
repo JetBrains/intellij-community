@@ -303,7 +303,7 @@ public class GenerateMembersUtil {
           }
         }
         else {
-          GenerateConstructorHandler.copyModifierList(factory, parameter, newParameter);
+          GenerateConstructorHandler.copyModifierList(parameter, newParameter);
         }
         newMethod.getParameterList().add(newParameter);
       }

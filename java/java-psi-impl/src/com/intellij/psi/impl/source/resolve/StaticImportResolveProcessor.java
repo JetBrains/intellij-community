@@ -21,6 +21,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -38,7 +39,7 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
   }
 
   @Override
-  public boolean execute(final PsiElement candidate, final ResolveState state) {
+  public boolean execute(@NotNull final PsiElement candidate, final ResolveState state) {
     if (candidate instanceof PsiMember && ((PsiModifierListOwner)candidate).hasModifierProperty(PsiModifier.STATIC)) {
       if (candidate instanceof PsiField) {
         if (checkDomination((PsiMember)candidate, myFieldResults)) return true;
@@ -90,7 +91,7 @@ public class StaticImportResolveProcessor extends BaseScopeProcessor implements 
   }
 
   @Override
-  public <T> T getHint(final Key<T> hintKey) {
+  public <T> T getHint(@NotNull final Key<T> hintKey) {
     if (hintKey == NameHint.KEY) {
       //noinspection unchecked
       return (T)this;

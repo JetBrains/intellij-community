@@ -36,9 +36,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -286,7 +288,11 @@ public class DeleteHandler {
   public static boolean shouldEnableDeleteAction(PsiElement[] elements) {
     if (elements == null || elements.length == 0) return false;
     for (PsiElement element : elements) {
-      if (element instanceof PsiCompiledElement) {
+      VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+      if (virtualFile == null) {
+        return false;
+      }
+      if (!WritingAccessProvider.isPotentiallyWritable(virtualFile, element.getProject())) {
         return false;
       }
     }

@@ -402,6 +402,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testAnonymousTypeParameter() throws Throwable { doTest(); }
+
   public void testClassLiteralInAnnoParam() throws Throwable {
     doTest();
   }

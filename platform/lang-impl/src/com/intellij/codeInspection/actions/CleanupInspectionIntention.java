@@ -96,7 +96,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myTool instanceof UnfairLocalInspectionTool);
+    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myTool.isUnfair());
   }
 
   public boolean startInWriteAction() {

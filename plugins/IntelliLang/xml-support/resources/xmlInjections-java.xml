@@ -37,7 +37,7 @@
   </injection>
   <injection language="HQL" injector-id="xml">
     <display-name>query</display-name>
-    <place><![CDATA[xmlTag().withLocalName(string().equalTo("query")).withNamespace(string().equalTo("http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd"))]]></place>
+    <place><![CDATA[xmlTag().withLocalName(string().equalTo("query")).withNamespace(or(string().endsWith("/hibernate-mapping-3.0.dtd"), string().equalTo("http://www.hibernate.org/xsd/hibernate-mapping")))]]></place>
   </injection>
   <injection language="JPAQL" injector-id="xml">
     <display-name>query</display-name>

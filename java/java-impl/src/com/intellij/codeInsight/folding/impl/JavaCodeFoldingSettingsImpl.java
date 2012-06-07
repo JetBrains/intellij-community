@@ -184,7 +184,7 @@ public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings impleme
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_I18N_MESSAGES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_END_OF_LINE_COMMENTS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_RECURSIVE_METHOD_CALLS = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_RECURSIVE_METHOD_CALLS = false;
 
   @Override
   @NotNull

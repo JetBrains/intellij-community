@@ -107,6 +107,9 @@ public class WalkingState<T> {
     stopped = true;
   }
 
+  /**
+   * process in the in-order fashion
+   */
   public static <T> boolean processAll(@NotNull T root, @NotNull TreeGuide<T> treeGuide, @NotNull final Processor<T> processor) {
     final boolean[] result = {true};
     new WalkingState<T>(treeGuide){

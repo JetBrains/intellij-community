@@ -21,10 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -145,12 +142,6 @@ public class CommonRefactoringUtil {
               readonly.add(virtualFile);
             }
           }
-        }
-      }
-      else if (element instanceof PsiCompiledElement) {
-        final PsiFile file = element.getContainingFile();
-        if (file != null) {
-          failed.add(file.getVirtualFile());
         }
       }
       else {

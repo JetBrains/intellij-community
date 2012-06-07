@@ -233,7 +233,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     @Override
-    public <T> T getHint(final Key<T> hintKey) {
+    public <T> T getHint(@NotNull final Key<T> hintKey) {
       return myDelegate.getHint(hintKey);
     }
 
@@ -250,7 +250,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     @Override
-    public boolean execute(final PsiElement element, final ResolveState state) {
+    public boolean execute(@NotNull final PsiElement element, final ResolveState state) {
       if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
         if (element instanceof PsiNamedElement && myIsProcessingOnDemand) {
           final String name = ((PsiNamedElement)element).getName();

@@ -51,8 +51,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private int myDuplicatedValuesPageStart;
   private int myDuplicatedValuesPageOffset;
   private static final int COLLISION_OFFSET = 4;
-  private int valuesCount;
-  private int collisions;
+  private int myValuesCount;
+  private int myCollisions;
+  private int myExistingKeysEnumerated;
 
   private IntToIntBtree btree;
   private final boolean myInlineKeysNoMapping;
@@ -72,8 +73,20 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
                                    PagedFileStorage.StorageLockContext lockContext) throws IOException {
-    super(file, new ResizeableMappedFile(file, initialSize, lockContext, VALUE_PAGE_SIZE, true), dataDescriptor, initialSize,
-          ourVersion, new RecordBufferHandler(), false);
+    super(file,
+          new ResizeableMappedFile(
+            file,
+            initialSize,
+            lockContext != null ? lockContext:ourLock.myDefaultStorageLockContext,
+            VALUE_PAGE_SIZE,
+            true
+          ),
+          dataDescriptor,
+          initialSize,
+          ourVersion,
+          new RecordBufferHandler(),
+          false
+    );
 
     myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantKeyMapping();
     myExternalKeysNoMapping = !(myDataDescriptor instanceof InlineKeyDescriptor) && !wantKeyMapping();
@@ -111,14 +124,15 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myFirstPageStart = store(DATA_START + 12, myFirstPageStart, toDisk);
     myDuplicatedValuesPageStart = store(DATA_START + 16, myDuplicatedValuesPageStart, toDisk);
     myDuplicatedValuesPageOffset = store(DATA_START + 20, myDuplicatedValuesPageOffset, toDisk);
-    valuesCount = store(DATA_START + 24, valuesCount, toDisk);
-    collisions = store(DATA_START + 28, collisions, toDisk);
+    myValuesCount = store(DATA_START + 24, myValuesCount, toDisk);
+    myCollisions = store(DATA_START + 28, myCollisions, toDisk);
+    myExistingKeysEnumerated = store(DATA_START + 32, myExistingKeysEnumerated, toDisk);
     storeBTreeVars(toDisk);
   }
 
   private void storeBTreeVars(boolean toDisk) {
     if (btree != null) {
-      final int BTREE_DATA_START = DATA_START + 32;
+      final int BTREE_DATA_START = DATA_START + 36;
       btree.persistVars(new IntToIntBtree.BtreeDataStorage() {
         @Override
         public int persistInt(int offset, int value, boolean toDisk) {
@@ -256,115 +270,114 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private final int[] myResultBuf = new int[1];
 
-  private int myExistingKeysEnumerated;
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       lockStorage();
-        if (IntToIntBtree.doDump) System.out.println(value);
-        final int valueHC = myDataDescriptor.getHashCode(value);
+      if (IntToIntBtree.doDump) System.out.println(value);
+      final int valueHC = myDataDescriptor.getHashCode(value);
 
-        final boolean hasMapping = btree.get(valueHC, myResultBuf);
-        if (!hasMapping && onlyCheckForExisting) {
-          return NULL_ID;
-        }
+      final boolean hasMapping = btree.get(valueHC, myResultBuf);
+      if (!hasMapping && onlyCheckForExisting) {
+        return NULL_ID;
+      }
 
-        int indexNodeValueAddress = hasMapping ? myResultBuf[0]:0;
-        int collisionAddress = NULL_ID;
-        Data existingData = null;
+      int indexNodeValueAddress = hasMapping ? myResultBuf[0]:0;
+      int collisionAddress = NULL_ID;
+      Data existingData = null;
 
-        if (!myInlineKeysNoMapping) {
-          collisionAddress = NULL_ID;
+      if (!myInlineKeysNoMapping) {
+        collisionAddress = NULL_ID;
 
-          if (indexNodeValueAddress > 0) {
-            // we found reference to no dupe key
-            Data candidate = valueOf(indexNodeValueAddress);
+        if (indexNodeValueAddress > 0) {
+          // we found reference to no dupe key
+          Data candidate = valueOf(indexNodeValueAddress);
+          if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
+
+          if (myDataDescriptor.isEqual(value, candidate)) {
+            if (!saveNewValue) {
+              ++myExistingKeysEnumerated;
+              return indexNodeValueAddress;
+            }
+            existingData = candidate;
+          }
+
+          collisionAddress = indexNodeValueAddress;
+        } else if (indexNodeValueAddress < 0) { // indexNodeValueAddress points to duplicates list
+          collisionAddress = -indexNodeValueAddress;
+
+          while (true) {
+            final int address = myStorage.getInt(collisionAddress);
+            Data candidate = valueOf(address);
+            if (myDataDescriptor.isEqual(value, candidate)) {
+              if (!saveNewValue) return address;
+              existingData = candidate;
+              break;
+            }
             if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
 
-            if (myDataDescriptor.isEqual(value, candidate)) {
-              if (!saveNewValue) {
-                ++myExistingKeysEnumerated;
-                return indexNodeValueAddress;
-              }
-              existingData = candidate;
-            }
-
-            collisionAddress = indexNodeValueAddress;
-          } else if (indexNodeValueAddress < 0) { // indexNodeValueAddress points to duplicates list
-            collisionAddress = -indexNodeValueAddress;
-
-            while (true) {
-              final int address = myStorage.getInt(collisionAddress);
-              Data candidate = valueOf(address);
-              if (myDataDescriptor.isEqual(value, candidate)) {
-                if (!saveNewValue) return address;
-                existingData = candidate;
-                break;
-              }
-              if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
-
-              int newCollisionAddress = myStorage.getInt(collisionAddress + COLLISION_OFFSET);
-              if (newCollisionAddress == 0) break;
-              collisionAddress = newCollisionAddress;
-            }
-          }
-
-          if (onlyCheckForExisting) return NULL_ID;
-        } else {
-          if (hasMapping) {
-            if(!saveNewValue) return indexNodeValueAddress;
-            existingData = value;
+            int newCollisionAddress = myStorage.getInt(collisionAddress + COLLISION_OFFSET);
+            if (newCollisionAddress == 0) break;
+            collisionAddress = newCollisionAddress;
           }
         }
 
-        int newValueId = writeData(value, valueHC);
-        ++valuesCount;
-
-        if (IOStatistics.DEBUG && (valuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
-          IOStatistics.dump("Index " +
-                            myFile +
-                            ", values " +
-                            valuesCount +
-                            ", existing keys enumerated:"+ myExistingKeysEnumerated +
-                            ", storage size:" +
-                            myStorage.length());
-          btree.dumpStatistics();
+        if (onlyCheckForExisting) return NULL_ID;
+      } else {
+        if (hasMapping) {
+          if(!saveNewValue) return indexNodeValueAddress;
+          existingData = value;
         }
+      }
 
-        if (collisionAddress != NULL_ID) {
-          if (existingData != null) {
-            if (indexNodeValueAddress > 0) {
-              btree.put(valueHC, newValueId);
-            } else {
-              myStorage.putInt(collisionAddress, newValueId);
-            }
+      int newValueId = writeData(value, valueHC);
+      ++myValuesCount;
+
+      if (IOStatistics.DEBUG && (myValuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
+        IOStatistics.dump("Index " +
+                          myFile +
+                          ", values " +
+                          myValuesCount +
+                          ", existing keys enumerated:"+ myExistingKeysEnumerated +
+                          ", storage size:" +
+                          myStorage.length());
+        btree.dumpStatistics();
+      }
+
+      if (collisionAddress != NULL_ID) {
+        if (existingData != null) {
+          if (indexNodeValueAddress > 0) {
+            btree.put(valueHC, newValueId);
           } else {
-            if (indexNodeValueAddress > 0) {
-              // organize collision type reference
-              int duplicatedValueOff = nextDuplicatedValueRecord();
-              btree.put(valueHC, -duplicatedValueOff);
-
-              myStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
-              collisionAddress = duplicatedValueOff;
-              ++collisions;
-            }
-
-            ++collisions;
-            int duplicatedValueOff = nextDuplicatedValueRecord();
-            myStorage.putInt(collisionAddress + COLLISION_OFFSET, duplicatedValueOff);
-            myStorage.putInt(duplicatedValueOff, newValueId);
-            myStorage.putInt(duplicatedValueOff + COLLISION_OFFSET, 0);
+            myStorage.putInt(collisionAddress, newValueId);
           }
         } else {
-          btree.put(valueHC, newValueId);
-        }
+          if (indexNodeValueAddress > 0) {
+            // organize collision type reference
+            int duplicatedValueOff = nextDuplicatedValueRecord();
+            btree.put(valueHC, -duplicatedValueOff);
 
-        if (IntToIntBtree.doSanityCheck) {
-          if (!myInlineKeysNoMapping) {
-            Data data = valueOf(newValueId);
-            IntToIntBtree.myAssert(myDataDescriptor.isEqual(value, data));
+            myStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
+            collisionAddress = duplicatedValueOff;
+            ++myCollisions;
           }
+
+          ++myCollisions;
+          int duplicatedValueOff = nextDuplicatedValueRecord();
+          myStorage.putInt(collisionAddress + COLLISION_OFFSET, duplicatedValueOff);
+          myStorage.putInt(duplicatedValueOff, newValueId);
+          myStorage.putInt(duplicatedValueOff + COLLISION_OFFSET, 0);
         }
-        return newValueId;
+      } else {
+        btree.put(valueHC, newValueId);
+      }
+
+      if (IntToIntBtree.doSanityCheck) {
+        if (!myInlineKeysNoMapping) {
+          Data data = valueOf(newValueId);
+          IntToIntBtree.myAssert(myDataDescriptor.isEqual(value, data));
+        }
+      }
+      return newValueId;
     }
     catch (IllegalStateException e) {
       CorruptedException exception = new CorruptedException(myFile);

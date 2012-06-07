@@ -562,13 +562,13 @@ public class GenerationUtil {
     final PsiManager manager = PsiManager.getInstance(context.project);
     return ResolveUtil.processAllDeclarations(declared, new PsiScopeProcessor() {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (manager.areElementsEquivalent(element, member)) return false;
         return true;
       }
 
       @Override
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return null;
       }
 

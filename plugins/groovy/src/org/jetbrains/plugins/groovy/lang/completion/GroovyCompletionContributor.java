@@ -115,12 +115,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
     final PsiManager manager = file.getManager();
     PsiScopeProcessor processor = new PsiScopeProcessor() {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         return !manager.areElementsEquivalent(element, member);
       }
 
       @Override
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return null;
       }
 

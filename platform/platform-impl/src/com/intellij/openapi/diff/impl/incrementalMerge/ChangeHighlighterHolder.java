@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.ArrayList;
 
 /**
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 class ChangeHighlighterHolder {
 
   private static final Logger LOG = Logger.getInstance(ChangeHighlighterHolder.class);
+  static final int APPLIED_CHANGE_TRANSPARENCY = 30;
 
   private Editor myEditor;
   private final ArrayList<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>(3);
@@ -55,28 +57,37 @@ class ChangeHighlighterHolder {
     return myEditor.getMarkupModel();
   }
 
-  private void highlighterCreated(RangeHighlighter highlighter, TextAttributes attrs) {
+  private void highlighterCreated(RangeHighlighter highlighter, TextAttributes attrs, boolean applied) {
     if (attrs != null) {
-      highlighter.setErrorStripeMarkColor(attrs.getErrorStripeColor());
+      Color color = attrs.getErrorStripeColor();
+      if (applied) {
+        color = makeColorForApplied(color);
+      }
+      highlighter.setErrorStripeMarkColor(color);
     }
     myHighlighters.add(highlighter);
   }
 
+  private static Color makeColorForApplied(Color color) {
+    return new Color(color.getRed(), color.getGreen(), color.getBlue(), APPLIED_CHANGE_TRANSPARENCY);
+  }
+
   @Nullable
-  public RangeHighlighter addLineHighlighter(int line, int layer, TextDiffType diffType) {
+  public RangeHighlighter addLineHighlighter(int line, int layer, TextDiffType diffType, boolean applied) {
     if (myEditor.getDocument().getTextLength() == 0) return null;
     RangeHighlighter highlighter = getMarkupModel().addLineHighlighter(line, layer, null);
     highlighter.setLineSeparatorColor(diffType.getTextBackground(myEditor));
-    highlighterCreated(highlighter, diffType.getTextAttributes(myEditor));
+    highlighterCreated(highlighter, diffType.getTextAttributes(myEditor), applied);
     return highlighter;
   }
 
   @Nullable
-  public RangeHighlighter addRangeHighlighter(int start, int end, int layer, TextDiffType type, HighlighterTargetArea targetArea) {
+  public RangeHighlighter addRangeHighlighter(int start, int end, int layer, TextDiffType type, HighlighterTargetArea targetArea,
+                                              boolean applied) {
     if (getMarkupModel().getDocument().getTextLength() == 0) return null;
     TextAttributes attributes = type.getTextAttributes(myEditor);
     RangeHighlighter highlighter = getMarkupModel().addRangeHighlighter(start, end, layer, attributes, targetArea);
-    highlighterCreated(highlighter, attributes);
+    highlighterCreated(highlighter, attributes, applied);
     return highlighter;
   }
 

@@ -25,6 +25,7 @@ import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.scope.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
@@ -210,7 +211,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   @Override
-  public boolean execute(PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, ResolveState state) {
     if (!(element instanceof PsiClass)) return true;
     final PsiClass aClass = (PsiClass)element;
     final String name = aClass.getName();
@@ -308,7 +309,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   @Override
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     if (hintKey == ElementClassHint.KEY || hintKey == NameHint.KEY) {
       //noinspection unchecked
       return (T)this;

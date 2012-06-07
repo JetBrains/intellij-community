@@ -16,8 +16,14 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -61,6 +67,10 @@ public class SetupSDKNotificationProvider implements EditorNotifications.Provide
 
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) {
+      return null;
+    }
+
+    if (psiFile.getLanguage() != JavaLanguage.INSTANCE) {
       return null;
     }
 

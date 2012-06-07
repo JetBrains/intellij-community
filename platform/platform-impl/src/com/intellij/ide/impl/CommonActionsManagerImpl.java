@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.*;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -45,6 +46,14 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return expandAllToolbarAction;
   }
 
+  @Override
+  public AnAction createExpandAllHeaderAction(JTree tree) {
+    AnAction action = createExpandAllAction(new DefaultTreeExpander(tree), tree);
+    action.getTemplatePresentation().setIcon(AllIcons.General.ExpandAll);
+    action.getTemplatePresentation().setHoveredIcon(AllIcons.General.ExpandAllHover);
+    return action;
+  }
+
   public AnAction createCollapseAllAction(TreeExpander expander) {
     return new CollapseAllToolbarAction(expander);
   }
@@ -53,6 +62,14 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     final CollapseAllToolbarAction collapseAllToolbarAction = new CollapseAllToolbarAction(expander);
     collapseAllToolbarAction.registerCustomShortcutSet(collapseAllToolbarAction.getShortcutSet(), component);
     return collapseAllToolbarAction;
+  }
+
+  @Override
+  public AnAction createCollapseAllHeaderAction(JTree tree) {
+    AnAction action = createCollapseAllAction(new DefaultTreeExpander(tree), tree);
+    action.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
+    action.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
+    return action;
   }
 
   public AnAction createHelpAction(String helpId) {

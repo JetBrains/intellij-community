@@ -34,9 +34,9 @@ public class TraceableDisposable {
     CREATE_TRACE = creation;
   }
 
-  public void kill(@Nullable String msg) {
+  public void kill(@NonNls @Nullable String msg) {
     if (CREATE_TRACE != null) {
-      KILL_TRACE = new Throwable();
+      KILL_TRACE = new Throwable(msg);
     }
   }
 

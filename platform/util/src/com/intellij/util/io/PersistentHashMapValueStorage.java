@@ -180,6 +180,8 @@ public class PersistentHashMapValueStorage {
           }
         }
 
+        if (prevChunkAddress >= chunk) throw new PersistentEnumeratorBase.CorruptedException(myFile);
+
         chunk = prevChunkAddress;
         chunkCount++;
         if (result.length > mySize) {

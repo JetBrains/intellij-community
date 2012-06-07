@@ -19,10 +19,10 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -158,6 +158,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       final Project project = file.getProject();
       Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document == null) return;
+      final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
       GeneralHighlightingPass pass =
         new GeneralHighlightingPass(project, file, document, 0, file.getTextLength(), true) {
           @NotNull
@@ -168,7 +169,6 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
           @Override
           protected HighlightInfoHolder createInfoHolder(final PsiFile file) {
-            final HighlightInfoFilter[] filters = ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
             return new HighlightInfoHolder(file, getColorsScheme(), filters){
                 @Override
                 public boolean add(@Nullable HighlightInfo info) {
@@ -181,6 +181,13 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                   return true;
                 }
             };
+          }
+
+          @Override
+          protected void killAbandonedHighlightsUnder(@NotNull TextRange range,
+                                                      @NotNull HighlightInfoHolder holder,
+                                                      @NotNull ProgressIndicator progress) {
+            // do not mess with real editor highlights
           }
         };
       pass.setFailFastOnAcquireReadAction(false);

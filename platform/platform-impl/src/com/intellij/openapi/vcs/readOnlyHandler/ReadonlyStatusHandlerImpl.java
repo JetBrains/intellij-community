@@ -23,12 +23,14 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WritingAccessProvider;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +56,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   public ReadonlyStatusHandlerImpl(Project project) {
     myProject = project;
-    myAccessProviders = project.isDefault() ? new WritingAccessProvider[0] : Extensions.getExtensions(WritingAccessProvider.EP_NAME, project);
+    myAccessProviders = WritingAccessProvider.getProvidersForProject(myProject);
   }
 
   public State getState() {
@@ -80,8 +82,17 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
     files = VfsUtil.toVirtualFileArray(realFiles);
 
-    for (WritingAccessProvider accessProvider : myAccessProviders) {
-      Collection<VirtualFile> denied = accessProvider.requestWriting(files);
+    for (final WritingAccessProvider accessProvider : myAccessProviders) {
+      Collection<VirtualFile> denied = ContainerUtil.filter(files, new Condition<VirtualFile>() {
+        @Override
+        public boolean value(final VirtualFile virtualFile) {
+          return !accessProvider.isPotentiallyWritable(virtualFile);
+        }
+      });
+
+      if (denied.isEmpty()) {
+        denied = accessProvider.requestWriting(files);
+      }
       if (!denied.isEmpty()) {
         return new OperationStatusImpl(VfsUtil.toVirtualFileArray(denied));
       }

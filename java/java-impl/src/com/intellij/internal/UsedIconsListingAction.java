@@ -35,6 +35,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.AnnotationTargetsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -50,7 +51,7 @@ public class UsedIconsListingAction extends AnAction {
     final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
 
     final Set<String> answer = new HashSet<String>();
-    final MultiMap<String, PsiCallExpression> calls = new MultiMap<String, PsiCallExpression>();
+    final MultiMap<String, PsiExpression> calls = new MultiMap<String, PsiExpression>();
 
 
     Processor<PsiReference> consumer = new Processor<PsiReference>() {
@@ -111,11 +112,13 @@ public class UsedIconsListingAction extends AnAction {
       MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
     }
 
-    PsiClass javaeeIcons = JavaPsiFacade.getInstance(project).findClass("com.intellij.javaee.oss.JavaeeIcons", GlobalSearchScope.allScope(project));
-    MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
-
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
+    if (false) {
+      PsiClass javaeeIcons = JavaPsiFacade.getInstance(project).findClass("com.intellij.javaee.oss.JavaeeIcons", GlobalSearchScope.allScope(project));
+      MethodReferencesSearch.search(javaeeIcons.findMethodsByName("getIcon", false)[0], false).forEach(consumer);
+
+      MethodReferencesSearch.search(findIconMethod, false).forEach(consumer);
+    }
 
     PsiClass allIcons =
       JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons", GlobalSearchScope.allScope(project));
@@ -171,6 +174,27 @@ public class UsedIconsListingAction extends AnAction {
       }
     }
 
+    PsiClass presentation = JavaPsiFacade.getInstance(project).findClass("com.intellij.ide.presentation.Presentation",
+                                                                         GlobalSearchScope.allScope(project));
+    final MultiMap<String, PsiAnnotation> annotations = new MultiMap<String, PsiAnnotation>();
+    AnnotationTargetsSearch.search(presentation).forEach(new Processor<PsiModifierListOwner>() {
+      @Override
+      public boolean process(PsiModifierListOwner owner) {
+        PsiAnnotation annotation = owner.getModifierList().findAnnotation("com.intellij.ide.presentation.Presentation");
+
+        PsiAnnotationMemberValue icon = annotation.findAttributeValue("icon");
+        if (icon instanceof PsiLiteralExpression) {
+          Object value = ((PsiLiteralExpression)icon).getValue();
+          if (value instanceof String) {
+            annotations.putValue((String)value, annotation);
+          }
+        }
+
+        return true;
+      }
+    });
+
+
     if (true /*do replacements*/) {
       ArrayList<String> sorted = new ArrayList<String>(answer);
       Collections.sort(sorted);
@@ -180,17 +204,42 @@ public class UsedIconsListingAction extends AnAction {
       }
 
       final JVMElementFactory factory = JVMElementFactories.getFactory(JavaLanguage.INSTANCE, project);
-      for (Map.Entry<String, Collection<PsiCallExpression>> entry : calls.entrySet()) {
+      for (Map.Entry<String, Collection<PsiExpression>> entry : calls.entrySet()) {
         String path = entry.getKey();
         final String replacement = mappings.get(path);
         if (replacement != null) {
-          for (final PsiCallExpression call : entry.getValue()) {
+          for (final PsiExpression call : entry.getValue()) {
             new WriteCommandAction(project, call.getContainingFile()) {
               @Override
               protected void run(Result result) throws Throwable {
-                JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-                PsiElement expr = factory.createExpressionFromText("com.intellij.icons." + replacement, call);
-                styleManager.shortenClassReferences(call.replace(expr));
+                if (call instanceof PsiLiteralExpression) {
+                  call.replace(factory.createExpressionFromText("\"" + replacement + "\"", call));
+                }
+                else {
+                  JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+                  PsiElement expr = factory.createExpressionFromText("com.intellij.icons." + replacement, call);
+                  styleManager.shortenClassReferences(call.replace(expr));
+                }
+              }
+            }.execute();
+          }
+        }
+      }
+
+      for (Map.Entry<String, Collection<PsiAnnotation>> entry : annotations.entrySet()) {
+        String path = entry.getKey();
+        final String replacement = mappings.get(path);
+        if (replacement != null) {
+          for (final PsiAnnotation annotation : entry.getValue()) {
+            if (annotation instanceof PsiCompiledElement) continue;
+            new WriteCommandAction(project, annotation.getContainingFile()) {
+              @Override
+              protected void run(Result result) throws Throwable {
+                annotation.getNode();
+                annotation.setDeclaredAttributeValue(
+                  "icon",
+                  JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory()
+                    .createAnnotationFromText("@A(\"" + replacement + "\")", null).findDeclaredAttributeValue(null));
               }
             }.execute();
           }

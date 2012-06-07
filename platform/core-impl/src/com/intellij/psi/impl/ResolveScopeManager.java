@@ -38,10 +38,12 @@ public abstract class ResolveScopeManager {
     return ServiceManager.getService(project, ResolveScopeManager.class);
   }
 
+  @NotNull
   public static GlobalSearchScope getElementUseScope(PsiElement element) {
     return getInstance(element.getProject()).getUseScope(element);
   }
 
+  @NotNull
   public static GlobalSearchScope getElementResolveScope(PsiElement element) {
     return getInstance(element.getProject()).getResolveScope(element);
   }

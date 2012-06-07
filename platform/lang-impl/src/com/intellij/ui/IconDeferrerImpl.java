@@ -60,7 +60,8 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   }
 
-  public <T> Icon defer(final Icon base, final T param, final Function<T, Icon> f) {
+  @Override
+  public <T> Icon defer(final Icon base, final T param, @NotNull final Function<T, Icon> f) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return f.fun(param);
     }

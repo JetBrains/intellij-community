@@ -61,7 +61,7 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     }
 
     @Override
-    public boolean execute(PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, ResolveState state) {
       if (element instanceof PsiField) {
         final PsiType type = ((PsiField)element).getType();
         final String typeText;
@@ -79,7 +79,7 @@ public class GrCollectionTypeMembersProvider extends NonCodeMembersContributor {
     }
 
     @Override
-    public <T> T getHint(Key<T> hintKey) {
+    public <T> T getHint(@NotNull Key<T> hintKey) {
       if (hintKey == NameHint.KEY) return processor.getHint(hintKey);
       if (hintKey == ClassHint.KEY || hintKey == ElementClassHint.KEY) return (T)this;
       return null;

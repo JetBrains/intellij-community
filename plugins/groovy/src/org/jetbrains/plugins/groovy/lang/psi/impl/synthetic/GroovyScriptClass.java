@@ -400,12 +400,12 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     final PsiClass scriptClass = getSuperClass();
     //noinspection RedundantIfStatement
     if (scriptClass != null && !scriptClass.processDeclarations(new BaseScopeProcessor() {
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         return !(element instanceof PsiNamedElement) || ResolveUtil.processElement(processor, (PsiNamedElement)element, state);
       }
 
       @Override
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return processor.getHint(hintKey);
       }
     }, state, lastParent, place)) {
