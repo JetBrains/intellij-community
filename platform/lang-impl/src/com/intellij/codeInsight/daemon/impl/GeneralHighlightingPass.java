@@ -673,9 +673,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     analyzeByVisitors(progress, visitors, holder, 0, action);
   }
 
-  private void killAbandonedHighlightsUnder(@NotNull final TextRange range,
-                                            @NotNull final HighlightInfoHolder holder,
-                                            @NotNull final ProgressIndicator progress) {
+  protected void killAbandonedHighlightsUnder(@NotNull final TextRange range,
+                                              @NotNull final HighlightInfoHolder holder,
+                                              @NotNull final ProgressIndicator progress) {
     DaemonCodeAnalyzerImpl.processHighlights(getDocument(), myProject, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override
       public boolean process(final HighlightInfo existing) {
