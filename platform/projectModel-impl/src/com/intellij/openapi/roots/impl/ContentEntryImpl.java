@@ -45,7 +45,6 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @NonNls public static final String ELEMENT_NAME = "content";
   private final Set<SourceFolder> mySourceFolders = new LinkedHashSet<SourceFolder>();
   private final Set<ExcludeFolder> myExcludeFolders = new TreeSet<ExcludeFolder>(ContentFolderComparator.INSTANCE);
-  private final Set<ExcludedOutputFolder> myExcludedOutputFolders = new TreeSet<ExcludedOutputFolder>(ContentFolderComparator.INSTANCE);
   @NonNls public static final String URL_ATTRIBUTE = "url";
 
   ContentEntryImpl(@NotNull VirtualFile file, @NotNull RootModelImpl m) {
@@ -287,13 +286,6 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
       }
     }
 
-    for (ExcludedOutputFolder excludedOutputFolder : myExcludedOutputFolders) {
-      if (excludedOutputFolder instanceof ClonableContentFolder) {
-        ContentFolder folder = ((ClonableContentFolder)excludedOutputFolder).cloneFolder(cloned);
-        cloned.myExcludedOutputFolders.add((ExcludedOutputFolder)folder);
-      }
-    }
-
     return cloned;
   }
 
@@ -333,11 +325,6 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     if (i != 0) return i;
     i = ArrayUtil.lexicographicCompare(getSourceFolders(), other.getSourceFolders());
     if (i != 0) return i;
-    i = ArrayUtil.lexicographicCompare(getExcludeFolders(), other.getExcludeFolders());
-    if (i != 0) return i;
-
-    ExcludedOutputFolder[] excludedOutputFolders = myExcludedOutputFolders.toArray(new ExcludedOutputFolder[myExcludedOutputFolders.size()]);
-    ExcludedOutputFolder[] otherExcludedOutputFolders = other.myExcludedOutputFolders.toArray(new ExcludedOutputFolder[other.myExcludedOutputFolders.size()]);
-    return ArrayUtil.lexicographicCompare(excludedOutputFolders, otherExcludedOutputFolders);
+    return ArrayUtil.lexicographicCompare(getExcludeFolders(), other.getExcludeFolders());
   }
 }
