@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.stubs;
 
-/*
- * @author max
+/**
+ * Author: dmitrylomov
  */
-package com.intellij.util.indexing;
+public abstract class StubSerializationUtil {
+  private StubSerializationUtil() {}
 
-import org.jetbrains.annotations.NotNull;
+  public static StubSerializer getSerializer(StubElement rootStub) {
+    if (rootStub instanceof PsiFileStub) {
+      final PsiFileStub fileStub = (PsiFileStub)rootStub;
+      return fileStub.getType();
+    }
 
-public abstract class CustomImplementationFileBasedIndexExtension<K, V, I> extends FileBasedIndexExtension<K, V> {
-  @NotNull
-  public abstract UpdatableIndex<K, V, I> createIndexImplementation(final ID<K, V> indexId, @NotNull FileBasedIndex owner, @NotNull IndexStorage<K, V> storage)
-    throws StorageException;
+    return rootStub.getStubType();
+  }
 }

@@ -56,6 +56,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-i18n/java-i18n.iml" filepath="$PROJECT_DIR$/plugins/java-i18n/java-i18n.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/java/java-impl/java-impl.iml" filepath="$PROJECT_DIR$/java/java-impl/java-impl.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/java/java-indexing-impl/java-indexing-impl.iml" filepath="$PROJECT_DIR$/java/java-indexing-impl/java-indexing-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-api/java-psi-api.iml" filepath="$PROJECT_DIR$/java/java-psi-api/java-psi-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-impl/java-psi-impl.iml" filepath="$PROJECT_DIR$/java/java-psi-impl/java-psi-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-runtime/java-runtime.iml" filepath="$PROJECT_DIR$/java/java-runtime/java-runtime.iml" group="java" />

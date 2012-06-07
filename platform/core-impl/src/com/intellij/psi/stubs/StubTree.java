@@ -65,13 +65,12 @@ public class StubTree {
 
   @NotNull
   public Map<StubIndexKey, Map<Object, int[]>> indexStubTree() {
-    SerializationManager serializationManager = SerializationManager.getInstance();
     StubIndexSink sink = new StubIndexSink();
 
     for (int i = 0, plainListSize = myPlainList.size(); i < plainListSize; i++) {
       final StubElement<?> stub = myPlainList.get(i);
       sink.myStubIdx = i;
-      serializationManager.getSerializer(stub).indexStub(stub, sink);
+      StubSerializationUtil.getSerializer(stub).indexStub(stub, sink);
     }
 
     return sink.getResult();

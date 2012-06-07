@@ -58,6 +58,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.SerializationManager;
+import com.intellij.psi.stubs.SerializationManagerEx;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -670,7 +671,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     if (!HeavyProcessLatch.INSTANCE.isRunning() && modCount == myLocalModCount) { // do not interfere with 'main' jobs
-      SerializationManager.getInstance().flushNameStorage();
+      SerializationManagerEx.getInstanceEx().flushNameStorage();
     }
   }
 

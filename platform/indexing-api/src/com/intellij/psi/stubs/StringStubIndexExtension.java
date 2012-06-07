@@ -17,12 +17,20 @@
 /*
  * @author max
  */
-package com.intellij.util.indexing;
+package com.intellij.psi.stubs;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CustomImplementationFileBasedIndexExtension<K, V, I> extends FileBasedIndexExtension<K, V> {
+public abstract class StringStubIndexExtension<Psi extends PsiElement> extends AbstractStubIndex<String, Psi> {
+  public int getVersion() {
+    return 2;
+  }
+
   @NotNull
-  public abstract UpdatableIndex<K, V, I> createIndexImplementation(final ID<K, V> indexId, @NotNull FileBasedIndex owner, @NotNull IndexStorage<K, V> storage)
-    throws StorageException;
+  public KeyDescriptor<String> getKeyDescriptor() {
+    return new EnumeratorStringDescriptor();
+  }
 }

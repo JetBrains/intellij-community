@@ -62,7 +62,7 @@ public class JavaResolveCache {
 
   private static final Object NULL = Key.create("NULL");
 
-  public JavaResolveCache(@Nullable("can be null in com.intellij.core.JavaCoreEnvironment.JavaCoreEnvironment") MessageBus messageBus) {
+  public JavaResolveCache(@Nullable("can be null in com.intellij.core.JavaCoreApplicationEnvironment.JavaCoreApplicationEnvironment") MessageBus messageBus) {
     if (messageBus != null) {
       messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
         @Override

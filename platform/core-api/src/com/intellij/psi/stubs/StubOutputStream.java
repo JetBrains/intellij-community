@@ -16,10 +16,7 @@
 
 package com.intellij.psi.stubs;
 
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,10 +25,10 @@ import java.io.OutputStream;
  * @author yole
  */
 public class StubOutputStream extends DataOutputStream {
-  private final PersistentStringEnumerator myNameStorage;
+  private final AbstractStringEnumerator myNameStorage;
   private final byte[] myStringIOBuffer = IOUtil.allocReadWriteUTFBuffer();
 
-  public StubOutputStream(OutputStream out, PersistentStringEnumerator nameStorage) {
+  public StubOutputStream(OutputStream out, AbstractStringEnumerator nameStorage) {
     super(out);
     myNameStorage = nameStorage;
   }

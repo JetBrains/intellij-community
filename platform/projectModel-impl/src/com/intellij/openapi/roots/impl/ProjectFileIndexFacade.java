@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.vcs.impl;
+package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 

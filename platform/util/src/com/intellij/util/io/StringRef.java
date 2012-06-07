@@ -28,7 +28,7 @@ public class StringRef {
   
   private int id;
   private String name;
-  private final PersistentStringEnumerator store;
+  private final AbstractStringEnumerator store;
 
   private StringRef(final String name) {
     this.name = name;
@@ -36,7 +36,7 @@ public class StringRef {
     store = null;
   }
 
-  private StringRef(final int id, final PersistentStringEnumerator store) {
+  private StringRef(final int id, final AbstractStringEnumerator store) {
     this.id = id;
     this.store = store;
     name = null;
@@ -56,13 +56,13 @@ public class StringRef {
     return name;
   }
 
-  public void writeTo(DataOutput out, PersistentStringEnumerator store) throws IOException {
+  public void writeTo(DataOutput out, AbstractStringEnumerator store) throws IOException {
     int nameId = getId(store);
     out.writeByte(nameId & 0xFF);
     DataInputOutputUtil.writeINT(out, nameId >> 8);
   }
 
-  public int getId(PersistentStringEnumerator store) {
+  public int getId(AbstractStringEnumerator store) {
     if (id == -1) {
       try {
         id = store.enumerate(name);
@@ -98,7 +98,7 @@ public class StringRef {
     return source == null ? null : new StringRef(source);
   }
 
-  public static StringRef fromStream(DataInput in, PersistentStringEnumerator store) throws IOException {
+  public static StringRef fromStream(DataInput in, AbstractStringEnumerator store) throws IOException {
     final int low = in.readUnsignedByte();
     final int nameId = (DataInputOutputUtil.readINT(in) << 8) | low;
 

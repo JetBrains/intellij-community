@@ -84,11 +84,15 @@ public class CoreLocalVirtualFile extends VirtualFile {
     if (answer == null) {
       List<VirtualFile> result = new ArrayList<VirtualFile>();
       final File[] files = myIoFile.listFiles();
-      for (File file : files) {
-        result.add(new CoreLocalVirtualFile(myFileSystem, file));
+      if (files == null) {
+        answer = EMPTY_ARRAY;
       }
-      answer = result.toArray(new VirtualFile[result.size()]);
-
+      else {
+        for (File file : files) {
+          result.add(new CoreLocalVirtualFile(myFileSystem, file));
+        }
+        answer = result.toArray(new VirtualFile[result.size()]);
+      }
       myChildren = answer;
     }
     return answer;
@@ -129,7 +133,6 @@ public class CoreLocalVirtualFile extends VirtualFile {
   public long getModificationStamp() {
     return 0;
   }
-
 
   @Override
   public boolean equals(Object o) {

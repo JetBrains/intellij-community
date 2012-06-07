@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.stubs;
-
-import com.intellij.openapi.application.ApplicationManager;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public abstract class SerializationManager {
+/**
+ * Author: dmitrylomov
+ */
+public abstract class SerializationManagerEx extends SerializationManager {
 
-  public static SerializationManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(SerializationManager.class);
+  public static SerializationManagerEx getInstanceEx() {
+    return (SerializationManagerEx) SerializationManager.getInstance();
   }
-
-  public abstract void registerSerializer(StubSerializer<? extends StubElement> serializer);
 
   public abstract void serialize(StubElement rootStub, OutputStream stream);
 
   public abstract StubElement deserialize(InputStream stream);
-
-  public abstract StubSerializer getSerializer(StubElement rootStub);
 
   public abstract boolean isNameStorageCorrupted();
 

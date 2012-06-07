@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.zip.ZipFile;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
   private final Set<String> myNoCopyJarPaths = SystemInfo.isFileSystemCaseSensitive ?
@@ -173,10 +172,10 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public ZipFile getJarFile(VirtualFile entryVFile) throws IOException {
+  public JarFile getJarFile(VirtualFile entryVFile) throws IOException {
     JarHandler handler = getHandler(entryVFile);
 
-    return handler.getZip();
+    return handler.getJar();
   }
 
   @Nullable

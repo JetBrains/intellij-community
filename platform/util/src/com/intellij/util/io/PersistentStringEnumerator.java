@@ -24,7 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 
-public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String>{
+public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<String> implements AbstractStringEnumerator {
   private static final int STRIPE_POWER = 4;
   private static final int STRIPE_COUNT = 1 << STRIPE_POWER;
   private static final int STRIPE_MASK = STRIPE_COUNT - 1;

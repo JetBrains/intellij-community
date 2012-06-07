@@ -21,6 +21,7 @@
 
   <macrodef name="run">
     <attribute name="script"/>
+    <attribute name="target" default="default"/>
     <attribute name="deploy"/>
 
     <sequential>
@@ -29,6 +30,7 @@
         <jvmarg line="&quot;-Ddeploy=@{deploy}&quot;"/>
         <jvmarg line="&quot;-Dmodules.output=${modules.output}&quot;"/>
         <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
+        <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>
 
         <classpath>
           <fileset dir="${project.home}/lib/ant/lib">
@@ -60,6 +62,12 @@
 
   <target name="layout">
     <run script="${project.home}/build/scripts/layouts.gant"
+         deploy="${project.home}/out/deploy"/>
+  </target>
+
+  <target name="build-jars">
+    <run script="${project.home}/build/scripts/dist.gant"
+         target="build-dist-jars"
          deploy="${project.home}/out/deploy"/>
   </target>
 </project>

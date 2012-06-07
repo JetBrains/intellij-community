@@ -40,24 +40,27 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
  * @author yole
  */
 public class ProjectModelEnvironment {
-  public static void register(CoreEnvironment env) {
+  public static void registerApplicationEnvironment(CoreApplicationEnvironment env) {
     Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, null);
     PathMacrosImpl pathMacros = new PathMacrosImpl();
     env.registerApplicationComponent(PathMacros.class, pathMacros);
-    CoreEnvironment.registerApplicationExtensionPoint(OrderRootType.EP_NAME, OrderRootType.class);
-    CoreEnvironment.registerApplicationExtensionPoint(SdkFinder.EP_NAME, SdkFinder.class);
-    CoreEnvironment.registerApplicationExtensionPoint(PathMacroFilter.EP_NAME, PathMacroFilter.class);
+    CoreApplicationEnvironment.registerApplicationExtensionPoint(OrderRootType.EP_NAME, OrderRootType.class);
+    CoreApplicationEnvironment.registerApplicationExtensionPoint(SdkFinder.EP_NAME, SdkFinder.class);
+    CoreApplicationEnvironment.registerApplicationExtensionPoint(PathMacroFilter.EP_NAME, PathMacroFilter.class);
     env.getApplication().registerService(ProjectJdkTable.class, new CoreProjectJdkTable());
     env.getApplication().registerService(ApplicationLibraryTable.class, new ApplicationLibraryTable());
     env.getApplication().registerService(LibraryTablesRegistrar.class, new LibraryTablesRegistrarImpl());
+  }
 
+  public static void registerProjectEnvironment(CoreProjectEnvironment env) {
     final MockProject project = env.getProject();
     env.registerProjectComponent(ModuleManager.class, new CoreModuleManager(project, env.getParentDisposable()));
-    env.registerProjectComponent(PathMacroManager.class, new ProjectPathMacroManager(pathMacros, project));
+    env.registerProjectComponent(PathMacroManager.class, new ProjectPathMacroManager(PathMacros.getInstance(), project));
     env.registerProjectExtensionPoint(DirectoryIndexExcludePolicy.EP_NAME, DirectoryIndexExcludePolicy.class);
     env.registerProjectExtensionPoint(ProjectExtension.EP_NAME, ProjectExtension.class);
     DirectoryIndex index = new DirectoryIndexImpl(project);
-    env.registerProjectComponent(DirectoryIndex.class, index);
+    //env.registerProjectComponent(DirectoryIndex.class, index);
+    project.registerService(DirectoryIndex.class, index);
     env.registerProjectComponent(ProjectRootManager.class, new ProjectRootManagerImpl(project, index));
     project.registerService(ProjectLibraryTable.class, new ProjectLibraryTable());
     project.registerService(ProjectFileIndex.class, new ProjectFileIndexImpl(project, index, FileTypeRegistry.getInstance()));

@@ -33,7 +33,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class JarVersionDetectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.libraries.JarVersionDetectionUtil");
@@ -76,7 +75,7 @@ public class JarVersionDetectionUtil {
   }
 
   @Nullable
-  public static String detectJarVersion(ZipFile zipFile) {
+  public static String detectJarVersion(com.intellij.openapi.vfs.JarFile zipFile) {
     if (zipFile == null) {
       return null;
     }
@@ -96,7 +95,7 @@ public class JarVersionDetectionUtil {
   }
 
   @Nullable
-  private static ZipFile getDetectionJar(final String detectionClass, Module module) throws IOException {
+  private static com.intellij.openapi.vfs.JarFile getDetectionJar(final String detectionClass, Module module) throws IOException {
       for (OrderEntry library : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (library instanceof LibraryOrderEntry) {
           VirtualFile file = LibrariesHelper.getInstance().findJarByClass(((LibraryOrderEntry)library).getLibrary(), detectionClass);

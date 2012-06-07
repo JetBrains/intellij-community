@@ -29,10 +29,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
@@ -333,10 +330,11 @@ public class BrowserUtil {
 
         if (!extract.get()) return null;
 
-        final ZipFile jarFile = jarFileSystem.getJarFile(file);
-        ZipEntry entry = jarFile.getEntry(targetFileRelativePath);
+        final ZipFile zipFile = jarFileSystem.getJarFile(file).getZipFile();
+        if (zipFile == null) return null;
+        ZipEntry entry = zipFile.getEntry(targetFileRelativePath);
         if (entry == null) return null;
-        InputStream is = jarFile.getInputStream(entry);
+        InputStream is = zipFile.getInputStream(entry);
         try {
           ZipUtil.extractEntry(entry, is, outputDir);
         }
@@ -348,7 +346,7 @@ public class BrowserUtil {
           public void run() {
             new Task.Backgroundable(null, "Extracting files...", true) {
               public void run(@NotNull final ProgressIndicator indicator) {
-                final int size = jarFile.size();
+                final int size = zipFile.size();
                 final int[] counter = new int[]{0};
 
                 class MyFilter implements FilenameFilter {
@@ -372,8 +370,8 @@ public class BrowserUtil {
                 }
 
                 try {
-                  ZipUtil.extract(jarFile, outputDir, new MyFilter(true));
-                  ZipUtil.extract(jarFile, outputDir, new MyFilter(false));
+                  ZipUtil.extract(zipFile, outputDir, new MyFilter(true));
+                  ZipUtil.extract(zipFile, outputDir, new MyFilter(false));
                   FileUtil.writeToFile(timestampFile, currentTimestamp.getBytes());
                 }
                 catch (IOException ignore) {

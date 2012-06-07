@@ -32,16 +32,20 @@ import java.io.IOException;
  */
 public class CoreModuleManagerTest extends UsefulTestCase {
   public void _testLoadingModules() throws IOException, JDOMException, InvalidDataException {
-    CoreEnvironment env = new CoreEnvironment(getTestRootDisposable());
-    ProjectModelEnvironment.register(env);
+    CoreApplicationEnvironment appEnv = new CoreApplicationEnvironment(getTestRootDisposable());
+    ProjectModelEnvironment.registerApplicationEnvironment(appEnv);
+
+    CoreProjectEnvironment prjEnv = new CoreProjectEnvironment(getTestRootDisposable(), appEnv);
+    ProjectModelEnvironment.registerProjectEnvironment(prjEnv);
+
     final String projectPath = PathManagerEx.getTestDataPath("/core/loadingTest");
     VirtualFile vFile = StandardFileSystems.local().findFileByPath(projectPath);
-    CoreProjectLoader.loadProject(env.getProject(), vFile);
-    final ModuleManager moduleManager = ModuleManager.getInstance(env.getProject());
+    CoreProjectLoader.loadProject(prjEnv.getProject(), vFile);
+    final ModuleManager moduleManager = ModuleManager.getInstance(prjEnv.getProject());
     final Module[] modules = moduleManager.getModules();
     assertEquals(1, modules.length);
 
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(env.getProject());
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(prjEnv.getProject());
     assertEquals("1.6", projectRootManager.getProjectSdkName());
 
     ModuleRootManager rootManager = ModuleRootManager.getInstance(modules[0]);

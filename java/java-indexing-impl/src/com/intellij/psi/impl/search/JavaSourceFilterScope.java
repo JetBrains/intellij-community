@@ -19,7 +19,7 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +41,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
       return false;
     }
 
-    if (StdFileTypes.CLASS == file.getFileType()) {
+    if (JavaClassFileType.INSTANCE == file.getFileType()) {
       return myIndex.isInLibraryClasses(file);
     }
 

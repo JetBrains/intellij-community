@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util.io;
 
-/*
- * @author max
+import com.intellij.openapi.Forceable;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.Closeable;
+import java.io.IOException;
+
+/**
+ * Author: dmitrylomov
  */
-package com.intellij.util.indexing;
+public interface AbstractStringEnumerator extends Closeable, Forceable {
+  int enumerate(@Nullable String value) throws IOException;
 
-import org.jetbrains.annotations.NotNull;
+  @Nullable
+  String valueOf(int idx) throws IOException;
 
-public abstract class CustomImplementationFileBasedIndexExtension<K, V, I> extends FileBasedIndexExtension<K, V> {
-  @NotNull
-  public abstract UpdatableIndex<K, V, I> createIndexImplementation(final ID<K, V> indexId, @NotNull FileBasedIndex owner, @NotNull IndexStorage<K, V> storage)
-    throws StorageException;
+  void markCorrupted();
 }

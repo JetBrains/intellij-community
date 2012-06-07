@@ -2,6 +2,7 @@
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="project.home" value="${build.dir}/.."/>
   <property name="gant.home" value="${project.home}/build/lib/gant"/>
+  <property name="gant.target" value="default"/>
 
   <path id="gant.classpath">
     <fileset dir="${gant.home}/lib">
@@ -14,6 +15,6 @@
   </taskdef>
 
   <target name="doGant">
-    <gant file="${gant.script}"/>
+    <gant file="${gant.script}" target="${gant.target}"/>
   </target>
 </project>

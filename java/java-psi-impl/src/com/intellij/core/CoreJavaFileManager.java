@@ -16,69 +16,37 @@
 package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
-import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.CollectionQuery;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
  */
-public class CoreJavaFileManager extends PackageIndex implements JavaFileManager {
+public class CoreJavaFileManager implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
 
-  private final CoreLocalFileSystem myLocalFileSystem;
-  private final CoreJarFileSystem myJarFileSystem;
-  private final List<File> myClasspath = new ArrayList<File>();
-  private VirtualFile[] myClasspathRoots = null;
+  private final List<VirtualFile> myClasspath = new ArrayList<VirtualFile>();
 
   private final PsiManager myPsiManager;
 
-  public CoreJavaFileManager(PsiManager psiManager, CoreLocalFileSystem localFileSystem, CoreJarFileSystem jarFileSystem) {
+  public CoreJavaFileManager(PsiManager psiManager) {
     myPsiManager = psiManager;
-    myLocalFileSystem = localFileSystem;
-    myJarFileSystem = jarFileSystem;
   }
 
-  private VirtualFile[] roots() {
-    VirtualFile[] answer = myClasspathRoots;
-
-    if (answer == null) {
-      ArrayList<VirtualFile> answerList = new ArrayList<VirtualFile>(myClasspath.size());
-      for (File root : myClasspath) {
-        VirtualFile rootVfs = calcRoot(root);
-        if (rootVfs != null) {
-          answerList.add(rootVfs);
-        }
-      }
-
-      answer = answerList.toArray(new VirtualFile[answerList.size()]);
-      myClasspathRoots = answer;
-    }
-
-    return answer;
-  }
-
-  @Nullable
-  private VirtualFile calcRoot(File root) {
-    if (root.isFile()) {
-       return myJarFileSystem.findFileByPath(root.getPath() + "!/");
-    }
-    else {
-      return myLocalFileSystem.findFileByPath(root.getPath());
-    }
+  private List<VirtualFile> roots() {
+    return myClasspath;
   }
 
   @Override
@@ -104,24 +72,14 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
 
   @Nullable
   public PsiPackage getPackage(PsiDirectory dir) {
-    final File ioFile = new File(dir.getVirtualFile().getPath());
-    for (File root : myClasspath) {
-      if (FileUtil.isAncestor(root, ioFile, false)) {
-        final String relativePath = FileUtil.getRelativePath(root.getPath(), ioFile.getPath(), '.');
+    final VirtualFile file = dir.getVirtualFile();
+    for (VirtualFile root : myClasspath) {
+      if (VfsUtilCore.isAncestor(root, file, false)) {
+        final String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), '.');
         return new PsiPackageImpl(myPsiManager, relativePath);
       }
     }
     return null;
-  }
-
-  @Override
-  public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
-  }
-
-  @Override
-  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    return new CollectionQuery<VirtualFile>(findDirectoriesByPackageName(packageName));
   }
 
   @Override
@@ -223,8 +181,7 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
   public void initialize() {
   }
 
-  public void addToClasspath(File path) {
-    myClasspath.add(path);
-    myClasspathRoots = null;
+  public void addToClasspath(VirtualFile root) {
+    myClasspath.add(root);
   }
 }
