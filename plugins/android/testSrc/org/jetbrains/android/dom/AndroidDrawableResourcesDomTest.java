@@ -265,13 +265,29 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testRotateCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testRotateCompletion2() throws Throwable {
+    doTestOnlyDrawableReferences();
+  }
+
+  public void testRotateHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testRotateHighlighting2() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testIncorrectRootTag() throws Throwable {
     doTestHighlighting();
   }
 
   public void testRootTagCompletion() throws Throwable {
     doTestCompletionVariants(getTestName(true) + ".xml", "selector", "bitmap", "nine-patch", "layer-list", "level-list", "transition",
-                             "inset", "clip", "scale", "shape", "animation-list", "animated-rotate");
+                             "inset", "clip", "scale", "shape", "animation-list", "animated-rotate", "rotate");
   }
 
   public void testInlineClip() throws Throwable {
