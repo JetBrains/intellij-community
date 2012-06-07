@@ -58,7 +58,7 @@ public class SerializedStubTree {
       myStubElement = null;
       if (willIndexStub) return stubElement;
     }
-    return SerializationManager.getInstance().deserialize(new UnsyncByteArrayInputStream(myBytes));
+    return SerializationManagerEx.getInstanceEx().deserialize(new UnsyncByteArrayInputStream(myBytes));
   }
 
   public boolean equals(final Object that) {

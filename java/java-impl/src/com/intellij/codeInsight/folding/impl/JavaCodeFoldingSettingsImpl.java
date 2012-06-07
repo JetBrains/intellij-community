@@ -165,16 +165,6 @@ public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings impleme
     COLLAPSE_END_OF_LINE_COMMENTS = value;
   }
 
-  @Override
-  public boolean isCollapseRecursiveMethodCalls() {
-    return COLLAPSE_RECURSIVE_METHOD_CALLS;
-  }
-
-  @Override
-  public void setCollapseRecursiveMethodCalls(boolean value) {
-    COLLAPSE_RECURSIVE_METHOD_CALLS = value;
-  }
-
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ACCESSORS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_INNER_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
@@ -184,7 +174,6 @@ public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings impleme
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_I18N_MESSAGES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_END_OF_LINE_COMMENTS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_RECURSIVE_METHOD_CALLS = true;
 
   @Override
   @NotNull

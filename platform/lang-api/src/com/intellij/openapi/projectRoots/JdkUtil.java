@@ -45,7 +45,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class JdkUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.JdkUtil");
@@ -86,7 +85,7 @@ public class JdkUtil {
     if (rtJarFileContent == null) {
       return null;
     }
-    ZipFile manifestJarFile;
+    com.intellij.openapi.vfs.JarFile manifestJarFile;
     try {
       manifestJarFile = JarFileSystem.getInstance().getJarFile(rtJarFileContent);
     }

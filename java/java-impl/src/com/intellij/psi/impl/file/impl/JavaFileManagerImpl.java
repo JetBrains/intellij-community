@@ -34,7 +34,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -186,7 +186,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static boolean notClass(final PsiElement found) {
     if (found instanceof PsiClass) return false;
 
-    VirtualFile faultyContainer = PsiUtilBase.getVirtualFile(found);
+    VirtualFile faultyContainer = PsiUtilCore.getVirtualFile(found);
     LOG.error("Non class in class list: " + faultyContainer + ". found: " + found);
     if (faultyContainer != null && faultyContainer.isValid()) {
       FileBasedIndex.getInstance().requestReindex(faultyContainer);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.vfs;
 
-/*
- * @author max
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+/**
+ * Encapsulates operations with .jar file
  */
-package com.intellij.psi.stubs;
+public interface JarFile {
+  ZipEntry getEntry(String name);
+  InputStream getInputStream(ZipEntry entry) throws IOException;
+  Enumeration<? extends ZipEntry> entries();
 
-import com.intellij.psi.PsiElement;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
-import org.jetbrains.annotations.NotNull;
-
-public abstract class StringStubIndexExtension<Psi extends PsiElement> extends AbstractStubIndex<String, Psi> {
-  public int getVersion() {
-    return 2;
-  }
-
-  @NotNull
-  public KeyDescriptor<String> getKeyDescriptor() {
-    return new EnumeratorStringDescriptor();
-  }
+  @Nullable ZipFile getZipFile();
 }

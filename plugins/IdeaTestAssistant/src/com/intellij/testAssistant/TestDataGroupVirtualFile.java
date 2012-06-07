@@ -29,7 +29,7 @@ import java.io.OutputStream;
 /**
  * @author yole
  */
-@Presentation(icon = "/nodes/testSourceFolder.png")
+@Presentation(icon = "AllIcons.Nodes.TestSourceFolder")
 public class TestDataGroupVirtualFile extends VirtualFile {
   private final VirtualFile myBeforeFile;
   private final VirtualFile myAfterFile;

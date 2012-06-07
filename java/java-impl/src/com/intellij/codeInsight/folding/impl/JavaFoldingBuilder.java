@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
@@ -44,6 +46,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -646,13 +649,15 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
               if (lastLineEnd > 0 && seq.charAt(lastLineEnd) == '\n') lastLineEnd--;
               if (lastLineEnd < firstLineStart) return false;
 
+              String type = quick ? "" : getOptionalLambdaType(anonymousClass, expression);
+
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
                 @Override
                 public String fun(final PsiParameter psiParameter) {
                   return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = "(" + params + ") -> {";
+              @NonNls final String lambdas = type + "(" + params + ") -> {";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();
@@ -700,6 +705,19 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       }
     }
     return isClosure;
+  }
+
+  private static String getOptionalLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
+    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(expression, false);
+    if (expression.getParent() instanceof PsiReferenceExpression ||
+        types.length != 1 ||
+        !types[0].getType().equals(anonymousClass.getBaseClassType())) {
+      final String baseClassName = ObjectUtils.assertNotNull(anonymousClass.getBaseClassType().resolve()).getName();
+      if (baseClassName != null) {
+        return "(" + baseClassName + ") ";
+      }
+    }
+    return "";
   }
 
   private static boolean seemsLikeLambda(@Nullable final PsiClass baseClass) {

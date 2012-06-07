@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.openapi.fileEditor.FileDocumentManager
 
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
@@ -146,6 +147,32 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     configureSecondCompletion();
     incUseCount(getLookup(), 1);
     assertPreferredItems(0, "FooBee", "FooBar");
+  }
+
+  public void testSameStatsForDifferentQualifiers() throws Throwable {
+    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java");
+    assertPreferredItems(0, "getComponent");
+    incUseCount(getLookup(), myFixture.lookupElementStrings.indexOf('getComponents'));
+    FileDocumentManager.instance.saveAllDocuments()
+
+    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java");
+    assertPreferredItems(1, "getComponent", "getComponents");
+
+    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java");
+    assertPreferredItems(1, "getComponent", "getComponents");
+  }
+
+  public void testSameStatsForDifferentQualifiers2() throws Throwable {
+    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java");
+    assertPreferredItems(0, "getComponent");
+    incUseCount(getLookup(), myFixture.lookupElementStrings.indexOf('getComponents'));
+    FileDocumentManager.instance.saveAllDocuments()
+
+    invokeCompletion("SameStatsForDifferentQualifiersJComponent.java");
+    assertPreferredItems(1, "getComponent", "getComponents");
+
+    invokeCompletion("SameStatsForDifferentQualifiersJLabel.java");
+    assertPreferredItems(1, "getComponent", "getComponents");
   }
 
   public void testDispreferFinalize() throws Throwable {

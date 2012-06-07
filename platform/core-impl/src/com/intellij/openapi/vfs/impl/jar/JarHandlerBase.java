@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl.jar;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
@@ -37,7 +38,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JarHandlerBase {
-  protected final TimedReference<ZipFile> myZipFile = new TimedReference<ZipFile>(null);
+  protected final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
   protected SoftReference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
   protected final Object lock = new Object();
   protected final String myBasePath;
@@ -63,7 +64,7 @@ public class JarHandlerBase {
     synchronized (lock) {
       Map<String, EntryInfo> map = myRelPathsToEntries.get();
       if (map == null) {
-        final ZipFile zip = getZip();
+        final JarFile zip = getJar();
 
         map = new THashMap<String, EntryInfo>();
         if (zip != null) {
@@ -88,19 +89,46 @@ public class JarHandlerBase {
   }
 
   @Nullable
-  public ZipFile getZip() {
-    ZipFile zip = myZipFile.get();
-    if (zip == null) {
-      try {
-        zip = new ZipFile(getMirrorFile(getOriginalFile()));
-        myZipFile.set(zip);
-      }
-      catch (IOException e) {
-        return null;
-      }
+  public JarFile getJar() {
+    JarFile jar = myJarFile.get();
+    if (jar == null) {
+      jar = createJarFile();
+      if (jar != null)
+        myJarFile.set(jar);
     }
 
-    return zip;
+    return jar;
+  }
+
+  @Nullable
+  protected JarFile createJarFile() {
+    try {
+      final ZipFile zipFile = new ZipFile(getMirrorFile(getOriginalFile()));
+      return new JarFile() {
+        @Override
+        public ZipEntry getEntry(String name) {
+          return zipFile.getEntry(name);
+        }
+
+        @Override
+        public InputStream getInputStream(ZipEntry entry) throws IOException {
+          return zipFile.getInputStream(entry);
+        }
+
+        @Override
+        public Enumeration<? extends ZipEntry> entries() {
+          return zipFile.entries();
+        }
+
+        @Override
+        public ZipFile getZipFile() {
+          return zipFile;
+        }
+      };
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   protected File getOriginalFile() {
@@ -161,8 +189,8 @@ public class JarHandlerBase {
   @Nullable
   private ZipEntry convertToEntry(VirtualFile file) {
     String path = getRelativePath(file);
-    final ZipFile zip = getZip();
-    return zip != null ? zip.getEntry(path) : null;
+    final JarFile jar = getJar();
+    return jar != null ? jar.getEntry(path) : null;
   }
 
   public long getLength(@NotNull final VirtualFile file) {
@@ -185,10 +213,10 @@ public class JarHandlerBase {
         return new byte[0];
       }
 
-      final ZipFile zip = getZip();
-      assert zip != null : file;
+      final JarFile jar = getJar();
+      assert jar != null : file;
 
-      final InputStream stream = zip.getInputStream(entry);
+      final InputStream stream = jar.getInputStream(entry);
       assert stream != null : file;
 
       try {
@@ -220,7 +248,7 @@ public class JarHandlerBase {
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) {
       // Optimization. Do not build entries if asked for jar root existence.
-      return myZipFile.get() != null || getOriginalFile().exists();
+      return myJarFile.get() != null || getOriginalFile().exists();
     }
 
     return getEntryInfo(fileOrDirectory) != null;

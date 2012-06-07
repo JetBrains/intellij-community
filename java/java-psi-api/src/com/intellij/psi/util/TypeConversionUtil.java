@@ -1186,11 +1186,11 @@ public class TypeConversionUtil {
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
-  public static PsiType erasure(PsiType type) {
+  public static PsiType erasure(@Nullable PsiType type) {
     return erasure(type, PsiSubstitutor.EMPTY);
   }
 
-  public static PsiType erasure(final PsiType type, final PsiSubstitutor beforeSubstitutor) {
+  public static PsiType erasure(@Nullable final PsiType type, final PsiSubstitutor beforeSubstitutor) {
     if (type == null) return null;
     return type.accept(new PsiTypeVisitor<PsiType>() {
       @Override

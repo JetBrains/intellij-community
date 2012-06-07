@@ -248,7 +248,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         PsiParameter[] parms = baseConstructor.getParameterList().getParameters();
         for (PsiParameter parm : parms) {
           PsiParameter newParam = factory.createParameter(parm.getName(), parm.getType());
-          copyModifierList(factory, parm, newParam);
+          copyModifierList(parm, newParam);
           constructor.getParameterList().add(newParam);
         }
       }
@@ -291,7 +291,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return constructor;
   }
 
-  static void copyModifierList(JVMElementFactory factory, PsiParameter parm, PsiParameter newParam) {
+  static void copyModifierList(PsiParameter parm, PsiParameter newParam) {
     PsiModifierList modifierList = parm.getModifierList();
     PsiModifierList newMList = newParam.getModifierList();
     if (modifierList != null && newMList != null) {

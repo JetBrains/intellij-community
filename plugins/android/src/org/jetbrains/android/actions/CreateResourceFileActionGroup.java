@@ -17,7 +17,14 @@
 package org.jetbrains.android.actions;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import org.jetbrains.android.dom.animation.AndroidAnimationUtils;
+import org.jetbrains.android.dom.animator.AndroidAnimatorUtil;
+import org.jetbrains.android.dom.drawable.AndroidDrawableDomUtil;
+import org.jetbrains.android.dom.xml.AndroidXmlResourcesUtil;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -31,14 +38,44 @@ public class CreateResourceFileActionGroup extends DefaultActionGroup {
 
   public CreateResourceFileActionGroup() {
     CreateResourceFileAction a = new CreateResourceFileAction();
-    a.add(new CreateTypedResourceFileAction("Layout", "layout", "LinearLayout"));
-    a.add(new CreateTypedResourceFileAction("XML", "xml", "PreferenceScreen"));
-    a.add(new CreateTypedResourceFileAction("Drawable", "drawable", "selector"));
+    a.add(new AndroidCreateLayoutFileAction());
+
+    a.add(new CreateTypedResourceFileAction("XML", "xml", "PreferenceScreen", false, true) {
+      @NotNull
+      @Override
+      public List<String> getAllowedTagNames(@NotNull AndroidFacet facet) {
+        return AndroidXmlResourcesUtil.getPossibleRoots(facet);
+      }
+    });
+
+    a.add(new CreateTypedResourceFileAction("Drawable", "drawable", "selector", false, true) {
+      @NotNull
+      @Override
+      public List<String> getAllowedTagNames(@NotNull AndroidFacet facet) {
+        return AndroidDrawableDomUtil.getPossibleRoots();
+      }
+    });
+
     a.add(new CreateTypedResourceFileAction("Color", "color", "selector", false, false));
     a.add(new CreateTypedResourceFileAction("Values", "values", "resources", true, false));
     a.add(new CreateTypedResourceFileAction("Menu", "menu", "menu", false, false));
-    a.add(new CreateTypedResourceFileAction("Animation", "anim", "set"));
-    a.add(new CreateTypedResourceFileAction("Animator", "animator", "set"));
+
+    a.add(new CreateTypedResourceFileAction("Animation", "anim", "set", false, true) {
+      @NotNull
+      @Override
+      public List<String> getAllowedTagNames(@NotNull AndroidFacet facet) {
+        return AndroidAnimationUtils.getPossibleChildren(facet);
+      }
+    });
+
+    a.add(new CreateTypedResourceFileAction("Animator", "animator", "set", false, true) {
+      @NotNull
+      @Override
+      public List<String> getAllowedTagNames(@NotNull AndroidFacet facet) {
+        return AndroidAnimatorUtil.getPossibleChildren();
+      }
+    });
+
     myMajorAction = a;
     add(a);
     for (CreateTypedResourceFileAction subaction : a.getSubactions()) {

@@ -17,42 +17,30 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.PersistentStringEnumerator;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
  * @author max
  */
-public class SerializationManagerImpl extends SerializationManager implements ApplicationComponent {
+public class SerializationManagerImpl extends SerializationManagerEx implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerImpl");
 
-  private PersistentStringEnumerator myNameStorage;
-
-  private final TIntObjectHashMap<StubSerializer<? extends StubElement>> myIdToSerializer = new TIntObjectHashMap<StubSerializer<? extends StubElement>>();
-  private final TObjectIntHashMap<StubSerializer<? extends StubElement>> mySerializerToId = new TObjectIntHashMap<StubSerializer<? extends StubElement>>();
-  private final List<StubSerializer<? extends StubElement>> myAllSerializers = new ArrayList<StubSerializer<? extends StubElement>>();
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
   private final File myFile = new File(PathManager.getIndexRoot(), "rep.names");
-  private volatile boolean mySerializersLoaded = false;
   private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
+  private AbstractStringEnumerator myNameStorage;
+  private StubSerializationHelper myStubSerializationHelper;
 
   public SerializationManagerImpl() {
     myFile.getParentFile().mkdirs();
@@ -60,12 +48,13 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
       myNameStorage = new PersistentStringEnumerator(myFile, true);
+      myStubSerializationHelper = new StubSerializationHelper(myNameStorage);
     }
     catch (IOException e) {
-      myNameStorageCrashed.set(true);
+      nameStorageCrashed();
       LOG.info(e);
       repairNameStorage(); // need this in order for myNameStorage not to be null
-      myNameStorageCrashed.set(true);
+      nameStorageCrashed();
     }
     finally {
       registerSerializer(PsiFileStubImpl.TYPE);
@@ -97,16 +86,14 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
           }
         }
         myNameStorage = new PersistentStringEnumerator(myFile, true);
-        
-        mySerializerToId.clear();
-        myIdToSerializer.clear();
+        myStubSerializationHelper = new StubSerializationHelper(myNameStorage);
         for (StubSerializer<? extends StubElement> serializer : myAllSerializers) {
-          assignId(serializer);
+          myStubSerializationHelper.assignId(serializer);
         }
       }
       catch (IOException e) {
         LOG.info(e);
-        myNameStorageCrashed.set(true);
+        nameStorageCrashed();
       }
     }
   }
@@ -116,126 +103,8 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     myNameStorage.force();
   }
 
-  public void registerSerializer(@NotNull StubSerializer<? extends StubElement> serializer) {
-    myAllSerializers.add(serializer);
-    try {
-      assignId(serializer);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      myNameStorageCrashed.set(true);
-    }
-  }
-
-  private void assignId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
-    final int id = persistentId(serializer);
-    final StubSerializer old = myIdToSerializer.put(id, serializer);
-    assert old == null : "ID: " + serializer.getExternalId() + " is not unique; Already registered serializer with this ID: " + old.getClass().getName();
-
-    final int oldId = mySerializerToId.put(serializer, id);
-    assert oldId == 0 : "Serializer " + serializer + " is already registered; Old ID:" + oldId;
-  }
-
-  private int persistentId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
-    if (myNameStorage == null) {
-      throw new IOException("SerializationManager's name storage failed to initialize");
-    }
-    return myNameStorage.enumerate(serializer.getExternalId());
-  }
-
-  private synchronized void initSerializers() {
-    if (mySerializersLoaded) return;
-    for(StubElementTypeHolderEP holderEP: Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
-      holderEP.initialize();
-    }
-    final IElementType[] stubElementTypes = IElementType.enumerate(new IElementType.Predicate() {
-      public boolean matches(final IElementType type) {
-        return type instanceof StubSerializer;
-      }
-    });
-    for(IElementType type: stubElementTypes) {
-      if (type instanceof IStubFileElementType && ((IStubFileElementType) type).getExternalId().equals(PsiFileStubImpl.TYPE.getExternalId())) {
-        continue;
-      }
-      StubSerializer stubSerializer = (StubSerializer) type;
-
-      if (!myAllSerializers.contains(stubSerializer)) {
-        registerSerializer(stubSerializer);
-      }
-    }
-    mySerializersLoaded = true;
-  }
-
-  public void serialize(StubElement rootStub, OutputStream stream) {
-    if (!mySerializersLoaded) initSerializers();
-    StubOutputStream stubOutputStream = new StubOutputStream(stream, myNameStorage);
-    doSerialize(rootStub, stubOutputStream);
-  }
-
-  private void doSerialize(final StubElement rootStub, final StubOutputStream stream) {
-    try {
-      final StubSerializer serializer = getSerializer(rootStub);
-
-      DataInputOutputUtil.writeINT(stream, getClassId(serializer));
-      serializer.serialize(rootStub, stream);
-
-      final List<StubElement> children = rootStub.getChildrenStubs();
-      final int childrenSize = children.size();
-      DataInputOutputUtil.writeINT(stream, childrenSize);
-      for (int i = 0; i < childrenSize; ++i) {
-        doSerialize(children.get(i), stream);
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      myNameStorageCrashed.set(true);
-    }
-  }
-
-  public StubSerializer getSerializer(final StubElement rootStub) {
-    if (rootStub instanceof PsiFileStub) {
-      final PsiFileStub fileStub = (PsiFileStub)rootStub;
-      return fileStub.getType();
-    }
-
-    return rootStub.getStubType();
-  }
-
-  public StubElement deserialize(InputStream stream) {
-    StubInputStream inputStream = new StubInputStream(stream, myNameStorage);
-    if (!mySerializersLoaded) initSerializers();
-    try {
-      return deserialize(inputStream, null);
-    }
-    catch (IOException e) {
-      myNameStorageCrashed.set(true);
-      LOG.info(e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private StubElement deserialize(StubInputStream stream, StubElement parentStub) throws IOException {
-    final int id = DataInputOutputUtil.readINT(stream);
-    final StubSerializer serializer = getClassById(id);
-    
-    assert serializer != null : "No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null");
-    
-    StubElement stub = serializer.deserialize(stream, parentStub);
-    int childCount = DataInputOutputUtil.readINT(stream);
-    for (int i = 0; i < childCount; i++) {
-      deserialize(stream, stub);
-    }
-    return stub;
-  }
-
-  private int getClassId(final StubSerializer serializer) {
-    final int idValue = mySerializerToId.get(serializer);
-    assert idValue != 0: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
-    return idValue;
-  }
-
-  private StubSerializer getClassById(int id) {
-    return myIdToSerializer.get(id);
+  protected void nameStorageCrashed() {
+    myNameStorageCrashed.set(true);
   }
 
   @NotNull
@@ -261,6 +130,44 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+  }
+
+  public void registerSerializer(@NotNull StubSerializer<? extends StubElement> serializer) {
+    super.registerSerializer(serializer);
+    try {
+      myStubSerializationHelper.assignId(serializer);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      nameStorageCrashed();
+    }
+  }
+
+
+
+  public void serialize(StubElement rootStub, OutputStream stream) {
+    initSerializers();
+    try {
+      myStubSerializationHelper.serialize(rootStub, stream);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      nameStorageCrashed();
+    }
+  }
+
+
+  public StubElement deserialize(InputStream stream) {
+    initSerializers();
+
+    try {
+      return myStubSerializationHelper.deserialize(stream);
+    }
+    catch (IOException e) {
+      nameStorageCrashed();
+      LOG.info(e);
+      throw new RuntimeException(e);
     }
   }
 }

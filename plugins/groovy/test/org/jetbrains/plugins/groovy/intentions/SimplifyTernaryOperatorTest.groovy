@@ -32,7 +32,12 @@ class SimplifyTernaryOperatorTest extends GrIntentionTestCase {
     doAntiTest 'aaa ?<caret> bbb : ccc', intentionName
     doAntiTest 'aaa ?<caret> false : ccc', intentionName
     doAntiTest 'aaa ?<caret> bbb : true', intentionName
+  }
 
+  public void "test don't trigger for non-boolean conditions"() throws Exception {
+    doAntiTest 'def a = 0\n' +
+               'def b = 2\n' +
+               'println a <caret>? true : b', intentionName
   }
 
 

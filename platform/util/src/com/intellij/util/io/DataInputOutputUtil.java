@@ -32,11 +32,11 @@ public class DataInputOutputUtil {
     record.skipBytes(record.readUnsignedShort());
   }
 
-  public static StringRef readNAME(DataInput record, PersistentStringEnumerator nameStore) throws IOException {
+  public static StringRef readNAME(DataInput record, AbstractStringEnumerator nameStore) throws IOException {
     return StringRef.fromStream(record, nameStore);
   }
 
-  public static void writeNAME(DataOutput record, final String name, PersistentStringEnumerator nameStore) throws IOException {
+  public static void writeNAME(DataOutput record, final String name, AbstractStringEnumerator nameStore) throws IOException {
     final int nameId = name != null ? nameStore.enumerate(name) : 0;
     record.writeByte(nameId & 0xFF);
     writeINT(record, (nameId >> 8));

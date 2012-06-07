@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +49,10 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 public class CreateResourceFileAction extends CreateElementActionBase {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.actions.CreateResourceFileAction");
+
   private final Map<String, CreateTypedResourceFileAction> mySubactions = new HashMap<String, CreateTypedResourceFileAction>();
+  private String myRootElement;
 
   @NotNull
   public static CreateResourceFileAction getInstance() {
@@ -101,20 +106,24 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   @NotNull
   @Override
   protected PsiElement[] invokeDialog(final Project project, final PsiDirectory directory) {
-    CreateTypedResourceFileAction createLayoutAction = mySubactions.get("layout");
-    CreateResourceDialog dialog = new CreateResourceDialog(project, mySubactions.values(), createLayoutAction) {
+    final AndroidFacet facet = AndroidFacet.getInstance(directory);
+    LOG.assertTrue(facet != null);
+
+    CreateResourceDialog dialog = new CreateResourceDialog(facet, mySubactions.values()) {
       @Override
       protected InputValidator createValidator(@NotNull String subdirName) {
         return CreateResourceFileAction.this.createValidator(project, directory, subdirName);
       }
+
+      @Override
+      protected void doOKAction() {
+        myRootElement = getRootElement();
+        super.doOKAction();
+      }
     };
     dialog.setTitle(AndroidBundle.message("new.resource.dialog.title"));
     dialog.show();
-    InputValidator validator = dialog.getValidator();
-    if (validator == null) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-    return ((MyInputValidator)validator).getCreatedElements();
+    return PsiElement.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -134,6 +143,9 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     CreateTypedResourceFileAction action = getActionByDir(directory);
+    if (myRootElement != null && myRootElement.length() > 0) {
+      return action.doCreate(newName, directory, myRootElement, false);
+    }
     return action.create(newName, directory);
   }
 
