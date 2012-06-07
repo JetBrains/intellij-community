@@ -221,6 +221,7 @@ class Test {
     myFixture.addClass('interface Runnable2 { void run(); }')
     myFixture.addClass('interface Runnable3 { void run(); }')
     myFixture.addClass('interface Runnable4 { void run(); }')
+    myFixture.addClass('abstract class MyAction { public abstract void run(); public void registerVeryCustomShortcutSet() {} }')
     def text = """\
 class Test {
   void test() {
@@ -244,6 +245,11 @@ class Test {
         System.out.println();
       }
     });
+    new MyAction() {
+      public void run() {
+        System.out.println();
+      }
+    }.registerVeryCustomShortcutSet();
   }
 
   void foo(Object o) {}
@@ -257,6 +263,7 @@ class Test {
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2(")).placeholderText == '(Runnable2) () -> { '
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable3(")).placeholderText == '(Runnable3) () -> { '
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable4(")).placeholderText == '() -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == '(MyAction) () -> { '
   }
 
   public void "test no closure folding when the method throws an unresolved exception"() {

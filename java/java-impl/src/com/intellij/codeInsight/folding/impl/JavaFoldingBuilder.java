@@ -649,16 +649,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
               if (lastLineEnd > 0 && seq.charAt(lastLineEnd) == '\n') lastLineEnd--;
               if (lastLineEnd < firstLineStart) return false;
 
-              String type = "";
-              if (!quick) {
-                ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(expression, false);
-                if (types.length != 1 || !types[0].getType().equals(anonymousClass.getBaseClassType())) {
-                  final String baseClassName = ObjectUtils.assertNotNull(anonymousClass.getBaseClassType().resolve()).getName();
-                  if (baseClassName != null) {
-                    type = "(" + baseClassName + ") ";
-                  }
-                }
-              }
+              String type = quick ? "" : getOptionalLambdaType(anonymousClass, expression);
 
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
                 @Override
@@ -714,6 +705,19 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       }
     }
     return isClosure;
+  }
+
+  private static String getOptionalLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression) {
+    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(expression, false);
+    if (expression.getParent() instanceof PsiReferenceExpression ||
+        types.length != 1 ||
+        !types[0].getType().equals(anonymousClass.getBaseClassType())) {
+      final String baseClassName = ObjectUtils.assertNotNull(anonymousClass.getBaseClassType().resolve()).getName();
+      if (baseClassName != null) {
+        return "(" + baseClassName + ") ";
+      }
+    }
+    return "";
   }
 
   private static boolean seemsLikeLambda(@Nullable final PsiClass baseClass) {
