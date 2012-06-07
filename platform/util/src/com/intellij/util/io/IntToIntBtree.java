@@ -16,7 +16,8 @@ import java.util.Arrays;
 * Time: 1:34 PM
 */
 class IntToIntBtree {
-  static final int VERSION = 2;
+  static final int VERSION = 3;
+  private static final int HAS_ZERO_KEY_MASK = 0xFF000000;
   static final boolean doSanityCheck = false;
   static final boolean doDump = false;
 
@@ -33,6 +34,8 @@ class IntToIntBtree {
   private int hashedPagesCount;
   private int count;
   private int movedMembersCount;
+  private boolean hasZeroKey;
+  private int zeroKeyValue;
 
   private boolean isLarge = true;
   private final ResizeableMappedFile storage;
@@ -70,15 +73,10 @@ class IntToIntBtree {
 
     if (indexNodeIsHashTable) {
       ++i;
-      final double bitsPerState = BtreeIndexNodeView.haveDeleteState? 2d:1d;
-      while(Math.ceil(bitsPerState * i / 8) + i * BtreeIndexNodeView.INTERIOR_SIZE + BtreePage.RESERVED_META_PAGE_LEN > pageSize ||
-            !isPrime(i)
-           ) {
-        i -= 2;
-      }
+      while(!isPrime(i)) i -= 2;
 
       hashPageCapacity = i;
-      metaPageLen = BtreePage.RESERVED_META_PAGE_LEN + (int)Math.ceil(bitsPerState * hashPageCapacity / 8);
+      metaPageLen = BtreePage.RESERVED_META_PAGE_LEN;
       i = (int)(hashPageCapacity * 0.8);
       if ((i & 1) == 1) ++i;
     } else {
@@ -99,7 +97,14 @@ class IntToIntBtree {
   }
 
   public void persistVars(BtreeDataStorage storage, boolean toDisk) {
-    height = storage.persistInt(0, height, toDisk);
+    if (toDisk) {
+      storage.persistInt(0, height | (hasZeroKey ? HAS_ZERO_KEY_MASK :0), true);
+    } else {
+      int i = storage.persistInt(0, 0, false);
+      hasZeroKey = (i & HAS_ZERO_KEY_MASK) != 0;
+      height = i & ~HAS_ZERO_KEY_MASK;
+    }
+
     pagesCount = storage.persistInt(4, pagesCount, toDisk);
     movedMembersCount = storage.persistInt(8, movedMembersCount, toDisk);
     maxStepsSearchedInHash = storage.persistInt(12, maxStepsSearchedInHash, toDisk);
@@ -108,12 +113,13 @@ class IntToIntBtree {
     totalHashStepsSearched = storage.persistInt(24, totalHashStepsSearched, toDisk);
     hashedPagesCount = storage.persistInt(28, hashedPagesCount, toDisk);
     root.setAddress(storage.persistInt(32, root.address, toDisk));
+    zeroKeyValue = storage.persistInt(36, zeroKeyValue, toDisk);
   }
 
   interface BtreeDataStorage {
     int persistInt(int offset, int value, boolean toDisk);
   }
-  
+
   private static boolean isPrime(int val) {
     if (val % 2 == 0) return false;
     int maxDivisor = (int)Math.sqrt(val);
@@ -135,6 +141,14 @@ class IntToIntBtree {
   private boolean myCanUseLastKey;
 
   public boolean get(int key, int[] result) {
+    if (key == 0) {
+      if (hasZeroKey) {
+        result[0] = zeroKeyValue;
+        return true;
+      }
+      return false;
+    }
+
     if (hasCachedMappings) {
       if (myCachedMappings.containsKey(key)) {
         result[0] = myCachedMappings.get(key);
@@ -158,6 +172,12 @@ class IntToIntBtree {
   }
 
   public void put(int key, int value) {
+    if (key == 0) {
+      hasZeroKey = true;
+      zeroKeyValue = value;
+      return;
+    }
+
     if (hasCachedMappings) {
       myCachedMappings.put(key, value);
       if (myCachedMappings.size() == myCachedMappingsSize) flushCachedMappings();
@@ -342,9 +362,7 @@ class IntToIntBtree {
       super(btree);
     }
 
-    static final int HASH_FREE = 0;
-    static final int HASH_FULL = 1;
-    static final int HASH_REMOVED = 2;
+    private static final int HASH_FREE = 0;
 
     private int search(int value) {
       if (isIndexLeaf() && isHashedLeaf()) {
@@ -476,8 +494,9 @@ class IntToIntBtree {
         int offset = myAddressInBuffer + indexToOffset(0);
 
         for(int i = 0; i < btree.hashPageCapacity; ++i) {
-          if (hashGetState(i) == HASH_FULL) {
-            if (!processor.process(myBuffer.getInt(offset + KEY_OFFSET), myBuffer.getInt(offset))) return false;
+          int key = myBuffer.getInt(offset + KEY_OFFSET);
+          if (key != HASH_FREE) {
+            if(!processor.process(key,  myBuffer.getInt(offset))) return false;
           }
           offset += INTERIOR_SIZE;
         }
@@ -499,7 +518,7 @@ class IntToIntBtree {
       final BtreeIndexNodeView nodeView;
       final int[] keys;
       final TIntIntHashMap values;
-      
+
       HashLeafData(BtreeIndexNodeView _nodeView, int recordCount) {
         nodeView = _nodeView;
 
@@ -507,31 +526,33 @@ class IntToIntBtree {
 
         int offset = nodeView.myAddressInBuffer + nodeView.indexToOffset(0);
         final ByteBuffer buffer = nodeView.myBuffer;
-        
+
         keys = new int[recordCount];
         values = new TIntIntHashMap(recordCount);
         int keyNumber = 0;
-        
+
         for(int i = 0; i < btree.hashPageCapacity; ++i) {
-          if (nodeView.hashGetState(i) == HASH_FULL) {
-            int key = buffer.getInt(offset + KEY_OFFSET);
+          int key = buffer.getInt(offset + KEY_OFFSET);
+          if (key != HASH_FREE) {
+            int value = buffer.getInt(offset);
+
             keys[keyNumber++] = key;
-            values.put(key, buffer.getInt(offset));
+            values.put(key, value);
           }
           offset += INTERIOR_SIZE;
         }
-        
+
         Arrays.sort(keys);
       }
 
-      void clean() {
+      private void clean() {
         final IntToIntBtree btree = nodeView.btree;
         for(int i = 0; i < btree.hashPageCapacity; ++i) {
-          nodeView.hashSetState(i, HASH_FREE);
+          nodeView.setKeyAt(i, HASH_FREE);
         }
       }
     }
-    
+
     private int splitNode(int parentAddress) {
       final boolean indexLeaf = isIndexLeaf();
 
@@ -634,7 +655,7 @@ class IntToIntBtree {
       } else {
         short recordCountInNewNode = (short)(recordCount - maxIndex);
         newIndexNode.setChildrenCount(recordCountInNewNode);
-        
+
         if (btree.isLarge) {
           ByteBuffer buffer = getBytes(indexToOffset(maxIndex), recordCountInNewNode * INTERIOR_SIZE);
           newIndexNode.putBytes(newIndexNode.indexToOffset(0), buffer);
@@ -708,38 +729,38 @@ class IntToIntBtree {
 
     private boolean doOffloadToSiblingsWhenHashed(BtreeIndexNodeView parent, final HashLeafData hashLeafData) {
       int indexInParent = parent.search(hashLeafData.keys[0]);
-      
+
       if (indexInParent >= 0) {
         BtreeIndexNodeView sibling = new BtreeIndexNodeView(btree);
         sibling.setAddress(-parent.addressAt(indexInParent));
-  
+
         int numberOfKeysToMove = (sibling.getMaxChildrenCount() - sibling.getChildrenCount()) / 2;
-        
+
         if (!sibling.isFull() && numberOfKeysToMove > MIN_ITEMS_TO_SHARE) {
           if (doSanityCheck) {
             sibling.dump("Offloading to left sibling");
             parent.dump("parent before");
           }
-          
+
           final int childrenCount = getChildrenCount();
           final int[] keys = hashLeafData.keys;
           final TIntIntHashMap map = hashLeafData.values;
-          
+
           for(int i = 0; i < numberOfKeysToMove; ++i) {
             final int key = keys[i];
             sibling.insert(key, map.get(key));
           }
-          
+
           if (doSanityCheck) {
             sibling.dump("Left sibling after");
           }
-  
+
           parent.setKeyAt(indexInParent, keys[numberOfKeysToMove]);
-          
+
           setChildrenCount((short)0);
           --btree.hashedPagesCount;
           hashLeafData.clean();
-          
+
           for(int i = numberOfKeysToMove; i < childrenCount; ++i) {
             final int key = keys[i];
             insert(key, map.get(key));
@@ -750,7 +771,7 @@ class IntToIntBtree {
       } else if (indexInParent == -1) {
         insertToRightSiblingWhenHashed(parent, hashLeafData, 0, new BtreeIndexNodeView(btree));
       }
-      
+
       if (!isFull()) {
         if (doSanityCheck) {
           dump("old node after split:");
@@ -758,7 +779,7 @@ class IntToIntBtree {
         }
         return true;
       }
-      
+
       return false;
     }
 
@@ -784,7 +805,7 @@ class IntToIntBtree {
           final int key = keys[i];
           sibling.insert(key, map.get(key));
         }
-        
+
         if (doSanityCheck) {
           sibling.dump("Right sibling after");
         }
@@ -800,7 +821,7 @@ class IntToIntBtree {
         }
       }
     }
-    
+
     private boolean doOffloadToSiblingsSorted(BtreeIndexNodeView parent) {
       if (!isIndexLeaf()) return false; // TODO
 
@@ -958,7 +979,6 @@ class IntToIntBtree {
           }
 
           setKeyAt(index, valueHC);
-          hashSetState(index, HASH_FULL);
           setAddressAt(index, newValueId);
           setChildrenCount((short)(recordCount + 1));
           return;
@@ -1014,97 +1034,50 @@ class IntToIntBtree {
       }
     }
 
+    private static final boolean useDoubleHash = true;
     private int hashIndex(int value) {
-      int hash, probe, index;
+      int hash, index;
 
       final int length = btree.hashPageCapacity;
-      hash = hash(value) & 0x7fffffff;
+      hash = value & 0x7fffffff;
       index = hash % length;
-      int state = hashGetState(index);
+      int keyAtIndex = keyAt(index);
       int total = 0;
 
       btree.hashSearchRequests++;
 
-      if (state != HASH_FREE &&
-          (state == HASH_REMOVED || keyAt(index) != value)) {
-        // see Knuth, p. 529
-        probe = 1 + (hash % (length - 2));
+      if (useDoubleHash) {
+        if (keyAtIndex != value && keyAtIndex != HASH_FREE) {
+          // see Knuth, p. 529
+          final int probe = 1 + (hash % (length - 2));
 
-        do {
-          index -= probe;
-          if (index < 0) {
-            index += length;
+          do {
+            index -= probe;
+            if (index < 0) index += length;
+
+            keyAtIndex = keyAt(index);
+            ++total;
+            if (total > length) {
+              throw new IllegalStateException("Index corrupted"); // violation of Euler's theorem
+            }
           }
-          state = hashGetState(index);
-          ++total;
-          if (total > length) {
-            // violation of Euler's theorem
-            throw new IllegalStateException("Index corrupted");
-          }
+          while (keyAtIndex != value && keyAtIndex != HASH_FREE);
         }
-        while (state != HASH_FREE &&
-               (state == HASH_REMOVED || keyAt(index) != value));
+      } else {
+        while(keyAtIndex != value && keyAtIndex != HASH_FREE) {
+          if (index == 0) index = length;
+          --index;
+          keyAtIndex = keyAt(index);
+          ++total;
+
+          if (total > length) throw new IllegalStateException("Index corrupted"); // violation of Euler's theorem
+        }
       }
 
       btree.maxStepsSearchedInHash = Math.max(btree.maxStepsSearchedInHash, total);
       btree.totalHashStepsSearched += total;
 
-      return state == HASH_FREE ? -index - 1 : index;
-    }
-
-    private final int hash(int val) {
-      //return val * 0x278DDE6D;
-      return val;
-    }
-
-    static final int STATE_MASK = 0x3;
-    static final int STATE_MASK_WITHOUT_DELETE = 0x1;
-    
-    private final int hashGetState(int index) {
-      byte b = myBuffer.get(hashOccupiedStatusByteOffset(index));
-      if (haveDeleteState) {
-        return ((b & 0xFF) >> hashOccupiedStatusShift(index)) & STATE_MASK;
-      } else {
-        return ((b & 0xFF) >> hashOccupiedStatusShift(index)) & STATE_MASK_WITHOUT_DELETE;
-      }
-    }
-
-    private final int hashOccupiedStatusShift(int index) {
-      if (haveDeleteState) {
-        return 6 - ((index & 0x3) << 1);
-      } else {
-        return 7 - (index & 0x7);
-      }
-    }
-
-    private final int hashOccupiedStatusByteOffset(int index) {
-      if (haveDeleteState) {
-        return myAddressInBuffer + BtreePage.RESERVED_META_PAGE_LEN + (index >> 2);
-      } else {
-        return myAddressInBuffer + BtreePage.RESERVED_META_PAGE_LEN + (index >> 3);
-      }
-    }
-
-    private static final boolean haveDeleteState = false;
-
-    private void hashSetState(int index, int value) {
-      if (doSanityCheck) {
-        if (haveDeleteState) myAssert(value >= HASH_FREE && value <= HASH_REMOVED);
-        else myAssert(value >= HASH_FREE && value < HASH_REMOVED);
-      }
-
-      int hashOccupiedStatusOffset = hashOccupiedStatusByteOffset(index);
-      byte b = myBuffer.get(hashOccupiedStatusOffset);
-      int shift = hashOccupiedStatusShift(index);
-
-      if (haveDeleteState) {
-        b = (byte)(((b & 0xFF) & ~(STATE_MASK << shift)) | (value << shift));
-      } else {
-        b = (byte)(((b & 0xFF) & ~(STATE_MASK_WITHOUT_DELETE << shift)) | (value << shift));
-      }
-      myBuffer.put(hashOccupiedStatusOffset, b);
-
-      if (doSanityCheck) myAssert(hashGetState(index) == value);
+      return keyAtIndex == HASH_FREE ? -index - 1 : index;
     }
   }
 
@@ -1116,6 +1089,9 @@ class IntToIntBtree {
     doFlush();
     root.syncWithStore();
 
+    if (hasZeroKey) {
+      if(!processor.process(0, zeroKeyValue)) return false;
+    }
     return processLeafPages(root, processor);
   }
 

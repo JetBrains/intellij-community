@@ -51,8 +51,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private int myDuplicatedValuesPageStart;
   private int myDuplicatedValuesPageOffset;
   private static final int COLLISION_OFFSET = 4;
-  private int valuesCount;
-  private int collisions;
+  private int myValuesCount;
+  private int myCollisions;
+  private int myExistingKeysEnumerated;
 
   private IntToIntBtree btree;
   private final boolean myInlineKeysNoMapping;
@@ -123,14 +124,15 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     myFirstPageStart = store(DATA_START + 12, myFirstPageStart, toDisk);
     myDuplicatedValuesPageStart = store(DATA_START + 16, myDuplicatedValuesPageStart, toDisk);
     myDuplicatedValuesPageOffset = store(DATA_START + 20, myDuplicatedValuesPageOffset, toDisk);
-    valuesCount = store(DATA_START + 24, valuesCount, toDisk);
-    collisions = store(DATA_START + 28, collisions, toDisk);
+    myValuesCount = store(DATA_START + 24, myValuesCount, toDisk);
+    myCollisions = store(DATA_START + 28, myCollisions, toDisk);
+    myExistingKeysEnumerated = store(DATA_START + 32, myExistingKeysEnumerated, toDisk);
     storeBTreeVars(toDisk);
   }
 
   private void storeBTreeVars(boolean toDisk) {
     if (btree != null) {
-      final int BTREE_DATA_START = DATA_START + 32;
+      final int BTREE_DATA_START = DATA_START + 36;
       btree.persistVars(new IntToIntBtree.BtreeDataStorage() {
         @Override
         public int persistInt(int offset, int value, boolean toDisk) {
@@ -268,7 +270,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private final int[] myResultBuf = new int[1];
 
-  private int myExistingKeysEnumerated;
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       lockStorage();
@@ -329,13 +330,13 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
 
       int newValueId = writeData(value, valueHC);
-      ++valuesCount;
+      ++myValuesCount;
 
-      if (IOStatistics.DEBUG && (valuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
+      if (IOStatistics.DEBUG && (myValuesCount & IOStatistics.KEYS_FACTOR_MASK) == 0) {
         IOStatistics.dump("Index " +
                           myFile +
                           ", values " +
-                          valuesCount +
+                          myValuesCount +
                           ", existing keys enumerated:"+ myExistingKeysEnumerated +
                           ", storage size:" +
                           myStorage.length());
@@ -357,10 +358,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
             myStorage.putInt(duplicatedValueOff, indexNodeValueAddress); // we will set collision offset in next if
             collisionAddress = duplicatedValueOff;
-            ++collisions;
+            ++myCollisions;
           }
 
-          ++collisions;
+          ++myCollisions;
           int duplicatedValueOff = nextDuplicatedValueRecord();
           myStorage.putInt(collisionAddress + COLLISION_OFFSET, duplicatedValueOff);
           myStorage.putInt(duplicatedValueOff, newValueId);
