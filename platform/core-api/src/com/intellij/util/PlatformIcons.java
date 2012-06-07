@@ -63,7 +63,6 @@ public interface PlatformIcons {
   Icon PROPERTY_ICON = AllIcons.Nodes.Property;
   Icon NEW_PARAMETER = AllIcons.Nodes.NewParameter;
   Icon ASPECT_ICON = AllIcons.Nodes.Aspect;
-  Icon POINTCUT_ICON = AllIcons.Nodes.Pointcut;
   Icon ADVICE_ICON = AllIcons.Nodes.Advice;
   Icon ERROR_INTRODUCTION_ICON = AllIcons.Nodes.ErrorIntroduction;
   Icon WARNING_INTRODUCTION_ICON = AllIcons.Nodes.WarningIntroduction;
@@ -116,6 +115,4 @@ public interface PlatformIcons {
   
   Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
-
-  Icon SEPARATOR_HORIZONTAL_ICON = AllIcons.General.SeparatorH;
 }

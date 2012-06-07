@@ -27,7 +27,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +71,7 @@ public class QuickListPanel {
           public void run(AnActionButton button) {
             includeSelectedAction();
           }
-        }).addExtraAction(new AnActionButton("Add Separator", PlatformIcons.SEPARATOR_HORIZONTAL_ICON) {
+        }).addExtraAction(new AnActionButton("Add Separator", AllIcons.General.SeparatorH) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           addSeparator();
