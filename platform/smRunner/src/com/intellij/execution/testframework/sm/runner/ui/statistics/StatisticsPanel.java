@@ -49,7 +49,6 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public class StatisticsPanel implements DataProvider {
-  public static final Icon STATISTICS_TAB_ICON = TestsUIUtil.loadIcon("testStatistics");
   public static final DataKey<StatisticsPanel> SM_TEST_RUNNER_STATISTICS  = DataKey.create("SM_TEST_RUNNER_STATISTICS");
 
   private TableView<SMTestProxy> myStatisticsTableView;

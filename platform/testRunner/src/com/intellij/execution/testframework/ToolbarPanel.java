@@ -59,13 +59,13 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.run.hide.passed.action.name"),
                                                     ExecutionBundle.message("junit.run.hide.passed.action.description"),
-                                                    TestsUIUtil.loadIcon("hidePassed"),
+                                                    AllIcons.RunConfigurations.HidePassed,
                                                     properties, TestConsoleProperties.HIDE_PASSED_TESTS));
     actionGroup.addSeparator();
 
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.track.test.action.name"),
                                                     ExecutionBundle.message("junit.runing.info.track.test.action.description"),
-                                                    TestsUIUtil.loadIcon("trackTests"),
+                                                    AllIcons.RunConfigurations.TrackTests,
                                                     properties, TestConsoleProperties.TRACK_RUNNING_TEST)).setAsSecondary(true);
 
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
@@ -90,7 +90,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
 
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.select.first.failed.action.name"),
                                                     null,
-                                                    TestsUIUtil.loadIcon("selectFirstDefect"),
+                                                    AllIcons.RunConfigurations.SelectFirstDefect,
                                                     properties, TestConsoleProperties.SELECT_FIRST_DEFECT)).setAsSecondary(true);
     actionGroup.addAction(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
                                                     ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.description"),

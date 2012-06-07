@@ -256,7 +256,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
   }
 
   @Override
-  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
+  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement file = queryParameters.getElementToSearch();
     if (file instanceof PsiBinaryFile) {
       final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
@@ -278,26 +278,30 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         model.setWholeWordsOnly(true);
         final List<UsageInfo> usages = FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false);
         if (!usages.isEmpty()) {
-          for (UsageInfo usage : usages) {
-            final PsiElement element = usage.getElement();
+          for (final UsageInfo usage : usages) {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                final PsiElement element = usage.getElement();
 
-            final ProperTextRange textRange = usage.getRangeInElement();
-            if (element != null && textRange != null) {
-              final PsiElement start = element.findElementAt(textRange.getStartOffset());
-              final PsiElement end = element.findElementAt(textRange.getEndOffset());
-              if (start != null && end != null) {
-                PsiElement value = PsiTreeUtil.findCommonParent(start, end);
-                if (value instanceof PsiJavaToken) {
-                  value = value.getParent();
-                }
-                if (value != null) {
-                  final FileReference reference = FileReferenceUtil.findFileReference(value);
-                  if (reference != null) {
-                    consumer.process(reference);
+                final ProperTextRange textRange = usage.getRangeInElement();
+                if (element != null && textRange != null) {
+                  final PsiElement start = element.findElementAt(textRange.getStartOffset());
+                  final PsiElement end = element.findElementAt(textRange.getEndOffset());
+                  if (start != null && end != null) {
+                    PsiElement value = PsiTreeUtil.findCommonParent(start, end);
+                    if (value instanceof PsiJavaToken) {
+                      value = value.getParent();
+                    }
+                    if (value != null) {
+                      final FileReference reference = FileReferenceUtil.findFileReference(value);
+                      if (reference != null) {
+                        consumer.process(reference);
+                      }
+                    }
                   }
                 }
               }
-            }
+            });
           }
         }
       }

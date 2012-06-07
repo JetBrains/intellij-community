@@ -16,7 +16,7 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.TestsUIUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
@@ -29,7 +29,7 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
   private static final int MOVIE_TIME = 800;
   private static final int FRAME_TIME = MOVIE_TIME / FRAMES_COUNT;
 
-  public static final Icon PAUSED_ICON = TestsUIUtil.loadIcon("testPaused");
+  public static final Icon PAUSED_ICON = AllIcons.RunConfigurations.TestPaused;
   public static final Icon[] FRAMES = new Icon[FRAMES_COUNT];
 
   private long myLastInvocationTime = -1;
@@ -43,8 +43,14 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
   }
 
   static {
-    for (int i = 0; i < FRAMES_COUNT; i++)
-      FRAMES[i] = TestsUIUtil.loadIcon("testInProgress" + (i + 1));
+    FRAMES[0] = AllIcons.RunConfigurations.TestInProgress1;
+    FRAMES[1] = AllIcons.RunConfigurations.TestInProgress2;
+    FRAMES[2] = AllIcons.RunConfigurations.TestInProgress3;
+    FRAMES[3] = AllIcons.RunConfigurations.TestInProgress4;
+    FRAMES[4] = AllIcons.RunConfigurations.TestInProgress5;
+    FRAMES[5] = AllIcons.RunConfigurations.TestInProgress6;
+    FRAMES[6] = AllIcons.RunConfigurations.TestInProgress7;
+    FRAMES[7] = AllIcons.RunConfigurations.TestInProgress8;
   }
 
   public static int getCurrentFrameIndex() {
