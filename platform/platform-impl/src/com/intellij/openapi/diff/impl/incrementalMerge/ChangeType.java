@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
-import com.intellij.openapi.diff.impl.highlighting.LineRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.*;
@@ -104,7 +103,6 @@ public class ChangeType {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
       highlighter.setLineSeparatorColor(separatorColor);
       highlighter.setLineSeparatorRenderer(separatorRenderer);
-      highlighter.setLineMarkerRenderer(LineRenderer.top());
     }
 
     if (text.charAt(length - 1) == '\n') {
@@ -116,7 +114,6 @@ public class ChangeType {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
       highlighter.setLineSeparatorColor(separatorColor);
       highlighter.setLineSeparatorRenderer(separatorRenderer);
-      highlighter.setLineMarkerRenderer(LineRenderer.bottom());
     }
     return highlighter;
   }
