@@ -68,6 +68,9 @@ class AndroidSdkConfigurableForm {
         if (value instanceof IAndroidTarget) {
           setText(AndroidSdkUtils.getTargetPresentableName((IAndroidTarget)value));
         }
+        else if (value == null) {
+          setText("<html><font color='red'>[none]</font></html>");
+        }
       }
     });
 
@@ -142,10 +145,11 @@ class AndroidSdkConfigurableForm {
         IAndroidTarget target = (IAndroidTarget)myBuildTargetsModel.getElementAt(i);
         if (buildTarget.hashString().equals(target.hashString())) {
           myBuildTargetComboBox.setSelectedIndex(i);
-          break;
+          return;
         }
       }
     }
+    myBuildTargetComboBox.setSelectedItem(null);
   }
 
   private void updateJdks() {
