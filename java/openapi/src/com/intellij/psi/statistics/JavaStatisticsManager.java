@@ -95,7 +95,7 @@ public abstract class JavaStatisticsManager {
   }
 
   @NonNls @NotNull
-  public static String getMemberUseKey1(PsiType qualifierType) {
+  public static String getMemberUseKey1(@Nullable PsiType qualifierType) {
     qualifierType = TypeConversionUtil.erasure(qualifierType);
     return "member#" + (qualifierType == null ? "" : qualifierType.getCanonicalText());
   }
@@ -140,7 +140,7 @@ public abstract class JavaStatisticsManager {
     return ArrayUtil.toStringArray(list);
   }
 
-  public static String getAfterNewKey(PsiType expectedType) {
+  public static String getAfterNewKey(@Nullable PsiType expectedType) {
     return getMemberUseKey1(expectedType) + "###smartAfterNew";
   }
 
