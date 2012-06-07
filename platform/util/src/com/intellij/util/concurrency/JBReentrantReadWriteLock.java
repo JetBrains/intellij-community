@@ -19,6 +19,9 @@
  */
 package com.intellij.util.concurrency;
 
+/**
+ * @see LockFactory
+ */
 public interface JBReentrantReadWriteLock {
   JBLock readLock();
   JBLock writeLock();
