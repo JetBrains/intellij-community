@@ -11,16 +11,6 @@ public class AllIcons {
     public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.png"); 
     public static final Icon Apache = IconLoader.getIcon("/actions/apache.png"); 
     public static final Icon Back = IconLoader.getIcon("/actions/back.png"); 
-    public static final Icon Bookmark0 = IconLoader.getIcon("/actions/bookmark0.png"); 
-    public static final Icon Bookmark1 = IconLoader.getIcon("/actions/bookmark1.png"); 
-    public static final Icon Bookmark2 = IconLoader.getIcon("/actions/bookmark2.png"); 
-    public static final Icon Bookmark3 = IconLoader.getIcon("/actions/bookmark3.png"); 
-    public static final Icon Bookmark4 = IconLoader.getIcon("/actions/bookmark4.png"); 
-    public static final Icon Bookmark5 = IconLoader.getIcon("/actions/bookmark5.png"); 
-    public static final Icon Bookmark6 = IconLoader.getIcon("/actions/bookmark6.png"); 
-    public static final Icon Bookmark7 = IconLoader.getIcon("/actions/bookmark7.png"); 
-    public static final Icon Bookmark8 = IconLoader.getIcon("/actions/bookmark8.png"); 
-    public static final Icon Bookmark9 = IconLoader.getIcon("/actions/bookmark9.png"); 
     public static final Icon Breakpoint = IconLoader.getIcon("/actions/breakpoint.png"); 
     public static final Icon Browser_externalJavaDoc = IconLoader.getIcon("/actions/browser-externalJavaDoc.png"); 
     public static final Icon Cancel = IconLoader.getIcon("/actions/cancel.png"); 
@@ -50,7 +40,6 @@ public class AllIcons {
     public static final Icon Delete = IconLoader.getIcon("/actions/delete.png"); 
     public static final Icon Diff = IconLoader.getIcon("/actions/diff.png"); 
     public static final Icon DiffWithCurrent = IconLoader.getIcon("/actions/diffWithCurrent.png"); 
-    public static final Icon DownBig = IconLoader.getIcon("/actions/downBig.png"); 
     public static final Icon Dump = IconLoader.getIcon("/actions/dump.png"); 
     public static final Icon Eclipse = IconLoader.getIcon("/actions/eclipse.png"); 
     public static final Icon Edit = IconLoader.getIcon("/actions/edit.png"); 
@@ -166,7 +155,6 @@ public class AllIcons {
     public static final Icon Uninstall = IconLoader.getIcon("/actions/uninstall.png"); 
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.png"); 
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); 
-    public static final Icon UpBig = IconLoader.getIcon("/actions/upBig.png"); 
 
   }
   
@@ -395,8 +383,6 @@ public class AllIcons {
     public static final Icon Debug = IconLoader.getIcon("/general/debug.png"); 
     public static final Icon DefaultKeymap = IconLoader.getIcon("/general/defaultKeymap.png"); 
     public static final Icon Divider = IconLoader.getIcon("/general/divider.png"); 
-    public static final Icon Docked = IconLoader.getIcon("/general/docked.png"); 
-    public static final Icon DockedInactive = IconLoader.getIcon("/general/dockedInactive.png"); 
     public static final Icon Documentation = IconLoader.getIcon("/general/documentation.png"); 
     public static final Icon Dropdown = IconLoader.getIcon("/general/dropdown.png"); 
     public static final Icon EditColors = IconLoader.getIcon("/general/editColors.png"); 
@@ -412,7 +398,6 @@ public class AllIcons {
     public static final Icon ExpandAllHover = IconLoader.getIcon("/general/expandAllHover.png"); 
     public static final Icon ExternalTools = IconLoader.getIcon("/general/externalTools.png"); 
     public static final Icon ExtTools = IconLoader.getIcon("/general/extTools.png"); 
-    public static final Icon FileTemplates = IconLoader.getIcon("/general/fileTemplates.png"); 
     public static final Icon Fix = IconLoader.getIcon("/general/fix.png"); 
     public static final Icon FixInactive = IconLoader.getIcon("/general/fixInactive.png"); 
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); 
@@ -433,24 +418,12 @@ public class AllIcons {
     public static final Icon HideRightHover = IconLoader.getIcon("/general/hideRightHover.png"); 
     public static final Icon HideRightPart = IconLoader.getIcon("/general/hideRightPart.png"); 
     public static final Icon HideRightPartHover = IconLoader.getIcon("/general/hideRightPartHover.png"); 
-    public static final Icon HideSideDown = IconLoader.getIcon("/general/hideSideDown.png"); 
-    public static final Icon HideSideDownInactive = IconLoader.getIcon("/general/hideSideDownInactive.png"); 
-    public static final Icon HideSideLeft = IconLoader.getIcon("/general/hideSideLeft.png"); 
-    public static final Icon HideSideLeftInactive = IconLoader.getIcon("/general/hideSideLeftInactive.png"); 
-    public static final Icon HideSideRight = IconLoader.getIcon("/general/hideSideRight.png"); 
-    public static final Icon HideSideRightInactive = IconLoader.getIcon("/general/hideSideRightInactive.png"); 
-    public static final Icon HideSideUp = IconLoader.getIcon("/general/hideSideUp.png"); 
-    public static final Icon HideSideUpInactive = IconLoader.getIcon("/general/hideSideUpInactive.png"); 
     public static final Icon HideToolWindow = IconLoader.getIcon("/general/hideToolWindow.png"); 
     public static final Icon HideToolWindowInactive = IconLoader.getIcon("/general/hideToolWindowInactive.png"); 
-    public static final Icon HideUp = IconLoader.getIcon("/general/hideUp.png"); 
-    public static final Icon IdeFatalError = IconLoader.getIcon("/general/ideFatalError.png"); 
     public static final Icon IdeOptions = IconLoader.getIcon("/general/ideOptions.png"); 
     public static final Icon IjLogo = IconLoader.getIcon("/general/ijLogo.png"); 
     public static final Icon ImplementedMethod = IconLoader.getIcon("/general/implementedMethod.png"); 
     public static final Icon ImplementingMethod = IconLoader.getIcon("/general/implementingMethod.png"); 
-    public static final Icon ImportProjects = IconLoader.getIcon("/general/importProjects.png"); 
-    public static final Icon InactiveSeparator = IconLoader.getIcon("/general/inactiveSeparator.png"); 
     public static final Icon InformationDialog = IconLoader.getIcon("/general/informationDialog.png"); 
     public static final Icon InheritedMethod = IconLoader.getIcon("/general/inheritedMethod.png"); 
     public static final Icon InspectionInProgress = IconLoader.getIcon("/general/inspectionInProgress.png"); 
@@ -459,7 +432,6 @@ public class AllIcons {
     public static final Icon JetbrainsTvIdea = IconLoader.getIcon("/general/jetbrainsTvIdea.png"); 
     public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); 
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); 
-    public static final Icon LiveTemplates = IconLoader.getIcon("/general/liveTemplates.png"); 
     public static final Icon Locate = IconLoader.getIcon("/general/locate.png"); 
     public static final Icon LocateHover = IconLoader.getIcon("/general/locateHover.png"); 
     public static final Icon MacCorner = IconLoader.getIcon("/general/macCorner.png"); 
@@ -571,16 +543,6 @@ public class AllIcons {
   }
   
   public static class Gutter {
-    public static final Icon Bookmark0 = IconLoader.getIcon("/gutter/bookmark0.png"); 
-    public static final Icon Bookmark1 = IconLoader.getIcon("/gutter/bookmark1.png"); 
-    public static final Icon Bookmark2 = IconLoader.getIcon("/gutter/bookmark2.png"); 
-    public static final Icon Bookmark3 = IconLoader.getIcon("/gutter/bookmark3.png"); 
-    public static final Icon Bookmark4 = IconLoader.getIcon("/gutter/bookmark4.png"); 
-    public static final Icon Bookmark5 = IconLoader.getIcon("/gutter/bookmark5.png"); 
-    public static final Icon Bookmark6 = IconLoader.getIcon("/gutter/bookmark6.png"); 
-    public static final Icon Bookmark7 = IconLoader.getIcon("/gutter/bookmark7.png"); 
-    public static final Icon Bookmark8 = IconLoader.getIcon("/gutter/bookmark8.png"); 
-    public static final Icon Bookmark9 = IconLoader.getIcon("/gutter/bookmark9.png"); 
     public static final Icon Colors = IconLoader.getIcon("/gutter/colors.png"); 
     public static final Icon ImplementedMethod = IconLoader.getIcon("/gutter/implementedMethod.png"); 
     public static final Icon ImplementingMethod = IconLoader.getIcon("/gutter/implementingMethod.png"); 
@@ -604,6 +566,11 @@ public class AllIcons {
 
   }
   public static final Icon Icon = IconLoader.getIcon("/icon.png"); 
+  public static final Icon Icon_CE = IconLoader.getIcon("/icon_CE.png"); 
+  public static final Icon Icon_CEsmall = IconLoader.getIcon("/icon_CEsmall.png"); 
+  public static final Icon Icon_CEwhite = IconLoader.getIcon("/icon_CEwhite.png"); 
+  public static final Icon Icon_small = IconLoader.getIcon("/icon_small.png"); 
+  public static final Icon Icon_white = IconLoader.getIcon("/icon_white.png"); 
   
   public static class Icons {
     
@@ -627,11 +594,6 @@ public class AllIcons {
     }
 
   }
-  public static final Icon Icon_CE = IconLoader.getIcon("/icon_CE.png"); 
-  public static final Icon Icon_CEsmall = IconLoader.getIcon("/icon_CEsmall.png"); 
-  public static final Icon Icon_CEwhite = IconLoader.getIcon("/icon_CEwhite.png"); 
-  public static final Icon Icon_small = IconLoader.getIcon("/icon_small.png"); 
-  public static final Icon Icon_white = IconLoader.getIcon("/icon_white.png"); 
   
   public static class Ide {
     public static final Icon DefaultProfile = IconLoader.getIcon("/ide/defaultProfile.png"); 
@@ -646,9 +608,9 @@ public class AllIcons {
 
     }
     public static final Icon EmptyFatalError = IconLoader.getIcon("/ide/emptyFatalError.png"); 
+    public static final Icon Error_notifications = IconLoader.getIcon("/ide/error_notifications.png"); 
     public static final Icon ErrorPoint = IconLoader.getIcon("/ide/errorPoint.png"); 
     public static final Icon ErrorSign = IconLoader.getIcon("/ide/errorSign.png"); 
-    public static final Icon Error_notifications = IconLoader.getIcon("/ide/error_notifications.png"); 
     public static final Icon FacetDetected = IconLoader.getIcon("/ide/facetDetected.png"); 
     public static final Icon FatalError_read = IconLoader.getIcon("/ide/fatalError-read.png"); 
     public static final Icon FatalError = IconLoader.getIcon("/ide/fatalError.png"); 
@@ -762,13 +724,13 @@ public class AllIcons {
     public static final Icon TypeNumeric = IconLoader.getIcon("/javaee/typeNumeric.png"); 
     public static final Icon TypeString = IconLoader.getIcon("/javaee/typeString.png"); 
     public static final Icon UpdateRunningApplication = IconLoader.getIcon("/javaee/updateRunningApplication.png"); 
+    public static final Icon Web_xml = IconLoader.getIcon("/javaee/web_xml.png"); 
     public static final Icon WebModule = IconLoader.getIcon("/javaee/webModule.png"); 
     public static final Icon WebModuleBig = IconLoader.getIcon("/javaee/webModuleBig.png"); 
     public static final Icon WebModuleGroup = IconLoader.getIcon("/javaee/webModuleGroup.png"); 
     public static final Icon WebService = IconLoader.getIcon("/javaee/WebService.png"); 
     public static final Icon WebServiceClient = IconLoader.getIcon("/javaee/WebServiceClient.png"); 
     public static final Icon WebToolWindow = IconLoader.getIcon("/javaee/webToolWindow.png"); 
-    public static final Icon Web_xml = IconLoader.getIcon("/javaee/web_xml.png"); 
 
   }
   
@@ -801,38 +763,17 @@ public class AllIcons {
     public static final Icon ExcludeFolder = IconLoader.getIcon("/modules/excludeFolder.png"); 
     public static final Icon ExcludeRootClosed = IconLoader.getIcon("/modules/excludeRootClosed.png"); 
     public static final Icon ExcludeRootOpened = IconLoader.getIcon("/modules/excludeRootOpened.png"); 
-    public static final Icon GlobalLibraries = IconLoader.getIcon("/modules/globalLibraries.png"); 
-    public static final Icon HeaderCenter = IconLoader.getIcon("/modules/headerCenter.png"); 
-    public static final Icon HeaderCenterSelected = IconLoader.getIcon("/modules/headerCenterSelected.png"); 
-    public static final Icon HeaderLeftCorner = IconLoader.getIcon("/modules/headerLeftCorner.png"); 
-    public static final Icon HeaderLeftCornerSelected = IconLoader.getIcon("/modules/headerLeftCornerSelected.png"); 
-    public static final Icon HeaderRightCorner = IconLoader.getIcon("/modules/headerRightCorner.png"); 
-    public static final Icon HeaderRightCornerSelected = IconLoader.getIcon("/modules/headerRightCornerSelected.png"); 
     public static final Icon Javadoc = IconLoader.getIcon("/modules/javadoc.png"); 
     public static final Icon JavaModule = IconLoader.getIcon("/modules/javaModule.png"); 
-    public static final Icon Jbuilder = IconLoader.getIcon("/modules/jbuilder.png"); 
-    public static final Icon Jdks = IconLoader.getIcon("/modules/jdks.png"); 
-    public static final Icon LeftTopCornerGeneralTitleBar = IconLoader.getIcon("/modules/LeftTopCornerGeneralTitleBar.png"); 
     public static final Icon Libraries = IconLoader.getIcon("/modules/libraries.png"); 
     public static final Icon Library = IconLoader.getIcon("/modules/library.png"); 
-    public static final Icon LibraryItemAttachmentCenter = IconLoader.getIcon("/modules/libraryItemAttachmentCenter.png"); 
-    public static final Icon LibraryLeftSide = IconLoader.getIcon("/modules/libraryLeftSide.png"); 
-    public static final Icon LibraryRightSide = IconLoader.getIcon("/modules/libraryRightSide.png"); 
-    public static final Icon MarkSource = IconLoader.getIcon("/modules/markSource.png"); 
-    public static final Icon MarkTests = IconLoader.getIcon("/modules/markTests.png"); 
-    public static final Icon MarkWebroot = IconLoader.getIcon("/modules/markWebroot.png"); 
     public static final Icon Merge = IconLoader.getIcon("/modules/merge.png"); 
-    public static final Icon ModuleLibraries = IconLoader.getIcon("/modules/moduleLibraries.png"); 
-    public static final Icon Modules = IconLoader.getIcon("/modules/modules.png"); 
     public static final Icon ModulesNode = IconLoader.getIcon("/modules/modulesNode.png"); 
     public static final Icon Order = IconLoader.getIcon("/modules/order.png"); 
     public static final Icon Output = IconLoader.getIcon("/modules/output.png"); 
     public static final Icon Paths = IconLoader.getIcon("/modules/paths.png"); 
     public static final Icon PluginModule = IconLoader.getIcon("/modules/pluginModule.png"); 
-    public static final Icon ProjectLibraries = IconLoader.getIcon("/modules/projectLibraries.png"); 
     public static final Icon Remove = IconLoader.getIcon("/modules/remove.png"); 
-    public static final Icon RemoveModule = IconLoader.getIcon("/modules/removeModule.png"); 
-    public static final Icon RightTopCornerGeneralTitleBar = IconLoader.getIcon("/modules/RightTopCornerGeneralTitleBar.png"); 
     public static final Icon SetPackagePrefix = IconLoader.getIcon("/modules/setPackagePrefix.png"); 
     public static final Icon SetPackagePrefixRollover = IconLoader.getIcon("/modules/setPackagePrefixRollover.png"); 
     public static final Icon SourceClosed = IconLoader.getIcon("/modules/sourceClosed.png"); 
@@ -864,6 +805,10 @@ public class AllIcons {
     public static final Icon Artifact = IconLoader.getIcon("/nodes/artifact.png"); 
     public static final Icon Aspect = IconLoader.getIcon("/nodes/aspect.png"); 
     public static final Icon BeaSmall = IconLoader.getIcon("/nodes/beaSmall.png"); 
+    public static final Icon C_plocal = IconLoader.getIcon("/nodes/c_plocal.png"); 
+    public static final Icon C_private = IconLoader.getIcon("/nodes/c_private.png"); 
+    public static final Icon C_protected = IconLoader.getIcon("/nodes/c_protected.png"); 
+    public static final Icon C_public = IconLoader.getIcon("/nodes/c_public.png"); 
     public static final Icon Class = IconLoader.getIcon("/nodes/class.png"); 
     public static final Icon ClassInitializer = IconLoader.getIcon("/nodes/classInitializer.png"); 
     public static final Icon CollapseNode = IconLoader.getIcon("/nodes/collapseNode.png"); 
@@ -871,10 +816,6 @@ public class AllIcons {
     public static final Icon CopyOfFolder = IconLoader.getIcon("/nodes/copyOfFolder.png"); 
     public static final Icon Cvs_global = IconLoader.getIcon("/nodes/cvs_global.png"); 
     public static final Icon Cvs_roots = IconLoader.getIcon("/nodes/cvs_roots.png"); 
-    public static final Icon C_plocal = IconLoader.getIcon("/nodes/c_plocal.png"); 
-    public static final Icon C_private = IconLoader.getIcon("/nodes/c_private.png"); 
-    public static final Icon C_protected = IconLoader.getIcon("/nodes/c_protected.png"); 
-    public static final Icon C_public = IconLoader.getIcon("/nodes/c_public.png"); 
     public static final Icon DataColumn = IconLoader.getIcon("/nodes/dataColumn.png"); 
     public static final Icon DataConnection = IconLoader.getIcon("/nodes/dataConnection.png"); 
     public static final Icon DataFkColumn = IconLoader.getIcon("/nodes/dataFkColumn.png"); 
@@ -1137,8 +1078,8 @@ public class AllIcons {
     public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.png"); 
     public static final Icon RerunFailedTests = IconLoader.getIcon("/runConfigurations/rerunFailedTests.png"); 
     public static final Icon SaveTempConfig = IconLoader.getIcon("/runConfigurations/saveTempConfig.png"); 
-    public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); 
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.png"); 
+    public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); 
     public static final Icon SelectFirstDefect = IconLoader.getIcon("/runConfigurations/selectFirstDefect.png"); 
     public static final Icon SourceAtException = IconLoader.getIcon("/runConfigurations/sourceAtException.png"); 
     public static final Icon TestError = IconLoader.getIcon("/runConfigurations/testError.png"); 
