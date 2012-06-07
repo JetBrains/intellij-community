@@ -217,6 +217,48 @@ class Test {
     assert closureStartFold
   }
 
+  public void "test closure folding placeholder texts"() {
+    myFixture.addClass('interface Runnable2 { void run(); }')
+    myFixture.addClass('interface Runnable3 { void run(); }')
+    myFixture.addClass('interface Runnable4 { void run(); }')
+    def text = """\
+class Test {
+  void test() {
+    Runnable r = new Runnable() {
+      public void run() {
+        System.out.println();
+      }
+    };
+    new Runnable2() {
+      public void run() {
+        System.out.println();
+      }
+    }.run();
+    foo(new Runnable3() {
+      public void run() {
+        System.out.println();
+      }
+    });
+    bar(new Runnable4() {
+      public void run() {
+        System.out.println();
+      }
+    });
+  }
+
+  void foo(Object o) {}
+  void bar(Runnable4 o) {}
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable(")).placeholderText == '() -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2(")).placeholderText == '(Runnable2) () -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable3(")).placeholderText == '(Runnable3) () -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable4(")).placeholderText == '() -> { '
+  }
+
   public void "test no closure folding when the method throws an unresolved exception"() {
     def text = """\
 class Test {
