@@ -65,9 +65,12 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
     return (XmlStructureViewBuilderProvider[])Extensions.getExtensions(XmlStructureViewBuilderProvider.EXTENSION_POINT_NAME);
   }
 
+  @Nullable
   private static StructureViewBuilder getStructureViewBuilderForExtensions(final PsiFile psiFile) {
     for (Language language : XMLLanguage.INSTANCE.getLanguageExtensionsForFile(psiFile)) {
-      final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.forLanguage(language).getStructureViewBuilder(psiFile);
+      PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
+      if (factory == null) continue;
+      final StructureViewBuilder builder = factory.getStructureViewBuilder(psiFile);
       if (builder != null) {
         return builder;
       }
