@@ -40,6 +40,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * The panel from the Settings, that allows to see changes to diff/merge coloring scheme right away.
+ */
 public class DiffPreviewPanel implements PreviewPanel {
   private final MergePanel2.AsComponent myMergePanelComponent;
   private final JPanel myPanel = new JPanel(new BorderLayout());
