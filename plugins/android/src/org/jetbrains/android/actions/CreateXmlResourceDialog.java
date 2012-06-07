@@ -18,7 +18,6 @@ package org.jetbrains.android.actions;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -68,6 +67,9 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   private JTextField myFileNameField;
   private JPanel myDirectoriesPanel;
   private JBLabel myDirectoriesLabel;
+  private JTextField myValueField;
+  private JBLabel myValueLabel;
+  private JBLabel myNameLabel;
 
   private final Module myModule;
   private final ResourceType myResourceType;
@@ -78,11 +80,24 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   private final CheckBoxList myDirectoriesList;
   private VirtualFile myResourceDir;
 
-  public CreateXmlResourceDialog(@NotNull Module module, @NotNull ResourceType resourceType) {
+  public CreateXmlResourceDialog(@NotNull Module module,
+                                 @NotNull ResourceType resourceType,
+                                 @Nullable String predefinedName,
+                                 @Nullable String predefinedValue) {
     super(module.getProject());
-
     myResourceType = resourceType;
 
+    if (predefinedName != null && predefinedName.length() > 0) {
+      myNameLabel.setVisible(false);
+      myNameField.setVisible(false);
+      myNameField.setText(predefinedName);
+    }
+
+    if (predefinedValue != null && predefinedValue.length() > 0) {
+      myValueLabel.setVisible(false);
+      myValueField.setVisible(false);
+      myValueField.setText(predefinedValue);
+    }
     final Set<Module> modulesSet = new HashSet<Module>();
     modulesSet.add(module);
 
@@ -382,7 +397,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameField;
+    return myNameField.isVisible() ? myNameField : myValueField;
   }
 
   @Override
@@ -409,6 +424,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     }
     else {
       super.doOKAction();
+
     }
   }
 
@@ -432,6 +448,16 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   @NotNull
   public String getFileName() {
     return myFileNameField.getText().trim();
+  }
+
+  @NotNull
+  public String getName() {
+    return myNameField.getText().trim();
+  }
+
+  @NotNull
+  public String getValue() {
+    return myValueField.getText().trim();
   }
 
   @Nullable
