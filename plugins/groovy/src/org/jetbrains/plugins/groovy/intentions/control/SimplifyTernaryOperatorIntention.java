@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.intentions.control;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
@@ -118,6 +119,11 @@ public class SimplifyTernaryOperatorIntention extends Intention {
         }
 
         GrConditionalExpression condExp = (GrConditionalExpression)element;
+        PsiType condType = condExp.getType();
+        if (condType == null || !PsiType.BOOLEAN.isConvertibleFrom(condType)) {
+          return false;
+        }
+
         GrExpression thenBranch = condExp.getThenBranch();
         GrExpression elseBranch = condExp.getElseBranch();
 

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -60,15 +61,21 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     final Pair<PsiClass, Integer> pair = getTypeParameterInfo(context);
     if (pair == null) return;
 
-    ExpectedTypeInfo[] types = JavaSmartCompletionContributor.getExpectedTypes(parameters, false);
-    if (types.length > 0) {
-      for (ExpectedTypeInfo info : types) {
-        PsiType type = info.getType();
-        if (type instanceof PsiClassType) {
-          fillExpectedTypeArgs(resultSet, context, pair.first, pair.second, ((PsiClassType)type).resolveGenerics(), mySmart ? info.getTailType() : TailType.NONE);
+    PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
+    if (expression != null) {
+      ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes(expression, true, false, false);
+      if (types.length > 0) {
+        for (ExpectedTypeInfo info : types) {
+          PsiType type = info.getType();
+          if (type instanceof PsiClassType && !type.equals(expression.getType())) {
+            fillExpectedTypeArgs(resultSet, context, pair.first, pair.second, ((PsiClassType)type).resolveGenerics(), mySmart ? info.getTailType() : TailType.NONE);
+          }
         }
+        return;
       }
-    } else if (mySmart) {
+    }
+
+    if (mySmart) {
       addInheritors(parameters, resultSet, pair.first, pair.second);
     }
   }

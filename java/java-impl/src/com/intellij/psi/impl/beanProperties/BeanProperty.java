@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-@Presentation(icon = "/nodes/property.png")
+@Presentation(icon = "AllIcons.Nodes.Property")
 public class BeanProperty {
 
   public static final Icon ICON = AllIcons.Nodes.Property;
