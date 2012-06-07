@@ -2,6 +2,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
@@ -79,7 +80,18 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public FileType read(DataInput in) throws IOException {
-    return myFileTypeManager.getStdFileType(myEnumeratorStringDescriptor.read(in));
+    String read = myEnumeratorStringDescriptor.read(in);
+    FileType type = myFileTypeManager.getStdFileType(read);
+    // TODO: Abstract file types are not std one, so need to be restored specially,
+    // currently there are 6 of them and restoration does not happen very often so just iteration is enough
+    if (type == PlainTextFileType.INSTANCE && !read.equals(type.getName())) {
+      for(FileType fileType:myFileTypeManager.getRegisteredFileTypes()) {
+        if (read.equals(fileType.getName())) {
+          return fileType;
+        }
+      }
+    }
+    return type;
   }
 
   @Override
