@@ -1273,10 +1273,15 @@ public class AllIcons {
 
     }
     public static final Icon Css_class = IconLoader.getIcon("/xml/css_class.png"); 
-    public static final Icon Html_id = IconLoader.getIcon("/xml/html_id.png"); 
+    public static final Icon Html_id = IconLoader.getIcon("/xml/html_id.png");
     public static final Icon Toggle_addressbar = IconLoader.getIcon("/xml/toggle_addressbar.png"); 
     public static final Icon Web_preview = IconLoader.getIcon("/xml/web_preview.png"); 
     public static final Icon Web_preview2 = IconLoader.getIcon("/xml/web_preview2.png"); 
 
+  }
+
+  public static class Css {
+    public static final Icon Css_property = IconLoader.getIcon("/css/property.png");
+    public static final Icon Css_pseudo_element = IconLoader.getIcon("/css/pseudo-element.png");
   }
 }
