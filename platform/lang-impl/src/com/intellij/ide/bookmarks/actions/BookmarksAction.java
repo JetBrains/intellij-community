@@ -23,7 +23,8 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.util.DetailViewImpl;
+import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +122,15 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   @Override
   public Object[] getSelectedItemsInTree() {
     return new Object[0];  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void itemChosen(ItemWrapper item, Project project, JBPopup popup) {
+    if (item instanceof BookmarkItem) {
+      Bookmark bookmark = ((BookmarkItem)item).getBookmark();
+      popup.cancel();
+      bookmark.navigate();
+    }
   }
 
   private static DefaultListModel buildModel(Project project) {

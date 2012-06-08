@@ -57,11 +57,6 @@ public class SplitterItem implements ItemWrapper {
   }
 
   @Override
-  public void execute(Project project, JBPopup popup) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
   public String speedSearchText() {
     return "";  //To change body of implemented methods use File | Settings | File Templates.
   }

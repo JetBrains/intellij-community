@@ -23,6 +23,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -37,15 +38,27 @@ class JavaBreakpointItem extends BreakpointItem {
   private final Breakpoint myBreakpoint;
   private BreakpointFactory myBreakpointFactory;
 
-  public JavaBreakpointItem(BreakpointFactory breakpointFactory, Breakpoint breakpoint) {
+  public JavaBreakpointItem(@Nullable BreakpointFactory breakpointFactory, Breakpoint breakpoint) {
     myBreakpointFactory = breakpointFactory;
     myBreakpoint = breakpoint;
   }
 
   @Override
-  protected void setupGenericRenderer(SimpleColoredComponent renderer) {
-    //renderer.setIcon(myBreakpoint.getIcon());
+  protected void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
+    if (plainView) {
+      renderer.setIcon(myBreakpoint.getIcon());
+    }
     renderer.append(myBreakpoint.getShortName(), isEnabled() ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+  }
+
+  @Override
+  public Icon getIcon() {
+    return myBreakpoint.getIcon();
+  }
+
+  @Override
+  public String getDisplayText() {
+    return myBreakpoint.getDisplayName();
   }
 
   @Override
@@ -59,11 +72,12 @@ class JavaBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  public void updateDetailView(DetailView panel) {
-    BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory
-      .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false);
+  protected void doUpdateDetailView(DetailView panel) {
+    BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
+      .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false) : null;
     if (breakpointPropertiesPanel != null) {
       breakpointPropertiesPanel.setSaveOnRemove(true);
+      breakpointPropertiesPanel.setDetailView(panel);
     }
 
     if (breakpointPropertiesPanel != null) {
@@ -86,7 +100,7 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   public boolean allowedToRemove() {
-    return myBreakpointFactory.breakpointCanBeRemoved(myBreakpoint);
+    return myBreakpointFactory != null && myBreakpointFactory.breakpointCanBeRemoved(myBreakpoint);
   }
 
   @Override

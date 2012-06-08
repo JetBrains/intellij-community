@@ -16,14 +16,13 @@
 package com.intellij.xdebugger.breakpoints.ui;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -43,17 +42,25 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class BreakpointItem implements ItemWrapper {
+  protected static final Key<Object> BREAKPOINT_ITEM = Key.create("BreakpointItem");
+
   public abstract Object getBreakpoint();
 
   public abstract boolean isEnabled();
 
   public abstract void setEnabled(boolean state);
 
-  protected void showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
+  protected boolean showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
     TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
-    panel.navigateInPreviewEditor(virtualFile, new LogicalPosition(line, 0), attributes);
+    DetailView.PreviewEditorState state = DetailView.PreviewEditorState.create(virtualFile, line, attributes);
+
+    if (state.equals(panel.getEditorState())) {
+      return false;
+    }
+
+    panel.navigateInPreviewEditor(state);
 
     TextAttributes softerAttributes = attributes.clone();
     softerAttributes.setBackgroundColor(ColorUtil.softer(softerAttributes.getBackgroundColor()));
@@ -72,10 +79,7 @@ public abstract class BreakpointItem implements ItemWrapper {
         }
       }
     }
-  }
-
-  @Override
-  public void execute(Project project, JBPopup popup) {
+    return true;
   }
 
   @Override
@@ -86,14 +90,49 @@ public abstract class BreakpointItem implements ItemWrapper {
 
   @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-    setupGenericRenderer(renderer);
+    setupGenericRenderer(renderer, true);
   }
 
   @Override
   public void setupRenderer(ColoredTreeCellRenderer renderer) {
-    setupGenericRenderer(renderer);
+    boolean plainView = renderer.getTree().getClientProperty("plainView") != null;
+    setupGenericRenderer(renderer, plainView);
   }
 
-  protected abstract void setupGenericRenderer(SimpleColoredComponent renderer);
+  @Override
+  public void updateDetailView(DetailView panel) {
 
+    if (panel.getUserData(BREAKPOINT_ITEM) == getBreakpoint()) {
+      return;
+    }
+
+    doUpdateDetailView(panel);
+
+    panel.putUserData(BREAKPOINT_ITEM, getBreakpoint());
+  }
+
+  protected abstract void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView);
+
+  public abstract Icon getIcon();
+
+  public abstract String getDisplayText();
+
+  protected abstract void doUpdateDetailView(DetailView panel);
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BreakpointItem item = (BreakpointItem)o;
+
+    if (getBreakpoint() != null ? !getBreakpoint().equals(item.getBreakpoint()) : item.getBreakpoint() != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return getBreakpoint() != null ? getBreakpoint().hashCode() : 0;
+  }
 }
