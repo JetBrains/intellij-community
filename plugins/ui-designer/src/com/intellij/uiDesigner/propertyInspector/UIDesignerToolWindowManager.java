@@ -168,8 +168,10 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   @Nullable
   public UIFormEditor getActiveFormFileEditor() {
     FileEditor[] fileEditors = myFileEditorManager.getSelectedEditors();
-    if (fileEditors.length > 0 && fileEditors [0] instanceof UIFormEditor) {
-      return (UIFormEditor) fileEditors [0];
+    for (FileEditor fileEditor : fileEditors) {
+      if (fileEditor instanceof UIFormEditor) {
+        return (UIFormEditor)fileEditor;
+      }
     }
     return null;
   }

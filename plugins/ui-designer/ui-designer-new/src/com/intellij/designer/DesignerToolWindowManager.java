@@ -165,6 +165,7 @@ public final class DesignerToolWindowManager implements ProjectComponent {
   @Nullable
   public DesignerEditorPanel getActiveDesigner() {
     FileEditor[] editors = myFileEditorManager.getSelectedEditors();
+    // TODO: check all editors instead first
     return editors.length > 0 ? getDesigner(editors[0]) : null;
   }
 
