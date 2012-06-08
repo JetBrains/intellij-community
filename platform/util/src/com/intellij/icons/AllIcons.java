@@ -1,7 +1,8 @@
 package com.intellij.icons;
 
-import javax.swing.*;
 import com.intellij.openapi.util.IconLoader;
+
+import javax.swing.*;
 
 public class AllIcons {
   
@@ -1056,12 +1057,6 @@ public class AllIcons {
   }
   
   public static class Xml {
-    
-    public static class Actions {
-      public static final Icon Add_column_after = IconLoader.getIcon("/xml/actions/add_column_after.png"); // -1x-1
-      public static final Icon Add_column_before = IconLoader.getIcon("/xml/actions/add_column_before.png"); // -1x-1
-
-    }
     
     public static class Browsers {
       public static final Icon Chrome16 = IconLoader.getIcon("/xml/browsers/chrome16.png"); // 16x16
