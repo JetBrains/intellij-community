@@ -15,22 +15,36 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class FileTypeDescriptor extends FileChooserDescriptor {
-  private final ArrayList<String> ext;
+
+  private final ImmutableList<String> myExtensions;
 
   public FileTypeDescriptor(String title, @NotNull String... extensions) {
     super(true, false, false, true, false, false);
     assert extensions.length > 0 : "There should be at least one extension";
-    ext = new ArrayList<String>(Arrays.asList(extensions));
+    myExtensions = ImmutableList.copyOf(Lists.transform(
+      Arrays.asList(extensions),
+      new Function<String, String>() {
+        @Override
+        public String apply(String ext) {
+          if (ext.startsWith(".")) {
+            return ext;
+          }
+          return "." + ext;
+        }
+      }
+    ));
     setTitle(title);
   }
 
@@ -44,8 +58,13 @@ public class FileTypeDescriptor extends FileChooserDescriptor {
       return true;
     }
 
-    final String ex = file.getExtension();
-    return file.isDirectory() || (ex != null && ext.contains(ex.toLowerCase()));
+    String name = file.getName();
+    for (String extension : myExtensions) {
+      if (name.endsWith(extension)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
