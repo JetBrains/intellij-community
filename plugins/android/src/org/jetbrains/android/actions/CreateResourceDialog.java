@@ -18,8 +18,10 @@ package org.jetbrains.android.actions;
 
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.resources.ResourceFolderType;
+import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -27,11 +29,15 @@ import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
 import org.jetbrains.android.uipreview.InvalidOptionValueException;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ModuleListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +53,7 @@ import java.util.List;
  * Time: 7:47:01 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class CreateResourceDialog extends DialogWrapper {
+public class CreateResourceDialog extends DialogWrapper {
   private JTextField myFileNameField;
   private TemplateKindCombo myResourceTypeCombo;
   private JPanel myPanel;
@@ -58,6 +64,9 @@ public abstract class CreateResourceDialog extends DialogWrapper {
   private JTextField myDirectoryNameTextField;
   private JPanel myRootElementFieldWrapper;
   private JBLabel myRootElementLabel;
+  private JLabel myFileNameLabel;
+  private JComboBox myModuleCombo;
+  private JBLabel myModuleLabel;
   private TextFieldWithAutoCompletion<String> myRootElementField;
   private InputValidator myValidator;
 
@@ -65,7 +74,12 @@ public abstract class CreateResourceDialog extends DialogWrapper {
   private final DeviceConfiguratorPanel myDeviceConfiguratorPanel;
   private final AndroidFacet myFacet;
 
-  public CreateResourceDialog(@NotNull AndroidFacet facet, Collection<CreateTypedResourceFileAction> actions) {
+  public CreateResourceDialog(@NotNull AndroidFacet facet,
+                              Collection<CreateTypedResourceFileAction> actions,
+                              @Nullable ResourceType predefinedResourceType,
+                              @Nullable String predefinedFileName,
+                              @NotNull Module module,
+                              boolean chooseModule) {
     super(facet.getModule().getProject());
     myFacet = facet;
     myResTypeLabel.setLabelFor(myResourceTypeCombo);
@@ -79,12 +93,17 @@ public abstract class CreateResourceDialog extends DialogWrapper {
         return a1.toString().compareTo(a2.toString());
       }
     });
+    String selectedTemplate = null;
 
     for (CreateTypedResourceFileAction action : actionArray) {
       String resType = action.getResourceType();
       assert !myResType2ActionMap.containsKey(resType);
       myResType2ActionMap.put(resType, action);
       myResourceTypeCombo.addItem(action.toString(), null, resType);
+
+      if (predefinedResourceType != null && predefinedResourceType.getName().equals(resType)) {
+        selectedTemplate = resType;
+      }
     }
 
     myDeviceConfiguratorPanel = new DeviceConfiguratorPanel(null) {
@@ -122,6 +141,45 @@ public abstract class CreateResourceDialog extends DialogWrapper {
       }
     });
 
+    if (predefinedResourceType != null && selectedTemplate != null) {
+      final boolean v = predefinedResourceType == ResourceType.LAYOUT;
+      myRootElementLabel.setVisible(v);
+      myRootElementFieldWrapper.setVisible(v);
+
+      myResTypeLabel.setVisible(false);
+      myResourceTypeCombo.setVisible(false);
+      myUpDownHint.setVisible(false);
+      myResourceTypeCombo.setSelectedName(selectedTemplate);
+    }
+
+    if (predefinedFileName != null) {
+      myFileNameField.setVisible(false);
+      myFileNameLabel.setVisible(false);
+      myFileNameField.setText(predefinedFileName);
+    }
+
+    final Set<Module> modulesSet = new HashSet<Module>();
+    modulesSet.add(module);
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
+      modulesSet.add(depFacet.getModule());
+    }
+
+    final Module[] modules = modulesSet.toArray(new Module[modulesSet.size()]);
+    Arrays.sort(modules, new Comparator<Module>() {
+      @Override
+      public int compare(Module m1, Module m2) {
+        return m1.getName().compareTo(m2.getName());
+      }
+    });
+    myModuleCombo.setModel(new DefaultComboBoxModel(modules));
+
+    if (!chooseModule || modules.length == 1) {
+      myModuleLabel.setVisible(false);
+      myModuleCombo.setVisible(false);
+    }
+    myModuleCombo.setRenderer(new ModuleListCellRendererWrapper(myModuleCombo.getRenderer()));
+    myModuleCombo.setSelectedItem(module);
+
     myDeviceConfiguratorPanel.updateAll();
     myDeviceConfiguratorWrapper.add(myDeviceConfiguratorPanel, BorderLayout.CENTER);
     setOKActionEnabled(myDirectoryNameTextField.getText().length() > 0);
@@ -152,7 +210,10 @@ public abstract class CreateResourceDialog extends DialogWrapper {
     return false;
   }
 
-  protected abstract InputValidator createValidator(@NotNull String subdirName);
+  @Nullable
+  protected InputValidator createValidator(@NotNull String subdirName) {
+    return null;
+  }
 
   @Override
   protected void doOKAction() {
@@ -170,13 +231,22 @@ public abstract class CreateResourceDialog extends DialogWrapper {
       return;
     }
 
-    final String subdirName = myDirectoryNameTextField.getText();
-    assert subdirName != null && subdirName.length() > 0;
-
+    final String subdirName = getSubdirName();
+    assert subdirName.length() > 0;
     myValidator = createValidator(subdirName);
-    if (myValidator.checkInput(fileName) && myValidator.canClose(fileName)) {
+    if (myValidator == null || myValidator.checkInput(fileName) && myValidator.canClose(fileName)) {
       super.doOKAction();
     }
+  }
+
+  @NotNull
+  public Module getSelectedModule() {
+    return (Module)myModuleCombo.getSelectedItem();
+  }
+
+  @NotNull
+  public String getSubdirName() {
+    return myDirectoryNameTextField.getText().trim();
   }
 
   @NotNull
@@ -196,7 +266,16 @@ public abstract class CreateResourceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myFileNameField;
+    if (myFileNameField.isVisible()) {
+      return myFileNameField;
+    }
+    else if (myResourceTypeCombo.isVisible()) {
+      return myResourceTypeCombo;
+    }
+    else if (myModuleCombo.isVisible()) {
+      return myModuleCombo;
+    }
+    return myDeviceConfiguratorPanel.getAvailableQualifiersList();
   }
 
   public CreateTypedResourceFileAction getSelectedAction() {

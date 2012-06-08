@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -349,11 +350,13 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
       
       if (ranges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
-          actions.add(pair.getFirst().getAction());
+          final IntentionAction action = pair.getFirst().getAction();
+          if (action instanceof ResourceReferenceConverter.MyCreateValueResourceQuickFix) {
+            actions.add(action);
+          }
         }
       }
     }
-
     assertEquals(1, actions.size());
 
     new WriteCommandAction.Simple(getProject()) {
@@ -378,19 +381,20 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
       if (ranges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
           final HighlightInfo.IntentionActionDescriptor descriptor = pair.getFirst();
-          final List<IntentionAction> options = descriptor.getOptions(myFixture.getFile(), myFixture.getEditor());
+          if (descriptor.getAction() instanceof ResourceReferenceConverter.MyCreateValueResourceQuickFix) {
+            final List<IntentionAction> options = descriptor.getOptions(myFixture.getFile(), myFixture.getEditor());
 
-          if (options != null) {
-            for (IntentionAction option : options) {
-              if (option instanceof CleanupInspectionIntention) {
-                actions.add(option);
+            if (options != null) {
+              for (IntentionAction option : options) {
+                if (option instanceof CleanupInspectionIntention) {
+                  actions.add(option);
+                }
               }
             }
           }
         }
       }
     }
-
     assertEquals(1, actions.size());
 
     new WriteCommandAction.Simple(getProject()) {

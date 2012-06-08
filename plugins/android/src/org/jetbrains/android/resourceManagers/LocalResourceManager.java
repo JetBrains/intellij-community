@@ -265,15 +265,12 @@ public class LocalResourceManager extends ResourceManager {
 
   // must be invoked in a write action
   @Nullable
-  public VirtualFile addResourceFileAndNavigate(@NotNull final String fileOrResourceName, @NotNull String resType) {
-    VirtualFile resDir = getResourceDir();
+  public VirtualFile addResourceFileAndNavigate(@NotNull final String fileOrResourceName,
+                                                @NotNull ResourceType resType,
+                                                boolean chooseDirectory) {
     Project project = myModule.getProject();
-    if (resDir == null) {
-      Messages
-        .showErrorDialog(project, AndroidBundle.message("check.resource.dir.error", myModule.getName()), CommonBundle.getErrorTitle());
-      return null;
-    }
-    PsiElement[] createdElements = CreateResourceFileAction.createResourceFile(project, resDir, resType, fileOrResourceName);
+    PsiElement[] createdElements =
+      CreateResourceFileAction.createResourceFile(project, myFacet, resType, fileOrResourceName, chooseDirectory);
     if (createdElements.length == 0) return null;
     assert createdElements.length == 1;
     PsiElement element = createdElements[0];

@@ -17,13 +17,13 @@ package org.jetbrains.android.uipreview;
 
 import com.android.ide.common.resources.configuration.*;
 import com.android.resources.*;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -408,6 +408,10 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     listsPanel.add(rightPabel);
     add(listsPanel, BorderLayout.CENTER);
     add(myQualifierOptionsPanel, BorderLayout.EAST);
+  }
+
+  public JBList getAvailableQualifiersList() {
+    return myAvailableQualifiersList;
   }
 
   private abstract static class MyQualifierEditor<T extends ResourceQualifier> {

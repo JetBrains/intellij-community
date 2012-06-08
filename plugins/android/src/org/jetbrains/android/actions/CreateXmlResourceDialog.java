@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -47,6 +46,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ModuleListCellRendererWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,14 +125,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
 
       myModuleCombo.setModel(new DefaultComboBoxModel(modules));
       myModuleCombo.setSelectedItem(module);
-
-      myModuleCombo.setRenderer(new ListCellRendererWrapper<Module>(myModuleCombo.getRenderer()) {
-        @Override
-        public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
-          setText(module.getName());
-          setIcon(ModuleType.get(module).getNodeIcon(false));
-        }
-      });
+      myModuleCombo.setRenderer(new ModuleListCellRendererWrapper(myModuleCombo.getRenderer()));
     }
 
     final String defaultResFileName = AndroidResourceUtil.getDefaultResourceFileName(resourceType.getName());
