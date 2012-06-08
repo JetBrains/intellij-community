@@ -205,7 +205,7 @@ public class GitUpdateProcess {
       notifyImportantError(myProject, "Error updating " + rootName,
                            "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
     } finally {
-      if (incomplete || !!compoundResult.isSuccess()) {
+      if (incomplete || !compoundResult.isSuccess()) {
         mySaver.notifyLocalChangesAreNotRestored();
       }
       else {
