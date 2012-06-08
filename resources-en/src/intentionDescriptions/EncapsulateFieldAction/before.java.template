@@ -1,0 +1,12 @@
+class A {
+  public int field;
+}
+
+class B {
+  void method() {
+    A a = new A();
+
+    a.<spot>field</spot> = 0;
+    int b = a.field;
+  }
+}
