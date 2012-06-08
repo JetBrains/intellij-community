@@ -6,25 +6,17 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public class JpsGlobalElementReference extends JpsElementBase<JpsGlobalElementReference> implements JpsElementReference<JpsGlobal> {
-  private final JpsModel myModel;
-
-  public JpsGlobalElementReference(JpsModel model, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(eventDispatcher, parent);
-    myModel = model;
-  }
-
+public class JpsGlobalElementReference extends JpsElementReferenceBase<JpsGlobalElementReference, JpsGlobal> {
   @Override
   public JpsGlobal resolve() {
-    return myModel.getGlobal();
+    final JpsModel model = getModel();
+    return model != null ? model.getGlobal() : null;
   }
 
   @NotNull
   @Override
-  public JpsGlobalElementReference createCopy(@NotNull JpsModel model,
-                                              @NotNull JpsEventDispatcher eventDispatcher,
-                                              JpsParentElement parent) {
-    return new JpsGlobalElementReference(model, eventDispatcher, parent);
+  public JpsGlobalElementReference createCopy() {
+    return new JpsGlobalElementReference();
   }
 
   @Override

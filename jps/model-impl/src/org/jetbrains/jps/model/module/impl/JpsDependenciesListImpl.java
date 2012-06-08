@@ -2,12 +2,10 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementKind;
-import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsParentElement;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.impl.JpsElementCollectionKind;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 
@@ -20,13 +18,13 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
   public static final JpsElementKind<JpsDependencyElementBase<?>> DEPENDENCY_ELEMENT_KIND = new JpsElementKind<JpsDependencyElementBase<?>>();
   public static final JpsElementCollectionKind<JpsDependencyElementBase<?>> DEPENDENCY_COLLECTION_KIND = new JpsElementCollectionKind<JpsDependencyElementBase<?>>(DEPENDENCY_ELEMENT_KIND);
 
-  public JpsDependenciesListImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsModuleImpl parent) {
-    super(model, eventDispatcher, parent);
+  public JpsDependenciesListImpl() {
+    super();
     myContainer.setChild(DEPENDENCY_COLLECTION_KIND);
   }
 
-  public JpsDependenciesListImpl(JpsDependenciesListImpl original, JpsModel model, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(original, model, dispatcher, parent);
+  private JpsDependenciesListImpl(JpsDependenciesListImpl original) {
+    super(original);
   }
 
   @Override
@@ -38,7 +36,13 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
   @Override
   @NotNull
   public JpsModuleDependency addModuleDependency(@NotNull JpsModule module) {
-    final JpsModuleDependencyImpl dependency = new JpsModuleDependencyImpl(myModel, getEventDispatcher(), module, this);
+    return addModuleDependency(module.createReference());
+  }
+
+  @NotNull
+  @Override
+  public JpsModuleDependency addModuleDependency(@NotNull JpsModuleReference moduleReference) {
+    final JpsModuleDependencyImpl dependency = new JpsModuleDependencyImpl(moduleReference);
     myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(dependency);
     return dependency;
   }
@@ -46,25 +50,31 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
   @Override
   @NotNull
   public JpsLibraryDependency addLibraryDependency(@NotNull JpsLibrary libraryElement) {
-    JpsLibraryDependencyImpl dependency = new JpsLibraryDependencyImpl(myModel, getEventDispatcher(), libraryElement, this);
+    return addLibraryDependency(libraryElement.createReference());
+  }
+
+  @NotNull
+  @Override
+  public JpsLibraryDependency addLibraryDependency(@NotNull JpsLibraryReference libraryReference) {
+    final JpsLibraryDependencyImpl dependency = new JpsLibraryDependencyImpl(libraryReference);
     myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(dependency);
     return dependency;
   }
 
   @Override
   public void addModuleSourceDependency() {
-    myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(new JpsModuleSourceDependency(myModel, getEventDispatcher(), this));
+    myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(new JpsModuleSourceDependency());
   }
 
   @Override
   public void addSdkDependency(@NotNull JpsSdkType<?> sdkType) {
-    myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(new JpsSdkDependencyImpl(sdkType, myModel, getEventDispatcher(), this));
+    myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(new JpsSdkDependencyImpl(sdkType));
   }
 
   @NotNull
   @Override
-  public JpsDependenciesListImpl createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsDependenciesListImpl(this, model, eventDispatcher, parent);
+  public JpsDependenciesListImpl createCopy() {
+    return new JpsDependenciesListImpl(this);
   }
 
   @Override

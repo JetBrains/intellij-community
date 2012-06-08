@@ -248,7 +248,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
         PsiParameter[] parms = baseConstructor.getParameterList().getParameters();
         for (PsiParameter parm : parms) {
           PsiParameter newParam = factory.createParameter(parm.getName(), parm.getType());
-          copyModifierList(parm, newParam);
+          replaceModifierList(parm, newParam);
           constructor.getParameterList().add(newParam);
         }
       }
@@ -291,11 +291,24 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
     return constructor;
   }
 
-  static void copyModifierList(PsiParameter parm, PsiParameter newParam) {
+  static void copyModifierList(JVMElementFactory factory, PsiParameter parm, PsiParameter newParam) {
     PsiModifierList modifierList = parm.getModifierList();
     PsiModifierList newMList = newParam.getModifierList();
     if (modifierList != null && newMList != null) {
-      newMList.replace(modifierList);
+      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+        newMList.add(factory.createAnnotationFromText(annotation.getText(), newParam));
+      }
+      for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
+        newMList.setModifierProperty(m, parm.hasModifierProperty(m));
+      }
+    }
+  }
+
+  static void replaceModifierList(PsiParameter sourceParam, PsiParameter targetParam) {
+    PsiModifierList sourceModifierList = sourceParam.getModifierList();
+    PsiModifierList targetModifierList = targetParam.getModifierList();
+    if (sourceModifierList != null && targetModifierList != null) {
+      targetModifierList.replace(sourceModifierList);
     }
   }
 

@@ -273,8 +273,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
     myLeadPanel.add(myToolbarComponent);
 
-    if (myToolbarComponent instanceof ActionToolbarImpl) {
-      new ShowMoreOptions(myToolbarComponent, mySearchField);
+    if (secondaryActionsAvailable()) {
+      if (myToolbarComponent instanceof ActionToolbarImpl) {
+        new ShowMoreOptions(myToolbarComponent, mySearchField);
+      }
     }
 
 
@@ -358,11 +360,11 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myActionsToolbar.setSecondaryActionsTooltip("More Options(" + ShowMoreOptions.SHORT_CUT + ")");
 
     actionGroup.addAction(new ToggleWholeWordsOnlyAction(this));
-    if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
+    if (secondaryActionsAvailable()) {
       actionGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
       actionGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
     }
-    actionGroup.addAction(new TogglePreserveCaseAction(this)).setAsSecondary(true);
+    actionGroup.addAction(new TogglePreserveCaseAction(this));
     actionGroup.addAction(new ToggleSelectionOnlyAction(this));
 
 
@@ -370,6 +372,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myToolbarComponent = myActionsToolbar.getComponent();
     myToolbarComponent.setBorder(null);
     myToolbarComponent.setOpaque(false);
+  }
+
+  private boolean secondaryActionsAvailable() {
+    return FindManagerImpl.ourHasSearchInCommentsAndLiterals;
   }
 
   private void setupSearchFieldListener() {
@@ -484,9 +490,9 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myReplaceField = createTextField(myReplacementPane);
     myReplaceUndo = new TextComponentUndoProvider(myReplaceField);
 
-    if (myToolbarComponent instanceof ActionToolbarImpl) {
-      new ShowMoreOptions(myToolbarComponent, myReplaceField);
-    }
+    //if (myToolbarComponent instanceof ActionToolbarImpl) {
+    //  new ShowMoreOptions(myToolbarComponent, myReplaceField);
+    //}
 
     DocumentListener replaceFieldListener = new DocumentListener() {
       @Override

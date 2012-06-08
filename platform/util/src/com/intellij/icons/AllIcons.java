@@ -629,7 +629,6 @@ public class AllIcons {
     public static final Icon Ejb_jar_xml = IconLoader.getIcon("/javaee/ejb-jar_xml.png"); 
     public static final Icon EjbClass = IconLoader.getIcon("/javaee/ejbClass.png"); 
     public static final Icon EjbModule = IconLoader.getIcon("/javaee/ejbModule.png"); 
-    public static final Icon EjbModuleBig = IconLoader.getIcon("/javaee/ejbModuleBig.png"); 
     public static final Icon EmbeddedAttributeOverlay = IconLoader.getIcon("/javaee/embeddedAttributeOverlay.png"); 
     public static final Icon EntityBean = IconLoader.getIcon("/javaee/entityBean.png"); 
     public static final Icon EntityBeanBig = IconLoader.getIcon("/javaee/entityBeanBig.png"); 
@@ -638,12 +637,10 @@ public class AllIcons {
     public static final Icon InterceptorClass = IconLoader.getIcon("/javaee/interceptorClass.png"); 
     public static final Icon InterceptorMethod = IconLoader.getIcon("/javaee/interceptorMethod.png"); 
     public static final Icon JavaeeAppModule = IconLoader.getIcon("/javaee/JavaeeAppModule.png"); 
-    public static final Icon JavaeeAppModuleBig = IconLoader.getIcon("/javaee/JavaeeAppModuleBig.png"); 
     public static final Icon JpaFacet = IconLoader.getIcon("/javaee/jpaFacet.png"); 
     public static final Icon Local = IconLoader.getIcon("/javaee/local.png"); 
     public static final Icon LocalHome = IconLoader.getIcon("/javaee/localHome.png"); 
     public static final Icon MessageBean = IconLoader.getIcon("/javaee/messageBean.png"); 
-    public static final Icon MessageBeanBig = IconLoader.getIcon("/javaee/messageBeanBig.png"); 
     public static final Icon PersistenceAttribute = IconLoader.getIcon("/javaee/persistenceAttribute.png"); 
     public static final Icon PersistenceEmbeddable = IconLoader.getIcon("/javaee/persistenceEmbeddable.png"); 
     public static final Icon PersistenceEntity = IconLoader.getIcon("/javaee/persistenceEntity.png"); 
@@ -655,11 +652,9 @@ public class AllIcons {
     public static final Icon PersistenceUnit = IconLoader.getIcon("/javaee/persistenceUnit.png"); 
     public static final Icon Remote = IconLoader.getIcon("/javaee/remote.png"); 
     public static final Icon SessionBean = IconLoader.getIcon("/javaee/sessionBean.png"); 
-    public static final Icon SessionBeanBig = IconLoader.getIcon("/javaee/sessionBeanBig.png"); 
     public static final Icon UpdateRunningApplication = IconLoader.getIcon("/javaee/updateRunningApplication.png"); 
     public static final Icon Web_xml = IconLoader.getIcon("/javaee/web_xml.png"); 
     public static final Icon WebModule = IconLoader.getIcon("/javaee/webModule.png"); 
-    public static final Icon WebModuleBig = IconLoader.getIcon("/javaee/webModuleBig.png"); 
     public static final Icon WebModuleGroup = IconLoader.getIcon("/javaee/webModuleGroup.png"); 
     public static final Icon WebService = IconLoader.getIcon("/javaee/WebService.png"); 
     public static final Icon WebServiceClient = IconLoader.getIcon("/javaee/WebServiceClient.png"); 
@@ -681,16 +676,13 @@ public class AllIcons {
     public static final Icon DeleteContentFolderRollover = IconLoader.getIcon("/modules/deleteContentFolderRollover.png"); 
     public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); 
     public static final Icon DeleteContentRootRollover = IconLoader.getIcon("/modules/deleteContentRootRollover.png"); 
-    public static final Icon EmptyProjectType = IconLoader.getIcon("/modules/emptyProjectType.png"); 
     public static final Icon ExcludeFolder = IconLoader.getIcon("/modules/excludeFolder.png"); 
     public static final Icon ExcludeRootClosed = IconLoader.getIcon("/modules/excludeRootClosed.png"); 
     public static final Icon ExcludeRootOpened = IconLoader.getIcon("/modules/excludeRootOpened.png"); 
-    public static final Icon JavaModule = IconLoader.getIcon("/modules/javaModule.png"); 
     public static final Icon Library = IconLoader.getIcon("/modules/library.png"); 
     public static final Icon Merge = IconLoader.getIcon("/modules/merge.png"); 
     public static final Icon ModulesNode = IconLoader.getIcon("/modules/modulesNode.png"); 
     public static final Icon Output = IconLoader.getIcon("/modules/output.png"); 
-    public static final Icon PluginModule = IconLoader.getIcon("/modules/pluginModule.png"); 
     public static final Icon SetPackagePrefix = IconLoader.getIcon("/modules/setPackagePrefix.png"); 
     public static final Icon SetPackagePrefixRollover = IconLoader.getIcon("/modules/setPackagePrefixRollover.png"); 
     public static final Icon SourceClosed = IconLoader.getIcon("/modules/sourceClosed.png"); 
@@ -703,6 +695,16 @@ public class AllIcons {
     public static final Icon TestRootOpened = IconLoader.getIcon("/modules/testRootOpened.png"); 
     public static final Icon TestSourceClosed = IconLoader.getIcon("/modules/testSourceClosed.png"); 
     public static final Icon TestSourceOpened = IconLoader.getIcon("/modules/testSourceOpened.png"); 
+    
+    public static class Types {
+      public static final Icon EjbModule = IconLoader.getIcon("/modules/types/ejbModule.png"); 
+      public static final Icon EmptyProjectType = IconLoader.getIcon("/modules/types/emptyProjectType.png"); 
+      public static final Icon JavaeeAppModule = IconLoader.getIcon("/modules/types/JavaeeAppModule.png"); 
+      public static final Icon JavaModule = IconLoader.getIcon("/modules/types/javaModule.png"); 
+      public static final Icon PluginModule = IconLoader.getIcon("/modules/types/pluginModule.png"); 
+      public static final Icon WebModule = IconLoader.getIcon("/modules/types/webModule.png"); 
+
+    }
     public static final Icon UnmarkWebroot = IconLoader.getIcon("/modules/unmarkWebroot.png"); 
     public static final Icon WebRoot = IconLoader.getIcon("/modules/webRoot.png"); 
 

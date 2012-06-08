@@ -16,29 +16,36 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsProjectImpl extends JpsCompositeElementBase<JpsProjectImpl> implements JpsProject {
+public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implements JpsProject {
+  private static final JpsElementCollectionKind<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_KIND = new JpsElementCollectionKind<JpsElementReference<?>>(new JpsElementKind<JpsElementReference<?>>());
+
   public JpsProjectImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(model, eventDispatcher, null);
+    super(model, eventDispatcher);
     myContainer.setChild(JpsModuleKind.MODULE_COLLECTION_KIND);
     myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
+    myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_KIND);
   }
 
   public JpsProjectImpl(JpsProjectImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(original, model, eventDispatcher, null);
+    super(original, model, eventDispatcher);
+  }
+
+  public void addExternalReference(@NotNull JpsElementReference<?> reference) {
+    myContainer.getChild(EXTERNAL_REFERENCES_COLLECTION_KIND).addChild(reference);
   }
 
   @NotNull
   @Override
   public JpsModule addModule(@NotNull JpsModuleType<?> moduleType, @NotNull final String name) {
     final JpsElementCollectionImpl<JpsModuleImpl> collection = myContainer.getChild(JpsModuleKind.MODULE_COLLECTION_KIND);
-    return collection.addChild(new JpsModuleImpl(myModel, getEventDispatcher(), moduleType, name, collection));
+    return collection.addChild(new JpsModuleImpl(moduleType, name));
   }
 
   @NotNull
   @Override
   public JpsLibrary addLibrary(@NotNull JpsLibraryType<?> libraryType, @NotNull final String name) {
     final JpsElementCollectionImpl<JpsLibraryImpl> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
-    return collection.addChild(new JpsLibraryImpl(name, libraryType, myModel, getEventDispatcher(), collection));
+    return collection.addChild(new JpsLibraryImpl(name, libraryType));
   }
 
   @NotNull
@@ -55,13 +62,7 @@ public class JpsProjectImpl extends JpsCompositeElementBase<JpsProjectImpl> impl
 
   @NotNull
   @Override
-  public JpsElementReference<JpsProject> createReference(JpsParentElement parent) {
-    return new JpsProjectElementReference(myModel, getEventDispatcher(), parent);
-  }
-
-  @NotNull
-  @Override
-  public JpsProjectImpl createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsProjectImpl(this, model, eventDispatcher);
+  public JpsElementReference<JpsProject> createReference() {
+    return new JpsProjectElementReference();
   }
 }

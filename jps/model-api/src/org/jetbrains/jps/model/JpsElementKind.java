@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class JpsElementKind<E extends JpsElement> {
-
   public void fireElementAdded(@NotNull JpsEventDispatcher dispatcher, @NotNull E element) {
   }
 

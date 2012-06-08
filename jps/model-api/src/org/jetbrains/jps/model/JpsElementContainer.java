@@ -10,11 +10,11 @@ public interface JpsElementContainer {
   T getChild(@NotNull JpsElementKind<T> kind);
 
   @NotNull
-  <T extends JpsElement, K extends JpsElementKind<T>&JpsElementFactory<T>>
+  <T extends JpsElement, K extends JpsElementKind<T>&JpsElementCreator<T>>
   T setChild(@NotNull K kind);
 
   @NotNull
-  <T extends JpsElement, P, K extends JpsElementKind<T>&JpsElementFactoryWithParameter<T, P>>
+  <T extends JpsElement, P, K extends JpsElementKind<T>&JpsElementParameterizedCreator<T, P>>
   T setChild(@NotNull K kind, @NotNull P param);
 
   <T extends JpsElement>

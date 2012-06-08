@@ -9,13 +9,12 @@ import org.jetbrains.jps.model.*;
 public class SimpleJpsElementImpl<P extends JpsElementProperties> extends JpsElementBase<SimpleJpsElementImpl<P>> implements SimpleJpsElement<P> {
   private P myProperties;
 
-  public SimpleJpsElementImpl(JpsEventDispatcher eventDispatcher, P properties, JpsParentElement parent) {
-    super(eventDispatcher, parent);
+  public SimpleJpsElementImpl(P properties) {
     myProperties = properties;
   }
 
-  public SimpleJpsElementImpl(SimpleJpsElementImpl<P> original, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(original, dispatcher, parent);
+  public SimpleJpsElementImpl(SimpleJpsElementImpl<P> original) {
+    myProperties = original.myProperties;
   }
 
   @NotNull
@@ -28,14 +27,14 @@ public class SimpleJpsElementImpl<P extends JpsElementProperties> extends JpsEle
   public void setProperties(@NotNull P properties) {
     if (!myProperties.equals(properties)) {
       myProperties = properties;
-      getEventDispatcher().fireElementChanged(this);
+      fireElementChanged();
     }
   }
 
   @NotNull
   @Override
-  public SimpleJpsElementImpl<P> createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new SimpleJpsElementImpl<P>(this, eventDispatcher, parent);
+  public SimpleJpsElementImpl<P> createCopy() {
+    return new SimpleJpsElementImpl<P>(this);
   }
 
   @Override

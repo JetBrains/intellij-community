@@ -364,6 +364,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
 
+  @Override
   public void addListSelectionListener(ListSelectionListener listSelectionListener) {
     myList.addListSelectionListener(listSelectionListener);
   }

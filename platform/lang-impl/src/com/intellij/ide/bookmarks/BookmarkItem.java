@@ -15,11 +15,9 @@
  */
 package com.intellij.ide.bookmarks;
 
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -110,22 +108,17 @@ public class BookmarkItem implements ItemWrapper {
     return myBookmark.getFile().getName() + " " + myBookmark.getDescription();
   }
 
-  public void execute(Project project, JBPopup popup) {
-    popup.cancel();
-    myBookmark.navigate();
-    popup.cancel();
-  }
-
   public String footerText() {
     return myBookmark.getFile().getPresentableUrl();
   }
 
   @Override
   public void updateDetailView(final DetailView panel) {
-    VirtualFile file = myBookmark.getFile();
-    LogicalPosition positionToNavigate = new LogicalPosition(myBookmark.getLine(), 0);
+    doUpdateDetailView(panel);
+  }
 
-    panel.navigateInPreviewEditor(file, positionToNavigate, null);
+  private void doUpdateDetailView(DetailView panel) {
+    panel.navigateInPreviewEditor(DetailView.PreviewEditorState.create(myBookmark.getFile(), myBookmark.getLine()));
   }
 
   @Override

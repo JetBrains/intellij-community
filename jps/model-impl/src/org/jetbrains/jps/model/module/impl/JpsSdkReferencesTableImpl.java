@@ -2,11 +2,7 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementKind;
-import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsParentElement;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
-import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
@@ -17,25 +13,23 @@ import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkReferencesTableImpl> implements JpsSdkReferencesTable {
   public static final JpsElementKind<JpsSdkReferencesTableImpl> KIND = new JpsElementKind<JpsSdkReferencesTableImpl>();
 
-  public JpsSdkReferencesTableImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(model, eventDispatcher, parent);
+  public JpsSdkReferencesTableImpl() {
+    super();
   }
 
-  public JpsSdkReferencesTableImpl(JpsSdkReferencesTableImpl original, JpsModel model, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(original, model, dispatcher, parent);
+  private JpsSdkReferencesTableImpl(JpsSdkReferencesTableImpl original) {
+    super(original);
   }
 
   @NotNull
   @Override
-  public JpsSdkReferencesTableImpl createCopy(@NotNull JpsModel model,
-                                              @NotNull JpsEventDispatcher eventDispatcher,
-                                              JpsParentElement parent) {
-    return new JpsSdkReferencesTableImpl(this, model, eventDispatcher, parent);
+  public JpsSdkReferencesTableImpl createCopy() {
+    return new JpsSdkReferencesTableImpl(this);
   }
 
   @Override
-  public void setSdkReference(@NotNull JpsSdkType<?> type, @NotNull JpsLibrary sdk) {
-    myContainer.setChild(new JpsSdkReferenceKind(type), sdk.createReference(this));
+  public void setSdkReference(@NotNull JpsSdkType<?> type, @NotNull JpsLibraryReference sdkReference) {
+    myContainer.setChild(new JpsSdkReferenceKind(type), sdkReference);
   }
   
   @Override

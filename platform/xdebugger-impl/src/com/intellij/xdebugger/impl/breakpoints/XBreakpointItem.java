@@ -46,22 +46,28 @@ class XBreakpointItem extends BreakpointItem {
 
   @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-    setupGenericRenderer(renderer);
+    setupGenericRenderer(renderer, false);
   }
 
   @Override
   public void setupRenderer(ColoredTreeCellRenderer renderer) {
-    setupGenericRenderer(renderer);
+    setupGenericRenderer(renderer, false);
   }
 
-  protected void setupGenericRenderer(SimpleColoredComponent renderer) {
-    //renderer.setIcon(getIcon());
+  protected void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
+    if (plainView) {
+      renderer.setIcon(getIcon());
+    }
     final SimpleTextAttributes attributes =
       myBreakpoint.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
-    renderer.append(XBreakpointUtil.getShortText(myBreakpoint), attributes);
+    renderer.append(getDisplayText(), attributes);
   }
 
-  private Icon getIcon() {
+  public String getDisplayText() {
+    return XBreakpointUtil.getShortText(myBreakpoint);
+  }
+
+  public Icon getIcon() {
     return ((XBreakpointBase)myBreakpoint).getIcon();
   }
 
@@ -75,21 +81,22 @@ class XBreakpointItem extends BreakpointItem {
     return ((XBreakpointBase)myBreakpoint).getType().getDisplayText(myBreakpoint);
   }
 
-  @Override
-  public void updateDetailView(DetailView panel) {
+  public void doUpdateDetailView(DetailView panel) {
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
+
+    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
+    if (sourcePosition != null) {
+      if (!showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine())) {
+        return;
+      }
+    } else {
+      panel.clearEditor();
+    }
 
     XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
       new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
     propertiesPanel.loadProperties();
     panel.setDetailPanel(propertiesPanel.getMainPanel());
-
-    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
-    if (sourcePosition != null) {
-      showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine());
-    } else {
-      panel.clearEditor();
-    }
   }
 
   private XBreakpointManagerImpl getManager() {
