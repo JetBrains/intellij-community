@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.util.containers.HashMap;
+import gnu.trove.TIntObjectHashMap;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Map;
 
 public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;
@@ -34,24 +34,20 @@ public interface Iconable {
   Icon getIcon(@IconFlags int flags);
 
   class LastComputedIcon {
-    private static final Key<Map<Integer, Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
+    private static final Key<TIntObjectHashMap<Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
 
     @Nullable
-    public static Icon get(UserDataHolder holder, int flags) {
-      Map<Integer, Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
-      return map != null ? map.get(flags) : null;
+    public static Icon get(@NotNull UserDataHolder holder, int flags) {
+      TIntObjectHashMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
+      return map == null ? null : map.get(flags);
     }
 
-    public static void put(UserDataHolder holder, Icon icon, int flags) {
-      Map<Integer, Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
+    public static void put(@NotNull UserDataHolder holder, Icon icon, int flags) {
+      TIntObjectHashMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
       if (map == null) {
-        map = new HashMap<Integer, Icon>();
-        holder.putUserData(LAST_COMPUTED_ICON, map);
+        map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, new TIntObjectHashMap<Icon>());
       }
-
       map.put(flags, icon);
     }
   }
-
-
 }
