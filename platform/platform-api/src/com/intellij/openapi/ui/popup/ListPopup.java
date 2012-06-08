@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.ui.popup;
 
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.InputEvent;
 
 /**
@@ -52,4 +53,5 @@ public interface ListPopup extends JBPopup {
    */
   void setHandleAutoSelectionBeforeShow(boolean autoHandle);
 
+  void addListSelectionListener(ListSelectionListener listSelectionListener);
 }

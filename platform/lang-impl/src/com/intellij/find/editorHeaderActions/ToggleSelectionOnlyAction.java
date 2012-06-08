@@ -4,7 +4,7 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ToggleSelectionOnlyAction extends EditorHeaderToggleAction {
-  private static final String SELECTION_ONLY = "&Selection Only";
+  private static final String SELECTION_ONLY = "In &Selection";
 
   public ToggleSelectionOnlyAction(EditorSearchComponent editorSearchComponent) {
     super(editorSearchComponent, SELECTION_ONLY);

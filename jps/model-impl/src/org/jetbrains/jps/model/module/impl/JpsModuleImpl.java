@@ -3,6 +3,10 @@ package org.jetbrains.jps.model.module.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
+import org.jetbrains.jps.model.library.impl.JpsLibraryKind;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
@@ -16,24 +20,26 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
   private static final JpsElementKind<JpsUrlListImpl> EXCLUDED_ROOTS_KIND = new JpsElementKind<JpsUrlListImpl>();
   public static final JpsElementKind<JpsDependenciesListImpl> DEPENDENCIES_LIST_KIND = new JpsElementKind<JpsDependenciesListImpl>();
 
-  public JpsModuleImpl(JpsModel model, JpsEventDispatcher eventDispatcher, JpsModuleType type, @NotNull String name, JpsElementCollectionImpl<JpsModuleImpl> parent) {
-    super(model, eventDispatcher, name, parent);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleType<?>>(type, eventDispatcher, this));
-    myContainer.setChild(CONTENT_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, this));
-    myContainer.setChild(EXCLUDED_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, this));
-    myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl(model, eventDispatcher, this));
+  public JpsModuleImpl(JpsModuleType type,
+                       @NotNull String name) {
+    super(name);
+    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleType<?>>(type));
+    myContainer.setChild(CONTENT_ROOTS_KIND, new JpsUrlListImpl());
+    myContainer.setChild(EXCLUDED_ROOTS_KIND, new JpsUrlListImpl());
+    myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl());
+    myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
     myContainer.setChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
-    myContainer.setChild(JpsSdkReferencesTableImpl.KIND, new JpsSdkReferencesTableImpl(model, eventDispatcher, this));
+    myContainer.setChild(JpsSdkReferencesTableImpl.KIND, new JpsSdkReferencesTableImpl());
   }
 
-  public JpsModuleImpl(JpsModuleImpl original, JpsEventDispatcher eventDispatcher, JpsModel model, JpsParentElement parent) {
-    super(original, model, eventDispatcher, parent);
+  private JpsModuleImpl(JpsModuleImpl original) {
+    super(original);
   }
 
   @NotNull
   @Override
-  public JpsModuleImpl createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsModuleImpl(this, eventDispatcher, model, parent);
+  public JpsModuleImpl createCopy() {
+    return new JpsModuleImpl(this);
   }
 
   @NotNull
@@ -65,7 +71,7 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
   public <P extends JpsElementProperties> JpsModuleSourceRoot addSourceRoot(@NotNull JpsModuleSourceRootType<P> rootType,
                                                                             @NotNull String url,
                                                                             @NotNull P properties) {
-    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl(myModel, getEventDispatcher(), url, rootType, this);
+    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl(url, rootType);
     myContainer.getChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND).addChild(root);
     root.setProperties(rootType, properties);
     return root;
@@ -102,7 +108,14 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
 
   @NotNull
   @Override
-  public JpsModuleReference createReference(JpsParentElement parent) {
-    return new JpsModuleReferenceImpl(myModel, getName(), getEventDispatcher(), parent);
+  public JpsModuleReference createReference() {
+    return new JpsModuleReferenceImpl(getName());
+  }
+
+  @NotNull
+  @Override
+  public JpsLibrary addModuleLibrary(@NotNull JpsLibraryType<?> type, @NotNull String name) {
+    final JpsElementCollectionImpl<JpsLibraryImpl> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
+    return collection.addChild(new JpsLibraryImpl(name, type));
   }
 }

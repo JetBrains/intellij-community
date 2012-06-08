@@ -13,31 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl.quickfix;
+package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 /**
  * User: anna
  * Date: 9/5/11
  */
-public class RunRefactoringIntention implements IntentionAction, Iconable, LowPriorityAction {
-  public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
+public class RunRefactoringAction extends BaseRunRefactoringAction<RefactoringActionHandler> {
   private final RefactoringActionHandler myHandler;
   private final String myCommandName;
 
-  public RunRefactoringIntention(RefactoringActionHandler handler, String commandName) {
+  public RunRefactoringAction(RefactoringActionHandler handler, String commandName) {
     myHandler = handler;
     myCommandName = commandName;
   }
@@ -48,29 +41,13 @@ public class RunRefactoringIntention implements IntentionAction, Iconable, LowPr
     return myCommandName;
   }
 
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return "Refactorings";
-  }
-
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     myHandler.invoke(project, editor, file, null);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public Icon getIcon(int flags) {
-    return REFACTORING_BULB;
   }
 }

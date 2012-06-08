@@ -11,7 +11,7 @@ public interface JpsElement {
 
   interface BulkModificationSupport<E extends JpsElement> extends JpsElement {
     @NotNull
-    E createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent);
+    E createCopy();
 
     void applyChanges(@NotNull E modified);
   }

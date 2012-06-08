@@ -8,13 +8,13 @@ import org.jetbrains.jps.model.module.JpsModule;
 /**
  * @author nik
  */
-public class JavaModuleExtensionKind extends JpsElementKind<JavaModuleExtensionImpl> implements JpsElementFactory<JavaModuleExtensionImpl> {
+public class JavaModuleExtensionKind extends JpsElementKind<JavaModuleExtensionImpl> implements JpsElementCreator<JavaModuleExtensionImpl> {
   private static final JavaModuleExtensionKind INSTANCE = new JavaModuleExtensionKind();
 
   @NotNull
   @Override
-  public JavaModuleExtensionImpl create(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JavaModuleExtensionImpl(eventDispatcher, parent);
+  public JavaModuleExtensionImpl create() {
+    return new JavaModuleExtensionImpl();
   }
 
   @NotNull

@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.breakpoints.ui;
+package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.util.MultiValuesMap;
-import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
@@ -39,7 +37,7 @@ import java.util.*;
 /**
  * @author nik, zajac
  */
-public class BreakpointItemsTree extends CheckboxTree {
+public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.Delegate {
   //private final TreeNodeComparator myComparator;
   private final CheckedTreeNode myRoot;
   private final Map<BreakpointItem, BreakpointItemNode> myNodes = new HashMap<BreakpointItem, BreakpointItemNode>();
@@ -50,14 +48,20 @@ public class BreakpointItemsTree extends CheckboxTree {
 
   private final MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup> myGroups = new MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup>();
 
-  private BreakpointItemsTree(final CheckedTreeNode root,
-                              Collection<XBreakpointGroupingRule> groupingRules) {
-    super(new BreakpointsTreeCellRenderer(), root);
-    myRoot = root;
+  private JTree myTreeView;
+
+  public BreakpointItemsTreeController(Collection<XBreakpointGroupingRule> groupingRules) {
+    myRoot = new CheckedTreeNode("root");
     //myComparator = new TreeNodeComparator<B>(type, breakpointManager);
     setGroupingRulesInternal(groupingRules);
+  }
 
-    getEmptyText().setText("No Breakpoints");
+  public void setTreeView(JTree treeView) {
+    myTreeView = treeView;
+    if (treeView instanceof BreakpointsCheckboxTree) {
+      ((BreakpointsCheckboxTree)treeView).setDelegate(this);
+    }
+    myTreeView.setShowsRootHandles(!myGroupingRules.isEmpty());
   }
 
   public void setDelegate(BreakpointItemsTreeDelegate delegate) {
@@ -66,15 +70,10 @@ public class BreakpointItemsTree extends CheckboxTree {
 
   private void setGroupingRulesInternal(final Collection<XBreakpointGroupingRule> groupingRules) {
     myGroupingRules = new ArrayList<XBreakpointGroupingRule>(groupingRules);
-    setShowsRootHandles(!groupingRules.isEmpty());
-  }
-
-  public static BreakpointItemsTree createTree(final Collection<XBreakpointGroupingRule> groupingRules) {
-    return new BreakpointItemsTree(new CheckedTreeNode("root"), groupingRules);
   }
 
   public void buildTree(@NotNull Collection<? extends BreakpointItem> breakpoints) {
-    final TreeState state = TreeState.createOn(this, myRoot);
+    final TreeState state = TreeState.createOn(myTreeView, myRoot);
     myRoot.removeAllChildren();
     myNodes.clear();
     myGroupNodes.clear();
@@ -86,9 +85,9 @@ public class BreakpointItemsTree extends CheckboxTree {
       myNodes.put(breakpoint, node);
     }
     //TreeUtil.sort(myRoot, myComparator);
-    ((DefaultTreeModel)getModel()).nodeStructureChanged(myRoot);
-    state.applyTo(this, myRoot);
-    TreeUtil.expandAll(this);
+    ((DefaultTreeModel)(myTreeView.getModel())).nodeStructureChanged(myRoot);
+    state.applyTo(myTreeView, myRoot);
+    TreeUtil.expandAll(myTreeView);
   }
 
 
@@ -146,24 +145,28 @@ public class BreakpointItemsTree extends CheckboxTree {
   }
 
   @Override
-  protected void onDoubleClick(CheckedTreeNode node) {
+  public void didSelectNode(CheckedTreeNode node) {
     if (node instanceof BreakpointItemNode) {
       myDelegate.execute(((BreakpointItemNode)node).getBreakpointItem());
     }
   }
 
   @Override
-  protected void onNodeStateChanged(final CheckedTreeNode node) {
+  public void nodeStateChanged(CheckedTreeNode node) {
     if (node instanceof BreakpointItemNode) {
       ((BreakpointItemNode)node).getBreakpointItem().setEnabled(node.isChecked());
     }
   }
 
   public void setGroupingRules(Collection<XBreakpointGroupingRule> groupingRules) {
-    List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints();
-    List<BreakpointItem> allBreakpoints = new ArrayList<BreakpointItem>(myNodes.keySet());
-
     setGroupingRulesInternal(groupingRules);
+    rebuildTree(new ArrayList<BreakpointItem>(myNodes.keySet()));
+  }
+
+  public void rebuildTree(Collection<BreakpointItem> items) {
+    List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints();
+    Collection<BreakpointItem> allBreakpoints = items;
+
     buildTree(allBreakpoints);
 
     if (selectedBreakpoints.size() > 0) {
@@ -173,7 +176,7 @@ public class BreakpointItemsTree extends CheckboxTree {
 
   public List<BreakpointItem> getSelectedBreakpoints() {
     final ArrayList<BreakpointItem> list = new ArrayList<BreakpointItem>();
-    TreePath[] selectionPaths = getSelectionPaths();
+    TreePath[] selectionPaths = myTreeView.getSelectionPaths();
     if (selectionPaths == null || selectionPaths.length == 0) return list;
 
     for (TreePath selectionPath : selectionPaths) {
@@ -193,58 +196,12 @@ public class BreakpointItemsTree extends CheckboxTree {
   public void selectBreakpointItem(final BreakpointItem breakpoint) {
     BreakpointItemNode node = myNodes.get(breakpoint);
     if (node != null) {
-      TreeUtil.selectNode(this, node);
+      TreeUtil.selectNode(myTreeView, node);
     }
   }
 
-  private static class BreakpointsTreeCellRenderer extends CheckboxTreeCellRenderer {
-    @Override
-    public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof BreakpointItemNode) {
-        BreakpointItemNode node = (BreakpointItemNode)value;
-        BreakpointItem breakpoint = node.getBreakpointItem();
-        breakpoint.setupRenderer(getTextRenderer());
-      }
-      else if (value instanceof BreakpointsGroupNode) {
-        XBreakpointGroup group = ((BreakpointsGroupNode)value).getGroup();
-        getTextRenderer().setIcon(group.getIcon(expanded));
-        getTextRenderer().append(group.getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-      }
-    }
-  }
-
-  private static class BreakpointsGroupNode<G extends XBreakpointGroup> extends CheckedTreeNode {
-    private final G myGroup;
-    private final int myLevel;
-
-    private BreakpointsGroupNode(G group, int level) {
-      super(group);
-      myLevel = level;
-      setChecked(false);
-      myGroup = group;
-    }
-
-    public G getGroup() {
-      return myGroup;
-    }
-
-    public int getLevel() {
-      return myLevel;
-    }
-  }
-  
-  private static class BreakpointItemNode extends CheckedTreeNode {
-    private final BreakpointItem myBreakpoint;
-
-    private BreakpointItemNode(final BreakpointItem breakpoint) {
-      super(breakpoint);
-      myBreakpoint = breakpoint;
-      setChecked(breakpoint.isEnabled());
-    }
-
-    public BreakpointItem getBreakpointItem() {
-      return myBreakpoint;
-    }
+  public CheckedTreeNode getRoot() {
+    return myRoot;
   }
 
   private static class TreeNodeComparator<B extends XBreakpoint<?>> implements Comparator<TreeNode> {

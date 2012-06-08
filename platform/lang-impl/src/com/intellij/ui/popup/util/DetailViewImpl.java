@@ -26,8 +26,12 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +44,7 @@ import java.awt.*;
 * Time: 2:04 AM
 * To change this template use File | Settings | File Templates.
 */
-public class DetailViewImpl extends JPanel implements DetailView {
+public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder {
   private final Project myProject;
   private Editor myEditor;
   private ItemWrapper myWrapper;
@@ -51,6 +55,7 @@ public class DetailViewImpl extends JPanel implements DetailView {
   private JLabel myNothingToShow = new JLabel("Nothing to show");
   private JLabel myNothingToShowInEditor = new JLabel("Nothing to show");
   private RangeHighlighter myHighlighter;
+  private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
 
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
@@ -61,31 +66,21 @@ public class DetailViewImpl extends JPanel implements DetailView {
   }
 
   @Override
-  public void updateWithItem(ItemWrapper wrapper) {
-    if (myWrapper != wrapper) {
-      myWrapper = wrapper;
-      if (wrapper != null) {
-        wrapper.updateDetailView(this);
-      }
-      else {
-        clearEditor();
-        repaint();
-      }
-
-      revalidate();
-    }
-  }
-
-  @Override
   public void clearEditor() {
     if (getEditor() != null) {
       clearHightlighting();
       remove(getEditor().getComponent());
       EditorFactory.getInstance().releaseEditor(getEditor());
+      myEditorState = PreviewEditorState.EMPTY;
       setEditor(null);
       add(myNothingToShowInEditor, BorderLayout.CENTER);
       repaint();
     }
+  }
+
+  @Override
+  public PreviewEditorState getEditorState() {
+    return myEditorState;
   }
 
   @Override
@@ -104,7 +99,12 @@ public class DetailViewImpl extends JPanel implements DetailView {
   }
 
   @Override
-  public void navigateInPreviewEditor(VirtualFile file, LogicalPosition positionToNavigate, @Nullable TextAttributes lineAttributes) {
+  public void navigateInPreviewEditor(PreviewEditorState editorState) {
+    myEditorState = editorState;
+
+    final VirtualFile file = editorState.getFile();
+    final LogicalPosition positionToNavigate = editorState.getNavigate();
+    final TextAttributes lineAttributes = editorState.getAttributes();
     Document document = FileDocumentManager.getInstance().getDocument(file);
     Project project = myProject;
 
@@ -134,10 +134,9 @@ public class DetailViewImpl extends JPanel implements DetailView {
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
       clearHightlighting();
-      if (lineAttributes != null){
+      if (lineAttributes != null) {
         myHighlighter = getEditor().getMarkupModel().addLineHighlighter(positionToNavigate.line, HighlighterLayer.SELECTION - 1,
                                                                         lineAttributes);
-
       }
     }
     else {
@@ -187,5 +186,17 @@ public class DetailViewImpl extends JPanel implements DetailView {
       myDetailPanelWrapper.add(myNothingToShow);
     }
     myDetailPanel = panel;
+  }
+
+  final UserDataHolderBase myDataHolderBase = new UserDataHolderBase();
+
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myDataHolderBase.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myDataHolderBase.putUserData(key, value);
   }
 }

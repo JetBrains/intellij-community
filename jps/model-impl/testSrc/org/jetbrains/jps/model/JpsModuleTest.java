@@ -1,10 +1,8 @@
 package org.jetbrains.jps.model;
 
-import org.jetbrains.jps.model.impl.JpsProjectImpl;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
-import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
 
 import java.util.List;
 
@@ -74,32 +72,31 @@ public class JpsModuleTest extends JpsModelTestCase {
     m.getDependenciesList().getDependencies().get(0).remove();
     m.getDependenciesList().addModuleDependency(dep);
     modifiableModel.commit();
-    assertSame(library, assertOneElement(myDispatcher.retrieveRemoved(JpsLibraryDependency.class)).getLibraryReference().resolve());
+    assertOneElement(myDispatcher.retrieveRemoved(JpsLibraryDependency.class));
     assertSame(dep, assertOneElement(myDispatcher.retrieveAdded(JpsModuleDependency.class)).getModuleReference().resolve());
     assertSame(dep, assertInstanceOf(assertOneElement(module.getDependenciesList().getDependencies()), JpsModuleDependency.class).getModuleReference().resolve());
   }
 
   public void testCreateReferenceByModule() {
     final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
-    final JpsModuleReference reference = module.createReference(myModel.getProject());
+    final JpsModuleReference reference = module.createReference().asExternal(myModel);
     assertEquals("m", reference.getModuleName());
     assertSame(module, reference.resolve());
   }
 
   public void testCreateReferenceByName() {
-    final JpsProjectImpl project = myModel.getProject();
-    final JpsModuleReference reference = new JpsModuleReferenceImpl(myModel, "m", myDispatcher, project);
+    final JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference("m").asExternal(myModel);
     assertEquals("m", reference.getModuleName());
     assertNull(reference.resolve());
 
-    final JpsModule module = project.addModule(JpsJavaModuleType.INSTANCE, "m");
+    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
     assertSame(module, reference.resolve());
   }
 
   public void testSdkDependency() {
     JpsLibrary sdk = myModel.getGlobal().addLibrary(JpsJavaSdkType.INSTANCE, "sdk");
     final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
-    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk);
+    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
 
     final JpsSdkDependency dependency = assertInstanceOf(assertOneElement(module.getDependenciesList().getDependencies()), JpsSdkDependency.class);

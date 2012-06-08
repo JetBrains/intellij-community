@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -460,7 +460,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       else {
         s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + " found)";
       }
-      builder.setTitle(suggestSecondInvocation(options, handler, s));
+      builder.setTitle("<html>" + s + "</html>");
+      builder.setAdText(getSecondInvocationTitle(options, handler));
     }
 
     builder.setMovable(true).setResizable(true);
@@ -555,14 +556,24 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private static String suggestSecondInvocation(FindUsagesOptions options, FindUsagesHandler handler, String s) {
-    if (getShowUsagesShortcut() != null) {
-      GlobalSearchScope maximalScope = getMaximalScope(handler);
-      if (!notNullizeScope(options, handler.getProject()).equals(maximalScope)) {
-        s += "<br><small>Press " + KeymapUtil.getShortcutText(getShowUsagesShortcut()) +
-             " again to search in " + maximalScope.getDisplayName() + "</small>";
-      }
+    final String title = getSecondInvocationTitle(options, handler);
+
+    if (title != null) {
+        s += "<br><small>Press " + title + "</small>";
     }
     return "<html><body>" + s + "</body></html>";
+  }
+
+  @Nullable
+  private static String getSecondInvocationTitle(FindUsagesOptions options, FindUsagesHandler handler) {
+    if (getShowUsagesShortcut() != null) {
+       GlobalSearchScope maximalScope = getMaximalScope(handler);
+       if (!notNullizeScope(options, handler.getProject()).equals(maximalScope)) {
+         return "Press " + KeymapUtil.getShortcutText(getShowUsagesShortcut()) +
+              " again to search in " + maximalScope.getDisplayName();
+       }
+     }
+     return null;
   }
 
   private void searchEverywhere(FindUsagesOptions options,

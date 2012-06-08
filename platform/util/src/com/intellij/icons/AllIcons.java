@@ -641,7 +641,6 @@ public class AllIcons {
     public static final Icon Local = IconLoader.getIcon("/javaee/local.png"); 
     public static final Icon LocalHome = IconLoader.getIcon("/javaee/localHome.png"); 
     public static final Icon MessageBean = IconLoader.getIcon("/javaee/messageBean.png"); 
-    public static final Icon MessageBeanBig = IconLoader.getIcon("/javaee/messageBeanBig.png"); 
     public static final Icon PersistenceAttribute = IconLoader.getIcon("/javaee/persistenceAttribute.png"); 
     public static final Icon PersistenceEmbeddable = IconLoader.getIcon("/javaee/persistenceEmbeddable.png"); 
     public static final Icon PersistenceEntity = IconLoader.getIcon("/javaee/persistenceEntity.png"); 
@@ -653,7 +652,6 @@ public class AllIcons {
     public static final Icon PersistenceUnit = IconLoader.getIcon("/javaee/persistenceUnit.png"); 
     public static final Icon Remote = IconLoader.getIcon("/javaee/remote.png"); 
     public static final Icon SessionBean = IconLoader.getIcon("/javaee/sessionBean.png"); 
-    public static final Icon SessionBeanBig = IconLoader.getIcon("/javaee/sessionBeanBig.png"); 
     public static final Icon UpdateRunningApplication = IconLoader.getIcon("/javaee/updateRunningApplication.png"); 
     public static final Icon Web_xml = IconLoader.getIcon("/javaee/web_xml.png"); 
     public static final Icon WebModule = IconLoader.getIcon("/javaee/webModule.png"); 

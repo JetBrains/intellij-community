@@ -15,5 +15,7 @@ public interface JpsModel {
   @NotNull
   JpsModel createModifiableModel(@NotNull JpsEventDispatcher eventDispatcher);
 
+  void registerExternalReference(@NotNull JpsElementReference<?> reference);
+
   void commit();
 }

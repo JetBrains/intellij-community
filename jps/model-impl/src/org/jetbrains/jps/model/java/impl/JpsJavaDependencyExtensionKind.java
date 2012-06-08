@@ -9,16 +9,13 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 /**
  * @author nik
  */
-public class JpsJavaDependencyExtensionKind extends JpsElementKind<JpsJavaDependencyExtensionImpl>
-                                            implements JpsElementFactory<JpsJavaDependencyExtensionImpl> {
+public class JpsJavaDependencyExtensionKind extends JpsElementKind<JpsJavaDependencyExtensionImpl> implements JpsElementCreator<JpsJavaDependencyExtensionImpl> {
   public static final JpsJavaDependencyExtensionKind INSTANCE = new JpsJavaDependencyExtensionKind();
 
   @NotNull
   @Override
-  public JpsJavaDependencyExtensionImpl create(@NotNull JpsModel model,
-                                               @NotNull JpsEventDispatcher eventDispatcher,
-                                               JpsParentElement parent) {
-    return new JpsJavaDependencyExtensionImpl(eventDispatcher, parent, false, JpsJavaDependencyScope.COMPILE);
+  public JpsJavaDependencyExtensionImpl create() {
+    return new JpsJavaDependencyExtensionImpl(false, JpsJavaDependencyScope.COMPILE);
   }
 
   public static JpsJavaDependencyExtension getExtension(@NotNull JpsDependencyElement element) {

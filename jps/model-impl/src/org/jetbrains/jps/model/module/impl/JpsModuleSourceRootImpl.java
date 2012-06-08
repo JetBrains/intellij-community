@@ -15,16 +15,15 @@ public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSo
   private static final JpsTypedDataKind<JpsModuleSourceRootType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleSourceRootType<?>>();
   private String myUrl;
 
-  public JpsModuleSourceRootImpl(JpsModel model, JpsEventDispatcher eventDispatcher,
-                                 String url,
-                                 JpsModuleSourceRootType type, JpsParentElement parent) {
-    super(model, eventDispatcher, parent);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleSourceRootType<?>>(type, eventDispatcher, this));
+  public JpsModuleSourceRootImpl(String url,
+                                 JpsModuleSourceRootType type) {
+    super();
+    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleSourceRootType<?>>(type));
     myUrl = url;
   }
 
-  public JpsModuleSourceRootImpl(JpsModuleSourceRootImpl original, JpsModel model, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(original, model, dispatcher, parent);
+  private JpsModuleSourceRootImpl(JpsModuleSourceRootImpl original) {
+    super(original);
     myUrl = original.myUrl;
   }
 
@@ -51,7 +50,7 @@ public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSo
 
   @NotNull
   @Override
-  public JpsModuleSourceRootImpl createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsModuleSourceRootImpl(this, model, eventDispatcher, parent);
+  public JpsModuleSourceRootImpl createCopy() {
+    return new JpsModuleSourceRootImpl(this);
   }
 }

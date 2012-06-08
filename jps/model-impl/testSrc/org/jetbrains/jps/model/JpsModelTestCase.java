@@ -7,7 +7,7 @@ import org.jetbrains.jps.model.impl.JpsModelImpl;
  * @author nik
  */
 public abstract class JpsModelTestCase extends UsefulTestCase {
-  protected JpsModelImpl myModel;
+  protected JpsModel myModel;
   protected TestJpsEventDispatcher myDispatcher;
 
   public void setUp() throws Exception {
