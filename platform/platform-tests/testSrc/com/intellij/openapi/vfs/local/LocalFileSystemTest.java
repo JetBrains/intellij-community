@@ -292,7 +292,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     if (!SystemInfo.isWindows && !SystemInfo.isUnix) return;
 
     final boolean safeWrite = GeneralSettings.getInstance().isUseSafeWrite();
-    final File dir = FileUtil.createTempDirectory("hardlinks", "");
+    final File dir = FileUtil.createTempDirectory("hardlinks", "",false);
     try {
       GeneralSettings.getInstance().setUseSafeWrite(false);
 

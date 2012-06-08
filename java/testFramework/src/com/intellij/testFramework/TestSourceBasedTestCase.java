@@ -33,8 +33,8 @@ import java.io.File;
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTempDirectory = FileUtil.createTempDirectory(getTestName(true), "test");
-    myFilesToDelete.add(getTestContentFile());
+    myTempDirectory = FileUtil.createTempDirectory(getTestName(true), "test",false);
+    myFilesToDelete.add(myTempDirectory);
     final File testRoot = new File(getTestDataPath(), getTestPath());
     assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
 

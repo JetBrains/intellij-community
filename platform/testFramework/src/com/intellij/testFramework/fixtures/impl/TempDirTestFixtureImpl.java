@@ -164,7 +164,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
     try {
       if (myTempDir == null) {
         File th = getTempHome();
-        myTempDir = th != null ? FileUtil.createTempDirectory(th, "unitTest", null) : FileUtil.createTempDirectory("unitTest", null);
+        myTempDir = th != null ? FileUtil.createTempDirectory(th, "unitTest", null,false) : FileUtil.createTempDirectory("unitTest", null,false);
         myFilesToDelete.add(myTempDir);
       }
       return myTempDir;

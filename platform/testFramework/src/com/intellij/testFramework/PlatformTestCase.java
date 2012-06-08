@@ -53,6 +53,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
@@ -722,7 +723,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
-    final File tempDirectory = FileUtil.createTempDirectory(TEST_DIR_PREFIX + prefix, null);
+    final File tempDirectory = FileUtilRt.createTempDirectory(TEST_DIR_PREFIX + prefix, null, false);
     myFilesToDelete.add(tempDirectory);
     if (refresh) {
       getVirtualFile(tempDirectory);

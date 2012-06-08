@@ -18,6 +18,7 @@ package com.intellij.ide.caches;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 
 import java.io.IOException;
 
@@ -25,8 +26,6 @@ import java.io.IOException;
  * @author max
  */
 public class FileContent extends UserDataHolderBase {
-  private static final byte[] EMPTY_CONTENT = new byte[0];
-
   private final VirtualFile myVirtualFile;
   private byte[] myCachedBytes;
   private long myCachedLength = -1;
@@ -53,7 +52,7 @@ public class FileContent extends UserDataHolderBase {
   }
 
   public void setEmptyContent() {
-    myCachedBytes = EMPTY_CONTENT;
+    myCachedBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
     myCachedLength = 0;
   }
 

@@ -60,7 +60,7 @@ public class TestFileSystemItem {
     try {
       Assert.assertEquals("in " + relativePath, myName, file.getName());
       if (myArchive) {
-        final File dirForExtracted = FileUtil.createTempDirectory("extracted_archive", null);
+        final File dirForExtracted = FileUtil.createTempDirectory("extracted_archive", null,false);
         ZipUtil.extract(file, dirForExtracted, null);
         assertDirectoryEqual(dirForExtracted, relativePath);
         FileUtil.delete(dirForExtracted);
