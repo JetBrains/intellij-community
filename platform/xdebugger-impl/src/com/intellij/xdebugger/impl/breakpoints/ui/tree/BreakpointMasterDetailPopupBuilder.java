@@ -163,7 +163,7 @@ public class BreakpointMasterDetailPopupBuilder {
       @Nullable
       @Override
       public String getTitle() {
-        return myIsViewer ? null : "Breakpoints";
+        return "";
       }
 
       @Override
@@ -182,12 +182,9 @@ public class BreakpointMasterDetailPopupBuilder {
       }
 
       @Override
-      public void itemChosen(ItemWrapper item, Project project, JBPopup popup) {
-        if (!(item instanceof BreakpointItem)) {
-          return;
-        }
-        if (myCallback != null){
-          myCallback.breakpointChosen(project, (BreakpointItem)item,  popup);
+      public void itemChosen(ItemWrapper item, Project project, JBPopup popup, boolean withEnterOrDoubleClick) {
+        if (myCallback != null && item instanceof BreakpointItem && withEnterOrDoubleClick) {
+          myCallback.breakpointChosen(myProject, (BreakpointItem)item,  popup);
         }
       }
     };
@@ -203,7 +200,7 @@ public class BreakpointMasterDetailPopupBuilder {
     myTreeController.setDelegate(new BreakpointItemsTreeController.BreakpointItemsTreeDelegate() {
       @Override
       public void execute(BreakpointItem item) {
-        delegate.itemChosen(item, myProject, popup);
+        myCallback.breakpointChosen(myProject, item, popup);
       }
     });
 

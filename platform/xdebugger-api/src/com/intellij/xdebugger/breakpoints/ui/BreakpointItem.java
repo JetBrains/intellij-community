@@ -135,4 +135,6 @@ public abstract class BreakpointItem implements ItemWrapper {
   public int hashCode() {
     return getBreakpoint() != null ? getBreakpoint().hashCode() : 0;
   }
+
+  public abstract boolean navigate();
 }

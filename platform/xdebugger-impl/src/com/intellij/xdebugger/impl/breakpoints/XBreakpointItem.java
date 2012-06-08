@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
@@ -97,6 +98,16 @@ class XBreakpointItem extends BreakpointItem {
       new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
     propertiesPanel.loadProperties();
     panel.setDetailPanel(propertiesPanel.getMainPanel());
+  }
+
+  @Override
+  public boolean navigate() {
+    Navigatable navigatable = myBreakpoint.getNavigatable();
+    if (navigatable != null) {
+      navigatable.navigate(true);
+      return true;
+    }
+    return false;
   }
 
   private XBreakpointManagerImpl getManager() {

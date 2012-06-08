@@ -15,9 +15,7 @@
  */
 package com.intellij.ui.popup.util;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -148,12 +146,12 @@ public class MasterDetailPopupBuilder {
           public void run() {
             Object[] values = getSelectedItems();
             if (values.length == 1) {
-              myDelegate.itemChosen((ItemWrapper)values[0], myProject, myPopup);
+              myDelegate.itemChosen((ItemWrapper)values[0], myProject, myPopup, false);
             }
             else {
               for (Object value : values) {
                 if (value instanceof ItemWrapper) {
-                  myDelegate.itemChosen((ItemWrapper)value, myProject, myPopup);
+                  myDelegate.itemChosen((ItemWrapper)value, myProject, myPopup, false);
                 }
               }
             }
@@ -235,14 +233,20 @@ public class MasterDetailPopupBuilder {
     return null;
   }
 
-  public Object[] getSelectedItems() {
+  public ItemWrapper[] getSelectedItems() {
+    Object[] values = new Object[0];
     if (myChooserComponent instanceof JList) {
-      return ((JList)myChooserComponent).getSelectedValues();
+      values = ((JList)myChooserComponent).getSelectedValues();
+
     }
     else if (myChooserComponent instanceof JTree) {
-      return myDelegate.getSelectedItemsInTree();
+      values = myDelegate.getSelectedItemsInTree();
     }
-    return new Object[0];
+    ItemWrapper[] items = new ItemWrapper[values.length];
+    for (int i = 0; i < values.length; i++) {
+      items[i] = (ItemWrapper)values[i];
+    }
+    return items;
   }
 
   private void updateDetailViewLater() {
@@ -357,6 +361,16 @@ public class MasterDetailPopupBuilder {
         }
       }
     });
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        ItemWrapper[] items = getSelectedItems();
+        if (items.length > 0) {
+          myDelegate.itemChosen(items[0], myProject, myPopup, true);
+        }
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), list);
+
   }
 
   public MasterDetailPopupBuilder setDelegate(Delegate delegate) {
@@ -380,7 +394,7 @@ public class MasterDetailPopupBuilder {
 
     Object[] getSelectedItemsInTree();
 
-    void itemChosen(ItemWrapper item, Project project, JBPopup popup);
+    void itemChosen(ItemWrapper item, Project project, JBPopup popup, boolean withEnterOrDoubleClick);
   }
 
   public static class ListItemRenderer extends JPanel implements ListCellRenderer {

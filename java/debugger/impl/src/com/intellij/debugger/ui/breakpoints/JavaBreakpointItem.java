@@ -99,6 +99,15 @@ class JavaBreakpointItem extends BreakpointItem {
   }
 
   @Override
+  public boolean navigate() {
+    if (myBreakpoint instanceof BreakpointWithHighlighter) {
+      ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition().navigate(true);
+      return true;
+    }
+    return false;
+  }
+
+  @Override
   public boolean allowedToRemove() {
     return myBreakpointFactory != null && myBreakpointFactory.breakpointCanBeRemoved(myBreakpoint);
   }
