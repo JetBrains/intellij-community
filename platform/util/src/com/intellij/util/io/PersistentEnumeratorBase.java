@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -395,12 +396,21 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
       };
     } else {
       comparer = new OutputStream() {
-        int address = addr;
+        int base = addr;
+        int address = myKeyStorage.getPagedFileStorage().getOffsetInPage(addr);
         boolean same = true;
+        ByteBuffer buffer = myKeyStorage.getPagedFileStorage().getByteBuffer(addr, false);
+        final int myPageSize = myKeyStorage.getPagedFileStorage().myPageSize;
+
         @Override
         public void write(int b) throws IOException {
           if (same) {
-            same = address < myKeyStoreFileLength && myKeyStorage.get(address++) == (byte)b;
+            if (myPageSize == address && address < myKeyStoreFileLength) {    // reached end of current byte buffer
+              base += address;
+              buffer = myKeyStorage.getPagedFileStorage().getByteBuffer(base, false);
+              address = 0;
+            }
+            same = address < myKeyStoreFileLength && buffer.get(address++) == (byte)b;
           }
         }
 
