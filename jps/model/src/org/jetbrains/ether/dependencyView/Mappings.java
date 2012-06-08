@@ -78,6 +78,14 @@ public class Mappings {
   private IntObjectMultiMaplet<UsageRepr.Cluster> mySourceFileToUsages;
   private IntIntMaplet myClassToSourceFile;
 
+  private IntIntTransientMultiMaplet myRemovedSuperClasses;
+
+  private void registerRemovedSuperClass (final int aClass, final int superClass) {
+    assert (myRemovedSuperClasses != null);
+    myIsDifferentiated = true;
+    myRemovedSuperClasses.put(superClass, aClass);
+  }
+
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
     myIsDelta = true;
@@ -114,6 +122,8 @@ public class Mappings {
       myContext = new DependencyContext(myRootDir);
       myDebugS = myContext.getLogger(LOG);
     }
+
+    myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
     if (myIsDelta && myDeltaIsTransient) {
       myClassToSubclasses = new IntIntTransientMultiMaplet();
@@ -191,6 +201,10 @@ public class Mappings {
         createImplementation();
       }
     }
+  }
+
+  public IntIntTransientMultiMaplet getRemovedSuperClasses() {
+    return myRemovedSuperClasses;
   }
 
   private static class Option<X> {
@@ -651,10 +665,6 @@ public class Mappings {
           }
         });
       }
-    }
-
-    void affectAll(final int className, final Collection<File> affectedFiles) {
-      affectAll(className, affectedFiles, null);
     }
 
     void affectAll(final int className, final Collection<File> affectedFiles, final DependentFilesFilter filter) {
@@ -1533,6 +1543,16 @@ public class Mappings {
         final boolean interfacesChanged = !diff.interfaces().unchanged();
         final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
 
+        if (superClassChanged) {
+          myDelta.registerRemovedSuperClass(it.name, ((TypeRepr.ClassType)it.superClass).className);
+        }
+
+        if (interfacesChanged) {
+          for (final TypeRepr.AbstractType typ: diff.interfaces().removed()) {
+            myDelta.registerRemovedSuperClass(it.name, ((TypeRepr.ClassType)typ).className);
+          }
+        }
+
         if (superClassChanged || interfacesChanged || signatureChanged) {
           debug("Superclass changed: ", superClassChanged);
           debug("Interfaces changed: ", interfacesChanged);
@@ -1972,6 +1992,21 @@ public class Mappings {
               else {
                 mySourceFileToAnnotationUsages.remove(fileName);
               }
+              return true;
+            }
+          });
+
+          delta.getRemovedSuperClasses ().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+            @Override
+            public boolean execute(final int a, final TIntHashSet b) {
+              if (!compiledClasses.contains(a)) {
+                final TIntHashSet old = myClassToSubclasses.get(a);
+
+                old.removeAll(b.toArray());
+
+                myClassToSubclasses.replace(a, old);
+              }
+
               return true;
             }
           });
