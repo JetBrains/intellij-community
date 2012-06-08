@@ -20,13 +20,14 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -294,6 +295,7 @@ public class GrClassImplUtil {
     final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
 
+    LanguageLevel level = PsiUtil.getLanguageLevel(place);
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
       Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
       if (name != null) {
@@ -301,8 +303,9 @@ public class GrClassImplUtil {
         if (fieldInfo != null) {
           final PsiField field = (PsiField)fieldInfo.getElement();
           if (!isSameDeclaration(place, field)) { //the same variable declaration
-            final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
-              .obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, place, factory);
+            final PsiSubstitutor finalSubstitutor =
+              PsiClassImplUtil.obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, factory,
+                                                      level);
             if (!processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
@@ -311,8 +314,9 @@ public class GrClassImplUtil {
         for (CandidateInfo info : fieldsMap.values()) {
           final PsiField field = (PsiField)info.getElement();
           if (!isSameDeclaration(place, field)) {  //the same variable declaration
-            final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
-              .obtainFinalSubstitutor(field.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
+            final PsiSubstitutor finalSubstitutor =
+              PsiClassImplUtil.obtainFinalSubstitutor(field.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory,
+                                                      level);
             if (!processor.execute(field, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
@@ -327,8 +331,9 @@ public class GrClassImplUtil {
           for (CandidateInfo info : list) {
             PsiMethod method = (PsiMethod)info.getElement();
             if (!isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
-              final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
-                .obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
+              final PsiSubstitutor finalSubstitutor =
+                PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory,
+                                                        level);
               if (!processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
                 return false;
               }
@@ -342,8 +347,9 @@ public class GrClassImplUtil {
           for (CandidateInfo info : byName) {
             PsiMethod method = (PsiMethod)info.getElement();
             if (!isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
-              final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
-                .obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
+              final PsiSubstitutor finalSubstitutor =
+                PsiClassImplUtil.obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, factory,
+                                                        level);
               if (!processor.execute(method, state.put(PsiSubstitutor.KEY, finalSubstitutor))) {
                 return false;
               }

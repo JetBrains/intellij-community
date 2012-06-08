@@ -220,15 +220,14 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   private void resolveAllQualifiers() {
-    // to avoid SOE
+    // to avoid SOE, resolve all qualifiers starting from the innermost
     PsiElement qualifier = getQualifier();
     if (qualifier == null) return;
     final ResolveCache resolveCache = ResolveCache.getInstance(getProject());
-    //resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode)
     qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
-        if (!(expression instanceof PsiReferenceExpressionImpl) || resolveCache.isCached(expression, true, false)) {
+        if (!(expression instanceof PsiReferenceExpressionImpl) || resolveCache.isCached(expression, true, false, true)) {
           return;
         }
         visitElement(expression);
@@ -238,17 +237,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       protected void elementFinished(PsiElement element) {
         if (!(element instanceof PsiReferenceExpressionImpl)) return;
         PsiReferenceExpressionImpl expression = (PsiReferenceExpressionImpl)element;
-        //IElementType type = expression.getTreeParent().getElementType();
-        //expression.resolve();
-        ResolveResult[] results = resolveCache.resolveWithCaching(expression, OurGenericsResolver.INSTANCE, false, false);
-        //System.out.println("resolveWithCaching "+element);
-        //if (!resolveCache.isCached(expression, element.isPhysical(), false)) {
-        //  assert resolveCache.isCached(expression, element.isPhysical(), false);
-        //}
-        assert results != null;
+        resolveCache.resolveWithCaching(expression, OurGenericsResolver.INSTANCE, false, false);
       }
     });
-    int i = 0;
   }
 
   @NotNull
@@ -470,7 +461,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     final String qualifiedName = element.getQualifiedName();
     return qualifiedName != null &&
            qualifiedName.length() <= 2 &&
-           qualifiedName.length() > 0 &&
+           !qualifiedName.isEmpty() &&
            Character.isLowerCase(qualifiedName.charAt(0));
   }
 
@@ -554,7 +545,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
     else if (element instanceof PsiPackage) {
       final String qName = ((PsiPackage)element).getQualifiedName();
-      if (qName.length() == 0) {
+      if (qName.isEmpty()) {
         throw new IncorrectOperationException();
       }
       final PsiExpression ref = parserFacade.createExpressionFromText(qName, this);

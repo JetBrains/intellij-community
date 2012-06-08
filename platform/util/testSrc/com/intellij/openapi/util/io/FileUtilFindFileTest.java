@@ -36,7 +36,7 @@ public class FileUtilFindFileTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    myTempFile = FileUtil.createTempDirectory("tEF", ""); //NON-NLS
+    myTempFile = FileUtil.createTempDirectory("tEF", "",false); //NON-NLS
     myFirstFile = new File(myTempFile, "first");
     mySecondFile = new File(myTempFile, "second"); //NON-NLS
     assertTrue(myFirstFile.createNewFile());

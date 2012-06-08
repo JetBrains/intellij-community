@@ -87,7 +87,7 @@ import java.util.List;
                                                        final String rootPath,
                                                        final Collection<File> filesToDelete,
                                                        final boolean addProjectRoots) throws Exception {
-    File dir = FileUtil.createTempDirectory(tempName, null);
+    File dir = FileUtil.createTempDirectory(tempName, null,false);
     filesToDelete.add(dir);
 
     final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));

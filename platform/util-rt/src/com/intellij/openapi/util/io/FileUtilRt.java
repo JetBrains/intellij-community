@@ -37,6 +37,7 @@ public class FileUtilRt {
   private static final LoggerRt LOG = LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
 
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
+    @Override
     protected byte[] initialValue() {
       return new byte[1024 * 20];
     }
@@ -130,19 +131,31 @@ public class FileUtilRt {
 
   @NotNull
   public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return createTempDirectory(prefix, suffix, true);
+  }
+
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.mkdir();
-    file.deleteOnExit();
+    if (deleteOnExit) {
+      file.deleteOnExit();
+    }
     return file;
   }
 
   @NotNull
-  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
-    File file = doCreateTempFile(prefix, suffix, dir);
+  public static File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return createTempDirectory(dir, prefix, suffix,true);
+  }
+  @NotNull
+  public static File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,boolean deleteOnExit) throws IOException {
+    File file = doCreateTempFile(dir, prefix, suffix);
     file.delete();
     file.mkdir();
-    file.deleteOnExit();
+    if (deleteOnExit) {
+      file.deleteOnExit();
+    }
     return file;
   }
 
@@ -157,7 +170,7 @@ public class FileUtilRt {
                                     @Nullable @NonNls String suffix,
                                     final boolean create,
                                     boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(prefix, suffix, dir);
+    File file = doCreateTempFile(dir, prefix, suffix);
     file.delete();
     if (create) {
       file.createNewFile();
@@ -186,11 +199,11 @@ public class FileUtilRt {
 
   @NotNull
   private static File doCreateTempFile(String prefix, String suffix) throws IOException {
-    return doCreateTempFile(prefix, suffix, new File(getTempDirectory()));
+    return doCreateTempFile(new File(getTempDirectory()), prefix, suffix);
   }
 
   @NotNull
-  private static File doCreateTempFile(@NotNull String prefix, String suffix, final File dir) throws IOException {
+  private static File doCreateTempFile(@NotNull File dir, @NotNull String prefix, String suffix) throws IOException {
     dir.mkdirs();
 
     if (prefix.length() < 3) {

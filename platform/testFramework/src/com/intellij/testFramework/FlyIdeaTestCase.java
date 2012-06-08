@@ -34,7 +34,7 @@ public abstract class FlyIdeaTestCase extends TestCase {
 
   public File getTempDir() throws IOException {
     if (myTempDir == null) {
-      myTempDir = FileUtil.createTempDirectory(getName(), getClass().getName());
+      myTempDir = FileUtil.createTempDirectory(getName(), getClass().getName(),false);
     }
 
     return myTempDir;
