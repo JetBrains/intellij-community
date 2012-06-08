@@ -501,7 +501,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
            !isOverriddenOrOverrides(method)) &&
           !method.hasModifierProperty(PsiModifier.NATIVE) &&
           !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
-          !PsiClassImplUtil.isMainMethod(method)) {
+          !PsiClassImplUtil.isMainOrPremainMethod(method)) {
         if (UnusedSymbolLocalInspection.isInjected(method)) return null;
         HighlightInfo highlightInfo = checkUnusedParameter(parameter, identifier, progress);
         if (highlightInfo != null) {
