@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.*;
  */
 public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implements JpsElement, JpsElement.BulkModificationSupport<Self> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.model.impl.JpsElementBase");
-  protected JpsElementBase<?> myParent;
+  protected JpsElementBase myParent;
 
   protected JpsElementBase() {
   }
@@ -60,7 +60,7 @@ public abstract class JpsElementBase<Self extends JpsElementBase<Self>> implemen
 
   public abstract void applyChanges(@NotNull Self modified);
 
-  public JpsElementBase<?> getParent() {
+  public JpsElementBase getParent() {
     return myParent;
   }
 }

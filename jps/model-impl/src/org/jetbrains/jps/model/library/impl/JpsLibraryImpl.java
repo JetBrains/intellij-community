@@ -66,6 +66,7 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl,
   }
 
   public JpsElementCollectionImpl<JpsLibraryImpl> getParent() {
+    //noinspection unchecked
     return (JpsElementCollectionImpl<JpsLibraryImpl>)myParent;
   }
 
