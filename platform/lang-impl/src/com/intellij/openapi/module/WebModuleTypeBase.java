@@ -28,7 +28,7 @@ import javax.swing.*;
 public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   @NonNls public static final String WEB_MODULE = "WEB_MODULE";
 
-  private static final Icon MODULE_ICON = AllIcons.Javaee.WebModuleBig;
+  private static final Icon MODULE_ICON = AllIcons.Modules.Types.WebModule;
   private static final Icon MODULE_NODE_ICON_OPEN = AllIcons.Nodes.ModuleOpen;
   private static final Icon MODULE_NODE_ICON_CLOSED = AllIcons.Nodes.ModuleClosed;
 

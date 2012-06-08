@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
-  private static final Icon ICON = AllIcons.Modules.EmptyProjectType;
+  private static final Icon ICON = AllIcons.Modules.Types.EmptyProjectType;
   @NonNls public static final String EMPTY_MODULE = "EMPTY_MODULE";
   //private static final EmptyModuleType ourInstance = new EmptyModuleType();
 

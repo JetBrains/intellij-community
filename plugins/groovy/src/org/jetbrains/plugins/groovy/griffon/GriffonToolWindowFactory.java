@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.Icons;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.mvc.projectView.*;
@@ -75,17 +75,17 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
     final PsiDirectory testsUnit = findDirectory(project, root, "test/unit");
     if (testsUnit != null) {
       result.add(
-        new TestsTopLevelDirectoryNode(module, testsUnit, viewSettings, "Unit Tests", Icons.TEST_SOURCE_FOLDER, Icons.TEST_SOURCE_FOLDER));
+        new TestsTopLevelDirectoryNode(module, testsUnit, viewSettings, "Unit Tests", PlatformIcons.TEST_SOURCE_FOLDER, PlatformIcons.TEST_SOURCE_FOLDER));
     }
     final PsiDirectory testsIntegration = findDirectory(project, root, "test/integration");
     if (testsIntegration != null) {
-      result.add(new TestsTopLevelDirectoryNode(module, testsIntegration, viewSettings, "Integration Tests", Icons.TEST_SOURCE_FOLDER,
-                                                Icons.TEST_SOURCE_FOLDER));
+      result.add(new TestsTopLevelDirectoryNode(module, testsIntegration, viewSettings, "Integration Tests", PlatformIcons.TEST_SOURCE_FOLDER,
+                                                PlatformIcons.TEST_SOURCE_FOLDER));
     }
     final PsiDirectory testsShared = findDirectory(project, root, "test/shared");
     if (testsShared != null) {
-      result.add(new TestsTopLevelDirectoryNode(module, testsShared, viewSettings, "Shared Test Sources", Icons.TEST_SOURCE_FOLDER,
-                                                Icons.TEST_SOURCE_FOLDER));
+      result.add(new TestsTopLevelDirectoryNode(module, testsShared, viewSettings, "Shared Test Sources", PlatformIcons.TEST_SOURCE_FOLDER,
+                                                PlatformIcons.TEST_SOURCE_FOLDER));
     }
 
     // add additional sources provided by plugins
