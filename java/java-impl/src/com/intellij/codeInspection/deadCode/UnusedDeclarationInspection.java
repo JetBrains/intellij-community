@@ -439,7 +439,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   public boolean isEntryPoint(@NotNull PsiElement element) {
     final Project project = element.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    if (element instanceof PsiMethod && isAddMainsEnabled() && PsiClassImplUtil.isMainMethod((PsiMethod)element)) {
+    if (element instanceof PsiMethod && isAddMainsEnabled() && PsiClassImplUtil.isMainOrPremainMethod((PsiMethod)element)) {
       return true;
     }
     if (element instanceof PsiClass) {

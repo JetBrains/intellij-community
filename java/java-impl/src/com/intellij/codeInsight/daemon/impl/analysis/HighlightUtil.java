@@ -422,19 +422,32 @@ public class HighlightUtil {
     if (rType == null) return null;
 
     HighlightInfo highlightInfo = checkAssignability(lType, rType, rExpr, assignment);
-    if (highlightInfo != null) {
-      PsiVariable leftVar = null;
-      if (lExpr instanceof PsiReferenceExpression) {
-        PsiElement element = ((PsiReferenceExpression)lExpr).resolve();
-        if (element instanceof PsiVariable) {
-          leftVar = (PsiVariable)element;
-        }
-      }
-      if (leftVar != null) {
-        registerChangeVariableTypeFixes(leftVar, rType, highlightInfo);
-      }
+    if (highlightInfo == null) {
+      return null;
     }
+
+    registerChangeVariableTypeFixes(lExpr, rType, highlightInfo);
+    if (lType != null) {
+      registerChangeVariableTypeFixes(rExpr, lType, highlightInfo);
+    }
+
     return highlightInfo;
+  }
+
+  private static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,
+                                                      @NotNull PsiType type,
+                                                      @NotNull HighlightInfo highlightInfo) {
+    if (!(expression instanceof  PsiReferenceExpression)){
+      return;
+    }
+
+    final PsiElement element = ((PsiReferenceExpression)expression).resolve();
+
+    if (element == null || !(element instanceof PsiVariable)){
+      return;
+    }
+
+    registerChangeVariableTypeFixes((PsiVariable)element, type, highlightInfo);
   }
 
   private static boolean isCastIntentionApplicable(@NotNull PsiExpression expression, @Nullable PsiType toType) {

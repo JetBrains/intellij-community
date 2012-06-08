@@ -19,36 +19,36 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-import static org.junit.Assert.assertTrue;
-
 public class TempFiles {
   private final Collection<File> myFilesToDelete;
 
-  public TempFiles(Collection<File> filesToDelete) {
+  public TempFiles(@NotNull Collection<File> filesToDelete) {
     myFilesToDelete = filesToDelete;
   }
 
   @Nullable
-  public VirtualFile createVFile(String prefix) {
+  public VirtualFile createVFile(@NotNull String prefix) {
     return getVFileByFile(createTempFile(prefix));
   }
 
   @Nullable
-  public VirtualFile createVFile(String prefix, String postfix) {
+  public VirtualFile createVFile(@NotNull String prefix, String postfix) {
     return getVFileByFile(createTempFile(prefix, postfix));
   }
 
-  public File createTempFile(String prefix) {
+  public File createTempFile(@NotNull String prefix) {
     return createTempFile(prefix, "_Temp_File_");
   }
 
-  public File createTempFile(String prefix, String postfix) {
+  public File createTempFile(@NotNull String prefix, String postfix) {
     try {
       File tempFile = FileUtil.createTempFile(prefix, postfix);
       tempFileCreated(tempFile);
@@ -60,13 +60,12 @@ public class TempFiles {
     }
   }
 
-  private void tempFileCreated(File tempFile) {
+  private void tempFileCreated(@NotNull File tempFile) {
     myFilesToDelete.add(tempFile);
-    tempFile.deleteOnExit();
   }
 
   @Nullable
-  public static VirtualFile getVFileByFile(File tempFile) {
+  public static VirtualFile getVFileByFile(@NotNull File tempFile) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
   }
 
@@ -74,9 +73,9 @@ public class TempFiles {
     return createTempDir("dir");
   }
 
-  private File createTempDir(String prefix) {
+  private File createTempDir(@NotNull String prefix) {
     try {
-      File dir = FileUtil.createTempDirectory(prefix, "test");
+      File dir = FileUtil.createTempDirectory(prefix, "test",false);
       tempFileCreated(dir);
       getVFileByFile(dir);
       return dir;
@@ -92,20 +91,22 @@ public class TempFiles {
   }
 
   @Nullable
-  public VirtualFile createTempVDir(String prefix) {
+  public VirtualFile createTempVDir(@NotNull String prefix) {
     return getVFileByFile(createTempDir(prefix));
   }
 
   public String createTempPath() {
     File tempFile = createTempFile("xxx");
     String absolutePath = tempFile.getAbsolutePath();
-    assertTrue(absolutePath, tempFile.delete());
+    Assert.assertTrue(absolutePath, tempFile.delete());
     return absolutePath;
   }
 
   public void deleteAll() {
     for (File file : myFilesToDelete) {
-      FileUtil.delete(file);
+      if (!FileUtil.delete(file)) {
+        file.deleteOnExit();
+      }
     }
   }
 

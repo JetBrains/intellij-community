@@ -74,5 +74,6 @@
     <iconProvider implementation="com.intellij.util.xml.DomFileIconProvider" id="domFileDefault" order="last"/>
 
     <patterns.patternClass className="com.intellij.patterns.DomPatterns" alias="dom"/>
+    <xmlStructureViewBuilderProvider implementation="com.intellij.util.xml.structure.DomStructureViewBuilderProvider" order="last"/>
   </extensions>
 </idea-plugin>

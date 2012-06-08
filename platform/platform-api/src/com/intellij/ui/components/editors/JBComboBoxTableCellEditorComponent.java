@@ -16,6 +16,7 @@
 package com.intellij.ui.components.editors;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -150,7 +151,14 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
           myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
           myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));  // force repaint
         }
-      })      
+      })
+      .setCancelCallback(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          TableUtil.stopEditing(myTable);
+          return true;
+        }
+      })
       .createPopup()
       .show(new RelativePoint(myTable, point));
   }

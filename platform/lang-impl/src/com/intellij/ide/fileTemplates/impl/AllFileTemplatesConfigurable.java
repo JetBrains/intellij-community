@@ -66,7 +66,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
   private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
   private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
-  private static final Icon ourIcon = AllIcons.General.FileTemplates;
 
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;

@@ -27,7 +27,7 @@ public class LanguageStructureViewBuilder extends LanguageExtension<PsiStructure
   public static final LanguageStructureViewBuilder INSTANCE = new LanguageStructureViewBuilder();
 
   private LanguageStructureViewBuilder() {
-    super("com.intellij.lang.psiStructureViewFactory");
+    super(PsiStructureViewFactory.EP_NAME);
   }
 
   @Nullable

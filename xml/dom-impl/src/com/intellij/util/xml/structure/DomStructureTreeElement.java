@@ -64,6 +64,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
     final ArrayList<TreeElement> result = new ArrayList<TreeElement>();
     final DomElementVisitor elementVisitor = new DomElementVisitor() {
       public void visitDomElement(final DomElement element) {
+        if (element instanceof GenericDomValue) return;
         final DomService.StructureViewMode viewMode = myDescriptor.fun(element);
         switch (viewMode) {
           case SHOW:

@@ -22,7 +22,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -39,28 +39,28 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.xml.refactoring.XmlTagInplaceRenamer;
 import org.jetbrains.android.AndroidFileTemplateProvider;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class CreateTypedResourceFileAction extends CreateElementActionBase {
-  private static final String ROOT_TAG_PROPERTY = "ROOT_TAG";
+  static final String ROOT_TAG_PROPERTY = "ROOT_TAG";
 
   private final String myResourceType;
   private final String myResourcePresentableName;
-  private final String myDefaultRootTag;
+  protected final String myDefaultRootTag;
   private final boolean myValuesResourceFile;
   private final boolean myChooseTagName;
-
-  public CreateTypedResourceFileAction(@NotNull String presentableName, @NotNull String resourceType, @NotNull String defaultRootTag) {
-    this(presentableName, resourceType, defaultRootTag, false, true);
-  }
 
   public CreateTypedResourceFileAction(@NotNull String resourcePresentableName,
                                        @NotNull String resourceType,
@@ -84,25 +84,32 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   @Override
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
     MyInputValidator validator = new MyInputValidator(project, directory);
-    Messages.showInputDialog(project, AndroidBundle.message("new.file.dialog.text"), getCommandName(), Messages.getQuestionIcon(), "", validator);
-    return validator.getCreatedElements();
+    Messages.showInputDialog(project, AndroidBundle.message("new.file.dialog.text"),
+                             AndroidBundle.message("new.typed.resource.dialog.title", myResourcePresentableName),
+                             Messages.getQuestionIcon(), "", validator);
+    return PsiElement.EMPTY_ARRAY;
   }
 
   @NotNull
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+    return doCreate(newName, directory, myDefaultRootTag, myChooseTagName);
+  }
+
+  PsiElement[] doCreate(String newName, PsiDirectory directory, String rootTagName, boolean chooseTagName) throws Exception {
     FileTemplateManager manager = FileTemplateManager.getInstance();
     String templateName = getTemplateName();
     FileTemplate template = manager.getJ2eeTemplate(templateName);
     Properties properties = new Properties();
     if (!myValuesResourceFile) {
-      properties.setProperty(ROOT_TAG_PROPERTY, myDefaultRootTag);
+      properties.setProperty(ROOT_TAG_PROPERTY, rootTagName);
     }
     PsiElement createdElement = FileTemplateUtil.createFromTemplate(template, newName, properties, directory);
     assert createdElement instanceof XmlFile;
     final XmlFile file = (XmlFile)createdElement;
-    PsiNavigateUtil.navigate(file);
-    if (myChooseTagName) {
+    doNavigate(file);
+
+    if (chooseTagName) {
       XmlDocument document = file.getDocument();
       if (document != null) {
         XmlTag rootTag = document.getRootTag();
@@ -120,6 +127,10 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
     return new PsiElement[]{createdElement};
   }
 
+  protected void doNavigate(XmlFile file) {
+    PsiNavigateUtil.navigate(file);
+  }
+
   private String getTemplateName() {
     if (myValuesResourceFile) {
       return AndroidFileTemplateProvider.VALUE_RESOURCE_FILE_TEMPLATE;
@@ -132,13 +143,36 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
 
   @Override
   protected boolean isAvailable(DataContext context) {
-    if (!super.isAvailable(context)) return false;
-    final PsiElement element = (PsiElement)context.getData(DataKeys.PSI_ELEMENT.getName());
+    return super.isAvailable(context) && doIsAvailable(context, myResourceType);
+  }
+
+  public boolean isChooseTagName() {
+    return myChooseTagName;
+  }
+
+  @NotNull
+  public List<String> getAllowedTagNames(@NotNull AndroidFacet facet) {
+    return Collections.singletonList(getDefaultRootTag());
+  }
+
+  @NotNull
+  protected final List<String> getSortedAllowedTagNames(@NotNull AndroidFacet facet) {
+    final List<String> result = new ArrayList<String>(getAllowedTagNames(facet));
+    Collections.sort(result);
+    return result;
+  }
+
+  public String getDefaultRootTag() {
+    return myDefaultRootTag;
+  }
+
+  static boolean doIsAvailable(DataContext context, final String resourceType) {
+    final PsiElement element = (PsiElement)context.getData(LangDataKeys.PSI_ELEMENT.getName());
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         PsiElement e = element;
         while (e != null) {
-          if (e instanceof PsiDirectory && AndroidResourceUtil.isResourceSubdirectory((PsiDirectory)e, myResourceType)) {
+          if (e instanceof PsiDirectory && AndroidResourceUtil.isResourceSubdirectory((PsiDirectory)e, resourceType)) {
             return true;
           }
           e = e.getParent();

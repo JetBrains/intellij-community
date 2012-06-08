@@ -19,12 +19,10 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.android.dom.AndroidDomExtender;
 import org.jetbrains.android.dom.animation.AndroidAnimationUtils;
 import org.jetbrains.android.dom.animation.AnimationDomFileDescription;
 import org.jetbrains.android.dom.animator.AndroidAnimatorUtil;
@@ -32,17 +30,16 @@ import org.jetbrains.android.dom.animator.AnimatorDomFileDescription;
 import org.jetbrains.android.dom.color.ColorDomFileDescription;
 import org.jetbrains.android.dom.drawable.AndroidDrawableDomUtil;
 import org.jetbrains.android.dom.drawable.DrawableStateListDomFileDescription;
+import org.jetbrains.android.dom.layout.AndroidLayoutUtil;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.dom.xml.AndroidXmlResourcesUtil;
 import org.jetbrains.android.dom.xml.XmlResourceDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author coyote
@@ -68,15 +65,7 @@ public class AndroidCompletionContributor extends CompletionContributor {
             return false;
           }
           else if (LayoutDomFileDescription.isLayoutFile(xmlFile)) {
-            resultSet.addElement(LookupElementBuilder.create("view"));
-            resultSet.addElement(LookupElementBuilder.create("merge"));
-            Map<String, PsiClass> viewClassMap = AndroidDomExtender.getViewClassMap(facet);
-            for (String tagName : viewClassMap.keySet()) {
-              final PsiClass viewClass = viewClassMap.get(tagName);
-              if (!AndroidUtils.isAbstract(viewClass)) {
-                resultSet.addElement(LookupElementBuilder.create(tagName));
-              }
-            }
+            addAll(AndroidLayoutUtil.getPossibleRoots(facet), resultSet);
             return false;
           }
           else if (AnimationDomFileDescription.isAnimationFile(xmlFile)) {

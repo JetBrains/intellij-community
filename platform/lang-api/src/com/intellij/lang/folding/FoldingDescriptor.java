@@ -94,12 +94,12 @@ public class FoldingDescriptor {
                            @Nullable FoldingGroup group,
                            Set<Object> dependencies,
                            boolean neverExpands) {
-    assert range.getStartOffset() + 1 <= range.getEndOffset() : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
+    assert range.getStartOffset() + 1 < range.getEndOffset() : range + ", text: " + node.getText() + ", language = " + node.getPsi().getLanguage();
     myElement = node;
     ProperTextRange.assertProperRange(range);
     myRange = range;
     myGroup = group;
-    assert getRange().getLength() >= 1 : "range:" + getRange();
+    assert getRange().getLength() >= 2 : "range:" + getRange();
     myDependencies = dependencies;
     myNeverExpands = neverExpands;
   }

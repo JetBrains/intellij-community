@@ -281,24 +281,21 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         return NULL_ID;
       }
 
-      int indexNodeValueAddress = hasMapping ? myResultBuf[0]:0;
+      final int indexNodeValueAddress = hasMapping ? myResultBuf[0]:0;
       int collisionAddress = NULL_ID;
-      Data existingData = null;
+      boolean hasExistingData = false;
 
       if (!myInlineKeysNoMapping) {
         collisionAddress = NULL_ID;
 
         if (indexNodeValueAddress > 0) {
           // we found reference to no dupe key
-          Data candidate = valueOf(indexNodeValueAddress);
-          if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
-
-          if (myDataDescriptor.isEqual(value, candidate)) {
+          if (isKeyAtIndex(value, indexNodeValueAddress)) {
             if (!saveNewValue) {
               ++myExistingKeysEnumerated;
               return indexNodeValueAddress;
             }
-            existingData = candidate;
+            hasExistingData = true;
           }
 
           collisionAddress = indexNodeValueAddress;
@@ -307,13 +304,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
           while (true) {
             final int address = myStorage.getInt(collisionAddress);
-            Data candidate = valueOf(address);
-            if (myDataDescriptor.isEqual(value, candidate)) {
+            if (isKeyAtIndex(value, address)) {
               if (!saveNewValue) return address;
-              existingData = candidate;
+              hasExistingData = true;
               break;
             }
-            if (IntToIntBtree.doSanityCheck) IntToIntBtree.myAssert(myDataDescriptor.getHashCode(candidate) == valueHC);
 
             int newCollisionAddress = myStorage.getInt(collisionAddress + COLLISION_OFFSET);
             if (newCollisionAddress == 0) break;
@@ -325,7 +320,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       } else {
         if (hasMapping) {
           if(!saveNewValue) return indexNodeValueAddress;
-          existingData = value;
+          hasExistingData = true;
         }
       }
 
@@ -344,7 +339,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
 
       if (collisionAddress != NULL_ID) {
-        if (existingData != null) {
+        if (hasExistingData) {
           if (indexNodeValueAddress > 0) {
             btree.put(valueHC, newValueId);
           } else {

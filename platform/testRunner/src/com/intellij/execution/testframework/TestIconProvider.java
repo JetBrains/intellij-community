@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
@@ -36,7 +37,7 @@ public class TestIconProvider extends IconProvider {
     for (TestFramework framework : testFrameworks) {
       try {
         if (framework.isIgnoredMethod(element)) {
-          final Icon ignoredTestIcon = TestsUIUtil.loadIcon("ignoredTest");
+          final Icon ignoredTestIcon = AllIcons.RunConfigurations.IgnoredTest;
           final LayeredIcon icon = new LayeredIcon(ignoredTestIcon, PlatformIcons.PUBLIC_ICON);
           icon.setIcon(PlatformIcons.PUBLIC_ICON, 1, ignoredTestIcon.getIconWidth(), 0);
           return icon;
@@ -48,7 +49,7 @@ public class TestIconProvider extends IconProvider {
     for (TestFramework framework : testFrameworks) {
       try {
         if (framework.isTestMethod(element)) {
-          final LayeredIcon mark = new LayeredIcon(PlatformIcons.METHOD_ICON, TestsUIUtil.loadIcon("testMark"), PlatformIcons.PUBLIC_ICON);
+          final LayeredIcon mark = new LayeredIcon(PlatformIcons.METHOD_ICON, AllIcons.RunConfigurations.TestMark, PlatformIcons.PUBLIC_ICON);
           mark.setIcon(PlatformIcons.PUBLIC_ICON, 2, PlatformIcons.METHOD_ICON.getIconWidth(), 0);
           return mark;
         }

@@ -42,7 +42,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Alarm;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
@@ -63,7 +62,7 @@ import java.util.Set;
 public class AbstractPopup implements JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
-  private static final Image ourMacCorner = ImageLoader.loadFromResource("/general/macCorner.png");
+  private static final Icon ourMacCorner = AllIcons.General.MacCorner;
   private static final Object SUPPRESS_MAC_CORNER = new Object();
   public static final String SHOW_HINTS = "ShowHints";
 
@@ -897,7 +896,7 @@ public class AbstractPopup implements JBPopup {
         SwingUtilities.convertPointToScreen(point, e.getComponent());
 
         final Dimension dimension = myContent.getSize();
-        dimension.height += myResizable && isToDrawMacCorner() ? ourMacCorner.getHeight(myContent) : 4;
+        dimension.height += myResizable && isToDrawMacCorner() ? ourMacCorner.getIconHeight() : 4;
         dimension.width += 4;
         Point locationOnScreen = myContent.getLocationOnScreen();
         final Rectangle bounds = new Rectangle(new Point(locationOnScreen.x - 2, locationOnScreen.y - 2), dimension);
@@ -1214,10 +1213,9 @@ public class AbstractPopup implements JBPopup {
       super.paint(g);
 
       if (myResizable && myDrawMacCorner) {
-        g.drawImage(ourMacCorner,
-                    getX() + getWidth() - ourMacCorner.getWidth(this),
-                    getY() + getHeight() - ourMacCorner.getHeight(this),
-                    this);
+        ourMacCorner.paintIcon(this, g,
+                               getX() + getWidth() - ourMacCorner.getIconWidth(),
+                               getY() + getHeight() - ourMacCorner.getIconHeight());
       }
     }
 

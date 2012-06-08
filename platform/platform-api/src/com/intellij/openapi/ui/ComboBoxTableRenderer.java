@@ -25,6 +25,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.EventListenerList;
@@ -54,6 +55,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   public ComboBoxTableRenderer(final T[] values) {
     myValues = values;
     setFont(UIUtil.getButtonFont());
+    setBorder(new EmptyBorder(0, 5, 0, 5));
   }
 
   @Override

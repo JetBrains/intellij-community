@@ -17,6 +17,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +47,12 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   public TailType myTailType;
 
-  public String expectedName;
+  @NotNull public NullableComputable<String> expectedName = new NullableComputable<String>() {
+    @Override
+    public String compute() {
+      return null;
+    }
+  };
   private PsiMethod myCalledMethod;
 
 

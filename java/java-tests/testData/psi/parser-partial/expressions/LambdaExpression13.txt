@@ -1,0 +1,21 @@
+PsiJavaFile:LambdaExpression13.java
+  PsiLambdaExpression:<T>t -> t
+    PsiTypeParameterList
+      PsiJavaToken:LT('<')
+      PsiTypeParameter:T
+        PsiIdentifier:T('T')
+        PsiElement(EXTENDS_BOUND_LIST)
+          <empty list>
+      PsiJavaToken:GT('>')
+    PsiParameterList:t
+      PsiParameter:t
+        PsiModifierList:
+          <empty list>
+        PsiIdentifier:t('t')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiWhiteSpace(' ')
+    PsiReferenceExpression:t
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:t('t')

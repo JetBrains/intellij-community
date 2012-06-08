@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.griffon;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -36,6 +38,8 @@ import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +53,9 @@ import org.jetbrains.plugins.groovy.mvc.MvcProjectStructure;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -246,7 +252,7 @@ public class GriffonFramework extends MvcFramework {
       for (final VirtualFile child : dist.getChildren()) {
         final String name = child.getName();
         if (name.endsWith(".jar")) {
-          if (name.startsWith("griffon-cli-") || name.startsWith("griffon-rt-")) {
+          if (name.startsWith("griffon-cli-") || name.startsWith("griffon-rt-") || name.startsWith("griffon-resources-")) {
             params.getClassPath().add(child);
           }
         }
@@ -296,6 +302,9 @@ public class GriffonFramework extends MvcFramework {
     final String confpath = griffonHomePath + GROOVY_STARTER_CONF;
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confpath);
 
+    params.getVMParametersList().add(
+      "-Dgroovy.sanitized.stacktraces=\"groovy., org.codehaus.groovy., java., javax., sun., gjdk.groovy., gant., org.codehaus.gant.\"");
+
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add("org.codehaus.griffon.cli.GriffonScriptRunner");
     params.getProgramParametersList().add("--conf");
@@ -314,7 +323,7 @@ public class GriffonFramework extends MvcFramework {
     params.getProgramParametersList().add(argsString);
 
     params.setDefaultCharset(module.getProject());
-    
+
     return params;
   }
 
@@ -384,6 +393,24 @@ public class GriffonFramework extends MvcFramework {
     return EP_NAME.findExtension(GriffonFramework.class);
   }
 
+  public VirtualFile getApplicationPropertiesFile(Module module) {
+    final VirtualFile appRoot = findAppRoot(module);
+    return appRoot != null ? appRoot.findChild("application.properties") : null;
+  }
+
+  @Override
+  public String getApplicationName(Module module) {
+    final VirtualFile appProperties = getApplicationPropertiesFile(module);
+    if (appProperties != null) {
+      final PsiFile file = PsiManager.getInstance(module.getProject()).findFile(appProperties);
+      if (file instanceof PropertiesFile) {
+        final IProperty property = ((PropertiesFile)file).findPropertyByKey("application.name");
+        return property != null ? property.getValue() : super.getApplicationName(module);
+      }
+    }
+    return super.getApplicationName(module);
+  }
+
   private static class GriffonProjectStructure extends MvcProjectStructure {
     public GriffonProjectStructure(Module module, final boolean auxModule) {
       super(module, auxModule, getUserHomeGriffon(), GriffonFramework.getInstance().getSdkWorkDir(module));
@@ -395,11 +422,55 @@ public class GriffonFramework extends MvcFramework {
     }
 
     public String[] getSourceFolders() {
-      return new String[]{"griffon-app/controllers", "griffon-app/models", "griffon-app/views", "src/main", "griffon-app/services"};
+      List<String> sourceFolders = new ArrayList<String>();
+
+      for (VirtualFile file : ModuleRootManager.getInstance(myModule).getContentRoots()) {
+        handleSrc(file.findChild("src"), sourceFolders);
+        handleGriffonApp(file.findChild("griffon-app"), sourceFolders);
+        List<GriffonSourceInspector.GriffonSource> sources =
+          GriffonSourceInspector.processModuleMetadata(myModule);
+        for (GriffonSourceInspector.GriffonSource source : sources) {
+          sourceFolders.add(source.getPath());
+        }
+      }
+      return sourceFolders.toArray(new String[sourceFolders.size()]);
+    }
+
+    private void handleGriffonApp(VirtualFile griffonApp, List<String> sourceFolders) {
+      if (griffonApp == null) return;
+      // Add standard artifacts, i.e, models, views, controllers, services, conf, lifecycle
+      for (String child : new String[]{"models", "views", "controllers", "services", "conf", "lifecycle"}) {
+        if (griffonApp.findChild(child) != null) {
+          sourceFolders.add("griffon-app/" + child);
+        }
+      }
+    }
+
+    private void handleSrc(VirtualFile src, List<String> sourceFolders) {
+      if (src == null) return;
+      for (String child : new String[]{"main", "cli"}) {
+        if (src.findChild(child) != null) {
+          sourceFolders.add("src/" + child);
+        }
+      }
+    }
+
+    private void handleTest(VirtualFile test, List<String> sourceFolders) {
+      if (test == null) return;
+      for (String child : new String[]{"unit", "integration", "shared"}) {
+        if (test.findChild(child) != null) {
+          sourceFolders.add("test/" + child);
+        }
+      }
     }
 
     public String[] getTestFolders() {
-      return new String[]{"test/unit", "test/integration"};
+      List<String> sourceFolders = new ArrayList<String>();
+
+      for (VirtualFile file : ModuleRootManager.getInstance(myModule).getContentRoots()) {
+        handleTest(file.findChild("test"), sourceFolders);
+      }
+      return sourceFolders.toArray(new String[sourceFolders.size()]);
     }
 
     public String[] getInvalidSourceFolders() {

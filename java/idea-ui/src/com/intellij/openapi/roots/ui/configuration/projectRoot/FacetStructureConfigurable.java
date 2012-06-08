@@ -21,7 +21,6 @@ import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
@@ -54,7 +53,6 @@ import java.util.List;
  * @author nik
  */
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
-  private static final Icon ICON = AllIcons.Modules.Modules;//todo[nik] use facets icon
   private final ModuleManager myModuleManager;
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<FacetType<?,?>, FacetTypeEditor>();
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;

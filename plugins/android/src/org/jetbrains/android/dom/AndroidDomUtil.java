@@ -48,10 +48,7 @@ import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
 
@@ -327,5 +324,23 @@ public class AndroidDomUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static Collection<String> removeUnambigiousNames(@NotNull Map<String, PsiClass> viewClassMap) {
+    final Map<String, String> class2Name = new HashMap<String, String>();
+
+    for (String tagName : viewClassMap.keySet()) {
+      final PsiClass viewClass = viewClassMap.get(tagName);
+      if (!AndroidUtils.isAbstract(viewClass)) {
+        final String qName = viewClass.getQualifiedName();
+        final String prevTagName = class2Name.get(qName);
+
+        if (prevTagName == null || tagName.indexOf('.') == -1) {
+          class2Name.put(qName, tagName);
+        }
+      }
+    }
+    return class2Name.values();
   }
 }

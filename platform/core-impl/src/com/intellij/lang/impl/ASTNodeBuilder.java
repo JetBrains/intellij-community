@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,20 @@
  */
 package com.intellij.lang.impl;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: 11/5/11
- * Time: 6:31 PM
+ * @author Maxim.Mossienko
+ * @since 5.11.2011
  */
 public interface ASTNodeBuilder {
   @Nullable
-  IElementType getElementType(int lexemIndex);
+  IElementType getElementType(int lexemeIndex);
   
   interface ASTUnparsedNodeMarker {
     ASTNodeBuilder getBuilder();
-    int getStartLexemIndex();
-    int getEndLexemIndex();
+    int getStartLexemeIndex();
+    int getEndLexemeIndex();
   }
 }

@@ -180,7 +180,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                !isOverriddenOrOverrides(method)) &&
               !method.hasModifierProperty(PsiModifier.NATIVE) &&
               !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
-              !PsiClassImplUtil.isMainMethod(method)) {
+              !PsiClassImplUtil.isMainOrPremainMethod(method)) {
             HighlightInfo highlightInfo = PostHighlightingPass
               .createUnusedSymbolInfo(parameter.getNameIdentifierGroovy(), "Parameter " + parameter.getName() + " is unused",
                                       HighlightInfoType.UNUSED_SYMBOL);

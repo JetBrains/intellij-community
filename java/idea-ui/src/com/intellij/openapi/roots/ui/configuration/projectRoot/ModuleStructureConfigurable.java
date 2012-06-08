@@ -85,7 +85,6 @@ import java.util.List;
  */
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = AllIcons.ObjectBrowser.CompactEmptyPackages;
-  private static final Icon ICON = AllIcons.Modules.Modules;
   private static final Comparator<MyNode> NODE_COMPARATOR = new Comparator<MyNode>() {
     public int compare(final MyNode o1, final MyNode o2) {
       final NamedConfigurable configurable1 = o1.getConfigurable();

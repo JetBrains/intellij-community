@@ -65,7 +65,80 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
     final PsiJavaElementPattern.Capture<PsiLiteralExpression> javaFile
       = literalExpression().and(psiExpression().methodCallParameter(0, method));
 
+    final PsiJavaElementPattern.Capture<PsiLiteralExpression> annotationValue
+      = literalExpression().annotationParam("com.intellij.ide.presentation.Presentation", "icon");
+
     final XmlAttributeValuePattern pluginXml = XmlPatterns.xmlAttributeValue().withLocalName("icon");
+
+    registrar.registerReferenceProvider(annotationValue, new PsiReferenceProvider() {
+      @NotNull
+      @Override
+      public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
+        if (false && !isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+        return new PsiReference[] {
+          new PsiReferenceBase<PsiElement>(element, true) {
+            @Override
+            public PsiElement resolve() {
+              String value = (String)((PsiLiteralExpression)element).getValue();
+              if (value != null && value.startsWith("AllIcons.")) {
+                List<String> path = StringUtil.split(value, ".");
+                Project project = element.getProject();
+                PsiClass cur = JavaPsiFacade.getInstance(project).findClass("com.intellij.icons.AllIcons",
+                                                                            GlobalSearchScope.projectScope(project));
+                if (cur == null) return null;
+
+                for (int i = 1; i < path.size() - 1; i++) {
+                  cur = cur.findInnerClassByName(path.get(i), false);
+                  if (cur == null) return null;
+                }
+
+                return cur.findFieldByName(path.get(path.size() - 1), false);
+              }
+
+              return null;
+            }
+
+            @Override
+            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+              PsiElement field = resolve();
+              if (field instanceof PsiField) {
+                String fqn = ((PsiField)field).getContainingClass().getQualifiedName();
+
+                if (fqn.startsWith("com.intellij.icons.")) {
+                  String newValue = "\"" + fqn.substring("com.intellij.icons.".length()) + "." + newElementName + "\"";
+                  return getElement().replace(
+                    JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(newValue, element.getParent()));
+                }
+              }
+
+              return super.handleElementRename(newElementName);
+            }
+
+            @Override
+            public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+              if (element instanceof PsiField) {
+                String fqn = ((PsiField)element).getContainingClass().getQualifiedName();
+
+                if (fqn.startsWith("com.intellij.icons.")) {
+                  String newElementName = ((PsiField)element).getName();
+                  String newValue = "\"" + fqn.substring("com.intellij.icons.".length()) + "." + newElementName + "\"";
+                  return getElement().replace(
+                    JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(newValue, getElement().getParent()));
+                }
+              }
+
+              return super.bindToElement(element);
+            }
+
+            @NotNull
+            @Override
+            public Object[] getVariants() {
+              return EMPTY_ARRAY;
+            }
+          }
+        };
+      }
+    });
 
     registrar.registerReferenceProvider(javaFile, new PsiReferenceProvider() {
       @NotNull
@@ -183,7 +256,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
   }
 
   @Override
-  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
+  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement file = queryParameters.getElementToSearch();
     if (file instanceof PsiBinaryFile) {
       final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
@@ -205,26 +278,30 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
         model.setWholeWordsOnly(true);
         final List<UsageInfo> usages = FindInProjectUtil.findUsages(model, FindInProjectUtil.getPsiDirectory(model, project), project, false);
         if (!usages.isEmpty()) {
-          for (UsageInfo usage : usages) {
-            final PsiElement element = usage.getElement();
+          for (final UsageInfo usage : usages) {
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
+              public void run() {
+                final PsiElement element = usage.getElement();
 
-            final ProperTextRange textRange = usage.getRangeInElement();
-            if (element != null && textRange != null) {
-              final PsiElement start = element.findElementAt(textRange.getStartOffset());
-              final PsiElement end = element.findElementAt(textRange.getEndOffset());
-              if (start != null && end != null) {
-                PsiElement value = PsiTreeUtil.findCommonParent(start, end);
-                if (value instanceof PsiJavaToken) {
-                  value = value.getParent();
-                }
-                if (value != null) {
-                  final FileReference reference = FileReferenceUtil.findFileReference(value);
-                  if (reference != null) {
-                    consumer.process(reference);
+                final ProperTextRange textRange = usage.getRangeInElement();
+                if (element != null && textRange != null) {
+                  final PsiElement start = element.findElementAt(textRange.getStartOffset());
+                  final PsiElement end = element.findElementAt(textRange.getEndOffset());
+                  if (start != null && end != null) {
+                    PsiElement value = PsiTreeUtil.findCommonParent(start, end);
+                    if (value instanceof PsiJavaToken) {
+                      value = value.getParent();
+                    }
+                    if (value != null) {
+                      final FileReference reference = FileReferenceUtil.findFileReference(value);
+                      if (reference != null) {
+                        consumer.process(reference);
+                      }
+                    }
                   }
                 }
               }
-            }
+            });
           }
         }
       }

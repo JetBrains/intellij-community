@@ -635,6 +635,10 @@
       <className>com.intellij.codeInsight.intention.impl.AddOverrideAnnotationAction</className>
       <category>Declaration</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.IntroduceVariableAction</className>
+      <category>Declaration</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
@@ -749,7 +753,6 @@
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaBraceMatcher"/>
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.JavaFoldingBuilder"/>
-    <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.folding.impl.RecursiveMethodCallFoldingBuilder"/>
 
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler"/>
     <codeInsight.parameterInfo language="JAVA" implementationClass="com.intellij.codeInsight.hint.api.impls.ReferenceParameterInfoHandler"/>

@@ -21,30 +21,23 @@ import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SystemNotifications;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.List;
 
 public class TestsUIUtil {
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Test Runner");
-  @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
 
@@ -98,14 +91,6 @@ public class TestsUIUtil {
       }
     }
     return null;
-  }
-
-  public static Icon loadIcon(@NonNls final String iconName) {
-    final Application application = ApplicationManager.getApplication();
-    if (application == null || application.isUnitTestMode()) return new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR));
-    @NonNls final String fullIconName = ICONS_ROOT + iconName + ".png";
-
-    return IconLoader.getIcon(fullIconName);
   }
 
   public static void notifyByBalloon(@NotNull final Project project, final AbstractTestProxy root, final TestConsoleProperties properties) {

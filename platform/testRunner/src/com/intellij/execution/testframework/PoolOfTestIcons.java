@@ -21,14 +21,14 @@ import com.intellij.ui.LayeredIcon;
 import javax.swing.*;
 
 public interface PoolOfTestIcons {
-  Icon SKIPPED_ICON = TestsUIUtil.loadIcon("testSkipped");
-  Icon PASSED_ICON = TestsUIUtil.loadIcon("testPassed");
-  Icon FAILED_ICON = TestsUIUtil.loadIcon("testFailed");
-  Icon ERROR_ICON = TestsUIUtil.loadIcon("testError");
-  Icon NOT_RAN = TestsUIUtil.loadIcon("testNotRan");
-  Icon LOADING_ICON = TestsUIUtil.loadIcon("loadingTree");
-  Icon TERMINATED_ICON = TestsUIUtil.loadIcon("testTerminated");
-  Icon IGNORED_ICON = TestsUIUtil.loadIcon("testIgnored");
+  Icon SKIPPED_ICON = AllIcons.RunConfigurations.TestSkipped;
+  Icon PASSED_ICON = AllIcons.RunConfigurations.TestPassed;
+  Icon FAILED_ICON = AllIcons.RunConfigurations.TestFailed;
+  Icon ERROR_ICON = AllIcons.RunConfigurations.TestError;
+  Icon NOT_RAN = AllIcons.RunConfigurations.TestNotRan;
+  Icon LOADING_ICON = AllIcons.RunConfigurations.LoadingTree;
+  Icon TERMINATED_ICON = AllIcons.RunConfigurations.TestTerminated;
+  Icon IGNORED_ICON = AllIcons.RunConfigurations.TestIgnored;
   Icon ERROR_ICON_MARK = AllIcons.Nodes.ErrorMark;
   Icon TEAR_DOWN_FAILURE = new LayeredIcon(PASSED_ICON, ERROR_ICON_MARK);
 }

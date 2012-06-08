@@ -23,6 +23,10 @@ import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -43,10 +47,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.util.List;
 
@@ -140,12 +141,15 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
 
         myModuleDescriptionPane.setText(sb.toString());
 
+        boolean focusOwner = myTypesList.isFocusOwner();
         fireStateChanged();
-        SwingUtilities.invokeLater(new Runnable(){
-          public void run() {
-            myTypesList.requestFocusInWindow();
-          }
-        });
+        if (focusOwner) {
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              myTypesList.requestFocusInWindow();
+            }
+          });
+        }
       }
     });
     myTypesList.setSelectedIndex(0);
@@ -265,6 +269,28 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
         myModuleName.select(0, moduleName.length());
       }
     }
+
+    final AnAction arrow = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (e.getInputEvent() instanceof KeyEvent) {
+          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
+          if (!myCreateModuleCb.isSelected()) return;
+          int i = myTypesList.getSelectedIndex();
+          if (code == KeyEvent.VK_DOWN) {
+            if (++i == myTypesList.getModel().getSize()) return;
+          }
+          else if (code == KeyEvent.VK_UP) {
+            if (--i == -1) return;
+          }
+          myTypesList.setSelectedIndex(i);
+        }
+      }
+    };
+    final KeyboardShortcut up = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null);
+    final KeyboardShortcut down = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null);
+    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myNamePathComponent.getNameComponent());
+    arrow.registerCustomShortcutSet(new CustomShortcutSet(up, down), myModuleName);
   }
 
   private Dimension calcTypeListPreferredSize(final List<ModuleBuilder> allModuleTypes) {

@@ -18,6 +18,7 @@ package org.jetbrains.android.dom.xml;
 
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.dom.AndroidDomExtender;
+import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,8 @@ public class AndroidXmlResourcesUtil {
   @NotNull
   public static List<String> getPossibleRoots(@NotNull AndroidFacet facet) {
     List<String> result = new ArrayList<String>();
-    result.addAll(AndroidDomExtender.getPreferencesClassMap(facet).keySet());
+    result.addAll(AndroidDomUtil.removeUnambigiousNames(
+      AndroidDomExtender.getPreferencesClassMap(facet)));
     result.addAll(Arrays.asList(ROOT_TAGS));
 
     return result;

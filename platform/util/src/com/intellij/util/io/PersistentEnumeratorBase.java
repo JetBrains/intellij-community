@@ -369,6 +369,56 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
 
   protected abstract int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException;
 
+  protected boolean isKeyAtIndex(Data value, int idx) throws IOException {
+    if (myKeyStorage == null) return false;
+
+    // check if previous serialized state is the same as for value
+    // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value)
+    final boolean sameValue[] = new boolean[1];    // TODO: key storage lock
+    final int addr = indexToAddr(idx);
+    OutputStream comparer;
+
+    if (myKeyStoreFileLength <= addr) {
+      comparer = new OutputStream() {
+        int address = addr - myKeyStoreFileLength;
+        boolean same = true;
+        @Override
+        public void write(int b) throws IOException {
+          if (same) {
+            same = address < myKeyStoreBufferPosition && myKeyStoreFileBuffer[address++] == (byte)b;
+          }
+        }
+        @Override
+        public void close() throws IOException {
+          sameValue[0]  = same;
+        }
+      };
+    } else {
+      comparer = new OutputStream() {
+        int address = addr;
+        boolean same = true;
+        @Override
+        public void write(int b) throws IOException {
+          if (same) {
+            same = address < myKeyStoreFileLength && myKeyStorage.get(address++) == (byte)b;
+          }
+        }
+
+        @Override
+        public void close() throws IOException {
+          sameValue[0]  = same;
+        }
+      };
+
+    }
+
+    DataOutput out = new DataOutputStream(comparer);
+    myDataDescriptor.save(out, value);
+    comparer.close();
+
+    return sameValue[0];
+  }
+
   protected int writeData(final Data value, int hashCode) {
     try {
       markDirty(true);
