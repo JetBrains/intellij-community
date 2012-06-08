@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public interface JpsReferenceableElement<E extends JpsElement> {
+public interface JpsElementParameterizedCreator<E extends JpsElement, P> {
   @NotNull
-  JpsElementReference<E> createReference();
+  E create(@NotNull P param);
 }

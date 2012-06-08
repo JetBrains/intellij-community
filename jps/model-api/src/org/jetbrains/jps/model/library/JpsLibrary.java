@@ -2,7 +2,6 @@ package org.jetbrains.jps.model.library;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsNamedElement;
-import org.jetbrains.jps.model.JpsParentElement;
 import org.jetbrains.jps.model.JpsReferenceableElement;
 
 import java.util.List;
@@ -22,5 +21,5 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
   void delete();
 
   @NotNull
-  JpsLibraryReference createReference(JpsParentElement parent);
+  JpsLibraryReference createReference();
 }

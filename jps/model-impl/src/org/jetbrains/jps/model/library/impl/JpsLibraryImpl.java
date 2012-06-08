@@ -18,15 +18,14 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl,
   private static final JpsElementCollectionKind<JpsLibraryRootImpl> LIBRARY_ROOTS_COLLECTION = new JpsElementCollectionKind<JpsLibraryRootImpl>(JpsLibraryRootKind.INSTANCE);
   private static final JpsTypedDataKind<JpsLibraryType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsLibraryType<?>>();
 
-  public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<?> type, @NotNull JpsModel model,
-                        @NotNull JpsEventDispatcher eventDispatcher, JpsElementCollection<JpsLibraryImpl> parent) {
-    super(model, eventDispatcher, name, parent);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsLibraryType<?>>(type, eventDispatcher, this));
+  public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<?> type) {
+    super(name);
+    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsLibraryType<?>>(type));
     myContainer.setChild(LIBRARY_ROOTS_COLLECTION);
   }
 
-  public JpsLibraryImpl(@NotNull JpsLibraryImpl original, JpsModel model, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(original, model, eventDispatcher, parent);
+  private JpsLibraryImpl(@NotNull JpsLibraryImpl original) {
+    super(original);
   }
 
   @NotNull
@@ -43,7 +42,7 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl,
 
   @Override
   public void addUrl(@NotNull final String url, @NotNull final JpsLibraryRootType rootType) {
-    getRootsCollection().addChild(new JpsLibraryRootImpl(getEventDispatcher(), url, rootType, this));
+    getRootsCollection().addChild(new JpsLibraryRootImpl(url, rootType));
   }
 
   private JpsElementCollectionImpl<JpsLibraryRootImpl> getRootsCollection() {
@@ -67,21 +66,20 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl,
   }
 
   public JpsElementCollectionImpl<JpsLibraryImpl> getParent() {
-    //noinspection unchecked
     return (JpsElementCollectionImpl<JpsLibraryImpl>)myParent;
   }
 
   @NotNull
   @Override
-  public JpsLibraryImpl createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsLibraryImpl(this, model, eventDispatcher, parent);
+  public JpsLibraryImpl createCopy() {
+    return new JpsLibraryImpl(this);
   }
 
   @NotNull
   @Override
-  public JpsLibraryReference createReference(JpsParentElement parent) {
+  public JpsLibraryReference createReference() {
     //noinspection unchecked
-    final JpsElementReference<JpsCompositeElement> parentReference = ((JpsReferenceableElement<JpsCompositeElement>)getParent().getParent()).createReference(parent);
-    return new JpsLibraryReferenceImpl(myModel, getEventDispatcher(), getName(), parentReference, parent);
+    final JpsElementReference<JpsCompositeElement> parentReference = ((JpsReferenceableElement<JpsCompositeElement>)getParent().getParent()).createReference();
+    return new JpsLibraryReferenceImpl(getName(), parentReference);
   }
 }

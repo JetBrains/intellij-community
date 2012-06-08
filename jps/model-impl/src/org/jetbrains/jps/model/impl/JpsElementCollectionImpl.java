@@ -11,30 +11,23 @@ import java.util.*;
  */
 public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
   private final List<E> myElements;
-  private final JpsModel myModel;
   private final Map<E, E> myCopyToOriginal;
   private final JpsElementKind<E> myKind;
 
-  public JpsElementCollectionImpl(JpsElementKind<E> kind, JpsModel model, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(eventDispatcher, parent);
+  public JpsElementCollectionImpl(JpsElementKind<E> kind) {
     myKind = kind;
-    myModel = model;
     myElements = new SmartList<E>();
     myCopyToOriginal = null;
   }
 
-  public JpsElementCollectionImpl(JpsElementCollectionImpl<E> original,
-                                  JpsModel model,
-                                  JpsEventDispatcher eventDispatcher,
-                                  JpsParentElement parent) {
-    super(original, eventDispatcher, parent);
+  public JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
     myKind = original.myKind;
-    myModel = model;
     myElements = new SmartList<E>();
     myCopyToOriginal = new HashMap<E, E>();
     for (E e : original.myElements) {
       //noinspection unchecked
-      final E copy = (E)e.getBulkModificationSupport().createCopy(model, eventDispatcher, parent);
+      final E copy = (E)e.getBulkModificationSupport().createCopy();
+      setParent(copy, this);
       myElements.add(copy);
       myCopyToOriginal.put(copy, e);
     }
@@ -47,20 +40,24 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
 
   @NotNull
   @Override
-  public <P> E addChild(@NotNull JpsElementFactoryWithParameter<E, P> factory, @NotNull P param) {
-    return addChild(factory.create(myModel, getEventDispatcher(), myParent, param));
+  public <P> E addChild(@NotNull JpsElementParameterizedCreator<E, P> factory, @NotNull P param) {
+    return addChild(factory.create(param));
   }
 
   @NotNull
   @Override
-  public E addChild(@NotNull JpsElementFactory<E> factory) {
-    return addChild(factory.create(myModel, getEventDispatcher(), myParent));
+  public E addChild(@NotNull JpsElementCreator<E> creator) {
+    return addChild(creator.create());
   }
 
   @Override
   public E addChild(E element) {
     myElements.add(element);
-    getEventDispatcher().fireElementAdded(element, myKind);
+    setParent(element, this);
+    final JpsEventDispatcher eventDispatcher = getEventDispatcher();
+    if (eventDispatcher != null) {
+      eventDispatcher.fireElementAdded(element, myKind);
+    }
     return element;
   }
 
@@ -68,16 +65,18 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   public void removeChild(@NotNull E element) {
     final boolean removed = myElements.remove(element);
     if (removed) {
-      getEventDispatcher().fireElementRemoved(element, myKind);
+      final JpsEventDispatcher eventDispatcher = getEventDispatcher();
+      if (eventDispatcher != null) {
+        eventDispatcher.fireElementRemoved(element, myKind);
+      }
+      setParent(element, null);
     }
   }
 
   @NotNull
   @Override
-  public JpsElementCollectionImpl<E> createCopy(@NotNull JpsModel model,
-                                                @NotNull JpsEventDispatcher eventDispatcher,
-                                                JpsParentElement parent) {
-    return new JpsElementCollectionImpl<E>(this, model, eventDispatcher, parent);
+  public JpsElementCollectionImpl<E> createCopy() {
+    return new JpsElementCollectionImpl<E>(this);
   }
 
   public void applyChanges(@NotNull JpsElementCollectionImpl<E> modified) {
@@ -93,7 +92,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
       }
       else {
         //noinspection unchecked
-        final E copy = (E)element.getBulkModificationSupport().createCopy(myModel, getEventDispatcher(), myParent);
+        final E copy = (E)element.getBulkModificationSupport().createCopy();
         toAdd.add(copy);
       }
     }

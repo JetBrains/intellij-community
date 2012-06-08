@@ -12,19 +12,17 @@ import java.util.List;
 public class JpsUrlListImpl extends JpsElementBase<JpsUrlListImpl> implements JpsUrlList {
   private List<String> myUrls = new ArrayList<String>();
 
-  public JpsUrlListImpl(JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(eventDispatcher, parent);
+  public JpsUrlListImpl() {
   }
 
-  public JpsUrlListImpl(JpsUrlListImpl list, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(list, dispatcher, parent);
+  public JpsUrlListImpl(JpsUrlListImpl list) {
     myUrls.addAll(list.myUrls);
   }
 
   @NotNull
   @Override
-  public JpsUrlListImpl createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsUrlListImpl(this, eventDispatcher, parent);
+  public JpsUrlListImpl createCopy() {
+    return new JpsUrlListImpl(this);
   }
 
   @NotNull
@@ -36,20 +34,20 @@ public class JpsUrlListImpl extends JpsElementBase<JpsUrlListImpl> implements Jp
   @Override
   public void addUrl(@NotNull String url) {
     myUrls.add(url);
-    getEventDispatcher().fireElementChanged(this);
+    fireElementChanged();
   }
 
   @Override
   public void removeUrl(@NotNull String url) {
     myUrls.remove(url);
-    getEventDispatcher().fireElementChanged(this);
+    fireElementChanged();
   }
 
   public void applyChanges(@NotNull JpsUrlListImpl modified) {
     if (!myUrls.equals(modified.myUrls)) {
       myUrls.clear();
       myUrls.addAll(modified.myUrls);
-      getEventDispatcher().fireElementChanged(this);
+      fireElementChanged();
     }
   }
 }

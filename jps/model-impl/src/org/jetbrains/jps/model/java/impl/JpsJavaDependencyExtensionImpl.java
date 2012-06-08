@@ -1,9 +1,6 @@
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsParentElement;
 import org.jetbrains.jps.model.impl.JpsElementBase;
 import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
@@ -15,14 +12,13 @@ public class JpsJavaDependencyExtensionImpl extends JpsElementBase<JpsJavaDepend
   private boolean myExported;
   private JpsJavaDependencyScope myScope;
 
-  public JpsJavaDependencyExtensionImpl(JpsEventDispatcher eventDispatcher, JpsParentElement parent, boolean exported, JpsJavaDependencyScope scope) {
-    super(eventDispatcher, parent);
+  public JpsJavaDependencyExtensionImpl(boolean exported,
+                                        JpsJavaDependencyScope scope) {
     myExported = exported;
     myScope = scope;
   }
 
-  public JpsJavaDependencyExtensionImpl(JpsJavaDependencyExtensionImpl original, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(original, eventDispatcher, parent);
+  public JpsJavaDependencyExtensionImpl(JpsJavaDependencyExtensionImpl original) {
     myExported = original.myExported;
     myScope = original.myScope;
   }
@@ -36,7 +32,7 @@ public class JpsJavaDependencyExtensionImpl extends JpsElementBase<JpsJavaDepend
   public void setExported(boolean exported) {
     if (myExported != exported) {
       myExported = exported;
-      getEventDispatcher().fireElementChanged(this);
+      fireElementChanged();
     }
   }
 
@@ -50,16 +46,14 @@ public class JpsJavaDependencyExtensionImpl extends JpsElementBase<JpsJavaDepend
   public void setScope(@NotNull JpsJavaDependencyScope scope) {
     if (!scope.equals(myScope)) {
       myScope = scope;
-      getEventDispatcher().fireElementChanged(this);
+      fireElementChanged();
     }
   }
 
   @NotNull
   @Override
-  public JpsJavaDependencyExtensionImpl createCopy(@NotNull JpsModel model,
-                                                   @NotNull JpsEventDispatcher eventDispatcher,
-                                                   JpsParentElement parent) {
-    return new JpsJavaDependencyExtensionImpl(this, eventDispatcher, parent);
+  public JpsJavaDependencyExtensionImpl createCopy() {
+    return new JpsJavaDependencyExtensionImpl(this);
   }
 
   @Override

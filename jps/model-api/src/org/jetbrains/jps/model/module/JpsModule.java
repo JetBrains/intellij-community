@@ -37,7 +37,7 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   JpsElementContainer getContainer();
 
   @NotNull
-  JpsModuleReference createReference(JpsParentElement parent);
+  JpsModuleReference createReference();
 
   @NotNull
   JpsLibrary addModuleLibrary(@NotNull JpsLibraryType<?> type, @NotNull String name);

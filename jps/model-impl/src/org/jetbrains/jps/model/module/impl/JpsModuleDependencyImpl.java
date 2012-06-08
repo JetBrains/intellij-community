@@ -11,16 +11,13 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleDependencyImpl> implements JpsModuleDependency {
   private static final JpsElementKind<JpsModuleReference> MODULE_REFERENCE_KIND = new JpsElementKind<JpsModuleReference>();
 
-  public JpsModuleDependencyImpl(JpsModel model,
-                                 JpsEventDispatcher eventDispatcher,
-                                 final JpsModuleReference moduleReference,
-                                 JpsDependenciesListImpl parent) {
-    super(model, eventDispatcher, parent);
+  public JpsModuleDependencyImpl(final JpsModuleReference moduleReference) {
+    super();
     myContainer.setChild(MODULE_REFERENCE_KIND, moduleReference);
   }
 
-  public JpsModuleDependencyImpl(JpsModuleDependencyImpl original, JpsModel model, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(original, model, dispatcher, parent);
+  public JpsModuleDependencyImpl(JpsModuleDependencyImpl original) {
+    super(original);
   }
 
   @NotNull
@@ -31,9 +28,7 @@ public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleD
 
   @NotNull
   @Override
-  public JpsModuleDependencyImpl createCopy(@NotNull JpsModel model,
-                                            @NotNull JpsEventDispatcher eventDispatcher,
-                                            JpsParentElement parent) {
-    return new JpsModuleDependencyImpl(this, model, eventDispatcher, parent);
+  public JpsModuleDependencyImpl createCopy() {
+    return new JpsModuleDependencyImpl(this);
   }
 }
