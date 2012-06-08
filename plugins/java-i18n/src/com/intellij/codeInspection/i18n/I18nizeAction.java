@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLiteralExpression;
@@ -122,7 +123,7 @@ public class I18nizeAction extends AnAction {
         CommandProcessor.getInstance().executeCommand(project, new Runnable(){
           public void run() {
             try {
-              handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(), dialog.getValue(),
+              handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(), StringUtil.unescapeStringCharacters(dialog.getValue()),
                                          dialog.getI18nizedText(), dialog.getParameters(),
                                          dialog.getPropertyCreationHandler());
             }
