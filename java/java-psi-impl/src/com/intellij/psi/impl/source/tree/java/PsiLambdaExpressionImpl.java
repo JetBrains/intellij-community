@@ -16,7 +16,9 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,16 +27,22 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     super(JavaElementType.LAMBDA_EXPRESSION);
   }
 
+  @Override
+  public PsiTypeParameterList getTypeParameterList() {
+    final PsiElement element = getFirstChild();
+    return element instanceof PsiTypeParameterList ? (PsiTypeParameterList)element : null;
+  }
+
   @NotNull
   @Override
   public PsiParameterList getParameterList() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiParameterList.class);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public PsiElement getBody() {
-    return PsiTreeUtil.getChildOfAnyType(this, PsiExpression.class, PsiCodeBlock.class);
+    final PsiElement element = getLastChild();
+    return element instanceof PsiExpression || element instanceof PsiCodeBlock ? element : null;
   }
 
   @Override
@@ -50,6 +58,14 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
+                                     @NotNull final ResolveState state,
+                                     final PsiElement lastParent,
+                                     @NotNull final PsiElement place) {
+    return PsiImplUtil.processDeclarationsInLambda(this, processor, state, lastParent, place);
   }
 
   @Override

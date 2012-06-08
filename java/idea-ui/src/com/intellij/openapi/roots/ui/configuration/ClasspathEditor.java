@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ProjectTopics;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
@@ -45,7 +44,6 @@ import java.util.Map;
  */
 public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootListener {
   public static final String NAME = ProjectBundle.message("modules.classpath.title");
-  public static final Icon ICON = AllIcons.Modules.Classpath;
 
   private ClasspathPanelImpl myPanel;
 

@@ -1,0 +1,52 @@
+PsiJavaFile:AmbiguousLambdaExpression.java
+  PsiMethodCallExpression:f( (x) < y , z > (w) -> v )
+    PsiReferenceExpression:f
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:f('f')
+    PsiExpressionList
+      PsiJavaToken:LPARENTH('(')
+      PsiWhiteSpace(' ')
+      PsiBinaryExpression:(x) < y
+        PsiParenthesizedExpression:(x)
+          PsiJavaToken:LPARENTH('(')
+          PsiReferenceExpression:x
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:x('x')
+          PsiJavaToken:RPARENTH(')')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:LT('<')
+        PsiWhiteSpace(' ')
+        PsiReferenceExpression:y
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:y('y')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:COMMA(',')
+      PsiWhiteSpace(' ')
+      PsiBinaryExpression:z > (w) -> v
+        PsiReferenceExpression:z
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:z('z')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:GT('>')
+        PsiWhiteSpace(' ')
+        PsiLambdaExpression:(w) -> v
+          PsiParameterList:(w)
+            PsiJavaToken:LPARENTH('(')
+            PsiParameter:w
+              PsiModifierList:
+                <empty list>
+              PsiIdentifier:w('w')
+            PsiJavaToken:RPARENTH(')')
+          PsiWhiteSpace(' ')
+          PsiJavaToken:ARROW('->')
+          PsiWhiteSpace(' ')
+          PsiReferenceExpression:v
+            PsiReferenceParameterList
+              <empty list>
+            PsiIdentifier:v('v')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:RPARENTH(')')

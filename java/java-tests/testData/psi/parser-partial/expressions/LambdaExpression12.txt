@@ -1,0 +1,33 @@
+PsiJavaFile:LambdaExpression12.java
+  PsiLambdaExpression:<T>() -> new C<T>()
+    PsiTypeParameterList
+      PsiJavaToken:LT('<')
+      PsiTypeParameter:T
+        PsiIdentifier:T('T')
+        PsiElement(EXTENDS_BOUND_LIST)
+          <empty list>
+      PsiJavaToken:GT('>')
+    PsiParameterList:()
+      PsiJavaToken:LPARENTH('(')
+      PsiJavaToken:RPARENTH(')')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiWhiteSpace(' ')
+    PsiNewExpression:new C<T>()
+      PsiKeyword:new('new')
+      PsiReferenceParameterList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:C<T>
+        PsiIdentifier:C('C')
+        PsiReferenceParameterList
+          PsiJavaToken:LT('<')
+          PsiTypeElement:T
+            PsiJavaCodeReferenceElement:T
+              PsiIdentifier:T('T')
+              PsiReferenceParameterList
+                <empty list>
+          PsiJavaToken:GT('>')
+      PsiExpressionList
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
