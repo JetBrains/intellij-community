@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -55,14 +56,17 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private String myFSRootPath;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, final boolean toWatchRecursively) {
+    public WatchRequestImpl(String rootPath, final boolean toWatchRecursively) throws FileNotFoundException {
       final int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (index >= 0) rootPath = rootPath.substring(0, index);
 
       File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
       if (index > 0 || !rootFile.isDirectory()) {
-        rootFile = rootFile.getParentFile();
-        assert rootFile != null : rootPath;
+        final File parentFile = rootFile.getParentFile();
+        if (parentFile == null) {
+          throw new FileNotFoundException(rootPath);
+        }
+        rootFile = parentFile;
       }
 
       myFSRootPath = rootFile.getAbsolutePath();
@@ -437,7 +441,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     boolean update = false;
 
     for (String root : recursiveRoots) {
-      final WatchRequestImpl request = new WatchRequestImpl(root, true);
+      final WatchRequestImpl request = watch(root, true);
+      if (request == null) continue;
       final boolean alreadyWatched = isAlreadyWatched(request);
 
       request.myDominated = alreadyWatched;
@@ -448,7 +453,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
 
     for (String root : flatRoots) {
-      final WatchRequestImpl request = new WatchRequestImpl(root, false);
+      final WatchRequestImpl request = watch(root, false);
+      if (request == null) continue;
       final boolean alreadyWatched = isAlreadyWatched(request);
 
       if (!alreadyWatched) {
@@ -466,6 +472,17 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
 
     return update;
+  }
+
+  @Nullable
+  private static WatchRequestImpl watch(final String root, final boolean recursively) {
+    try {
+      return new WatchRequestImpl(root, recursively);
+    }
+    catch (FileNotFoundException e) {
+      LOG.warn(e);
+      return null;
+    }
   }
 
   private void syncFiles(@NotNull final Set<VirtualFile> filesToSync) {
