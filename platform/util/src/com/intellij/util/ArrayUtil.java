@@ -275,7 +275,14 @@ public class ArrayUtil {
       return array;
     }
 
-    final T[] array2 = collection.toArray(factory.create(collection.size()));
+    final T[] array2;
+    try {
+      array2 = collection.toArray(factory.create(collection.size()));
+    }
+    catch (ArrayStoreException e) {
+      throw new RuntimeException("Bad elements in collection: " + collection, e);
+    }
+
     if (array.length == 0) {
       return array2;
     }
