@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -44,7 +43,6 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   private JTable myTable;
 
   public static final String NAME = ProjectBundle.message("project.roots.external.annotations.tab.title");
-  public static final Icon ICON = AllIcons.Modules.Annotation;
 
   public AnnotationsEditor(final ModuleConfigurationState state) {
     super(state);

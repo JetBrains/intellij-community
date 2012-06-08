@@ -8,8 +8,8 @@ public class AllIcons {
   
   public static class Actions {
     public static final Icon AddFacesSupport = IconLoader.getIcon("/actions/addFacesSupport.png"); 
-    public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.png");
-    public static final Icon Back = IconLoader.getIcon("/actions/back.png");
+    public static final Icon Annotate = IconLoader.getIcon("/actions/annotate.png"); 
+    public static final Icon Back = IconLoader.getIcon("/actions/back.png"); 
     public static final Icon Browser_externalJavaDoc = IconLoader.getIcon("/actions/browser-externalJavaDoc.png"); 
     public static final Icon Cancel = IconLoader.getIcon("/actions/cancel.png"); 
     public static final Icon Checked = IconLoader.getIcon("/actions/checked.png"); 
@@ -56,8 +56,8 @@ public class AllIcons {
     public static final Icon GC = IconLoader.getIcon("/actions/gc.png"); 
     public static final Icon Get = IconLoader.getIcon("/actions/get.png"); 
     public static final Icon GroupByMethod = IconLoader.getIcon("/actions/groupByMethod.png"); 
-    public static final Icon Help = IconLoader.getIcon("/actions/help.png");
-    public static final Icon Import = IconLoader.getIcon("/actions/import.png");
+    public static final Icon Help = IconLoader.getIcon("/actions/help.png"); 
+    public static final Icon Import = IconLoader.getIcon("/actions/import.png"); 
     public static final Icon Install = IconLoader.getIcon("/actions/install.png"); 
     public static final Icon IntentionBulb = IconLoader.getIcon("/actions/intentionBulb.png"); 
     public static final Icon IntentionOffBulb = IconLoader.getIcon("/actions/intentionOffBulb.png"); 
@@ -68,20 +68,20 @@ public class AllIcons {
     public static final Icon Menu_open = IconLoader.getIcon("/actions/menu-open.png"); 
     public static final Icon Menu_paste = IconLoader.getIcon("/actions/menu-paste.png"); 
     public static final Icon Menu_replace = IconLoader.getIcon("/actions/menu-replace.png"); 
-    public static final Icon Menu_saveall = IconLoader.getIcon("/actions/menu-saveall.png");
-    public static final Icon Minimize = IconLoader.getIcon("/actions/minimize.png");
+    public static final Icon Menu_saveall = IconLoader.getIcon("/actions/menu-saveall.png"); 
+    public static final Icon Minimize = IconLoader.getIcon("/actions/minimize.png"); 
     public static final Icon Modul = IconLoader.getIcon("/actions/modul.png"); 
     public static final Icon Move_to_button_top = IconLoader.getIcon("/actions/move-to-button-top.png"); 
     public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.png"); 
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.png"); 
-    public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.png");
-    public static final Icon New = IconLoader.getIcon("/actions/new.png");
+    public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.png"); 
+    public static final Icon New = IconLoader.getIcon("/actions/new.png"); 
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.png"); 
     public static final Icon Nextfile = IconLoader.getIcon("/actions/nextfile.png"); 
-    public static final Icon NextOccurence = IconLoader.getIcon("/actions/nextOccurence.png");
-    public static final Icon Pause = IconLoader.getIcon("/actions/pause.png");
-    public static final Icon PopFrame = IconLoader.getIcon("/actions/popFrame.png");
-    public static final Icon Prevfile = IconLoader.getIcon("/actions/prevfile.png");
+    public static final Icon NextOccurence = IconLoader.getIcon("/actions/nextOccurence.png"); 
+    public static final Icon Pause = IconLoader.getIcon("/actions/pause.png"); 
+    public static final Icon PopFrame = IconLoader.getIcon("/actions/popFrame.png"); 
+    public static final Icon Prevfile = IconLoader.getIcon("/actions/prevfile.png"); 
     public static final Icon Preview = IconLoader.getIcon("/actions/preview.png"); 
     public static final Icon PreviousOccurence = IconLoader.getIcon("/actions/previousOccurence.png"); 
     public static final Icon ProfileCPU = IconLoader.getIcon("/actions/profileCPU.png"); 
@@ -118,11 +118,11 @@ public class AllIcons {
     public static final Icon SortAsc = IconLoader.getIcon("/actions/sortAsc.png"); 
     public static final Icon SortDesc = IconLoader.getIcon("/actions/sortDesc.png"); 
     public static final Icon SplitHorizontally = IconLoader.getIcon("/actions/splitHorizontally.png"); 
-    public static final Icon SplitVertically = IconLoader.getIcon("/actions/splitVertically.png");
-    public static final Icon StartDebugger = IconLoader.getIcon("/actions/startDebugger.png");
+    public static final Icon SplitVertically = IconLoader.getIcon("/actions/splitVertically.png"); 
+    public static final Icon StartDebugger = IconLoader.getIcon("/actions/startDebugger.png"); 
     public static final Icon StepOut = IconLoader.getIcon("/actions/stepOut.png"); 
-    public static final Icon Submit1 = IconLoader.getIcon("/actions/submit1.png");
-    public static final Icon Suspend = IconLoader.getIcon("/actions/suspend.png");
+    public static final Icon Submit1 = IconLoader.getIcon("/actions/submit1.png"); 
+    public static final Icon Suspend = IconLoader.getIcon("/actions/suspend.png"); 
     public static final Icon SwapPanels = IconLoader.getIcon("/actions/swapPanels.png"); 
     public static final Icon Sync = IconLoader.getIcon("/actions/sync.png"); 
     public static final Icon SyncPanels = IconLoader.getIcon("/actions/syncPanels.png"); 
@@ -134,18 +134,6 @@ public class AllIcons {
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.png"); 
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); 
 
-  }
-
-  public static class Providers {
-    public static final Icon Apache = IconLoader.getIcon("/providers/apache.png");
-    public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png");
-    public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.png");
-    public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.png");
-    public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.png");
-    public static final Icon Sun = IconLoader.getIcon("/providers/sun.png");
-    public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.png");
-    public static final Icon Postgresql = IconLoader.getIcon("/providers/postgresql.png");
-    public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png");
   }
   
   public static class Ant {
@@ -715,37 +703,21 @@ public class AllIcons {
   
   public static class Modules {
     public static final Icon AddContentEntry = IconLoader.getIcon("/modules/addContentEntry.png"); 
-    public static final Icon AddExistingModule = IconLoader.getIcon("/modules/addExistingModule.png"); 
-    public static final Icon AddLibraries = IconLoader.getIcon("/modules/addLibraries.png"); 
     public static final Icon Annotation = IconLoader.getIcon("/modules/annotation.png"); 
-    public static final Icon BottomCenter = IconLoader.getIcon("/modules/bottomCenter.png"); 
-    public static final Icon BottomLeftCorner = IconLoader.getIcon("/modules/bottomLeftCorner.png"); 
-    public static final Icon BottomRightCorner = IconLoader.getIcon("/modules/bottomRightCorner.png"); 
-    public static final Icon CenterGeneralTitleBar = IconLoader.getIcon("/modules/CenterGeneralTitleBar.png"); 
-    public static final Icon Classpath = IconLoader.getIcon("/modules/classpath.png"); 
-    public static final Icon CreateNewModule = IconLoader.getIcon("/modules/createNewModule.png"); 
     public static final Icon DeleteContentFolder = IconLoader.getIcon("/modules/deleteContentFolder.png"); 
     public static final Icon DeleteContentFolderRollover = IconLoader.getIcon("/modules/deleteContentFolderRollover.png"); 
     public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); 
     public static final Icon DeleteContentRootRollover = IconLoader.getIcon("/modules/deleteContentRootRollover.png"); 
-    public static final Icon Dependencies = IconLoader.getIcon("/modules/dependencies.png"); 
-    public static final Icon Edit = IconLoader.getIcon("/modules/edit.png"); 
-    public static final Icon EditLibraries = IconLoader.getIcon("/modules/editLibraries.png"); 
     public static final Icon EmptyProjectType = IconLoader.getIcon("/modules/emptyProjectType.png"); 
     public static final Icon ExcludeFolder = IconLoader.getIcon("/modules/excludeFolder.png"); 
     public static final Icon ExcludeRootClosed = IconLoader.getIcon("/modules/excludeRootClosed.png"); 
     public static final Icon ExcludeRootOpened = IconLoader.getIcon("/modules/excludeRootOpened.png"); 
-    public static final Icon Javadoc = IconLoader.getIcon("/modules/javadoc.png"); 
     public static final Icon JavaModule = IconLoader.getIcon("/modules/javaModule.png"); 
-    public static final Icon Libraries = IconLoader.getIcon("/modules/libraries.png"); 
     public static final Icon Library = IconLoader.getIcon("/modules/library.png"); 
     public static final Icon Merge = IconLoader.getIcon("/modules/merge.png"); 
     public static final Icon ModulesNode = IconLoader.getIcon("/modules/modulesNode.png"); 
-    public static final Icon Order = IconLoader.getIcon("/modules/order.png"); 
     public static final Icon Output = IconLoader.getIcon("/modules/output.png"); 
-    public static final Icon Paths = IconLoader.getIcon("/modules/paths.png"); 
     public static final Icon PluginModule = IconLoader.getIcon("/modules/pluginModule.png"); 
-    public static final Icon Remove = IconLoader.getIcon("/modules/remove.png"); 
     public static final Icon SetPackagePrefix = IconLoader.getIcon("/modules/setPackagePrefix.png"); 
     public static final Icon SetPackagePrefixRollover = IconLoader.getIcon("/modules/setPackagePrefixRollover.png"); 
     public static final Icon SourceClosed = IconLoader.getIcon("/modules/sourceClosed.png"); 
@@ -758,8 +730,6 @@ public class AllIcons {
     public static final Icon TestRootOpened = IconLoader.getIcon("/modules/testRootOpened.png"); 
     public static final Icon TestSourceClosed = IconLoader.getIcon("/modules/testSourceClosed.png"); 
     public static final Icon TestSourceOpened = IconLoader.getIcon("/modules/testSourceOpened.png"); 
-    public static final Icon UnmarkSource = IconLoader.getIcon("/modules/unmarkSource.png"); 
-    public static final Icon UnmarkTests = IconLoader.getIcon("/modules/unmarkTests.png"); 
     public static final Icon UnmarkWebroot = IconLoader.getIcon("/modules/unmarkWebroot.png"); 
     public static final Icon WebRoot = IconLoader.getIcon("/modules/webRoot.png"); 
 
@@ -772,8 +742,8 @@ public class AllIcons {
     public static final Icon AddLocalWeblogicInstance = IconLoader.getIcon("/nodes/addLocalWeblogicInstance.png"); 
     public static final Icon AddRemoteWeblogicInstance = IconLoader.getIcon("/nodes/addRemoteWeblogicInstance.png"); 
     public static final Icon Advice = IconLoader.getIcon("/nodes/advice.png"); 
-    public static final Icon Annotationtype = IconLoader.getIcon("/nodes/annotationtype.png"); 
-    public static final Icon AnonymousClass = IconLoader.getIcon("/nodes/anonymousClass.png"); 
+    public static final Icon Annotationtype = IconLoader.getIcon("/nodes/annotationtype.png");
+    public static final Icon AnonymousClass = IconLoader.getIcon("/nodes/anonymousClass.png");
     public static final Icon Artifact = IconLoader.getIcon("/nodes/artifact.png"); 
     public static final Icon Aspect = IconLoader.getIcon("/nodes/aspect.png"); 
     public static final Icon BeaSmall = IconLoader.getIcon("/nodes/beaSmall.png"); 
@@ -1020,6 +990,19 @@ public class AllIcons {
     public static final Icon Step_passive = IconLoader.getIcon("/process/step_passive.png"); 
     public static final Icon Stop = IconLoader.getIcon("/process/stop.png"); 
     public static final Icon StopHovered = IconLoader.getIcon("/process/stopHovered.png"); 
+
+  }
+  
+  public static class Providers {
+    public static final Icon Apache = IconLoader.getIcon("/providers/apache.png"); 
+    public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png"); 
+    public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png"); 
+    public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.png"); 
+    public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.png"); 
+    public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.png"); 
+    public static final Icon Postgresql = IconLoader.getIcon("/providers/postgresql.png"); 
+    public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.png"); 
+    public static final Icon Sun = IconLoader.getIcon("/providers/sun.png"); 
 
   }
   
