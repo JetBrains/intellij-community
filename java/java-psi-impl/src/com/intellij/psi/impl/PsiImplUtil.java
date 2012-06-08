@@ -184,14 +184,39 @@ public class PsiImplUtil {
                                                     @NotNull final ResolveState state,
                                                     final PsiElement lastParent,
                                                     @NotNull final PsiElement place) {
+    final boolean fromBody = lastParent instanceof PsiCodeBlock;
+    final PsiTypeParameterList typeParameterList = method.getTypeParameterList();
+    final PsiParameterList parameterList = method.getParameterList();
+    return processDeclarationsInMethodLike(method, processor, state, fromBody, place, typeParameterList, parameterList);
+  }
+
+  public static boolean processDeclarationsInLambda(@NotNull final PsiLambdaExpression lambda,
+                                                    @NotNull final PsiScopeProcessor processor,
+                                                    @NotNull final ResolveState state,
+                                                    final PsiElement lastParent,
+                                                    @NotNull final PsiElement place) {
+    final boolean fromBody = lastParent != null && lastParent == lambda.getBody();
+    final PsiTypeParameterList typeParameterList = lambda.getTypeParameterList();
+    final PsiParameterList parameterList = lambda.getParameterList();
+    return processDeclarationsInMethodLike(lambda, processor, state, fromBody, place, typeParameterList, parameterList);
+  }
+
+  private static boolean processDeclarationsInMethodLike(@NotNull final PsiElement element,
+                                                         @NotNull final PsiScopeProcessor processor,
+                                                         @NotNull final ResolveState state,
+                                                         final boolean fromBody,
+                                                         @NotNull final PsiElement place,
+                                                         @Nullable final PsiTypeParameterList typeParameterList,
+                                                         @NotNull final PsiParameterList parameterList) {
+    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, element);
+
     final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
-    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, method);
     if (hint == null || hint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
-      final PsiTypeParameterList list = method.getTypeParameterList();
-      if (list != null && !list.processDeclarations(processor, state, null, place)) return false;
+      if (typeParameterList != null && !typeParameterList.processDeclarations(processor, state, null, place)) return false;
     }
-    if (lastParent instanceof PsiCodeBlock) {
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
+
+    if (fromBody) {
+      final PsiParameter[] parameters = parameterList.getParameters();
       for (PsiParameter parameter : parameters) {
         if (!processor.execute(parameter, state)) return false;
       }

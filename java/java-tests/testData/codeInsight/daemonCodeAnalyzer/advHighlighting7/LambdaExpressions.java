@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
+import java.util.*;
+
 class C {
   interface Simplest {
     void m();
   }
-  void simplest() { }
   void use(Simplest s) { }
+
+  interface IntParser {
+    int parse(String s);
+  }
+
+  interface ListProducer<T> {
+    List<T> produce();
+  }
 
   void test() {
     Simplest simplest = <weak_warning descr="Lambda expressions type check is not yet implemented">() -> { }</weak_warning>;
     use(<weak_warning descr="Lambda expressions type check is not yet implemented">() -> { }</weak_warning>);
+
+    IntParser intParser = <weak_warning descr="Lambda expressions type check is not yet implemented">(String s) -> Integer.parseInt(s)</weak_warning>;
+    ListProducer<String> listProducer = <weak_warning descr="Lambda expressions type check is not yet implemented"><T>() -> new ArrayList<T>()</weak_warning>;
   }
 }
