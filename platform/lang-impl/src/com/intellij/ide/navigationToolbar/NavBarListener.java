@@ -273,7 +273,8 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
       final ActionCallback firstCharTyped = new ActionCallback();
       focusManager.typeAheadUntil(firstCharTyped);
       myPanel.moveDown();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           try {
             final Robot robot = new Robot();
