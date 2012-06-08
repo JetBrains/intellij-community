@@ -170,11 +170,14 @@ public class ReplaceIfWithConditionalIntention extends Intention {
                                            PsiExpression elseValue,
                                            PsiType requiredType) {
     condition = ParenthesesUtils.stripParentheses(condition);
-    thenValue = PsiDiamondTypeUtil.expandTopLevelDiamondsInside(ParenthesesUtils.stripParentheses(thenValue));
+    thenValue = ParenthesesUtils.stripParentheses(thenValue);
+    elseValue = ParenthesesUtils.stripParentheses(elseValue);
+
+    thenValue = expandDiamondsWhenNeeded(thenValue, requiredType);
     if (thenValue == null) {
       return null;
     }
-    elseValue = PsiDiamondTypeUtil.expandTopLevelDiamondsInside(ParenthesesUtils.stripParentheses(elseValue));
+    elseValue = expandDiamondsWhenNeeded(elseValue, requiredType);
     if (elseValue == null) {
       return null;
     }
@@ -215,6 +218,15 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       conditional.append(getExpressionText(elseValue));
     }
     return conditional.toString();
+  }
+
+  private static PsiExpression expandDiamondsWhenNeeded(PsiExpression thenValue, PsiType requiredType) {
+    if (thenValue instanceof PsiNewExpression) {
+      if (!PsiDiamondTypeUtil.canChangeContextForDiamond((PsiNewExpression)thenValue, requiredType)) {
+        return PsiDiamondTypeUtil.expandTopLevelDiamondsInside(thenValue);
+      }
+    }
+    return thenValue;
   }
 
   private static String getExpressionText(PsiExpression expression) {
