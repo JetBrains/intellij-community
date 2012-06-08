@@ -25,7 +25,7 @@ import javax.swing.*;
  */
 
 public class CvsListCellRenderer extends AbstractListCellRenderer {
-  private static final Icon ICON = AllIcons.Actions.Cvs;
+  private static final Icon ICON = AllIcons.Providers.Cvs;
 
   protected Icon getPresentableIcon(Object value) {
     if (value == null) return null;

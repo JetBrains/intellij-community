@@ -34,12 +34,10 @@ public class AllIcons {
     public static final Icon CreateFromUsage_off = IconLoader.getIcon("/actions/createFromUsage_off.png"); 
     public static final Icon CreatePatch = IconLoader.getIcon("/actions/createPatch.png"); 
     public static final Icon Cross = IconLoader.getIcon("/actions/cross.png"); 
-    public static final Icon Cvs = IconLoader.getIcon("/actions/cvs.png"); 
     public static final Icon Delete = IconLoader.getIcon("/actions/delete.png"); 
     public static final Icon Diff = IconLoader.getIcon("/actions/diff.png"); 
     public static final Icon DiffWithCurrent = IconLoader.getIcon("/actions/diffWithCurrent.png"); 
     public static final Icon Dump = IconLoader.getIcon("/actions/dump.png"); 
-    public static final Icon Eclipse = IconLoader.getIcon("/actions/eclipse.png"); 
     public static final Icon Edit = IconLoader.getIcon("/actions/edit.png"); 
     public static final Icon EditSource = IconLoader.getIcon("/actions/editSource.png"); 
     public static final Icon ErDiagram = IconLoader.getIcon("/actions/erDiagram.png"); 
@@ -742,11 +740,10 @@ public class AllIcons {
     public static final Icon AddLocalWeblogicInstance = IconLoader.getIcon("/nodes/addLocalWeblogicInstance.png"); 
     public static final Icon AddRemoteWeblogicInstance = IconLoader.getIcon("/nodes/addRemoteWeblogicInstance.png"); 
     public static final Icon Advice = IconLoader.getIcon("/nodes/advice.png"); 
-    public static final Icon Annotationtype = IconLoader.getIcon("/nodes/annotationtype.png");
-    public static final Icon AnonymousClass = IconLoader.getIcon("/nodes/anonymousClass.png");
+    public static final Icon Annotationtype = IconLoader.getIcon("/nodes/annotationtype.png"); 
+    public static final Icon AnonymousClass = IconLoader.getIcon("/nodes/anonymousClass.png"); 
     public static final Icon Artifact = IconLoader.getIcon("/nodes/artifact.png"); 
     public static final Icon Aspect = IconLoader.getIcon("/nodes/aspect.png"); 
-    public static final Icon BeaSmall = IconLoader.getIcon("/nodes/beaSmall.png"); 
     public static final Icon C_plocal = IconLoader.getIcon("/nodes/c_plocal.png"); 
     public static final Icon C_private = IconLoader.getIcon("/nodes/c_private.png"); 
     public static final Icon C_protected = IconLoader.getIcon("/nodes/c_protected.png"); 
@@ -995,6 +992,9 @@ public class AllIcons {
   
   public static class Providers {
     public static final Icon Apache = IconLoader.getIcon("/providers/apache.png"); 
+    public static final Icon Bea = IconLoader.getIcon("/providers/bea.png"); 
+    public static final Icon Cvs = IconLoader.getIcon("/providers/cvs.png"); 
+    public static final Icon Eclipse = IconLoader.getIcon("/providers/eclipse.png"); 
     public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png"); 
     public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png"); 
     public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.png"); 
