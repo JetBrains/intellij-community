@@ -79,6 +79,6 @@ public class IntroduceVariableAction implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }
