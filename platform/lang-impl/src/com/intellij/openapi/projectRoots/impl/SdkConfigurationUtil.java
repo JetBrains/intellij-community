@@ -168,7 +168,7 @@ public class SdkConfigurationUtil {
     return sdk;
   }
 
-  public static void setDirectoryProjectSdk(@NotNull final Project project, final Sdk sdk) {
+  public static void setDirectoryProjectSdk(@NotNull final Project project, @Nullable final Sdk sdk) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ProjectRootManager.getInstance(project).setProjectSdk(sdk);
