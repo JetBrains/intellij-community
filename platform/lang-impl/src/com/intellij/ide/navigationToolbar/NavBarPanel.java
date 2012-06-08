@@ -104,7 +104,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private boolean myDisposed = false;
   private RelativePoint myLocationCache;
 
-  public NavBarPanel(final Project project) {
+  public NavBarPanel(final Project project, boolean docked) {
     super(new FlowLayout(FlowLayout.LEFT, 0 , 0));
     myProject = project;
     myModel = new NavBarModel(myProject);
@@ -123,11 +123,14 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
     };
 
-    final ActionCallback typeAheadDone = new ActionCallback();
-    IdeFocusManager.getInstance(project).typeAheadUntil(typeAheadDone);
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
-    myUpdateQueue.queueTypeAheadDone(typeAheadDone);
+    if (!docked) {
+      final ActionCallback typeAheadDone = new ActionCallback();
+      IdeFocusManager.getInstance(project).typeAheadUntil(typeAheadDone);
+      myUpdateQueue.queueTypeAheadDone(typeAheadDone);
+    }
+
     Disposer.register(project, this);
   }
 
