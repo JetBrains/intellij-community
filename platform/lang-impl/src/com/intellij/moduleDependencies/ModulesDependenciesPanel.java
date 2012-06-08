@@ -177,7 +177,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     final AnAction analyzeDepsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES);
     group.add(new AnAction(analyzeDepsAction.getTemplatePresentation().getText(),
                            analyzeDepsAction.getTemplatePresentation().getDescription(),
-                           AllIcons.General.ToolWindowInspection){
+                           AllIcons.Toolwindows.ToolWindowInspection){
 
       public void actionPerformed(AnActionEvent e) {
         analyzeDepsAction.actionPerformed(e);

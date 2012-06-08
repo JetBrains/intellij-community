@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
@@ -56,7 +57,6 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentsUtil;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
@@ -219,7 +219,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
           ToolWindow toolWindow =
             toolWindowManager.registerToolWindow(ToolWindowId.VCS, true, ToolWindowAnchor.BOTTOM, myProject, true);
           myContentManager = toolWindow.getContentManager();
-          toolWindow.setIcon(PlatformIcons.VCS_SMALL_TAB);
+          toolWindow.setIcon(AllIcons.Toolwindows.VcsSmallTab);
           toolWindow.installWatcher(myContentManager);
         } else {
           myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);

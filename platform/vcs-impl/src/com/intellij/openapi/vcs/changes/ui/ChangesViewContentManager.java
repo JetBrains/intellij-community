@@ -77,7 +77,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
         final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager != null) {
           myToolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.BOTTOM, myProject, true);
-          myToolWindow.setIcon(AllIcons.General.ToolWindowChanges);
+          myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowChanges);
           updateToolWindowAvailability();
           final ContentManager contentManager = myToolWindow.getContentManager();
           myContentManagerListener = new MyContentManagerListener();

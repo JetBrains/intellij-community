@@ -34,7 +34,7 @@ public class DefaultRunExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.RUN;
 
   private static final Icon ICON = AllIcons.Actions.Execute;
-  private static final Icon TOOLWINDOW_ICON = AllIcons.General.ToolWindowRun;
+  private static final Icon TOOLWINDOW_ICON = AllIcons.Toolwindows.ToolWindowRun;
   private static final Icon DISABLED_ICON = AllIcons.Process.DisabledRun;
 
   @NotNull

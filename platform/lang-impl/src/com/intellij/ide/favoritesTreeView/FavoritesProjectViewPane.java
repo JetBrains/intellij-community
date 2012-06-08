@@ -83,7 +83,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   }
 
   public Icon getIcon() {
-    return AllIcons.General.ToolWindowFavorites;
+    return AllIcons.Toolwindows.ToolWindowFavorites;
   }
 
   @NotNull
