@@ -60,7 +60,7 @@ public class MasterDetailPopupBuilder {
   private Alarm myUpdateAlarm;
   private JComponent myChooserComponent;
   private ActionToolbar myActionToolbar;
-  private boolean myAddDetailViewToEast;
+  private boolean myAddDetailViewToEast = true;
 
 
   public MasterDetailPopupBuilder setDetailView(DetailView detailView) {
