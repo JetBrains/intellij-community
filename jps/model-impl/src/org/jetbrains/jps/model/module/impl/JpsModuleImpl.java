@@ -3,6 +3,10 @@ package org.jetbrains.jps.model.module.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
+import org.jetbrains.jps.model.library.impl.JpsLibraryKind;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
@@ -22,6 +26,7 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
     myContainer.setChild(CONTENT_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, this));
     myContainer.setChild(EXCLUDED_ROOTS_KIND, new JpsUrlListImpl(eventDispatcher, this));
     myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl(model, eventDispatcher, this));
+    myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
     myContainer.setChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
     myContainer.setChild(JpsSdkReferencesTableImpl.KIND, new JpsSdkReferencesTableImpl(model, eventDispatcher, this));
   }
@@ -104,5 +109,12 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
   @Override
   public JpsModuleReference createReference(JpsParentElement parent) {
     return new JpsModuleReferenceImpl(myModel, getName(), getEventDispatcher(), parent);
+  }
+
+  @NotNull
+  @Override
+  public JpsLibrary addModuleLibrary(@NotNull JpsLibraryType<?> type, @NotNull String name) {
+    final JpsElementCollectionImpl<JpsLibraryImpl> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
+    return collection.addChild(new JpsLibraryImpl(name, type, myModel, getEventDispatcher(), collection));
   }
 }

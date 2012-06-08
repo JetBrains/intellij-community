@@ -8,6 +8,7 @@ import org.jetbrains.jps.model.JpsParentElement;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.impl.JpsElementCollectionKind;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 
@@ -38,7 +39,13 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
   @Override
   @NotNull
   public JpsModuleDependency addModuleDependency(@NotNull JpsModule module) {
-    final JpsModuleDependencyImpl dependency = new JpsModuleDependencyImpl(myModel, getEventDispatcher(), module, this);
+    return addModuleDependency(module.createReference(this));
+  }
+
+  @NotNull
+  @Override
+  public JpsModuleDependency addModuleDependency(@NotNull JpsModuleReference moduleReference) {
+    final JpsModuleDependencyImpl dependency = new JpsModuleDependencyImpl(myModel, getEventDispatcher(), moduleReference, this);
     myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(dependency);
     return dependency;
   }
@@ -46,7 +53,13 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
   @Override
   @NotNull
   public JpsLibraryDependency addLibraryDependency(@NotNull JpsLibrary libraryElement) {
-    JpsLibraryDependencyImpl dependency = new JpsLibraryDependencyImpl(myModel, getEventDispatcher(), libraryElement, this);
+    return addLibraryDependency(libraryElement.createReference(this));
+  }
+
+  @NotNull
+  @Override
+  public JpsLibraryDependency addLibraryDependency(@NotNull JpsLibraryReference libraryReference) {
+    final JpsLibraryDependencyImpl dependency = new JpsLibraryDependencyImpl(myModel, getEventDispatcher(), libraryReference, this);
     myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(dependency);
     return dependency;
   }
