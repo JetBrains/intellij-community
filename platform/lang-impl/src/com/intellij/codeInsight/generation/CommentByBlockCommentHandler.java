@@ -313,7 +313,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   @Nullable
   private static Commenter findCommenter(PsiFile file, Editor editor) {
     final FileType fileType = file.getFileType();
-    if (fileType instanceof CustomSyntaxTableFileType) {
+    if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter();
     }
 
