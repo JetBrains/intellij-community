@@ -676,6 +676,7 @@ public class AllIcons {
     public static final Icon DeleteContentFolderRollover = IconLoader.getIcon("/modules/deleteContentFolderRollover.png"); 
     public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); 
     public static final Icon DeleteContentRootRollover = IconLoader.getIcon("/modules/deleteContentRootRollover.png"); 
+    public static final Icon Edit = IconLoader.getIcon("/modules/edit.png"); 
     public static final Icon ExcludeFolder = IconLoader.getIcon("/modules/excludeFolder.png"); 
     public static final Icon ExcludeRootClosed = IconLoader.getIcon("/modules/excludeRootClosed.png"); 
     public static final Icon ExcludeRootOpened = IconLoader.getIcon("/modules/excludeRootOpened.png"); 
