@@ -32,7 +32,7 @@ import java.util.Map;
 public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance("#" + CoverageViewManager.class.getName());
   public static final String TOOLWINDOW_ID = "Coverage";
-  private static final Icon TOOLWINDOW_ICON = AllIcons.General.ToolWindowCoverage;
+  private static final Icon TOOLWINDOW_ICON = AllIcons.Toolwindows.ToolWindowCoverage;
   private Project myProject;
   private final CoverageDataManager myDataManager;
   private ContentManager myContentManager;
