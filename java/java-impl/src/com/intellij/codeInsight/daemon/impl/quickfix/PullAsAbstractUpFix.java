@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -163,13 +164,13 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
            name+= " and make it abstract";
         }
       }
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringIntention(new ExtractInterfaceHandler(), "Extract interface"));
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringIntention(new ExtractSuperclassHandler(), "Extract superclass"));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new ExtractInterfaceHandler(), "Extract interface"));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new ExtractSuperclassHandler(), "Extract superclass"));
     }
 
 
     if (canBePulledUp) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringIntention(new JavaPullUpHandler(), "Pull members up"));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new RunRefactoringAction(new JavaPullUpHandler(), "Pull members up"));
     }
     QuickFixAction.registerQuickFixAction(highlightInfo, new PullAsAbstractUpFix(methodWithOverrides, name));
   }

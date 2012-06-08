@@ -16,14 +16,12 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,18 +29,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class IntroduceVariableAction implements IntentionAction {
+public class IntroduceVariableAction extends BaseRunRefactoringAction<IntroduceVariableHandler> {
 
   @NotNull
   @Override
   public String getText() {
     return CodeInsightBundle.message("intention.introduce.variable.text");
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return getText();
   }
 
   @Override
@@ -73,12 +65,6 @@ public class IntroduceVariableAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final RefactoringActionHandler refactoringActionHandler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
-    refactoringActionHandler.invoke(project, editor, file, null);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    new IntroduceVariableHandler().invoke(project, editor, file, null);
   }
 }

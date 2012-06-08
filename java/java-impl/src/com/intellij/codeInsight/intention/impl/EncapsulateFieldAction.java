@@ -16,13 +16,11 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,18 +28,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class EncapsulateFieldAction implements IntentionAction {
+public class EncapsulateFieldAction extends BaseRunRefactoringAction<EncapsulateFieldsHandler> {
 
   @NotNull
   @Override
   public String getText() {
     return CodeInsightBundle.message("intention.encapsulate.field.text");
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return getText();
   }
 
   @Override
@@ -58,8 +50,7 @@ public class EncapsulateFieldAction implements IntentionAction {
       return;
     }
 
-    final RefactoringActionHandler refactoringActionHandler = JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler();
-    refactoringActionHandler.invoke(project, new PsiElement[]{field}, null);
+    new EncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, null);
   }
 
   @Nullable
@@ -91,10 +82,5 @@ public class EncapsulateFieldAction implements IntentionAction {
     final CaretModel caretModel = editor.getCaretModel();
     final int position = caretModel.getOffset();
     return file.findElementAt(position);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }
