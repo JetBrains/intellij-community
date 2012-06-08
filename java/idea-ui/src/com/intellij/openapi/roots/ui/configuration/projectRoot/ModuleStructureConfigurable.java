@@ -925,7 +925,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private class AddModuleAction extends AnAction implements DumbAware {
     public AddModuleAction() {
-      super(ProjectBundle.message("add.new.module.text.full"), null, AllIcons.Actions.Modul);
+      super(ProjectBundle.message("add.new.module.text.full"), null, AllIcons.Actions.Module);
     }
 
     public void actionPerformed(final AnActionEvent e) {

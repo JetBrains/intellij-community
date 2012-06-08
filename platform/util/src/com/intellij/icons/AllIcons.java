@@ -64,7 +64,7 @@ public class AllIcons {
     public static final Icon Menu_replace = IconLoader.getIcon("/actions/menu-replace.png"); 
     public static final Icon Menu_saveall = IconLoader.getIcon("/actions/menu-saveall.png"); 
     public static final Icon Minimize = IconLoader.getIcon("/actions/minimize.png"); 
-    public static final Icon Modul = IconLoader.getIcon("/actions/modul.png"); 
+    public static final Icon Module = IconLoader.getIcon("/actions/module.png"); 
     public static final Icon Move_to_button_top = IconLoader.getIcon("/actions/move-to-button-top.png"); 
     public static final Icon Move_to_button = IconLoader.getIcon("/actions/move-to-button.png"); 
     public static final Icon MoveDown = IconLoader.getIcon("/actions/moveDown.png"); 
