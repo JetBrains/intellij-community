@@ -37,4 +37,8 @@ class C {
     IntParser intParser = <weak_warning descr="Lambda expressions type check is not yet implemented">(String s) -> Integer.parseInt(s)</weak_warning>;
     ListProducer<String> listProducer = <weak_warning descr="Lambda expressions type check is not yet implemented"><T>() -> new ArrayList<T>()</weak_warning>;
   }
+
+  Runnable foo() {
+    return <weak_warning descr="Lambda expressions type check is not yet implemented">() -> { System.out.println("foo"); }</weak_warning>;
+  }
 }
