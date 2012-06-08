@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -46,8 +45,7 @@ import java.util.List;
 public class JavadocEditor extends ModuleElementsEditor {
   private JTable myTable;
 
-  public static final String NAME = ProjectBundle.message("module.javadoc.title");
-  public static final Icon ICON = AllIcons.Modules.Javadoc;
+  private static final String NAME = ProjectBundle.message("module.javadoc.title");
 
   public JavadocEditor(ModuleConfigurationState state) {
     super(state);

@@ -1137,8 +1137,15 @@ public final class GuiEditor extends JPanel implements DataProvider {
     }
 
     public void run() {
+      if (myModule.isDisposed()) {
+        return;
+      }
+      Project project = myModule.getProject();
+      if (project.isDisposed()) {
+        return;
+      }
       LOG.debug("Synchronizing GUI editor " + myFile.getName() + " to document");
-      PsiDocumentManager.getInstance(myModule.getProject()).commitDocument(myDocument);
+      PsiDocumentManager.getInstance(project).commitDocument(myDocument);
       readFromFile(myKeepSelection);
     }
   }

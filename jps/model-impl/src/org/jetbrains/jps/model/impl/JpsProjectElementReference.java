@@ -6,25 +6,17 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public class JpsProjectElementReference extends JpsElementBase<JpsProjectElementReference> implements JpsElementReference<JpsProject> {
-  private final JpsModel myModel;
-
-  public JpsProjectElementReference(JpsModel model, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(eventDispatcher, parent);
-    myModel = model;
-  }
-
+public class JpsProjectElementReference extends JpsElementReferenceBase<JpsProjectElementReference, JpsProject> {
   @Override
   public JpsProject resolve() {
-    return myModel.getProject();
+    final JpsModel model = getModel();
+    return model != null ? model.getProject() : null;
   }
 
   @NotNull
   @Override
-  public JpsProjectElementReference createCopy(@NotNull JpsModel model,
-                                               @NotNull JpsEventDispatcher eventDispatcher,
-                                               JpsParentElement parent) {
-    return new JpsProjectElementReference(model, eventDispatcher, parent);
+  public JpsProjectElementReference createCopy() {
+    return new JpsProjectElementReference();
   }
 
   @Override

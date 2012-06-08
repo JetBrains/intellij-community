@@ -41,8 +41,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   protected boolean myFocused;
 
   protected JTree myTree;
-  private boolean myOpaque = true;
 
+  private boolean myOpaque = true;
   public final Component getTreeCellRendererComponent(
     JTree tree,
     Object value,
@@ -120,6 +120,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     return this;
+  }
+
+  public JTree getTree() {
+    return myTree;
   }
 
   protected boolean isFocused() {

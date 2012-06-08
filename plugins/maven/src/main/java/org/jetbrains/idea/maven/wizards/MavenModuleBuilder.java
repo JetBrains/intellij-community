@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
-  private static final Icon BIG_ICON = AllIcons.Modules.JavaModule;
+  private static final Icon BIG_ICON = AllIcons.Modules.Types.JavaModule;
 
   private MavenProject myAggregatorProject;
   private MavenProject myParentProject;

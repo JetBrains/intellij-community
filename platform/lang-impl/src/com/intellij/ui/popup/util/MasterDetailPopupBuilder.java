@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -42,13 +44,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 5/6/12
- * Time: 2:06 PM
- * To change this template use File | Settings | File Templates.
- */
 public class MasterDetailPopupBuilder {
 
   private static final Color BORDER_COLOR = Gray._135;
@@ -57,26 +52,27 @@ public class MasterDetailPopupBuilder {
   private Delegate myDelegate;
   private boolean myCloseOnEnter;
 
-  public DetailViewImpl getDetailView() {
-    return myDetailView;
-  }
+  private DetailView myDetailView;
 
-  private DetailViewImpl myDetailView;
   private JLabel myPathLabel;
+
   private JBPopup myPopup;
   private Alarm myUpdateAlarm;
-
-
   private JComponent myChooserComponent;
+  private ActionToolbar myActionToolbar;
+  private boolean myAddDetailViewToEast = true;
+
+
+  public MasterDetailPopupBuilder setDetailView(DetailView detailView) {
+    myDetailView = detailView;
+    return this;
+  }
 
   public ActionToolbar getActionToolbar() {
     return myActionToolbar;
   }
 
-  private ActionToolbar myActionToolbar;
-
   public MasterDetailPopupBuilder(Project project) {
-
     myProject = project;
   }
 
@@ -106,9 +102,18 @@ public class MasterDetailPopupBuilder {
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
-        myDetailView.updateWithItem(wrapper1);
+        doUpdateDetailViewWithItem(wrapper1);
       }
     }, 100);
+  }
+
+  protected void doUpdateDetailViewWithItem(ItemWrapper wrapper1) {
+    if (wrapper1 != null) {
+      wrapper1.updateDetailView(myDetailView);
+    }
+    else {
+      myDetailView.clearEditor();
+    }
   }
 
   public JBPopup createMasterDetailPopup() {
@@ -122,7 +127,10 @@ public class MasterDetailPopupBuilder {
     myPathLabel.setFont(font.deriveFont((float)10));
 
     myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    myDetailView = new DetailViewImpl(myProject);
+
+    if (myDetailView == null) {
+      myDetailView = new DetailViewImpl(myProject);
+    }
 
     JPanel footerPanel = new JPanel(new BorderLayout()) {
       @Override
@@ -139,14 +147,13 @@ public class MasterDetailPopupBuilder {
         IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
           public void run() {
             Object[] values = getSelectedItems();
-
             if (values.length == 1) {
-              ((ItemWrapper)values[0]).execute(myProject, myPopup);
+              myDelegate.itemChosen((ItemWrapper)values[0], myProject, myPopup);
             }
             else {
               for (Object value : values) {
                 if (value instanceof ItemWrapper) {
-                  ((ItemWrapper)value).execute(myProject, myPopup);
+                  myDelegate.itemChosen((ItemWrapper)value, myProject, myPopup);
                 }
               }
             }
@@ -158,21 +165,34 @@ public class MasterDetailPopupBuilder {
     footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     footerPanel.add(myPathLabel);
 
-    myActionToolbar = ActionManager.getInstance().createActionToolbar("", myActions, true);
-    myActionToolbar.setReservePlaceAutoPopupIcon(false);
-    myActionToolbar.setMinimumButtonSize(new Dimension(20, 20));
-    final JComponent toolBar = myActionToolbar.getComponent();
-    toolBar.setOpaque(false);
+    JComponent toolBar = null;
+    if (myActions != null) {
+      myActionToolbar = ActionManager.getInstance().createActionToolbar("", myActions, true);
+      myActionToolbar.setReservePlaceAutoPopupIcon(false);
+      myActionToolbar.setMinimumButtonSize(new Dimension(20, 20));
+      toolBar = myActionToolbar.getComponent();
+      toolBar.setOpaque(false);
+    }
 
-    final PopupChooserBuilder builder = createInnerBuilder();
-    myPopup = builder.
-      setTitle(myDelegate.getTitle()).
+    final PopupChooserBuilder builder = createInnerBuilder().
       setMovable(true).
       setResizable(true).
       setAutoselectOnMouseMove(false).
       setSettingButton(toolBar).
-      setSouthComponent(footerPanel).
-      setEastComponent(myDetailView).
+      setSouthComponent(footerPanel);
+
+    if (myAddDetailViewToEast) {
+      builder.
+        setEastComponent((JComponent)myDetailView);
+    }
+
+    String title = myDelegate.getTitle();
+    if (title != null) {
+      builder.setTitle(title);
+    }
+
+
+    builder.
       setItemChoosenCallback(runnable).
       setCloseOnEnter(myCloseOnEnter).
       setMayBeParent(true).
@@ -181,7 +201,20 @@ public class MasterDetailPopupBuilder {
         public String fun(Object o) {
           return ((ItemWrapper)o).speedSearchText();
         }
-      }).createPopup();
+      });
+
+    myPopup = builder.createPopup();
+    myPopup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(LightweightWindowEvent event) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        myDetailView.clearEditor();
+      }
+    });
     return myPopup;
   }
 
@@ -214,11 +247,16 @@ public class MasterDetailPopupBuilder {
 
   private void updateDetailViewLater() {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        doUpdateDetailView();
-      }
-    });
+    //SwingUtilities.invokeLater(new Runnable() {
+    //  public void run() {
+    //    doUpdateDetailView();
+    //  }
+    //});
+    doUpdateDetailView();
+  }
+
+  public void setAddDetailViewToEast(boolean addDetailViewToEast) {
+    myAddDetailViewToEast = addDetailViewToEast;
   }
 
   public static boolean allowedToRemoveItems(Object[] values) {
@@ -271,7 +309,7 @@ public class MasterDetailPopupBuilder {
     }
   }
 
-  public MasterDetailPopupBuilder setActionsGroup(ActionGroup actions) {
+  public MasterDetailPopupBuilder setActionsGroup(@Nullable ActionGroup actions) {
     myActions = actions;
     return this;
   }
@@ -332,6 +370,7 @@ public class MasterDetailPopupBuilder {
   }
 
   public interface Delegate {
+    @Nullable
     String getTitle();
 
     void handleMnemonic(KeyEvent e, Project project, JBPopup popup);
@@ -340,6 +379,8 @@ public class MasterDetailPopupBuilder {
     JComponent createAccessoryView(Project project);
 
     Object[] getSelectedItemsInTree();
+
+    void itemChosen(ItemWrapper item, Project project, JBPopup popup);
   }
 
   public static class ListItemRenderer extends JPanel implements ListCellRenderer {

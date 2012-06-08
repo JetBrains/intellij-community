@@ -1,9 +1,6 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsParentElement;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsSdkType;
@@ -15,20 +12,20 @@ import org.jetbrains.jps.model.module.JpsSdkDependency;
 public class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDependencyImpl> implements JpsSdkDependency {
   private final JpsSdkType<?> mySdkType;
   
-  public JpsSdkDependencyImpl(@NotNull JpsSdkType<?> sdkType, JpsModel model, JpsEventDispatcher eventDispatcher, JpsDependenciesListImpl parent) {
-    super(model, eventDispatcher, parent);
+  public JpsSdkDependencyImpl(@NotNull JpsSdkType<?> sdkType) {
+    super();
     mySdkType = sdkType;
   }
 
-  public JpsSdkDependencyImpl(JpsSdkDependencyImpl original, JpsModel model, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(original, model, dispatcher, parent);
+  public JpsSdkDependencyImpl(JpsSdkDependencyImpl original) {
+    super(original);
     mySdkType = original.mySdkType;
   }
 
   @NotNull
   @Override
-  public JpsSdkDependencyImpl createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsSdkDependencyImpl(this, model, eventDispatcher, parent);
+  public JpsSdkDependencyImpl createCopy() {
+    return new JpsSdkDependencyImpl(this);
   }
 
   @Override
@@ -39,12 +36,11 @@ public class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDepende
 
   @Override
   public JpsLibrary resolveSdk() {
-    final JpsLibraryReference reference = getParent().getParent().getSdkReferencesTable().getSdkReference(mySdkType);
+    final JpsLibraryReference reference = getDependenciesList().getParent().getSdkReferencesTable().getSdkReference(mySdkType);
     return reference != null ? reference.resolve() : null;
   }
 
-  @Override
-  public JpsDependenciesListImpl getParent() {
-    return (JpsDependenciesListImpl)super.getParent();
+  public JpsDependenciesListImpl getDependenciesList() {
+    return (JpsDependenciesListImpl)myParent.getParent();
   }
 }

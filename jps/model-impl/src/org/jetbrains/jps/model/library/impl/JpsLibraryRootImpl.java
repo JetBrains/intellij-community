@@ -1,9 +1,6 @@
 package org.jetbrains.jps.model.library.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsParentElement;
 import org.jetbrains.jps.model.impl.JpsElementBase;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
@@ -16,14 +13,13 @@ public class JpsLibraryRootImpl extends JpsElementBase<JpsLibraryRootImpl> imple
   private final String myUrl;
   private final JpsLibraryRootType myRootType;
 
-  public JpsLibraryRootImpl(JpsEventDispatcher eventDispatcher, @NotNull String url, @NotNull JpsLibraryRootType rootType, @NotNull JpsParentElement parent) {
-    super(eventDispatcher, parent);
+  public JpsLibraryRootImpl(@NotNull String url,
+                            @NotNull JpsLibraryRootType rootType) {
     myUrl = url;
     myRootType = rootType;
   }
 
-  public JpsLibraryRootImpl(JpsLibraryRootImpl original, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(original, dispatcher, parent);
+  public JpsLibraryRootImpl(JpsLibraryRootImpl original) {
     myUrl = original.myUrl;
     myRootType = original.myRootType;
   }
@@ -41,8 +37,8 @@ public class JpsLibraryRootImpl extends JpsElementBase<JpsLibraryRootImpl> imple
 
   @NotNull
   @Override
-  public JpsLibraryRootImpl createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsLibraryRootImpl(this, eventDispatcher, parent);
+  public JpsLibraryRootImpl createCopy() {
+    return new JpsLibraryRootImpl(this);
   }
 
   public void applyChanges(@NotNull JpsLibraryRootImpl modified) {
@@ -51,6 +47,6 @@ public class JpsLibraryRootImpl extends JpsElementBase<JpsLibraryRootImpl> imple
   @Override
   @NotNull
   public JpsLibrary getLibrary() {
-    return (JpsLibrary)myParent;
+    return (JpsLibrary)myParent.getParent();
   }
 }

@@ -11,10 +11,10 @@ public interface JpsElementCollection<E extends JpsElement> extends JpsParentEle
   List<E> getElements();
 
   @NotNull
-  <P> E addChild(@NotNull JpsElementFactoryWithParameter<E,P> factory, @NotNull P param);
+  <P> E addChild(@NotNull JpsElementParameterizedCreator<E,P> factory, @NotNull P param);
 
   @NotNull
-  E addChild(@NotNull JpsElementFactory<E> factory);
+  E addChild(@NotNull JpsElementCreator<E> creator);
 
   E addChild(E element);
 

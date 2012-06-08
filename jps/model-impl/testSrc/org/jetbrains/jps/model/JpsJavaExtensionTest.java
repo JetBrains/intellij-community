@@ -1,10 +1,10 @@
 package org.jetbrains.jps.model;
 
+import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.java.impl.JavaModuleExtensionKind;
-import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionImpl;
 import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionKind;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -31,7 +31,7 @@ public class JpsJavaExtensionTest extends JpsModelTestCase {
     model.commit();
 
     final JpsDependencyElement dep = assertOneElement(assertOneElement(myModel.getProject().getModules()).getDependenciesList().getDependencies());
-    final JpsJavaDependencyExtensionImpl extension = dep.getContainer().getChild(JpsJavaDependencyExtensionKind.INSTANCE);
+    final JpsJavaDependencyExtension extension = dep.getContainer().getChild(JpsJavaDependencyExtensionKind.INSTANCE);
     assertTrue(extension.isExported());
     assertSame(JpsJavaDependencyScope.TEST, extension.getScope());
   }

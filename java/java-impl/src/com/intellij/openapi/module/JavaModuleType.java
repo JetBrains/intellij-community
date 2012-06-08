@@ -92,7 +92,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   private static class IconHolder {
-    private static final Icon JAVA_MODULE_ICON = AllIcons.Modules.JavaModule;
+    private static final Icon JAVA_MODULE_ICON = AllIcons.Modules.Types.JavaModule;
   }
 
   private static Icon getJavaModuleIcon() {

@@ -10,13 +10,12 @@ import org.jetbrains.jps.model.library.JpsLibraryReference;
  * @author nik
  */
 public class JpsLibraryReferenceImpl extends JpsNamedElementReferenceBase<JpsLibrary, JpsLibraryReferenceImpl> implements JpsLibraryReference {
-  public JpsLibraryReferenceImpl(JpsModel model, JpsEventDispatcher eventDispatcher, String elementName, JpsElementReference<? extends JpsCompositeElement> parentReference,
-                                 JpsParentElement parent) {
-    super(model, eventDispatcher, JpsLibraryKind.LIBRARIES_COLLECTION_KIND, elementName, parentReference, parent);
+  public JpsLibraryReferenceImpl(String elementName, JpsElementReference<? extends JpsCompositeElement> parentReference) {
+    super(JpsLibraryKind.LIBRARIES_COLLECTION_KIND, elementName, parentReference);
   }
 
-  public JpsLibraryReferenceImpl(JpsLibraryReferenceImpl original, JpsModel model, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(original, model, eventDispatcher, parent);
+  private JpsLibraryReferenceImpl(JpsLibraryReferenceImpl original) {
+    super(original);
   }
 
   @NotNull
@@ -27,9 +26,13 @@ public class JpsLibraryReferenceImpl extends JpsNamedElementReferenceBase<JpsLib
 
   @NotNull
   @Override
-  public JpsLibraryReferenceImpl createCopy(@NotNull JpsModel model,
-                                            @NotNull JpsEventDispatcher eventDispatcher,
-                                            JpsParentElement parent) {
-    return new JpsLibraryReferenceImpl(this, model, eventDispatcher, parent);
+  public JpsLibraryReferenceImpl createCopy() {
+    return new JpsLibraryReferenceImpl(this);
+  }
+
+  @Override
+  public JpsLibraryReference asExternal(@NotNull JpsModel model) {
+    model.registerExternalReference(this);
+    return this;
   }
 }

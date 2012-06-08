@@ -7,5 +7,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface JpsReferenceableElement<E extends JpsElement> {
   @NotNull
-  JpsElementReference<E> createReference(JpsParentElement parent);
+  JpsElementReference<E> createReference();
 }

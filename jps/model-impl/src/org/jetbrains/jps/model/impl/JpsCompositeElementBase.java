@@ -8,19 +8,13 @@ import org.jetbrains.jps.model.*;
  */
 public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBase<Self>> extends JpsElementBase<Self> implements JpsCompositeElement {
   protected final JpsElementContainerImpl myContainer;
-  protected final JpsModel myModel;
 
-  protected JpsCompositeElementBase(JpsModel model, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(eventDispatcher, parent);
-    myModel = model;
-    myContainer = new JpsElementContainerImpl(model, eventDispatcher, this);
+  protected JpsCompositeElementBase() {
+    myContainer = new JpsElementContainerImpl(this);
   }
 
-  protected JpsCompositeElementBase(JpsCompositeElementBase<Self> original, JpsModel model, JpsEventDispatcher dispatcher,
-                                    JpsParentElement parent) {
-    super(original, dispatcher, parent);
-    myModel = model;
-    myContainer = new JpsElementContainerImpl(original.myContainer, model, dispatcher, this);
+  protected JpsCompositeElementBase(JpsCompositeElementBase<Self> original) {
+    myContainer = new JpsElementContainerImpl(original.myContainer, this);
   }
 
   public void applyChanges(@NotNull Self element) {

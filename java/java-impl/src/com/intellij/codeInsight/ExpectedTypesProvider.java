@@ -18,6 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -330,14 +331,19 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitReturnStatement(PsiReturnStatement statement) {
-      PsiMethod scopeMethod = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      final PsiMethod scopeMethod = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
       if (scopeMethod != null) {
         PsiType type = scopeMethod.getReturnType();
         if (type != null) {
           ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type,
                                                      TailType.SEMICOLON);
           if (PropertyUtil.isSimplePropertyAccessor(scopeMethod)) {
-            info.expectedName = PropertyUtil.getPropertyName(scopeMethod);
+            info.expectedName = new NullableComputable<String>() {
+              @Override
+              public String compute() {
+                return PropertyUtil.getPropertyName(scopeMethod);
+              }
+            };
           }
 
           myResult = new ExpectedTypeInfo[]{info};
@@ -1017,8 +1023,8 @@ public class ExpectedTypesProvider {
       ExpectedTypeInfoImpl info = createInfoImpl(parameterType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, tailType);
       info.setInsertExplicitTypeParams(true);
       info.setCalledMethod(method);
-      String propertyName = getPropertyName(parameter);
-      if (propertyName != null) info.expectedName = propertyName;
+      NullableComputable<String> propertyName = getPropertyName(parameter);
+      info.expectedName = propertyName;
       array.add(info);
 
       if (index == parameters.length - 1 && parameter.isVarArgs()) {
@@ -1158,12 +1164,17 @@ public class ExpectedTypesProvider {
     }
 
     @Nullable
-    private static String getPropertyName(@NotNull PsiVariable variable) {
-      final String name = variable.getName();
-      if (name == null) return null;
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
-      VariableKind variableKind = codeStyleManager.getVariableKind(variable);
-      return codeStyleManager.variableNameToPropertyName(name, variableKind);
+    private static NullableComputable<String> getPropertyName(@NotNull final PsiVariable variable) {
+      return new NullableComputable<String>() {
+        @Override
+        public String compute() {
+          final String name = variable.getName();
+          if (name == null) return null;
+          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
+          VariableKind variableKind = codeStyleManager.getVariableKind(variable);
+          return codeStyleManager.variableNameToPropertyName(name, variableKind);
+        }
+      };
     }
 
     @NotNull

@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
@@ -160,7 +161,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       };
 
-      ListPopup popup = createPopup(onDispose);
+      JBPopup popup = createPopup(onDispose);
 
       popup.show(new RelativePoint(this, new Point(0, this.getHeight() - 1)));
     }
@@ -171,7 +172,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       return myForcePressed ? null : super.getToolTipText();
     }
 
-    protected ListPopup createPopup(Runnable onDispose) {
+    protected JBPopup createPopup(Runnable onDispose) {
       DefaultActionGroup group = createPopupActionGroup(this);
 
       DataContext context = getDataContext();

@@ -138,10 +138,14 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
   private static void fillResultsMap(Map<PsiFile, PsiClass[]> result, PsiFile containingFile, PsiClass[] topLevelClasses) {
     PsiClass[] classes = result.get(containingFile);
-    if (classes != null) {
-      topLevelClasses = ArrayUtil.mergeArrays(classes, topLevelClasses, PsiClass.ARRAY_FACTORY);
+    if (topLevelClasses != null) {
+      if (classes != null) {
+        topLevelClasses = ArrayUtil.mergeArrays(classes, topLevelClasses, PsiClass.ARRAY_FACTORY);
+      }
+      result.put(containingFile, topLevelClasses);
+    } else {
+      result.put(containingFile, classes);
     }
-    result.put(containingFile, topLevelClasses);
   }
 
   public void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {

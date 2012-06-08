@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.lang;
 
 import com.intellij.openapi.project.Project;
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The IDEA side of a custom language parser. Provides lexing results to the
+ * The IDEA side of a custom language parser. Provides lexical analysis results to the
  * plugin and allows the plugin to build the AST tree.
  *
  * @see PsiParser
@@ -54,14 +53,14 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Returns the type of current token from the lexer.
    *
-   * @return the token type, or null when lexing is over.
+   * @return the token type, or null when the token stream is over.
    * @see #setTokenTypeRemapper(ITokenTypeRemapper).
    */
   @Nullable
   IElementType getTokenType();
 
   /**
-   * Sets optional remapper that can change the type of freshly lexed tokens.
+   * Sets optional remapper that can change the type of tokens.
    * Output of getTokenType() is affected by it.
    *
    * @param remapper the remapper object, or null.
@@ -107,14 +106,14 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Returns the text of the current token from the lexer.
    *
-   * @return the token text, or null when the lexing is over.
+   * @return the token text, or null when the token stream is over.
    */
   @NonNls
   @Nullable
   String getTokenText();
 
   /**
-   * Returns the start offset of the current token, or the file length when the lexing is over.
+   * Returns the start offset of the current token, or the file length when the token stream is over.
    *
    * @return the token offset.
    */

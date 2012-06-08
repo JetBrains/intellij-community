@@ -23,9 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
-  private static final Icon ICON = AllIcons.Modules.EmptyProjectType;
-  private static final Icon NODE_ICON_OPEN = AllIcons.Nodes.ModuleOpen;
-  private static final Icon NODE_ICON_CLOSED = AllIcons.Nodes.ModuleClosed;
+  private static final Icon ICON = AllIcons.Modules.Types.EmptyProjectType;
   @NonNls public static final String EMPTY_MODULE = "EMPTY_MODULE";
   //private static final EmptyModuleType ourInstance = new EmptyModuleType();
 
@@ -59,6 +57,6 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   }
 
   public Icon getNodeIcon(boolean isOpened) {
-    return isOpened ? NODE_ICON_OPEN : NODE_ICON_CLOSED;
+    return isOpened ? AllIcons.Nodes.ModuleOpen : AllIcons.Nodes.ModuleClosed;
   }
 }

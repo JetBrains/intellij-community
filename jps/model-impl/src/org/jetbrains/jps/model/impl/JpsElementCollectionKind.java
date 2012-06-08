@@ -7,7 +7,7 @@ import org.jetbrains.jps.model.*;
  * @author nik
  */
 public class JpsElementCollectionKind<E extends JpsElement> extends JpsElementKind<JpsElementCollectionImpl<E>>
-  implements JpsElementFactory<JpsElementCollectionImpl<E>> {
+                                                            implements JpsElementCreator<JpsElementCollectionImpl<E>> {
   private final JpsElementKind<E> myElementKind;
 
   public JpsElementCollectionKind(JpsElementKind<E> elementKind) {
@@ -16,9 +16,7 @@ public class JpsElementCollectionKind<E extends JpsElement> extends JpsElementKi
 
   @NotNull
   @Override
-  public JpsElementCollectionImpl<E> create(@NotNull JpsModel model,
-                                            @NotNull JpsEventDispatcher eventDispatcher,
-                                            JpsParentElement parent) {
-    return new JpsElementCollectionImpl<E>(myElementKind, model, eventDispatcher, parent);
+  public JpsElementCollectionImpl<E> create() {
+    return new JpsElementCollectionImpl<E>(myElementKind);
   }
 }

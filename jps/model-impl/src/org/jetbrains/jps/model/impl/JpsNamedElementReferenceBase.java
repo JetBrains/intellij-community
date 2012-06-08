@@ -13,18 +13,17 @@ public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Se
   private final JpsElementCollectionKind<? extends T> myCollectionKind;
   protected final String myElementName;
 
-  protected JpsNamedElementReferenceBase(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, @NotNull JpsElementCollectionKind<? extends T> kind, @NotNull String elementName,
-                                         @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference, JpsParentElement parent) {
-    super(model, eventDispatcher, parent);
+  protected JpsNamedElementReferenceBase(@NotNull JpsElementCollectionKind<? extends T> kind,
+                                         @NotNull String elementName,
+                                         @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference) {
+    super();
     myCollectionKind = kind;
     myElementName = elementName;
     myContainer.setChild(PARENT_REFERENCE_KIND, parentReference);
   }
 
-  protected JpsNamedElementReferenceBase(JpsNamedElementReferenceBase<T, Self> original,
-                                         JpsModel model, JpsEventDispatcher eventDispatcher,
-                                         JpsParentElement parent) {
-    super(original, model, eventDispatcher, parent);
+  protected JpsNamedElementReferenceBase(JpsNamedElementReferenceBase<T, Self> original) {
+    super(original);
     myCollectionKind = original.myCollectionKind;
     myElementName = original.myElementName;
   }

@@ -9,19 +9,17 @@ import org.jetbrains.jps.model.JpsParentElement;
  * @author nik
  */
 public class JpsModuleSourceDependency extends JpsDependencyElementBase<JpsModuleSourceDependency> {
-  public JpsModuleSourceDependency(JpsModel model, JpsEventDispatcher eventDispatcher, JpsDependenciesListImpl parent) {
-    super(model, eventDispatcher, parent);
+  public JpsModuleSourceDependency() {
+    super();
   }
 
-  public JpsModuleSourceDependency(JpsModuleSourceDependency original, JpsModel model, JpsEventDispatcher dispatcher, JpsParentElement parent) {
-    super(original, model, dispatcher, parent);
+  public JpsModuleSourceDependency(JpsModuleSourceDependency original) {
+    super(original);
   }
 
   @NotNull
   @Override
-  public JpsModuleSourceDependency createCopy(@NotNull JpsModel model,
-                                              @NotNull JpsEventDispatcher eventDispatcher,
-                                              JpsParentElement parent) {
-    return new JpsModuleSourceDependency(this, model, eventDispatcher, parent);
+  public JpsModuleSourceDependency createCopy() {
+    return new JpsModuleSourceDependency(this);
   }
 }

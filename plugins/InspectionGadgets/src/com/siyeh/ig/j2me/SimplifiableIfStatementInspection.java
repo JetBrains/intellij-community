@@ -17,6 +17,7 @@ package com.siyeh.ig.j2me;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -53,7 +54,8 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiIfStatement statement = (PsiIfStatement)infos[0];
-    return InspectionGadgetsBundle.message("simplifiable.if.statement.problem.descriptor", calculateReplacementStatement(statement));
+    return InspectionGadgetsBundle.message("simplifiable.if.statement.problem.descriptor", 
+                                           StringUtil.escapeXml(calculateReplacementStatement(statement)));
   }
 
   @Nullable

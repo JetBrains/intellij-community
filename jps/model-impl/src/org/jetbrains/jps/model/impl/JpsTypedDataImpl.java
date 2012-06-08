@@ -11,15 +11,12 @@ public class JpsTypedDataImpl<T extends JpsElementType<?>> extends JpsElementBas
   private final T myType;
   private JpsElementProperties myProperties;
 
-  public JpsTypedDataImpl(T type, JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(eventDispatcher, parent);
+  public JpsTypedDataImpl(T type) {
     myType = type;
     myProperties = type.createDefaultProperties();
   }
 
-  public JpsTypedDataImpl(JpsTypedDataImpl<T> original,
-                          JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    super(original, eventDispatcher, parent);
+  public JpsTypedDataImpl(JpsTypedDataImpl<T> original) {
     myType = original.getType();
     final JpsElementType<?> type = original.getType();
     myProperties = createCopy(type, original.myProperties);
@@ -44,8 +41,8 @@ public class JpsTypedDataImpl<T extends JpsElementType<?>> extends JpsElementBas
 
   @NotNull
   @Override
-  public JpsTypedDataImpl<T> createCopy(@NotNull JpsModel model, @NotNull JpsEventDispatcher eventDispatcher, JpsParentElement parent) {
-    return new JpsTypedDataImpl<T>(this, eventDispatcher, parent);
+  public JpsTypedDataImpl<T> createCopy() {
+    return new JpsTypedDataImpl<T>(this);
   }
 
   @NotNull
@@ -56,7 +53,7 @@ public class JpsTypedDataImpl<T extends JpsElementType<?>> extends JpsElementBas
   public void setProperties(@NotNull JpsElementProperties properties) {
     if (!myProperties.equals(properties)) {
       myProperties = properties;
-      getEventDispatcher().fireElementChanged(this);
+      fireElementChanged();
     }
   }
 

@@ -276,8 +276,9 @@ public class MinusculeMatcher implements Matcher {
 
     boolean prefixMatching = first != null && first.getStartOffset() == 0;
     boolean middleWordStart = first != null && first.getStartOffset() > 0 && NameUtil.isWordStart(name, first.getStartOffset());
+    int startIndex = first != null ? first.getStartOffset() : 42;
 
-    return -fragmentCount + matchingCase * 10 + commonStart + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
+    return -fragmentCount + matchingCase * 10 + commonStart - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
   }
 
   @Override

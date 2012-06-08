@@ -94,7 +94,9 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
         ExpressionConverter.getExpression(data.getParameterInitializer().getExpression(), StdLanguages.JAVA, data.getProject());
       assert initializer instanceof PsiExpression;
       if (initializer instanceof PsiNewExpression) {
-        initializer = PsiDiamondTypeUtil.expandTopLevelDiamondsInside((PsiNewExpression)initializer);
+        if (!PsiDiamondTypeUtil.canChangeContextForDiamond((PsiNewExpression)initializer, ((PsiNewExpression)initializer).getType())) {
+          initializer = PsiDiamondTypeUtil.expandTopLevelDiamondsInside((PsiNewExpression)initializer);
+        }
       }
       substituteTypeParametersInInitializer(initializer, callExpression, argList, methodToSearchFor);
       ChangeContextUtil.encodeContextInfo(initializer, true);

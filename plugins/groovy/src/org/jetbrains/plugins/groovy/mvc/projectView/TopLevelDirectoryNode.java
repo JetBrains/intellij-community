@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.mvc.projectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,11 @@ public class TopLevelDirectoryNode extends AbstractFolderNode {
     super(module, directory, directory.getName(), title, viewSettings, weight);
     myTitle = title;
     myIcon = icon;
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    return super.equals(object) && Comparing.equal(myTitle, ((TopLevelDirectoryNode) object).myTitle);
   }
 
   @Override
