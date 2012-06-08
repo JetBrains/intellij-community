@@ -252,12 +252,6 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
-    return getModifierList().getAnnotations();
-  }
-
-  @Override
   public ItemPresentation getPresentation() {
     return ItemPresentationProviders.getItemPresentation(this);
   }

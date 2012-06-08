@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,12 +251,6 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     final PsiParameterList paramList = (PsiParameterList)getParent();
     final PsiMethod method = (PsiMethod)paramList.getParent();
     return method.isVarArgs() && getIndex() == paramList.getParametersCount() - 1;
-  }
-
-  @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
-    return getModifierList().getAnnotations();
   }
 
   @Override
