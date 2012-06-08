@@ -17,15 +17,20 @@ package com.intellij.designer.propertyTable.actions;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.IconLoader;
 
+import javax.swing.*;
+
 /**
  * @author Alexander Lobas
  */
 public class ShowExpert extends ToggleAction {
+  private static final Icon ICON = IconLoader.getIcon("/com/intellij/designer/icons/filter.png");
+
   private final PropertyTable myTable;
 
   public ShowExpert(PropertyTable table) {
@@ -35,7 +40,20 @@ public class ShowExpert extends ToggleAction {
     String text = DesignerBundle.message("designer.properties.show.expert");
     presentation.setText(text);
     presentation.setDescription(text);
-    presentation.setIcon(IconLoader.getIcon("/com/intellij/designer/icons/filter.png"));
+    presentation.setIcon(ICON);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+
+    Presentation presentation = e.getPresentation();
+    if (ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP.equals(e.getPlace())) {
+      presentation.setIcon(null);
+    }
+    else {
+      presentation.setIcon(ICON);
+    }
   }
 
   @Override
@@ -46,5 +64,8 @@ public class ShowExpert extends ToggleAction {
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     myTable.showExpert(state);
+    if (ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP.equals(e.getPlace())) {
+      getTemplatePresentation().putClientProperty(SELECTED_PROPERTY, state);
+    }
   }
 }
