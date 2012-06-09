@@ -53,7 +53,7 @@ import java.util.List;
  * Time: 7:47:01 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CreateResourceDialog extends DialogWrapper {
+public class CreateResourceFileDialog extends DialogWrapper {
   private JTextField myFileNameField;
   private TemplateKindCombo myResourceTypeCombo;
   private JPanel myPanel;
@@ -75,13 +75,13 @@ public class CreateResourceDialog extends DialogWrapper {
   private final AndroidFacet myFacet;
   private final ResourceType myPredefinedResourceType;
 
-  public CreateResourceDialog(@NotNull AndroidFacet facet,
-                              Collection<CreateTypedResourceFileAction> actions,
-                              @Nullable ResourceType predefinedResourceType,
-                              @Nullable String predefinedFileName,
-                              boolean chooseFileName,
-                              @NotNull Module module,
-                              boolean chooseModule) {
+  public CreateResourceFileDialog(@NotNull AndroidFacet facet,
+                                  Collection<CreateTypedResourceFileAction> actions,
+                                  @Nullable ResourceType predefinedResourceType,
+                                  @Nullable String predefinedFileName,
+                                  boolean chooseFileName,
+                                  @NotNull Module module,
+                                  boolean chooseModule) {
     super(facet.getModule().getProject());
     myFacet = facet;
     myPredefinedResourceType = predefinedResourceType;

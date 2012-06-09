@@ -210,7 +210,7 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     return AndroidBundle.message("new.resource.action.name", directory.getName() + File.separator + newName);
   }
 
-  private static class MyDialog extends CreateResourceDialog {
+  private static class MyDialog extends CreateResourceFileDialog {
     private final CreateResourceFileAction myAction;
 
     protected MyDialog(@NotNull AndroidFacet facet,
