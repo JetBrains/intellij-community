@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,10 @@ public class TestLoggerFactory implements Logger.Factory {
 
   private void init() {
     try {
-      final File logXmlFile = new File(PathManager.getBinPath() + File.separator + "log.xml");
+      File logXmlFile = new File(PathManager.getHomePath(), "test-log.xml");
+      if (!logXmlFile.exists()) {
+        logXmlFile = new File(PathManager.getBinPath(), "log.xml");
+      }
       if (!logXmlFile.exists()) {
         return;
       }
@@ -65,11 +68,9 @@ public class TestLoggerFactory implements Logger.Factory {
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
       text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(logDir, "\\", "\\\\"));
 
-      final File logDirFile = new File(PathManager.getSystemPath() + File.separator + LOG_DIR);
-      if (!logDirFile.mkdirs()) {
-        if (!logDirFile.exists()) {
-          throw new IOException("Unable to create log dir: " + logDirFile);
-        }
+      final File logDirFile = new File(logDir);
+      if (!logDirFile.mkdirs() && !logDirFile.exists()) {
+        throw new IOException("Unable to create log dir: " + logDirFile);
       }
 
       System.setProperty("log4j.defaultInitOverride", "true");
