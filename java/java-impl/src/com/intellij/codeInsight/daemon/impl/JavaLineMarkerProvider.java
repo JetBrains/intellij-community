@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -32,6 +33,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -71,8 +74,9 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   @Override
   @Nullable
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
-    if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element.getParent();
+    PsiElement parent;
+    if (element instanceof PsiIdentifier && (parent = element.getParent()) instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)parent;
       MethodSignatureBackedByPsiMethod superSignature = null;
       try {
         superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
@@ -101,13 +105,19 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
         }
       }
       if (isMember && !(element1 instanceof PsiAnonymousClass || element1.getParent() instanceof PsiAnonymousClass)) {
+        PsiFile file = element1.getContainingFile();
+        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
         boolean drawSeparator = false;
-        int category = getCategory(element1);
-        for (PsiElement child = element1.getPrevSibling(); child != null; child = child.getPrevSibling()) {
-          int category1 = getCategory(child);
-          if (category1 == 0) continue;
-          drawSeparator = category != 1 || category1 != 1;
-          break;
+
+        if (document != null) {
+          CharSequence documentChars = document.getCharsSequence();
+          int category = getCategory(element1, documentChars);
+          for (PsiElement child = element1.getPrevSibling(); child != null; child = child.getPrevSibling()) {
+            int category1 = getCategory(child, documentChars);
+            if (category1 == 0) continue;
+            drawSeparator = category != 1 || category1 != 1;
+            break;
+          }
         }
 
         if (drawSeparator) {
@@ -125,20 +135,18 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
     return null;
   }
 
-  protected static int getCategory(PsiElement element) {
+  protected static int getCategory(@NotNull PsiElement element, @NotNull CharSequence documentChars) {
     if (element instanceof PsiField || element instanceof PsiTypeParameter) return 1;
     if (element instanceof PsiClass || element instanceof PsiClassInitializer) return 2;
     if (element instanceof PsiMethod) {
       if (((PsiMethod)element).hasModifierProperty(PsiModifier.ABSTRACT)) {
         return 1;
       }
-      String text = element.getText();
-      if (text.indexOf('\n') < 0 && text.indexOf('\r') < 0) {
-        return 1;
-      }
-      else {
-        return 2;
-      }
+      TextRange textRange = element.getTextRange();
+      int start = textRange.getStartOffset();
+      int end = Math.min(documentChars.length(), textRange.getEndOffset());
+      int crlf = StringUtil.getLineBreakCount(documentChars.subSequence(start, end));
+      return crlf == 0 ? 1 : 2;
     }
     return 0;
   }
