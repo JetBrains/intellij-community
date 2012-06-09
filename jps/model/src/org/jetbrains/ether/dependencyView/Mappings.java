@@ -2002,9 +2002,10 @@ public class Mappings {
               if (!compiledClasses.contains(a)) {
                 final TIntHashSet old = myClassToSubclasses.get(a);
 
-                old.removeAll(b.toArray());
-
-                myClassToSubclasses.replace(a, old);
+                if (old != null) {
+                  old.removeAll(b.toArray());
+                  myClassToSubclasses.replace(a, old);
+                }
               }
 
               return true;
