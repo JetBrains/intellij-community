@@ -30,6 +30,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
@@ -42,7 +44,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -66,13 +67,15 @@ public class JdkChooserPanel extends JPanel {
         myCurrentJdk = (Sdk)myList.getSelectedValue();
       }
     });
-    myList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && myProject == null) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        if (myProject == null) {
           editJdkTable();
         }
+        return true;
       }
-    });
+    }.installOn(myList);
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
@@ -219,14 +222,13 @@ public class JdkChooserPanel extends JPanel {
     } else {
       ListScrollingUtil.ensureSelectionExists(jdkChooserPanel.myList);
     }
-    jdkChooserPanel.myList.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-          dialog.clickDefaultButton();
-        }
+      protected boolean onDoubleClick(MouseEvent e) {
+        dialog.clickDefaultButton();
+        return true;
       }
-    });
+    }.installOn(jdkChooserPanel.myList);
     dialog.show();
     return dialog.isOK() ? jdkChooserPanel.getChosenJdk() : null;
   }

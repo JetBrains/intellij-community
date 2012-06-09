@@ -70,7 +70,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
@@ -119,7 +118,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new ShelfTreeCellRenderer(project, myMoveRenameInfo));
-    new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).install(myTree);
+    new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).installOn(myTree);
 
     final AnAction showDiffAction = ActionManager.getInstance().getAction("ShelvedChanges.Diff");
     showDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
@@ -128,13 +127,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
 
-    myTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() != 2) return;
-
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
         DiffShelvedChangesAction.showShelvedChangesDiff(DataManager.getInstance().getDataContext(myTree));
+        return true;
       }
-    });
+    }.installOn(myTree);
+
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       public String convert(TreePath o) {
         final Object lc = o.getLastPathComponent();

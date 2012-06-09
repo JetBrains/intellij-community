@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
@@ -53,7 +54,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
 import java.util.*;
@@ -96,28 +96,29 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
     model = new TestNGResultsTableModel(project);
     resultsTable = new TableView(model);
-    resultsTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          final Object result = resultsTable.getSelectedObject();
-          if (result instanceof TestResultMessage) {
-            final String testClass = ((TestResultMessage)result).getTestClass();
-            final PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass);
-            if (psiClass != null) {
-              final String method = ((TestResultMessage)result).getMethod();
-              if (method != null) {
-                final PsiMethod[] psiMethods = psiClass.findMethodsByName(method, false);
-                if (psiMethods.length > 0) {
-                  psiMethods[0].navigate(true);
-                  return;
-                }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        final Object result = resultsTable.getSelectedObject();
+        if (result instanceof TestResultMessage) {
+          final String testClass = ((TestResultMessage)result).getTestClass();
+          final PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass);
+          if (psiClass != null) {
+            final String method = ((TestResultMessage)result).getMethod();
+            if (method != null) {
+              final PsiMethod[] psiMethods = psiClass.findMethodsByName(method, false);
+              if (psiMethods.length > 0) {
+                psiMethods[0].navigate(true);
               }
-              psiClass.navigate(true);
             }
+            psiClass.navigate(true);
+            return true;
           }
         }
+        return false;
       }
-    });
+    }.installOn(resultsTable);
+
     rootNode = new TreeRootNode();
     console.getUnboundOutput().addChild(rootNode);
   }

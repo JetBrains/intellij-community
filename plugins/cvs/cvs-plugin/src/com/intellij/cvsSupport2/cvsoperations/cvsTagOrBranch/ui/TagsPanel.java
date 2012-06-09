@@ -17,13 +17,13 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 
@@ -54,11 +54,14 @@ public class TagsPanel extends JPanel implements TableCellRenderer{
     add(myTextLabel, BorderLayout.CENTER);
     add(myMoreLabel, BorderLayout.EAST);
 
-    myMoreLabel.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         showTags();
+        return true;
       }
-    });
+    }.installOn(myMoreLabel);
+
     myPopupTitle = popupTitle;
   }
 

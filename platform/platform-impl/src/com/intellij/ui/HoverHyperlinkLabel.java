@@ -46,7 +46,29 @@ public class HoverHyperlinkLabel extends JLabel {
   }
 
   private void setupListener() {
-    addMouseListener(new MouseHandler());
+    addMouseListener(new MouseAdapter() {
+      public void mouseEntered(MouseEvent e) {
+        HoverHyperlinkLabel.super.setText(underlineTextInHtml(myOriginalText));
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      }
+
+      public void mouseExited(MouseEvent e) {
+        HoverHyperlinkLabel.super.setText(myOriginalText);
+        setCursor(Cursor.getDefaultCursor());
+      }
+    });
+
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        HyperlinkListener[] listeners = myListeners.toArray(new HyperlinkListener[myListeners.size()]);
+        HyperlinkEvent event = new HyperlinkEvent(HoverHyperlinkLabel.this, HyperlinkEvent.EventType.ACTIVATED, null);
+        for (HyperlinkListener listener : listeners) {
+          listener.hyperlinkUpdate(event);
+        }
+        return true;
+      }
+    }.installOn(this);
   }
 
   public void setText(String text) {
@@ -65,27 +87,6 @@ public class HoverHyperlinkLabel extends JLabel {
 
   public String getOriginalText() {
     return myOriginalText;
-  }
-
-  private class MouseHandler extends MouseAdapter {
-    public void mouseClicked(MouseEvent e) {
-      HyperlinkListener[] listeners = myListeners.toArray(new HyperlinkListener[myListeners.size()]);
-      HyperlinkEvent event = new HyperlinkEvent(HoverHyperlinkLabel.this, HyperlinkEvent.EventType.ACTIVATED, null);
-      for (int i = 0; i < listeners.length; i++) {
-        HyperlinkListener listener = listeners[i];
-        listener.hyperlinkUpdate(event);
-      }
-    }
-
-    public void mouseEntered(MouseEvent e) {
-      HoverHyperlinkLabel.super.setText(underlineTextInHtml(myOriginalText));
-      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    }
-
-    public void mouseExited(MouseEvent e) {
-      HoverHyperlinkLabel.super.setText(myOriginalText);
-      setCursor(Cursor.getDefaultCursor());
-    }
   }
 
   public void addHyperlinkListener(HyperlinkListener listener) {

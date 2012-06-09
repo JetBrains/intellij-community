@@ -17,13 +17,13 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
 import java.util.List;
@@ -71,13 +71,15 @@ public class Advertiser {
     myNextLabel = new JLabel(">>");
     myNextLabel.setFont(adFont().deriveFont(ImmutableMap.<TextAttribute, Object>builder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
     myNextLabel.setForeground(Color.blue);
-    myNextLabel.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         myCurrentItem++;
         updateAdvertisements();
+        return true;
       }
-    });
+    }.installOn(myNextLabel);
+
     myNextLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     GridBag gb = new GridBag();

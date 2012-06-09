@@ -103,7 +103,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     });
 
     final TreeLinkMouseListener linkMouseListener = new TreeLinkMouseListener(new CommittedChangeListRenderer(project, myDecorators));
-    linkMouseListener.install(myChangesTree);
+    linkMouseListener.installOn(myChangesTree);
 
     myLeftPanel = new JPanel(new BorderLayout());
 

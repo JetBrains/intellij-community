@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.impl.VisibilityWatcher;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
@@ -360,12 +361,15 @@ public abstract class AbstractQuickFixManager {
           setIcon(myInactiveIcon);
           setBorder(INACTIVE_BORDER);
         }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          showPopup();
-        }
       });
+
+      new ClickListener() {
+        @Override
+        public boolean onClick(MouseEvent event, int clickCount) {
+          showPopup();
+          return true;
+        }
+      }.installOn(this);
     }
   }
 }

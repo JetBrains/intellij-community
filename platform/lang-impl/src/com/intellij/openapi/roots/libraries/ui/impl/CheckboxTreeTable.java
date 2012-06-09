@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
@@ -30,7 +31,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -54,12 +54,13 @@ public class CheckboxTreeTable extends TreeTableView {
     tree.setLineStyleAngled();
     TreeUtil.installActions(tree);
 
-    addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         int row = tree.getRowForLocation(e.getX(), e.getY());
-        if (row < 0) return;
+        if (row < 0) return false;
         final Object o = tree.getPathForRow(row).getLastPathComponent();
-        if (!(o instanceof CheckedTreeNode)) return;
+        if (!(o instanceof CheckedTreeNode)) return false;
         Rectangle rowBounds = tree.getRowBounds(row);
         cellRenderer.setBounds(rowBounds);
         Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
@@ -72,11 +73,13 @@ public class CheckboxTreeTable extends TreeTableView {
           if (node.isEnabled()) {
             toggleNode(node);
             tree.setSelectionRow(row);
+            return true;
           }
-          e.consume();
         }
+
+        return false;
       }
-    });
+    }.installOn(this);
 
     addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {

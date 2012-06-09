@@ -29,6 +29,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,14 +91,13 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
           setMode(mode);
         }
       });
-      rb.addMouseListener(new MouseAdapter() {
+      new DoubleClickListener() {
         @Override
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-            wizardContext.requestNextStep();
-          }
+        protected boolean onDoubleClick(MouseEvent e) {
+          wizardContext.requestNextStep();
+          return true;
         }
-      });
+      }.installOn(rb);
 
       myWholePanel.add(rb, gc);
       group.add(rb);

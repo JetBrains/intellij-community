@@ -17,14 +17,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
-import java.awt.event.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 public abstract class TextFieldAction extends AnAction implements CustomComponentAction {
   protected JTextField myField;
@@ -75,11 +78,14 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
     myField.setOpaque(true);
     myField.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
 
-    label.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         actionPerformed(null);
+        return true;
       }
-    });
+    }.installOn(label);
+
     return panel;
   }
 }

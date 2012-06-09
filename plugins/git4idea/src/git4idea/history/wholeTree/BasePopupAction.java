@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -59,7 +60,16 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
     final JLabel iconLabel = new JLabel(ARROWS_ICON);
     iconLabel.setBorder(BorderFactory.createEmptyBorder(0,0,0,2));
     myPanel.add(iconLabel, myLabel);
-    final MouseAdapter mouseAdapter = new MouseAdapter() {
+
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        doAction(e);
+        return true;
+      }
+    }.installOn(myPanel);
+
+    myPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
         super.mouseEntered(e);
@@ -73,13 +83,7 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
         show.setForeground(UIUtil.getInactiveTextColor());
         myLabel.setForeground(UIUtil.getInactiveTextColor().darker().darker());
       }
-
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        doAction(e);
-      }
-    };
-    myPanel.addMouseListener(mouseAdapter);
+    });
     myAsTextAction = new DefaultActionGroup(asTextLabel, true);
   }
 

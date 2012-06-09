@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.UIBundle;
@@ -24,10 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 
 public abstract class StatusText {
@@ -35,7 +33,8 @@ public abstract class StatusText {
 
   @Nullable
   private Component myOwner;
-  private final MouseAdapter myMouseListener;
+  private final MouseMotionListener myMouseMotionListener;
+  private final ClickListener myClickListener;
 
   private boolean myIsDefaultText;
 
@@ -49,17 +48,21 @@ public abstract class StatusText {
   }
 
   public StatusText() {
-    myMouseListener = new MouseAdapter() {
+    myClickListener = new ClickListener() {
       @Override
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getButton() == 1 && e.getClickCount() == 1) {
+      public boolean onClick(MouseEvent e, int clickCount) {
+        if (e.getButton() == MouseEvent.BUTTON1 && clickCount == 1) {
           ActionListener actionListener = findActionListenerAt(e.getPoint());
           if (actionListener != null) {
             actionListener.actionPerformed(new ActionEvent(this, 0, ""));
+            return true;
           }
         }
+        return false;
       }
+    };
 
+    myMouseMotionListener = new MouseAdapter() {
       @Override
       public void mouseMoved(final MouseEvent e) {
         if (findActionListenerAt(e.getPoint()) != null) {
@@ -79,15 +82,15 @@ public abstract class StatusText {
 
   public void attachTo(@Nullable Component owner) {
     if (myOwner != null) {
-      myOwner.removeMouseListener(myMouseListener);
-      myOwner.removeMouseMotionListener(myMouseListener);
+      myClickListener.uninstall(myOwner);
+      myOwner.removeMouseMotionListener(myMouseMotionListener);
     }
 
     myOwner = owner;
 
     if (myOwner != null) {
-      myOwner.addMouseListener(myMouseListener);
-      myOwner.addMouseMotionListener(myMouseListener);
+      myClickListener.installOn(myOwner);
+      myOwner.addMouseMotionListener(myMouseMotionListener);
     }
   }
 

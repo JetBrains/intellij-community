@@ -18,12 +18,12 @@ package com.intellij.uiDesigner.quickFixes;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.ui.ClickListener;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -48,13 +48,13 @@ final class LightBulbComponentImpl extends JComponent{
       setToolTipText(UIDesignerBundle.message("tooltip.press.accelerator", acceleratorsText));
     }
 
-    addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(final MouseEvent e) {
-          myManager.showIntentionPopup();
-        }
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        myManager.showIntentionPopup();
+        return true;
       }
-    );
+    }.installOn(this);
   }
 
   protected void paintComponent(final Graphics g) {

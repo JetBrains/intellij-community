@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -531,8 +532,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       splitDownlabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
         .message("splitter.right.tooltip.text"));
-      splitDownlabel.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
+      new ClickListener() {
+        @Override
+        public boolean onClick(MouseEvent e, int clickCount) {
           if (myInnerComponent != null) {
             final int income = myVerticalSplit ? myInnerComponent.getHeight() : myInnerComponent.getWidth();
             if (myIsFirst) {
@@ -542,8 +544,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
               setLastSize(myLastSize + income);
             }
           }
+          return true;
         }
-      });
+      }.installOn(splitDownlabel);
+
       add(splitDownlabel,
           new GridBagConstraints(isVerticalSplit ? 1 : 0,
                                  isVerticalSplit ? 0 : 5,
@@ -554,11 +558,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       JLabel splitCenterlabel = new JLabel(isVerticalSplit ? AllIcons.General.SplitCenterV : AllIcons.General.SplitCenterH);
       splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
-      splitCenterlabel.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
+      new ClickListener() {
+        @Override
+        public boolean onClick(MouseEvent e, int clickCount) {
           center();
+          return true;
         }
-      });
+      }.installOn(splitCenterlabel);
       add(splitCenterlabel,
           new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       add(new JLabel(glueIcon),
@@ -568,18 +574,22 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       splitUpLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.up.tooltip.text") : UIBundle
         .message("splitter.left.tooltip.text"));
-      splitUpLabel.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
+      new ClickListener() {
+        @Override
+        public boolean onClick(MouseEvent e, int clickCount) {
           if (myInnerComponent != null) {
+            final int income = myVerticalSplit ? myInnerComponent.getHeight() : myInnerComponent.getWidth();
             if (myIsFirst) {
-              setFirstSize(getMinSize(myFirstComponent));
+              setFirstSize(myFirstSize + income);
             }
             else {
-              setLastSize(getMinSize(myLastComponent));
+              setLastSize(myLastSize + income);
             }
           }
+          return true;
         }
-      });
+      }.installOn(splitUpLabel);
+
       add(splitUpLabel,
           new GridBagConstraints(isVerticalSplit ? 5 : 0,
                                  isVerticalSplit ? 0 : 1,

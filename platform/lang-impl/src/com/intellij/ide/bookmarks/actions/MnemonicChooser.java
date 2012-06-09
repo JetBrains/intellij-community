@@ -20,6 +20,7 @@
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.UIUtil;
@@ -110,12 +111,15 @@ public class MnemonicChooser extends JPanel {
           setForeground(UIUtil.getListForeground());
           setBackground(backgroundForMnemonic(c));
         }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          onMnemonicChosen(c);
-        }
       });
+
+      new ClickListener() {
+        @Override
+        public boolean onClick(MouseEvent e, int clickCount) {
+          onMnemonicChosen(c);
+          return true;
+        }
+      }.installOn(this);
     }
   }
 }

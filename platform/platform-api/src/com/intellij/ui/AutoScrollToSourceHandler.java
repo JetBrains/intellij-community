@@ -41,7 +41,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 
@@ -53,16 +52,21 @@ public abstract class AutoScrollToSourceHandler {
 
   public void install(final JTree tree) {
     myAutoScrollAlarm = new Alarm();
-    tree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) return;
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        if (clickCount > 1) return false;
 
         TreePath location = tree.getPathForLocation(e.getPoint().x, e.getPoint().y);
         if (location != null) {
           onMouseClicked(tree);
+          return true;
         }
+
+        return false;
       }
-    });
+    }.installOn(tree);
+
     tree.addMouseMotionListener(new MouseMotionAdapter() {
       public void mouseDragged(final MouseEvent e) {
         onSelectionChanged(tree);
@@ -79,16 +83,20 @@ public abstract class AutoScrollToSourceHandler {
 
   public void install(final JTable table) {
     myAutoScrollAlarm = new Alarm();
-    table.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) return;
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        if (clickCount >= 2) return false;
 
         Component location = table.getComponentAt(e.getPoint());
         if (location != null) {
           onMouseClicked(table);
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(table);
+
     table.addMouseMotionListener(new MouseMotionAdapter() {
       public void mouseDragged(final MouseEvent e) {
         onSelectionChanged(table);
@@ -106,16 +114,20 @@ public abstract class AutoScrollToSourceHandler {
 
   public void install(final JList jList) {
     myAutoScrollAlarm = new Alarm();
-    jList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) return;
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        if (clickCount >= 2) return false;
         final Object source = e.getSource();
         final int index = jList.locationToIndex(SwingUtilities.convertPoint(source instanceof Component ? (Component)source : null, e.getPoint(), jList));
         if (index >= 0 && index < jList.getModel().getSize()) {
           onMouseClicked(jList);
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(jList);
+
     jList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         onSelectionChanged(jList);

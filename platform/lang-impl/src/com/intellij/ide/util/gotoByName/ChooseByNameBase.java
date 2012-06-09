@@ -52,6 +52,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -609,14 +610,14 @@ public abstract class ChooseByNameBase {
     myList.setFocusable(false);
     myList.setSelectionMode(allowMultipleSelection ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION :
                             ListSelectionModel.SINGLE_SELECTION);
-    myList.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(@NotNull MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         if (!myTextField.hasFocus()) {
           myTextField.requestFocus();
         }
 
-        if (e.getClickCount() == 2) {
+        if (clickCount == 2) {
           int selectedIndex = myList.getSelectedIndex();
           Rectangle selectedCellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
 
@@ -624,15 +625,19 @@ public abstract class ChooseByNameBase {
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
               rebuildList(selectedIndex, REBUILD_DELAY, null, ModalityState.current(), e);
-              e.consume();
             }
             else {
               doClose(true);
+
             }
           }
+          return true;
         }
+
+        return false;
       }
-    });
+    }.installOn(myList);
+
     myList.setCellRenderer(myModel.getListCellRenderer());
     myList.setFont(editorFont);
 

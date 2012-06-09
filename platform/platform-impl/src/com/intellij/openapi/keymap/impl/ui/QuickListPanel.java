@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -27,19 +26,12 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class QuickListPanel {
-  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-
   private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
   private JPanel myPanel;
   private JBList myActionsList;
@@ -56,13 +48,13 @@ public class QuickListPanel {
     myActionsList.getEmptyText().setText(KeyMapBundle.message("no.actions"));
     myActionsList.setEnabled(!QuickListsManager.getInstance().getSchemesManager().isShared(origin));
 
-    myActionsList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && !e.isPopupTrigger()) {
-          excludeSelectionAction();
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        excludeSelectionAction();
+        return true;
       }
-    });
+    }.installOn(myActionsList);
 
     myListPanel.add(
       ToolbarDecorator.createDecorator(myActionsList)
@@ -152,75 +144,6 @@ public class QuickListPanel {
 
   public JPanel getPanel() {
     return myPanel;
-  }
-
-  private class MyTreeCellRenderer extends JBDefaultTreeCellRenderer {
-    private MyTreeCellRenderer(@NotNull JTree tree) {
-      super(tree);
-    }
-
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean sel,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-      Icon icon = null;
-      if (value instanceof DefaultMutableTreeNode) {
-        boolean used = false;
-        Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-        if (userObject instanceof Group) {
-          Group group = (Group)userObject;
-          final String name = group.getName();
-          setText(name != null ? name : group.getId());
-          icon = expanded ? group.getOpenIcon() : group.getIcon();
-
-          if (icon == null) {
-            icon = expanded ? getOpenIcon() : getClosedIcon();
-          }
-        }
-        else if (userObject instanceof String) {
-          String actionId = (String)userObject;
-          used = ((DefaultListModel)myActionsList.getModel()).lastIndexOf(actionId) >= 0;
-          AnAction action = ActionManager.getInstance().getAction(actionId);
-          String text = action == null ? actionId : action.getTemplatePresentation().getText();
-          if (text == null || text.length() == 0) text = actionId;
-          setText(text);
-          if (action != null) {
-            Icon actionIcon = action.getTemplatePresentation().getIcon();
-            if (actionIcon != null) {
-              icon = actionIcon;
-            }
-          }
-        }
-        else if (userObject instanceof QuickList) {
-          QuickList list = (QuickList)userObject;
-          icon = QUICK_LIST_ICON;
-          setText(list.getDisplayName());
-          used = ((DefaultListModel)myActionsList.getModel()).lastIndexOf(list.getActionId()) >= 0;
-        }
-        else if (userObject instanceof Separator) {
-          // TODO[vova,anton]: beautify
-          setText("-------------");
-        }
-        else {
-          throw new IllegalArgumentException("unknown userObject: " + userObject);
-        }
-
-        setIcon(ActionsTree.getEvenIcon(icon));
-
-        if (sel) {
-          setForeground(getSelectionForeground(tree));
-        }
-        else {
-          Color foreground = used ? UIUtil.getInactiveTextColor() : UIUtil.getTreeForeground();
-          setForeground(foreground);
-        }
-      }
-      return this;
-    }
   }
 
   private static class MyListCellRenderer extends DefaultListCellRenderer {

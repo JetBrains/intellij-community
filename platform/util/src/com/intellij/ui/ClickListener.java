@@ -19,7 +19,6 @@
  */
 package com.intellij.ui;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -28,11 +27,12 @@ public abstract class ClickListener {
 
   private static final int EPS = 4;
   private static final long TIME_EPS = 500; // TODO: read system mouse sensitivity settings?
+  private MouseAdapter myListener;
 
-  public abstract void onClick(MouseEvent event, int clickCount);
+  public abstract boolean onClick(MouseEvent event, int clickCount);
 
-  public void installOn(final JComponent c) {
-    MouseAdapter adapter = new MouseAdapter() {
+  public void installOn(final Component c) {
+    myListener = new MouseAdapter() {
       private Point clickPoint;
       private long lastTimeClicked = -1;
       private int clickCount = 0;
@@ -56,17 +56,24 @@ public abstract class ClickListener {
         Point clickedAt = clickPoint;
         clickPoint = null;
 
+        if (e.isConsumed()) return;
+
         if (clickedAt == null) return;
         if (e.isPopupTrigger()) return;
-        if (releasedAt.x < 0 || releasedAt.y < 0 || releasedAt.x >= c.getWidth() || releasedAt.y >= c.getWidth()) return;
+        if (releasedAt.x < 0 || releasedAt.y < 0 || releasedAt.x >= c.getWidth() || releasedAt.y >= c.getHeight()) return;
 
         if (Math.abs(clickedAt.x - releasedAt.x) < EPS && Math.abs(clickedAt.y - releasedAt.y) < EPS) {
-          onClick(e, clickCount);
+          if (onClick(e, clickCount)) {
+            e.consume();
+          }
         }
       }
     };
 
-    c.addMouseListener(adapter);
-    c.addMouseMotionListener(adapter);
+    c.addMouseListener(myListener);
+  }
+
+  public void uninstall(Component c) {
+    c.removeMouseListener(myListener);
   }
 }

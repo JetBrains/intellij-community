@@ -41,6 +41,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -56,10 +57,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -225,14 +223,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     mySortingLabel.setBorder(new LineBorder(Color.LIGHT_GRAY));
     mySortingLabel.setOpaque(true);
-    mySortingLabel.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
         UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = !UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
         updateSorting();
+        return true;
       }
-    });
+    }.installOn(mySortingLabel);
     updateSorting();
   }
 
@@ -897,20 +896,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     });
 
-    myList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e){
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         setFocused(true);
         markSelectionTouched();
 
-        if (e.getClickCount() == 2){
+        if (clickCount == 2){
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
             public void run() {
               finishLookup(NORMAL_SELECT_CHAR);
             }
           }, "", null);
         }
+        return true;
       }
-    });
+    }.installOn(myList);
   }
 
   private void updateHint(@NotNull final LookupElement item) {

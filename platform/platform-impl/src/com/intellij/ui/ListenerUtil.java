@@ -52,6 +52,28 @@ public class ListenerUtil {
     }
   }
 
+  public static void addClickListener(Component component, ClickListener l) {
+    l.installOn(component);
+
+    if (component instanceof Container) {
+      Container container = (Container)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        addClickListener(container.getComponent(i), l);
+      }
+    }
+  }
+
+  public static void removeClickListener(Component component, ClickListener l) {
+    l.uninstall(component);
+
+    if (component instanceof Container) {
+      Container container = (Container)component;
+      for (int i = 0; i < container.getComponentCount(); i++) {
+        removeClickListener(container.getComponent(i), l);
+      }
+    }
+  }
+
   public static void addMouseMotionListener(Component c, MouseMotionListener l) {
     c.addMouseMotionListener(l);
     if (c instanceof Container) {

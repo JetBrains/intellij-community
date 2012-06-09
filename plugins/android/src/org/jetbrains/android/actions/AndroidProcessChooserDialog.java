@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.JBDefaultTreeCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.content.Content;
@@ -181,14 +182,16 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
       }
     });
 
-    myProcessTree.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && isOKActionEnabled()) {
+      protected boolean onDoubleClick(MouseEvent event) {
+        if (isOKActionEnabled()) {
           doOKAction();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myProcessTree);
 
     myProcessTree.addKeyListener(new KeyAdapter() {
       @Override

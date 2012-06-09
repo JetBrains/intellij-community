@@ -337,17 +337,17 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       }
     });
 
-    myTree.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) {
-            if (myTree.getPathForLocation(e.getX(), e.getY()) != null) {
-              doOKAction();
-            }
-          }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (myTree.getPathForLocation(e.getX(), e.getY()) != null) {
+          doOKAction();
+          return true;
         }
+        return false;
       }
-    );
+    }.installOn(myTree);
+
     TreeUtil.installActions(myTree);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(350, 450));

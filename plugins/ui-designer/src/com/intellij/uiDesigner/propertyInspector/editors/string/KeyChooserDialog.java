@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.table.JBTable;
@@ -43,7 +44,6 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -139,14 +139,13 @@ public final class KeyChooserDialog extends DialogWrapper{
     selectKey(keyToPreselect);
 
     init();
-
-    myTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (!e.isPopupTrigger() && e.getClickCount() == 2) {
-          doOKAction();
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        doOKAction();
+        return true;
       }
-    });
+    }.installOn(myTable);
   }
 
   private void fillPropertyList() {

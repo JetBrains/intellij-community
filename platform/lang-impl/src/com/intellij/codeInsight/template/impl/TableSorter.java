@@ -35,15 +35,14 @@ package com.intellij.codeInsight.template.impl;
  */
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ui.ClickListener;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.event.InputEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Date;
 import java.util.Vector;
@@ -332,20 +331,21 @@ order diminishes - it may drop very quickly.  */
     final TableSorter sorter = this;
     final JTable tableView = table;
     tableView.setColumnSelectionAllowed(false);
-    MouseAdapter listMouseListener = new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         TableColumnModel columnModel = tableView.getColumnModel();
         int viewColumn = columnModel.getColumnIndexAtX(e.getX());
         int column = tableView.convertColumnIndexToModel(viewColumn);
-        if (e.getClickCount() == 1 && column != -1) {
+        if (clickCount == 1 && column != -1) {
           //System.out.println("Sorting ...");
           int shiftPressed = e.getModifiers() & InputEvent.SHIFT_MASK;
           boolean ascending = (shiftPressed == 0);
           sorter.sortByColumn(column, ascending);
+          return true;
         }
+        return false;
       }
-    };
-    JTableHeader th = tableView.getTableHeader();
-    th.addMouseListener(listMouseListener);
+    }.installOn(tableView.getTableHeader());
   }
 }

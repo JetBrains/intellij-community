@@ -145,7 +145,49 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     myCellRenderer = new MyCompositeTableCellRenderer();
     myCellEditor = new MyCellEditor();
 
-    addMouseListener(new MyMouseListener());
+    addMouseListener(new MouseAdapter() {
+      public void mousePressed(final MouseEvent e){
+        final int row = rowAtPoint(e.getPoint());
+        if (row == -1){
+          return;
+        }
+        final Property property = myProperties.get(row);
+        int indent = getPropertyIndent(property) * 11;
+        final Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
+        if (e.getX() < rect.x + indent || e.getX() > rect.x + 9 + indent || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
+          return;
+        }
+
+        final Property[] children = getPropChildren(property);
+        if (children.length == 0) {
+          return;
+        }
+
+        if (isPropertyExpanded(property, property.getParent())) {
+          collapseProperty(row);
+        }
+        else {
+          expandProperty(row);
+        }
+      }
+    });
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        int row = rowAtPoint(e.getPoint());
+        int column = columnAtPoint(e.getPoint());
+        if (row >= 0 && column == 0) {
+          final Property property = myProperties.get(row);
+          if (getPropChildren(property).length == 0) {
+            startEditing(row);
+            return true;
+          }
+        }
+        return false;
+      }
+    }.installOn(this);
+
 
     final AnAction quickJavadocAction = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC);
     new ShowJavadocAction().registerCustomShortcutSet(
@@ -1144,49 +1186,6 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         SimpleColoredComponent errComponent = new SimpleColoredComponent();
         errComponent.append(UIDesignerBundle.message("error.getting.value", ex.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
         return errComponent;
-      }
-    }
-  }
-
-  /**
-   * Expands/collapses rows
-   */
-  private final class MyMouseListener extends MouseAdapter {
-    public void mousePressed(final MouseEvent e){
-      final int row = rowAtPoint(e.getPoint());
-      if (row == -1){
-        return;
-      }
-      final Property property = myProperties.get(row);
-      int indent = getPropertyIndent(property) * 11;
-      final Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
-      if (e.getX() < rect.x + indent || e.getX() > rect.x + 9 + indent || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
-        return;
-      }
-
-      final Property[] children = getPropChildren(property);
-      if (children.length == 0) {
-        return;
-      }
-
-      if (isPropertyExpanded(property, property.getParent())) {
-        collapseProperty(row);
-      }
-      else {
-        expandProperty(row);
-      }
-    }
-
-    public void mouseClicked(MouseEvent e) {
-      if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-        int row = rowAtPoint(e.getPoint());
-        int column = columnAtPoint(e.getPoint());
-        if (row >= 0 && column == 0) {
-          final Property property = myProperties.get(row);
-          if (getPropChildren(property).length == 0) {
-            startEditing(row);
-          }
-        }
       }
     }
   }

@@ -18,6 +18,7 @@ package com.intellij.ide.startupWizard;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.wizard.WizardNavigationState;
 import com.intellij.ui.wizard.WizardStep;
@@ -93,15 +94,16 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
     });
 
     final int clickableArea = new JCheckBox("").getMinimumSize().width;
-    myPluginsList.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(final MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         if (e.getX() < clickableArea) {
           toggleSelection();
         }
-        e.consume();
+        return true;
       }
-    });
+    }.installOn(myPluginsList);
+
     myPluginsList.addKeyListener(new KeyAdapter() {
       public void keyTyped(final KeyEvent e) {
         if (e.getKeyChar() == ' ') {

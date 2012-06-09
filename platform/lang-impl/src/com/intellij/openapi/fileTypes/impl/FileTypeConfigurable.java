@@ -43,7 +43,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -360,12 +359,14 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           return result;
         }
       }));
-      myFileTypesList.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) myController.editFileType();
-        }
-      });
 
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(MouseEvent e) {
+          myController.editFileType();
+          return true;
+        }
+      }.installOn(myFileTypesList);
 
       ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myFileTypesList)
         .setAddAction(new AnActionButtonRunnable() {

@@ -646,7 +646,7 @@ public class GitLogUI implements Disposable {
       }
     };
     final ActionToolbar actionToolbar = createToolbar();
-    tableLinkListener.install(myJBTable);
+    tableLinkListener.installOn(myJBTable);
     myJBTable.getExpandableItemsHandler().setEnabled(false);
     myJBTable.setShowGrid(false);
     myJBTable.setModel(myTableModel);

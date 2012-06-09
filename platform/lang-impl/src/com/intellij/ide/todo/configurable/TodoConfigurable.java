@@ -38,7 +38,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -221,14 +220,15 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
         return new JButton[]{};
       }
     };
+
     // double click in "Patterns" table should also start editing of selected pattern
-    myPatternsTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          editSelectedPattern();
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        editSelectedPattern();
+        return true;
       }
-    });
+    }.installOn(myPatternsTable);
 
     // Panel with filters
     PanelWithButtons filtersPanel = new PanelWithButtons() {
@@ -294,15 +294,13 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
       }
     };
     // double click in "Filters" table should also start editing of selected filter
-    myFiltersTable.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) {
-            editSelectedFilter();
-          }
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        editSelectedFilter();
+        return true;
       }
-    );
+    }.installOn(myFiltersTable);
 
     myPanel = new JPanel(new GridBagLayout());
     myPanel.add(patternsPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH,

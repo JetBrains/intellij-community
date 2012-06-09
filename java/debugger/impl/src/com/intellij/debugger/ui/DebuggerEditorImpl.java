@@ -38,13 +38,13 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.ClickListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -102,18 +102,18 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
     myChooseFactory.setToolTipText("Click to change the language");
     myChooseFactory.setBorder(new EmptyBorder(0, 3, 0, 3));
-    myChooseFactory.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         ListPopup oldPopup = myPopup != null ? myPopup.get() : null;
         if (oldPopup != null && !oldPopup.isDisposed()) {
           oldPopup.cancel();
           myPopup = null;
-          return;
+          return true;
         }
 
         if (!myChooseFactory.isEnabled()) {
-          return;
+          return true;
         }
 
         DefaultActionGroup actions = new DefaultActionGroup();
@@ -134,8 +134,9 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
                                                                               false);
         popup.showUnderneathOf(myChooseFactory);
         myPopup = new WeakReference<ListPopup>(popup);
+        return true;
       }
-    });
+    }.installOn(myChooseFactory);
   }
 
   @Override

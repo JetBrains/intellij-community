@@ -19,6 +19,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
+import com.intellij.ui.ClickListener;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,7 +27,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -38,13 +38,14 @@ public class TrackRunningTestUtil {
   }
 
   public static void installStopListeners(final JTree tree, final Disposable parentDisposable, final Pass<AbstractTestProxy> setSelection) {
-    final MouseAdapter userSelectionListener = new MouseAdapter() {
+    final ClickListener userSelectionListener = new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         setSelection.pass(setUserSelection(tree.getPathForLocation(e.getX(), e.getY())));
+        return true;
       }
     };
-    tree.addMouseListener(userSelectionListener);
+    userSelectionListener.installOn(tree);
     final KeyAdapter keyAdapter = new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -58,7 +59,7 @@ public class TrackRunningTestUtil {
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        tree.removeMouseListener(userSelectionListener);
+        userSelectionListener.uninstall(tree);
         tree.removeKeyListener(keyAdapter);
       }
     });

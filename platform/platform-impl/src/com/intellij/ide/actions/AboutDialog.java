@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -111,14 +112,13 @@ public class AboutDialog extends JDialog {
       }
     });
 
-    closeListenerOwner.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (!e.isConsumed()) {
-          dispose();
-          e.consume();
-        }
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent event, int clickCount) {
+        dispose();
+        return true;
       }
-    });
+    }.installOn(closeListenerOwner);
 
     pack();
 

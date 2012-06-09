@@ -74,7 +74,10 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -188,13 +191,13 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       myEntryTable.getSelectionModel().setSelectionInterval(0,0);
     }
 
-    myEntryTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2){
-          navigate(true);
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        navigate(true);
+        return true;
       }
-    });
+    }.installOn(myEntryTable);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     final AnAction navigateAction = new AnAction(ProjectBundle.message("classpath.panel.navigate.action.text")) {

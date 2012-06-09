@@ -30,13 +30,9 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +45,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class TargetChooserDialog extends DialogWrapper {
@@ -77,13 +72,18 @@ public class TargetChooserDialog extends DialogWrapper {
         }
       }
     });
-    myTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        if (UIUtil.isActionClick(e) && e.getClickCount() == 2 && mySelectedTarget != null) {
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (mySelectedTarget != null) {
           doOKAction();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myTree);
+
     return panel;
   }
 

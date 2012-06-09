@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui;
 
 import com.intellij.CvsBundle;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,13 +70,17 @@ public class SelectTagDialog extends DialogWrapper {
         setOkEnabled();
       }
     });
-    list.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && isOKActionEnabled()) {
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (isOKActionEnabled()) {
           doOKAction();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(list);
 
     fillList(data, list);
 

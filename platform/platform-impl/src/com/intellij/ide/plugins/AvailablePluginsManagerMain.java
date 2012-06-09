@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -31,7 +32,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.TreeSet;
@@ -94,11 +94,11 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   @Override
   protected void installTableActions(final PluginTable pluginTable) {
     super.installTableActions(pluginTable);
-    pluginTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() != 2) return;
-        if (pluginTable.columnAtPoint(e.getPoint()) < 0) return;
-        if (pluginTable.rowAtPoint(e.getPoint()) < 0) return;
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (pluginTable.columnAtPoint(e.getPoint()) < 0) return false;
+        if (pluginTable.rowAtPoint(e.getPoint()) < 0) return false;
         IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
         if (selection != null) {
           boolean enabled = true;
@@ -117,9 +117,11 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
           if (enabled) {
             new ActionInstallPlugin(AvailablePluginsManagerMain.this, installed).install();
           }
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(pluginTable);
   }
 
   @Override

@@ -17,13 +17,17 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -77,14 +81,15 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
         doOKAction();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
-    myChooser.getComponent().addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && !e.isPopupTrigger() && !e.isConsumed()) {
-          e.consume();
-          doOKAction();
-        }
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        doOKAction();
+        return true;
       }
-    });
+    }.installOn(myChooser.getComponent());
+
     init();
   }
 

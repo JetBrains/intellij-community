@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.*;
 import java.awt.*;
@@ -90,7 +89,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
     myCopyProvider = new TreeCopyProvider(this);
-    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).install(this);
+    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).installOn(this);
   }
 
   public DefaultTreeModel getModel() {

@@ -66,7 +66,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,16 +120,19 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         popupInvoked(comp, x, y);
       }
     });
-    myTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-          if (path != null) {
-            runSelection(DataManager.getInstance().getDataContext(myTree));
-          }
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+        if (path != null) {
+          runSelection(DataManager.getInstance().getDataContext(myTree));
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myTree);
+
     myTree.registerKeyboardAction(new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         runSelection(DataManager.getInstance().getDataContext(myTree));

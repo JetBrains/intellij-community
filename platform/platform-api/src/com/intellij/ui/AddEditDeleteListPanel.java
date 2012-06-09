@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -28,13 +27,13 @@ import java.util.List;
 public abstract class AddEditDeleteListPanel<T> extends AddDeleteListPanel<T> {
   public AddEditDeleteListPanel(final String title, final List<T> initialList) {
     super(title, initialList);
-    myList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-          editSelectedItem();
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        editSelectedItem();
+        return true;
       }
-    });
+    }.installOn(myList);
   }
 
   @Override

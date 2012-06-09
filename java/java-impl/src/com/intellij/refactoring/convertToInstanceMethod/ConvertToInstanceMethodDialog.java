@@ -23,12 +23,11 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialogBase;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -66,16 +65,17 @@ public class ConvertToInstanceMethodDialog  extends MoveInstanceMethodDialogBase
   @Override
   protected JList createTargetVariableChooser() {
     final JList variableChooser = super.createTargetVariableChooser();
-    variableChooser.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() != 2) return;
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
         Point point = e.getPoint();
         int index = variableChooser.locationToIndex(point);
-        if (index == -1) return;
-        if (!variableChooser.getCellBounds(index, index).contains(point)) return;
+        if (index == -1) return false;
+        if (!variableChooser.getCellBounds(index, index).contains(point)) return false;
         doRefactorAction();
+        return true;
       }
-    });
+    }.installOn(variableChooser);
     return variableChooser;
   }
 }

@@ -18,13 +18,13 @@ package com.intellij.openapi.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -501,11 +501,14 @@ public class Splitter extends JPanel {
         splitDownlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         splitDownlabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.down.tooltip.text") : UIBundle
           .message("splitter.right.tooltip.text"));
-        splitDownlabel.addMouseListener(new MouseAdapter() {
-          public void mouseClicked(MouseEvent e) {
+        new ClickListener() {
+          @Override
+          public boolean onClick(MouseEvent e, int clickCount) {
             setProportion(1.0f - getMinProportion(mySecondComponent));
+            return true;
           }
-        });
+        }.installOn(splitDownlabel);
+
         add(splitDownlabel, new GridBagConstraints(isVerticalSplit ? 1 : 0, isVerticalSplit ? 0 : 5, 1, 1, 0, 0, GridBagConstraints.CENTER,
                                                    GridBagConstraints.NONE, new Insets(0, leftInsetArrow, 0, 0), 0, 0));
         //
@@ -516,11 +519,14 @@ public class Splitter extends JPanel {
           new JLabel(isVerticalSplit ? AllIcons.General.SplitCenterV : AllIcons.General.SplitCenterH);
         splitCenterlabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         splitCenterlabel.setToolTipText(UIBundle.message("splitter.center.tooltip.text"));
-        splitCenterlabel.addMouseListener(new MouseAdapter() {
-          public void mouseClicked(MouseEvent e) {
+        new ClickListener() {
+          @Override
+          public boolean onClick(MouseEvent e, int clickCount) {
             setProportion(.5f);
+            return true;
           }
-        });
+        }.installOn(splitCenterlabel);
+
         add(splitCenterlabel, new GridBagConstraints(3 * xMask, 3 * yMask, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                                      new Insets(0, leftInsetArrow, 0, 0), 0, 0));
         add(new JLabel(glueIcon),
@@ -531,11 +537,14 @@ public class Splitter extends JPanel {
         splitUpLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         splitUpLabel.setToolTipText(isVerticalSplit ? UIBundle.message("splitter.up.tooltip.text") : UIBundle
           .message("splitter.left.tooltip.text"));
-        splitUpLabel.addMouseListener(new MouseAdapter() {
-          public void mouseClicked(MouseEvent e) {
+        new ClickListener() {
+          @Override
+          public boolean onClick(MouseEvent e, int clickCount) {
             setProportion(getMinProportion(myFirstComponent));
+            return true;
           }
-        });
+        }.installOn(splitUpLabel);
+
         add(splitUpLabel, new GridBagConstraints(isVerticalSplit ? 5 : 0, isVerticalSplit ? 0 : 1, 1, 1, 0, 0, GridBagConstraints.CENTER,
                                                  GridBagConstraints.NONE, new Insets(0, leftInsetArrow, 0, 0), 0, 0));
         add(new JLabel(glueIcon), new GridBagConstraints(6 * xMask, 6 * yMask, 1, 1, 0, 0,
