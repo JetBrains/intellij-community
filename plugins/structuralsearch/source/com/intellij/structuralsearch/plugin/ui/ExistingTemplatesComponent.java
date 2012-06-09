@@ -15,7 +15,6 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.LinkedList;
 
@@ -157,15 +156,13 @@ public class ExistingTemplatesComponent {
       }
     );
 
-    component.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) {
-            owner.close(DialogWrapper.OK_EXIT_CODE);
-          }
-        }
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        owner.close(DialogWrapper.OK_EXIT_CODE);
+        return true;
       }
-    );
+    }.installOn(component);
   }
 
   private void addSelectedTreeNodeAndClose() {
