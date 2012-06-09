@@ -257,6 +257,12 @@ public class PyEditingTest extends PyTestCase {
                 "        (a, a) for a in [])");
   }
 
+  public void testEmptyStringInParenthesis() {
+    doTestEnter("a = ('<caret>')",
+                "a = (''\n" +
+                "     '')");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");
