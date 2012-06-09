@@ -52,7 +52,7 @@ public class ProfileAction {
 
     myProfileList = ProfileList.getInstance(myDesigner.getProject());
 
-    myProfileManager = new ProfileManager(myDesigner.getModule(), refreshAction, new Runnable() {
+    myProfileManager = new ProfileManager(myDesigner, refreshAction, new Runnable() {
       @Override
       public void run() {
         myProfileList.addVersion();
@@ -142,7 +142,7 @@ public class ProfileAction {
   }
 
   private void editProfiles() {
-    ProfileDialog dialog = new ProfileDialog(myDesigner.getModule(), myProfileList.getProfiles());
+    ProfileDialog dialog = new ProfileDialog(myDesigner, myProfileList.getProfiles());
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

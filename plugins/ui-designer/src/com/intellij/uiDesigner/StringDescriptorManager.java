@@ -41,7 +41,7 @@ import java.util.Map;
  * @author yole
  */
 public class StringDescriptorManager {
-  private final Module myModule;
+  private Module myModule;
   private final Map<Pair<Locale, String>, SoftReference<PropertiesFile>> myPropertiesFileCache = new HashMap<Pair<Locale, String>, SoftReference<PropertiesFile>>();
 
   public StringDescriptorManager(final Module module, MessageBus bus) {
@@ -56,7 +56,11 @@ public class StringDescriptorManager {
   }
 
   public static StringDescriptorManager getInstance(Module module) {
-    return ModuleServiceManager.getService(module, StringDescriptorManager.class);
+    StringDescriptorManager service = ModuleServiceManager.getService(module, StringDescriptorManager.class);
+    if (service != null) {
+      service.myModule = module;
+    }
+    return service;
   }
 
   @Nullable public String resolve(@NotNull RadComponent component, @Nullable StringDescriptor descriptor) {

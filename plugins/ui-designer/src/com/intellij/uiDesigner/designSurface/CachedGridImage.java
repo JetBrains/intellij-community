@@ -41,7 +41,7 @@ public class CachedGridImage {
 
   private CachedGridImage(final RadContainer container) {
     final GraphicsConfiguration graphicsConfiguration =
-      WindowManagerEx.getInstanceEx().getFrame(container.getModule().getProject()).getGraphicsConfiguration();
+      WindowManagerEx.getInstanceEx().getFrame(container.getProject()).getGraphicsConfiguration();
     if (container.getWidth() * container.getHeight() < 4096*4096) {
       myImage = graphicsConfiguration.createCompatibleImage(container.getWidth(), container.getHeight(),
                                                           Transparency.BITMASK);

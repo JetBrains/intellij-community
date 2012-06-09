@@ -174,7 +174,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     //noinspection ForLoopThatDoesntUseLoopVariable
     for(int i = 0; true; i++){
       final String nameCandidate = baseName + (i + 1);
-      final String binding = JavaCodeStyleManager.getInstance(root.getModule().getProject()).propertyNameToVariableName(
+      final String binding = JavaCodeStyleManager.getInstance(root.getProject()).propertyNameToVariableName(
         nameCandidate,
         VariableKind.FIELD
       );
@@ -465,7 +465,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     RadComponentFactory factory = getRadComponentFactory(item.getClassName(), loader);
     if (factory != null) {
       try {
-        result = factory.newInstance(editor.getModule(), item.getClassName(), id);
+        result = factory.newInstance(editor, item.getClassName(), id);
       }
       catch (Exception e) {
         LOG.error(e);
@@ -477,13 +477,13 @@ public final class InsertComponentProcessor extends EventProcessor {
       if (boundForm != null) {
         final String formFileName = FormEditingUtil.buildResourceName(boundForm);
         try {
-          result = new RadNestedForm(editor.getModule(), formFileName, id);
+          result = new RadNestedForm(editor, formFileName, id);
         }
         catch(Exception ex) {
           String errorMessage = UIDesignerBundle.message("error.instantiating.nested.form", formFileName,
                                 (ex.getMessage() != null ? ex.getMessage() : ex.toString()));
           result = RadErrorComponent.create(
-            editor.getModule(),
+            editor,
             id,
             item.getClassName(),
             null,
@@ -496,14 +496,14 @@ public final class InsertComponentProcessor extends EventProcessor {
           final Class aClass = Class.forName(item.getClassName(), true, loader);
           if (item.isContainer()) {
             LOG.debug("Creating custom container instance");
-            result = new RadContainer(editor.getModule(), aClass, id);
+            result = new RadContainer(editor, aClass, id);
           }
           else {
-            result = new RadAtomicComponent(editor.getModule(), aClass, id);
+            result = new RadAtomicComponent(editor, aClass, id);
           }
         }
         catch(final UnsupportedClassVersionError ucve) {
-          result = RadErrorComponent.create(editor.getModule(), id, item.getClassName(), null,
+          result = RadErrorComponent.create(editor, id, item.getClassName(), null,
             UIDesignerBundle.message("unsupported.component.class.version")
           );
         }
@@ -518,7 +518,7 @@ public final class InsertComponentProcessor extends EventProcessor {
             }
           }
           result = RadErrorComponent.create(
-            editor.getModule(),
+            editor,
             id,
             item.getClassName(),
             null,

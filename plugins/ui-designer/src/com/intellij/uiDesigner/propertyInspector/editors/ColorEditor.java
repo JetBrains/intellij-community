@@ -75,7 +75,7 @@ public class ColorEditor extends PropertyEditor<ColorDescriptor> {
 
   public JComponent getComponent(RadComponent component, ColorDescriptor value, InplaceContext inplaceContext) {
     myValue = value != null ? value : new ColorDescriptor(new Color(0));
-    myProject = component.getModule().getProject();
+    myProject = component.getProject();
     updateTextField();
     return myTextField;
   }

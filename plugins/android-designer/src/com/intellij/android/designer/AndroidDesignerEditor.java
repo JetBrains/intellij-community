@@ -37,8 +37,8 @@ public final class AndroidDesignerEditor extends DesignerEditor {
 
   @Override
   @NotNull
-  protected DesignerEditorPanel createDesignerPanel(Module module, VirtualFile file) {
-    return new AndroidDesignerEditorPanel(module, file);
+  protected DesignerEditorPanel createDesignerPanel(Project project, Module module, VirtualFile file) {
+    return new AndroidDesignerEditorPanel(project, module, file);
   }
 
   @NotNull

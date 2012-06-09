@@ -442,7 +442,7 @@ public final class FormEditingUtil {
   }
 
   public static GridConstraints getDefaultConstraints(final RadComponent component) {
-    final Palette palette = Palette.getInstance(component.getModule().getProject());
+    final Palette palette = Palette.getInstance(component.getProject());
     final ComponentItem item = palette.getItem(component.getComponentClassName());
     if (item != null) {
       return item.getDefaultConstraints();

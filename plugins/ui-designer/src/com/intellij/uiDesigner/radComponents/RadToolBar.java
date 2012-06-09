@@ -16,13 +16,13 @@
 
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
+import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
 import com.intellij.uiDesigner.palette.Palette;
-import com.intellij.uiDesigner.designSurface.*;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,7 +32,7 @@ import java.awt.*;
  */
 public class RadToolBar extends RadContainer {
   public static class Factory extends RadComponentFactory {
-    public RadComponent newInstance(Module module, Class aClass, String id) {
+    public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadToolBar(module, aClass, id);
     }
 
@@ -41,7 +41,7 @@ public class RadToolBar extends RadContainer {
     }
   }
 
-  public RadToolBar(final Module module, final Class componentClass, final String id) {
+  public RadToolBar(final ModuleProvider module, final Class componentClass, final String id) {
     super(module, componentClass, id);
   }
 

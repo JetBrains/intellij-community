@@ -42,6 +42,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,8 +77,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private boolean myParseTime;
   private int myProfileLastVersion;
 
-  public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
-    super(module, file);
+  public AndroidDesignerEditorPanel(@NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
+    super(project, module, file);
 
     myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
@@ -151,10 +152,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         RadViewComponent newRootComponent = parser.getRootComponent();
 
         newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
-        newRootComponent.setClientProperty(ModelParser.MODULE_KEY, getModule());
+        newRootComponent.setClientProperty(ModelParser.MODULE_KEY, AndroidDesignerEditorPanel.this);
         newRootComponent.setClientProperty(TreeComponentDecorator.KEY, myTreeDecorator);
 
-        PropertyParser propertyParser = new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget());
+        PropertyParser propertyParser = new PropertyParser(getModule(), myProfileAction.getProfileManager().getSelectedTarget());
         newRootComponent.setClientProperty(PropertyParser.KEY, propertyParser);
         propertyParser.loadRecursive(newRootComponent);
 
@@ -195,12 +196,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
           myProfileLastVersion = myProfileAction.getVersion();
 
-          AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+          AndroidPlatform platform = AndroidPlatform.getInstance(getModule());
           if (platform == null) {
             throw new AndroidSdkNotConfiguredException();
           }
 
-          AndroidFacet facet = AndroidFacet.getInstance(myModule);
+          AndroidFacet facet = AndroidFacet.getInstance(getModule());
           ProfileManager manager = myProfileAction.getProfileManager();
 
           LayoutDeviceConfiguration deviceConfiguration = manager.getSelectedDeviceConfiguration();
@@ -231,7 +232,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           }
 
           RenderingResult result =
-            RenderUtil.renderLayout(myModule, layoutXmlText, myFile, null, target, facet, config, xdpi, ydpi, theme, 10000, true);
+            RenderUtil.renderLayout(getModule(), layoutXmlText, myFile, null, target, facet, config, xdpi, ydpi, theme, 10000, true);
 
           if (ApplicationManagerEx.getApplicationEx().isInternal()) {
             System.out.println("Render time: " + (System.currentTimeMillis() - time)); // XXX
@@ -327,15 +328,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       info.myShowLog = false;
       info.myShowStack = false;
 
-      if (AndroidMavenUtil.isMavenizedModule(myModule)) {
+      if (AndroidMavenUtil.isMavenizedModule(getModule())) {
         info.myMessages.add(new FixableMessageInfo(true, AndroidBundle.message("android.maven.cannot.parse.android.sdk.error",
-                                                                               myModule.getName()), "", "", null, null));
+                                                                               getModule().getName()), "", "", null, null));
       }
       else {
         info.myMessages.add(new FixableMessageInfo(true, "Please ", "configure", " Android SDK", new Runnable() {
           @Override
           public void run() {
-            AndroidSdkUtils.openModuleDependenciesConfigurable(myModule);
+            AndroidSdkUtils.openModuleDependenciesConfigurable(getModule());
           }
         }, null));
       }
@@ -381,7 +382,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     StringBuilder builder = new StringBuilder("SDK: ");
 
     try {
-      AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+      AndroidPlatform platform = AndroidPlatform.getInstance(getModule());
       IAndroidTarget target = platform.getTarget();
       builder.append(target.getFullName()).append(" - ").append(target.getVersion());
     }

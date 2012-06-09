@@ -16,7 +16,6 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.RecursiveFormNestingException;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.*;
@@ -45,13 +44,13 @@ public final class XmlReader {
   }
 
   @NotNull
-  public static RadRootContainer createRoot(final Module module, final LwRootContainer lwRootContainer, final ClassLoader loader,
+  public static RadRootContainer createRoot(final ModuleProvider module, final LwRootContainer lwRootContainer, final ClassLoader loader,
                                             final Locale stringDescriptorLocale) throws Exception{
     return (RadRootContainer)createComponent(module, lwRootContainer, loader, stringDescriptorLocale);
   }
 
   @NotNull
-  public static RadComponent createComponent(@NotNull final Module module,
+  public static RadComponent createComponent(@NotNull final ModuleProvider module,
                                              @NotNull final LwComponent lwComponent,
                                              @NotNull final ClassLoader loader,
                                              final Locale stringDescriptorLocale) throws Exception{
@@ -64,7 +63,7 @@ public final class XmlReader {
       LwNestedForm nestedForm = (LwNestedForm) lwComponent;
       boolean recursiveNesting = false;
       try {
-        Utils.validateNestedFormLoop(nestedForm.getFormFileName(), new PsiNestedFormLoader(module));
+        Utils.validateNestedFormLoop(nestedForm.getFormFileName(), new PsiNestedFormLoader(module.getModule()));
       }
       catch(RecursiveFormNestingException ex) {
         recursiveNesting = true;
@@ -258,7 +257,7 @@ public final class XmlReader {
     container.setBorderColor(lwContainer.getBorderColor());
   }
 
-  private static RadErrorComponent createErrorComponent(final Module module, final String id, final LwComponent lwComponent, final ClassLoader loader) {
+  private static RadErrorComponent createErrorComponent(final ModuleProvider module, final String id, final LwComponent lwComponent, final ClassLoader loader) {
     final String componentClassName = lwComponent.getComponentClassName();
     final String errorDescription = Utils.validateJComponentClass(loader, componentClassName, true);
     return RadErrorComponent.create(

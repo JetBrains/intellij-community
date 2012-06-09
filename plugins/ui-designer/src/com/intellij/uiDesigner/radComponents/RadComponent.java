@@ -18,10 +18,7 @@ package com.intellij.uiDesigner.radComponents;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.uiDesigner.UIFormXmlConstants;
-import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.SwingProperties;
-import com.intellij.uiDesigner.StringDescriptorManager;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.Util;
@@ -96,7 +93,8 @@ public abstract class RadComponent implements IComponent {
   private boolean myCustomCreate = false;
   private boolean myLoadingProperties = false;
 
-  @NotNull private final Module myModule;
+  private final ModuleProvider myModule;
+
   @NotNull private final Class myClass;
   /**
    * Delegee is the JComponent which really represents the
@@ -138,7 +136,7 @@ public abstract class RadComponent implements IComponent {
    * @param id     id of the compoent inside the form. <code>id</code>
    *               should be a unique atring inside the form.
    */
-  public RadComponent(final Module module, @NotNull final Class aClass, @NotNull final String id) {
+  public RadComponent(final ModuleProvider module, @NotNull final Class aClass, @NotNull final String id) {
     myModule = module;
     myClass = aClass;
     myId = id;
@@ -172,7 +170,7 @@ public abstract class RadComponent implements IComponent {
     myDelegee.putClientProperty(CLIENT_PROP_RAD_COMPONENT, this);
   }
 
-  public RadComponent(final Module module, @NotNull final Class aClass, @NotNull final String id, final Palette palette) {
+  public RadComponent(final ModuleProvider module, @NotNull final Class aClass, @NotNull final String id, final Palette palette) {
     this(module, aClass, id);
     myPalette = palette;
   }
@@ -181,16 +179,15 @@ public abstract class RadComponent implements IComponent {
    * @return module for the component.
    */
   public final Module getModule() {
-    return myModule;
+    return myModule == null ? null : myModule.getModule();
+  }
+
+  public final Project getProject() {
+    return myModule == null ? null : myModule.getProject();
   }
 
   public boolean isLoadingProperties() {
     return myLoadingProperties;
-  }
-
-  @NotNull
-  public final Project getProject() {
-    return myModule.getProject();
   }
 
   public Palette getPalette() {
@@ -630,7 +627,9 @@ public abstract class RadComponent implements IComponent {
   }
 
   private void writeClientProperties(final XmlWriter writer) {
-    if (myModule == null) return;
+    if (myModule == null) {
+      return;
+    }
     boolean haveClientProperties = false;
     try {
       ClientPropertiesProperty cpp = ClientPropertiesProperty.getInstance(getProject());
@@ -800,7 +799,7 @@ public abstract class RadComponent implements IComponent {
 
   @Nullable
   public String getComponentTitle() {
-    Palette palette = Palette.getInstance(getModule().getProject());
+    Palette palette = Palette.getInstance(getProject());
     IntrospectedProperty[] props = palette.getIntrospectedProperties(this);
     for (IntrospectedProperty prop : props) {
       if (prop.getName().equals(SwingProperties.TEXT) && prop instanceof IntroStringProperty) {

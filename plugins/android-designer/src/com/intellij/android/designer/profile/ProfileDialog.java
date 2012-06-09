@@ -15,8 +15,8 @@
  */
 package com.intellij.android.designer.profile;
 
+import com.intellij.designer.ModuleProvider;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -63,8 +63,8 @@ public class ProfileDialog extends DialogWrapper {
 
   private final ProfileManager myProfileManager;
 
-  public ProfileDialog(Module module, List<Profile> profiles) {
-    super(module.getProject(), false);
+  public ProfileDialog(ModuleProvider moduleProvider, List<Profile> profiles) {
+    super(moduleProvider.getProject(), false);
 
     setTitle("Edit Profiles");
     getOKAction().putValue(DEFAULT_ACTION, null);
@@ -113,7 +113,7 @@ public class ProfileDialog extends DialogWrapper {
     decorator.setMoveUpAction(null);
     decorator.setMoveDownAction(null);
 
-    myProfileManager = new ProfileManager(module, EmptyRunnable.INSTANCE, EmptyRunnable.INSTANCE);
+    myProfileManager = new ProfileManager(moduleProvider, EmptyRunnable.INSTANCE, EmptyRunnable.INSTANCE);
 
 
     myContentPanel = new JPanel(new GridBagLayout());

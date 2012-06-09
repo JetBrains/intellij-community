@@ -24,15 +24,17 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.LoaderFactory;
+import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.palette.Palette;
 
 public abstract class RadComponentFactory {
-  public RadComponent newInstance(Module module, String className, String id) throws ClassNotFoundException {
+  public RadComponent newInstance(ModuleProvider moduleProvider, String className, String id) throws ClassNotFoundException {
+    Module module = moduleProvider.getModule();
     final Class<?> aClass = Class.forName(className, true, LoaderFactory.getInstance(module.getProject()).getLoader(module));
-    return newInstance(module, aClass, id);
+    return newInstance(moduleProvider, aClass, id);
   }
 
-  protected abstract RadComponent newInstance(Module module, Class aClass, String id);
+  protected abstract RadComponent newInstance(ModuleProvider moduleProvider, Class aClass, String id);
 
   public abstract RadComponent newInstance(final Class componentClass, final String id, final Palette palette);
 }
