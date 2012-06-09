@@ -14,7 +14,7 @@
 
   <appender name="CONSOLE-ALL" class="org.apache.log4j.ConsoleAppender">
     <layout class="org.apache.log4j.PatternLayout">
-      <param name="ConversionPattern" value="[%7r] %6p - %30.30c - %m \n"/>
+      <param name="ConversionPattern" value="[%d{HH:mm:ss,SSS}] %6p - %30.30c - %m \n"/>
     </layout>
   </appender>
 
@@ -25,6 +25,11 @@
       <param name="ConversionPattern" value="%d [%7r] %6p - %30.30c - %m \n"/>
     </layout>
   </appender>
+
+  <category name="#com.intellij.openapi.vfs.impl.local.FileWatcher">
+    <priority value="DEBUG"/>
+    <appender-ref ref="CONSOLE-ALL"/>
+  </category>
 
   <root>
     <priority value="INFO"/>

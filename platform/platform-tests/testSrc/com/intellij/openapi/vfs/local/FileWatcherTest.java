@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,6 +43,8 @@ import java.util.*;
 
 public class FileWatcherTest extends PlatformLangTestCase {
   private static final int NATIVE_PROCESS_DELAY = 750;  // time to event to be caught by native watcher and passed to watcher thread
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
@@ -68,6 +71,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    LOG.debug("================== setting up " + getName() + " ==================");
+
     super.setUp();
 
     Disposer.register(getProject(), myAlarm);
@@ -92,10 +97,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
         myEvents.addAll(events);
       }
     });
+
+    LOG.debug("================== setting up " + getName() + " ==================");
   }
 
   @Override
   protected void tearDown() throws Exception {
+    LOG.debug("================== tearing down " + getName() + " ==================");
+
     try {
       myConnection.disconnect();
       myWatcher.shutdown();
@@ -105,6 +114,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
       myWatcher = null;
       super.tearDown();
     }
+
+    LOG.debug("================== tearing down " + getName() + " ==================");
   }
 
 
