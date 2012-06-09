@@ -83,6 +83,12 @@ public class PopupChooserBuilder {
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
 
+  public JScrollPane getScrollPane() {
+    return myScrollPane;
+  }
+
+  private JScrollPane myScrollPane;
+
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
   }
@@ -232,29 +238,28 @@ public class PopupChooserBuilder {
       registerClosePopupKeyboardAction(keystroke, true);
     }
 
-    final JScrollPane scrollPane;
     if (myChooserComponent instanceof ListWithFilter) {
-      scrollPane = ((ListWithFilter)myChooserComponent).getScrollPane();
+      myScrollPane = ((ListWithFilter)myChooserComponent).getScrollPane();
     }
     else if (myChooserComponent instanceof JTable) {
-      scrollPane = createScrollPane((JTable)myChooserComponent);
+      myScrollPane = createScrollPane((JTable)myChooserComponent);
     }
     else if (myChooserComponent instanceof JTree) {
-      scrollPane = createScrollPane((JTree)myChooserComponent);
+      myScrollPane = createScrollPane((JTree)myChooserComponent);
     }
     else {
       throw new IllegalStateException("PopupChooserBuilder is intended to be constructed with one of JTable, JTree, JList components");
     }
 
-    scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    myScrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     Insets viewportPadding = UIUtil.getListViewportPadding();
-    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
+    ((JComponent)myScrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);
     }
     else {
-      contentPane.add(scrollPane, BorderLayout.CENTER);
+      contentPane.add(myScrollPane, BorderLayout.CENTER);
     }
 
     if (mySouthComponent != null) {

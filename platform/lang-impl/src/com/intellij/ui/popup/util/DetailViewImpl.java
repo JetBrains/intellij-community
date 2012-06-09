@@ -30,6 +30,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,6 +149,8 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       getEditor().getCaretModel().moveToLogicalPosition(positionToNavigate);
       validate();
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+
+      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
 
       clearHightlighting();
       if (lineAttributes != null) {

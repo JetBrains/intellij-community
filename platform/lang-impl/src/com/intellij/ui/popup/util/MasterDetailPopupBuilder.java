@@ -22,9 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.Gray;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
@@ -59,6 +57,7 @@ public class MasterDetailPopupBuilder {
   private JComponent myChooserComponent;
   private ActionToolbar myActionToolbar;
   private boolean myAddDetailViewToEast = true;
+  private Dimension myMinSize;
 
 
   public MasterDetailPopupBuilder setDetailView(DetailView detailView) {
@@ -194,14 +193,18 @@ public class MasterDetailPopupBuilder {
       setItemChoosenCallback(runnable).
       setCloseOnEnter(myCloseOnEnter).
       setMayBeParent(true).
-      setMinSize(new Dimension(-1, 700)).
       setFilteringEnabled(new Function<Object, String>() {
         public String fun(Object o) {
           return ((ItemWrapper)o).speedSearchText();
         }
       });
 
+    if (myMinSize != null) {
+      builder.setMinSize(myMinSize);
+    }
+
     myPopup = builder.createPopup();
+    builder.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
     myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
@@ -261,6 +264,11 @@ public class MasterDetailPopupBuilder {
 
   public void setAddDetailViewToEast(boolean addDetailViewToEast) {
     myAddDetailViewToEast = addDetailViewToEast;
+  }
+
+  public MasterDetailPopupBuilder setMinSize(Dimension minSize) {
+    myMinSize = minSize;
+    return this;
   }
 
   public static boolean allowedToRemoveItems(Object[] values) {

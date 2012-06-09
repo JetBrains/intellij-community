@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
@@ -193,18 +192,23 @@ public class BreakpointMasterDetailPopupBuilder {
       }
     };
 
-    final JBPopup popup = myPopupBuilder.
-      setActionsGroup(actions).
-      setTree(tree).
-      setDelegate(delegate).
-      setCloseOnEnter(false).createMasterDetailPopup();
+    myPopupBuilder.
+          setActionsGroup(actions).
+          setTree(tree).
+          setDelegate(delegate);
 
-    tree.setBorder(IdeBorderFactory.createBorder());
+    if (!myIsViewer) {
+      myPopupBuilder.setMinSize(new Dimension(-1, 700));
+    }
+
+    final JBPopup popup = myPopupBuilder.setCloseOnEnter(false).createMasterDetailPopup();
 
     myTreeController.setDelegate(new BreakpointItemsTreeController.BreakpointItemsTreeDelegate() {
       @Override
       public void execute(BreakpointItem item) {
-        myCallback.breakpointChosen(myProject, item, popup);
+        if (myCallback != null) {
+          myCallback.breakpointChosen(myProject, item, popup);
+        }
       }
     });
 
