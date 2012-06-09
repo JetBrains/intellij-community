@@ -54,10 +54,8 @@ public class DiffPreviewPanel implements PreviewPanel {
     myPanel.add(myMergePanelComponent, BorderLayout.CENTER);
     myMergePanelComponent.setToolbarEnabled(false);
     MergePanel2 mergePanel = getMergePanel();
-    mergePanel.setEditorProperty(MergePanel2.LINE_NUMBERS, Boolean.FALSE);
-    mergePanel.setEditorProperty(MergePanel2.LINE_MARKERS_AREA, Boolean.FALSE);
-    mergePanel.setEditorProperty(MergePanel2.ADDITIONAL_LINES, 1);
-    mergePanel.setEditorProperty(MergePanel2.ADDITIONAL_COLUMNS, 1);
+    mergePanel.setShowLineNumbers(false);
+    mergePanel.setAdditionalLinesAndColumns(1, 1);
     mergePanel.setScrollToFirstDiff(false);
 
     for (int i = 0; i < MergePanel2.EDITORS_COUNT; i++) {
@@ -105,7 +103,7 @@ public class DiffPreviewPanel implements PreviewPanel {
 
   public void setColorScheme(final EditorColorsScheme highlighterSettings) {
     getMergePanel().setColorScheme(highlighterSettings);
-    getMergePanel().setEditorProperty(MergePanel2.HIGHLIGHTER_SETTINGS, highlighterSettings);
+    getMergePanel().setHighlighterSettings(highlighterSettings);
   }
 
   private class EditorMouseListener extends EditorMouseMotionAdapter {

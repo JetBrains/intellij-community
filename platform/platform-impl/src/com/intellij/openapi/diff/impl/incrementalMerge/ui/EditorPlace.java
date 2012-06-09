@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,11 +28,11 @@ import java.util.ArrayList;
 
 public class EditorPlace extends JComponent implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.ui.EditorPlace");
-  private final ComponentState myState;
+  private final MergePanel2.DiffEditorState myState;
   private final ArrayList<EditorListener> myListeners = new ArrayList<EditorListener>();
   private Editor myEditor = null;
 
-  public EditorPlace(ComponentState state) {
+  public EditorPlace(MergePanel2.DiffEditorState state) {
     myState = state;
     setLayout(new BorderLayout());
   }
@@ -109,23 +109,8 @@ public class EditorPlace extends JComponent implements Disposable {
     return myState.getDocument();
   }
 
-  public ComponentState getState() {
+  public MergePanel2.DiffEditorState getState() {
     return myState;
-  }
-
-  public abstract static class ComponentState {
-    private Document myDocument;
-    public abstract Editor createEditor();
-
-    public void setDocument(Document document) {
-      myDocument = document;
-    }
-
-    public Document getDocument() {
-      return myDocument;
-    }
-
-    public abstract <T> void updateValue(Editor editor, ViewProperty<T> property, T value);
   }
 
   public interface EditorListener {
@@ -137,25 +122,9 @@ public class EditorPlace extends JComponent implements Disposable {
     return EditorFactory.getInstance();
   }
 
+  @Nullable
   public JComponent getContentComponent() {
     return myEditor == null ? null : myEditor.getContentComponent();
-  }
-
-  public abstract static class ViewProperty<T> {
-    private final T myDefault;
-
-    protected ViewProperty(T aDefault) {
-      myDefault = aDefault;
-    }
-
-    public void updateEditor(Editor editor, T value, ComponentState state) {
-      if (editor == null) return;
-      if (value == null) value = myDefault;
-      EditorEx editorEx = (EditorEx)editor;
-      doUpdateEditor(editorEx, value, state);
-    }
-
-    protected abstract void doUpdateEditor(EditorEx editorEx, T value, ComponentState state);
   }
 
   public void dispose() {
