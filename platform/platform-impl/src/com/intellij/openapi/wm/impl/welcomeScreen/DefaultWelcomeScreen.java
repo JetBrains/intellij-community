@@ -278,7 +278,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
 
       new ClickListener() {
         @Override
-        public void onClick(MouseEvent e) {
+        public void onClick(MouseEvent e, int clickCount) {
           if (e.getButton() == MouseEvent.BUTTON1) {
             DataContext dataContext = DataManager.getInstance().getDataContext(myWelcomePanel);
             int fragment = actionLabel.findFragmentAt(e.getX());
@@ -700,7 +700,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       JLabel name = new JLabel(underlineHtmlText(commandLink));
       new ClickListener() {
         @Override
-        public void onClick(MouseEvent event) {
+        public void onClick(MouseEvent event, int clickCount) {
           button.onPress(event);
         }
       }.installOn(name);
