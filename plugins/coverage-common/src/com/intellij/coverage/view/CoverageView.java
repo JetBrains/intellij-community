@@ -88,13 +88,13 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
     final CoverageViewTreeStructure structure = new CoverageViewTreeStructure(project, suitesBundle, stateBean);
     myBuilder = new CoverageViewBuilder(project, new JBList(), myModel, structure, myTable);
     myBuilder.setParentTitle(titleLabel);
-    myTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          drillDown(structure);
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        drillDown(structure);
+        return true;
       }
-    });
+    }.installOn(myTable);
     final TableSpeedSearch speedSearch = new TableSpeedSearch(myTable);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installUnknownPopupHandler(myTable, createPopupGroup(), ActionManager.getInstance());
