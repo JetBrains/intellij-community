@@ -33,8 +33,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -62,6 +64,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,7 +151,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
         final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
         for (PsiMember psiMember : myMembersAfterMove) {
           if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).getBody() != null) {
-            methodsToSearchDuplicates.add((PsiMethod)psiMember);
+            methodsToSearchDuplicates.add(psiMember);
           }
         }
 
@@ -289,7 +292,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
           PsiJavaCodeReferenceElement ref = mySourceClass.equals(sourceReferenceList.getParent()) ?
                                             RefactoringUtil.removeFromReferenceList(sourceReferenceList, aClass) :
                                             RefactoringUtil.findReferenceToClass(sourceReferenceList, aClass);
-          if (ref != null) {
+          if (ref != null && !myTargetSuperClass.isInheritor(aClass, false)) {
             RefactoringUtil.replaceMovedMemberTypeParameters(ref, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
             final PsiReferenceList referenceList =
               myTargetSuperClass.isInterface() ? myTargetSuperClass.getExtendsList() : myTargetSuperClass.getImplementsList();

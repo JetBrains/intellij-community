@@ -23,14 +23,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PsiLambdaExpression extends PsiExpression {
   /**
-   * Returns this lambda expression's type parameter list (if any).
-   *
-   * @return type parameter list or null.
-   */
-  @Nullable
-  PsiTypeParameterList getTypeParameterList();
-
-  /**
    * Returns this lambda expression's parameter list.
    *
    * @return parameter list.

@@ -69,10 +69,6 @@ public class SinglePathEntry implements AntClasspathEntry {
     return FileAppearanceService.getInstance().forIoFile(myFile);
   }
 
-  public String getPresentablePath() {
-    return myFile.getAbsolutePath();
-  }
-
   private static SinglePathEntry fromVirtualFile(VirtualFile file) {
     return new SinglePathEntry(file.getPresentableUrl());
   }

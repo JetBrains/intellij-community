@@ -44,26 +44,26 @@ public final class ToolWindowsGroup extends ActionGroup {
   static{
     ourId2Text = new HashMap<String, MyDescriptor>();
     ourId2Text.put(ToolWindowId.COMMANDER, new MyDescriptor(IdeBundle.message("action.toolwindow.commander"),
-                                                            AllIcons.General.ToolWindowCommander));
+                                                            AllIcons.Toolwindows.ToolWindowCommander));
     ourId2Text.put(ToolWindowId.MESSAGES_WINDOW, new MyDescriptor(IdeBundle.message("action.toolwindow.messages"),
-                                                                  AllIcons.General.ToolWindowMessages));
+                                                                  AllIcons.Toolwindows.ToolWindowMessages));
     ourId2Text.put(ToolWindowId.PROJECT_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.project"),
-                                                               AllIcons.General.ToolWindowProject));
+                                                               AllIcons.Toolwindows.ToolWindowProject));
     ourId2Text.put(ToolWindowId.STRUCTURE_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.structure"),
-                                                                 AllIcons.General.ToolWindowStructure));
+                                                                 AllIcons.Toolwindows.ToolWindowStructure));
     ourId2Text.put(ToolWindowId.ANT_BUILD, new MyDescriptor(IdeBundle.message("action.toolwindow.ant.build"),
-                                                            AllIcons.General.ToolWindowAnt));
-    ourId2Text.put(ToolWindowId.DEBUG, new MyDescriptor(IdeBundle.message("action.toolwindow.debug"), AllIcons.General.ToolWindowDebugger));
-    ourId2Text.put(ToolWindowId.RUN, new MyDescriptor(IdeBundle.message("action.toolwindow.run"), AllIcons.General.ToolWindowRun));
-    ourId2Text.put(ToolWindowId.FIND, new MyDescriptor(IdeBundle.message("action.toolwindow.find"), AllIcons.General.ToolWindowFind));
-    ourId2Text.put(ToolWindowId.CVS, new MyDescriptor(IdeBundle.message("action.toolwindow.cvs"), AllIcons.General.ToolWindowCvs));
+                                                            AllIcons.Toolwindows.ToolWindowAnt));
+    ourId2Text.put(ToolWindowId.DEBUG, new MyDescriptor(IdeBundle.message("action.toolwindow.debug"), AllIcons.Toolwindows.ToolWindowDebugger));
+    ourId2Text.put(ToolWindowId.RUN, new MyDescriptor(IdeBundle.message("action.toolwindow.run"), AllIcons.Toolwindows.ToolWindowRun));
+    ourId2Text.put(ToolWindowId.FIND, new MyDescriptor(IdeBundle.message("action.toolwindow.find"), AllIcons.Toolwindows.ToolWindowFind));
+    ourId2Text.put(ToolWindowId.CVS, new MyDescriptor(IdeBundle.message("action.toolwindow.cvs"), AllIcons.Toolwindows.ToolWindowCvs));
     ourId2Text.put(ToolWindowId.HIERARCHY, new MyDescriptor(IdeBundle.message("action.toolwindow.hierarchy"),
-                                                            AllIcons.General.ToolWindowHierarchy));
-    ourId2Text.put(ToolWindowId.TODO_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.todo"), AllIcons.General.ToolWindowTodo));
+                                                            AllIcons.Toolwindows.ToolWindowHierarchy));
+    ourId2Text.put(ToolWindowId.TODO_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.todo"), AllIcons.Toolwindows.ToolWindowTodo));
     ourId2Text.put(ToolWindowId.INSPECTION, new MyDescriptor(IdeBundle.message("action.toolwindow.inspection"),
-                                                             AllIcons.General.ToolWindowInspection));
+                                                             AllIcons.Toolwindows.ToolWindowInspection));
     ourId2Text.put(ToolWindowId.FAVORITES_VIEW, new MyDescriptor(IdeBundle.message("action.toolwindow.favorites"),
-                                                                 AllIcons.General.ToolWindowFavorites));
+                                                                 AllIcons.Toolwindows.ToolWindowFavorites));
   }
 
   private final ArrayList<ActivateToolWindowAction> myChildren;

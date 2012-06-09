@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,15 @@ import com.intellij.util.ArrayUtil;
  * Represents an array of suggested variable names and allows to keep statistics on
  * which of the suggestions has been accepted.
  *
- * @see JavaCodeStyleManager#suggestVariableName(VariableKind, String, com.intellij.psi.PsiExpression, com.intellij.psi.PsiType)
+ * (see JavaCodeStyleManager.suggestVariableName() methods).
  */
 public abstract class SuggestedNameInfo {
+  @SuppressWarnings("UnusedDeclaration")
   public static final Key<SuggestedNameInfo> SUGGESTED_NAME_INFO_KEY = Key.create("SUGGESTED_NAME_INFO_KEY");
+
   public static final SuggestedNameInfo NULL_INFO = new SuggestedNameInfo(ArrayUtil.EMPTY_STRING_ARRAY) {
     @Override
-    public void nameChoosen(String name) {}
+    public void nameChosen(String name) {}
   };
 
   /**
@@ -41,13 +43,17 @@ public abstract class SuggestedNameInfo {
   }
 
   /**
-   * Should be called when one of the suggested names has been chosen by the user, to
-   * update the statistics on name usage.
+   * <p>Should be called when one of the suggested names has been chosen by the user, to
+   * update the statistics on name usage.</p>
+   * <p><b>Note to implementers:</b> do not leave this method non-overridden as it going to be abstract.</p>
    *
    * @param name the accepted suggestion.
    */
-  public abstract void nameChoosen(String name);
+  public void nameChosen(String name) { }
 
+  /** @deprecated override {@linkplain #nameChosen(String)} instead (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public void nameChoosen(String name) { nameChosen(name); }
 
   public static class Delegate extends SuggestedNameInfo {
     SuggestedNameInfo myDelegate;
@@ -58,9 +64,8 @@ public abstract class SuggestedNameInfo {
     }
 
     @Override
-    public void nameChoosen(final String name) {
-      myDelegate.nameChoosen(name);
+    public void nameChosen(final String name) {
+      myDelegate.nameChosen(name);
     }
   }
-
 }

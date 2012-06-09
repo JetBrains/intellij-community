@@ -245,7 +245,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final PsiType _type = type;
     return new SuggestedNameInfo(namesArray) {
       @Override
-      public void nameChoosen(String name) {
+      public void nameChosen(String name) {
         if (_propertyName != null || _type != null && _type.isValid()) {
           JavaStatisticsManager.incVariableNameUseCount(name, kind, _propertyName, _type);
         }
@@ -862,8 +862,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     return new SuggestedNameInfo(ArrayUtil.toStringArray(uniqueNames)) {
       @Override
-      public void nameChoosen(String name) {
-        baseNameInfo.nameChoosen(name);
+      public void nameChosen(String name) {
+        baseNameInfo.nameChosen(name);
       }
     };
   }

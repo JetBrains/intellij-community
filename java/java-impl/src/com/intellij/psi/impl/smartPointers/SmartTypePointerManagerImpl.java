@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,11 @@ import java.util.Set;
 public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl");
 
+  private static final SmartTypePointer NULL_POINTER = new SmartTypePointer() {
+    @Override
+    public PsiType getType() { return null; }
+  };
+
   private final SmartPointerManager myPsiPointerManager;
   private final Project myProject;
 
@@ -53,7 +58,8 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   @Override
   @NotNull
   public SmartTypePointer createSmartTypePointer(@NotNull PsiType type) {
-    return type.accept(new SmartTypeCreatingVisitor());
+    final SmartTypePointer pointer = type.accept(new SmartTypeCreatingVisitor());
+    return pointer != null ? pointer : NULL_POINTER;
   }
 
   private static class SimpleTypePointer implements SmartTypePointer {
@@ -77,6 +83,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       myComponentTypePointer = componentTypePointer;
     }
 
+    @Nullable
     @Override
     protected PsiArrayType calcType() {
       final PsiType type = myComponentTypePointer.getType();
@@ -164,6 +171,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       return myType;
     }
 
+    @Nullable
     protected abstract T calcType();
   }
 
@@ -228,7 +236,8 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
 
     @Override
     public SmartTypePointer visitArrayType(PsiArrayType arrayType) {
-      return new ArrayTypePointer(arrayType, arrayType.getComponentType().accept(this));
+      final SmartTypePointer componentTypePointer = arrayType.getComponentType().accept(this);
+      return componentTypePointer != null ? new ArrayTypePointer(arrayType, componentTypePointer) : null;
     }
 
     @Override

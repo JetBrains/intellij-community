@@ -43,16 +43,22 @@ public class IntroduceVariableAction extends BaseRunRefactoringAction<IntroduceV
     if (element == null) {
       return false;
     }
-    final PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, false);
 
-    if (statement == null || !(statement instanceof PsiExpressionStatement)) {
+    final PsiExpression expression = getExpression(element);
+    if (expression == null || !(expression.getParent() instanceof PsiExpressionStatement)) {
       return false;
     }
 
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
-    final PsiExpression expression = expressionStatement.getExpression();
-
     return expression.getType() != PsiType.VOID && !(expression instanceof PsiAssignmentExpression);
+  }
+
+  @Nullable
+  private static PsiExpression getExpression(@NotNull PsiElement element) {
+    PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
+    while (expression != null && expression instanceof PsiReferenceExpression) {
+      expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class, true);
+    }
+    return expression;
   }
 
   @Nullable

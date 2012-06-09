@@ -275,18 +275,19 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       actionLabel.setFont(new Font(CAPTION_FONT_NAME, Font.PLAIN, 12));
       actionLabel.setForeground(CAPTION_COLOR);
       actionLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      actionLabel.addMouseListener(new MouseAdapter() {
+
+      new ClickListener() {
         @Override
-        public void mouseClicked(MouseEvent e) {
+        public void onClick(MouseEvent e) {
           if (e.getButton() == MouseEvent.BUTTON1) {
             DataContext dataContext = DataManager.getInstance().getDataContext(myWelcomePanel);
             int fragment = actionLabel.findFragmentAt(e.getX());
             if (fragment == SimpleColoredComponent.FRAGMENT_ICON) {
               final int rc = Messages.showOkCancelDialog(PlatformDataKeys.PROJECT.getData(dataContext),
-                                                        "Remove '" + action.getTemplatePresentation().getText() +
-                                                        "' from recent projects list?",
-                                                        "Remove Recent Project",
-                                                        Messages.getQuestionIcon());
+                                                         "Remove '" + action.getTemplatePresentation().getText() +
+                                                         "' from recent projects list?",
+                                                         "Remove Recent Project",
+                                                         Messages.getQuestionIcon());
               if (rc == 0) {
                 final RecentProjectsManagerBase manager = RecentProjectsManagerBase.getInstance();
                 assert action instanceof ReopenProjectAction : action;
@@ -310,7 +311,9 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
             }
           }
         }
+      }.installOn(actionLabel);
 
+      actionLabel.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseEntered(MouseEvent e) {
           actionLabel.setIcon(ICON);
@@ -695,11 +698,13 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       myCount++;
 
       JLabel name = new JLabel(underlineHtmlText(commandLink));
-      name.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          button.onPress(e);
+      new ClickListener() {
+        @Override
+        public void onClick(MouseEvent event) {
+          button.onPress(event);
         }
-      });
+      }.installOn(name);
+
       name.setForeground(CAPTION_COLOR);
       name.setFont(LINK_FONT);
       name.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

@@ -35,7 +35,6 @@ import java.io.FileFilter;
 import java.util.List;
 
 public class AllJarsUnderDirEntry implements AntClasspathEntry {
-  private static final Icon ALL_JARS_IN_DIR_ICON = AllIcons.Ant.AllJarsInDir;
   @NonNls private static final String JAR_SUFFIX = ".jar";
 
   private static final Function<VirtualFile, AntClasspathEntry> CREATE_FROM_VIRTUAL_FILE = new Function<VirtualFile, AntClasspathEntry>() {
@@ -56,10 +55,6 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
     this(new File(osPath));
   }
 
-  public String getPresentablePath() {
-    return myDir.getAbsolutePath();
-  }
-
   public void writeExternal(final Element dataElement) throws WriteExternalException {
     String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, myDir.getAbsolutePath().replace(File.separatorChar, '/'));
     dataElement.setAttribute(DIR, url);
@@ -77,7 +72,7 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
   public CellAppearanceEx getAppearance() {
     CellAppearanceEx appearance = FileAppearanceService.getInstance().forIoFile(myDir);
     if (appearance instanceof ModifiableCellAppearanceEx) {
-      ((ModifiableCellAppearanceEx)appearance).setIcon(ALL_JARS_IN_DIR_ICON);
+      ((ModifiableCellAppearanceEx)appearance).setIcon(AllIcons.Nodes.JarDirectory);
     }
     return appearance;
   }
