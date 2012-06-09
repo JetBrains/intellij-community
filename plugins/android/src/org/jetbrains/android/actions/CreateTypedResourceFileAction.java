@@ -16,11 +16,9 @@
 
 package org.jetbrains.android.actions;
 
+import com.android.resources.ResourceFolderType;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +36,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.xml.refactoring.XmlTagInplaceRenamer;
-import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
@@ -48,36 +45,33 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class CreateTypedResourceFileAction extends CreateElementActionBase {
-  static final String ROOT_TAG_PROPERTY = "ROOT_TAG";
 
-  private final String myResourceType;
+  private final ResourceFolderType myResourceType;
   private final String myResourcePresentableName;
   protected final String myDefaultRootTag;
   private final boolean myValuesResourceFile;
   private final boolean myChooseTagName;
 
   public CreateTypedResourceFileAction(@NotNull String resourcePresentableName,
-                                       @NotNull String resourceType,
-                                       @NotNull String defaultRootTag,
+                                       @NotNull ResourceFolderType resourceFolderType,
                                        boolean valuesResourceFile,
                                        boolean chooseTagName) {
     super(AndroidBundle.message("new.typed.resource.action.title", resourcePresentableName),
           AndroidBundle.message("new.typed.resource.action.description", resourcePresentableName), StdFileTypes.XML.getIcon());
-    myResourceType = resourceType;
+    myResourceType = resourceFolderType;
     myResourcePresentableName = resourcePresentableName;
-    myDefaultRootTag = defaultRootTag;
+    myDefaultRootTag = getDefaultRootTabByResourceType(resourceFolderType);
     myValuesResourceFile = valuesResourceFile;
     myChooseTagName = chooseTagName;
   }
 
   public String getResourceType() {
-    return myResourceType;
+    return myResourceType.getName();
   }
 
   @NotNull
@@ -93,20 +87,12 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   @NotNull
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
-    return doCreate(newName, directory, myDefaultRootTag, myChooseTagName);
+    return doCreateAndNavigate(newName, directory, myDefaultRootTag, myChooseTagName);
   }
 
-  PsiElement[] doCreate(String newName, PsiDirectory directory, String rootTagName, boolean chooseTagName) throws Exception {
-    FileTemplateManager manager = FileTemplateManager.getInstance();
-    String templateName = getTemplateName();
-    FileTemplate template = manager.getJ2eeTemplate(templateName);
-    Properties properties = new Properties();
-    if (!myValuesResourceFile) {
-      properties.setProperty(ROOT_TAG_PROPERTY, rootTagName);
-    }
-    PsiElement createdElement = FileTemplateUtil.createFromTemplate(template, newName, properties, directory);
-    assert createdElement instanceof XmlFile;
-    final XmlFile file = (XmlFile)createdElement;
+  PsiElement[] doCreateAndNavigate(String newName, PsiDirectory directory, String rootTagName, boolean chooseTagName) throws Exception {
+    final XmlFile file = AndroidResourceUtil
+      .createFileResource(newName, directory, rootTagName, myResourceType.getName(), myValuesResourceFile);
     doNavigate(file);
 
     if (chooseTagName) {
@@ -124,26 +110,16 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
         }
       }
     }
-    return new PsiElement[]{createdElement};
+    return new PsiElement[]{file};
   }
 
   protected void doNavigate(XmlFile file) {
     PsiNavigateUtil.navigate(file);
   }
 
-  private String getTemplateName() {
-    if (myValuesResourceFile) {
-      return AndroidFileTemplateProvider.VALUE_RESOURCE_FILE_TEMPLATE;
-    }
-    if ("layout".equals(myResourceType)) {
-      return AndroidFileTemplateProvider.LAYOUT_RESOURCE_FILE_TEMPLATE;
-    }
-    return AndroidFileTemplateProvider.RESOURCE_FILE_TEMPLATE;
-  }
-
   @Override
   protected boolean isAvailable(DataContext context) {
-    return super.isAvailable(context) && doIsAvailable(context, myResourceType);
+    return super.isAvailable(context) && doIsAvailable(context, myResourceType.getName());
   }
 
   public boolean isChooseTagName() {
@@ -201,5 +177,29 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   @Override
   public String toString() {
     return myResourcePresentableName;
+  }
+
+  @NotNull
+  public static String getDefaultRootTabByResourceType(@NotNull ResourceFolderType resourceType) {
+    switch (resourceType) {
+      case XML:
+        return "PreferenceScreen";
+      case DRAWABLE:
+        return "selector";
+      case COLOR:
+        return "selector";
+      case VALUES:
+        return "resources";
+      case MENU:
+        return "menu";
+      case ANIM:
+        return "set";
+      case ANIMATOR:
+        return "set";
+      case LAYOUT:
+        return "LinearLayout";
+      default:
+    }
+    throw new IllegalArgumentException("Incorrect resource folder type");
   }
 }

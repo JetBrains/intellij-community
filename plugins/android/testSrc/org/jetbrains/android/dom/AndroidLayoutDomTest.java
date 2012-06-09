@@ -4,13 +4,12 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
+import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -351,46 +350,8 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
       if (ranges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
           final IntentionAction action = pair.getFirst().getAction();
-          if (action instanceof ResourceReferenceConverter.MyCreateValueResourceQuickFix) {
+          if (action instanceof CreateValueResourceQuickFix) {
             actions.add(action);
-          }
-        }
-      }
-    }
-    assertEquals(1, actions.size());
-
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        actions.get(0).invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-      }
-    }.execute();
-    myFixture.checkResultByFile("res/values/drawables.xml", testFolder + '/' + getTestName(true) + "_drawable_after.xml", true);
-  }
-
-  public void testCreateResourceFromUsageCleanUp() throws Throwable {
-    final VirtualFile virtualFile = copyFileToProject(getTestName(true) + ".xml");
-    myFixture.configureFromExistingVirtualFile(virtualFile);
-    final List<HighlightInfo> infos = myFixture.doHighlighting();
-
-    final List<IntentionAction> actions = new ArrayList<IntentionAction>();
-
-    for (HighlightInfo info : infos) {
-      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = info.quickFixActionRanges;
-
-      if (ranges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
-          final HighlightInfo.IntentionActionDescriptor descriptor = pair.getFirst();
-          if (descriptor.getAction() instanceof ResourceReferenceConverter.MyCreateValueResourceQuickFix) {
-            final List<IntentionAction> options = descriptor.getOptions(myFixture.getFile(), myFixture.getEditor());
-
-            if (options != null) {
-              for (IntentionAction option : options) {
-                if (option instanceof CleanupInspectionIntention) {
-                  actions.add(option);
-                }
-              }
-            }
           }
         }
       }

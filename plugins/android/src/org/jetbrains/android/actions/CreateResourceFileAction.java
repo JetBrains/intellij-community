@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,39 +91,48 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     });
   }
 
-  // must be invoked in a write action
-  public static PsiElement[] createResourceFile(final Project project,
-                                                @NotNull AndroidFacet facet,
+  @NotNull
+  public static PsiElement[] createFileResource(@NotNull AndroidFacet facet,
                                                 @NotNull final ResourceType resType,
                                                 @NotNull String resName,
-                                                boolean chooseDirectory) {
+                                                boolean chooseResName) {
     final CreateResourceFileAction action = getInstance();
-    String subdirName = resType.getName();
-    VirtualFile resourceDir = facet.getLocalResourceManager().getResourceDir();
-
-    if (chooseDirectory) {
-      final MyDialog dialog = new MyDialog(facet, action.mySubactions.values(), resType, resName, action, facet.getModule(), true);
-      dialog.setTitle(AndroidBundle.message("new.resource.dialog.title"));
-      dialog.show();
-      if (!dialog.isOK()) {
-        return PsiElement.EMPTY_ARRAY;
-      }
-      subdirName = dialog.getSubdirName();
-      final AndroidFacet selectedFacet = AndroidFacet.getInstance(dialog.getSelectedModule());
-      LOG.assertTrue(selectedFacet != null);
-      resourceDir = selectedFacet.getLocalResourceManager().getResourceDir();
+    final MyDialog dialog =
+      new MyDialog(facet, action.mySubactions.values(), resType, resName, chooseResName, action, facet.getModule(), true);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return PsiElement.EMPTY_ARRAY;
     }
 
-    if (resourceDir != null) {
-      final PsiDirectory psiResDir = PsiManager.getInstance(project).findDirectory(resourceDir);
-      if (psiResDir != null) {
-        CreateElementActionBase.MyInputValidator validator = action.createValidator(project, psiResDir, subdirName);
-        if (validator.checkInput(resName) && validator.canClose(resName)) {
-          return validator.getCreatedElements();
-        }
-      }
+    if (chooseResName) {
+      resName = dialog.getFileName();
     }
-    return PsiElement.EMPTY_ARRAY;
+    final String subdirName = dialog.getSubdirName();
+    final AndroidFacet selectedFacet = AndroidFacet.getInstance(dialog.getSelectedModule());
+    LOG.assertTrue(selectedFacet != null);
+
+    final VirtualFile resourceDir = selectedFacet.getLocalResourceManager().getResourceDir();
+    final Project project = facet.getModule().getProject();
+    final PsiDirectory psiResDir = resourceDir != null ? PsiManager.getInstance(project).findDirectory(resourceDir) : null;
+
+    if (psiResDir == null) {
+      Messages.showErrorDialog(project, "Cannot find resource directory for module " + selectedFacet.getModule().getName(),
+                               CommonBundle.getErrorTitle());
+      return PsiElement.EMPTY_ARRAY;
+    }
+    final String finalResName = resName;
+
+    final PsiElement[] elements = ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement[]>() {
+      @Nullable
+      @Override
+      public PsiElement[] compute() {
+        MyInputValidator validator = action.createValidator(project, psiResDir, subdirName);
+        return validator.checkInput(finalResName) && validator.canClose(finalResName)
+               ? validator.getCreatedElements()
+               : null;
+      }
+    });
+    return elements != null ? elements : PsiElement.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -131,13 +141,13 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     final AndroidFacet facet = AndroidFacet.getInstance(directory);
     LOG.assertTrue(facet != null);
 
-    MyDialog dialog = new MyDialog(facet, mySubactions.values(), null, null, CreateResourceFileAction.this, facet.getModule(), false) {
+    final MyDialog dialog =
+      new MyDialog(facet, mySubactions.values(), null, null, true, CreateResourceFileAction.this, facet.getModule(), false) {
       @Override
       protected InputValidator createValidator(@NotNull String subdirName) {
         return CreateResourceFileAction.this.createValidator(project, directory, subdirName);
       }
     };
-    dialog.setTitle(AndroidBundle.message("new.resource.dialog.title"));
     dialog.show();
     return PsiElement.EMPTY_ARRAY;
   }
@@ -159,8 +169,11 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     CreateTypedResourceFileAction action = getActionByDir(directory);
+    if (action == null) {
+      throw new IllegalArgumentException("Incorrect directory");
+    }
     if (myRootElement != null && myRootElement.length() > 0) {
-      return action.doCreate(newName, directory, myRootElement, false);
+      return action.doCreateAndNavigate(newName, directory, myRootElement, false);
     }
     return action.create(newName, directory);
   }
@@ -204,10 +217,11 @@ public class CreateResourceFileAction extends CreateElementActionBase {
                        Collection<CreateTypedResourceFileAction> actions,
                        @Nullable ResourceType predefinedResourceType,
                        @Nullable String predefinedFileName,
+                       boolean chooseFileName,
                        @NotNull CreateResourceFileAction action,
                        @NotNull Module module,
                        boolean chooseModule) {
-      super(facet, actions, predefinedResourceType, predefinedFileName, module, chooseModule);
+      super(facet, actions, predefinedResourceType, predefinedFileName, chooseFileName, module, chooseModule);
       myAction = action;
     }
 

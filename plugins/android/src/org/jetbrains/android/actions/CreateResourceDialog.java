@@ -73,15 +73,19 @@ public class CreateResourceDialog extends DialogWrapper {
   private final Map<String, CreateTypedResourceFileAction> myResType2ActionMap = new HashMap<String, CreateTypedResourceFileAction>();
   private final DeviceConfiguratorPanel myDeviceConfiguratorPanel;
   private final AndroidFacet myFacet;
+  private final ResourceType myPredefinedResourceType;
 
   public CreateResourceDialog(@NotNull AndroidFacet facet,
                               Collection<CreateTypedResourceFileAction> actions,
                               @Nullable ResourceType predefinedResourceType,
                               @Nullable String predefinedFileName,
+                              boolean chooseFileName,
                               @NotNull Module module,
                               boolean chooseModule) {
     super(facet.getModule().getProject());
     myFacet = facet;
+    myPredefinedResourceType = predefinedResourceType;
+
     myResTypeLabel.setLabelFor(myResourceTypeCombo);
     myResourceTypeCombo.registerUpDownHint(myFileNameField);
     myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
@@ -137,7 +141,7 @@ public class CreateResourceDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         myDeviceConfiguratorPanel.applyEditors();
-        updateRootElementCombo();
+        updateRootElementTextField();
       }
     });
 
@@ -153,8 +157,10 @@ public class CreateResourceDialog extends DialogWrapper {
     }
 
     if (predefinedFileName != null) {
-      myFileNameField.setVisible(false);
-      myFileNameLabel.setVisible(false);
+      if (!chooseFileName) {
+        myFileNameField.setVisible(false);
+        myFileNameLabel.setVisible(false);
+      }
       myFileNameField.setText(predefinedFileName);
     }
 
@@ -183,11 +189,13 @@ public class CreateResourceDialog extends DialogWrapper {
     myDeviceConfiguratorPanel.updateAll();
     myDeviceConfiguratorWrapper.add(myDeviceConfiguratorPanel, BorderLayout.CENTER);
     setOKActionEnabled(myDirectoryNameTextField.getText().length() > 0);
-    updateRootElementCombo();
+    updateRootElementTextField();
     init();
+
+    setTitle(AndroidBundle.message("new.resource.dialog.title"));
   }
 
-  private void updateRootElementCombo() {
+  private void updateRootElementTextField() {
     final CreateTypedResourceFileAction action = getSelectedAction();
 
     if (action != null) {
@@ -195,10 +203,17 @@ public class CreateResourceDialog extends DialogWrapper {
       myRootElementField = new TextFieldWithAutoCompletion<String>(
         myFacet.getModule().getProject(), new TextFieldWithAutoCompletion.StringsCompletionProvider(allowedTagNames, null), true);
       myRootElementField.setEnabled(allowedTagNames.size() > 1);
-      myRootElementField.setText(!action.isChooseTagName() ? action.getDefaultRootTag() : "");
+      myRootElementField.setText(!action.isChooseTagName() && myPredefinedResourceType != ResourceType.LAYOUT
+                                 ? action.getDefaultRootTag()
+                                 : "");
       myRootElementFieldWrapper.removeAll();
       myRootElementFieldWrapper.add(myRootElementField, BorderLayout.CENTER);
     }
+  }
+
+  @NotNull
+  public String getFileName() {
+    return myFileNameField.getText().trim();
   }
 
   private static boolean containsElement(@NotNull ListModel model, @NotNull Object objectToFind) {
@@ -232,7 +247,10 @@ public class CreateResourceDialog extends DialogWrapper {
     }
 
     final String subdirName = getSubdirName();
-    assert subdirName.length() > 0;
+    if (subdirName.length() == 0) {
+      Messages.showErrorDialog(myPanel, AndroidBundle.message("directory.not.specified.error"), CommonBundle.getErrorTitle());
+      return;
+    }
     myValidator = createValidator(subdirName);
     if (myValidator == null || myValidator.checkInput(fileName) && myValidator.canClose(fileName)) {
       super.doOKAction();
@@ -266,7 +284,7 @@ public class CreateResourceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    if (myFileNameField.isVisible()) {
+    if (myFileNameField.getText().length() == 0) {
       return myFileNameField;
     }
     else if (myResourceTypeCombo.isVisible()) {
@@ -275,7 +293,10 @@ public class CreateResourceDialog extends DialogWrapper {
     else if (myModuleCombo.isVisible()) {
       return myModuleCombo;
     }
-    return myDeviceConfiguratorPanel.getAvailableQualifiersList();
+    else if (myRootElementFieldWrapper.isVisible()) {
+      return myRootElementField;
+    }
+    return myDirectoryNameTextField;
   }
 
   public CreateTypedResourceFileAction getSelectedAction() {

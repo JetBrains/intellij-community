@@ -15,38 +15,26 @@
  */
 package org.jetbrains.android.dom.converters;
 
-import com.android.AndroidConstants;
 import com.android.resources.ResourceType;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
-import org.jetbrains.android.actions.CreateXmlResourceDialog;
 import org.jetbrains.android.dom.AdditionalConverter;
 import org.jetbrains.android.dom.AndroidResourceType;
-import org.jetbrains.android.dom.resources.Item;
-import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.inspections.CreateFileResourceQuickFix;
+import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
-import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NonNls;
@@ -61,11 +49,6 @@ import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
  * @author yole
  */
 public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue> implements CustomReferenceConverter<ResourceValue> {
-  private static final Set<ResourceType> XML_FILE_RESOURCE_TYPES = EnumSet.of(ResourceType.ANIM, ResourceType.ANIMATOR,
-                                                                              ResourceType.INTERPOLATOR, ResourceType.LAYOUT,
-                                                                              ResourceType.MENU, ResourceType.XML, ResourceType.COLOR,
-                                                                              ResourceType.DRAWABLE);
-
   private final List<String> myResourceTypes;
   private ResolvingConverter<String> myAdditionalConverter;
   private boolean myAdditionalConverterSoft = false;
@@ -313,10 +296,10 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
               final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
 
               if (AndroidResourceUtil.VALUE_RESOURCE_TYPES.contains(resType)) {
-                fixes.add(new MyCreateValueResourceQuickFix(facet, resType, resourceName, context.getFile()));
+                fixes.add(new CreateValueResourceQuickFix(facet, resType, resourceName, context.getFile(), false));
               }
-              if (XML_FILE_RESOURCE_TYPES.contains(resType)) {
-                fixes.add(new MyCreateFileResourceQuickFix(facet, resType, resourceName, context.getFile()));
+              if (AndroidResourceUtil.XML_FILE_RESOURCE_TYPES.contains(resType)) {
+                fixes.add(new CreateFileResourceQuickFix(facet, resType, resourceName, context.getFile(), false));
               }
               return fixes.toArray(new LocalQuickFix[fixes.size()]);
             }
@@ -349,164 +332,5 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
       }
     }
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  public static class MyCreateValueResourceQuickFix implements LocalQuickFix, IntentionAction {
-    private final AndroidFacet myFacet;
-    private final ResourceType myResourceType;
-    private final String myResourceName;
-    private final PsiFile myFile;
-
-    public MyCreateValueResourceQuickFix(@NotNull AndroidFacet facet,
-                                         @NotNull ResourceType resourceType,
-                                         @NotNull String resourceName,
-                                         @NotNull PsiFile file) {
-      myFacet = facet;
-      myResourceType = resourceType;
-      myResourceName = resourceName;
-      myFile = file;
-    }
-
-    @NotNull
-    public String getName() {
-      return AndroidBundle.message("create.value.resource.quickfix.name", myResourceName,
-                                   AndroidResourceUtil.getDefaultResourceFileName(myResourceType.getName()));
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return AndroidBundle.message("create.value.resource.intention.name", myResourceType, myResourceName);
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return AndroidBundle.message("quick.fixes.family");
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        final String fileName = AndroidResourceUtil.getDefaultResourceFileName(myResourceType.getName());
-        assert fileName != null;
-
-        if (!AndroidResourceUtil.createValueResource(myFacet.getModule(), myResourceName, myResourceType,
-                                                     fileName, Collections.singletonList(AndroidConstants.FD_RES_VALUES), "a")) {
-          return;
-        }
-      }
-      else {
-        final CreateXmlResourceDialog dialog = new CreateXmlResourceDialog(myFacet.getModule(), myResourceType, myResourceName, null);
-        dialog.setTitle("New " + StringUtil.capitalize(myResourceType.getDisplayName()) + " Value Resource");
-        dialog.show();
-
-        if (!dialog.isOK()) {
-          return;
-        }
-
-        final Module moduleToPlaceResource = dialog.getModule();
-        if (moduleToPlaceResource == null) {
-          return;
-        }
-        if (!AndroidResourceUtil.createValueResource(moduleToPlaceResource, dialog.getResourceName(), myResourceType,
-                                                     dialog.getFileName(), dialog.getDirNames(), dialog.getValue())) {
-          return;
-        }
-      }
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      UndoUtil.markPsiFileForUndo(file);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().saveAll();
-        }
-      });
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
-
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      // simplified resource creating for batch mode
-      LocalResourceManager manager = myFacet.getLocalResourceManager();
-
-      String initialValue = !myResourceType.equals(ResourceType.ID) ? "value" : null;
-      ResourceElement resElement = manager.addValueResource(myResourceType.getName(), myResourceName, initialValue);
-      if (resElement != null) {
-        if (!(resElement instanceof Item)) {
-          // then it is ID
-          List<ResourceElement> list = manager.findValueResources(myResourceType.getName(), myResourceName);
-          if (list.size() == 1) {
-            ResourceElement element = list.get(0);
-            XmlTag tag = element.getXmlTag();
-            tag.getValue().setText("");
-          }
-        }
-      }
-      UndoUtil.markPsiFileForUndo(myFile);
-    }
-  }
-
-  public static class MyCreateFileResourceQuickFix implements LocalQuickFix, IntentionAction {
-    private final AndroidFacet myFacet;
-    private final ResourceType myResourceType;
-    private final String myResourceName;
-    private final PsiFile myFile;
-
-    public MyCreateFileResourceQuickFix(@NotNull AndroidFacet facet,
-                                        @NotNull ResourceType resourceType,
-                                        @NotNull String resourceName,
-                                        @NotNull PsiFile file) {
-      myFacet = facet;
-      myResourceType = resourceType;
-      myResourceName = resourceName;
-      myFile = file;
-    }
-
-    @NotNull
-    public String getName() {
-      return AndroidBundle.message("create.file.resource.quickfix.name", myResourceName,
-                                   '\'' + myResourceType.getName() + "' directory");
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return AndroidBundle.message("create.file.resource.intention.name", myResourceType, myResourceName + ".xml");
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return AndroidBundle.message("quick.fixes.family");
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      // simplified resource creating for batch mode
-      myFacet.getLocalResourceManager().addResourceFileAndNavigate(myResourceName, myResourceType, true);
-      UndoUtil.markPsiFileForUndo(myFile);
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
-
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      // simplified resource creating for batch mode
-      myFacet.getLocalResourceManager().addResourceFileAndNavigate(myResourceName, myResourceType, false);
-      UndoUtil.markPsiFileForUndo(myFile);
-    }
   }
 }

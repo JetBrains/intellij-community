@@ -35,10 +35,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -180,7 +178,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
     }
 
     if (resName == null) {
-      final CreateXmlResourceDialog dialog = new CreateXmlResourceDialog(facet.getModule(), ResourceType.STRING, null, value);
+      final CreateXmlResourceDialog dialog = new CreateXmlResourceDialog(facet.getModule(), ResourceType.STRING, null, value, false);
       dialog.setTitle("Extract String Resource");
       dialog.show();
 
@@ -244,7 +242,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        createStubResourceField(module, aPackage, resType, rJavaFieldName);
+        AndroidResourceUtil.createStubResourceField(module, aPackage, resType, rJavaFieldName);
       }
     });
 
@@ -288,37 +286,6 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
       @Override
       public void beforeTemplateFinished(TemplateState state, Template template) {
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, marker.getStartOffset(), marker.getEndOffset());
-      }
-    });
-  }
-
-  private static void createStubResourceField(final Module module,
-                                              final String aPackage,
-                                              final String resType,
-                                              final String fieldName) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Project project = module.getProject();
-        final PsiClass[] classes =
-          JavaPsiFacade.getInstance(project).findClasses(aPackage + ".R", GlobalSearchScope.moduleScope(module));
-        if (classes.length == 1) {
-          final PsiClass aClass = classes[0];
-          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-
-          PsiClass resTypeClass = aClass.findInnerClassByName(resType, false);
-
-          if (resTypeClass == null) {
-            resTypeClass = (PsiClass)aClass.add(factory.createClass(resType));
-          }
-          else if (resTypeClass.findFieldByName(fieldName, false) != null) {
-            return;
-          }
-          final PsiField psiField = (PsiField)resTypeClass.add(factory.createField(fieldName, PsiType.INT));
-          PsiUtil.setModifierProperty(psiField, PsiModifier.PUBLIC, true);
-          PsiUtil.setModifierProperty(psiField, PsiModifier.STATIC, true);
-          PsiUtil.setModifierProperty(psiField, PsiModifier.FINAL, true);
-        }
       }
     });
   }

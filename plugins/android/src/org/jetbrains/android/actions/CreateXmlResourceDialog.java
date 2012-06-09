@@ -83,13 +83,16 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   public CreateXmlResourceDialog(@NotNull Module module,
                                  @NotNull ResourceType resourceType,
                                  @Nullable String predefinedName,
-                                 @Nullable String predefinedValue) {
+                                 @Nullable String predefinedValue,
+                                 boolean chooseName) {
     super(module.getProject());
     myResourceType = resourceType;
 
     if (predefinedName != null && predefinedName.length() > 0) {
-      myNameLabel.setVisible(false);
-      myNameField.setVisible(false);
+      if (!chooseName) {
+        myNameLabel.setVisible(false);
+        myNameField.setVisible(false);
+      }
       myNameField.setText(predefinedName);
     }
 
@@ -390,7 +393,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameField.isVisible() ? myNameField : myValueField;
+    return myNameField.getText().length() == 0 ? myNameField : myValueField;
   }
 
   @Override

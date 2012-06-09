@@ -19,7 +19,11 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -27,7 +31,6 @@ import org.jetbrains.android.dom.wrappers.FileResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
-import org.jetbrains.android.util.AndroidUtils;
 
 import java.util.List;
 
@@ -51,47 +54,22 @@ public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
       return null;
     }
 
-    final String resFieldName = refExp.getReferenceName();
-    if (resFieldName == null || resFieldName.length() == 0) {
+    final Pair<String, String> pair = AndroidResourceUtil.getReferredResourceField(facet, refExp);
+    if (pair == null) {
       return null;
     }
-
-    PsiExpression qExp = refExp.getQualifierExpression();
-    if (!(qExp instanceof PsiReferenceExpression)) {
-      return null;
-    }
-    final PsiReferenceExpression resClassReference = (PsiReferenceExpression)qExp;
-
-    final String resClassName = resClassReference.getReferenceName();
-    if (resClassName == null || resClassName.length() == 0) {
-      return null;
-    }
-
-    qExp = resClassReference.getQualifierExpression();
-    if (!(qExp instanceof PsiReferenceExpression)) {
-      return null;
-    }
-
-    final PsiElement resolvedElement = ((PsiReferenceExpression)qExp).resolve();
-    if (!(resolvedElement instanceof PsiClass) ||
-        !AndroidUtils.R_CLASS_NAME.equals(((PsiClass)resolvedElement).getName())) {
-      return null;
-    }
-
-    final PsiFile containingFile = resolvedElement.getContainingFile();
-    if (containingFile == null || !AndroidResourceUtil.isRJavaFile(facet, containingFile)) {
-      return null;
-    }
+    final String resClassName = pair.getFirst();
+    final String resFieldName = pair.getSecond();
 
     final List<PsiElement> resourceList = facet.getLocalResourceManager().findResourcesByFieldName(resClassName, resFieldName);
     final PsiElement[] resources = resourceList.toArray(new PsiElement[resourceList.size()]);
     final PsiElement[] wrappedResources = new PsiElement[resources.length];
-    
+
     for (int i = 0; i < resources.length; i++) {
       final PsiElement resource = resources[i];
-      
-      if (resource instanceof XmlAttributeValue && 
-          resource instanceof PsiMetaOwner && 
+
+      if (resource instanceof XmlAttributeValue &&
+          resource instanceof PsiMetaOwner &&
           resource instanceof NavigationItem) {
         wrappedResources[i] = new ValueResourceElementWrapper((XmlAttributeValue)resource);
       }

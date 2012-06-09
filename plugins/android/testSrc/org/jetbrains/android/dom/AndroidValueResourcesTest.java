@@ -27,7 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
-import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
+import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -199,7 +199,7 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
       if (ranges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
           final IntentionAction action = pair.getFirst().getAction();
-          if (action instanceof ResourceReferenceConverter.MyCreateValueResourceQuickFix) {
+          if (action instanceof CreateValueResourceQuickFix) {
             actions.add(action);
           }
         }
