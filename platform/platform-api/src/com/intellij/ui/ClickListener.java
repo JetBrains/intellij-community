@@ -36,7 +36,9 @@ public abstract class ClickListener {
 
       @Override
       public void mousePressed(MouseEvent e) {
-        clickPoint = e.getPoint();
+        if (!e.isPopupTrigger()) {
+          clickPoint = e.getPoint();
+        }
       }
 
       @Override
@@ -45,8 +47,9 @@ public abstract class ClickListener {
         Point clickedAt = clickPoint;
         clickPoint = null;
 
-        if (releasedAt.x < 0 || releasedAt.y < 0 || releasedAt.x >= c.getWidth() || releasedAt.y >= c.getWidth()) return;
         if (clickedAt == null) return;
+        if (e.isPopupTrigger()) return;
+        if (releasedAt.x < 0 || releasedAt.y < 0 || releasedAt.x >= c.getWidth() || releasedAt.y >= c.getWidth()) return;
 
         if (Math.abs(clickedAt.x - releasedAt.x) < EPS && Math.abs(clickedAt.y - releasedAt.y) < EPS) {
           onClick(e);
