@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -338,9 +339,15 @@ public class AndroidSdkData {
   private String getAdbPath() {
     String path = getLocation() + File.separator + SdkConstants.OS_SDK_PLATFORM_TOOLS_FOLDER + SdkConstants.FN_ADB;
     if (!new File(path).exists()) {
-      return getLocation() + File.separator + AndroidCommonUtils.toolPath(SdkConstants.FN_ADB);
+      path = getLocation() + File.separator + AndroidCommonUtils.toolPath(SdkConstants.FN_ADB);
     }
-    return path;
+    try {
+      return new File(path).getCanonicalPath();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return path;
+    }
   }
 
   public static void terminateDdmlib() {
