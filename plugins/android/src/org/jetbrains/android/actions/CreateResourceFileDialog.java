@@ -208,6 +208,7 @@ public class CreateResourceFileDialog extends DialogWrapper {
                                  : "");
       myRootElementFieldWrapper.removeAll();
       myRootElementFieldWrapper.add(myRootElementField, BorderLayout.CENTER);
+      myRootElementLabel.setLabelFor(myRootElementField);
     }
   }
 
