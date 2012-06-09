@@ -17,7 +17,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implements JpsProject {
-  private static final JpsElementCollectionKind<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_KIND = new JpsElementCollectionKind<JpsElementReference<?>>(new JpsElementKind<JpsElementReference<?>>());
+  private static final JpsElementCollectionKind<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_KIND = new JpsElementCollectionKind<JpsElementReference<?>>(new JpsElementKindBase<JpsElementReference<?>>("external reference"));
 
   public JpsProjectImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
