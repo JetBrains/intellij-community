@@ -134,6 +134,9 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     CreateTypedResourceFileAction action = getActionByDir(directory);
+    if (action == null) {
+      throw new IllegalArgumentException("Incorrect directory");
+    }
     return action.create(newName, directory);
   }
 
