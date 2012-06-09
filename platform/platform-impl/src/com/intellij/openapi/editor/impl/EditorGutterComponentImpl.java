@@ -91,6 +91,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private String myLastGutterToolTip = null;
   private int myLastPreferredHeight = -1;
   private Convertor<Integer, Integer> myLineNumberConvertor;
+  private boolean myShowDefaultGutterPopup = true;
 
   @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
@@ -1343,6 +1344,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myLineNumberConvertor = lineNumberConvertor;
   }
 
+  @Override
+  public void setShowDefaultGutterPopup(boolean show) {
+    myShowDefaultGutterPopup = show;
+  }
+
   private void invokePopup(MouseEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
@@ -1381,9 +1387,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       else {
-        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
-        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-        popupMenu.getComponent().show(this, e.getX(), e.getY());
+        if (myShowDefaultGutterPopup) {
+          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+          ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          popupMenu.getComponent().show(this, e.getX(), e.getY());
+        }
         e.consume();
       }
     }

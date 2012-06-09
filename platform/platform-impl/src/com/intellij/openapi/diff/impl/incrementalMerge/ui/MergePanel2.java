@@ -411,7 +411,7 @@ public class MergePanel2 implements DiffViewer {
       editor.getSettings().setFoldingOutlineShown(false);
       editor.getFoldingModel().setFoldingEnabled(false);
       editor.getSettings().setLineMarkerAreaShown(false);
-
+      editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
       initEditorSettings(editor);
 
       return editor;
