@@ -41,8 +41,9 @@ import javax.swing.*;
  * Time: 4:48 AM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class BreakpointItem implements ItemWrapper {
+public abstract class BreakpointItem extends ItemWrapper {
   protected static final Key<Object> BREAKPOINT_ITEM = Key.create("BreakpointItem");
+  public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
 
   public abstract Object getBreakpoint();
 
@@ -99,17 +100,6 @@ public abstract class BreakpointItem implements ItemWrapper {
     setupGenericRenderer(renderer, plainView);
   }
 
-  @Override
-  public void updateDetailView(DetailView panel) {
-
-    if (panel.getUserData(BREAKPOINT_ITEM) == getBreakpoint()) {
-      return;
-    }
-
-    doUpdateDetailView(panel);
-
-    panel.putUserData(BREAKPOINT_ITEM, getBreakpoint());
-  }
 
   protected abstract void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView);
 
@@ -117,7 +107,6 @@ public abstract class BreakpointItem implements ItemWrapper {
 
   public abstract String getDisplayText();
 
-  protected abstract void doUpdateDetailView(DetailView panel);
 
   @Override
   public boolean equals(Object o) {

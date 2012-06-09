@@ -45,6 +45,12 @@ public interface DetailView extends UserDataHolder {
 
   PreviewEditorState getEditorState();
 
+  ItemWrapper getCurrentItem();
+
+  boolean hasEditorOnly();
+
+  void setCurrentItem(ItemWrapper item);
+
   class PreviewEditorState {
 
     public static PreviewEditorState EMPTY = new PreviewEditorState(null, null, null);

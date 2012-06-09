@@ -16,7 +16,6 @@
 package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 
@@ -29,7 +28,7 @@ import javax.swing.*;
  * Time: 21:55
  * To change this template use File | Settings | File Templates.
  */
-public class SplitterItem implements ItemWrapper {
+public class SplitterItem extends ItemWrapper {
 
   private String myText;
 
@@ -58,7 +57,7 @@ public class SplitterItem implements ItemWrapper {
 
   @Override
   public String speedSearchText() {
-    return "";  //To change body of implemented methods use File | Settings | File Templates.
+    return "";
   }
 
   @Override
@@ -67,7 +66,7 @@ public class SplitterItem implements ItemWrapper {
   }
 
   @Override
-  public void updateDetailView(DetailView panel) {
+  protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     //To change body of implemented methods use File | Settings | File Templates.
   }
 

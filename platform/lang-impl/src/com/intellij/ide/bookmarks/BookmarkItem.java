@@ -42,7 +42,7 @@ import java.awt.*;
 * Time: 2:06 AM
 * To change this template use File | Settings | File Templates.
 */
-public class BookmarkItem implements ItemWrapper {
+public class BookmarkItem extends ItemWrapper {
   private final Bookmark myBookmark;
 
   public BookmarkItem(Bookmark bookmark) {
@@ -112,12 +112,7 @@ public class BookmarkItem implements ItemWrapper {
     return myBookmark.getFile().getPresentableUrl();
   }
 
-  @Override
-  public void updateDetailView(final DetailView panel) {
-    doUpdateDetailView(panel);
-  }
-
-  private void doUpdateDetailView(DetailView panel) {
+  protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     panel.navigateInPreviewEditor(DetailView.PreviewEditorState.create(myBookmark.getFile(), myBookmark.getLine()));
   }
 
