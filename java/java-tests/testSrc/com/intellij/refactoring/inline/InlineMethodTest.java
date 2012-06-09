@@ -176,6 +176,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testChainedConstructor() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  public void testChainedConstructor1() throws Exception {
+    doTest();
+  }
+
   public void testMethodUsedInJavadoc() throws Exception {
     try {
       doTest();
@@ -187,6 +195,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testInlineRunnableRun() throws Exception {
+    doTestInlineThisOnly();
+  }
+
+  private void doTestInlineThisOnly() {
     @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
     configureByFile(fileName);
     performAction(new MockInlineMethodOptions(){

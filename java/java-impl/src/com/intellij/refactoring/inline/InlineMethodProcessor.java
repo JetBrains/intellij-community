@@ -324,7 +324,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void doRefactoring(UsageInfo[] usages) {
     try {
       if (myInlineThisOnly) {
-        if (myMethod.isConstructor()) {
+        if (myMethod.isConstructor() && InlineMethodHandler.isChainingConstructor(myMethod)) {
           PsiCall constructorCall = RefactoringUtil.getEnclosingConstructorCall(myReference);
           if (constructorCall != null) {
             inlineConstructorCall(constructorCall);
