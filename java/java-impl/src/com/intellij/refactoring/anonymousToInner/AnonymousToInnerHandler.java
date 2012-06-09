@@ -240,7 +240,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private Boolean cachedNeedsThis = null;
-  private boolean needsThis() {
+  public boolean needsThis() {
     if(cachedNeedsThis == null) {
 
       ElementNeedsThis memberNeedsThis = new ElementNeedsThis(myTargetClass, myAnonClass);

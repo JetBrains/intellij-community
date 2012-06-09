@@ -41,7 +41,12 @@ public class ElementNeedsThis extends ClassThisReferencesVisitor {
     if (classMember == null || classMember.equals(myMember)) return;
     if (classMember.hasModifierProperty(PsiModifier.STATIC)) return;
 
+    if (ignoreUsedTypeParams() && classMember instanceof PsiTypeParameter) return;
     myResult = true;
+  }
+
+  protected boolean ignoreUsedTypeParams() {
+    return myMember != null;
   }
 
   protected void visitExplicitThis(PsiClass referencedClass, PsiThisExpression reference) {
