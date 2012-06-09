@@ -18,12 +18,14 @@ package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -38,8 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.List;
 
 public class BreakpointMasterDetailPopupBuilder {
 
@@ -291,6 +295,10 @@ public class BreakpointMasterDetailPopupBuilder {
     myBreakpointsPanelProviders = breakpointsPanelProviders;
   }
 
+  private static Font smaller(Font f) {
+    return f.deriveFont(f.getStyle(), f.getSize() - 2);
+  }
+
   private class ToggleBreakpointGroupingRuleEnabledAction extends CheckboxAction {
     private XBreakpointGroupingRule myRule;
 
@@ -298,6 +306,17 @@ public class BreakpointMasterDetailPopupBuilder {
       super(rule.getPresentableName());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
+    }
+
+
+
+    @Override
+    public JComponent createCustomComponent(Presentation presentation) {
+      JComponent component = super.createCustomComponent(presentation);
+      if (SystemInfo.isMac) {
+        getCheckBox().setFont(smaller(getCheckBox().getFont()));
+      }
+      return component;
     }
 
     @Override
