@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -26,11 +28,11 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   public ToggleAction(){
   }
 
-  public ToggleAction(final String text){
+  public ToggleAction(@Nullable final String text){
     super(text);
   }
 
-  public ToggleAction(final String text, final String description, final Icon icon){
+  public ToggleAction(@Nullable final String text, @Nullable final String description, @Nullable final Icon icon){
     super(text, description, icon);
   }
 
