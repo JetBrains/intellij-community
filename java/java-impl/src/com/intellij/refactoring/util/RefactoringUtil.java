@@ -1204,13 +1204,13 @@ public class RefactoringUtil {
   }
 
   @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiTypeParameterList fromList,
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
                                                                                    @NotNull final PsiElement... elements) {
     return createTypeParameterListWithUsedTypeParameters(fromList, Condition.TRUE, elements);
   }
 
   @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiTypeParameterList fromList,
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
                                                                                    Condition<PsiTypeParameter> filter,
                                                                                    @NotNull final PsiElement... elements) {
     if (elements.length == 0) return null;
