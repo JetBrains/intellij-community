@@ -49,7 +49,7 @@ public class BasePathMacroManager extends PathMacroManager {
     if (f == null) return;
     addFileHierarchyReplacements(result, f.getParent(), macro + "/..");
 
-    final String path = FileUtil.toSystemIndependentName(f.getCanonicalPath());
+    final String path = FileUtil.toSystemIndependentName(f.getPath());
     String s = macro;
     if (StringUtil.endsWithChar(path, '/')) s += "/";
     result.put(s, path);
@@ -62,7 +62,7 @@ public class BasePathMacroManager extends PathMacroManager {
     VirtualFile dir = StandardFileSystems.local().findFileByPath(path);
     boolean check = false;
     while (dir != null && dir.getParent() != null) {
-      path = FileUtil.toSystemIndependentName(dir.getCanonicalPath());
+      path = dir.getPath();
 
       String s = macro;
       if (StringUtil.endsWithChar(path, '/')) s += "/";
