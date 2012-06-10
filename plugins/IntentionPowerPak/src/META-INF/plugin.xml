@@ -302,16 +302,13 @@
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.forloop.ReverseForLoopDirectionIntention</className>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-
-    <!--
-    <intentionAction>
       <className>com.siyeh.ipp.braces.RemoveBracesIntention</className>
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
-    -->
+    <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReverseForLoopDirectionIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
 
     <!-- Modifiers -->
 

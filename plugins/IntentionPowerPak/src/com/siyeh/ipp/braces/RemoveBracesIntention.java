@@ -15,52 +15,59 @@
  */
 package com.siyeh.ipp.braces;
 
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class RemoveBracesIntention extends MutablyNamedIntention {
+public class RemoveBracesIntention extends BaseBracesIntention {
 
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
-    return new RemoveBracesPredicate();
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        final PsiStatement statement = getSurroundingStatement(element);
+        if (statement == null || !(statement instanceof PsiBlockStatement)) {
+          return false;
+        }
+
+        final PsiStatement[] statements = ((PsiBlockStatement)statement).getCodeBlock().getStatements();
+        if (statements.length != 1 || statements[0] instanceof PsiDeclarationStatement) {
+          return false;
+        }
+        final PsiFile file = statement.getContainingFile();
+        //this intention doesn't work in JSP files, as it can't tell about tags
+        // inside the braces
+        return !JspPsiUtil.isInJspFile(file);
+      }
+    };
   }
 
-  protected String getTextForElement(PsiElement element) {
-    final PsiElement parent = element.getParent();
-    assert parent != null;
-    @NonNls final String keyword;
-    if (parent instanceof PsiIfStatement) {
-      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-      final PsiStatement elseBranch = ifStatement.getElseBranch();
-      if (element.equals(elseBranch)) {
-        keyword = PsiKeyword.ELSE;
-      }
-      else {
-        keyword = PsiKeyword.IF;
-      }
-    }
-    else {
-      final PsiElement firstChild = parent.getFirstChild();
-      assert firstChild != null;
-      keyword = firstChild.getText();
-    }
-    return IntentionPowerPackBundle.message("remove.braces.intention.name",
-                                            keyword);
+  @NotNull
+  @Override
+  protected String getMessageKey() {
+    return "remove.braces.intention.name";
   }
 
   protected void processIntention(@NotNull PsiElement element)
     throws IncorrectOperationException {
-    final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
+    final PsiStatement body = getSurroundingStatement(element);
+    if (body == null || !(body instanceof PsiBlockStatement)) return;
+    final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
+
     final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
     final PsiStatement[] statements = codeBlock.getStatements();
     final PsiStatement statement = statements[0];
 
-    // handle comments
+    handleComments(blockStatement, codeBlock);
+
+    final String text = statement.getText();
+    replaceStatement(text, blockStatement);
+  }
+
+  private static void handleComments(PsiBlockStatement blockStatement, PsiCodeBlock codeBlock) {
     final PsiElement parent = blockStatement.getParent();
     assert parent != null;
     final PsiElement grandParent = parent.getParent();
@@ -68,7 +75,7 @@ public class RemoveBracesIntention extends MutablyNamedIntention {
     PsiElement sibling = codeBlock.getFirstChild();
     assert sibling != null;
     sibling = sibling.getNextSibling();
-    while (sibling != null && !sibling.equals(statement)) {
+    while (sibling != null) {
       if (sibling instanceof PsiComment) {
         grandParent.addBefore(sibling, parent);
       }
@@ -79,8 +86,5 @@ public class RemoveBracesIntention extends MutablyNamedIntention {
       final PsiElement nextSibling = parent.getNextSibling();
       grandParent.addAfter(lastChild, nextSibling);
     }
-
-    final String text = statement.getText();
-    replaceStatement(text, blockStatement);
   }
 }
