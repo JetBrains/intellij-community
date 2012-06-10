@@ -32,7 +32,7 @@ public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
   public String getDescription(PsiElement e) {
     String text = e.getText();
     if (text.length() > 20) text = text.substring(0, 17) + "...";
-    return CodeInsightBundle.message("unwrap.method.parameter", text);
+    return CodeInsightBundle.message("unwrap.with.placeholder", text);
   }
 
   public boolean isApplicableTo(PsiElement e) {

@@ -32,7 +32,8 @@ public class JavaUnwrapDescriptor extends UnwrapDescriptorBase {
       new JavaCatchRemover(),
       new JavaSynchronizedUnwrapper(),
       new JavaAnonymousUnwrapper(),
-      new JavaConditionalUnwrapper()
+      new JavaConditionalUnwrapper(),
+      new JavaBinaryExpressionUnwrapper()
     };
   }
 }
