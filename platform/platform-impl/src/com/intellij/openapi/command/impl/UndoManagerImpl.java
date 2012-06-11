@@ -252,10 +252,40 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myCommandLevel == 0) return; // possible if command listener was added within command
     myCommandLevel--;
     if (myCommandLevel > 0) return;
+
+    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isGlobal()) {
+      addFocusedDocumentAsAffected();
+    }
+
     myCurrentMerger.setAfterState(getCurrentState());
     myMerger.commandFinished(commandName, groupId, myCurrentMerger);
 
     disposeCurrentMerger();
+  }
+
+  private void addFocusedDocumentAsAffected() {
+    VirtualFile[] selected = FileEditorManager.getInstance(myProject).getSelectedFiles();
+    if (selected.length == 0) return;
+
+    final DocumentReference[] refs = new DocumentReference[selected.length];
+    for (int i = 0; i < refs.length; i++) {
+      refs[i] = DocumentReferenceManager.getInstance().create(selected[i]);
+    }
+
+    myCurrentMerger.addAction(new BasicUndoableAction() {
+      @Override
+      public void undo() throws UnexpectedUndoException {
+      }
+
+      @Override
+      public void redo() throws UnexpectedUndoException {
+      }
+
+      @Override
+      public DocumentReference[] getAffectedDocuments() {
+        return refs;
+      }
+    });
   }
 
   private EditorAndState getCurrentState() {
@@ -598,7 +628,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   @TestOnly
   private void flushMergers() {
     // Run dummy command in order to flush all mergers...
-    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
+    CommandProcessor.getInstance()
+      .executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }
 
   @TestOnly
