@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,11 @@ public class SegmentArray {
     if (newArraySize == 0) {
       newArraySize = 16;
     }
-    while (newArraySize <= index) {
-      newArraySize = newArraySize * 120 / 100;
+    else {
+      newArraySize = newArraySize * 12 / 10;
+    }
+    if (index >= newArraySize) {
+      newArraySize = index * 12 / 10;
     }
     int[] newArray = new int[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
@@ -89,8 +92,11 @@ public class SegmentArray {
     if (newArraySize == 0) {
       newArraySize = 16;
     }
-    while (newArraySize <= index) {
-      newArraySize = newArraySize * 120 / 100;
+    else {
+      newArraySize = newArraySize * 12 / 10;
+    }
+    if (index >= newArraySize) {
+      newArraySize = index * 12 / 10;
     }
 
     T[] newArray = (T[])Array.newInstance(array.getClass().getComponentType(), newArraySize);
@@ -107,8 +113,11 @@ public class SegmentArray {
     if (newArraySize == 0) {
       newArraySize = 16;
     }
-    while (newArraySize <= index) {
+    else {
       newArraySize = newArraySize * 12 / 10;
+    }
+    if (index >= newArraySize) {
+      newArraySize = index * 12 / 10;
     }
     short[] newArray = new short[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
