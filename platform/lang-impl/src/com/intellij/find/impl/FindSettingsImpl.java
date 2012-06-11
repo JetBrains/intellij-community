@@ -29,6 +29,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -55,6 +56,26 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   
   private static final int MAX_RECENT_SIZE = 30;
 
+  public FindSettingsImpl() {
+    RECENT_FILE_MASKS.add("*.properties");
+    RECENT_FILE_MASKS.add("*.html");
+    RECENT_FILE_MASKS.add("*.jsp");
+    RECENT_FILE_MASKS.add("*.xml");
+    RECENT_FILE_MASKS.add("*.java");
+    RECENT_FILE_MASKS.add("*.js");
+    RECENT_FILE_MASKS.add("*.as");
+    RECENT_FILE_MASKS.add("*.css");
+    RECENT_FILE_MASKS.add("*.mxml");
+    if (PlatformUtils.isPyCharm()) {
+      RECENT_FILE_MASKS.add("*.py");
+    }
+    else if (PlatformUtils.isRubyMine()) {
+      RECENT_FILE_MASKS.add("*.rb");
+    }
+    else if (PlatformUtils.isPhpStorm()) {
+      RECENT_FILE_MASKS.add("*.php");
+    }
+  }
 
   @Override
   public boolean isSearchOverloadedMethods() {
@@ -102,20 +123,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     }
     catch (InvalidDataException e) {
       LOG.info(e);
-    }
-    if (RECENT_FILE_MASKS.isEmpty()) {
-      RECENT_FILE_MASKS.add("*.properties");
-      RECENT_FILE_MASKS.add("*.html");
-      RECENT_FILE_MASKS.add("*.jsp");
-      RECENT_FILE_MASKS.add("*.xml");
-      RECENT_FILE_MASKS.add("*.java");
-      RECENT_FILE_MASKS.add("*.php");
-      RECENT_FILE_MASKS.add("*.js");
-      RECENT_FILE_MASKS.add("*.as");
-      RECENT_FILE_MASKS.add("*.css");
-      RECENT_FILE_MASKS.add("*.mxml");
-      RECENT_FILE_MASKS.add("*.py");
-      RECENT_FILE_MASKS.add("*.rb");
     }
   }
 
