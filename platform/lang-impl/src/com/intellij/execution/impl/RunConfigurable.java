@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -32,6 +33,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -43,10 +45,10 @@ import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +67,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class RunConfigurable extends BaseConfigurable {
+
   private static final Icon ADD_ICON = IconUtil.getAddIcon();
   private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
   @NonNls private static final String DIVIDER_PROPORTION = "dividerProportion";
@@ -84,6 +87,7 @@ class RunConfigurable extends BaseConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
   private final JTextField myRecentsLimit = new JTextField("5", 2);
   private final JCheckBox myConfirmation = new JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true);
+  private final List<Pair<UnnamedConfigurable, JComponent>> myAdditionalSettings = new ArrayList<Pair<UnnamedConfigurable, JComponent>>();
   private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<ConfigurationFactory, Configurable>();
 
   public RunConfigurable(final Project project) {
@@ -392,7 +396,19 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.removeAll();
     myRightPanel.add(scrollPane, BorderLayout.CENTER);
     if (configurationType == null) {
-      myRightPanel.add(createRecentLimitPanel(), BorderLayout.SOUTH);
+      JPanel settingsPanel = new JPanel(new GridBagLayout());
+      GridBag grid = new GridBag().setDefaultAnchor(GridBagConstraints.NORTHWEST);
+
+      for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
+        settingsPanel.add(each.second, grid.nextLine().next());
+      }
+      settingsPanel.add(createSettingsPanel(), grid.nextLine().next());
+
+      JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.add(settingsPanel, BorderLayout.WEST);
+      wrapper.add(Box.createGlue(), BorderLayout.CENTER);
+
+      myRightPanel.add(wrapper, BorderLayout.SOUTH);
     }
     myRightPanel.revalidate();
     myRightPanel.repaint();
@@ -412,12 +428,14 @@ class RunConfigurable extends BaseConfigurable {
     return leftPanel;
   }
 
-  private JPanel createRecentLimitPanel() {
-    final JPanel bottomPanel = new JPanel(new MigLayout("ins 5, gap 5"));
+  private JPanel createSettingsPanel() {
+    JPanel bottomPanel = new JPanel(new GridBagLayout());
+    GridBag g = new GridBag();
 
-    bottomPanel.add(new JLabel("<html>Temporary configurations limit:</html>"));
-    bottomPanel.add(myRecentsLimit, "wrap, h pref!, w pref!");
-    bottomPanel.add(myConfirmation, "spanx 2");
+    bottomPanel.add(myConfirmation, g.nextLine().coverLine());
+    bottomPanel.add(new JLabel("Temporary configurations limit:"), g.nextLine().next());
+    bottomPanel.add(myRecentsLimit, g.next().anchor(GridBagConstraints.WEST));
+
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -475,6 +493,11 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   public JComponent createComponent() {
+    for (RunConfigurationsSettings each : Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT)) {
+      UnnamedConfigurable configurable = each.createConfigurable();
+      myAdditionalSettings.add(Pair.create(configurable, configurable.createComponent()));
+    }
+
     myWholePanel = new JPanel(new BorderLayout());
     mySplitter.setFirstComponent(createLeftPanel());
     mySplitter.setSecondComponent(myRightPanel);
@@ -497,6 +520,11 @@ class RunConfigurable extends BaseConfigurable {
     final RunManagerConfig config = manager.getConfig();
     myRecentsLimit.setText(Integer.toString(config.getRecentsLimit()));
     myConfirmation.setSelected(config.isRestartRequiresConfirmation());
+
+    for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
+      each.first.reset();
+    }
+
     setModified(false);
   }
 
@@ -543,6 +571,10 @@ class RunConfigurable extends BaseConfigurable {
       if (configurable.isModified()){
         configurable.apply();
       }
+    }
+
+    for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
+      each.first.apply();
     }
 
     manager.saveOrder();
@@ -683,6 +715,10 @@ class RunConfigurable extends BaseConfigurable {
       if (configurable.isModified()) return true;
     }
 
+    for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
+      if (each.first.isModified()) return true;
+    }
+
     return false;
   }
 
@@ -692,6 +728,10 @@ class RunConfigurable extends BaseConfigurable {
       configurable.disposeUIResources();
     }
     myStoredComponents.clear();
+
+    for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
+      each.first.disposeUIResources();
+    }
 
     TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
       public boolean accept(Object node) {
