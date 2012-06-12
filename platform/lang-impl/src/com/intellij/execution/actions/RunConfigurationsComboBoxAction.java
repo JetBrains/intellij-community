@@ -41,7 +41,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class RunConfigurationAction extends ComboBoxAction implements DumbAware {
+public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
   private static final Key<ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
 
