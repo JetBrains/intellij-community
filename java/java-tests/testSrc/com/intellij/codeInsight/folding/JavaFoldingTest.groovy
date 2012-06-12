@@ -283,6 +283,22 @@ class Test {
     assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
   }
 
+  public void "test no closure folding for synchronized methods"() {
+    def text = """\
+class Test {
+    void test() { new Runnable() {
+      public synchronized void run() {
+        System.out.println(<caret>);
+      }
+    };
+  }
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
+  }
+
   public void testFindInFolding() {
     def text = """\
 class Test {
