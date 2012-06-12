@@ -495,6 +495,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void afterLibraryAdded(final Library newLibrary) {
+      myModificationCount++;
       mergeRootsChangesDuring(new Runnable() {
         public void run() {
           for (LibraryTable.Listener listener : myListeners) {
@@ -505,6 +506,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void afterLibraryRenamed(final Library library) {
+      myModificationCount++;
       mergeRootsChangesDuring(new Runnable() {
         public void run() {
           for (LibraryTable.Listener listener : myListeners) {
@@ -515,6 +517,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void beforeLibraryRemoved(final Library library) {
+      myModificationCount++;
       mergeRootsChangesDuring(new Runnable() {
         public void run() {
           for (LibraryTable.Listener listener : myListeners) {
@@ -525,6 +528,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     public void afterLibraryRemoved(final Library library) {
+      myModificationCount++;
       mergeRootsChangesDuring(new Runnable() {
         public void run() {
           for (LibraryTable.Listener listener : myListeners) {
