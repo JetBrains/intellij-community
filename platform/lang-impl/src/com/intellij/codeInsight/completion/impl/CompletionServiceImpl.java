@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -238,24 +237,18 @@ public class CompletionServiceImpl extends CompletionService{
     final CompletionLocation location = new CompletionLocation(parameters);
 
     CompletionSorterImpl sorter = emptySorter();
-    final String prefix = matcher.getPrefix();
-    if (!prefix.isEmpty()) {
-      final String prefixHumps = StringUtil.capitalsOnly(prefix);
-      if (prefixHumps.length() > 0) {
-        sorter = sorter.weigh(new LookupElementWeigher("prefixHumps") {
+    sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("prefixHumps") {
+      @Override
+      public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+        return new ComparingClassifier<LookupElement>(next, "prefixHumps") {
           @NotNull
           @Override
-          public Comparable weigh(@NotNull LookupElement element) {
-            for (String itemString : element.getAllLookupStrings()) {
-              if (StringUtil.capitalsOnly(itemString).startsWith(prefixHumps) && StringUtil.isCapitalized(itemString)) {
-                return false;
-              }
-            }
-            return true;
+          public Comparable getWeight(LookupElement element) {
+            return PrefixMatchingWeigher.getStartMatchingDegree(element, location);
           }
-        });
+        };
       }
-    }
+    });
 
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
       final String id = weigher.toString();
