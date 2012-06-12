@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.ide.projectView.impl;
+package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TitledHandler;
@@ -28,31 +27,26 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author dsl
+ * @author Konstantin Bulenkov
  */
-
-public class RenameModuleHandler implements RenameHandler, TitledHandler {
+public class RenameLibraryHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
-    return module != null;
+    Library library = LangDataKeys.LIBRARY.getData(dataContext);
+    return library != null;
   }
 
   public boolean isRenaming(DataContext dataContext) {
@@ -64,42 +58,42 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   }
 
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, @NotNull DataContext dataContext) {
-    final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
-    LOG.assertTrue(module != null);
+    final Library library = LangDataKeys.LIBRARY.getData(dataContext);
+    LOG.assertTrue(library != null);
     Messages.showInputDialog(project,
-                             IdeBundle.message("prompt.enter.new.module.name"),
-                             IdeBundle.message("title.rename.module"),
+                             IdeBundle.message("prompt.enter.new.library.name"),
+                             IdeBundle.message("title.rename.library"),
                              Messages.getQuestionIcon(),
-                             module.getName(),
-                             new MyInputValidator(project, module));
+                             library.getName(),
+                             new MyInputValidator(project, library));
   }
 
   public String getActionTitle() {
-    return RefactoringBundle.message("rename.module.title");
+    return IdeBundle.message("title.rename.library");
   }
 
   private static class MyInputValidator implements InputValidator {
     private final Project myProject;
-    private final Module myModule;
-    public MyInputValidator(Project project, Module module) {
+    private final Library myLibrary;
+    public MyInputValidator(Project project, Library library) {
       myProject = project;
-      myModule = module;
+      myLibrary = library;
     }
 
     public boolean checkInput(String inputString) {
-      return inputString != null && inputString.length() > 0;
+      return inputString != null && inputString.length() > 0 && myLibrary.getTable().getLibraryByName(inputString) == null;
     }
 
     public boolean canClose(final String inputString) {
-      final String oldName = myModule.getName();
-      final ModifiableModuleModel modifiableModel = renameModule(inputString);
+      final String oldName = myLibrary.getName();
+      final Library.ModifiableModel modifiableModel = renameLibrary(inputString);
       if (modifiableModel == null) return false;
       final Ref<Boolean> success = Ref.create(Boolean.TRUE);
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
           UndoableAction action = new BasicUndoableAction() {
             public void undo() throws UnexpectedUndoException {
-              final ModifiableModuleModel modifiableModel = renameModule(oldName);
+              final Library.ModifiableModel modifiableModel = renameLibrary(oldName);
               if (modifiableModel != null) {
                 modifiableModel.commit();
               }
@@ -107,7 +101,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
 
             @Override
             public void redo() throws UnexpectedUndoException {
-              final ModifiableModuleModel modifiableModel = renameModule(inputString);
+              final Library.ModifiableModel modifiableModel = renameLibrary(inputString);
               if (modifiableModel != null) {
                 modifiableModel.commit();
               }
@@ -125,16 +119,9 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
     }
 
     @Nullable
-    private ModifiableModuleModel renameModule(String inputString) {
-      final ModifiableModuleModel modifiableModel = ModuleManager.getInstance(myProject).getModifiableModel();
-      try {
-        modifiableModel.renameModule(myModule, inputString);
-      }
-      catch (ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-        Messages.showErrorDialog(myProject, IdeBundle.message("error.module.already.exists", inputString),
-                                 IdeBundle.message("title.rename.module"));
-        return null;
-      }
+    private Library.ModifiableModel renameLibrary(String inputString) {
+      final Library.ModifiableModel modifiableModel = myLibrary.getModifiableModel();
+      modifiableModel.setName(inputString);
       return modifiableModel;
     }
   }

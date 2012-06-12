@@ -105,6 +105,7 @@
     <appStarter implementation="com.intellij.compiler.ant.GenerateAntMain"/>
 
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
+    <renameHandler implementation="com.intellij.openapi.roots.impl.libraries.RenameLibraryHandler"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.InternalFileTypeFactory"/>
 

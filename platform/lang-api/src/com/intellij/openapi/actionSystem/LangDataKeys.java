@@ -21,6 +21,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
@@ -58,4 +59,7 @@ public class LangDataKeys extends PlatformDataKeys {
   
   public static final DataKey<JBPopup> POSITION_ADJUSTER_POPUP = DataKey.create("chooseByNameDropDown");
   public static final DataKey<JBPopup> PARENT_POPUP = DataKey.create("chooseByNamePopup");
+
+
+  public static final DataKey<Library> LIBRARY = DataKey.create("project.model.library");
 }
