@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.UserDataHolderBase;
 
-public interface PsiNonJavaFileReferenceProcessor {
-  boolean process(PsiFile file, int startOffset, int endOffset);
+/**
+ * @author peter
+ */
+public class SearchSession extends UserDataHolderBase {
 }

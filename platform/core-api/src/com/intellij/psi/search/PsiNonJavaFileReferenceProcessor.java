@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.search;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 
-/**
- * @author ven
- */
-public interface TextOccurenceProcessor {
-  boolean execute (PsiElement element, int offsetInElement);
+public interface PsiNonJavaFileReferenceProcessor {
+  boolean process(PsiFile file, int startOffset, int endOffset);
 }
