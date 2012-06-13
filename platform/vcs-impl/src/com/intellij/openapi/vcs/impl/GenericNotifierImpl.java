@@ -58,9 +58,6 @@ public abstract class GenericNotifierImpl<T, Key> {
   @NotNull
   protected abstract String getNotificationContent(final T obj);
 
-  @NotNull
-  protected abstract String getToString(final T obj);
-
   protected Collection<Key> getAllCurrentKeys() {
     synchronized (myLock) {
       return new ArrayList<Key>(myState.keySet());
@@ -109,7 +106,7 @@ public abstract class GenericNotifierImpl<T, Key> {
       if (myState.containsKey(key)) {
         return false;
       }
-      notification = new MyNotification<T>(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj, getToString(obj));
+      notification = new MyNotification<T>(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj);
       myState.put(key, notification);
     }
     final boolean state = onFirstNotification(obj);
@@ -180,24 +177,21 @@ public abstract class GenericNotifierImpl<T, Key> {
 
   protected static class MyNotification<T> extends Notification {
     private final T myObj;
-    private final String myStringPresentation;
 
-    protected MyNotification(@NotNull String groupId, @NotNull String title, @NotNull String content, @NotNull NotificationType type, @Nullable NotificationListener listener,
-                             @NotNull final T obj,
-                             final String stringPresentation) {
+    protected MyNotification(@NotNull String groupId,
+                             @NotNull String title,
+                             @NotNull String content,
+                             @NotNull NotificationType type,
+                             @Nullable NotificationListener listener,
+                             @NotNull final T obj) {
       super(groupId, title, content, type, listener);
       myObj = obj;
-      myStringPresentation = stringPresentation;
     }
 
     public T getObj() {
       return myObj;
     }
 
-    @Override
-    public String toString() {
-      return myStringPresentation;
-    }
   }
 
   private static void log(final String s) {
