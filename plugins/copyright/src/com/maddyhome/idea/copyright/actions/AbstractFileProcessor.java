@@ -339,7 +339,7 @@ public abstract class AbstractFileProcessor {
         readAction.run();
       }
     }, title, true, myProject);
-    new WriteCommandAction(myProject, title, null) {
+    new WriteCommandAction(myProject, title) {
       protected void run(Result result) throws Throwable {
         writeAction.run();
       }

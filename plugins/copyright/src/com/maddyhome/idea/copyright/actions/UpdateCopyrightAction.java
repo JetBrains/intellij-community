@@ -72,6 +72,7 @@ public class UpdateCopyrightAction extends AnAction {
     }
     else if ((files == null || files.length != 1) &&
              LangDataKeys.MODULE_CONTEXT.getData(context) == null &&
+             LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context) == null &&
              PlatformDataKeys.PROJECT_CONTEXT.getData(context) == null) {
       final PsiElement[] elems = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
       if (elems != null) {
