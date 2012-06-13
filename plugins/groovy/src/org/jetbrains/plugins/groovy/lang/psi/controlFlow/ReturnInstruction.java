@@ -26,8 +26,8 @@ import java.util.Deque;
 * @author peter
 */
 public class ReturnInstruction extends InstructionImpl {
-  public ReturnInstruction(GrFinallyClause finallyClause, int num) {
-    super(finallyClause, num);
+  public ReturnInstruction(GrFinallyClause finallyClause) {
+    super(finallyClause);
   }
 
   public String toString() {

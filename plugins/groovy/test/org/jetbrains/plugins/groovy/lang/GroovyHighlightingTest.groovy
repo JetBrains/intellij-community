@@ -185,6 +185,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnassigned1() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassigned2() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassigned3() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassigned4() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassignedTryFinally() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
 
   public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }

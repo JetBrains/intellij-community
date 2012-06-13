@@ -25,8 +25,8 @@ import java.util.Collections;
 public class CallInstruction extends InstructionImpl {
   private final InstructionImpl myCallee;
 
-  public CallInstruction(int num, InstructionImpl callee) {
-    super(null, num);
+  public CallInstruction(InstructionImpl callee) {
+    super(null);
     myCallee = callee;
   }
 

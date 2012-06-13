@@ -38,6 +38,10 @@ public class AnonymousToInnerTest extends LightCodeInsightTestCase {
     doTest("MyRunnable", true);
   }
   
+  public void testCollapseDiamonds() throws Exception {  // IDEADEV-29446
+    doTest("MyPredicate", true);
+  }
+  
   public void testCanBeStatic() throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
     AnonymousToInnerHandler handler = new AnonymousToInnerHandler(){

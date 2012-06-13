@@ -431,8 +431,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
     final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
 
     LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
+    final Set<String> unresolvedProps;
     if (reference instanceof GrReferenceExpression && (qualifier instanceof GrExpression || qualifier == null)) {
-      for (String string : CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier, (GrReferenceExpression)reference)) {
+      unresolvedProps = CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier, (GrReferenceExpression)reference);
+      for (String string : unresolvedProps) {
         result.add(GroovyCompletionUtil.getLookupElement(string));
       }
       if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
@@ -442,6 +444,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
         return result;
       }
+    }
+    else {
+      unresolvedProps = Collections.emptySet();
     }
 
     final ElementFilter classFilter = getClassFilter(position);
@@ -466,6 +471,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
         Object object = lookupElement.getObject();
         if (object instanceof GroovyResolveResult) {
           object = ((GroovyResolveResult)object).getElement();
+        }
+
+        if (object instanceof GrReferenceExpression && unresolvedProps.contains(((GrReferenceExpression)object).getName())) {
+          return;
         }
 
         if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object, true)) {

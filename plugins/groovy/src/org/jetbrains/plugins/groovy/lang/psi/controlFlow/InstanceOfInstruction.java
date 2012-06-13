@@ -32,8 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 public class InstanceOfInstruction extends InstructionImpl implements MixinTypeInstruction {
   private final ConditionInstruction myCondition;
 
-  public InstanceOfInstruction(int num, GrExpression assertion, ConditionInstruction cond) {
-    super(assertion, num);
+  public InstanceOfInstruction(GrExpression assertion, ConditionInstruction cond) {
+    super(assertion);
     myCondition = cond;
   }
 

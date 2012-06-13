@@ -247,11 +247,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnSuiteFinished(@NotNull TestSuiteFinishedEvent nodeFinishedEvent) {
+  private void fireOnSuiteFinished(@NotNull TestSuiteFinishedEvent suiteFinishedEvent) {
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onSuiteFinished(nodeFinishedEvent);
+      processor.onSuiteFinished(suiteFinishedEvent);
     }
   }
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -216,6 +217,7 @@ public class GroovyCompletionUtil {
     List<Object> result = CollectionFactory.arrayList();
     for (GroovyResolveResult candidate : candidates) {
       result.add(createCompletionVariant(candidate));
+      ProgressManager.checkCanceled();
     }
 
     return result;
