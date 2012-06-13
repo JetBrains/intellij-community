@@ -11,11 +11,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.cython.types.CythonStructType;
@@ -250,8 +252,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
       Collections.addAll(variants, getVariantFromHasAttr(qualifier));
       if (qualifier instanceof PyQualifiedExpression) {
         Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
-        variants.addAll(attrs);
         for (PyExpression ex : attrs) {
+          if (ex instanceof PsiNamedElement && qualifierType instanceof PyClassType) {
+            variants.add(LookupElementBuilder.create((PsiNamedElement)ex)
+                           .withTypeText(qualifierType.getName())
+                           .withIcon(PlatformIcons.FIELD_ICON));
+          }
           if (ex instanceof PyReferenceExpression) {
             PyReferenceExpression refExpr = (PyReferenceExpression)ex;
             namesAlready.add(refExpr.getReferencedName());
