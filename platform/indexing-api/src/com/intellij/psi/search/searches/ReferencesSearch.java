@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
-  public static ExtensionPointName<ReferencesSearch> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
+  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
   private static final ReferencesSearch INSTANCE = new ReferencesSearch();
 
   private ReferencesSearch() {
