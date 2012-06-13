@@ -18,7 +18,7 @@ package com.siyeh.ig.maturity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 
 public class TodoUtil {
@@ -28,7 +28,7 @@ public class TodoUtil {
 
   public static boolean isTodoComment(PsiComment comment) {
     final PsiFile file = comment.getContainingFile();
-    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(comment.getProject());
+    final PsiTodoSearchHelper searchHelper = PsiTodoSearchHelper.SERVICE.getInstance(comment.getProject());
     final TodoItem[] todoItems = searchHelper.findTodoItems(file);
     for (final TodoItem todoItem : todoItems) {
       final TextRange commentTextRange = comment.getTextRange();

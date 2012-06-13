@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * Use {@link com.intellij.psi.search.PsiSearchHelper.SERVICE#getInstance}() to get a search helper instance.
  */
-public interface PsiSearchHelper extends PsiTodoSearchHelper {
+public interface PsiSearchHelper {
   class SERVICE {
     private SERVICE() {
     }

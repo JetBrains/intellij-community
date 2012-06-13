@@ -73,6 +73,9 @@
   <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
                   serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
 
+  <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper"
+                  serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>
+
   <projectService serviceInterface="com.intellij.codeInsight.lookup.LookupManager"
                   serviceImplementation="com.intellij.codeInsight.lookup.impl.LookupManagerImpl"/>
 

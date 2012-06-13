@@ -16,16 +16,14 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 
 import java.util.List;
@@ -53,7 +51,7 @@ public class TodoForExistingFile extends TodoForRanges {
     return ApplicationManager.getApplication().runReadAction(new Computable<TodoItem[]>() {
       @Override
       public TodoItem[] compute() {
-        final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myProject);
+        final PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
 
         PsiFile psiFile = myFile == null ? null : PsiManager.getInstance(myProject).findFile(myFile);
         if (psiFile != null) {
