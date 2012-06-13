@@ -200,8 +200,7 @@ public class TypeEvaluator {
                 return elseType;
 
               case 3:
-                LOG.error("Condition type conflict.");
-                return null;
+                return expr.getType();
 
               default:
                 LOG.error("Must not happen.");
