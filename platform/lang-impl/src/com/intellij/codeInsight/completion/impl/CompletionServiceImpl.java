@@ -32,7 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,7 +141,7 @@ public class CompletionServiceImpl extends CompletionService{
         PsiFile positionFile = myParameters.getPosition().getContainingFile();
         LOG.error("prefix should be some actual file string just before caret: " + matcher.getPrefix() +
                   "\n text=" + fragment +
-                  "\ninjected=" + (InjectedLanguageUtil.getTopLevelFile(positionFile) != positionFile) +
+                  "\ninjected=" + (InjectedLanguageFacadeImpl.getTopLevelFile(positionFile) != positionFile) +
                   "\nlang=" + positionFile.getLanguage());
       }
       return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, myParameters, mySorter, myProcess, this);

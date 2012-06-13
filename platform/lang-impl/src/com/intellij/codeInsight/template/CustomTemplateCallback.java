@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,11 +55,11 @@ public class CustomTemplateCallback {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     int offset = getOffset(wrapping, editor);
-    PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+    PsiElement element = InjectedLanguageFacadeImpl.findInjectedElementNoCommit(file, offset);
     myFile = element != null ? element.getContainingFile() : file;
 
     myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
-    myEditor = myInInjectedFragment ? InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file, offset) : editor;
+    myEditor = myInInjectedFragment ? InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(editor, file, offset) : editor;
 
     fixInitialState(wrapping);
   }
@@ -164,7 +164,7 @@ public class CustomTemplateCallback {
   public static PsiElement getContext(@NotNull PsiFile file, int offset) {
     PsiElement element = null;
     if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-      element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+      element = InjectedLanguageFacadeImpl.findInjectedElementNoCommit(file, offset);
     }
     if (element == null) {
       element = file.findElementAt(offset);

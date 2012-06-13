@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.InjectedLanguageFacade;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -45,7 +46,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class InjectedLanguageUtil {
+public class InjectedLanguageFacadeImpl extends InjectedLanguageFacade {
   static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
   public static void forceInjectionOnElement(@NotNull PsiElement host) {
@@ -75,8 +76,9 @@ public class InjectedLanguageUtil {
     return host;
   }
 
+  @Override
   @Nullable
-  public static List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
+  public List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
     if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
       return null;
     }

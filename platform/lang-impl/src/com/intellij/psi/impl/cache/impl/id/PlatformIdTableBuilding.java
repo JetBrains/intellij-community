@@ -31,7 +31,7 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;

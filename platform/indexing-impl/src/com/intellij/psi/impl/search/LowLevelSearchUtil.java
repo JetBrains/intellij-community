@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.InjectedLanguageFacade;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -49,7 +49,7 @@ public class LowLevelSearchUtil {
                                              final StringSearcher searcher,
                                              ProgressIndicator progress) {
     if (!(element instanceof PsiLanguageInjectionHost)) return null;
-    List<Pair<PsiElement,TextRange>> list = InjectedLanguageUtil.getInjectedPsiFiles(element);
+    List<Pair<PsiElement,TextRange>> list = InjectedLanguageFacade.getInstance().getInjectedPsiFiles(element);
     if (list == null) return null;
     for (Pair<PsiElement, TextRange> pair : list) {
       final PsiElement injected = pair.getFirst();

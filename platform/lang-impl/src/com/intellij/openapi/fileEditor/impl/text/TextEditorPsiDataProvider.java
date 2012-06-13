@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
         return e;
       }
       else {
-        return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(e, getPsiFile(e, file));
+        return InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(e, getPsiFile(e, file));
       }
     }
     if (dataId.equals(injectedId(PSI_ELEMENT.getName()))) {

@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -53,7 +53,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
+    final PsiFile psiFile = InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(file, offset);
     if (psiFile == null) return false;
     final LanguageInjectionSupport support = psiFile.getUserData(LanguageInjectionSupport.SETTINGS_EDITOR);
     return support != null;
@@ -68,7 +68,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
   }
 
   private static void invokeImpl(Project project, Editor editor, PsiFile file) {
-    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, editor.getCaretModel().getOffset());
+    final PsiFile psiFile = InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(file, editor.getCaretModel().getOffset());
     if (psiFile == null) return;
     final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(psiFile);
     if (host == null) return;

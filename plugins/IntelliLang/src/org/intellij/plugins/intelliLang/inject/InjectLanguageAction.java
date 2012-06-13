@@ -16,6 +16,7 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
@@ -31,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.FileContentUtil;
@@ -65,7 +65,7 @@ public class InjectLanguageAction implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
-    final List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageUtil.getInjectedPsiFiles(host);
+    final List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(host);
     return injectedPsi == null || injectedPsi.isEmpty();
   }
 

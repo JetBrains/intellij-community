@@ -52,7 +52,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
@@ -136,7 +136,7 @@ public class BraceHighlightingHandler {
           public void run() {
             try {
               if (!isReallyDisposed(editor, project)) {
-                Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
+                Editor newEditor = InjectedLanguageFacadeImpl.getInjectedEditorForInjectedFile(editor, injected);
                 BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
                 processor.process(handler);
               }
@@ -161,7 +161,7 @@ public class BraceHighlightingHandler {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
     if (!PsiDocumentManager.getInstance(project).isUncommited(document)) {
-      final PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
+      final PsiElement injectedElement = InjectedLanguageFacadeImpl.findInjectedElementNoCommit(psiFile, offset);
       if (injectedElement != null /*&& !(injectedElement instanceof PsiWhiteSpace)*/) {
         final PsiFile injected = injectedElement.getContainingFile();
         if (injected != null) {

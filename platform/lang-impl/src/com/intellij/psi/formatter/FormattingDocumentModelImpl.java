@@ -28,7 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,7 +128,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     if (strategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
       return true;
     }
-    PsiElement injectedElement = myFile != null ? InjectedLanguageUtil.findElementAtNoCommit(myFile, startOffset) : null;
+    PsiElement injectedElement = myFile != null ? InjectedLanguageFacadeImpl.findElementAtNoCommit(myFile, startOffset) : null;
     if (injectedElement != null) {
       Language injectedLanguage = injectedElement.getLanguage();
       if (!injectedLanguage.equals(myFile.getLanguage())) {

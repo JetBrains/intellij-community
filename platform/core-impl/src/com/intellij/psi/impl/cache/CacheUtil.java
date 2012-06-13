@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.psi.impl.cache.impl;
+package com.intellij.psi.impl.cache;
 
 import com.intellij.ide.caches.FileContent;
 import com.intellij.lang.Language;

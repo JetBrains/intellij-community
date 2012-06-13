@@ -50,6 +50,8 @@
   <applicationService serviceInterface="com.intellij.application.options.CodeStyleSettingsUtil"
                       serviceImplementation="com.intellij.application.options.CodeStyleSettingsUtilImpl"/>
 
+  <applicationService serviceInterface="com.intellij.psi.impl.InjectedLanguageFacade"
+                      serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl"/>
   <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
                       serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.codeInspection.ex.InspectionToolRegistrar"

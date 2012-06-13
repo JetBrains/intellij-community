@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -45,7 +45,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
     element = findJavaCodeUpThere(element);
     PsiFile file = element.getContainingFile();
-    editor = InjectedLanguageUtil.openEditorFor(file, project);
+    editor = InjectedLanguageFacadeImpl.openEditorFor(file, project);
     int endOffset = element.getTextRange().getEndOffset();
     int line = editor.getDocument().getLineNumber(endOffset);
     int lineEndOffset = editor.getDocument().getLineEndOffset(line);

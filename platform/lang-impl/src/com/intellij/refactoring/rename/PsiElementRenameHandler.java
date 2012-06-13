@@ -31,7 +31,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.refactoring.RefactoringBundle;
@@ -57,7 +57,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = getElement(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final PsiElement nameSuggestionContext = InjectedLanguageUtil.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
+    final PsiElement nameSuggestionContext = InjectedLanguageFacadeImpl.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
     invoke(element, project, nameSuggestionContext, editor);
   }
 
@@ -127,7 +127,7 @@ public class PsiElementRenameHandler implements RenameHandler {
       }
     }
 
-    if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(element)) {
+    if (InjectedLanguageFacadeImpl.isInInjectedLanguagePrefixSuffix(element)) {
       final String message = RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element));
       return RefactoringBundle.getCannotRefactorMessage(message);
     }

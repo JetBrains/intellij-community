@@ -41,7 +41,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,7 +167,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
       PsiFile containingFile = element.getContainingFile();
       Project project = element.getProject();
       // each reference can reside in its own injected editor
-      Editor textEditor = InjectedLanguageUtil.openEditorFor(containingFile, project);
+      Editor textEditor = InjectedLanguageFacadeImpl.openEditorFor(containingFile, project);
       if (textEditor != null) {
         addOccurrenceHighlight(textEditor, start, end, attributes, flags, outHighlighters, scrollmarkColor);
       }

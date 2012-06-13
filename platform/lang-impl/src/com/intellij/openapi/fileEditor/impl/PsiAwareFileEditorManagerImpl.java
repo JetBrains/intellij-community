@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.docking.DockManager;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +99,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       return editor;
     }
 
-    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile);
+    return InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(editor, psiFile);
   }
 
   /**

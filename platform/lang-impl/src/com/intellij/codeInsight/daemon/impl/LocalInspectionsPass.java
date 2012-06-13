@@ -53,7 +53,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -301,43 +301,49 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final ArrayList<InspectionContext> init = new ArrayList<InspectionContext>();
     List<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> entries = new ArrayList<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>(tools.entrySet());
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, myFailFastOnAcquireReadAction,
-                                                                 new Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>() {
-                                                                   @Override
-                                                                   public boolean process(final Map.Entry<LocalInspectionToolWrapper, Collection<String>> pair) {
-                                                                     indicator.checkCanceled();
+                                                                               new Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>() {
+                                                                                 @Override
+                                                                                 public boolean process(final Map.Entry<LocalInspectionToolWrapper, Collection<String>> pair) {
+                                                                                   indicator.checkCanceled();
 
-                                                                     ApplicationManager.getApplication().assertReadAccessAllowed();
-                                                                     final LocalInspectionToolWrapper wrapper = pair.getKey();
-                                                                     LocalInspectionTool tool = wrapper.getTool();
-                                                                     final boolean[] applyIncrementally = {isOnTheFly};
-                                                                     ProblemsHolder holder =
-                                                                       new ProblemsHolder(iManager, myFile, isOnTheFly) {
-                                                                         @Override
-                                                                         public void registerProblem(@NotNull ProblemDescriptor descriptor) {
-                                                                           super.registerProblem(descriptor);
-                                                                           if (applyIncrementally[0]) {
-                                                                             addDescriptorIncrementally(descriptor, wrapper, indicator);
-                                                                           }
-                                                                         }
-                                                                       };
-                                                                     Set<String> languages = (Set<String>)pair.getValue();
-                                                                     PsiElementVisitor visitor =
-                                                                       createVisitorAndAcceptElements(tool, holder, isOnTheFly, session,
-                                                                                                      elements, languages);
+                                                                                   ApplicationManager.getApplication()
+                                                                                     .assertReadAccessAllowed();
+                                                                                   final LocalInspectionToolWrapper wrapper = pair.getKey();
+                                                                                   LocalInspectionTool tool = wrapper.getTool();
+                                                                                   final boolean[] applyIncrementally = {isOnTheFly};
+                                                                                   ProblemsHolder holder =
+                                                                                     new ProblemsHolder(iManager, myFile, isOnTheFly) {
+                                                                                       @Override
+                                                                                       public void registerProblem(@NotNull ProblemDescriptor descriptor) {
+                                                                                         super.registerProblem(descriptor);
+                                                                                         if (applyIncrementally[0]) {
+                                                                                           addDescriptorIncrementally(descriptor, wrapper,
+                                                                                                                      indicator);
+                                                                                         }
+                                                                                       }
+                                                                                     };
+                                                                                   Set<String> languages = (Set<String>)pair.getValue();
+                                                                                   PsiElementVisitor visitor =
+                                                                                     createVisitorAndAcceptElements(tool, holder,
+                                                                                                                    isOnTheFly, session,
+                                                                                                                    elements, languages);
 
-                                                                     synchronized (init) {
-                                                                       init.add(new InspectionContext(wrapper, holder, visitor, languages));
-                                                                     }
-                                                                     advanceProgress(1);
+                                                                                   synchronized (init) {
+                                                                                     init.add(
+                                                                                       new InspectionContext(wrapper, holder, visitor,
+                                                                                                             languages));
+                                                                                   }
+                                                                                   advanceProgress(1);
 
-                                                                     if (holder.hasResults()) {
-                                                                       appendDescriptors(myFile, holder.getResults(), wrapper);
-                                                                     }
-                                                                     applyIncrementally[0] =
-                                                                       false; // do not apply incrementally outside visible range
-                                                                     return true;
-                                                                   }
-                                                                 });
+                                                                                   if (holder.hasResults()) {
+                                                                                     appendDescriptors(myFile, holder.getResults(),
+                                                                                                       wrapper);
+                                                                                   }
+                                                                                   applyIncrementally[0] =
+                                                                                     false; // do not apply incrementally outside visible range
+                                                                                   return true;
+                                                                                 }
+                                                                               });
     if (!result) throw new ProcessCanceledException();
     inspectInjectedPsi(elements, isOnTheFly, indicator, iManager, true, checkDumbAwareness, wrappers);
     return init;
@@ -413,7 +419,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                           final boolean inVisibleRange, final boolean checkDumbAwareness, final List<LocalInspectionToolWrapper> wrappers) {
     final Set<PsiFile> injected = new THashSet<PsiFile>();
     for (PsiElement element : elements) {
-      InjectedLanguageUtil.enumerate(element, myFile, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      InjectedLanguageFacadeImpl.enumerate(element, myFile, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         @Override
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           injected.add(injectedPsi);
@@ -421,15 +427,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       });
     }
     if (injected.isEmpty()) return;
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator, myFailFastOnAcquireReadAction,
-                                                     new Processor<PsiFile>() {
-                                                       @Override
-                                                       public boolean process(final PsiFile injectedPsi) {
-                                                         doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager, inVisibleRange,
-                                                                              wrappers, checkDumbAwareness);
-                                                         return true;
-                                                       }
-                                                     })) throw new ProcessCanceledException();
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injected), indicator,
+                                                                   myFailFastOnAcquireReadAction,
+                                                                   new Processor<PsiFile>() {
+                                                                     @Override
+                                                                     public boolean process(final PsiFile injectedPsi) {
+                                                                       doInspectInjectedPsi(injectedPsi, onTheFly, indicator, iManager,
+                                                                                            inVisibleRange,
+                                                                                            wrappers, checkDumbAwareness);
+                                                                       return true;
+                                                                     }
+                                                                   })) throw new ProcessCanceledException();
   }
 
   @Nullable

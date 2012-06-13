@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.search;
 
-import com.intellij.codeInsight.CommentUtil;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -25,7 +24,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -43,6 +42,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -104,7 +104,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     TextOccurenceProcessor occurrenceProcessor = new TextOccurenceProcessor() {
       @Override
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (CommentUtil.isCommentTextElement(element)) {
+        if (CommentUtilCore.isCommentTextElement(element)) {
           if (element.findReferenceAt(offsetInElement) == null) {
             return processor.process(element);
           }
@@ -124,7 +124,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (text.length() == 0) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
     if (searchScope instanceof GlobalSearchScope) {
       StringSearcher searcher = new StringSearcher(text, caseSensitively, true);
 
@@ -138,12 +138,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiElement[] scopeElements = scope.getScope();
       final boolean ignoreInjectedPsi = scope.isIgnoreInjectedPsi();
 
-      return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, false, new Processor<PsiElement>() {
-        @Override
-        public boolean process(PsiElement scopeElement) {
-          return processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi, progress);
-        }
-      });
+      return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, false,
+                                                                       new Processor<PsiElement>() {
+                                                                         @Override
+                                                                         public boolean process(PsiElement scopeElement) {
+                                                                           return processElementsWithWordInScopeElement(scopeElement,
+                                                                                                                        processor, text,
+                                                                                                                        caseSensitively,
+                                                                                                                        ignoreInjectedPsi,
+                                                                                                                        progress);
+                                                                         }
+                                                                       });
     }
   }
 
@@ -343,7 +348,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (qName.length() == 0) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
-    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
 
     int dotIndex = qName.lastIndexOf('.');
     int dollarIndex = qName.lastIndexOf('$');
@@ -472,7 +477,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     appendCollectorsFromQueryRequests(collectors);
 
-    ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
     do {
       final MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<Set<IdIndexEntry>, RequestWithProcessor>();
       final List<Computable<Boolean>> customs = CollectionFactory.arrayList();

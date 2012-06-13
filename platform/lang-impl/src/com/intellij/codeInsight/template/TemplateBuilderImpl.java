@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +60,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private static final Logger LOG = Logger.getInstance("#" + TemplateBuilderImpl.class.getName());
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
-    myFile = InjectedLanguageUtil.getTopLevelFile(element);
+    myFile = InjectedLanguageFacadeImpl.getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
   }
