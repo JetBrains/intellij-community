@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.*;
@@ -307,7 +306,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return ContainerUtil.process(collectProcessor.getResults(), new ReadActionProcessor<VirtualFile>() {
       @Override
       public boolean processInReadAction(VirtualFile virtualFile) {
-        return !IndexCacheManagerImpl.shouldBeFound(scope, virtualFile, index) || processor.process(virtualFile);
+        return !index.shouldBeFound(scope, virtualFile) || processor.process(virtualFile);
       }
     });
   }
@@ -624,7 +623,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
               FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, file, new FileBasedIndex.ValueProcessor<Integer>() {
                 @Override
                 public boolean process(VirtualFile file, Integer value) {
-                  if (IndexCacheManagerImpl.shouldBeFound(commonScope, file, index)) {
+                  if (index.shouldBeFound(commonScope, file)) {
                     int mask = value.intValue();
                     for (RequestWithProcessor single : data) {
                       final PsiSearchRequest request = single.request;
@@ -679,7 +678,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
             public boolean process(VirtualFile file, Integer value) {
               if (progress != null) progress.checkCanceled();
 
-              if (IndexCacheManagerImpl.shouldBeFound(commonScope, file, index)) {
+              if (index.shouldBeFound(commonScope, file)) {
                 int mask = value.intValue();
                 for (RequestWithProcessor single : data) {
                   final PsiSearchRequest request = single.request;
@@ -757,7 +756,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       @Override
       public boolean process(VirtualFile file) {
         if (file == fileToIgnoreOccurencesInVirtualFile) return true;
-        if (!IndexCacheManagerImpl.shouldBeFound(scope, file, index)) return true;
+        if (!index.shouldBeFound(scope, file)) return true;
         final int value = count.incrementAndGet();
         return value < 10;
       }

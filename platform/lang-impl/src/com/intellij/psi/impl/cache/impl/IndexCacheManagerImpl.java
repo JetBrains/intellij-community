@@ -65,10 +65,6 @@ public class IndexCacheManagerImpl implements CacheManager{
     return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(PsiFile.EMPTY_ARRAY);
   }
 
-  public static boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile, FileIndexFacade index) {
-    return (scope.isSearchOutsideRootModel() || index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
-  }
-
   // IMPORTANT!!!
   // Since implementation of virtualFileProcessor.process() may call indices directly or indirectly,
   // we cannot call it inside FileBasedIndex.processValues() method except in collecting form
@@ -90,7 +86,7 @@ public class IndexCacheManagerImpl implements CacheManager{
             public boolean process(final VirtualFile file, final Integer value) {
               ProgressManager.checkCanceled();
               final int mask = value.intValue();
-              if ((mask & occurrenceMask) != 0 && shouldBeFound(scope, file, index)) {
+              if ((mask & occurrenceMask) != 0 && index.shouldBeFound(scope, file)) {
                 if (!fileProcessor.process(file)) return false;
               }
               return true;
