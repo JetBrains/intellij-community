@@ -16,17 +16,19 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
  */
-public class JavaBinaryExpressionUnwrapper extends JavaUnwrapper {
-  public JavaBinaryExpressionUnwrapper() {
+public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
+  public JavaPolyadicExpressionUnwrapper() {
     super("");
   }
 
@@ -37,26 +39,41 @@ public class JavaBinaryExpressionUnwrapper extends JavaUnwrapper {
 
   @Override
   public boolean isApplicableTo(PsiElement e) {
-    return e.getParent() instanceof PsiBinaryExpression;
+    if (!(e.getParent() instanceof PsiPolyadicExpression)) {
+      return false;
+    }
+
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)e.getParent();
+
+    final PsiExpression operand = findOperand(e, expression);
+
+    return operand != null;
   }
 
   @Override
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
-    final PsiBinaryExpression parent = (PsiBinaryExpression)element.getParent();
+    final PsiPolyadicExpression parent = (PsiPolyadicExpression)element.getParent();
 
-    final PsiExpression lOperand = parent.getLOperand();
-    final PsiExpression rOperand = parent.getROperand();
+    final PsiExpression operand = findOperand(element, parent);
 
-    if (rOperand == null) {
+    if (operand == null) {
       return;
     }
 
-    if (Comparing.equal(lOperand, element)) {
-      context.extractElement(rOperand, parent);
-    }
-    else {
-      context.extractElement(lOperand, parent);
-    }
+    context.extractElement(operand, parent);
     context.delete(parent);
+  }
+
+  @Nullable
+  private static PsiExpression findOperand(@NotNull PsiElement e, @NotNull PsiPolyadicExpression expression) {
+    final TextRange elementTextRange = e.getTextRange();
+
+    for (PsiExpression operand : expression.getOperands()) {
+      final TextRange operandTextRange = operand.getTextRange();
+      if (operandTextRange != null && operandTextRange.contains(elementTextRange)) {
+        return operand;
+      }
+    }
+    return null;
   }
 }

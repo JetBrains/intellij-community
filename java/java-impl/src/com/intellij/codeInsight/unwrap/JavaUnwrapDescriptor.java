@@ -33,7 +33,7 @@ public class JavaUnwrapDescriptor extends UnwrapDescriptorBase {
       new JavaSynchronizedUnwrapper(),
       new JavaAnonymousUnwrapper(),
       new JavaConditionalUnwrapper(),
-      new JavaBinaryExpressionUnwrapper()
+      new JavaPolyadicExpressionUnwrapper()
     };
   }
 }
