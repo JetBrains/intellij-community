@@ -17,7 +17,10 @@ package com.intellij.psi.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.*;
+import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.ReferenceParser;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,6 +48,8 @@ import java.util.Map;
 public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   protected final PsiManager myManager;
   private PsiJavaFile myDummyJavaFile;
+
+  private static final String DUMMY_FILE_NAME = "_Dummy_." + JavaFileType.INSTANCE.getDefaultExtension();
 
   public PsiJavaParserFacadeImpl(PsiManager manager) {
     myManager = manager;
@@ -323,9 +328,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   protected PsiJavaFile createDummyJavaFile(final String text) {
-    final String fileName = "_Dummy_." + JavaFileType.INSTANCE.getDefaultExtension();
     final FileType type = JavaFileType.INSTANCE;
-    return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(type, fileName, text, 0, text.length());
+    return (PsiJavaFile)PsiFileFactory.getInstance(myManager.getProject()).createFileFromText(DUMMY_FILE_NAME, type, text);
   }
 
   @NotNull
