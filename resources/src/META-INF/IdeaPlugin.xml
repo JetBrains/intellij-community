@@ -548,6 +548,10 @@
       <category>Control Flow</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ExtractIfConditionAction</className>
+      <category>Control Flow</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction</className>
       <category>Control Flow</category>
     </intentionAction>
