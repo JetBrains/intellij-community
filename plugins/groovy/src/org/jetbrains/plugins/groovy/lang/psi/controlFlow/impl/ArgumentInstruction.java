@@ -41,8 +41,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSig
 public class ArgumentInstruction extends InstructionImpl implements MixinTypeInstruction {
   private static final Logger LOG = Logger.getInstance(ArgumentInstruction.class);
 
-  public ArgumentInstruction(@Nullable GrReferenceExpression ref, int num) {
-    super(ref, num);
+  public ArgumentInstruction(@Nullable GrReferenceExpression ref) {
+    super(ref);
   }
 
   @Nullable

@@ -35,16 +35,15 @@ public class InstructionImpl implements Instruction {
   private final LinkedHashSet<NegatingGotoInstruction> myNegations = new LinkedHashSet<NegatingGotoInstruction>();
 
   PsiElement myPsiElement;
-  private final int myNumber;
+  private int myNumber = -1;
 
   @Nullable
   public PsiElement getElement() {
     return myPsiElement;
   }
 
-  public InstructionImpl(@Nullable PsiElement element, int num) {
+  public InstructionImpl(@Nullable PsiElement element) {
     myPsiElement = element;
-    myNumber = num;
   }
 
   public Iterable<? extends Instruction> successors(CallEnvironment environment) {
@@ -91,6 +90,7 @@ public class InstructionImpl implements Instruction {
   }
 
   public int num() {
+    assert myNumber != -1;
     return myNumber;
   }
 
@@ -115,5 +115,10 @@ public class InstructionImpl implements Instruction {
     if (instruction instanceof NegatingGotoInstruction) {
       myNegations.add((NegatingGotoInstruction)instruction);
     }
+  }
+
+  final void setNumber(int num) {
+    assert myNumber == -1;
+    myNumber = num;
   }
 }

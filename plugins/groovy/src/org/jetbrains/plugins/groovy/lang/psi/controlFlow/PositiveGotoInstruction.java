@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ConditionInstructi
  * @author Max Medvedev
  */
 public class PositiveGotoInstruction extends GotoInstruction {
-  public PositiveGotoInstruction(@Nullable PsiElement element, int num, @NotNull ConditionInstruction condition) {
-    super(element, num, condition);
+  public PositiveGotoInstruction(@Nullable PsiElement element, @NotNull ConditionInstruction condition) {
+    super(element, condition);
   }
 }

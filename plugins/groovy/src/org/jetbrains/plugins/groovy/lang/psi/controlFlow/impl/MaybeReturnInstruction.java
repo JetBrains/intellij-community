@@ -23,8 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 * @author peter
 */
 public class MaybeReturnInstruction extends InstructionImpl {
-  MaybeReturnInstruction(GrExpression element, int num) {
-    super(element, num);
+  MaybeReturnInstruction(GrExpression element) {
+    super(element);
   }
 
   public String toString() {
