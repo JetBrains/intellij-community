@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.jetbrains.django.lang.template.psi.impl.DjangoStringLiteralImpl;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -298,6 +299,9 @@ public class PythonStringUtil {
     if (o instanceof PyStringLiteralExpression) {
       PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)o;
       return literalExpression.getStringValue();
+    }
+    else if (o instanceof DjangoStringLiteralImpl) {
+      return ((DjangoStringLiteralImpl)o).getString();
     }
     else if (o instanceof PyExpression) {
       return ((PyExpression)o).getText();
