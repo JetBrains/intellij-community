@@ -22,7 +22,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.cache.TodoCacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.PsiTodoSearchHelper;
@@ -48,7 +48,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   @Override
   @NotNull
   public PsiFile[] findFilesWithTodoItems() {
-    return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
+    return TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
   }
 
   @Override
@@ -103,14 +103,14 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
 
   @Override
   public int getTodoItemsCount(@NotNull PsiFile file) {
-    int count = CacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
+    int count = TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
     if (count != -1) return count;
     return findTodoItems(file).length;
   }
 
   @Override
   public int getTodoItemsCount(@NotNull PsiFile file, @NotNull TodoPattern pattern) {
-    int count = CacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), pattern.getIndexPattern());
+    int count = TodoCacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), pattern.getIndexPattern());
     if (count != -1) return count;
     TodoItem[] items = findTodoItems(file);
     count = 0;
