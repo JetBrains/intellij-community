@@ -27,6 +27,7 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
@@ -70,7 +71,8 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   }
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, @Nullable final MoveCallback callback) {
-    if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer, targetContainer)) {
+    if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer, 
+                        "container: " + targetContainer + "; elements: " + Arrays.toString(elements))) {
       return;
     }
     MoveFilesOrDirectoriesUtil.doMove(project, adjustForMove(project, elements, targetContainer), new PsiElement[] {targetContainer}, callback);
