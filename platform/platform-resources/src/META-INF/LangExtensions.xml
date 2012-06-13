@@ -15,6 +15,9 @@
   <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                       serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
 
+  <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
+                      serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
+
   <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
                       serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
 

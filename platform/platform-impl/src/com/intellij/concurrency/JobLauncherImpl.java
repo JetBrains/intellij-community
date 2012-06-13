@@ -34,13 +34,10 @@ import java.util.concurrent.Future;
  * @author cdr
  */
 
-public class JobUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobUtil");
+public class JobLauncherImpl extends JobLauncher {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobLauncher");
 
-  private JobUtil() {
-  }
-
-  private static <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things,
+  private <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things,
                                                       boolean failFastOnAcquireReadAction,
                                                       @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException {
     final Job<String> job = new JobImpl<String>(Job.DEFAULT_PRIORITY, failFastOnAcquireReadAction);
@@ -95,7 +92,8 @@ public class JobUtil {
    *         or we were unable to start read action in at least one thread
    * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
    */
-  public static <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+  @Override
+  public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
                                                             ProgressIndicator progress,
                                                             boolean failFastOnAcquireReadAction,
                                                             @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException {
@@ -122,11 +120,13 @@ public class JobUtil {
     });
   }
 
-  public static Job<Void> submitToJobThread(int priority, @NotNull final Runnable action) {
+  @Override
+  public Job<Void> submitToJobThread(int priority, @NotNull final Runnable action) {
     return submitToJobThread(priority, action, null);
   }
 
-  public static Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, Consumer<Future> onDoneCallback) {
+  @Override
+  public Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, Consumer<Future> onDoneCallback) {
     final JobImpl<Void> job = new JobImpl<Void>(priority, false);
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {

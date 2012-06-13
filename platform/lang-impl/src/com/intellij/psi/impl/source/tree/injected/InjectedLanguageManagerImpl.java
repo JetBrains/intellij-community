@@ -19,7 +19,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -181,7 +181,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       @Override
       public void run() {
         if (myProgress.isCanceled()) return;
-        JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, commitProcessor);
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, commitProcessor);
       }
     };
 
@@ -196,7 +196,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
     else {
-      JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+      JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
         @Override
         public void run() {
           ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable);

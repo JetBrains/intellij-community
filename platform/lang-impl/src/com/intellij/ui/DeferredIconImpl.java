@@ -20,7 +20,7 @@
 package com.intellij.ui;
 
 import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Ref;
@@ -117,14 +117,15 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         paintingParentRec.set(((PaintingParent)pp).getChildRec(c));
       }
 
-      JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+      JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
         @Override
         public void run() {
           int oldWidth = myDelegateIcon.getIconWidth();
           final Icon result = evaluate();
           myDelegateIcon = result;
 
-          final boolean shouldRevalidate = Registry.is("ide.tree.deferredicon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
+          final boolean shouldRevalidate =
+            Registry.is("ide.tree.deferredicon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {

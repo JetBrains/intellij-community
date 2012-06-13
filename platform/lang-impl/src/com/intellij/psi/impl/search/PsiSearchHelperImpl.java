@@ -17,7 +17,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.codeInsight.CommentUtil;
-import com.intellij.concurrency.JobUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -138,7 +138,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       PsiElement[] scopeElements = scope.getScope();
       final boolean ignoreInjectedPsi = scope.isIgnoreInjectedPsi();
 
-      return JobUtil.invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, false, new Processor<PsiElement>() {
+      return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, false, new Processor<PsiElement>() {
         @Override
         public boolean process(PsiElement scopeElement) {
           return processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi, progress);
@@ -207,7 +207,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final AtomicBoolean pceThrown = new AtomicBoolean(false);
 
       final int size = files.size();
-      boolean completed = JobUtil.invokeConcurrentlyUnderProgress(files, progress, false, new Processor<VirtualFile>() {
+      boolean completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, false, new Processor<VirtualFile>() {
         @Override
         public boolean process(final VirtualFile vfile) {
           final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
@@ -228,7 +228,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                   for (PsiElement psiRoot : psiRoots) {
                     if (progress != null) progress.checkCanceled();
                     if (!processed.add(psiRoot)) continue;
-                    assert psiRoot != null : "One of the roots of file "+file + " is null. All roots: "+Arrays.asList(psiRoots)+"; Viewprovider: "+file.getViewProvider()+"; Virtual file: "+file.getViewProvider().getVirtualFile();
+                    assert psiRoot != null : "One of the roots of file " +
+                                             file +
+                                             " is null. All roots: " +
+                                             Arrays.asList(psiRoots) +
+                                             "; Viewprovider: " +
+                                             file.getViewProvider() +
+                                             "; Virtual file: " +
+                                             file.getViewProvider().getVirtualFile();
                     if (!psiRootProcessor.process(psiRoot)) {
                       canceled.set(true);
                       return;
