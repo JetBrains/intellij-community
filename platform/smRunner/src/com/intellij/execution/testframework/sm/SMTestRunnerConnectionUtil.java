@@ -85,16 +85,20 @@ public class SMTestRunnerConnectionUtil {
                                                                           final RunnerSettings runnerSettings,
                                                                           final ConfigurationPerRunnerSettings configurationSettings,
                                                                           @Nullable final TestLocationProvider locator) {
-    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, runnerSettings,
-                                          configurationSettings, locator, false);
+    return createConsoleWithCustomLocator(testFrameworkName,
+                                          consoleProperties,
+                                          runnerSettings,
+                                          configurationSettings,
+                                          new CompositeTestLocationProvider(locator),
+                                          false);
   }
 
-  public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull final String testFrameworkName,
-                                                                          @NotNull final TestConsoleProperties consoleProperties,
-                                                                          final RunnerSettings runnerSettings,
-                                                                          final ConfigurationPerRunnerSettings configurationSettings,
-                                                                          @Nullable final TestLocationProvider locator,
-                                                                          final boolean idBasedTreeConstruction) {
+  public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull final String testFrameworkName,
+                                                                    @NotNull final TestConsoleProperties consoleProperties,
+                                                                    final RunnerSettings runnerSettings,
+                                                                    final ConfigurationPerRunnerSettings configurationSettings,
+                                                                    @Nullable final TestLocationProvider locator,
+                                                                    final boolean idBasedTreeConstruction) {
     // Console
     final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
     final SMTRunnerConsoleView console =

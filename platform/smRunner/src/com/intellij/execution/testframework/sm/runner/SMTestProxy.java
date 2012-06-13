@@ -25,8 +25,6 @@ import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
@@ -60,7 +58,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private final boolean myIsSuite;
   private boolean myIsEmptyIsCached = false; // is used for separating unknown and unset values
   private boolean myIsEmpty = true;
-  TestLocationProvider myCustomLocator = null;
+  TestLocationProvider myLocator = null;
   private final boolean myPreservePresentableName;
 
   public SMTestProxy(final String testName, final boolean isSuite,
@@ -78,7 +76,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void setLocator(@NotNull TestLocationProvider locator) {
-    myCustomLocator = locator;
+    myLocator = locator;
   }
 
   public boolean isInProgress() {
@@ -186,30 +184,17 @@ public class SMTestProxy extends AbstractTestProxy {
 
     //TODO multiresolve support
 
-    if (myLocationUrl == null) {
+    if (myLocationUrl == null || myLocator == null) {
       return null;
     }
 
     final String protocolId = TestsLocationProviderUtil.extractProtocol(myLocationUrl);
     final String path = TestsLocationProviderUtil.extractPath(myLocationUrl);
 
-    final boolean isDumbMode = DumbService.isDumb(project);
-
     if (protocolId != null && path != null) {
-      if (myCustomLocator != null) {
-        List<Location> locations = myCustomLocator.getLocation(protocolId, path, project);
-        if (!locations.isEmpty()) {
-          return locations.iterator().next();
-        }
-      }
-      for (TestLocationProvider provider : Extensions.getExtensions(TestLocationProvider.EP_NAME)) {
-        if (isDumbMode && !DumbService.isDumbAware(provider)) {
-          continue;
-        }
-        final List<Location> locations = provider.getLocation(protocolId, path, project);
-        if (!locations.isEmpty()) {
-          return locations.iterator().next();
-        }
+      List<Location> locations = myLocator.getLocation(protocolId, path, project);
+      if (!locations.isEmpty()) {
+        return locations.iterator().next();
       }
     }
 
