@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -175,7 +176,11 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
 
     public static boolean satisfiedBy(PsiElement element, boolean checkForParent) {
-      if (element instanceof GrString || element instanceof GrLiteral && ((GrLiteral)element).getValue() instanceof String) return true;
+      if (element instanceof GrLiteral &&
+          ((GrLiteral)element).getValue() instanceof String &&
+          GrLiteralImpl.getLiteralType((GrLiteral)element) != GroovyTokenTypes.mGSTRING_LITERAL) {
+        return true;
+      }
 
       if (!(element instanceof GrBinaryExpression)) return false;
 

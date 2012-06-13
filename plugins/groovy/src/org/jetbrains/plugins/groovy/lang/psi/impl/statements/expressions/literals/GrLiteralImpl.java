@@ -149,7 +149,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     return null;
   }
 
-  private static IElementType getLiteralType(GrLiteral literal) {
+  public static IElementType getLiteralType(GrLiteral literal) {
     PsiElement firstChild = literal.getFirstChild();
     assert firstChild != null;
     return firstChild.getNode().getElementType();
