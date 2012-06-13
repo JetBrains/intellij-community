@@ -210,7 +210,7 @@ public class GitRootProblemNotifier {
     @Override
     public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        if (event.getDescription().equals("configure")) {
+        if (event.getDescription().equals("configure") && !myProject.isDisposed()) {
           ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
           Collection<VcsRootError> errorsAfterPossibleFix = GitRootProblemNotifier.getInstance(myProject).scan();
           if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
