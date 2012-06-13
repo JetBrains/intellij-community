@@ -39,7 +39,7 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -93,7 +93,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       }
     });
     synchronized (results) {
-      return PsiUtilBase.toPsiElementArray(results);
+      return PsiUtilCore.toPsiElementArray(results);
     }
   }
 
