@@ -28,8 +28,8 @@ import java.util.Set;
 public class ConditionInstruction extends InstructionImpl implements Instruction {
   private final Set<ConditionInstruction> myDependent = new HashSet<ConditionInstruction>();
 
-  public ConditionInstruction(@NotNull PsiElement element, int num) {
-    super(element, num);
+  public ConditionInstruction(@NotNull PsiElement element) {
+    super(element);
     myDependent.add(this);
   }
 

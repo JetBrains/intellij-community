@@ -16,21 +16,20 @@
 package org.jetbrains.plugins.groovy.codeInspection.unassignedVariable;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -62,7 +61,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
 
   protected void check(GrControlFlowOwner owner, ProblemsHolder problemsHolder) {
     Instruction[] flow = owner.getControlFlow();
-    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow);
+    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, true);
     for (ReadWriteVariableInstruction read : reads) {
       PsiElement element = read.getElement();
       if (element instanceof GroovyPsiElement) {
@@ -70,7 +69,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
         GroovyPsiElement property = ResolveUtil.resolveProperty((GroovyPsiElement) element, name);
         if (property != null && !(property instanceof PsiParameter) && !(property instanceof PsiField) &&
             PsiTreeUtil.isAncestor(owner, property, false) && !GppTypeConverter.hasTypedContext(element)) {
-          problemsHolder.registerProblem(element, GroovyInspectionBundle.message("unassigned.access.tooltip", name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          problemsHolder.registerProblem(element, GroovyInspectionBundle.message("unassigned.access.tooltip", name));
         }
       }
     }

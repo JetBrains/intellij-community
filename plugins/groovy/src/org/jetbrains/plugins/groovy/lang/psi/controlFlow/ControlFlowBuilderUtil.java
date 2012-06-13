@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
 
@@ -56,7 +57,7 @@ public class ControlFlowBuilderUtil {
     return currN;
   }
 
-  public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow) {
+  public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {
     List<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
     TObjectIntHashMap<String> namesIndex = buildNamesIndex(flow);
 
@@ -65,7 +66,7 @@ public class ControlFlowBuilderUtil {
     int[] postorder = postorder(flow);
     int[] invpostorder = invPostorder(postorder);
 
-    findReadsBeforeWrites(flow, definitelyAssigned, result, namesIndex, postorder, invpostorder);
+    findReadsBeforeWrites(flow, definitelyAssigned, result, namesIndex, postorder, invpostorder, onlyFirstRead);
     if (result.size() == 0) return ReadWriteVariableInstruction.EMPTY_ARRAY;
     return result.toArray(new ReadWriteVariableInstruction[result.size()]);
   }
@@ -97,28 +98,36 @@ public class ControlFlowBuilderUtil {
                                             List<ReadWriteVariableInstruction> result,
                                             TObjectIntHashMap<String> namesIndex,
                                             int[] postorder,
-                                            int[] invpostorder) {
+                                            int[] invpostorder,
+                                            boolean onlyFirstRead) {
     //skip instructions that are not reachable from the start
-    int start = 0;
-    while (invpostorder[start] != 0) start++;
+    int start = ArrayUtil.find(invpostorder, 0);
 
     for (int i = start; i < flow.length; i++) {
       int j = invpostorder[i];
       Instruction curr = flow[j];
       if (curr instanceof ReadWriteVariableInstruction) {
-        ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
-        int idx = namesIndex.get(readWriteInsn.getVariableName());
+        ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction) curr;
+        int name = namesIndex.get(rw.getVariableName());
         TIntHashSet vars = definitelyAssigned[j];
-        if (!readWriteInsn.isWrite()) {
-          if (vars == null || !vars.contains(idx)) {
-            result.add(readWriteInsn);
-          }
-        } else {
+        if (rw.isWrite()) {
           if (vars == null) {
             vars = new TIntHashSet();
             definitelyAssigned[j] = vars;
           }
-          vars.add(idx);
+          vars.add(name);
+        }
+        else {
+          if (vars == null || !vars.contains(name)) {
+            result.add(rw);
+            if (onlyFirstRead) {
+              if (vars == null) {
+                vars = new TIntHashSet();
+                definitelyAssigned[j] = vars;
+              }
+              vars.add(name);
+            }
+          }
         }
       }
 
@@ -132,20 +141,22 @@ public class ControlFlowBuilderUtil {
               succDefinitelyAssigned = new TIntHashSet();
               succDefinitelyAssigned.addAll(currArray);
               definitelyAssigned[succ.num()] = succDefinitelyAssigned;
-            } else {
+            }
+            else {
               succDefinitelyAssigned.retainAll(currArray);
             }
-          } else {
+          }
+          else {
             if (succDefinitelyAssigned != null) {
               succDefinitelyAssigned.clear();
-            } else {
+            }
+            else {
               succDefinitelyAssigned = new TIntHashSet();
               definitelyAssigned[succ.num()] = succDefinitelyAssigned;
             }
           }
         }
       }
-
     }
   }
 

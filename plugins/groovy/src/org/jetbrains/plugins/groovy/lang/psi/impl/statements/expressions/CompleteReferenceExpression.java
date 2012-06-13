@@ -369,6 +369,7 @@ public class CompleteReferenceExpression {
     private final boolean myFieldPointerOperator;
     private final boolean myMethodPointerOperator;
     private final boolean myIsMap;
+    private Set<String> myNonDeclaredVars = new com.intellij.util.containers.HashSet<String>();
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
@@ -427,6 +428,10 @@ public class CompleteReferenceExpression {
       PsiElement element = result.getElement();
       if (element instanceof PsiVariable && !myMatcher.prefixMatches(((PsiVariable)element).getName())) {
         return;
+      }
+      if (element instanceof GrReferenceExpression) {
+        String name = ((GrReferenceExpression)element).getName();
+        if (!myNonDeclaredVars.add(name)) return;
       }
 
       if (element instanceof GrReflectedMethod) {

@@ -26,8 +26,8 @@ public class AfterCallInstruction extends InstructionImpl {
   public final CallInstruction myCall;
   private ReturnInstruction myReturnInstruction;
 
-  public AfterCallInstruction(int num, CallInstruction call) {
-    super(null, num);
+  public AfterCallInstruction(CallInstruction call) {
+    super(null);
     this.myCall = call;
   }
 
