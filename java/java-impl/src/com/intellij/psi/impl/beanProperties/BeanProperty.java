@@ -28,6 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * Provide {@link com.intellij.refactoring.rename.BeanPropertyRenameHandler} if necessary.
+ */
 @Presentation(icon = "AllIcons.Nodes.Property")
 public class BeanProperty {
 
@@ -104,5 +107,4 @@ public class BeanProperty {
   public static BeanProperty createBeanProperty(@NotNull PsiMethod method) {
     return PropertyUtil.isSimplePropertyAccessor(method) ? new BeanProperty(method) : null;
   }
-
 }
