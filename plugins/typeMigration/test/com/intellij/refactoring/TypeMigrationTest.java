@@ -827,4 +827,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   public void testT135() throws Exception {
     doTestFieldType("foo", "Test", PsiType.LONG, PsiType.INT);
   }
+
+  public void testT136() throws Exception {
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    doTestFirstParamType("foo", "Test", 
+                         JavaPsiFacade.getInstance(myProject).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_INTEGER, scope),
+                         PsiType.getJavaLangString(myPsiManager, scope));
+  }
 }
