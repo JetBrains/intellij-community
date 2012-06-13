@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
+  public static ExtensionPointName<ReferencesSearch> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
   private static final ReferencesSearch INSTANCE = new ReferencesSearch();
 
   private ReferencesSearch() {
