@@ -186,9 +186,10 @@ public class InplaceEditingLayer extends JComponent {
       }
       else {
         grabFocus();
-        componentToFocus.requestFocusInWindow();
+        final JComponent finalComponentToFocus = componentToFocus;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
+            finalComponentToFocus.requestFocusInWindow();
             myFocusWatcher.install(myInplaceComponent);
           }
         });

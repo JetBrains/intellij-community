@@ -249,7 +249,7 @@ public final class GuiEditor extends JPanel implements DataProvider, ModuleProvi
     myGlassLayer.addFocusListener(new FocusListener() {
       public void focusGained(FocusEvent e) {
         myDecorationLayer.repaint();
-        fireSelectedComponentChanged();
+        //fireSelectedComponentChanged(); // EA-36478
       }
 
       public void focusLost(FocusEvent e) {

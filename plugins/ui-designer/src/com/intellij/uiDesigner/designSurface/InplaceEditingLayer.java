@@ -198,20 +198,28 @@ public final class InplaceEditingLayer extends JComponent{
     // 3. Add it into layer
     add(myInplaceEditorComponent);
     myInplaceEditorComponent.revalidate();
-    myInplaceEditorComponent.requestFocusInWindow();
 
     // 4. Request focus into proper component
     JComponent componentToFocus = myInplaceEditor.getPreferredFocusedComponent(myInplaceEditorComponent);
-    if(componentToFocus == null){
+    if (componentToFocus == null) {
       componentToFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myInplaceEditorComponent);
     }
-    if(componentToFocus != null){
-      componentToFocus.requestFocusInWindow();
+    if (componentToFocus == null) {
+      componentToFocus = myInplaceEditorComponent;
     }
-    else{
-      myInplaceEditorComponent.requestFocusInWindow();
+    if (componentToFocus.requestFocusInWindow()) {
+      myFocusWatcher.install(myInplaceEditorComponent);
     }
-    myFocusWatcher.install(myInplaceEditorComponent);
+    else {
+      grabFocus();
+      final JComponent finalComponentToFocus = componentToFocus;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          finalComponentToFocus.requestFocusInWindow();
+          myFocusWatcher.install(myInplaceEditorComponent);
+        }
+      });
+    }
 
     // 5. Block any mouse event to finish editing by any of them
     enableEvents(MouseEvent.MOUSE_EVENT_MASK);
