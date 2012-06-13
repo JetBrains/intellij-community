@@ -413,9 +413,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     List<GotoInstruction> negations = collectAndRemoveAllPendingNegations(expression);
 
+    InstructionImpl head = myHead;
     addPendingEdge(expression, addNodeAndCheckPending(new PositiveGotoInstruction(expression, cond)));
 
-    myHead = reduceAllNegationsIntoInstruction(expression, negations);
+    if (negations.isEmpty()) {
+      myHead = head;
+    }
+    else {
+      myHead = reduceAllNegationsIntoInstruction(expression, negations);
+    }
   }
 
   @Nullable
@@ -556,7 +562,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       addNodeAndCheckPending(new InstructionImpl(expression)); //collect all pending edges from left argument
       addPendingEdge(expression, myHead);
 
-      myHead = reduceAllNegationsIntoInstruction(expression, negations);
+      InstructionImpl head = reduceAllNegationsIntoInstruction(expression, negations);
+      if (head != null) myHead = head;
       //addNode(new NegatingGotoInstruction(expression, myInstructionNumber++, condition));
     }
     myConditions.removeFirstOccurrence(condition);
@@ -611,7 +618,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     myHead = reduceAllNegationsIntoInstruction(ifStatement, negations);
-    if (negations.isEmpty() && conditionEnd != null) {
+    if (myHead == null && conditionEnd != null) {
       myHead = conditionEnd;
     }
     if (elseBranch != null) {
@@ -785,6 +792,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     GrExpression elseBranch = expression.getElseBranch();
 
     condition.accept(this);
+    InstructionImpl conditionEnd = myHead;
     List<GotoInstruction> negations = collectAndRemoveAllPendingNegations(expression);
 
     if (thenBranch != null) {
@@ -794,7 +802,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     if (elseBranch != null) {
-      myHead = reduceAllNegationsIntoInstruction(expression, negations);
+      InstructionImpl head = reduceAllNegationsIntoInstruction(expression, negations);
+      myHead = head != null ? head : conditionEnd;
       elseBranch.accept(this);
       handlePossibleReturn(elseBranch);
     }
@@ -810,7 +819,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     addPendingEdge(expression, myHead);
 
     if (elseBranch != null) {
-      myHead = reduceAllNegationsIntoInstruction(expression, negations);
+      InstructionImpl head = reduceAllNegationsIntoInstruction(expression, negations);
+      if (head != null) myHead = head;
       elseBranch.accept(this);
       handlePossibleReturn(elseBranch);
     }
