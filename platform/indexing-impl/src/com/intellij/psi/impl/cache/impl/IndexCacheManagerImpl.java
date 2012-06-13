@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -84,7 +84,7 @@ public class IndexCacheManagerImpl implements CacheManager{
             final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
             @Override
             public boolean process(final VirtualFile file, final Integer value) {
-              ProgressManager.checkCanceled();
+              ProgressIndicatorProvider.checkCanceled();
               final int mask = value.intValue();
               if ((mask & occurrenceMask) != 0 && index.shouldBeFound(scope, file)) {
                 if (!fileProcessor.process(file)) return false;
@@ -124,7 +124,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     // If we do, deadlocks are possible (IDEADEV-42137). So first we obtain files with the word specified,
     // and then process them not holding indices' read lock.
     for (VirtualFile vFile : vFiles) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       if (!virtualFileProcessor.process(vFile)) {
         return false;
       }
