@@ -60,7 +60,7 @@ import java.util.ArrayList;
 public class ScopeEditorPanel {
 
   private JPanel myButtonsPanel;
-  private JTextField myPatternField;
+  private RawCommandLineEditor myPatternField;
   private JPanel myTreeToolbar;
   private final Tree myPackageTree;
   private JPanel myPanel;
@@ -107,20 +107,21 @@ public class ScopeEditorPanel {
       }
     };
 
+    myPatternField.setDialogCaption("Pattern");
     myPatternField.getDocument().addDocumentListener(new DocumentAdapter() {
       public void textChanged(DocumentEvent event) {
         onTextChange();
       }
     });
 
-    myPatternField.addCaretListener(new CaretListener() {
+    myPatternField.getTextField().addCaretListener(new CaretListener() {
       public void caretUpdate(CaretEvent e) {
         myCaretPosition = e.getDot();
         updateCaretPositionText();
       }
     });
 
-    myPatternField.addFocusListener(new FocusListener() {
+    myPatternField.getTextField().addFocusListener(new FocusListener() {
       public void focusGained(FocusEvent e) {
         if (myErrorMessage != null) {
           myPositionPanel.setVisible(true);
@@ -615,7 +616,7 @@ public class ScopeEditorPanel {
     if (requestFocus) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          myPatternField.requestFocusInWindow();
+          myPatternField.getTextField().requestFocusInWindow();
         }
       });
     }
