@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -52,8 +52,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
                                 EditorActionHandler originalHandler) {
     int offset = caretOffset.get();
     if (editor instanceof EditorWindow) {
-      file = InjectedLanguageUtil.getTopLevelFile(file);
-      editor = InjectedLanguageUtil.getTopLevelEditor(editor);
+      file = InjectedLanguageFacadeImpl.getTopLevelFile(file);
+      editor = InjectedLanguageFacadeImpl.getTopLevelEditor(editor);
       offset = editor.getCaretModel().getOffset();
     }
     if (!(file instanceof PyFile)) {
