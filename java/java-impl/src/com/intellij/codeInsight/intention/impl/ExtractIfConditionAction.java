@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -37,60 +38,41 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
-    if (ifStatement == null || ifStatement.getCondition() == null || !(ifStatement.getCondition() instanceof PsiBinaryExpression)) {
+    if (ifStatement == null || ifStatement.getCondition() == null) {
       return false;
     }
 
     final PsiExpression condition = ifStatement.getCondition();
 
-    if (condition == null || !(condition instanceof PsiBinaryExpression)) {
+    if (condition == null || !(condition instanceof PsiPolyadicExpression)) {
       return false;
     }
 
-    final PsiBinaryExpression binaryCondition = (PsiBinaryExpression)condition;
-    final PsiType expressionType = binaryCondition.getType();
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+    final PsiType expressionType = polyadicExpression.getType();
     if (expressionType == null || !PsiType.BOOLEAN.isAssignableFrom(expressionType)) {
       return false;
     }
 
-    final IElementType operation = binaryCondition.getOperationTokenType();
+    final IElementType operation = polyadicExpression.getOperationTokenType();
 
     if (operation != JavaTokenType.OROR && operation != JavaTokenType.ANDAND) {
       return false;
     }
 
-    final PsiExpression lOperand = binaryCondition.getLOperand();
-    final PsiExpression rOperand = binaryCondition.getROperand();
+    final PsiExpression operand = findOperand(element, polyadicExpression);
 
-    if (rOperand == null) {
+    if (operand == null) {
       return false;
     }
-
-    final TextRange lOperandTextRange = lOperand.getTextRange();
-    final TextRange rOperandTextRange = rOperand.getTextRange();
-    final TextRange elementTextRange = element.getTextRange();
-
-    if (lOperandTextRange == null || rOperandTextRange == null || elementTextRange == null) {
-      return false;
-    }
-
-    if (lOperandTextRange.contains(elementTextRange)) {
-      setText(CodeInsightBundle.message("intention.extract.if.condition.text", lOperand.getText()));
-      return true;
-    }
-
-    if (rOperandTextRange.contains(elementTextRange)) {
-      setText(CodeInsightBundle.message("intention.extract.if.condition.text", rOperand.getText()));
-      return true;
-    }
-
-    return false;
+    setText(CodeInsightBundle.message("intention.extract.if.condition.text", operand.getText()));
+    return true;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
-    if (ifStatement == null || ifStatement.getCondition() == null || !(ifStatement.getCondition() instanceof PsiBinaryExpression)) {
+    if (ifStatement == null) {
       return;
     }
 
@@ -112,35 +94,42 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
 
     final PsiExpression condition = ifStatement.getCondition();
 
-    if (condition == null || !(condition instanceof PsiBinaryExpression)) {
+    if (condition == null || !(condition instanceof PsiPolyadicExpression)) {
       return null;
     }
 
-    final PsiBinaryExpression binaryCondition = (PsiBinaryExpression)condition;
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
 
-    final PsiExpression lOperand = binaryCondition.getLOperand();
-    final PsiExpression rOperand = binaryCondition.getROperand();
+    final PsiExpression operand = findOperand(element, polyadicExpression);
 
-    if (rOperand == null) {
+    if (operand == null) {
       return null;
     }
 
-    final TextRange lOperandTextRange = lOperand.getTextRange();
-    final TextRange rOperandTextRange = rOperand.getTextRange();
-    final TextRange elementTextRange = element.getTextRange();
 
-    if (lOperandTextRange == null || rOperandTextRange == null) {
-      return null;
-    }
+    return create(
+      factory,
+      ifStatement.getThenBranch(), ifStatement.getElseBranch(),
+      operand,
+      removeOperand(factory, polyadicExpression, operand),
+      polyadicExpression.getOperationTokenType()
+    );
+  }
 
-    if (lOperandTextRange.contains(elementTextRange)) {
-      return create(factory, ifStatement.getThenBranch(), ifStatement.getElseBranch(), lOperand, rOperand, binaryCondition.getOperationTokenType());
+  @NotNull
+  private static PsiExpression removeOperand(@NotNull PsiElementFactory factory,
+                                             @NotNull PsiPolyadicExpression expression,
+                                             @NotNull PsiExpression operand) {
+    final StringBuilder sb = new StringBuilder();
+    for (PsiExpression e : expression.getOperands()) {
+      if (e == operand) continue;
+      final PsiJavaToken token = expression.getTokenBeforeOperand(e);
+      if (token != null && sb.length() != 0) {
+        sb.append(token.getText()).append(" ");
+      }
+      sb.append(e.getText());
     }
-    else if (rOperandTextRange.contains(elementTextRange)) {
-      return create(factory, ifStatement.getThenBranch(), ifStatement.getElseBranch(), rOperand, lOperand, binaryCondition.getOperationTokenType());
-    }
-
-    return null;
+    return factory.createExpressionFromText(sb.toString(), expression);
   }
 
   @Nullable
