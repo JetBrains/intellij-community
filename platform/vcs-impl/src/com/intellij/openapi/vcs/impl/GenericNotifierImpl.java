@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,17 +95,11 @@ public abstract class GenericNotifierImpl<T, Key> {
   }
 
   private void expireNotification(final MyNotification<T> notification) {
-    final Application application = ApplicationManager.getApplication();
-    final Runnable runnable = new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         notification.expire();
       }
-    };
-    if (application.isDispatchThread()) {
-      runnable.run();
-    } else {
-      application.invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
-    }
+    });
   }
 
   public boolean ensureNotify(final T obj) {
