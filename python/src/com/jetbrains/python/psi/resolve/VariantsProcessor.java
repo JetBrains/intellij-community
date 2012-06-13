@@ -17,7 +17,6 @@ import java.util.List;
 
 public abstract class VariantsProcessor implements PsiScopeProcessor {
   protected final PsiElement myContext;
-  protected String myNotice;
   protected Condition<PsiElement> myNodeFilter;
   protected Condition<String> myNameFilter;
 
@@ -34,10 +33,6 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     myContext = context;
     myNodeFilter = nodeFilter;
     myNameFilter = nameFilter;
-  }
-
-  public void setNotice(@Nullable String notice) {
-    myNotice = notice;
   }
 
   public boolean isPlainNamesOnly() {
