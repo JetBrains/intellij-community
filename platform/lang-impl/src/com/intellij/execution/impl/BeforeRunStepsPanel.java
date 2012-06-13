@@ -51,9 +51,9 @@ import java.util.Set;
  * @author Vassiliy Kudryashov
  */
 class BeforeRunStepsPanel extends JPanel {
-  private JCheckBox myShowSettingsBeforeRunCheckBox;
-  private JCheckBox mySingletonCheckBox;
-  private JBList myList;
+  private final JCheckBox myShowSettingsBeforeRunCheckBox;
+  private final JCheckBox mySingletonCheckBox;
+  private final JBList myList;
   private final CollectionListModel<BeforeRunTask> myModel;
   private RunConfiguration myRunConfiguration;
 
