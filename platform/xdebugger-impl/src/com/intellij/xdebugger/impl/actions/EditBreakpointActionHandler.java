@@ -53,6 +53,10 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
     GutterIconRenderer breakpointGutterRenderer = pair.first;
 
     if (breakpointGutterRenderer == null) return;
+    editBreakpoint(project, editor, breakpoint, breakpointGutterRenderer);
+  }
+
+  public void editBreakpoint(@NotNull Project project, @NotNull Editor editor, @NotNull Object breakpoint, @NotNull GutterIconRenderer breakpointGutterRenderer) {
     EditorGutterComponentEx gutterComponent = ((EditorEx)editor).getGutterComponentEx();
     Point point = gutterComponent.getPoint(breakpointGutterRenderer);
     if (point == null) return;

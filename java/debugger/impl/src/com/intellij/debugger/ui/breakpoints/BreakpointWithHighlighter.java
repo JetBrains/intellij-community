@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -49,6 +50,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -594,67 +596,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     }
   }
 
-  @NotNull
-  private ActionGroup createMenuActions() {
-    final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-    /**
-     * Used from Popup Menu
-     */
-    class RemoveAction extends AnAction {
-      @Nullable private Breakpoint myBreakpoint;
-
-      public RemoveAction(Breakpoint breakpoint) {
-        super(DebuggerBundle.message("action.remove.text"));
-        myBreakpoint = breakpoint;
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (myBreakpoint != null) {
-          breakpointManager.removeBreakpoint(myBreakpoint);
-          myBreakpoint = null;
-        }
-      }
-    }
-
-    /**
-     * Used from Popup Menu
-     */
-    class SetEnabledAction extends AnAction {
-      private final boolean myNewValue;
-      private final Breakpoint myBreakpoint;
-
-      public SetEnabledAction(Breakpoint breakpoint, boolean newValue) {
-        super(newValue ? DebuggerBundle.message("action.enable.text") : DebuggerBundle.message("action.disable.text"));
-        myBreakpoint = breakpoint;
-        myNewValue = newValue;
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        myBreakpoint.ENABLED = myNewValue;
-        breakpointManager.fireBreakpointChanged(myBreakpoint);
-        myBreakpoint.updateUI();
-      }
-    }
-
-
-    AnAction viewBreakpointsAction =
-      new ViewBreakpointsAction(ActionsBundle.actionText(XDebuggerActions.VIEW_BREAKPOINTS), this);
-
-    DefaultActionGroup group = new DefaultActionGroup();
-    RangeHighlighter highlighter = getHighlighter();
-    if (highlighter != null) {
-      group.add(new EditBreakpointAction());
-      group.addSeparator();
-    }
-    group.add(new SetEnabledAction(this, !ENABLED));
-    group.add(new RemoveAction(this));
-    group.addSeparator();
-    group.add(viewBreakpointsAction);
-    return group;
-  }
-
   private class MyGutterIconRenderer extends GutterIconRenderer {
     private final Icon myIcon;
     private final String myDescription;
@@ -699,7 +640,63 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
     @Override
     public ActionGroup getPopupMenuActions() {
-      return createMenuActions();
+      final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+      /**
+       * Used from Popup Menu
+       */
+      class RemoveAction extends AnAction {
+        @Nullable private Breakpoint myBreakpoint;
+
+        public RemoveAction(Breakpoint breakpoint) {
+          super(DebuggerBundle.message("action.remove.text"));
+          myBreakpoint = breakpoint;
+        }
+
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          if (myBreakpoint != null) {
+            breakpointManager.removeBreakpoint(myBreakpoint);
+            myBreakpoint = null;
+          }
+        }
+      }
+
+      /**
+       * Used from Popup Menu
+       */
+      class SetEnabledAction extends AnAction {
+        private final boolean myNewValue;
+        private final Breakpoint myBreakpoint;
+
+        public SetEnabledAction(Breakpoint breakpoint, boolean newValue) {
+          super(newValue ? DebuggerBundle.message("action.enable.text") : DebuggerBundle.message("action.disable.text"));
+          myBreakpoint = breakpoint;
+          myNewValue = newValue;
+        }
+
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myBreakpoint.ENABLED = myNewValue;
+          breakpointManager.fireBreakpointChanged(myBreakpoint);
+          myBreakpoint.updateUI();
+        }
+      }
+
+
+      AnAction viewBreakpointsAction =
+        new ViewBreakpointsAction(ActionsBundle.actionText(XDebuggerActions.VIEW_BREAKPOINTS), BreakpointWithHighlighter.this);
+
+      DefaultActionGroup group = new DefaultActionGroup();
+      RangeHighlighter highlighter = getHighlighter();
+      if (highlighter != null) {
+        group.add(new EditBreakpointAction.ContextAction(this, BreakpointWithHighlighter.this, DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class)));
+        group.addSeparator();
+      }
+      group.add(new SetEnabledAction(BreakpointWithHighlighter.this, !ENABLED));
+      group.add(new RemoveAction(BreakpointWithHighlighter.this));
+      group.addSeparator();
+      group.add(viewBreakpointsAction);
+      return group;
     }
 
     @Override
