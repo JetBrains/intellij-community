@@ -56,4 +56,8 @@ public interface RunnerAndConfigurationSettings {
   void setEditBeforeRun(boolean b);
 
   boolean isEditBeforeRun();
+
+  void setSingleton(boolean singleton);
+
+  boolean isSingleton();
 }

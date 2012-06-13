@@ -16,6 +16,7 @@
 
 package com.intellij.execution.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessAdapter;
@@ -33,13 +34,19 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -51,6 +58,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private final Project myProject;
 
   private RunContentManagerImpl myContentManager;
+  private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
+    new ArrayList<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>>();
 
   /**
    * reflection
@@ -157,6 +167,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           final RunContentDescriptor descriptor = starter.execute(project, executor, state, reuseContent, env);
 
           if (descriptor != null) {
+            myRunningConfigurations.add(Trinity.create(descriptor, env.getRunnerAndConfigurationSettings(), executor));
             ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor, reuseContent);
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null) {
@@ -191,6 +202,116 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           }
         }
       });
+    }
+  }
+
+  @Override
+  public void restartRunProfile(@NotNull final Project project,
+                                @NotNull final Executor executor,
+                                @NotNull final RunnerAndConfigurationSettings configuration) {
+    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
+    final RunManagerConfig config = runManager.getConfig();
+    final List<Pair<RunContentDescriptor, Executor>> pairs = getRunningDescriptors(configuration);
+
+    for (Pair<RunContentDescriptor, Executor> pair : pairs) {
+      ProcessHandler processHandler = pair.getFirst().getProcessHandler();
+      if (processHandler == null)
+        continue;
+      if (!processHandler.isProcessTerminated()) {
+        if (config.isRestartRequiresConfirmation()) {
+          DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+            @Override
+            public boolean isToBeShown() {
+              return config.isRestartRequiresConfirmation();
+            }
+
+            @Override
+            public void setToBeShown(boolean value, int exitCode) {
+              config.setRestartRequiresConfirmation(value);
+            }                                                                                  /**/
+
+            @Override
+            public boolean canBeHidden() {
+              return true;
+            }
+
+            @Override
+            public boolean shouldSaveOptionsOnCancel() {
+              return false;
+            }
+
+            @Override
+            public String getDoNotShowMessage() {
+              return CommonBundle.message("dialog.options.do.not.show");
+            }
+          };
+          if (Messages.OK != Messages.showOkCancelDialog(ExecutionBundle.message("rerun.confirmation.message", configuration.getName()),
+                                                         ExecutionBundle.message("rerun.confirmation.title") + " ("+pair.getSecond().getId()+")",
+                                                         CommonBundle.message("button.ok"),
+                                                         CommonBundle.message("button.cancel"),
+                                                         Messages.getQuestionIcon(), option)) {
+            return;
+          }
+        }
+        stop(processHandler);
+        for (
+          Iterator<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> iterator = myRunningConfigurations.iterator();
+          iterator.hasNext(); ) {
+          Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity = iterator.next();
+          if (trinity.getFirst() == pair.getFirst()) {
+            iterator.remove();
+            break;
+          }
+        }
+      }
+    }
+
+    if (pairs.isEmpty()) {
+      ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+      return;
+    }
+
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        for (Pair<RunContentDescriptor, Executor> pair : pairs) {
+          ProcessHandler processHandler = pair.getFirst().getProcessHandler();
+          if (processHandler == null)
+            continue;
+          if (!processHandler.isProcessTerminated()) {
+            awaitingTerminationAlarm.addRequest(this, 100);
+            return;
+          }
+        }
+        ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+      }
+    };
+    awaitingTerminationAlarm.addRequest(runnable, 100);
+  }
+
+  private List<Pair<RunContentDescriptor, Executor>> getRunningDescriptors(RunnerAndConfigurationSettings configuration) {
+    List<Pair<RunContentDescriptor, Executor>> result = new ArrayList<Pair<RunContentDescriptor, Executor>>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (trinity.getSecond() == configuration) {
+        result.add(Pair.create(trinity.getFirst(), trinity.getThird()));
+      }
+    }
+    return result;
+  }
+
+
+
+  private static void stop(ProcessHandler processHandler) {
+    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
+      ((KillableProcess)processHandler).killProcess();
+      return;
+    }
+
+    if (processHandler.detachIsDefault()) {
+      processHandler.detachProcess();
+    }
+    else {
+      processHandler.destroyProcess();
     }
   }
 

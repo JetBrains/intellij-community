@@ -55,6 +55,11 @@ public class UnknownConfigurationType implements ConfigurationType {
       public RunConfiguration createTemplateConfiguration(final Project project) {
         return new UnknownRunConfiguration(this, project);
       }
+
+      @Override
+      public boolean canConfigurationBeSingleton() {
+        return false;
+      }
     }};
   }
 }

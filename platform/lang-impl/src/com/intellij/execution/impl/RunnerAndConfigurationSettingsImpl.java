@@ -59,6 +59,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
   private static final String TEMPORARY_ATTRIBUTE = "temporary";
   @NonNls
   private static final String EDIT_BEFORE_RUN = "editBeforeRun";
+  @NonNls
+  private static final String SINGLETON = "singleton";
 
 
   /** for compatibility */
@@ -77,6 +79,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   private boolean myTemporary;
   private boolean myEditBeforeRun;
+  private boolean mySingleton;
 
   public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
     myManager = manager;
@@ -136,6 +139,16 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     return myEditBeforeRun;
   }
 
+  @Override
+  public void setSingleton(boolean singleton) {
+    mySingleton = singleton;
+  }
+
+  @Override
+  public boolean isSingleton() {
+    return mySingleton;
+  }
+
   @Nullable
   private ConfigurationFactory getFactory(final Element element) {
     final String typeName = element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE);
@@ -147,6 +160,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     myIsTemplate = Boolean.valueOf(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE)).booleanValue();
     myTemporary = Boolean.valueOf(element.getAttributeValue(TEMPORARY_ATTRIBUTE)).booleanValue() || TEMP_CONFIGURATION.equals(element.getName());
     myEditBeforeRun = Boolean.valueOf(element.getAttributeValue(EDIT_BEFORE_RUN)).booleanValue();
+    mySingleton = Boolean.valueOf(element.getAttributeValue(SINGLETON)).booleanValue();
 
     final ConfigurationFactory factory = getFactory(element);
     if (factory == null) return;
@@ -208,6 +222,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
       element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
 
       if (isEditBeforeRun()) element.setAttribute(EDIT_BEFORE_RUN, String.valueOf(true));
+      if (isSingleton()) element.setAttribute(SINGLETON, String.valueOf(true));
       if (myTemporary) {
         element.setAttribute(TEMPORARY_ATTRIBUTE, Boolean.toString(myTemporary));
       }

@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -40,6 +42,8 @@ import java.util.*;
  */
 public class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ExecutorRegistryImpl");
+  private static final Icon STOP_AND_START_ICON = IconLoader.getIcon("/actions/restart.png");
+
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
   @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroup";
@@ -240,7 +244,11 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       if (configuration == null) {
         return;
       }
-      ProgramRunnerUtil.executeConfiguration(project, configuration, myExecutor);
+      if (configuration.isSingleton()) {
+        ExecutionManager.getInstance(project).restartRunProfile(project, myExecutor, configuration);
+      } else {
+        ProgramRunnerUtil.executeConfiguration(project, configuration, myExecutor);
+      }
     }
   }
 }
