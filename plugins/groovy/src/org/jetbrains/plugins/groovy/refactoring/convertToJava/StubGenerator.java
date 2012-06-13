@@ -20,13 +20,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightMirrorMethod;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -278,7 +278,16 @@ public class StubGenerator implements ClassItemGenerator {
   @Override
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    ContainerUtil.addAll(methods, typeDefinition.getMethods());
+    for (PsiMethod method : typeDefinition.getMethods()) {
+      if (method instanceof LightMirrorMethod) {
+        PsiMethod prototype = ((LightMirrorMethod)method).getPrototype();
+        PsiClass aClass = prototype.getContainingClass();
+        if (prototype.hasModifierProperty(PsiModifier.FINAL) && aClass != null && typeDefinition.isInheritor(aClass, true)) {
+          continue; //skip final super methods
+        }
+      }
+      methods.add(method);
+    }
     if (classDef) {
       final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
       for (MethodSignature signature : toOverride) {
