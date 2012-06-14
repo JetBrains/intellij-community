@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,11 +71,30 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   public void update(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Change[] changes = e.getData(getChangesKey());
 
     final Presentation presentation = e.getPresentation();
-    presentation.setVisible(VcsDataKeys.CHANGES.getData(dataContext) != null);
-    presentation.setEnabled(enabled(project, changes));
+    final Change[] data = VcsDataKeys.CHANGES.getData(dataContext);
+    boolean showAction = checkThatChangesAreUnderSvn(data);
+    presentation.setVisible(data != null && showAction);
+    presentation.setEnabled(showAction);
+  }
+
+  private boolean checkThatChangesAreUnderSvn(Change[] data) {
+    boolean showAction = false;
+    if (data != null) {
+      for (Change change : data) {
+        final ContentRevision before = change.getBeforeRevision();
+        if (before != null) {
+          showAction = showAction || before instanceof MarkerVcsContentRevision && SvnVcs.getKey().equals(((MarkerVcsContentRevision)before).getVcsKey());
+        }
+        final ContentRevision after = change.getAfterRevision();
+        if (after != null) {
+          showAction = showAction || after instanceof MarkerVcsContentRevision && SvnVcs.getKey().equals(((MarkerVcsContentRevision)after).getVcsKey());
+        }
+        if (showAction) break;
+      }
+    }
+    return showAction;
   }
 
   private boolean enabled(final Project project, final Change[] changes) {
@@ -107,7 +127,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Change[] changes = e.getData(getChangesKey());
 
-    if (! enabled(project, changes)) {
+    if (! checkThatChangesAreUnderSvn(changes)) {
       return;
     }
 
