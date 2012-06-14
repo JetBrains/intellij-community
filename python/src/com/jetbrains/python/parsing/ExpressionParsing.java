@@ -533,10 +533,18 @@ public class ExpressionParsing extends Parsing {
       myBuilder.advanceLexer();
       if (myBuilder.getTokenType() == PyTokenTypes.FROM_KEYWORD) {
         myBuilder.advanceLexer();
+        final boolean parsed = parseTupleExpression(false, isTargetExpression, false);
+        if (!parsed) {
+          myBuilder.error(message("PARSE.expected.expression"));
+        }
+        yieldExpr.done(PyElementTypes.YIELD_EXPRESSION);
+        return parsed;
       }
-      parseTupleExpression(false, isTargetExpression, false);
-      yieldExpr.done(PyElementTypes.YIELD_EXPRESSION);
-      return true;
+      else {
+        parseTupleExpression(false, isTargetExpression, false);
+        yieldExpr.done(PyElementTypes.YIELD_EXPRESSION);
+        return true;
+      }
     }
     else {
       return parseTupleExpression(false, isTargetExpression, false);
