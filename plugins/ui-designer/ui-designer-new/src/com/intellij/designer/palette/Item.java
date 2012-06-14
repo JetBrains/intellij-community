@@ -29,7 +29,7 @@ import javax.swing.*;
 /**
  * @author Alexander Lobas
  */
-public final class Item implements PaletteItem {
+public final class Item implements PaletteItem, com.intellij.designer.palette2.PaletteItem {
   private String myTitle;
   private String myIconPath;
   private Icon myIcon;
@@ -52,6 +52,11 @@ public final class Item implements PaletteItem {
       myIcon = IconLoader.findIcon(myIconPath, myMetaModel.getModel());
     }
     return myIcon;
+  }
+
+  @Override
+  public String getTooltip() {
+    return myTooltip;
   }
 
   @Override

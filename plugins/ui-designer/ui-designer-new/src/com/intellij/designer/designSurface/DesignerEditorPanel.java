@@ -24,6 +24,8 @@ import com.intellij.designer.designSurface.tools.*;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
+import com.intellij.designer.palette2.PaletteGroup;
+import com.intellij.designer.palette2.PaletteItem;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.diagnostic.LogMessageEx;
@@ -334,6 +336,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
     };
     mySurfaceArea.addSelectionListener(mySourceSelectionListener);
+  }
+
+  public void activatePaletteItem(@Nullable PaletteItem item) {
+    // XXX
   }
 
   protected final void showDesignerCard() {
@@ -690,6 +696,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected abstract boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties);
 
   protected abstract void execute(List<EditOperation> operations);
+
+  public List<PaletteGroup> getPaletteGroups() {
+    // XXX
+    return null;
+  }
 
   @NotNull
   protected abstract ComponentCreationFactory createCreationFactory(Item paletteItem);

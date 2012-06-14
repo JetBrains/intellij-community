@@ -22,19 +22,11 @@ import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -44,8 +36,6 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,62 +48,22 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Alexander Lobas
  */
-public final class DesignerToolWindowManager implements ProjectComponent {
-  private final MergingUpdateQueue myWindowQueue = new MergingUpdateQueue("designer.components.properties", 200, true, null);
-  private final Project myProject;
-  private final FileEditorManager myFileEditorManager;
-  private ToolWindow myToolWindow;
+public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   private Splitter myToolWindowPanel;
   private ComponentTree myComponentTree;
   private ComponentTreeBuilder myTreeBuilder;
   private PropertyTablePanel myPropertyTablePanel;
-  private boolean myToolWindowReady;
-  private boolean myToolWindowDisposed;
 
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
-    myProject = project;
-    myFileEditorManager = fileEditorManager;
-    project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
-        bindToDesigner(getActiveDesigner());
-      }
-
-      @Override
-      public void fileClosed(FileEditorManager source, VirtualFile file) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            bindToDesigner(getActiveDesigner());
-          }
-        });
-      }
-
-      @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
-        bindToDesigner(getDesigner(event.getNewEditor()));
-      }
-    });
+    super(project, fileEditorManager);
   }
 
-  @Override
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myToolWindowReady = true;
-      }
-    });
-  }
 
   @Override
-  public void projectClosed() {
-    if (!myToolWindowDisposed) {
-      myToolWindowDisposed = true;
-      clearTreeBuilder();
-      myComponentTree = null;
-      myPropertyTablePanel = null;
-      myToolWindow = null;
-    }
+  public void disposeComponent() {
+    clearTreeBuilder();
+    myComponentTree = null;
+    myPropertyTablePanel = null;
   }
 
   private void clearTreeBuilder() {
@@ -153,55 +103,26 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     }
   }
 
-  @Nullable
-  private static DesignerEditorPanel getDesigner(FileEditor editor) {
-    if (editor instanceof DesignerEditor) {
-      DesignerEditor designerEditor = (DesignerEditor)editor;
-      return designerEditor.getDesignerPanel();
+  @Override
+  protected void updateToolWindow(@Nullable DesignerEditorPanel designer) {
+    clearTreeBuilder();
+    myComponentTree.newModel();
+    if (designer == null) {
+      myComponentTree.setDesignerPanel(null);
+      myPropertyTablePanel.getPropertyTable().setArea(null, null);
+      myToolWindow.setAvailable(false, null);
     }
-    return null;
+    else {
+      myComponentTree.setDesignerPanel(designer);
+      myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
+      myPropertyTablePanel.getPropertyTable().setArea(designer, myTreeBuilder.getTreeArea());
+      myToolWindow.setAvailable(true, null);
+      myToolWindow.show(null);
+    }
   }
 
-  @Nullable
-  public DesignerEditorPanel getActiveDesigner() {
-    FileEditor[] editors = myFileEditorManager.getSelectedEditors();
-    // TODO: check all editors instead first
-    return editors.length > 0 ? getDesigner(editors[0]) : null;
-  }
-
-  private void bindToDesigner(final DesignerEditorPanel designer) {
-    myWindowQueue.cancelAllUpdates();
-    myWindowQueue.queue(new Update("update") {
-      @Override
-      public void run() {
-        if (!myToolWindowReady || myToolWindowDisposed) {
-          return;
-        }
-        if (myToolWindow == null) {
-          if (designer == null) {
-            return;
-          }
-          initToolWindow();
-        }
-        clearTreeBuilder();
-        myComponentTree.newModel();
-        if (designer == null) {
-          myComponentTree.setDesignerPanel(null);
-          myPropertyTablePanel.getPropertyTable().setArea(null, null);
-          myToolWindow.setAvailable(false, null);
-        }
-        else {
-          myComponentTree.setDesignerPanel(designer);
-          myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
-          myPropertyTablePanel.getPropertyTable().setArea(designer, myTreeBuilder.getTreeArea());
-          myToolWindow.setAvailable(true, null);
-          myToolWindow.show(null);
-        }
-      }
-    });
-  }
-
-  private void initToolWindow() {
+  @Override
+  protected void initToolWindow() {
     myComponentTree = new ComponentTree();
     JScrollPane treeScrollPane = ScrollPaneFactory.createScrollPane(myComponentTree);
     treeScrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
@@ -261,14 +182,6 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     };
 
     return new AnAction[]{expandAll, collapseAll};
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   @NotNull
