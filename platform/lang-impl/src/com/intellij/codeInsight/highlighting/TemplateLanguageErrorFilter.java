@@ -19,18 +19,23 @@ import com.intellij.lang.Language;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
 public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
-  private final IElementType myTemplateExpressionStart;
+  @NotNull
+  private final TokenSet myTemplateExpressionStartTokens;
+  @NotNull
   private final Class myTemplateFileViewProviderClass;
 
-  protected TemplateLanguageErrorFilter(IElementType templateExpressionStart, Class templateFileViewProviderClass) {
-    myTemplateExpressionStart = templateExpressionStart;
+  protected TemplateLanguageErrorFilter(
+    final @NotNull TokenSet templateExpressionStartTokens,
+    final @NotNull Class templateFileViewProviderClass)
+  {
+    myTemplateExpressionStartTokens = TokenSet.create(templateExpressionStartTokens.getTypes());
     myTemplateFileViewProviderClass = templateFileViewProviderClass;
   }
 
@@ -45,7 +50,7 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     final Language css = Language.findLanguageByID("CSS");
     if (javaScript != null && parentLanguage.is(javaScript) || css != null && parentLanguage.is(css)) {
       final PsiElement next = viewProvider.findElementAt(element.getTextOffset() + 1, viewProvider.getBaseLanguage());
-      if (next != null && next.getNode().getElementType() == myTemplateExpressionStart) {
+      if (next != null && myTemplateExpressionStartTokens.contains(next.getNode().getElementType())) {
         return false;
       }
     }
