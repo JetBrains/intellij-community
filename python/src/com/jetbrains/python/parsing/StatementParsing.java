@@ -340,7 +340,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       }
       else if (myBuilder.getTokenType() == PyTokenTypes.FROM_KEYWORD) {
         myBuilder.advanceLexer();
-        getExpressionParser().parseSingleExpression(false);
+        if (!getExpressionParser().parseSingleExpression(false)) {
+          myBuilder.error("Expression expected");
+        }
       }
     }
     checkEndOfStatement(inSuite);
