@@ -33,6 +33,7 @@ public abstract class AbstractPackageSet extends PackageSetBase {
     myPriority = priority;
   }
 
+  @NotNull
   public AbstractPackageSet createCopy() {
     return this;
   }
@@ -41,6 +42,7 @@ public abstract class AbstractPackageSet extends PackageSetBase {
     return myPriority;
   }
 
+  @NotNull
   @Override
   public String getText() {
     return myText;
