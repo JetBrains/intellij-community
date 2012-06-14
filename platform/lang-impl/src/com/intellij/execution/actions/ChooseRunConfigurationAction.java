@@ -161,6 +161,12 @@ public class ChooseRunConfigurationAction extends AnAction {
       }
     });
 
+    popup.registerAction("deleteConfiguration_bksp", KeyStroke.getKeyStroke("BACK_SPACE"), new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        popup.removeSelected();
+      }
+    });
+
     final Action action0 = createNumberAction(0, popup, getDefaultExecutor());
     final Action action0_ = createNumberAction(0, popup, getAlternateExecutor());
     popup.registerAction("0Action", KeyStroke.getKeyStroke("0"), action0);

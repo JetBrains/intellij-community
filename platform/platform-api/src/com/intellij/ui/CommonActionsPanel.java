@@ -166,7 +166,7 @@ public class CommonActionsPanel extends JPanel {
         }
         removeButton.update(e);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE"), removeButton.getContextComponent());
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), removeButton.getContextComponent());
   }
 
   public void setEnabled(Buttons button, boolean enabled) {

@@ -35,7 +35,7 @@ class DeleteBookmarkAction extends DumbAwareAction {
     super("Delete", "Delete current bookmark", AllIcons.General.Remove);
     myProject = project;
     myList = list;
-    registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("DELETE")), list);
+    registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), list);
   }
 
   @Override
