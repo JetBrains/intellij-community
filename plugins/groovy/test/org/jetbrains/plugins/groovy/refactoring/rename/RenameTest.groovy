@@ -573,4 +573,23 @@ class Java {
     }
 
   }
+
+  void testTupleConstructor() {
+    myFixture.with {
+      configureByText('a.groovy', '''\
+import groovy.transform.TupleConstructor
+
+@TupleConstructor
+class X<caret>x {}
+''')
+
+    renameElementAtCaret('Yy')
+    checkResult("""\
+import groovy.transform.TupleConstructor
+
+@TupleConstructor
+class Y<caret>y {}
+""")
+    }
+  }
 }

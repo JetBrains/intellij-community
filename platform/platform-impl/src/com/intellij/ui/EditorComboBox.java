@@ -215,6 +215,20 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(objects)));
   }
 
+  public void appendItem(String item) {
+    ArrayList<Object> objects = new ArrayList<Object>();
+
+    int count = getItemCount();
+    for (int i = 0; i < count; i++) {
+      objects.add(getItemAt(i));
+    }
+
+    if (!objects.contains(item)) {
+      objects.add(item);
+    }
+    setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(objects)));
+  }
+
   private class MyEditor implements ComboBoxEditor {
     public void addActionListener(ActionListener l) {
     }

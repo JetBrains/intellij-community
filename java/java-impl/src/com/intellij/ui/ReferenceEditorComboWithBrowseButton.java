@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
                                               @NotNull final Project project,
                                               boolean toAcceptClasses,
                                               final JavaCodeFragment.VisibilityChecker visibilityChecker, final String recentsKey) {
-    super(new EditorComboBox(createDocument(text, project, toAcceptClasses, visibilityChecker), project, StdFileTypes.JAVA),
+    super(new EditorComboBox(createDocument(StringUtil.isEmpty(text) ? "" : text, project, toAcceptClasses, visibilityChecker), project, StdFileTypes.JAVA),
           browseActionListener);
     final List<String> recentEntries = RecentsManager.getInstance(project).getRecentEntries(recentsKey);
     if (recentEntries != null) {
@@ -81,5 +82,9 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
 
   public void prependItem(String item) {
     getChildComponent().prependItem(item);
+  }
+
+  public void appendItem(String item) {
+    getChildComponent().appendItem(item);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -74,8 +75,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTryStatement)) {
@@ -93,10 +93,8 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           variables.add(variable);
         }
       }
-      final PsiElementFactory factory =
-        JavaPsiFacade.getElementFactory(project);
-      @NonNls final StringBuilder newTryStatementText =
-        new StringBuilder("try (");
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      @NonNls final StringBuilder newTryStatementText = new StringBuilder("try (");
       final Set<Integer> unwantedChildren = new HashSet(2);
       boolean separator = false;
       for (PsiLocalVariable variable : variables) {
@@ -120,19 +118,17 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           newTryStatementText.append(initializer.getText());
         }
         else {
-          final int index = findInitialization(tryBlockChildren,
-                                               variable, hasInitializer);
+          final int index = findInitialization(tryBlockChildren, variable, hasInitializer);
           if (index < 0) {
             return;
           }
           unwantedChildren.add(Integer.valueOf(index));
-          final PsiExpressionStatement expressionStatement =
-            (PsiExpressionStatement)tryBlockChildren[index];
-          final PsiAssignmentExpression assignmentExpression =
-            (PsiAssignmentExpression)
-              expressionStatement.getExpression();
-          final PsiExpression rhs =
-            assignmentExpression.getRExpression();
+          final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)tryBlockChildren[index];
+          if (expressionStatement.getNextSibling() instanceof PsiWhiteSpace) {
+            unwantedChildren.add(Integer.valueOf(index + 1));
+          }
+          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expressionStatement.getExpression();
+          final PsiExpression rhs = assignmentExpression.getRExpression();
           if (rhs == null) {
             return;
           }
@@ -145,16 +141,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       for (int i = 1; i < tryBlockStatementsLength; i++) {
         final PsiElement child = tryBlockChildren[i];
         if (unwantedChildren.contains(Integer.valueOf(i))) {
-          if (child.getNextSibling() instanceof PsiWhiteSpace) {
-            i++;
-          }
           continue;
         }
         newTryStatementText.append(child.getText());
       }
       newTryStatementText.append('}');
-      final PsiCatchSection[] catchSections =
-        tryStatement.getCatchSections();
+      final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
       for (PsiCatchSection catchSection : catchSections) {
         newTryStatementText.append(catchSection.getText());
       }
@@ -167,17 +159,17 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       for (int i = 1; i < finallyChildrenLength; i++) {
         final PsiElement child = finallyChildren[i];
         if (isCloseStatement(child, variables)) {
-          if (child.getNextSibling() instanceof PsiWhiteSpace) {
-            i++;
-          }
           continue;
         }
         if (!appended) {
-          if (child instanceof PsiWhiteSpace ||
-              child instanceof PsiComment) {
+          if (child instanceof PsiComment) {
+            final PsiElement prevSibling = child.getPrevSibling();
+            if (prevSibling instanceof PsiWhiteSpace) {
+              savedComments.add(prevSibling);
+            }
             savedComments.add(child);
           }
-          else {
+          else if (!(child instanceof PsiWhiteSpace)) {
             newTryStatementText.append(" finally {");
             for (PsiElement savedComment : savedComments) {
               newTryStatementText.append(savedComment.getText());
@@ -204,9 +196,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           parent1.addAfter(savedComment, tryStatement);
         }
       }
-      final PsiStatement newTryStatement =
-        factory.createStatementFromText(
-          newTryStatementText.toString(), element);
+      final PsiStatement newTryStatement = factory.createStatementFromText(newTryStatementText.toString(), element);
       tryStatement.replace(newTryStatement);
     }
 
@@ -404,6 +394,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return variables;
   }
 
+  @Nullable
   static PsiLocalVariable findAutoCloseableVariable(
     PsiStatement statement) {
     if (statement instanceof PsiIfStatement) {

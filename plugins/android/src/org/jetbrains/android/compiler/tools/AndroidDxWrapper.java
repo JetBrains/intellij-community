@@ -29,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.android.compiler.AndroidDexCompilerConfiguration;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
@@ -51,9 +50,12 @@ public class AndroidDxWrapper {
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public static Map<AndroidCompilerMessageKind, List<String>> execute(@NotNull Module module,
-                                                                   @NotNull IAndroidTarget target,
-                                                                   @NotNull String outputDir,
-                                                                   @NotNull String[] compileTargets) {
+                                                                      @NotNull IAndroidTarget target,
+                                                                      @NotNull String outputDir,
+                                                                      @NotNull String[] compileTargets,
+                                                                      @NotNull String additionalVmParams,
+                                                                      int maxHeapSize,
+                                                                      boolean optimize) {
     String outFile = outputDir + File.separatorChar + AndroidCommonUtils.CLASSES_FILE_NAME;
 
     final Map<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>(2);
@@ -82,18 +84,17 @@ public class AndroidDxWrapper {
     ParametersList programParamList = parameters.getProgramParametersList();
     programParamList.add(dxJarPath);
     programParamList.add(outFile);
+    programParamList.add("--optimize", Boolean.toString(optimize));
     programParamList.addAll(compileTargets);
     programParamList.add("--exclude");
 
     ParametersList vmParamList = parameters.getVMParametersList();
 
-    AndroidDexCompilerConfiguration configuration = AndroidDexCompilerConfiguration.getInstance(module.getProject());
-    String additionalVmParams = configuration.VM_OPTIONS;
     if (additionalVmParams.length() > 0) {
       vmParamList.addParametersString(additionalVmParams);
     }
     if (!hasXmxParam(vmParamList)) {
-      vmParamList.add("-Xmx" + configuration.MAX_HEAP_SIZE + "M");
+      vmParamList.add("-Xmx" + maxHeapSize + "M");
     }
     final PathsList classPath = parameters.getClassPath();
     classPath.add(PathUtil.getJarPathForClass(AndroidDxRunner.class));

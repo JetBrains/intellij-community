@@ -27,7 +27,6 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.icons.AllIcons;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -173,7 +172,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           profile.setLocal(true);
           profile.initInspectionTools(null);
           profile.setModified(true);
-          if (myPanels.get(profile.getName()) != null) {
+          if (getProfilePanel(profile) != null) {
             if (Messages.showOkCancelDialog(myWholePanel, "Profile with name \'" + profile.getName() + "\' already exists. Do you want to overwrite it?", "Warning", Messages.getInformationIcon()) != DialogWrapper.OK_EXIT_CODE) return;
           }
           addProfile((InspectionProfileImpl)profile.getModifiableModel());
@@ -247,7 +246,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     if (!myPanels.containsKey(modelName)) {
       ((DefaultComboBoxModel)myProfiles.getModel()).addElement(model);
     }
-    myPanels.put(modelName, panel);
+    putProfile(model, panel);
     myProfiles.setSelectedItem(model);
   }
 
@@ -281,7 +280,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void customize(final JList list, final Profile value, final int index, final boolean selected, final boolean hasFocus) {
         final String profileName = value.getName();
         setText(profileName);
-        final SingleInspectionProfilePanel panel = myPanels.get(profileName);
+        final SingleInspectionProfilePanel panel = getProfilePanel(value);
         setIcon(panel != null && panel.isProfileShared() ? Profile.PROJECT_PROFILE : Profile.LOCAL_PROFILE);
       }
     });
@@ -320,15 +319,36 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   }
 
   public void apply() throws ConfigurationException {
-    for (final Iterator<String> it = myPanels.keySet().iterator(); it.hasNext();) {
-      final String name = it.next();
+    final Map<String, SingleInspectionProfilePanel> panels = new LinkedHashMap<String, SingleInspectionProfilePanel>();
+    for (final String name : myPanels.keySet()) {
       if (myDeletedProfiles.remove(name)) {
         deleteProfile(name);
-        it.remove();
-      } else {
-        myPanels.get(name).apply();
+      }
+      else {
+        final SingleInspectionProfilePanel panel = getProfilePanel(name);
+        panel.apply();
+        final ModifiableModel profile = panel.getSelectedProfile();
+        panels.put(getProfilePrefix(profile) + profile.getName(), panel);
       }
     }
+    myPanels.clear();
+    myPanels.putAll(panels);
+  }
+
+  private SingleInspectionProfilePanel getProfilePanel(String name) {
+    return myPanels.get(name);
+  }
+
+  private SingleInspectionProfilePanel getProfilePanel(Profile inspectionProfile) {
+    return getProfilePanel(getProfilePrefix(inspectionProfile) + inspectionProfile.getName());
+  }
+
+  private void putProfile(Profile profile, SingleInspectionProfilePanel panel) {
+    myPanels.put(getProfilePrefix(profile) + profile.getName(), panel);
+  }
+
+  private static String getProfilePrefix(Profile profile) {
+    return (profile.isLocal() ? "L" : "S");
   }
 
   protected void deleteProfile(String name) {
@@ -349,7 +369,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       model.addElement(profile);
       final String profileName = profile.getName();
       final SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(myProjectProfileManager, profileName, ((InspectionProfileImpl)profile).getModifiableModel());
-      myPanels.put(profileName, panel);
+      putProfile(profile, panel);
       myPanel.add(profileName, panel);
     }
     final InspectionProfileImpl inspectionProfile = getCurrentProfile();
@@ -426,7 +446,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   public void selectInspectionTool(String selectedToolShortName) {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
     assert inspectionProfile != null : configuredProfiles();
-    final SingleInspectionProfilePanel panel = myPanels.get(inspectionProfile.getName());
+    final SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
     LOG.assertTrue(panel != null, "No settings panel for: " + inspectionProfile.getName() + "; " + configuredProfiles());
     panel.selectInspectionTool(selectedToolShortName);
   }
@@ -434,7 +454,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   protected SingleInspectionProfilePanel getSelectedPanel() {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
     assert inspectionProfile != null : configuredProfiles();
-    return myPanels.get(inspectionProfile.getName());
+    return getProfilePanel(inspectionProfile);
   }
 
   private String configuredProfiles() {
@@ -453,6 +473,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   public JComponent getPreferredFocusedComponent() {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
     assert inspectionProfile != null : configuredProfiles();
-    return myPanels.get(inspectionProfile.getName()).getTree();
+    return getProfilePanel(inspectionProfile).getTree();
   }
 }
