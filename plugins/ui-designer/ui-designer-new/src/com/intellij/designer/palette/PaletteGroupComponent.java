@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.palette2;
+package com.intellij.designer.palette;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.util.ui.UIUtil;
@@ -28,12 +28,9 @@ import java.awt.event.KeyEvent;
  * @author Alexander Lobas
  */
 public class PaletteGroupComponent extends JCheckBox {
-  private final PaletteGroup myGroup;
   private PaletteItemsComponent myItemsComponent;
 
   public PaletteGroupComponent(PaletteGroup group) {
-    myGroup = group;
-
     setText(group.getName());
     setSelected(true);
     setIcon(AllIcons.Nodes.TreeClosed);

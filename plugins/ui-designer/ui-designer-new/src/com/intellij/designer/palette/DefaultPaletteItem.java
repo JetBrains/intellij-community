@@ -16,20 +16,14 @@
 package com.intellij.designer.palette;
 
 import com.intellij.designer.model.MetaModel;
-import com.intellij.ide.dnd.DnDDragStartBean;
-import com.intellij.ide.palette.PaletteItem;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
 
 /**
  * @author Alexander Lobas
  */
-public final class Item implements PaletteItem, com.intellij.designer.palette2.PaletteItem {
+public final class DefaultPaletteItem implements PaletteItem {
   private String myTitle;
   private String myIconPath;
   private Icon myIcon;
@@ -37,16 +31,18 @@ public final class Item implements PaletteItem, com.intellij.designer.palette2.P
 
   private MetaModel myMetaModel;
 
-  public Item(String title, String iconPath, String tooltip) {
+  public DefaultPaletteItem(String title, String iconPath, String tooltip) {
     myTitle = title;
     myIconPath = iconPath;
     myTooltip = tooltip;
   }
 
+  @Override
   public String getTitle() {
     return myTitle;
   }
 
+  @Override
   public Icon getIcon() {
     if (myIcon == null) {
       myIcon = IconLoader.findIcon(myIconPath, myMetaModel.getModel());
@@ -57,28 +53,6 @@ public final class Item implements PaletteItem, com.intellij.designer.palette2.P
   @Override
   public String getTooltip() {
     return myTooltip;
-  }
-
-  @Override
-  public void customizeCellRenderer(ColoredListCellRenderer cellRenderer, boolean selected, boolean hasFocus) {
-    cellRenderer.setIcon(getIcon());
-    cellRenderer.append(myTitle, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    cellRenderer.setToolTipText(myTooltip);
-  }
-
-  @Override
-  public DnDDragStartBean startDragging() {
-    return null;
-  }
-
-  @Override
-  public ActionGroup getPopupActionGroup() {
-    return null; // TODO: Auto-generated method stub
-  }
-
-  @Override
-  public Object getData(Project project, String dataId) {
-    return null; // TODO: Auto-generated method stub
   }
 
   public MetaModel getMetaModel() {

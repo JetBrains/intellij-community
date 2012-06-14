@@ -13,21 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.palette2;
+package com.intellij.designer.palette;
 
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 /**
  * @author Alexander Lobas
  */
 public class PaletteItemsComponent extends JBList {
   private final PaletteGroup myGroup;
+  private int myBeforeClickSelectedRow = -1;
+  private boolean myNeedClearSelection;
+  private Integer myTempWidth;
 
   public PaletteItemsComponent(PaletteGroup group) {
     myGroup = group;
@@ -43,7 +51,8 @@ public class PaletteItemsComponent extends JBList {
         return myGroup.getItems().get(index);
       }
     });
-    setCellRenderer(new ColoredListCellRenderer() {
+
+    ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         clear();
@@ -52,16 +61,76 @@ public class PaletteItemsComponent extends JBList {
         append(item.getTitle(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setToolTipText(item.getTooltip());
       }
-    });
+    };
+    renderer.getIpad().left = UIUtil.getTreeLeftChildIndent();
+    renderer.getIpad().right = UIUtil.getTreeRightChildIndent();
+    setCellRenderer(renderer);
 
     setVisibleRowCount(0);
     setLayoutOrientation(HORIZONTAL_WRAP);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        myNeedClearSelection = SwingUtilities.isLeftMouseButton(e) &&
+                               myBeforeClickSelectedRow >= 0 &&
+                               locationToIndex(e.getPoint()) == myBeforeClickSelectedRow &&
+                               !UIUtil.isControlKeyDown(e) && !e.isShiftDown();
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e) &&
+            myBeforeClickSelectedRow >= 0 &&
+            locationToIndex(e.getPoint()) == myBeforeClickSelectedRow &&
+            !UIUtil.isControlKeyDown(e) && !e.isShiftDown() && myNeedClearSelection) {
+          clearSelection();
+        }
+      }
+    });
+
     initActions();
   }
 
-  Integer myTempWidth;
+  @Override
+  public void updateUI() {
+    setUI(new BasicListUI() {
+      MouseListener myListener;
+
+      @Override
+      protected void updateLayoutState() {
+        super.updateLayoutState();
+
+        Insets insets = list.getInsets();
+        int listWidth = list.getWidth() - (insets.left + insets.right);
+        if (listWidth >= cellWidth) {
+          int columnCount = listWidth / cellWidth;
+          cellWidth = (columnCount == 0) ? 1 : listWidth / columnCount;
+        }
+      }
+
+      @Override
+      protected void installListeners() {
+        addMouseListener(myListener = new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            myBeforeClickSelectedRow = list.getSelectedIndex();
+          }
+        });
+        super.installListeners();
+      }
+
+      @Override
+      protected void uninstallListeners() {
+        if (myListener != null) {
+          removeMouseListener(myListener);
+        }
+        super.uninstallListeners();
+      }
+    });
+    invalidate();
+  }
 
   public int getWidth() {
     return (myTempWidth == null) ? super.getWidth() : myTempWidth.intValue();

@@ -21,7 +21,7 @@ import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.palette.Item;
+import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +46,7 @@ public final class AndroidTreeDecorator implements TreeComponentDecorator {
     }
 
     StringBuilder fullTitle = new StringBuilder();
-    Item item = metaModel.getPaletteItem();
+    DefaultPaletteItem item = metaModel.getPaletteItem();
     if (item != null) {
       fullTitle.append(item.getTitle());
     }

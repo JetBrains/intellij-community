@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.palette2;
+package com.intellij.designer.palette;
 
 import com.intellij.designer.AbstractToolWindowManager;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -41,17 +41,13 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     return project.getComponent(PaletteToolWindowManager.class);
   }
 
-  public PaletteItem getActiveItem() {
-    return myToolWindowPanel.getActiveItem();
-  }
-
   public void clearActiveItem() {
     myToolWindowPanel.clearActiveItem();
   }
 
   @Override
   protected void initToolWindow() {
-    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette2", false, ToolWindowAnchor.RIGHT, myProject, true);
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, ToolWindowAnchor.RIGHT, myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
 
     ContentManager contentManager = myToolWindow.getContentManager();

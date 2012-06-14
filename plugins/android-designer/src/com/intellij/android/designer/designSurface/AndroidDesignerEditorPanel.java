@@ -32,11 +32,10 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
-import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.palette.Item;
-import com.intellij.designer.palette2.PaletteGroup;
-import com.intellij.ide.palette.PaletteItem;
+import com.intellij.designer.palette.DefaultPaletteItem;
+import com.intellij.designer.palette.PaletteGroup;
+import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
@@ -62,7 +61,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -446,32 +444,19 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     return null;
   }
 
-  private List<PaletteGroup> myPaletteGroups;
-
   @Override
   public List<PaletteGroup> getPaletteGroups() {
-    if (myPaletteGroups == null) {
-      myPaletteGroups = new ArrayList<PaletteGroup>();
-      MetaManager metaManager = ViewsMetaManager.getInstance(getProject());
-      for (com.intellij.ide.palette.PaletteGroup group : metaManager.getPaletteGroups()) {
-        PaletteGroup newGroup = new PaletteGroup(group.getName());
-        for (PaletteItem item : group.getItems()) {
-          newGroup.addItem((com.intellij.designer.palette2.PaletteItem)item);
-        }
-        myPaletteGroups.add(newGroup);
-      }
-    }
-    return myPaletteGroups;
+    return ViewsMetaManager.getInstance(getProject()).getPaletteGroups();
   }
 
   @Override
   @NotNull
-  protected ComponentCreationFactory createCreationFactory(final Item paletteItem) {
+  protected ComponentCreationFactory createCreationFactory(final PaletteItem paletteItem) {
     return new ComponentCreationFactory() {
       @NotNull
       @Override
       public RadComponent create() throws Exception {
-        RadViewComponent component = ModelParser.createComponent(null, paletteItem.getMetaModel());
+        RadViewComponent component = ModelParser.createComponent(null, ((DefaultPaletteItem)paletteItem).getMetaModel());
         if (component instanceof IConfigurableComponent) {
           ((IConfigurableComponent)component).configure(myRootComponent);
         }

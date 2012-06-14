@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.palette2;
+package com.intellij.designer.palette;
 
 import java.util.ArrayList;
 import java.util.List;
