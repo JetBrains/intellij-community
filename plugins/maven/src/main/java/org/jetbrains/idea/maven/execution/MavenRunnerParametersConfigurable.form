@@ -31,7 +31,7 @@
           <componentClass value="com.intellij.ui.EditorTextField"/>
           <labelInsets top="0" left="0" bottom="0" right="0"/>
           <labelLocation value="West"/>
-          <text value="&amp;Goals (separated with space)"/>
+          <text value="&amp;Command line"/>
         </properties>
       </component>
       <grid id="1fdf9" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
