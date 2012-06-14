@@ -44,12 +44,16 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    final BeanProperty property = getProperty(dataContext);
-    new PropertyRenameDialog(property, editor).show();
+    performInvoke(editor, dataContext);
   }
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    performInvoke(null, dataContext);
+  }
 
+  private void performInvoke(@Nullable Editor editor, DataContext dataContext) {
+    final BeanProperty property = getProperty(dataContext);
+    new PropertyRenameDialog(property, editor).show();
   }
 
   public static void doRename(@NotNull final BeanProperty property, final String newName, final boolean searchInComments) {
@@ -89,6 +93,5 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
       doRename(myProperty, newName, searchInComments);
       close(DialogWrapper.OK_EXIT_CODE);
     }
-
   }
 }
