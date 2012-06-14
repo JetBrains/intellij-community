@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -48,7 +49,6 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
@@ -68,14 +68,15 @@ public class ChooseActionsDialog extends DialogWrapper {
     myActionsTree = new ActionsTree();
     myActionsTree.reset(keymap, quicklists);
     myActionsTree.getTree().getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    myActionsTree.getTree().addMouseListener(new MouseAdapter() {
+
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          doOKAction();
-        }
+      protected boolean onDoubleClick(MouseEvent e) {
+        doOKAction();
+        return true;
       }
-    });
+    }.installOn(myActionsTree.getTree());
+
 
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree.getTree());
 

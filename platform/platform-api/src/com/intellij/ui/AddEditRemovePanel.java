@@ -25,7 +25,6 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -147,11 +146,13 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     myTable = new JBTable(myTableModel);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myTable.setStriped(true);
-    myTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e){
-        if (e.getClickCount() == 2) doEdit();
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        doEdit();
+        return true;
       }
-    });
+    }.installOn(myTable);
   }
 
   protected JButton[] createButtons(){

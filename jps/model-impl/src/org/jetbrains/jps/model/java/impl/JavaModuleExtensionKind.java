@@ -1,28 +1,23 @@
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.java.JavaModuleExtension;
-import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.JpsElementCreator;
+import org.jetbrains.jps.model.impl.JpsElementKindBase;
 
 /**
  * @author nik
  */
-public class JavaModuleExtensionKind extends JpsElementKind<JavaModuleExtensionImpl> implements JpsElementCreator<JavaModuleExtensionImpl> {
-  private static final JavaModuleExtensionKind INSTANCE = new JavaModuleExtensionKind();
+public class JavaModuleExtensionKind extends JpsElementKindBase<JpsJavaModuleExtensionImpl>
+  implements JpsElementCreator<JpsJavaModuleExtensionImpl> {
+  public static final JavaModuleExtensionKind INSTANCE = new JavaModuleExtensionKind();
 
-  @NotNull
-  @Override
-  public JavaModuleExtensionImpl create() {
-    return new JavaModuleExtensionImpl();
+  private JavaModuleExtensionKind() {
+    super("java module extension");
   }
 
   @NotNull
-  public static JavaModuleExtension getExtension(@NotNull JpsModule module) {
-    JavaModuleExtension child = module.getContainer().getChild(INSTANCE);
-    if (child == null) {
-      child = module.getContainer().setChild(INSTANCE);
-    }
-    return child;
+  @Override
+  public JpsJavaModuleExtensionImpl create() {
+    return new JpsJavaModuleExtensionImpl();
   }
 }

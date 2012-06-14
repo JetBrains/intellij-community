@@ -23,6 +23,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
@@ -31,7 +32,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -191,17 +191,16 @@ public final class MacrosDialog extends DialogWrapper {
       }
     );
 
-    // doubleclick support
-    myMacrosList.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if ((e.getClickCount() == 2) && (getSelectedMacro() != null)){
-            close(OK_EXIT_CODE);
-          }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (getSelectedMacro() != null){
+          close(OK_EXIT_CODE);
+          return true;
         }
+        return false;
       }
-    );
-
+    }.installOn(myMacrosList);
   }
 
   public Macro getSelectedMacro() {

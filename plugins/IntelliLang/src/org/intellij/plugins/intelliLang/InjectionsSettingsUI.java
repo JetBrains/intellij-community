@@ -64,7 +64,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
@@ -546,17 +545,19 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
         }
       });
       final int[] max = new int[] {0};
-      addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() != 2) return;
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(MouseEvent e) {
           final int row = rowAtPoint(e.getPoint());
-          if (row < 0) return;
-          if (columnAtPoint(e.getPoint()) <= 0) return;
+          if (row < 0) return false;
+          if (columnAtPoint(e.getPoint()) <= 0) return false;
           myInjectionsTable.getSelectionModel().setSelectionInterval(row, row);
           performEditAction(new AnActionEvent(e, DataManager.getInstance().getDataContext(InjectionsTable.this),
                                               ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0));
+          return true;
         }
-      });
+      }.installOn(this);
+
       ContainerUtil.process(InjectedLanguage.getAvailableLanguageIDs(), new Processor<String>() {
         public boolean process(final String languageId) {
           if (max[0] < languageId.length()) max[0] = languageId.length();

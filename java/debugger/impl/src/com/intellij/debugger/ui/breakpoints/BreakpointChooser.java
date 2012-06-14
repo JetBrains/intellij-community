@@ -24,7 +24,9 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.popup.util.DetailView;
+import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointMasterDetailPopupBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +64,7 @@ public class BreakpointChooser {
   public void setSelectedBreakpoint(Object selectedBreakpoint) {
     mySelectedBreakpoint = selectedBreakpoint;
     myBreakpointItem = selectedBreakpoint != null ? new JavaBreakpointItem(null, (Breakpoint)selectedBreakpoint) : null;
-  updatePresentation(myComboBoxAction.getTemplatePresentation(), myBreakpointItem);
-    myActionToolbar.getComponent().repaint();
+    updatePresentation(myComboBoxAction.getTemplatePresentation(), myBreakpointItem);
   }
 
   private void pop(DetailView.PreviewEditorState pushed) {
@@ -80,7 +81,7 @@ public class BreakpointChooser {
     void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup);
   }
 
-  public BreakpointChooser(Project project, Delegate delegate) {
+  public BreakpointChooser(Project project, Delegate delegate, Breakpoint baseBreakpoint) {
     myProject = project;
     myDelegate = delegate;
 
@@ -146,7 +147,7 @@ public class BreakpointChooser {
         return null;
       }
     };
-
+    setSelectedBreakpoint(baseBreakpoint);
     myActionToolbar = ActionManager.getInstance().createActionToolbar("asdad", new DefaultActionGroup(myComboBoxAction), true);
 
   }
@@ -156,7 +157,7 @@ public class BreakpointChooser {
   }
 
   private void updatePresentation(Presentation presentation, BreakpointItem breakpointItem) {
-    if (breakpointItem != null) {
+    if (breakpointItem != null && breakpointItem.getBreakpoint() != null) {
       presentation.setIcon(breakpointItem.getIcon());
       presentation.setText(breakpointItem.getDisplayText());
     }
@@ -173,9 +174,11 @@ public class BreakpointChooser {
   private class MyDetailView implements DetailView {
 
     private final PreviewEditorState myPushed;
+    private ItemWrapper myCurrentItem;
 
     public MyDetailView(PreviewEditorState pushed) {
       myPushed = pushed;
+      putUserData(BreakpointItem.EDITOR_ONLY, Boolean.TRUE);
     }
 
     @Override
@@ -210,14 +213,30 @@ public class BreakpointChooser {
       return myDetailView.getEditorState();
     }
 
+    public void setCurrentItem(ItemWrapper currentItem) {
+      myCurrentItem = currentItem;
+    }
+
+    @Override
+    public ItemWrapper getCurrentItem() {
+      return myCurrentItem;
+    }
+
+    @Override
+    public boolean hasEditorOnly() {
+      return true;
+    }
+
+    UserDataHolderBase myDataHolderBase = new UserDataHolderBase();
+
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
-      return myDetailView.getUserData(key);
+      return myDataHolderBase.getUserData(key);
     }
 
     @Override
     public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      myDetailView.putUserData(key, value);
+      myDataHolderBase.putUserData(key, value);
     }
   }
 }

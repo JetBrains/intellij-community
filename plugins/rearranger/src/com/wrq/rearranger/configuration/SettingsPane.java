@@ -21,6 +21,7 @@
  */
 package com.wrq.rearranger.configuration;
 
+import com.intellij.ui.DoubleClickListener;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.settings.attributeGroups.AttributeGroup;
 import com.wrq.rearranger.settings.attributeGroups.PrioritizedRule;
@@ -404,15 +405,14 @@ public abstract class SettingsPane {
         }
       }
     );
-    jTable.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() >= 2) {
-            editRow(addRemovePanel);
-          }
-        }
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        editRow(addRemovePanel);
+        return true;
       }
-    );
+    }.installOn(jTable);
 
     duplicateButton.addActionListener(
       new ActionListener() {

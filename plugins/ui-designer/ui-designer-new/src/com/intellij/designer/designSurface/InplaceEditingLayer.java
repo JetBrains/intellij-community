@@ -173,18 +173,27 @@ public class InplaceEditingLayer extends JComponent {
       myInplaceComponent.setBounds(bounds.x, bounds.y, myPreferredWidth, size.height);
       add(myInplaceComponent);
 
+      myDesigner.getSurfaceArea().addSelectionListener(mySelectionListener);
+
       if (componentToFocus == null) {
         componentToFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myInplaceComponent);
       }
-      if (componentToFocus != null) {
-        componentToFocus.requestFocusInWindow();
+      if (componentToFocus == null) {
+        componentToFocus = myInplaceComponent;
+      }
+      if (componentToFocus.requestFocusInWindow()) {
+        myFocusWatcher.install(myInplaceComponent);
       }
       else {
-        myInplaceComponent.requestFocusInWindow();
+        grabFocus();
+        final JComponent finalComponentToFocus = componentToFocus;
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            finalComponentToFocus.requestFocusInWindow();
+            myFocusWatcher.install(myInplaceComponent);
+          }
+        });
       }
-
-      myDesigner.getSurfaceArea().addSelectionListener(mySelectionListener);
-      myFocusWatcher.install(myInplaceComponent);
 
       enableEvents(AWTEvent.MOUSE_EVENT_MASK);
       repaint();

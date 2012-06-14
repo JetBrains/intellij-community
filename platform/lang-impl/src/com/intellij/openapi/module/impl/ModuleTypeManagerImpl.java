@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   private final LinkedHashMap<ModuleType, Boolean> myModuleTypes = new LinkedHashMap<ModuleType, Boolean>();
 
-
   public ModuleTypeManagerImpl() {
     registerModuleType(getDefaultModuleType(), true);
   }
@@ -40,17 +39,18 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   public void registerModuleType(ModuleType type, boolean classpathProvider) {
     for (ModuleType oldType : myModuleTypes.keySet()) {
       if (oldType.getId().equals(type.getId())) {
-        LOG.error("Trying to register a module type that claunches with existing one. Old=" + oldType + ", new = " + type);
+        LOG.error("Trying to register a module type that clashes with existing one. Old=" + oldType + ", new = " + type);
         return;
       }
     }
+
     myModuleTypes.put(type, classpathProvider);
   }
 
   public ModuleType[] getRegisteredTypes() {
     List<ModuleType> result = new ArrayList<ModuleType>();
     result.addAll(myModuleTypes.keySet());
-    for(ModuleTypeEP moduleTypeEP: Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
+    for (ModuleTypeEP moduleTypeEP : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
       result.add(moduleTypeEP.getModuleType());
     }
 
@@ -64,18 +64,17 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
         return type;
       }
     }
-    for(ModuleTypeEP ep: Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
+    for (ModuleTypeEP ep : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
       if (ep.id.equals(moduleTypeID)) {
         return ep.getModuleType();
       }
     }
 
-
     return new UnknownModuleType(moduleTypeID, getDefaultModuleType());
   }
 
   public boolean isClasspathProvider(final ModuleType moduleType) {
-    for(ModuleTypeEP ep: Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
+    for (ModuleTypeEP ep : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
       if (ep.id.equals(moduleType.getId())) {
         return ep.classpathProvider;
       }

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ClickListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.Nullable;
@@ -87,17 +88,20 @@ class StatusPanel extends JPanel {
     setOpaque(isOpaque() && !SystemInfo.isMac);
 
     myTextPanel.setBorder(new EmptyBorder(0, 5, 0, 0));
-    myTextPanel.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         if (myLogMode || myAfterClick) {
           EventLog.toggleLog(getActiveProject());
           myAfterClick = true;
           myTextPanel.setExplicitSize(myTextPanel.getSize());
           myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
+        return true;
       }
+    }.installOn(myTextPanel);
 
+    myTextPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseExited(MouseEvent e) {
         myTextPanel.setExplicitSize(null);

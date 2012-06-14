@@ -52,7 +52,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
     setFocusable(false);
     addMouseListener(
       new MouseAdapter() {
-        public void mouseClicked(final MouseEvent e) {
+        public void mousePressed(final MouseEvent e) {
           _requestDefaultFocus();
         }
       }

@@ -187,6 +187,22 @@ public class Switcher extends AnAction implements DumbAware {
     final Map<String, ToolWindow> twShortcuts;
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
+    final ClickListener myClickListener = new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        final Object source = e.getSource();
+        if (source instanceof JList) {
+          JList jList = (JList)source;
+          if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
+            jList.setSelectedIndex(jList.getAnchorSelectionIndex());
+          }
+          if (jList.getSelectedIndex() != -1) {
+            navigate();
+          }
+        }
+        return true;
+      }
+    };
 
     @SuppressWarnings({"ManualArrayToCollectionCopy"})
     SwitcherPanel(Project project, String title, boolean pinned) {
@@ -276,6 +292,7 @@ public class Switcher extends AnAction implements DumbAware {
       toolWindows.addKeyListener(this);
       toolWindows.addMouseListener(this);
       toolWindows.addMouseMotionListener(this);
+      myClickListener.installOn(toolWindows);
       toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
           if (!toolWindows.isSelectionEmpty() && !files.isSelectionEmpty()) {
@@ -416,6 +433,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.addKeyListener(this);
       files.addMouseListener(this);
       files.addMouseMotionListener(this);
+      myClickListener.installOn(files);
 
       this.add(toolWindows, BorderLayout.WEST);
       if (filesModel.size() > 0) {
@@ -763,16 +781,6 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     public void mouseClicked(MouseEvent e) {
-      final Object source = e.getSource();
-      if (source instanceof JList) {
-        JList jList = (JList)source;
-        if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
-          jList.setSelectedIndex(jList.getAnchorSelectionIndex());
-        }
-        if (jList.getSelectedIndex() != -1) {
-          navigate();
-        }
-      }
     }
 
     private boolean mouseMovedFirstTime = true;

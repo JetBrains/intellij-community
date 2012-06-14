@@ -656,16 +656,19 @@ public class SvnHistoryProvider
       myFile = file;
     }
 
-    public void mouseClicked(final MouseEvent e) {
+    @Override
+    public boolean onClick(MouseEvent e, int clickCount) {
       if (e.getButton() == 1 && !e.isPopupTrigger()) {
         Object tag = getTagAt(e);
         if (tag == myTag) {
           final SvnFileRevision revision = getSelectedRevision(e);
           if (revision != null) {
             SvnMergeSourceDetails.showMe(myVcs.getProject(), revision, myFile);
+            return true;
           }
         }
       }
+      return false;
     }
 
     @Nullable
@@ -729,7 +732,7 @@ public class SvnHistoryProvider
                                          final int column) {
       if (myListener == null) {
         myListener = new MergeSourceDetailsLinkListener(MERGE_SOURCE_DETAILS_TAG, myFile);
-        myListener.install(table);
+        myListener.installOn(table);
       }
       if (value instanceof String) {
         append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);

@@ -21,6 +21,7 @@ import com.android.ddmlib.IDevice;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Condition;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
@@ -39,7 +40,6 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -89,14 +89,17 @@ public class DeviceChooser implements Disposable {
         }
       }
     });
-    myDeviceTable.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && okAction.isEnabled()) {
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (okAction.isEnabled()) {
           okAction.actionPerformed(null);
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myDeviceTable);
+
     myDeviceTable.setDefaultRenderer(Boolean.class, new BooleanCellRenderer());
     myDeviceTable.addKeyListener(new KeyAdapter() {
       @Override

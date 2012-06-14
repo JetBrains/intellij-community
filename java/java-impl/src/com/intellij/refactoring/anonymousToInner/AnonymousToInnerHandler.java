@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -184,8 +185,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       }
     }
     buf.append(")");
-    PsiExpression newClassExpression = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(buf.toString(), null);
-    newExpr.replace(newClassExpression);
+    PsiNewExpression newClassExpression =
+      (PsiNewExpression)JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(buf.toString(), null);
+    newClassExpression = (PsiNewExpression)newExpr.replace(newClassExpression);
+    if (PsiDiamondTypeUtil.canCollapseToDiamond(newClassExpression, newClassExpression, newClassExpression.getType())) {
+      PsiDiamondTypeUtil.replaceExplicitWithDiamond(newClassExpression.getClassOrAnonymousClassReference().getParameterList());
+    }
   }
 
   @Nullable
@@ -240,7 +245,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private Boolean cachedNeedsThis = null;
-  private boolean needsThis() {
+  public boolean needsThis() {
     if(cachedNeedsThis == null) {
 
       ElementNeedsThis memberNeedsThis = new ElementNeedsThis(myTargetClass, myAnonClass);

@@ -72,21 +72,23 @@ class JavaBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  protected void doUpdateDetailView(DetailView panel) {
-    BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
-      .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false) : null;
-    if (breakpointPropertiesPanel != null) {
-      breakpointPropertiesPanel.setSaveOnRemove(true);
-      breakpointPropertiesPanel.setDetailView(panel);
-    }
+  protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
+    if (!editorOnly) {
+      BreakpointPropertiesPanel breakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
+        .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false) : null;
 
-    if (breakpointPropertiesPanel != null) {
-      breakpointPropertiesPanel.initFrom(myBreakpoint, true);
-      final JPanel mainPanel = breakpointPropertiesPanel.getPanel();
-      panel.setDetailPanel(mainPanel);
-    }
-    else {
-      panel.setDetailPanel(null);
+      if (breakpointPropertiesPanel != null) {
+        breakpointPropertiesPanel.initFrom(myBreakpoint, true);
+
+        breakpointPropertiesPanel.setSaveOnRemove(true);
+        breakpointPropertiesPanel.setDetailView(panel);
+
+        final JPanel mainPanel = breakpointPropertiesPanel.getPanel();
+        panel.setDetailPanel(mainPanel);
+      }
+      else {
+        panel.setDetailPanel(null);
+      }
     }
 
     if (myBreakpoint instanceof BreakpointWithHighlighter) {
@@ -96,6 +98,15 @@ class JavaBreakpointItem extends BreakpointItem {
     } else {
       panel.clearEditor();
     }
+  }
+
+  @Override
+  public boolean navigate() {
+    if (myBreakpoint instanceof BreakpointWithHighlighter) {
+      ((BreakpointWithHighlighter)myBreakpoint).getSourcePosition().navigate(true);
+      return true;
+    }
+    return false;
   }
 
   @Override

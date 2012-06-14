@@ -16,6 +16,7 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class IntersectionPackageSet extends PackageSetBase {
   private final PackageSet myFirstSet;
@@ -35,6 +36,7 @@ public class IntersectionPackageSet extends PackageSetBase {
     return false;
   }
 
+  @NotNull
   public PackageSet createCopy() {
     return new IntersectionPackageSet(myFirstSet.createCopy(), mySecondSet.createCopy());
   }
@@ -43,6 +45,7 @@ public class IntersectionPackageSet extends PackageSetBase {
     return 2;
   }
 
+  @NotNull
   public String getText() {
     StringBuffer buf = new StringBuffer();
     boolean needParen = myFirstSet.getNodePriority() > getNodePriority();

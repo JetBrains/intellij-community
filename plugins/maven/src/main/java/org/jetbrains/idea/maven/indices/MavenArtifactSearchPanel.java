@@ -19,10 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -44,7 +41,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -122,18 +118,17 @@ public class MavenArtifactSearchPanel extends JPanel {
       }
     });
 
-    myResultList.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          Object sel = myResultList.getLastSelectedPathComponent();
-          if (sel != null && myResultList.getModel().isLeaf(sel)) {
-            myListener.itemSelected();
-            e.consume();
-          }
+      protected boolean onDoubleClick(MouseEvent event) {
+        Object sel = myResultList.getLastSelectedPathComponent();
+        if (sel != null && myResultList.getModel().isLeaf(sel)) {
+          myListener.itemSelected();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myResultList);
   }
 
   public void scheduleSearch() {

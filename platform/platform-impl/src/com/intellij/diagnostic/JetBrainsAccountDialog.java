@@ -18,11 +18,11 @@ package com.intellij.diagnostic;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ClickListener;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -76,24 +76,27 @@ public class JetBrainsAccountDialog extends DialogWrapper {
     setTitle(ReportMessages.ERROR_REPORT);
     getContentPane().add(myMainPanel);
 
-    mySendingSettingsLabel.addMouseListener(new MouseAdapter () {
-      public void mouseClicked(MouseEvent e) {
-
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         HTTPProxySettingsDialog settingsDialog = new HTTPProxySettingsDialog ();
         settingsDialog.pack();
         settingsDialog.show();
+        return true;
       }
-    });
+    }.installOn(mySendingSettingsLabel);
+
     mySendingSettingsLabel.setCursor(new Cursor (Cursor.HAND_CURSOR));
 
     loadInfo();
 
-    myCreateAccountLabel.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(final MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         BrowserUtil.launchBrowser("http://account.jetbrains.com");
+        return true;
       }
-    });
+    }.installOn(myCreateAccountLabel);
     myCreateAccountLabel.setCursor(new Cursor (Cursor.HAND_CURSOR));
 
     super.init ();

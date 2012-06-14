@@ -230,6 +230,9 @@
   <extensionPoint name="favoriteNodeProvider"
                   interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider"
                   area="IDEA_PROJECT"/>
+  <extensionPoint name="favoritesListProvider"
+                  interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider"
+                  area="IDEA_PROJECT"/>
   
   <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
@@ -266,6 +269,9 @@
 
   <extensionPoint name="configurationType"
                   interface="com.intellij.execution.configurations.ConfigurationType"/>
+
+  <extensionPoint name="runConfigurationsSettings"
+                  interface="com.intellij.execution.configurations.RunConfigurationsSettings"/>
 
   <extensionPoint name="programRunner"
                   interface="com.intellij.execution.runners.ProgramRunner"/>

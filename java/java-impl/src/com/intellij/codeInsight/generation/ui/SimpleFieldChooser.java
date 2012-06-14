@@ -21,11 +21,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -48,17 +48,16 @@ public class SimpleFieldChooser extends DialogWrapper {
     }
     myList = new JBList(model);
     myList.setCellRenderer(new MyListCellRenderer());
-    myList.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) {
-            if (myList.getSelectedValues().length > 0) {
-              doOKAction();
-            }
-          }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (myList.getSelectedValues().length > 0) {
+          doOKAction();
+          return true;
         }
+        return false;
       }
-    );
+    }.installOn(myList);
 
     myList.setPreferredSize(new Dimension(300, 400));
     return myList;

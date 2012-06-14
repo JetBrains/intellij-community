@@ -288,12 +288,6 @@ public class LinkLabel extends JLabel {
   }
 
   private class MyMouseHandler extends MouseAdapter implements MouseMotionListener {
-    public void mouseClicked(MouseEvent e) {
-      if (isInClickableArea(e.getPoint()) && e.getClickCount() == 1) {
-        doClick(e);
-      }
-    }
-
     public void mousePressed(MouseEvent e) {
       if (isInClickableArea(e.getPoint())) {
         setActive(true);
@@ -301,6 +295,9 @@ public class LinkLabel extends JLabel {
     }
 
     public void mouseReleased(MouseEvent e) {
+      if (myIsLinkActive && isInClickableArea(e.getPoint())) {
+        doClick(e);
+      }
       setActive(false);
     }
 

@@ -103,7 +103,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
   public void navigate(boolean requestFocus) {
     VirtualFile jarRoot = getJarRoot();
     final Project project = getProject();
-    if (jarRoot != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
+    if (requestFocus && jarRoot != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
       final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project);
       if (orderEntry != null) {
         ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry);

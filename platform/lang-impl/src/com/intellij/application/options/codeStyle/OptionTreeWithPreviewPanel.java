@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.MultiMap;
@@ -35,7 +36,6 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -213,14 +213,15 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       }
     });
 
-    optionsTree.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (!optionsTree.isEnabled()) return;
+      public boolean onClick(MouseEvent e, int clickCount) {
+        if (!optionsTree.isEnabled()) return false;
         TreePath treePath = optionsTree.getPathForLocation(e.getX(), e.getY());
         selectCheckbox(treePath);
+        return true;
       }
-    });
+    }.installOn(optionsTree);
 
     int row = 0;
     while (row < optionsTree.getRowCount()) {

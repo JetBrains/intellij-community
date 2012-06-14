@@ -24,6 +24,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +33,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,14 +87,14 @@ public class ImportChooserStep extends ProjectImportWizardStep {
         }
       }
     }
-    myList.addMouseListener(new MouseAdapter() {
+
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
-          context.requestNextStep();
-        }
+      protected boolean onDoubleClick(MouseEvent e) {
+        context.requestNextStep();
+        return true;
       }
-    });
+    }.installOn(myList);
   }
 
   private static List<ProjectImportProvider> sorted(ProjectImportProvider[] providers) {

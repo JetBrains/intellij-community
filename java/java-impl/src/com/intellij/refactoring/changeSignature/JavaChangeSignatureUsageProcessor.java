@@ -741,8 +741,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       final JavaParameterInfo[] primaryNewParms = changeInfo.getNewParameters();
       PsiSubstitutor substitutor =
         baseMethod == null ? PsiSubstitutor.EMPTY : ChangeSignatureProcessor.calculateSubstitutor(caller, baseMethod);
+      final PsiClass aClass = changeInfo.getMethod().getContainingClass();
+      final PsiClass callerContainingClass = caller.getContainingClass();
+      final PsiSubstitutor psiSubstitutor = aClass != null && callerContainingClass != null && callerContainingClass.isInheritor(aClass, true) 
+                                            ? TypeConversionUtil.getSuperClassSubstitutor(aClass, callerContainingClass, substitutor) 
+                                            : PsiSubstitutor.EMPTY;
       for (JavaParameterInfo info : primaryNewParms) {
-        if (info.getOldIndex() < 0) newParameters.add(createNewParameter(changeInfo, info, substitutor));
+        if (info.getOldIndex() < 0) newParameters.add(createNewParameter(changeInfo, info, psiSubstitutor, substitutor));
       }
       PsiParameter[] arrayed = newParameters.toArray(new PsiParameter[newParameters.size()]);
       boolean[] toRemoveParm = new boolean[arrayed.length];
@@ -802,10 +807,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   }
 
   private static PsiParameter createNewParameter(JavaChangeInfo changeInfo, JavaParameterInfo newParm,
-                                                 PsiSubstitutor substitutor) throws IncorrectOperationException {
+                                                 PsiSubstitutor... substitutor) throws IncorrectOperationException {
     final PsiParameterList list = changeInfo.getMethod().getParameterList();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
-    final PsiType type = substitutor.substitute(newParm.createType(list, list.getManager()));
+    PsiType type = newParm.createType(list, list.getManager());
+    for (PsiSubstitutor psiSubstitutor : substitutor) {
+      type = psiSubstitutor.substitute(type);
+    }
     return factory.createParameter(newParm.getName(), type);
   }
 

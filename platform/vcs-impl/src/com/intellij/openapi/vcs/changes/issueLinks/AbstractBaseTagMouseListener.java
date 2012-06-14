@@ -16,25 +16,29 @@
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ui.ClickListener;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-public abstract class AbstractBaseTagMouseListener extends MouseAdapter implements MouseMotionListener {
-  public void mouseClicked(final MouseEvent e) {
+public abstract class AbstractBaseTagMouseListener extends ClickListener implements MouseMotionListener {
+  @Override
+  public boolean onClick(MouseEvent e, int clickCount) {
     if (e.getButton() == 1 && !e.isPopupTrigger()) {
       Object tag = getTagAt(e);
       if (tag instanceof Runnable) {
         ((Runnable) tag).run();
-        return;
+        return true;
       }
+
       if ((tag != null) && (! Object.class.getName().equals(tag.getClass().getName()))) {
         BrowserUtil.launchBrowser(tag.toString());
+        return true;
       }
     }
+    return false;
   }
 
   @Nullable
@@ -53,8 +57,9 @@ public abstract class AbstractBaseTagMouseListener extends MouseAdapter implemen
     }
   }
 
-  public void install(Component component) {
-    component.addMouseListener(this);
-    component.addMouseMotionListener(this);
+  @Override
+  public void installOn(Component c) {
+    super.installOn(c);
+    c.addMouseMotionListener(this);
   }
 }

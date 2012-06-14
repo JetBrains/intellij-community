@@ -21,16 +21,15 @@
  */
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.ui.DoubleClickListener;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
-import org.jetbrains.annotations.NonNls;
 
 public class GetJPDADialog extends DialogWrapper {
   private static final @NonNls String JPDA_URL = "http://java.sun.com/products/jpda";
@@ -55,14 +54,13 @@ public class GetJPDADialog extends DialogWrapper {
     JLabel label1 = new JLabel(DebuggerBundle.message("label.get.jpda.dialog.prompt"));
     //label1.setForeground(Color.black);
     JLabel label2 = new JLabel(JPDA_URL);
-    label2.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          BrowserUtil.launchBrowser(JPDA_URL);
-        }
-
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        BrowserUtil.launchBrowser(JPDA_URL);
+        return true;
       }
-    );
+    }.installOn(label2);
     label2.setForeground(Color.blue.darker());
     label2.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     _panel2.add(new JLabel(DebuggerBundle.message("label.get.jpda.dialog.error.description")), BorderLayout.NORTH);

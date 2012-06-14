@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
-    
+
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
   <appender name="CONSOLE-WARN" class="org.apache.log4j.ConsoleAppender">
     <param name="target" value="System.err"/>
@@ -29,9 +29,9 @@
   </appender>
 
   <appender name="DIALOG" class="com.intellij.diagnostic.DialogAppender">
-      <filter class="org.apache.log4j.varia.LevelRangeFilter">
-        <param name="LevelMin" value="INFO"/>
-      </filter>
+    <filter class="org.apache.log4j.varia.LevelRangeFilter">
+      <param name="LevelMin" value="INFO"/>
+    </filter>
   </appender>
 
   <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
@@ -52,19 +52,10 @@
     </layout>
   </appender>
 
-  <!-- <category name="#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier">
-  <level value="DEBUG"/>
-  <appender-ref ref="FILE"/>
-  </category>
-  <category name="#com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase">
-  <level value="DEBUG"/>
-  <appender-ref ref="FILE"/>
-  </category> -->
-
   <root>
     <priority value="INFO"/>
     <appender-ref ref="DIALOG"/>
-    <appender-ref ref="CONSOLE-WARN"/>    <!-- $COMMENT_LINE_FOR_TEST_MODE$ If a line contains such macro, it will be deleted then we start IDEA in JUnit Test mode -->
+    <appender-ref ref="CONSOLE-WARN"/>
     <appender-ref ref="FILE"/>
   </root>
 </log4j:configuration>

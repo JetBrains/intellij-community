@@ -17,6 +17,7 @@
 package org.jetbrains.android.newProject;
 
 import com.android.AndroidConstants;
+import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
@@ -78,6 +79,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -425,7 +427,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(myApplicationName.replace("\\", "\\\\"));
 
     if (appNameResElement == null) {
-      manager.addValueResource("string", appNameResource, normalizedAppName);
+      final String fileName = AndroidResourceUtil.getDefaultResourceFileName(ResourceType.STRING.getName());
+      assert fileName != null;
+      AndroidResourceUtil.createValueResource(facet.getModule(), appNameResource, ResourceType.STRING, fileName, Collections
+              .singletonList(AndroidConstants.FD_RES_VALUES), normalizedAppName);
     }
     else {
       appNameResElement.setStringValue(normalizedAppName);

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -117,13 +118,19 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
         }
       }
       if (isMember && !(element1 instanceof PsiAnonymousClass || element1.getParent() instanceof PsiAnonymousClass)) {
+        PsiFile file = element1.getContainingFile();
+        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
         boolean drawSeparator = false;
-        int category = getGroovyCategory(element1);
-        for (PsiElement child = element1.getPrevSibling(); child != null; child = child.getPrevSibling()) {
-          int category1 = getGroovyCategory(child);
-          if (category1 == 0) continue;
-          drawSeparator = category != 1 || category1 != 1;
-          break;
+        if (document != null) {
+          CharSequence documentChars = document.getCharsSequence();
+
+          int category = getGroovyCategory(element1, documentChars);
+          for (PsiElement child = element1.getPrevSibling(); child != null; child = child.getPrevSibling()) {
+            int category1 = getGroovyCategory(child, documentChars);
+            if (category1 == 0) continue;
+            drawSeparator = category != 1 || category1 != 1;
+            break;
+          }
         }
 
         if (drawSeparator) {
@@ -155,7 +162,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     return false;
   }
 
-  private static int getGroovyCategory(PsiElement element) {
+  private static int getGroovyCategory(PsiElement element, CharSequence documentChars) {
     if (element instanceof GrVariableDeclarationBase) {
       GrVariable[] variables = ((GrVariableDeclarationBase)element).getVariables();
       if (variables.length == 1 && variables[0] instanceof GrField && variables[0].getInitializerGroovy() instanceof GrClosableBlock) {
@@ -163,7 +170,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       }
     }
 
-    return JavaLineMarkerProvider.getCategory(element);
+    return JavaLineMarkerProvider.getCategory(element, documentChars);
   }
 
   @Override

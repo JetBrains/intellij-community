@@ -31,8 +31,8 @@ public class ReadWriteVariableInstruction extends InstructionImpl {
   private final boolean myIsWrite;
   private final String myName;
 
-  public ReadWriteVariableInstruction(@NotNull String varName, PsiElement element, int num, int accessType) {
-    super(element, num);
+  public ReadWriteVariableInstruction(@NotNull String varName, PsiElement element, int accessType) {
+    super(element);
     myName = varName;
     myIsWrite = accessType == WRITE;
   }

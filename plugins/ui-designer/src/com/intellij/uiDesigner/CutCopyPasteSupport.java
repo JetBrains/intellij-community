@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -191,9 +190,8 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
           }
         });
 
-        final Module module = editor.getModule();
-        final ClassLoader loader = LoaderFactory.getInstance(module.getProject()).getLoader(editor.getFile());
-        final RadComponent radComponent = XmlReader.createComponent(module, lwComponent, loader, editor.getStringDescriptorLocale());
+        final ClassLoader loader = LoaderFactory.getInstance(editor.getProject()).getLoader(editor.getFile());
+        final RadComponent radComponent = XmlReader.createComponent(editor, lwComponent, loader, editor.getStringDescriptorLocale());
         componentsToPaste.add(radComponent);
       }
     }

@@ -17,12 +17,9 @@
 package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.favoritesTreeView.FavoritesListNode;
-import com.intellij.ide.favoritesTreeView.FavoritesManager;
-import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
-import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.favoritesTreeView.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -30,6 +27,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.AnActionButton;
+
+import java.util.List;
 
 /**
  * @author anna
@@ -50,6 +49,8 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     }
     FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     FavoritesTreeNodeDescriptor[] roots = FavoritesTreeViewPanel.CONTEXT_FAVORITES_ROOTS_DATA_KEY.getData(dataContext);
+    final DnDAwareTree tree = FavoritesTreeViewPanel.FAVORITES_TREE_KEY.getData(dataContext);
+
     assert roots != null;
     for (FavoritesTreeNodeDescriptor root : roots) {
       final AbstractTreeNode node = root.getElement();
@@ -59,10 +60,14 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
       else {
         final Object value = node.getValue();
         LOG.assertTrue(value != null, node);
-        final NodeDescriptor parent = root.getParentDescriptor();
-        if (parent instanceof FavoritesTreeNodeDescriptor) {
-          final String name = ((FavoritesTreeNodeDescriptor)parent).getName();
-          favoritesManager.removeRoot(name, value);
+        final FavoritesListNode listNode = FavoritesTreeUtil.extractParentList(root);
+        LOG.assertTrue(listNode != null);
+
+        //final List<AbstractTreeNode> pathToSelected = FavoritesTreeUtil.getLogicalPathToSelected(tree);
+        //favoritesManager.removeRoot(listNode.getName(), pathToSelected);
+        final List<Integer> pathTo = FavoritesTreeUtil.getLogicalIndexPathTo(tree.getSelectionPath());
+        if (pathTo != null) {
+          favoritesManager.removeRootByIndexes(listNode.getName(), pathTo);
         }
       }
     }
@@ -81,9 +86,10 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
       return;
     }
 
+    final FavoritesManager fm = FavoritesManager.getInstance(project);
     if (roots.length == 1
         && roots[0].getElement() instanceof FavoritesListNode
-        && project.getName().equals(roots[0].getElement().getValue())) {
+        && fm.isReadOnly(((FavoritesListNode) roots[0].getElement()).getName())) {
       e.getPresentation().setEnabled(false);
       return;
     }

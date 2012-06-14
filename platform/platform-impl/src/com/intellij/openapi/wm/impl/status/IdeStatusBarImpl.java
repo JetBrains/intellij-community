@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
@@ -617,17 +618,18 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
       putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
       setToolTipText(presentation.getTooltipText());
-
-      addMouseListener(new MouseAdapter() {
+      new ClickListener() {
         @Override
-        public void mouseClicked(final MouseEvent e) {
+        public boolean onClick(MouseEvent e, int clickCount) {
           final ListPopup popup = myPresentation.getPopupStep();
-          if (popup == null) return;
+          if (popup == null) return false;
           final Dimension dimension = popup.getContent().getPreferredSize();
           final Point at = new Point(0, -dimension.height);
           popup.show(new RelativePoint(e.getComponent(), at));
+          return true;
         }
-      });
+      }.installOn(this);
+
 
       setOpaque(false);
     }

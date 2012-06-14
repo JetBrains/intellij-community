@@ -218,40 +218,36 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  protected int getPathLength() {
-    Object o = rawName();
-    int length = o instanceof String ? ((String)o).length() : ((byte[]) o).length;
-    length += getEncodedSuffix().length();
-    return myParent == null ? length : myParent.getPathLength() + length + 1;
-  }
+  protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
+    final Object o = rawName();
+    final String suffix = getEncodedSuffix();
+    final int nameLength = (o instanceof String ? ((String)o).length() : ((byte[]) o).length) + suffix.length();
 
-  protected int appendPathOnFileSystem(@NotNull char[] chars, int pos) {
+    final char[] chars;
     if (myParent != null) {
-      pos = myParent.appendPathOnFileSystem(chars, pos);
-    }
-
-    Object o = rawName();
-    String suffix = getEncodedSuffix();
-    //noinspection StringEquality
-    if (o == EMPTY && suffix == EMPTY) {
-      return pos;
-    }
-
-    if (pos > 0 && chars[pos - 1] != '/') {
-      chars[pos++] = '/';
+      chars = myParent.appendPathOnFileSystem(pathLength + 1 + nameLength, position);
+      if (position[0] > 0 && chars[position[0] - 1] != '/') {
+        chars[position[0]++] = '/';
+      }
+    } else {
+      chars = new char[pathLength + nameLength];
     }
 
     if (o instanceof String) {
-      pos = copyString(chars, pos, (String)o);
-      return copyString(chars, pos, suffix);
+      position[0] = copyString(chars, position[0], (String)o);
+    } else {
+      byte[] bytes = (byte[]) o;
+      int pos = position[0];
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, len = bytes.length; i < len; i++) {
+        chars[pos++] = (char)bytes[i];
+      }
+      position[0] = pos;
     }
-    byte[] bytes = (byte[]) o;
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0, len = bytes.length; i < len; i++) {
-      chars[pos++] = (char)bytes[i];
-    }
-    return copyString(chars, pos, suffix);
+    position[0] = copyString(chars, position[0], suffix);
+    return chars;
   }
+
 
   private static int copyString(@NotNull char[] chars, int pos, @NotNull String s) {
     int length = s.length();
@@ -263,23 +259,19 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @NotNull
   public String getUrl() {
     String protocol = getFileSystem().getProtocol();
-    char[] chars = new char[getPathLength() + protocol.length() + "://".length()];
-    int pos = copyString(chars, 0, protocol);
-    pos = copyString(chars, pos, "://");
-
-    return getPathImpl(chars, pos);
+    int prefixLen = protocol.length() + "://".length();
+    int[] pos = {prefixLen};
+    char[] chars = appendPathOnFileSystem(prefixLen, pos);
+    copyString(chars, copyString(chars, 0, protocol), "://");
+    return new String(chars, 0, pos[0]);
   }
 
   @Override
   @NotNull
   public String getPath() {
-    char[] chars = new char[getPathLength()];
-    return getPathImpl(chars, 0);
-  }
-
-  private String getPathImpl(@NotNull char[] chars, int pos) {
-    int count = appendPathOnFileSystem(chars, pos);
-    return new String(chars, 0, count);
+    int[] pos = {0};
+    char[] chars = appendPathOnFileSystem(0, pos);
+    return new String(chars, 0, pos[0]);
   }
 
   @Override

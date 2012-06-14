@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
-import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +36,6 @@ public abstract class TreeNodeEvent {
   private void validate() {
     if (myId < -1) {
       fail("id should be greater than -2");
-    }
-    if (myName != null && myName.isEmpty()) {
-      fail("Tree node name is empty");
     }
   }
 
@@ -86,11 +83,11 @@ public abstract class TreeNodeEvent {
     }
   }
 
-  public static int getNodeId(@NotNull MessageWithAttributes message) {
+  public static int getNodeId(@NotNull ServiceMessage message) {
     return getIntAttribute(message, "nodeId");
   }
 
-  public static int getIntAttribute(@NotNull MessageWithAttributes message, @NotNull String key) {
+  public static int getIntAttribute(@NotNull ServiceMessage message, @NotNull String key) {
     String value = message.getAttributes().get(key);
     if (value == null) {
       return -1;

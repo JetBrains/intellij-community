@@ -35,10 +35,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.AbstractBaseTagMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TableViewSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
@@ -52,7 +49,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -211,7 +211,7 @@ public class ToBeMergedDialog extends DialogWrapper {
         return tag;
       }
     };
-    mouseListener.install(myRevisionsList);
+    mouseListener.installOn(myRevisionsList);
 
     final PagedListWithActions.InnerComponentManager<CommittedChangeList> listsManager =
       new PagedListWithActions.InnerComponentManager<CommittedChangeList>() {
@@ -264,8 +264,9 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   private void addRevisionListListeners() {
     final int checkboxWidth = new JCheckBox().getPreferredSize().width;
-    myRevisionsList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         final int idx = myRevisionsList.rowAtPoint(e.getPoint());
         if (idx >= 0) {
           final Rectangle baseRect = myRevisionsList.getCellRect(idx, 0, false);
@@ -275,11 +276,12 @@ public class ToBeMergedDialog extends DialogWrapper {
             final long number = changeList.getNumber();
             toggleInclusion(number);
             myRevisionsList.repaint(baseRect);
-            e.consume();
           }
         }
+        return true;
       }
-    });
+    }.installOn(myRevisionsList);
+
     myRevisionsList.addKeyListener(new KeyAdapter() {
       @Override
       public void keyReleased(KeyEvent e) {

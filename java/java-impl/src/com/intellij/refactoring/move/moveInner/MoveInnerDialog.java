@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,7 +288,7 @@ public class MoveInnerDialog extends RefactoringDialog {
 
     JavaRefactoringSettings.getInstance().MOVE_INNER_PREVIEW_USAGES = isPreviewUsages();
     if (myCbPassOuterClass.isSelected() && mySuggestedNameInfo != null) {
-      mySuggestedNameInfo.nameChoosen(getParameterName());
+      mySuggestedNameInfo.nameChosen(getParameterName());
     }
 
     final PsiElement target = getTargetContainer();

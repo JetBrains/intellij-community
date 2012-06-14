@@ -723,7 +723,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                          final int column) {
       if (myListener == null) {
         myListener = new MergeSourceDetailsLinkListener(MERGE_SOURCE_DETAILS_TAG, myFile);
-        myListener.install(table);
+        myListener.installOn(table);
       }
       if (! (value instanceof SvnFileRevision)) {
         append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);

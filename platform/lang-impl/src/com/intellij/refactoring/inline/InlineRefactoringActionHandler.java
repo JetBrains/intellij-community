@@ -72,7 +72,7 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
     }
     if (element != null) {
       for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
-        if (handler.canInlineElementInEditor(element)) {
+        if (handler.canInlineElementInEditor(element, editor)) {
           handler.inlineElement(project, editor, element);
           return;
         }

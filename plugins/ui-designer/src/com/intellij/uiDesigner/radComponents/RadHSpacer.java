@@ -15,11 +15,11 @@
  */
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.HSpacer;
+import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.XmlWriter;
-import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.palette.Palette;
 
 /**
  * @author Anton Katilin
@@ -27,25 +27,25 @@ import com.intellij.uiDesigner.core.GridConstraints;
  */
 public final class RadHSpacer extends RadAtomicComponent {
   public static class Factory extends RadComponentFactory {
-    public RadComponent newInstance(Module module, Class aClass, String id) {
-      return new RadHSpacer(module, aClass, id);
+    public RadComponent newInstance(ModuleProvider moduleProvider, Class aClass, String id) {
+      return new RadHSpacer(moduleProvider, aClass, id);
     }
 
     public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
       throw new UnsupportedOperationException("Spacer instances should not be created by SnapShooter");
     }
 
-    public RadComponent newInstance(Module module, String className, String id) throws ClassNotFoundException {
-      return new RadHSpacer(module, HSpacer.class, id);
+    public RadComponent newInstance(ModuleProvider moduleProvider, String className, String id) throws ClassNotFoundException {
+      return new RadHSpacer(moduleProvider, HSpacer.class, id);
     }
   }
 
-  public RadHSpacer(final Module module, final String id) {
-    super(module, HSpacer.class, id);
+  public RadHSpacer(final ModuleProvider moduleProvider, final String id) {
+    super(moduleProvider, HSpacer.class, id);
   }
 
-  public RadHSpacer(final Module module, final Class aClass, final String id) {
-    super(module, aClass, id);
+  public RadHSpacer(final ModuleProvider moduleProvider, final Class aClass, final String id) {
+    super(moduleProvider, aClass, id);
   }
 
   /**
@@ -61,15 +61,17 @@ public final class RadHSpacer extends RadAtomicComponent {
 
   public void write(final XmlWriter writer) {
     writer.startElement("hspacer");
-    try{
+    try {
       writeId(writer);
       writeConstraints(writer);
-    }finally{
+    }
+    finally {
       writer.endElement(); // hspacer
     }
   }
 
-  @Override public boolean hasIntrospectedProperties() {
+  @Override
+  public boolean hasIntrospectedProperties() {
     return false;
   }
 }

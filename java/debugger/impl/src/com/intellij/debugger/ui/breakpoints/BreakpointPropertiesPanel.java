@@ -20,6 +20,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
@@ -42,6 +43,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.IJSwingUtilities;
@@ -61,7 +63,7 @@ import java.util.List;
 
 public abstract class BreakpointPropertiesPanel {
 
-  private final BreakpointChooser myMasterBreakpointChooser;
+  private BreakpointChooser myMasterBreakpointChooser;
 
   public void setDetailView(DetailView detailView) {
     myDetailView = detailView;
@@ -284,24 +286,6 @@ public abstract class BreakpointPropertiesPanel {
 
     myLogExpressionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint logMessage");
 
-    myMasterBreakpointChooser = new BreakpointChooser(project, new BreakpointChooser.Delegate() {
-      @Override
-      public void breakpointChosen(Project project, BreakpointItem item, JBPopup popup) {
-        final boolean enabled = item != null && item.getBreakpoint() != null;
-        myLeaveEnabledRadioButton.setEnabled(enabled);
-        myDisableAgainRadio.setEnabled(enabled);
-        myEnableOrDisableLabel.setEnabled(enabled);
-
-        if (item != null) {
-
-          saveMasterBreakpoint();
-        }
-
-        updateMasterBreakpointPanel(findMasterBreakpointRule());
-
-      }
-    });
-
     myInstanceFiltersField = new FieldPanel(new MyTextField(), "", null,
      new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -357,8 +341,7 @@ public abstract class BreakpointPropertiesPanel {
 
     insert(myConditionComboPanel, conditionPanel);
     insert(myLogExpressionComboPanel, myLogExpressionCombo);
-    //insert(myDependentBreakpointComboPanel, baseBreakpointCombo);
-    insert(myDependentBreakpointComboPanel, myMasterBreakpointChooser.getComponent());
+
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
     insert(myClassFiltersFieldPanel, myClassFiltersField);
 
@@ -390,6 +373,68 @@ public abstract class BreakpointPropertiesPanel {
         break;
       }
     }
+    items.add(new BreakpointItem() {
+      @Override
+      public Object getBreakpoint() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void setEnabled(boolean state) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      protected void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
+        renderer.clear();
+        renderer.append(getDisplayText());
+      }
+
+      @Override
+      public Icon getIcon() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public String getDisplayText() {
+        return DebuggerBundle.message("value.none");
+      }
+
+      @Override
+      public boolean navigate() {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public String speedSearchText() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public String footerText() {
+        return "";
+      }
+
+      @Override
+      protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public boolean allowedToRemove() {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public void removed(Project project) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+    });
     return items;
   }
 
@@ -414,9 +459,13 @@ public abstract class BreakpointPropertiesPanel {
     else {
       EnableBreakpointRule rule = findMasterBreakpointRule();
       boolean selected = myLeaveEnabledRadioButton.isSelected();
-      if (rule != null && (rule.getMasterBreakpoint() != masterBreakpoint || rule.isLeaveEnabled() != selected ) ) {
-        getBreakpointManager(myProject).removeBreakpointRule(rule);
-
+      if (rule != null) {
+        if (rule.getMasterBreakpoint() != masterBreakpoint || rule.isLeaveEnabled() != selected) {
+          getBreakpointManager(myProject).removeBreakpointRule(rule);
+        }
+        else {
+          return;
+        }
       }
       getBreakpointManager(myProject).addBreakpointRule(new EnableBreakpointRule(getBreakpointManager(myProject),
                                                                                  masterBreakpoint,
@@ -569,14 +618,35 @@ public abstract class BreakpointPropertiesPanel {
   }
 
   private void initMasterBreakpointPanel() {
-    myMasterBreakpointChooser.setBreakpointItems(getBreakpointItemsExceptMy());
-
     final EnableBreakpointRule rule = findMasterBreakpointRule();
 
     final Breakpoint baseBreakpoint = rule != null ? rule.getMasterBreakpoint() : null;
     updateMasterBreakpointPanel(rule);
 
-    myMasterBreakpointChooser.setSelectedBreakpoint(baseBreakpoint);
+
+    myMasterBreakpointChooser = new BreakpointChooser(myProject, new BreakpointChooser.Delegate() {
+      @Override
+      public void breakpointChosen(Project project, BreakpointItem item, JBPopup popup) {
+        final boolean enabled = item != null && item.getBreakpoint() != null;
+        myLeaveEnabledRadioButton.setEnabled(enabled);
+        myDisableAgainRadio.setEnabled(enabled);
+        myEnableOrDisableLabel.setEnabled(enabled);
+
+        if (item != null) {
+
+          saveMasterBreakpoint();
+        }
+
+        updateMasterBreakpointPanel(findMasterBreakpointRule());
+
+      }
+    }, baseBreakpoint);
+
+    insert(myDependentBreakpointComboPanel, myMasterBreakpointChooser.getComponent());
+
+
+    myMasterBreakpointChooser.setBreakpointItems(getBreakpointItemsExceptMy());
+
   }
 
   private @Nullable EnableBreakpointRule findMasterBreakpointRule() {
@@ -791,37 +861,6 @@ public abstract class BreakpointPropertiesPanel {
 
   public JPanel getPanel() {
     return myPanel;
-  }
-
-  private static class ComboboxItem {
-    private final Breakpoint breakpoint;
-
-    public ComboboxItem() {
-      breakpoint = null;
-    }
-
-    public ComboboxItem(@NotNull final Breakpoint breakpoint) {
-      this.breakpoint = breakpoint;
-    }
-
-    public Breakpoint getBreakpoint() {
-      return breakpoint;
-    }
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      final ComboboxItem comboboxItem = (ComboboxItem)o;
-
-      if (breakpoint != null ? !breakpoint.equals(comboboxItem.breakpoint) : comboboxItem.breakpoint != null) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      return breakpoint != null ? breakpoint.hashCode() : 0;
-    }
   }
 
   private BreakpointManager getBreakpointManager(Project project) {

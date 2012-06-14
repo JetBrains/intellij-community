@@ -19,7 +19,6 @@ import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -74,17 +73,19 @@ public class CheckBoxWithColorChooser extends JPanel {
       if (SystemInfo.isMac) {
         putClientProperty("JButton.buttonType", "square");
       }
-      addMouseListener(new MouseAdapter() {
+
+      new ClickListener() {
         @Override
-        public void mouseClicked(MouseEvent e) {
+        public boolean onClick(MouseEvent e, int clickCount) {
           if (myCheckbox.isSelected()) {
             final Color color = ColorChooser.chooseColor(myCheckbox, "Chose color", CheckBoxWithColorChooser.this.myColor);
             if (color != null) {
               myColor = color;
             }
           }
+          return true;
         }
-      });
+      }.installOn(this);
     }
 
     @Override

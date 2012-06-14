@@ -10,7 +10,6 @@ import javax.swing.plaf.basic.BasicRadioButtonUI;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Map;
 
@@ -53,8 +52,9 @@ public class CheckBoxList extends JBList {
         }
       }
     });
-    addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         if (isEnabled()) {
           int index = locationToIndex(e.getPoint());
 
@@ -69,11 +69,13 @@ public class CheckBoxList extends JBList {
             }
             if (e.getX() < iconArea) {
               setSelected(checkbox, index);
+              return true;
             }
           }
         }
+        return false;
       }
-    });
+    }.installOn(this);
   }
 
   public void setStringItems(final Map<String, Boolean> items) {

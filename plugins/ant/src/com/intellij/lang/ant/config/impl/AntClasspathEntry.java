@@ -49,8 +49,6 @@ public interface AntClasspathEntry {
     }
   };
 
-  String getPresentablePath();
-
   void writeExternal(Element dataElement) throws WriteExternalException;
 
   void addFilesTo(List<File> files);

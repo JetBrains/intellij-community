@@ -59,7 +59,10 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -208,37 +211,41 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
-    myList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         final int idx = myList.locationToIndex(e.getPoint());
         if (idx >= 0) {
           final Rectangle baseRect = myList.getCellBounds(idx, idx);
           baseRect.setSize(checkboxWidth, baseRect.height);
           if (baseRect.contains(e.getPoint())) {
             toggleSelection();
-            e.consume();
+            return true;
           }
-          else if (e.getClickCount() == 2) {
+          else if (clickCount == 2) {
             myDoubleClickHandler.run();
-            e.consume();
+            return true;
           }
         }
+        return false;
       }
-    });
+    }.installOn(myList);
 
-    myTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         final int row = myTree.getRowForLocation(e.getPoint().x, e.getPoint().y);
         if (row >= 0) {
           final Rectangle baseRect = myTree.getRowBounds(row);
           baseRect.setSize(checkboxWidth, baseRect.height);
-          if (!baseRect.contains(e.getPoint()) && e.getClickCount() == 2) {
+          if (!baseRect.contains(e.getPoint()) && clickCount == 2) {
             myDoubleClickHandler.run();
-            e.consume();
+            return true;
           }
         }
+        return false;
       }
-    });
+    }.installOn(myTree);
 
     setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
 

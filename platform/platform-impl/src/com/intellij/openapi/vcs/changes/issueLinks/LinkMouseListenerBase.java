@@ -15,23 +15,25 @@
  */
 package com.intellij.openapi.vcs.changes.issueLinks;
 
+import com.intellij.ui.ClickListener;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
-public abstract class LinkMouseListenerBase extends MouseAdapter implements MouseMotionListener {
+public abstract class LinkMouseListenerBase extends ClickListener implements MouseMotionListener {
   @Nullable
   protected abstract Object getTagAt(final MouseEvent e);
 
-  public void mouseClicked(final MouseEvent e) {
-    if (!e.isPopupTrigger() && e.getButton() == 1) {
+  @Override
+  public boolean onClick(MouseEvent e, int clickCount) {
+    if (e.getButton() == 1) {
       Object tag = getTagAt(e);
       handleTagClick(tag, e);
+      return true;
     }
+    return false;
   }
 
   protected void handleTagClick(final Object tag, MouseEvent event) {
@@ -54,8 +56,8 @@ public abstract class LinkMouseListenerBase extends MouseAdapter implements Mous
     }
   }
 
-  public void install(final JComponent tree) {
-    tree.addMouseListener(this);
+  public void installOn(Component tree) {
+    super.installOn(tree);
     tree.addMouseMotionListener(this);
   }
 }

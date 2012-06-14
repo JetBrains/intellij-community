@@ -6,11 +6,12 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public class JpsElementCollectionKind<E extends JpsElement> extends JpsElementKind<JpsElementCollectionImpl<E>>
+public class JpsElementCollectionKind<E extends JpsElement> extends JpsElementKindBase<JpsElementCollectionImpl<E>>
                                                             implements JpsElementCreator<JpsElementCollectionImpl<E>> {
   private final JpsElementKind<E> myElementKind;
 
   public JpsElementCollectionKind(JpsElementKind<E> elementKind) {
+    super("collection of " + elementKind);
     myElementKind = elementKind;
   }
 

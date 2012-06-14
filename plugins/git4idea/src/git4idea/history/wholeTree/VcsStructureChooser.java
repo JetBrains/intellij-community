@@ -56,7 +56,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -199,12 +198,13 @@ public class VcsStructureChooser extends DialogWrapper {
     });
     myRoot = (DefaultMutableTreeNode)myTree.getModel().getRoot();
 
-    myTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         int row = myTree.getRowForLocation(e.getX(), e.getY());
-        if (row < 0) return;
+        if (row < 0) return false;
         final Object o = myTree.getPathForRow(row).getLastPathComponent();
-        if (myRoot == o || getFile(o) == null) return;
+        if (myRoot == o || getFile(o) == null) return false;
 
         Rectangle rowBounds = myTree.getRowBounds(row);
         cellRenderer.setBounds(rowBounds);
@@ -217,10 +217,10 @@ public class VcsStructureChooser extends DialogWrapper {
           mySelectionManager.toggleSelection((DefaultMutableTreeNode)o);
           myTree.revalidate();
           myTree.repaint();
-          e.consume();
         }
+        return true;
       }
-    });
+    }.installOn(myTree);
 
     myTree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {

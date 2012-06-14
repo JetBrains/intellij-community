@@ -326,16 +326,17 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
     };
 
-    change.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (disposeContextPopup()) return;
+      public boolean onClick(MouseEvent e, int clickCount) {
+        if (disposeContextPopup()) return false;
 
         JPanel content = createPopupContextPanel(updateLabel);
         myContextPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null).setResizable(true).createPopup();
         myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
+        return true;
       }
-    });
+    }.installOn(change);
 
     updateLabel.run();
 

@@ -18,6 +18,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
@@ -28,7 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -57,15 +57,13 @@ public class SelectFontDialog extends DialogWrapper {
     myFontList.setModel(new DefaultListModel());
     fillList(useOnlyMonospacedFonts);
 
-    myFontList.addMouseListener(
-      new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2){
-            doOKAction();
-          }
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        doOKAction();
+        return true;
       }
-    );
+    }.installOn(myFontList);
 
     myFontList.setCellRenderer(new MyListCellRenderer());
 

@@ -17,13 +17,13 @@ package org.jetbrains.android.uipreview;
 
 import com.android.ide.common.resources.configuration.*;
 import com.android.resources.*;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -340,16 +340,18 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     final JPanel leftPanel = new JPanel(new BorderLayout(5, 5));
     myAvailableQualifiersList = new JBList();
     myAvailableQualifiersList.setMinimumSize(new Dimension(10, 10));
-    leftPanel
-      .add(new JBLabel(AndroidBundle.message("android.layout.preview.edit.configuration.available.qualifiers.label")), BorderLayout.NORTH);
+    JBLabel label = new JBLabel(AndroidBundle.message("android.layout.preview.edit.configuration.available.qualifiers.label"));
+    label.setLabelFor(myAvailableQualifiersList);
+    leftPanel.add(label, BorderLayout.NORTH);
     leftPanel.add(new JBScrollPane(myAvailableQualifiersList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
 
     final JPanel rightPabel = new JPanel(new BorderLayout(5, 5));
     myChosenQualifiersList = new JBList();
     myChosenQualifiersList.setMinimumSize(new Dimension(10, 10));
-    rightPabel
-      .add(new JBLabel(AndroidBundle.message("android.layout.preview.edit.configuration.choosen.qualifiers.label")), BorderLayout.NORTH);
+    label = new JBLabel(AndroidBundle.message("android.layout.preview.edit.configuration.choosen.qualifiers.label"));
+    label.setLabelFor(myChosenQualifiersList);
+    rightPabel.add(label, BorderLayout.NORTH);
     rightPabel.add(new JBScrollPane(myChosenQualifiersList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
 
@@ -408,6 +410,10 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     listsPanel.add(rightPabel);
     add(listsPanel, BorderLayout.CENTER);
     add(myQualifierOptionsPanel, BorderLayout.EAST);
+  }
+
+  public JBList getAvailableQualifiersList() {
+    return myAvailableQualifiersList;
   }
 
   private abstract static class MyQualifierEditor<T extends ResourceQualifier> {

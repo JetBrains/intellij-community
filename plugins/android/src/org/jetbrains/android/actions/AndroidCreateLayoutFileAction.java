@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.actions;
 
+import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
 import com.intellij.facet.ProjectFacetManager;
@@ -57,7 +58,7 @@ public class AndroidCreateLayoutFileAction extends CreateTypedResourceFileAction
   private String myLastRootComponentName;
 
   public AndroidCreateLayoutFileAction() {
-    super("Layout", "layout", "LinearLayout", false, false);
+    super("Layout", ResourceFolderType.LAYOUT, false, false);
   }
 
   @NotNull
@@ -75,7 +76,7 @@ public class AndroidCreateLayoutFileAction extends CreateTypedResourceFileAction
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     assert myLastRootComponentName != null;
-    return doCreate(newName, directory, myLastRootComponentName, false);
+    return doCreateAndNavigate(newName, directory, myLastRootComponentName, false);
   }
 
   @Override

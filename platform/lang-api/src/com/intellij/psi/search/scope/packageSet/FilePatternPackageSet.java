@@ -31,12 +31,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
 public class FilePatternPackageSet extends PatternBasedPackageSet {
-  public static final @NonNls String SCOPE_FILE = "file";
+  @NonNls public static final String SCOPE_FILE = "file";
   private Pattern myModulePattern;
   private Pattern myModuleGroupPattern;
   private final String myPathPattern;
@@ -48,7 +49,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
                                @NonNls String filePattern) {
     myPathPattern = filePattern;
     myModulePatternText = modulePattern;
-    if (modulePattern == null || modulePattern.length() == 0) {
+    if (modulePattern == null || modulePattern.isEmpty()) {
       myModulePattern = null;
     }
     else {
@@ -66,6 +67,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     myFilePattern = filePattern != null ? Pattern.compile(convertToRegexp(filePattern, '/')) : null;
   }
 
+  @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
     Project project = holder.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -147,14 +149,19 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return buf.toString();
   }
 
+  @Override
+  @NotNull
   public PackageSet createCopy() {
     return new FilePatternPackageSet(myModulePatternText, myPathPattern);
   }
 
+  @Override
   public int getNodePriority() {
     return 0;
   }
 
+  @Override
+  @NotNull
   public String getText() {
     @NonNls StringBuffer buf = new StringBuffer("file");
 

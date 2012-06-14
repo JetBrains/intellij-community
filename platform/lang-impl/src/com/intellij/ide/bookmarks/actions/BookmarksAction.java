@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
@@ -125,7 +124,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   }
 
   @Override
-  public void itemChosen(ItemWrapper item, Project project, JBPopup popup) {
+  public void itemChosen(ItemWrapper item, Project project, JBPopup popup, boolean withEnterOrDoubleClick) {
     if (item instanceof BookmarkItem) {
       Bookmark bookmark = ((BookmarkItem)item).getBookmark();
       popup.cancel();

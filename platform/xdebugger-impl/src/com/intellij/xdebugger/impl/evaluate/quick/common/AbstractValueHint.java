@@ -281,24 +281,26 @@ public abstract class AbstractValueHint {
 
   protected JComponent createExpandableHintComponent(final SimpleColoredText text, final Runnable expand) {
     final JComponent component = HintUtil.createInformationLabel(text, COLLAPSED_TREE_ICON);
-    addMouseListenerToHierarchy(component, new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    addClickListenerToHierarchy(component, new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent event, int clickCount) {
         if (myCurrentHint != null) {
           myCurrentHint.hide();
         }
         expand.run();
+        return true;
       }
     });
     return component;
   }
 
-  private static void addMouseListenerToHierarchy(Component c, MouseListener l) {
-    c.addMouseListener(l);
+  private static void addClickListenerToHierarchy(Component c, ClickListener l) {
+    l.installOn(c);
     if (c instanceof Container) {
       final Container container = (Container)c;
       Component[] children = container.getComponents();
       for (Component child : children) {
-        addMouseListenerToHierarchy(child, l);
+        addClickListenerToHierarchy(child, l);
       }
     }
   }

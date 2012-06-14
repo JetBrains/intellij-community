@@ -22,14 +22,15 @@ import com.android.sdklib.ISystemImage;
 import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
@@ -42,7 +43,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -233,18 +233,19 @@ public class CreateAvdDialog extends DialogWrapper {
     myAvdInfoLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
     myAvdInfoLink.setVisible(showAvdInfo);
     myAvdInfoLabel.setVisible(showAvdInfo);
-    myAvdInfoLink.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.isConsumed()) return;
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         try {
           BrowserUtil.launchBrowser(url);
         }
         catch (IllegalThreadStateException ex) {
           /* not a problem */
         }
-        e.consume();
+        return true;
       }
-    });
+    }.installOn(myAvdInfoLabel);
+
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

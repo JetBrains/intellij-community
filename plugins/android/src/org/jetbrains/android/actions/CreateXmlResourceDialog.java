@@ -18,14 +18,12 @@ package org.jetbrains.android.actions;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -48,6 +46,7 @@ import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.ModuleListCellRendererWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +67,9 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   private JTextField myFileNameField;
   private JPanel myDirectoriesPanel;
   private JBLabel myDirectoriesLabel;
+  private JTextField myValueField;
+  private JBLabel myValueLabel;
+  private JBLabel myNameLabel;
 
   private final Module myModule;
   private final ResourceType myResourceType;
@@ -78,11 +80,27 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   private final CheckBoxList myDirectoriesList;
   private VirtualFile myResourceDir;
 
-  public CreateXmlResourceDialog(@NotNull Module module, @NotNull ResourceType resourceType) {
+  public CreateXmlResourceDialog(@NotNull Module module,
+                                 @NotNull ResourceType resourceType,
+                                 @Nullable String predefinedName,
+                                 @Nullable String predefinedValue,
+                                 boolean chooseName) {
     super(module.getProject());
-
     myResourceType = resourceType;
 
+    if (predefinedName != null && predefinedName.length() > 0) {
+      if (!chooseName) {
+        myNameLabel.setVisible(false);
+        myNameField.setVisible(false);
+      }
+      myNameField.setText(predefinedName);
+    }
+
+    if (predefinedValue != null && predefinedValue.length() > 0) {
+      myValueLabel.setVisible(false);
+      myValueField.setVisible(false);
+      myValueField.setText(predefinedValue);
+    }
     final Set<Module> modulesSet = new HashSet<Module>();
     modulesSet.add(module);
 
@@ -110,14 +128,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
 
       myModuleCombo.setModel(new DefaultComboBoxModel(modules));
       myModuleCombo.setSelectedItem(module);
-
-      myModuleCombo.setRenderer(new ListCellRendererWrapper<Module>(myModuleCombo.getRenderer()) {
-        @Override
-        public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
-          setText(module.getName());
-          setIcon(ModuleType.get(module).getNodeIcon(false));
-        }
-      });
+      myModuleCombo.setRenderer(new ModuleListCellRendererWrapper(myModuleCombo.getRenderer()));
     }
 
     final String defaultResFileName = AndroidResourceUtil.getDefaultResourceFileName(resourceType.getName());
@@ -382,7 +393,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameField;
+    return myNameField.getText().length() == 0 ? myNameField : myValueField;
   }
 
   @Override
@@ -409,6 +420,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     }
     else {
       super.doOKAction();
+
     }
   }
 
@@ -432,6 +444,16 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   @NotNull
   public String getFileName() {
     return myFileNameField.getText().trim();
+  }
+
+  @NotNull
+  public String getName() {
+    return myNameField.getText().trim();
+  }
+
+  @NotNull
+  public String getValue() {
+    return myValueField.getText().trim();
   }
 
   @Nullable

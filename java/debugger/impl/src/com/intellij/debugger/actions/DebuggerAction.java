@@ -31,11 +31,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.DoubleClickListener;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,22 +114,23 @@ public abstract class DebuggerAction extends AnAction {
   }
 
   public static Disposable installEditAction(final JTree tree, String actionName) {
-    final MouseAdapter mouseListener = new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() != 2) return;
-        if (tree.getPathForLocation(e.getX(), e.getY()) == null) return;
+    final DoubleClickListener listener = new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (tree.getPathForLocation(e.getX(), e.getY()) == null) return false;
         DataContext dataContext = DataManager.getInstance().getDataContext(tree);
         GotoFrameSourceAction.doAction(dataContext);
+        return true;
       }
     };
-    tree.addMouseListener(mouseListener);
-    
+    listener.installOn(tree);
+
     final AnAction action = ActionManager.getInstance().getAction(actionName);
     action.registerCustomShortcutSet(CommonShortcuts.getEditSource(), tree);
 
     return new Disposable() {
       public void dispose() {
-        tree.removeMouseListener(mouseListener);
+        listener.uninstall(tree);
         action.unregisterCustomShortcutSet(tree);
       }
     };

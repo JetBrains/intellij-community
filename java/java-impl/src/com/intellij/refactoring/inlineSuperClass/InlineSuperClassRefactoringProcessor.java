@@ -221,7 +221,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         super.performRefactoring(pushDownUsages);
         RefactoringUtil.sortDepthFirstRightLeftOrder(usages);
         for (UsageInfo usageInfo : usages) {
-          if (!(usageInfo instanceof ReplaceExtendsListUsageInfo)) {
+          if (!(usageInfo instanceof ReplaceExtendsListUsageInfo || usageInfo instanceof RemoveImportUsageInfo)) {
             try {
               ((FixableUsageInfo)usageInfo).fixUsage();
             }
@@ -234,8 +234,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
         //postpone broken hierarchy
         for (UsageInfo usage : usages) {
-          if (usage instanceof ReplaceExtendsListUsageInfo) {
-            ((ReplaceExtendsListUsageInfo)usage).fixUsage();
+          if (usage instanceof ReplaceExtendsListUsageInfo || usage instanceof RemoveImportUsageInfo) {
+            ((FixableUsageInfo)usage).fixUsage();
           }
         }
         try {

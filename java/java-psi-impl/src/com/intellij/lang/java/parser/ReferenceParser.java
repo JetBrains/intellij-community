@@ -297,13 +297,6 @@ public class ReferenceParser {
 
   @NotNull
   public PsiBuilder.Marker parseTypeParameters(final PsiBuilder builder) {
-    final PsiBuilder.Marker marker = parseTypeParameters(builder, false);
-    assert marker != null;
-    return marker;
-  }
-
-  @Nullable
-  public PsiBuilder.Marker parseTypeParameters(final PsiBuilder builder, final boolean stopOnErrors) {
     final PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(JavaElementType.TYPE_PARAMETER_LIST);
@@ -313,10 +306,6 @@ public class ReferenceParser {
     while (true) {
       final PsiBuilder.Marker param = parseTypeParameter(builder);
       if (param == null) {
-        if (stopOnErrors) {
-          list.rollbackTo();
-          return null;
-        }
         error(builder, JavaErrorMessages.message("expected.type.parameter"));
       }
       if (!expect(builder, JavaTokenType.COMMA)) {
@@ -325,11 +314,6 @@ public class ReferenceParser {
     }
 
     if (!expect(builder, JavaTokenType.GT)) {
-      if (stopOnErrors) {
-        list.rollbackTo();
-        return null;
-      }
-
       // hack for completion
       if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
         if (builder.lookAhead(1) == JavaTokenType.GT) {

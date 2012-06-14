@@ -55,7 +55,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private String myIconUrl = "/icon.png";
   @NonNls private String mySmallIconUrl = "/icon_small.png";
   @NonNls private String myOpaqueIconUrl = "/icon.png";
-  @NonNls private String myToolWindowIconUrl = "/general/toolWindowProject.png";
+  @NonNls private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private Calendar myBuildDate = null;
   private Calendar myMajorReleaseBuildDate = null;
   private String myPackageCode = null;

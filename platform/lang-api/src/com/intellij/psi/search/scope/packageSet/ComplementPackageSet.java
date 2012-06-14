@@ -16,6 +16,7 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class ComplementPackageSet extends PackageSetBase {
   private final PackageSet myComplementarySet;
@@ -29,10 +30,12 @@ public class ComplementPackageSet extends PackageSetBase {
                                                         : myComplementarySet.contains(getPsiFile(file, holder), holder);
   }
 
+  @NotNull
   public PackageSet createCopy() {
     return new ComplementPackageSet(myComplementarySet.createCopy());
   }
 
+  @NotNull
   public String getText() {
     StringBuffer buf = new StringBuffer();
     boolean needParen = myComplementarySet.getNodePriority() > getNodePriority();

@@ -569,7 +569,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
     }
   }
 
-  private static boolean hasOnlyOneMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
+  private static boolean hasOnlyOneLambdaMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
     PsiField[] fields = anonymousClass.getFields();
     if (fields.length != 0) {
       if (fields.length == 1 && HighlightUtil.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) &&
@@ -590,8 +590,13 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       return false;
     }
 
+    PsiMethod method = anonymousClass.getMethods()[0];
+    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+      return false;
+    }
+
     if (checkResolve) {
-      PsiReferenceList throwsList = anonymousClass.getMethods()[0].getThrowsList();
+      PsiReferenceList throwsList = method.getThrowsList();
       for (PsiClassType type : throwsList.getReferencedTypes()) {
         if (type.resolve() == null) {
           return false;
@@ -617,7 +622,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
         final PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList != null && argumentList.getExpressions().length == 0) {
           final PsiMethod[] methods = anonymousClass.getMethods();
-          if (hasOnlyOneMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
+          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
             final PsiMethod method = methods[0];
             final PsiCodeBlock body = method.getBody();
             if (body != null) {

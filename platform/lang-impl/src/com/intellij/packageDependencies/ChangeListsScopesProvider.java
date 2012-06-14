@@ -103,11 +103,13 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
         return files.contains(file);
       }
 
+      @NotNull
       @Override
       public PackageSet createCopy() {
         return this;
       }
 
+      @NotNull
       @Override
       public String getText() {
         return "file:*//*";

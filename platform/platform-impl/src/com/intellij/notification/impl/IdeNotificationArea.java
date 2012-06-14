@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,12 +63,13 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
         updateStatus();
       }
     }, this);
-    addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         EventLog.toggleLog(getProject());
+        return true;
       }
-    });
+    }.installOn(this);
   }
 
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {

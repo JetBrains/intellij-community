@@ -21,6 +21,7 @@ import com.android.ide.common.resources.configuration.RegionQualifier;
 import com.android.resources.NightMode;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
+import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -45,7 +46,7 @@ import java.util.*;
 public class ProfileManager {
   private static final LayoutDevice CUSTOM_DEVICE = new LayoutDevice("Edit Devices", LayoutDevice.Type.CUSTOM);
 
-  private final Module myModule;
+  private final ModuleProvider myModuleProvider;
   private final Runnable myRefreshAction;
   private final Runnable mySelectionRunnable;
 
@@ -65,12 +66,12 @@ public class ProfileManager {
 
   private Profile myProfile;
 
-  public ProfileManager(Module module, Runnable refreshAction, Runnable selectionRunnable) {
-    myModule = module;
+  public ProfileManager(ModuleProvider moduleProvider, Runnable refreshAction, Runnable selectionRunnable) {
+    myModuleProvider = moduleProvider;
     myRefreshAction = refreshAction;
     mySelectionRunnable = selectionRunnable;
 
-    myLayoutDeviceManager = ProfileList.getInstance(module.getProject()).getLayoutDeviceManager();
+    myLayoutDeviceManager = ProfileList.getInstance(moduleProvider.getProject()).getLayoutDeviceManager();
 
     myDeviceAction = new MyComboBoxAction<LayoutDevice>() {
       @Override
@@ -87,7 +88,7 @@ public class ProfileManager {
           LayoutDeviceConfiguration configuration = myDeviceConfigurationAction.getSelection();
           configuration = configuration != null && configuration.getDevice().getType() == LayoutDevice.Type.CUSTOM ? configuration : null;
           LayoutDeviceConfigurationsDialog dialog =
-            new LayoutDeviceConfigurationsDialog(myModule.getProject(), configuration, myLayoutDeviceManager);
+            new LayoutDeviceConfigurationsDialog(myModuleProvider.getProject(), configuration, myLayoutDeviceManager);
           dialog.show();
 
           if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
@@ -264,7 +265,7 @@ public class ProfileManager {
   }
 
   public Module getModule() {
-    return myModule;
+    return myModuleProvider.getModule();
   }
 
   @Nullable
@@ -340,7 +341,7 @@ public class ProfileManager {
     List<LocaleData> locales = new ArrayList<LocaleData>();
     Map<String, Set<String>> language2Regions = new HashMap<String, Set<String>>();
 
-    AndroidFacet facet = AndroidFacet.getInstance(myModule);
+    AndroidFacet facet = AndroidFacet.getInstance(getModule());
     if (facet != null) {
       VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
       for (VirtualFile resourceDir : resourceDirs) {
@@ -586,7 +587,7 @@ public class ProfileManager {
   @Nullable
   private AndroidPlatform getPlatform(@Nullable Sdk sdk) {
     if (sdk == null) {
-      sdk = ProfileList.getInstance(myModule.getProject()).getModuleSdk(myModule);
+      sdk = ProfileList.getInstance(myModuleProvider.getProject()).getModuleSdk(getModule());
     }
     if (isAndroidSdk(sdk)) {
       AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();

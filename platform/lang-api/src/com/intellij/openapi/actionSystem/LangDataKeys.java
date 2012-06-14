@@ -21,6 +21,7 @@ import com.intellij.ide.IdeView;
 import com.intellij.lang.Language;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
@@ -48,6 +49,7 @@ public class LangDataKeys extends PlatformDataKeys {
    * Returns {@link com.intellij.ide.IdeView} (one of project, packages, commander or favorites view).
    */
   public static final DataKey<IdeView> IDE_VIEW = DataKey.create("IDEView");
+  public static final DataKey<Boolean> NO_NEW_ACTION = DataKey.create("IDEview.no.create.element.action");
   public static final DataKey<Condition<AnAction>> PRESELECT_NEW_ACTION_CONDITION = DataKey.create("newElementAction.preselect.id");
 
   public static final DataKey<PsiElement> TARGET_PSI_ELEMENT = DataKey.create("psi.TargetElement");
@@ -58,4 +60,7 @@ public class LangDataKeys extends PlatformDataKeys {
   
   public static final DataKey<JBPopup> POSITION_ADJUSTER_POPUP = DataKey.create("chooseByNameDropDown");
   public static final DataKey<JBPopup> PARENT_POPUP = DataKey.create("chooseByNamePopup");
+
+
+  public static final DataKey<Library> LIBRARY = DataKey.create("project.model.library");
 }

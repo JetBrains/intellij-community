@@ -2,6 +2,7 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.impl.JpsElementKindBase;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 
@@ -9,7 +10,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency;
  * @author nik
  */
 public class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
-  public static final JpsElementKind<JpsLibraryReference> LIBRARY_REFERENCE_KIND = new JpsElementKind<JpsLibraryReference>();
+  public static final JpsElementKind<JpsLibraryReference> LIBRARY_REFERENCE_KIND = new JpsElementKindBase<JpsLibraryReference>("library reference");
 
   public JpsLibraryDependencyImpl(final JpsLibraryReference reference) {
     super();

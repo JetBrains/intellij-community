@@ -30,6 +30,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,16 +49,17 @@ import java.awt.*;
 public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder {
   private final Project myProject;
   private Editor myEditor;
-  private ItemWrapper myWrapper;
-  private JPanel myDetailPanel;
 
+  private ItemWrapper myWrapper;
+
+  private JPanel myDetailPanel;
   private JBScrollPane myDetailScrollPanel;
+
   private JPanel myDetailPanelWrapper;
   private JLabel myNothingToShow = new JLabel("Nothing to show");
   private JLabel myNothingToShowInEditor = new JLabel("Nothing to show");
   private RangeHighlighter myHighlighter;
   private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
-
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
@@ -78,9 +81,23 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     }
   }
 
+  public void setCurrentItem(ItemWrapper wrapper) {
+    myWrapper = wrapper;
+  }
+
   @Override
   public PreviewEditorState getEditorState() {
     return myEditorState;
+  }
+
+  @Override
+  public ItemWrapper getCurrentItem() {
+    return myWrapper;
+  }
+
+  @Override
+  public boolean hasEditorOnly() {
+    return false;
   }
 
   @Override
@@ -132,6 +149,8 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       getEditor().getCaretModel().moveToLogicalPosition(positionToNavigate);
       validate();
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+
+      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
 
       clearHightlighting();
       if (lineAttributes != null) {

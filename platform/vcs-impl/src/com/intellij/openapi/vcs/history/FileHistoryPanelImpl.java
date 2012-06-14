@@ -400,8 +400,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
     new TableSpeedSearch(myDualView.getFlatView()).setComparator(new SpeedSearchComparator(false));
     final TableLinkMouseListener listener = new TableLinkMouseListener();
-    listener.install(myDualView.getFlatView());
-    listener.install(myDualView.getTreeView());
+    listener.installOn(myDualView.getFlatView());
+    listener.installOn(myDualView.getTreeView());
 
     createDualView();
     if (isStaticEmbedded) {

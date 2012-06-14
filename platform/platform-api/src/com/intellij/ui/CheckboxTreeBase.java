@@ -25,7 +25,6 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -48,12 +47,13 @@ public class CheckboxTreeBase extends Tree {
     setLineStyleAngled();
     TreeUtil.installActions(this);
 
-    addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         int row = getRowForLocation(e.getX(), e.getY());
-        if (row < 0) return;
+        if (row < 0) return false;
         final Object o = getPathForRow(row).getLastPathComponent();
-        if (!(o instanceof CheckedTreeNode)) return;
+        if (!(o instanceof CheckedTreeNode)) return false;
         Rectangle rowBounds = getRowBounds(row);
         cellRenderer.setBounds(rowBounds);
         Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
@@ -66,14 +66,16 @@ public class CheckboxTreeBase extends Tree {
           if (node.isEnabled()) {
             toggleNode(node);
             setSelectionRow(row);
+            return true;
           }
-          e.consume();
         }
-        else if (e.getClickCount() > 1) {
+        else if (clickCount > 1) {
           onDoubleClick(node);
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(this);
 
     addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {

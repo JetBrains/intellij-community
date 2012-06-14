@@ -175,7 +175,11 @@ public class RefactoringUtil {
       public int compare(final UsageInfo usage1, final UsageInfo usage2) {
         final PsiElement element1 = usage1.getElement();
         final PsiElement element2 = usage2.getElement();
-        if (element1 == null || element2 == null) return 0;
+        if (element1 == null) {
+          if (element2 == null) return 0;
+          return 1;
+        }
+        if (element2 == null) return -1;
         return element2.getTextRange().getStartOffset() - element1.getTextRange().getStartOffset();
       }
     });
@@ -1200,13 +1204,13 @@ public class RefactoringUtil {
   }
 
   @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiTypeParameterList fromList,
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
                                                                                    @NotNull final PsiElement... elements) {
     return createTypeParameterListWithUsedTypeParameters(fromList, Condition.TRUE, elements);
   }
 
   @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiTypeParameterList fromList,
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
                                                                                    Condition<PsiTypeParameter> filter,
                                                                                    @NotNull final PsiElement... elements) {
     if (elements.length == 0) return null;

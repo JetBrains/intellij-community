@@ -18,13 +18,14 @@ package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
@@ -38,8 +39,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.List;
 
 public class BreakpointMasterDetailPopupBuilder {
 
@@ -163,7 +166,7 @@ public class BreakpointMasterDetailPopupBuilder {
       @Nullable
       @Override
       public String getTitle() {
-        return myIsViewer ? null : "Breakpoints";
+        return "";
       }
 
       @Override
@@ -182,28 +185,30 @@ public class BreakpointMasterDetailPopupBuilder {
       }
 
       @Override
-      public void itemChosen(ItemWrapper item, Project project, JBPopup popup) {
-        if (!(item instanceof BreakpointItem)) {
-          return;
-        }
-        if (myCallback != null){
-          myCallback.breakpointChosen(project, (BreakpointItem)item,  popup);
+      public void itemChosen(ItemWrapper item, Project project, JBPopup popup, boolean withEnterOrDoubleClick) {
+        if (myCallback != null && item instanceof BreakpointItem && withEnterOrDoubleClick) {
+          myCallback.breakpointChosen(myProject, (BreakpointItem)item,  popup);
         }
       }
     };
 
-    final JBPopup popup = myPopupBuilder.
-      setActionsGroup(actions).
-      setTree(tree).
-      setDelegate(delegate).
-      setCloseOnEnter(false).createMasterDetailPopup();
+    myPopupBuilder.
+          setActionsGroup(actions).
+          setTree(tree).
+          setDelegate(delegate);
 
-    tree.setBorder(IdeBorderFactory.createBorder());
+    if (!myIsViewer) {
+      myPopupBuilder.setMinSize(new Dimension(-1, 700));
+    }
+
+    final JBPopup popup = myPopupBuilder.setCloseOnEnter(false).createMasterDetailPopup();
 
     myTreeController.setDelegate(new BreakpointItemsTreeController.BreakpointItemsTreeDelegate() {
       @Override
       public void execute(BreakpointItem item) {
-        delegate.itemChosen(item, myProject, popup);
+        if (myCallback != null) {
+          myCallback.breakpointChosen(myProject, item, popup);
+        }
       }
     });
 
@@ -294,6 +299,10 @@ public class BreakpointMasterDetailPopupBuilder {
     myBreakpointsPanelProviders = breakpointsPanelProviders;
   }
 
+  private static Font smaller(Font f) {
+    return f.deriveFont(f.getStyle(), f.getSize() - 2);
+  }
+
   private class ToggleBreakpointGroupingRuleEnabledAction extends CheckboxAction {
     private XBreakpointGroupingRule myRule;
 
@@ -301,6 +310,17 @@ public class BreakpointMasterDetailPopupBuilder {
       super(rule.getPresentableName());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
+    }
+
+
+
+    @Override
+    public JComponent createCustomComponent(Presentation presentation) {
+      JComponent component = super.createCustomComponent(presentation);
+      if (SystemInfo.isMac) {
+        getCheckBox().setFont(smaller(getCheckBox().getFont()));
+      }
+      return component;
     }
 
     @Override

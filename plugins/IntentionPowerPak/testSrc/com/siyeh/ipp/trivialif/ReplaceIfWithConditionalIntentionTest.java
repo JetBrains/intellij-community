@@ -28,6 +28,10 @@ public class ReplaceIfWithConditionalIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testReplaceableAssignmentsWithDiamondsLeave() {
+    doTest();
+  }
+
   @Override
   protected String getIntentionName() {
     return IntentionPowerPackBundle.message("replace.if.with.conditional.intention.name");

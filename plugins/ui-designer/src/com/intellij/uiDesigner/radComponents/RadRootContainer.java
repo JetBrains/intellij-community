@@ -15,12 +15,12 @@
  */
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -50,7 +50,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   private final List<RadButtonGroup> myButtonGroups = new ArrayList<RadButtonGroup>();
   private final List<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<LwInspectionSuppression>();
 
-  public RadRootContainer(final Module module, final String id) {
+  public RadRootContainer(final ModuleProvider module, final String id) {
     super(module, JPanel.class, id);
     getDelegee().setBackground(Color.WHITE);
   }

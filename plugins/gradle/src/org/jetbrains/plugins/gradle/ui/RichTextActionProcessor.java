@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.ui.ClickListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -56,21 +56,22 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
     };
     result.setForeground(UIUtil.getInactiveTextColor().darker().darker().darker());
     result.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    
-    result.addMouseListener(new MouseAdapter() {
+
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
+      public boolean onClick(MouseEvent e, int clickCount) {
         final AsyncResult<DataContext> callback = DataManager.getInstance().getDataContextFromFocus();
         final DataContext context = callback.getResult();
         if (context == null) {
-          return;
+          return false;
         }
         final Presentation presentation = new PresentationFactory().getPresentation(action);
         action.actionPerformed(new AnActionEvent(
           e, context, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE, presentation, ActionManager.getInstance(), e.getModifiers()
         ));
+        return true;
       }
-    });
+    }.installOn(result);
     return result;
   }
 

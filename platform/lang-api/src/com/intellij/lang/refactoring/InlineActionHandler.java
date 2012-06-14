@@ -47,7 +47,7 @@ public abstract class InlineActionHandler {
 
   public abstract boolean canInlineElement(PsiElement element);
 
-  public boolean canInlineElementInEditor(PsiElement element) {
+  public boolean canInlineElementInEditor(PsiElement element, Editor editor) {
     return canInlineElement(element);
   }
 

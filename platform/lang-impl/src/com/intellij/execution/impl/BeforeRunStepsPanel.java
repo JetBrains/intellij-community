@@ -51,8 +51,9 @@ import java.util.Set;
  * @author Vassiliy Kudryashov
  */
 class BeforeRunStepsPanel extends JPanel {
-  private JCheckBox myShowSettingsBeforeRunCheckBox;
-  private JBList myList;
+  private final JCheckBox myShowSettingsBeforeRunCheckBox;
+  private final JCheckBox mySingletonCheckBox;
+  private final JBList myList;
   private final CollectionListModel<BeforeRunTask> myModel;
   private RunConfiguration myRunConfiguration;
 
@@ -129,11 +130,14 @@ class BeforeRunStepsPanel extends JPanel {
     });
 
     myShowSettingsBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.edit.before.run"));
+    mySingletonCheckBox = new JCheckBox(ExecutionBundle.message("configuration.singleton"));
+    myPanel = myDecorator.createPanel();
 
     setLayout(new MigLayout("fill, ins 0, gap 10, hidemode 3"));
-    add(myShowSettingsBeforeRunCheckBox, "shrinky, ay bottom, wrap");
-    myPanel = myDecorator.createPanel();
-    add(myPanel, "grow, push");
+    add(myShowSettingsBeforeRunCheckBox, "shrink, split 2");
+    add(mySingletonCheckBox, "shrink");
+    add(Box.createHorizontalGlue(), "push, grow, wrap");
+    add(myPanel, "grow, push, spanx 2");
   }
 
   @Nullable
@@ -154,7 +158,10 @@ class BeforeRunStepsPanel extends JPanel {
     originalTasks.addAll(RunManagerImpl.getInstanceImpl(myRunConfiguration.getProject()).getBeforeRunTasks(myRunConfiguration));
     myModel.replaceAll(originalTasks);
     myShowSettingsBeforeRunCheckBox.setSelected(settings.isEditBeforeRun());
-    myShowSettingsBeforeRunCheckBox.setEnabled(!(myRunConfiguration instanceof UnknownRunConfiguration));
+    myShowSettingsBeforeRunCheckBox.setEnabled(!(isUnknown()));
+    mySingletonCheckBox.setSelected(settings.isSingleton());
+    mySingletonCheckBox.setEnabled(!(isUnknown()));
+    mySingletonCheckBox.setVisible(myRunConfiguration.getFactory().canConfigurationBeSingleton());
 
     myPanel.setVisible(checkBeforeRunTasksAbility(false));
   }
@@ -171,8 +178,12 @@ class BeforeRunStepsPanel extends JPanel {
     return myShowSettingsBeforeRunCheckBox.isSelected();
   }
 
+  public boolean isSingleton() {
+    return myRunConfiguration.getFactory().canConfigurationBeSingleton() && mySingletonCheckBox.isSelected();
+  }
+
   private boolean checkBeforeRunTasksAbility(boolean checkOnlyAddAction) {
-    if (myRunConfiguration instanceof UnknownRunConfiguration) {
+    if (isUnknown()) {
       return false;
     }
     Set<Key> activeProviderKeys = getActiveProviderKeys();
@@ -191,8 +202,12 @@ class BeforeRunStepsPanel extends JPanel {
     return false;
   }
 
+  private boolean isUnknown() {
+    return myRunConfiguration instanceof UnknownRunConfiguration;
+  }
+
   void doAddAction(AnActionButton button) {
-      if (myRunConfiguration instanceof UnknownRunConfiguration) {
+      if (isUnknown()) {
         return;
       }
 

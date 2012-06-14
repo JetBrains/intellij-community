@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,15 +42,19 @@ import java.io.IOException;
 import java.util.*;
 
 public class FileWatcherTest extends PlatformLangTestCase {
-  private static final int NATIVE_PROCESS_DELAY = 750;  // time to event to be caught by native watcher and passed to watcher thread
+  private static final int NATIVE_PROCESS_DELAY = 750;  // time for events to be caught by native watcher and passed to watcher thread
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
   private FileWatcher myWatcher;
   private LocalFileSystem myFileSystem;
   private MessageBusConnection myConnection;
+  private volatile boolean myAccept = false;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final Runnable myNotifier = new Runnable() {
     @Override
     public void run() {
+      if (!myAccept) return;
       synchronized (myAlarm) {
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(new Runnable() {
@@ -68,6 +73,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    LOG.debug("================== setting up " + getName() + " ==================");
+
     super.setUp();
 
     Disposer.register(getProject(), myAlarm);
@@ -92,10 +99,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
         myEvents.addAll(events);
       }
     });
+
+    LOG.debug("================== setting up " + getName() + " ==================");
   }
 
   @Override
   protected void tearDown() throws Exception {
+    LOG.debug("================== tearing down " + getName() + " ==================");
+
     try {
       myConnection.disconnect();
       myWatcher.shutdown();
@@ -105,6 +116,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
       myWatcher = null;
       super.tearDown();
     }
+
+    LOG.debug("================== tearing down " + getName() + " ==================");
   }
 
 
@@ -418,11 +431,17 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
 
   private List<VFileEvent> getEvents() throws InterruptedException {
-    waitForResponse();
-    myFileSystem.refresh(false);
-    final ArrayList<VFileEvent> result = new ArrayList<VFileEvent>(myEvents);
-    myEvents.clear();
-    return result;
+    myAccept = true;
+    try {
+      waitForResponse();
+      myFileSystem.refresh(false);
+      final ArrayList<VFileEvent> result = new ArrayList<VFileEvent>(myEvents);
+      myEvents.clear();
+      return result;
+    }
+    finally {
+      myAccept = false;
+    }
   }
 
   private void waitForResponse() throws InterruptedException {
@@ -434,9 +453,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   private void clearEvents() {
     myFileSystem.refresh(false);
-    synchronized (myEvents) {
-      myEvents.clear();
-    }
+    myEvents.clear();
   }
 
   @NotNull

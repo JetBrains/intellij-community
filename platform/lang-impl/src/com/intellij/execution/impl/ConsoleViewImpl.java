@@ -79,7 +79,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -130,9 +129,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Runnable myFinishProgress;
   private boolean myAllowHeavyFilters = false;
 
-  @TestOnly
   public Editor getEditor() {
     return myEditor;
+  }
+
+  public EditorHyperlinkSupport getHyperlinks() {
+    return myHyperlinks;
   }
 
   public void scrollToEnd() {

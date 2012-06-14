@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -87,10 +88,14 @@ class InlineMethodHandler extends JavaInlineActionHandler {
         CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
         return;
       }
-      if (!isChainingConstructor(method)) {
-        String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
-        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
-        return;
+      final boolean chainingConstructor = isChainingConstructor(method);
+      if (!chainingConstructor) {
+        if (!isThisReference(reference)) {
+          String message = RefactoringBundle.message("refactoring.cannot.be.applied.to.inline.non.chaining.constructors", REFACTORING_NAME);
+          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_CONSTRUCTOR);
+          return;
+        }
+        allowInlineThisOnly = true;
       }
       if (reference != null) {
         final PsiElement refElement = reference.getElement();
@@ -146,6 +151,18 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       if (checkCalls(child, method)) return true;
     }
 
+    return false;
+  }
+
+  public static boolean isThisReference(PsiReference reference) {
+    if (reference != null) {
+      final PsiElement referenceElement = reference.getElement();
+      if (referenceElement instanceof PsiJavaCodeReferenceElement &&
+          referenceElement.getParent() instanceof PsiMethodCallExpression &&
+          "this".equals(((PsiJavaCodeReferenceElement)referenceElement).getReferenceName())) {
+        return true;
+      }
+    }
     return false;
   }
 }

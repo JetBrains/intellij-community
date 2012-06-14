@@ -122,6 +122,10 @@ public class GeneratorTest extends LightGroovyTestCase {
     doTest();
   }
 
+  public void testFinalMethods() {
+    doTest();
+  }
+
   public void doTest() {
     final String relTestPath = getTestName(true) + ".test";
     final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + relTestPath);

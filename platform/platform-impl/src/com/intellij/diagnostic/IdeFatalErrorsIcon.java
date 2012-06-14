@@ -2,12 +2,12 @@ package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.LayeredIcon;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -32,13 +32,16 @@ public class IdeFatalErrorsIcon extends JLabel {
     myListener = aListener;
     setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
 
-    addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         if (myState != State.NoErrors) {
           myListener.actionPerformed(null);
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(this);
 
     myIcon = new LayeredIcon(UNREAD_ERROR_ICON, READ_ERROR_ICON, NO_ERRORS_ICON) {
       @Override

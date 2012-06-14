@@ -29,7 +29,6 @@ import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
 
@@ -63,15 +62,14 @@ public class MethodListDlg extends DialogWrapper {
       }
     });
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          MethodListDlg.this.close(OK_EXIT_CODE);
-          e.consume();
-        }
+      protected boolean onDoubleClick(MouseEvent e) {
+        MethodListDlg.this.close(OK_EXIT_CODE);
+        return true;
       }
-    });
+    }.installOn(myList);
+
     ListScrollingUtil.ensureSelectionExists(myList);
     setTitle(ExecutionBundle.message("choose.test.method.dialog.title"));
     init();

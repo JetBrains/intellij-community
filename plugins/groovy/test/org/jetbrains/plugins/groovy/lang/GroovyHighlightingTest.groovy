@@ -49,6 +49,8 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*
 import org.jetbrains.plugins.groovy.codeInspection.confusing.*
 
+import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy1_8LibraryName
+
 /**
  * @author peter
  */
@@ -56,8 +58,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor GROOVY_18_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
-      final VirtualFile groovyJar = JarFileSystem.getInstance().refreshAndFindFileByPath(TestUtils.getMockGroovy1_8LibraryName()+"!/");
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(mockGroovy1_8LibraryName + '!/');
       assertTrue(groovyJar != null);
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
       modifiableModel.commit();
@@ -66,7 +68,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "highlighting/";
+    return TestUtils.testDataPath + 'highlighting/';
   }
 
   @NotNull
@@ -185,6 +187,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnassigned1() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassigned2() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassigned3() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassigned4() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassignedTryFinally() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
 
   public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
@@ -1057,5 +1060,35 @@ class A {
 ''')
     myFixture.enableInspections(GroovyAssignabilityCheckInspection)
     myFixture.checkHighlighting(true, false, true)
+  }
+
+  void testUsedVar() {
+    testHighlighting('''\
+def foo(xxx) {
+  if ((xxx = 5) || xxx) {
+    <warning descr="Assignment is not used">xxx</warning>=4
+  }
+}
+
+def foxo(doo) {
+  def xxx = 'asdf'
+  if (!doo) {
+    println xxx
+    <warning descr="Assignment is not used">xxx</warning>=5
+  }
+}
+
+def bar(xxx) {
+  print ((xxx=5)?:xxx)
+}
+
+def a(xxx) {
+  if (2 && (xxx=5)) {
+    xxx
+  }
+  else {
+  }
+}
+''', UnusedDefInspection)
   }
 }

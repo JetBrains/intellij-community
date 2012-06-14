@@ -40,6 +40,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
@@ -47,7 +48,10 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 
@@ -153,13 +157,13 @@ public class ProjectNameWithTypeStep extends ProjectNameStep {
       }
     });
     myTypesList.setSelectedIndex(0);
-    myTypesList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-          myWizardContext.requestNextStep();
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        myWizardContext.requestNextStep();
+        return true;
       }
-    });
+    }.installOn(myTypesList);
 
     final Dimension preferredSize = calcTypeListPreferredSize(ModuleBuilder.getAllBuilders());
     final JBScrollPane pane = IJSwingUtilities.findParentOfType(myTypesList, JBScrollPane.class);

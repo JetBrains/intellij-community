@@ -50,7 +50,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
   public static JScrollPane install(JTree tree) {
     final NewErrorTreeRenderer renderer = new NewErrorTreeRenderer();
     //new TreeLinkMouseListener(renderer.myColoredTreeCellRenderer).install(tree);
-    new TreeNodePartListener(renderer.myRightCellRenderer).install(tree);
+    new TreeNodePartListener(renderer.myRightCellRenderer).installOn(tree);
     return MultilineTreeCellRenderer.installRenderer(tree, renderer);
   }
 

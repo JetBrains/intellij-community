@@ -26,11 +26,15 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
 
   public TestStartedEvent(@NotNull TestStarted testStarted,
                           @Nullable String locationUrl) {
-    super(testStarted.getTestName(), TreeNodeEvent.getNodeId(testStarted),
-          getParentNodeId(testStarted), locationUrl);
+    super(testStarted.getTestName(),
+          TreeNodeEvent.getNodeId(testStarted),
+          getParentNodeId(testStarted),
+          locationUrl,
+          BaseStartedNodeEvent.getNodeType(testStarted),
+          BaseStartedNodeEvent.getNodeArgs(testStarted));
   }
 
   public TestStartedEvent(@NotNull String name, @Nullable String locationUrl) {
-    super(name, -1, -1, locationUrl);
+    super(name, -1, -1, locationUrl, null, null);
   }
 }

@@ -22,6 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
  */
 public class FakeInstruction extends InstructionImpl implements Instruction {
   public FakeInstruction(int num) {
-    super(null, num);
+    super(null);
   }
 }

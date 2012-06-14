@@ -15,49 +15,36 @@
  */
 package com.siyeh.ipp.braces;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIfStatement;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class AddBracesIntention extends MutablyNamedIntention {
+public class AddBracesIntention extends BaseBracesIntention {
 
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
-    return new AddBracesPredicate();
+    return new PsiElementPredicate() {
+      @Override
+      public boolean satisfiedBy(PsiElement element) {
+        final PsiStatement statement = getSurroundingStatement(element);
+        return statement != null && !(statement instanceof PsiBlockStatement);
+      }
+    };
   }
 
-  protected String getTextForElement(PsiElement element) {
-    final PsiElement parent = element.getParent();
-    @NonNls final String keyword;
-    if (parent instanceof PsiIfStatement) {
-      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-      final PsiStatement elseBranch = ifStatement.getElseBranch();
-      if (element.equals(elseBranch)) {
-        keyword = PsiKeyword.ELSE;
-      }
-      else {
-        keyword = PsiKeyword.IF;
-      }
-    }
-    else {
-      final PsiElement firstChild = parent.getFirstChild();
-      assert firstChild != null;
-      keyword = firstChild.getText();
-    }
-    return IntentionPowerPackBundle.message("add.braces.intention.name", keyword);
+  @NotNull
+  @Override
+  protected String getMessageKey() {
+    return "add.braces.intention.name";
   }
 
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiStatement statement = (PsiStatement)element;
-    final String newStatement = "{\n" + element.getText() + "\n}";
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiStatement statement = getSurroundingStatement(element);
+    if (statement == null) {
+      return;
+    }
+    final String newStatement = "{\n" + statement.getText() + "\n}";
     replaceStatement(newStatement, statement);
   }
 }

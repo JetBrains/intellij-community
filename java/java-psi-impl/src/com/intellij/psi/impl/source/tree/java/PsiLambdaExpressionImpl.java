@@ -27,12 +27,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     super(JavaElementType.LAMBDA_EXPRESSION);
   }
 
-  @Override
-  public PsiTypeParameterList getTypeParameterList() {
-    final PsiElement element = getFirstChild();
-    return element instanceof PsiTypeParameterList ? (PsiTypeParameterList)element : null;
-  }
-
   @NotNull
   @Override
   public PsiParameterList getParameterList() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,7 +343,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       String path = matcher.group(2);
       if (path != null) {
         path = path.trim();
-        if (path.endsWith("$")) {
+        if (path.endsWith("$") && path.length() >= 2) {
           path = path.substring(0, path.length() - 2);
         }
         if (!path.isEmpty()) return path;

@@ -124,7 +124,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
       final PsiType componentType;
       try {
         componentType =
-          JavaPsiFacade.getInstance(component.getModule().getProject()).getElementFactory().createTypeFromText(componentClassName, null);
+          JavaPsiFacade.getInstance(component.getProject()).getElementFactory().createTypeFromText(componentClassName, null);
       }
       catch (IncorrectOperationException e) {
         continue;

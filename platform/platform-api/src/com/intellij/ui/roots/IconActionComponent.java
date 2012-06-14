@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.roots;
 
+import com.intellij.ui.ClickListener;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -34,17 +36,22 @@ public class IconActionComponent extends ScalableIconComponent {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
 
-      public void mouseClicked(MouseEvent e) {
-        if (action != null) {
-          action.run();
-        }
-      }
-
       public void mouseExited(MouseEvent e) {
         setSelected(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
       }
     });
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
+        if (action != null) {
+          action.run();
+          return true;
+        }
+        return false;
+      }
+    }.installOn(this);
+
     if (tooltipText != null) {
       this.setToolTipText(tooltipText);
     }

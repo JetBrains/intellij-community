@@ -22,7 +22,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
@@ -47,7 +46,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -328,15 +329,17 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     myTreeExpansionMonitor = TreeExpansionMonitor.install(myActionsTree.getTree());
 
-    myActionsTree.getTree().addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 || e.isPopupTrigger()) {
-          editSelection(e);
-          e.consume();
-        }
+      protected boolean onDoubleClick(MouseEvent e) {
+        editSelection(e);
+        return true;
       }
+    }.installOn(myActionsTree.getTree());
 
+
+
+    myActionsTree.getTree().addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
         if (e.isPopupTrigger()) {

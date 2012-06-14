@@ -86,7 +86,6 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           if (stringExpression != null && stringBuilderExpression != null) {
             replaceExpression(stringBuilderExpression, stringExpression.toString());
           }
-          return;
         }
         return;
       }
@@ -111,9 +110,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     }
 
     @Nullable
-    private static StringBuilder buildStringExpression(PsiExpression initializer, StringBuilder result) {
-      if (initializer instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)initializer;
+    private static StringBuilder buildStringExpression(PsiExpression expression, StringBuilder result) {
+      if (expression instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)expression;
         final PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList ==  null) {
           return null;
@@ -124,16 +123,19 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiType type = argument.getType();
           if (!PsiType.INT.equals(type)) {
             result.append(argument.getText());
+            if (type != null && type.equalsToText("java.lang.CharSequence")) {
+              result.append(".toString()");
+            }
           }
         }
-        final PsiElement parent = initializer.getParent();
+        final PsiElement parent = expression.getParent();
         if (result.length() == 0 && parent instanceof PsiVariable) {
           result.append("\"\"");
         }
         return result;
       }
-      else if (initializer instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)initializer;
+      else if (expression instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
         final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
         result = buildStringExpression(qualifier, result);
@@ -173,6 +175,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
               }
               else {
                 result.append(argument.getText());
+                if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+                  result.append(".toString()");
+                }
               }
             }
           }

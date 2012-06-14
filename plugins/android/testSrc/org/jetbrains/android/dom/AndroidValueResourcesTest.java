@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
+import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -197,11 +198,13 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
 
       if (ranges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
-          actions.add(pair.getFirst().getAction());
+          final IntentionAction action = pair.getFirst().getAction();
+          if (action instanceof CreateValueResourceQuickFix) {
+            actions.add(action);
+          }
         }
       }
     }
-
     assertEquals(1, actions.size());
 
     new WriteCommandAction.Simple(getProject()) {

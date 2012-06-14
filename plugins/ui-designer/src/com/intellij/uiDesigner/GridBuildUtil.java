@@ -197,7 +197,7 @@ public class GridBuildUtil {
 
       final Module module = editor.getModule();
       final ComponentItem panelItem = Palette.getInstance(editor.getProject()).getPanelItem();
-      final RadContainer newContainer = new RadContainer(module, FormEditingUtil.generateId(editor.getRootContainer()));
+      final RadContainer newContainer = new RadContainer(editor, FormEditingUtil.generateId(editor.getRootContainer()));
       newContainer.setLayout(gridLayoutManager);
       newContainer.init(editor, panelItem);
 

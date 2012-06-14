@@ -17,6 +17,7 @@
 package org.jetbrains.android.actions;
 
 import com.android.AndroidConstants;
+import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -26,8 +27,10 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,19 +91,48 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     });
   }
 
-  // must be invoked in a write action
-  public static PsiElement[] createResourceFile(Project project,
-                                                @NotNull VirtualFile resDir,
-                                                @NotNull String resType,
-                                                @NotNull String resName) {
-    PsiDirectory psiResDir = PsiManager.getInstance(project).findDirectory(resDir);
-    if (psiResDir != null) {
-      CreateElementActionBase.MyInputValidator validator = getInstance().createValidator(project, psiResDir, resType);
-      if (validator.checkInput(resName) && validator.canClose(resName)) {
-        return validator.getCreatedElements();
-      }
+  @NotNull
+  public static PsiElement[] createFileResource(@NotNull AndroidFacet facet,
+                                                @NotNull final ResourceType resType,
+                                                @NotNull String resName,
+                                                boolean chooseResName) {
+    final CreateResourceFileAction action = getInstance();
+    final MyDialog dialog =
+      new MyDialog(facet, action.mySubactions.values(), resType, resName, chooseResName, action, facet.getModule(), true);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return PsiElement.EMPTY_ARRAY;
     }
-    return PsiElement.EMPTY_ARRAY;
+
+    if (chooseResName) {
+      resName = dialog.getFileName();
+    }
+    final String subdirName = dialog.getSubdirName();
+    final AndroidFacet selectedFacet = AndroidFacet.getInstance(dialog.getSelectedModule());
+    LOG.assertTrue(selectedFacet != null);
+
+    final VirtualFile resourceDir = selectedFacet.getLocalResourceManager().getResourceDir();
+    final Project project = facet.getModule().getProject();
+    final PsiDirectory psiResDir = resourceDir != null ? PsiManager.getInstance(project).findDirectory(resourceDir) : null;
+
+    if (psiResDir == null) {
+      Messages.showErrorDialog(project, "Cannot find resource directory for module " + selectedFacet.getModule().getName(),
+                               CommonBundle.getErrorTitle());
+      return PsiElement.EMPTY_ARRAY;
+    }
+    final String finalResName = resName;
+
+    final PsiElement[] elements = ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement[]>() {
+      @Nullable
+      @Override
+      public PsiElement[] compute() {
+        MyInputValidator validator = action.createValidator(project, psiResDir, subdirName);
+        return validator.checkInput(finalResName) && validator.canClose(finalResName)
+               ? validator.getCreatedElements()
+               : null;
+      }
+    });
+    return elements != null ? elements : PsiElement.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -109,19 +141,13 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     final AndroidFacet facet = AndroidFacet.getInstance(directory);
     LOG.assertTrue(facet != null);
 
-    CreateResourceDialog dialog = new CreateResourceDialog(facet, mySubactions.values()) {
+    final MyDialog dialog =
+      new MyDialog(facet, mySubactions.values(), null, null, true, CreateResourceFileAction.this, facet.getModule(), false) {
       @Override
       protected InputValidator createValidator(@NotNull String subdirName) {
         return CreateResourceFileAction.this.createValidator(project, directory, subdirName);
       }
-
-      @Override
-      protected void doOKAction() {
-        myRootElement = getRootElement();
-        super.doOKAction();
-      }
     };
-    dialog.setTitle(AndroidBundle.message("new.resource.dialog.title"));
     dialog.show();
     return PsiElement.EMPTY_ARRAY;
   }
@@ -143,8 +169,11 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   @Override
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     CreateTypedResourceFileAction action = getActionByDir(directory);
+    if (action == null) {
+      throw new IllegalArgumentException("Incorrect directory");
+    }
     if (myRootElement != null && myRootElement.length() > 0) {
-      return action.doCreate(newName, directory, myRootElement, false);
+      return action.doCreateAndNavigate(newName, directory, myRootElement, false);
     }
     return action.create(newName, directory);
   }
@@ -179,5 +208,27 @@ public class CreateResourceFileAction extends CreateElementActionBase {
       newName += ".xml";
     }
     return AndroidBundle.message("new.resource.action.name", directory.getName() + File.separator + newName);
+  }
+
+  private static class MyDialog extends CreateResourceFileDialog {
+    private final CreateResourceFileAction myAction;
+
+    protected MyDialog(@NotNull AndroidFacet facet,
+                       Collection<CreateTypedResourceFileAction> actions,
+                       @Nullable ResourceType predefinedResourceType,
+                       @Nullable String predefinedFileName,
+                       boolean chooseFileName,
+                       @NotNull CreateResourceFileAction action,
+                       @NotNull Module module,
+                       boolean chooseModule) {
+      super(facet, actions, predefinedResourceType, predefinedFileName, chooseFileName, module, chooseModule);
+      myAction = action;
+    }
+
+    @Override
+    protected void doOKAction() {
+      super.doOKAction();
+      myAction.myRootElement = getRootElement();
+    }
   }
 }

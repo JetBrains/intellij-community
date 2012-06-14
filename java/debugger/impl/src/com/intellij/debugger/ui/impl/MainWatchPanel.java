@@ -52,7 +52,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class MainWatchPanel extends WatchPanel implements DataProvider {
@@ -67,25 +66,25 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
     final AnAction newWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.NEW_WATCH);
     newWatchAction.registerCustomShortcutSet(CommonShortcuts.INSERT, watchTree);
 
-    final MouseAdapter mouseListener = new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
-          AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
-          Presentation presentation = (Presentation)editWatchAction.getTemplatePresentation().clone();
-          DataContext context = DataManager.getInstance().getDataContext(watchTree);
+    final ClickListener mouseListener = new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        AnAction editWatchAction = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
+        Presentation presentation = editWatchAction.getTemplatePresentation().clone();
+        DataContext context = DataManager.getInstance().getDataContext(watchTree);
 
-          AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
-          editWatchAction.actionPerformed(actionEvent);
-        }
+        AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
+        editWatchAction.actionPerformed(actionEvent);
+        return true;
       }
     };
-    ListenerUtil.addMouseListener(watchTree, mouseListener);
+    ListenerUtil.addClickListener(watchTree, mouseListener);
 
     final AnAction editWatchAction  = ActionManager.getInstance().getAction(DebuggerActions.EDIT_WATCH);
     editWatchAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), watchTree);
     registerDisposable(new Disposable() {
       public void dispose() {
-        ListenerUtil.removeMouseListener(watchTree, mouseListener);
+        ListenerUtil.removeClickListener(watchTree, mouseListener);
         removeWatchesAction.unregisterCustomShortcutSet(watchTree);
         newWatchAction.unregisterCustomShortcutSet(watchTree);
         editWatchAction.unregisterCustomShortcutSet(watchTree);

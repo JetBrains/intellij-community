@@ -176,6 +176,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           return true;
         }
       }).
+      setAdText(getAdText(gotoData.source, targets.length)).
       createPopup();
     if (gotoData.listUpdaterTask != null) {
       gotoData.listUpdaterTask.init((AbstractPopup)popup, list);
@@ -237,6 +238,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   protected abstract String getChooserTitle(PsiElement sourceElement, String name, int length);
 
   protected abstract String getNotFoundMessage(Project project, Editor editor, PsiFile file);
+  @Nullable
+  protected String getAdText(PsiElement source, int length) {
+    return null;
+  }
 
   public interface AdditionalAction {
     String getText();

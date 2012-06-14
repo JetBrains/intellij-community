@@ -16,7 +16,6 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.AbstractLayout;
@@ -47,7 +46,7 @@ public class RadContainer extends RadComponent implements IContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadContainer");
 
   public static class Factory extends RadComponentFactory {
-    public RadComponent newInstance(Module module, Class aClass, String id) {
+    public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadContainer(module, aClass, id);
     }
 
@@ -84,11 +83,11 @@ public class RadContainer extends RadComponent implements IContainer {
   protected RadLayoutManager myLayoutManager;
   private LayoutManager myDelegeeLayout;
 
-  public RadContainer(final Module module, final String id) {
+  public RadContainer(final ModuleProvider module, final String id) {
     this(module, JPanel.class, id);
   }
 
-  public RadContainer(final Module module, final Class aClass, final String id) {
+  public RadContainer(final ModuleProvider module, final Class aClass, final String id) {
     super(module, aClass, id);
 
     myComponents = new ArrayList<RadComponent>();
@@ -114,7 +113,7 @@ public class RadContainer extends RadComponent implements IContainer {
   protected RadLayoutManager createInitialLayoutManager() {
     String defaultLayoutManager = UIFormXmlConstants.LAYOUT_INTELLIJ;
     if (getModule() != null) {
-      final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(getModule().getProject());
+      final GuiDesignerConfiguration configuration = GuiDesignerConfiguration.getInstance(getProject());
       defaultLayoutManager = configuration.DEFAULT_LAYOUT_MANAGER;
     }
 
@@ -701,7 +700,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
     public MyBorderTitleProperty() {
       super(null, "Title");
-      myEditor = new StringEditor(getModule().getProject());
+      myEditor = new StringEditor(getProject());
     }
 
     public Dimension getPreferredSize() {

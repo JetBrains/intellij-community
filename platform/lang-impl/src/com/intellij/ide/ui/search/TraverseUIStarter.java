@@ -17,8 +17,12 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.ide.plugins.AvailablePluginsManagerMain;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.internal.ImageDuplicateResultsDialog;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
@@ -90,9 +94,7 @@ public class TraverseUIStarter implements ApplicationStarter {
       configurableElement.setAttribute(ID, id);
       configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
       final TreeSet<OptionDescription> sortedOptions = options.get(configurable);
-      for (OptionDescription option : sortedOptions) {
-        append(option.getPath(), option.getHit(), option.getOption(), configurableElement);
-      }
+      writeOptions(configurableElement, sortedOptions);
       if (configurable instanceof KeymapPanel){
         processKeymap(configurableElement);
       } else if (configurable instanceof OptionsContainingConfigurable){
@@ -102,6 +104,8 @@ public class TraverseUIStarter implements ApplicationStarter {
         for (OptionDescription description : descriptions) {
           append(null, AvailablePluginsManagerMain.MANAGE_REPOSITORIES, description.getOption(), configurableElement);
         }
+      } else if (configurable instanceof AllFileTemplatesConfigurable) {
+        processFileTemplates(configurableElement);
       }
       root.addContent(configurableElement);
       configurable.disposeUIResources();
@@ -118,13 +122,39 @@ public class TraverseUIStarter implements ApplicationStarter {
     ((ApplicationEx)ApplicationManager.getApplication()).exit(true);
   }
 
+  private static void processFileTemplates(Element configurableElement) {
+    final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    TreeSet<OptionDescription> options = new TreeSet<OptionDescription>();
+
+    processTemplates(optionsRegistrar, options, FileTemplateManager.getInstance().getAllTemplates());
+    processTemplates(optionsRegistrar, options, FileTemplateManager.getInstance().getAllPatterns());
+    processTemplates(optionsRegistrar, options, FileTemplateManager.getInstance().getAllCodeTemplates());
+    processTemplates(optionsRegistrar, options, FileTemplateManager.getInstance().getAllJ2eeTemplates());
+
+    writeOptions(configurableElement, options);
+  }
+
+  private static void processTemplates(SearchableOptionsRegistrar optionsRegistrar,
+                                       TreeSet<OptionDescription> options,
+                                       FileTemplate[] templates) {
+    for (FileTemplate template : templates) {
+      collectOptions(optionsRegistrar, options, template.getName());
+      //collectOptions(optionsRegistrar, options, template.getDescription());
+    }
+  }
+
+  private static void collectOptions(SearchableOptionsRegistrar optionsRegistrar, TreeSet<OptionDescription> options, String text) {
+    final Set<String> strings = optionsRegistrar.getProcessedWordsWithoutStemming(text);
+    for (String word : strings) {
+      options.add(new OptionDescription(word, text, null));
+    }
+  }
+
   private static void processOptionsContainingConfigurable(final OptionsContainingConfigurable configurable,
                                                            final Element configurableElement) {
     final Set<String> optionsPath = configurable.processListOptions();
     final TreeSet<OptionDescription> result = wordsToOptionDescriptors(optionsPath);
-    for (OptionDescription option : result) {
-      append(option.getPath(), option.getHit(), option.getOption(), configurableElement);
-    }
+    writeOptions(configurableElement, result);
   }
 
   private static TreeSet<OptionDescription> wordsToOptionDescriptors(Set<String> optionsPath) {
@@ -150,24 +180,22 @@ public class TraverseUIStarter implements ApplicationStarter {
       final AnAction anAction = actionManager.getAction(id);
       final String text = anAction.getTemplatePresentation().getText();
       if (text != null) {
-        final Set<String> strings = searchableOptionsRegistrar.getProcessedWordsWithoutStemming(text);
-        for (String word : strings) {
-          options.add(new OptionDescription(word, text, null));
-        }
+        collectOptions(searchableOptionsRegistrar, options, text);
       }
       final String description = anAction.getTemplatePresentation().getDescription();
       if (description != null) {
-        final Set<String> strings = searchableOptionsRegistrar.getProcessedWordsWithoutStemming(description);
-        for (String word : strings) {
-          options.add(new OptionDescription(word, description, null));
-        }
+        collectOptions(searchableOptionsRegistrar, options, description);
       }
     }
+    writeOptions(configurableElement, options);
+  }
+
+  private static void writeOptions(Element configurableElement, TreeSet<OptionDescription> options) {
     for (OptionDescription opt : options) {
       append(opt.getPath(), opt.getHit(), opt.getOption(), configurableElement);
     }
   }
- 
+
   private static void append(String path, String hit, final String word, final Element configurableElement) {
     Element optionElement = new Element(OPTION);
     optionElement.setAttribute(NAME, word);

@@ -24,6 +24,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -48,7 +49,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -149,14 +149,17 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myTree.setScrollsOnExpand(true);
       myTree.setRootVisible(false);
       myTree.setShowsRootHandles(true);
-      myTree.addMouseListener(new MouseAdapter() {
+      new DoubleClickListener() {
         @Override
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2 && !myTreeBuilder.getSelectedElements(ResourceItem.class).isEmpty()) {
+        protected boolean onDoubleClick(MouseEvent e) {
+          if (!myTreeBuilder.getSelectedElements(ResourceItem.class).isEmpty()) {
             close(OK_EXIT_CODE);
+            return true;
           }
+          return false;
         }
-      });
+      }.installOn(myTree);
+
       ToolTipManager.sharedInstance().registerComponent(myTree);
       TreeUtil.installActions(myTree);
 

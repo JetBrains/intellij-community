@@ -45,6 +45,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
@@ -67,7 +68,6 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -180,16 +180,17 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       }
     });
 
-    myTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-          if (path != null && myTree.isPathSelected(path)) {
-            doOKAction();
-          }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+        if (path != null && myTree.isPathSelected(path)) {
+          doOKAction();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myTree);
 
     myTree.addTreeSelectionListener(
       new TreeSelectionListener() {

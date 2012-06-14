@@ -29,12 +29,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -76,8 +76,9 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     myLabel.setIcon(SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? ourQuickFixIcon : ourIntentionIcon);
     setBackground(getColor(severity));
 
-    myLabel.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
+    new ClickListener() {
+      @Override
+      public boolean onClick(MouseEvent e, int clickCount) {
         IntentionListStep step = new IntentionListStep(null, info, editor, psiFile, project);
         if (intentions != null && !intentions.isEmpty()) {
           HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
@@ -87,10 +88,9 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
           }
         }
         JBPopupFactory.getInstance().createListPopup(step).showUnderneathOf(myLabel);
+        return true;
       }
-    });
-
-
+    }.installOn(myLabel);
   }
 
   private  Color getColor(HighlightSeverity severity) {

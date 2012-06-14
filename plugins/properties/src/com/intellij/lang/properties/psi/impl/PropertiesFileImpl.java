@@ -18,7 +18,9 @@ package com.intellij.lang.properties.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesLanguage;
+import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
@@ -26,13 +28,16 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +47,7 @@ import java.util.*;
 
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static final TokenSet PROPERTIES_LIST_SET = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
-  private volatile MultiMap<String,IProperty> myPropertiesMap; //guarded by lock
+  private volatile MostlySingularMultiMap<String,IProperty> myPropertiesMap; //guarded by lock
   private volatile List<IProperty> myProperties;  //guarded by lock
   private final Object lock = new Object();
 
@@ -50,6 +55,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     super(viewProvider, PropertiesLanguage.INSTANCE);
   }
 
+  @Override
   @NotNull
   public FileType getFileType() {
     return StdFileTypes.PROPERTIES;
@@ -60,6 +66,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return "Properties file:" + getName();
   }
 
+  @Override
   @NotNull
   public List<IProperty> getProperties() {
     ensurePropertiesLoaded();
@@ -74,12 +81,12 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     if (myPropertiesMap != null) return;
 
     final ASTNode[] props = getPropertiesList().getChildren(PropertiesElementTypes.PROPERTIES);
-    MultiMap<String, IProperty> propertiesMap = new MultiMap<String, IProperty>();
+    MostlySingularMultiMap<String, IProperty> propertiesMap = new MostlySingularMultiMap<String, IProperty>();
     List<IProperty> properties = new ArrayList<IProperty>(props.length);
     for (final ASTNode prop : props) {
       final Property property = (Property)prop.getPsi();
       String key = property.getUnescapedKey();
-      propertiesMap.putValue(key, property);
+      propertiesMap.add(key, property);
       properties.add(property);
     }
     synchronized (lock) {
@@ -89,32 +96,37 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     }
   }
 
+  @Override
   public IProperty findPropertyByKey(@NotNull String key) {
     ensurePropertiesLoaded();
     synchronized (lock) {
-      Collection<IProperty> list = myPropertiesMap.get(key);
-      return list.isEmpty() ? null : list.iterator().next();
+      Iterator<IProperty> iterator = myPropertiesMap.get(key).iterator();
+      return iterator.hasNext() ? iterator.next() : null;
     }
   }
 
+  @Override
   @NotNull
   public List<IProperty> findPropertiesByKey(@NotNull String key) {
     ensurePropertiesLoaded();
     synchronized (lock) {
-      return (List<IProperty>)myPropertiesMap.get(key);
+      return ContainerUtil.collect(myPropertiesMap.get(key).iterator());
     }
   }
 
+  @Override
   @NotNull
   public ResourceBundle getResourceBundle() {
     return PropertiesUtil.getResourceBundle(getContainingFile());
   }
 
+  @Override
   @NotNull
   public Locale getLocale() {
     return PropertiesUtil.getLocale(getVirtualFile());
   }
 
+  @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element instanceof Property) {
       throw new IncorrectOperationException("Use addProperty() instead");
@@ -122,6 +134,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return super.add(element);
   }
 
+  @Override
   @NotNull
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
     if (haveToAddNewLine()) {
@@ -132,6 +145,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return copy.getPsi();
   }
 
+  @Override
   @NotNull
   public PsiElement addPropertyAfter(@NotNull final Property property, @Nullable final Property anchor) throws IncorrectOperationException {
     final TreeElement copy = ChangeUtil.copyToElement(property);
@@ -167,6 +181,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return lastChild != null && !lastChild.getText().endsWith("\n");
   }
 
+  @Override
   @NotNull
   public Map<String, String> getNamesMap() {
     Map<String, String> result = new THashMap<String, String>();

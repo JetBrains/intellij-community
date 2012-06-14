@@ -26,14 +26,20 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
 
   private final int myParentId;
   private final String myLocationUrl;
+  private final String myNodeType;
+  private final String myNodeArgs;
 
   protected BaseStartedNodeEvent(@NotNull String name,
                                  int id,
                                  int parentId,
-                                 @Nullable final String locationUrl) {
+                                 @Nullable final String locationUrl,
+                                 @Nullable String nodeType,
+                                 @Nullable String nodeArgs) {
     super(name, id);
     myParentId = parentId;
     myLocationUrl = locationUrl;
+    myNodeType = nodeType;
+    myNodeArgs = nodeArgs;
     validate();
   }
 
@@ -58,6 +64,16 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
     return myLocationUrl;
   }
 
+  @Nullable
+  public String getNodeType() {
+    return myNodeType;
+  }
+
+  @Nullable
+  public String getNodeArgs() {
+    return myNodeArgs;
+  }
+
   @Override
   protected void appendToStringInfo(@NotNull StringBuilder buf) {
     append(buf, "parentId", myParentId);
@@ -66,6 +82,16 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
 
   public static int getParentNodeId(@NotNull MessageWithAttributes message) {
     return TreeNodeEvent.getIntAttribute(message, "parentNodeId");
+  }
+
+  @Nullable
+  public static String getNodeType(@NotNull MessageWithAttributes message) {
+    return message.getAttributes().get("nodeType");
+  }
+
+  @Nullable
+  public static String getNodeArgs(@NotNull MessageWithAttributes message) {
+    return message.getAttributes().get("nodeArgs");
   }
 
 }

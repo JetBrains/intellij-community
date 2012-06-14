@@ -71,6 +71,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/model/jps-model.iml" filepath="$PROJECT_DIR$/jps/model/jps-model.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-api/jps-model-api.iml" filepath="$PROJECT_DIR$/jps/model-api/jps-model-api.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-impl.iml" group="jps" />
+      <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-model-serialization.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/plugins/scala/jps-scala.iml" filepath="$PROJECT_DIR$/jps/plugins/scala/jps-scala.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/jps-tests.iml" filepath="$PROJECT_DIR$/jps/jps-tests.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" group="java" />

@@ -317,7 +317,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       nameBuilder.append(shortClassName);
 
       RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(component);
-      Project project = root.getModule().getProject();
+      Project project = root.getProject();
       String binding = JavaCodeStyleManager.getInstance(project).propertyNameToVariableName(nameBuilder.toString(), VariableKind.FIELD);
       if (FormEditingUtil.findComponentWithBinding(root, binding, component) != null) {
         binding = InsertComponentProcessor.getUniqueBinding(root, nameBuilder.toString());

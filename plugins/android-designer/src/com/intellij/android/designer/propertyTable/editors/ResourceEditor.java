@@ -17,11 +17,11 @@ package com.intellij.android.designer.propertyTable.editors;
 
 import com.android.resources.ResourceType;
 import com.intellij.android.designer.model.ModelParser;
+import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -204,8 +204,8 @@ public class ResourceEditor extends PropertyEditor {
   }
 
   protected void showDialog() {
-    Module module = myRootComponent.getClientProperty(ModelParser.MODULE_KEY);
-    ResourceDialog dialog = new ResourceDialog(module, myTypes);
+    ModuleProvider moduleProvider = myRootComponent.getClientProperty(ModelParser.MODULE_KEY);
+    ResourceDialog dialog = new ResourceDialog(moduleProvider.getModule(), myTypes);
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

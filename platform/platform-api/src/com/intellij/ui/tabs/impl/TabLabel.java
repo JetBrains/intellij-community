@@ -139,7 +139,9 @@ public class TabLabel extends JPanel {
   }
 
   public void paintOffscreen(Graphics g) {
-    validateTree();
+    synchronized(getTreeLock()) {
+      validateTree();
+    }
     doPaint(g);
   }
 

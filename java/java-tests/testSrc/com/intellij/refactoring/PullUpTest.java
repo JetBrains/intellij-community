@@ -111,6 +111,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  public void testMergeInterfaces() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("I", PsiClass.class));
+  }
+
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {
     doTest(true, membersToFind);
   }

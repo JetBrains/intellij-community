@@ -17,12 +17,15 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.DesignerEditorState;
 import com.intellij.designer.DesignerToolWindowManager;
+import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.tools.*;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
+import com.intellij.designer.palette2.PaletteGroup;
+import com.intellij.designer.palette2.PaletteItem;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.diagnostic.LogMessageEx;
@@ -34,6 +37,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -69,7 +73,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class DesignerEditorPanel extends JPanel implements DataProvider {
+public abstract class DesignerEditorPanel extends JPanel implements DataProvider, ModuleProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
@@ -84,7 +88,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private final static String ERROR_STACK_CARD = "stack";
   private final static String ERROR_NO_STACK_CARD = "no_stack";
 
-  protected final Module myModule;
+  private final Project myProject;
+  private Module myModule;
   protected final VirtualFile myFile;
 
   private final CardLayout myLayout = new CardLayout();
@@ -127,7 +132,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private AsyncProcessIcon myProgressIcon;
   private JLabel myProgressMessage;
 
-  public DesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
+  public DesignerEditorPanel(@NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
+    myProject = project;
     myModule = module;
     myFile = file;
 
@@ -332,6 +338,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     mySurfaceArea.addSelectionListener(mySourceSelectionListener);
   }
 
+  public void activatePaletteItem(@Nullable PaletteItem item) {
+    // XXX
+  }
+
   protected final void showDesignerCard() {
     myErrorMessages.removeAll();
     myErrorStack.setText(null);
@@ -512,12 +522,20 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @NotNull
-  public Module getModule() {
+  @Override
+  public final Module getModule() {
+    if (myModule.isDisposed()) {
+      myModule = ModuleUtil.findModuleForFile(myFile, myProject);
+      if (myModule == null) {
+        throw new IllegalArgumentException("No module for file " + myFile + " in project " + myProject);
+      }
+    }
     return myModule;
   }
 
-  public Project getProject() {
-    return myModule.getProject();
+  @Override
+  public final Project getProject() {
+    return myProject;
   }
 
   public EditableArea getSurfaceArea() {
@@ -678,6 +696,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected abstract boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties);
 
   protected abstract void execute(List<EditOperation> operations);
+
+  public List<PaletteGroup> getPaletteGroups() {
+    // XXX
+    return null;
+  }
 
   @NotNull
   protected abstract ComponentCreationFactory createCreationFactory(Item paletteItem);

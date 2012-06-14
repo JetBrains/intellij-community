@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -41,7 +41,7 @@ public final class RadScrollPane extends RadContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadScrollPane");
 
   public static class Factory extends RadComponentFactory {
-    public RadComponent newInstance(Module module, Class aClass, String id) {
+    public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadScrollPane(module, aClass, id);
     }
 
@@ -50,7 +50,7 @@ public final class RadScrollPane extends RadContainer {
     }
   }
 
-  public RadScrollPane(final Module module, final Class componentClass, final String id){
+  public RadScrollPane(final ModuleProvider module, final Class componentClass, final String id){
     super(module, componentClass, id);
   }
 

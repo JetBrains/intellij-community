@@ -24,10 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -39,7 +36,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,13 +84,14 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
     rebuildListContent();
 
-    myList.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.isConsumed() || e.getClickCount() != 2 || e.isPopupTrigger()) return;
+      protected boolean onDoubleClick(MouseEvent e) {
         close(OK_EXIT_CODE);
+        return true;
       }
-    });
+    }.installOn(myList);
+
 
     myList.setCellRenderer(new MyListCellRenderer());
 

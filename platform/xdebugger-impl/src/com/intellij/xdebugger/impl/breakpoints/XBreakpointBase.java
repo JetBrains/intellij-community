@@ -37,7 +37,9 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
@@ -366,7 +368,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       DefaultActionGroup group = new DefaultActionGroup();
       final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getProject());
 
-      group.add(new EditBreakpointAction());
+
+      group.add(new EditBreakpointAction.ContextAction(this, XBreakpointBase.this, DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class)));
 
       group.add(new Separator());
 

@@ -23,8 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
  * @author Max Medvedev
  */
 public class ThrowingInstruction extends InstructionImpl {
-  public ThrowingInstruction(@Nullable PsiElement element, int num) {
-    super(element, num);
+  public ThrowingInstruction(@Nullable PsiElement element) {
+    super(element);
   }
 
   @Override

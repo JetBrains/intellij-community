@@ -16,13 +16,42 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 public class EditBreakpointAction extends XDebuggerActionBase {
 
+  public static class ContextAction extends AnAction {
+    private final GutterIconRenderer myRenderer;
+    private final Object myBreakpoint;
+    private DebuggerSupport myDebuggerSupport;
+
+    public ContextAction(GutterIconRenderer breakpointRenderer, Object breakpoint, DebuggerSupport debuggerSupport) {
+      myRenderer = breakpointRenderer;
+      myBreakpoint = breakpoint;
+      myDebuggerSupport = debuggerSupport;
+      initPresentation(this);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+      if (editor == null) return;
+      myDebuggerSupport.getEditBreakpointAction().editBreakpoint(getEventProject(e), editor, myBreakpoint, myRenderer);
+    }
+  }
+
   public EditBreakpointAction() {
-    getTemplatePresentation().setText(ActionsBundle.actionText("EditBreakpoint"));
+    initPresentation(this);
+  }
+
+  private static void initPresentation(AnAction action) {
+    action.getTemplatePresentation().setText(ActionsBundle.actionText("EditBreakpoint"));
   }
 
   @NotNull

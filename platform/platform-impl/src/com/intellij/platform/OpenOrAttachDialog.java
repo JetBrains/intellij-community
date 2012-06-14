@@ -18,12 +18,13 @@ package com.intellij.platform;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -46,16 +47,15 @@ public class OpenOrAttachDialog extends DialogWrapper {
     myHideReplace = hideReplace;
     setTitle(title);
     init();
-    MouseAdapter listener = new MouseAdapter() {
+    ClickListener listener = new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
-          doOKAction();
-        }
+      protected boolean onDoubleClick(MouseEvent event) {
+        doOKAction();
+        return true;
       }
     };
-    myCurrentWindowButton.addMouseListener(listener);
-    myOpenInNewWindowButton.addMouseListener(listener);
+    listener.installOn(myCurrentWindowButton);
+    listener.installOn(myOpenInNewWindowButton);
 
     final String mode = PropertiesComponent.getInstance().getValue(MODE_PROPERTY);
     if (MODE_NEW.equals(mode)) {

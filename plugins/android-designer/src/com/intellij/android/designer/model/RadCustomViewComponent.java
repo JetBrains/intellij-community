@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.intellij.android.designer.propertyTable.CustomViewProperty;
 import com.intellij.android.designer.propertyTable.editors.ChooseClassDialog;
+import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.MetaManager;
@@ -24,7 +25,6 @@ import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -66,9 +66,9 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
 
   @Nullable
   public static String chooseView(RadComponent rootComponent) {
-    Module module = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
+    ModuleProvider moduleProvider = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
     ChooseClassDialog dialog =
-      new ChooseClassDialog(module, "View Dialog", false, "android.view.View");
+      new ChooseClassDialog(moduleProvider.getModule(), "View Dialog", false, "android.view.View");
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
@@ -108,9 +108,9 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
     MetaModel metaModel = getClientProperty(MODEL_KEY);
 
     if (metaModel == null) {
-      Module module = getRoot().getClientProperty(ModelParser.MODULE_KEY);
-      MetaManager metaManager = ViewsMetaManager.getInstance(module.getProject());
-      PsiClass viewClass = ChooseClassDialog.findClass(module, getViewClass());
+      ModuleProvider moduleProvider = getRoot().getClientProperty(ModelParser.MODULE_KEY);
+      MetaManager metaManager = ViewsMetaManager.getInstance(moduleProvider.getProject());
+      PsiClass viewClass = ChooseClassDialog.findClass(moduleProvider.getModule(), getViewClass());
 
       while (viewClass != null) {
         metaModel = metaManager.getModelByTarget(viewClass.getQualifiedName());

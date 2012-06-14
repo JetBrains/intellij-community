@@ -17,30 +17,24 @@ package org.jetbrains.android.dom.converters;
 
 import com.android.resources.ResourceType;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.android.dom.AdditionalConverter;
 import org.jetbrains.android.dom.AndroidResourceType;
-import org.jetbrains.android.dom.resources.Item;
-import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.inspections.CreateFileResourceQuickFix;
+import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
-import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,11 +49,6 @@ import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
  * @author yole
  */
 public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue> implements CustomReferenceConverter<ResourceValue> {
-  private static final Set<ResourceType> XML_FILE_RESOURCE_TYPES = EnumSet.of(ResourceType.ANIM, ResourceType.ANIMATOR,
-                                                                              ResourceType.INTERPOLATOR, ResourceType.LAYOUT,
-                                                                              ResourceType.MENU, ResourceType.XML, ResourceType.COLOR,
-                                                                              ResourceType.DRAWABLE);
-
   private final List<String> myResourceTypes;
   private ResolvingConverter<String> myAdditionalConverter;
   private boolean myAdditionalConverterSoft = false;
@@ -115,7 +104,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     if (module == null) return result;
     AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet == null) return result;
-    
+
     final Set<String> recommendedTypes = getResourceTypes(context);
 
     // hack to check if it is a real id attribute
@@ -169,16 +158,16 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     }
     return result;
   }
-  
+
   @NotNull
   private static Set<String> getResourceTypesInCurrentModule(@NotNull AndroidFacet facet) {
     final Set<String> result = new HashSet<String>();
     final LocalResourceManager manager = facet.getLocalResourceManager();
-    
+
     for (VirtualFile resSubdir : manager.getResourceSubdirs(null)) {
       final String resType = AndroidCommonUtils.getResourceTypeByDirName(resSubdir.getName());
-      
-      if (resType != null && com.android.resources.ResourceType.getEnum(resType) != null) {
+
+      if (resType != null && ResourceType.getEnum(resType) != null) {
         result.add(resType);
       }
     }
@@ -239,7 +228,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     if (s == null) return null;
     ResourceValue parsed = ResourceValue.parse(s, true, myWithPrefix);
     final ResolvingConverter<String> additionalConverter = getAdditionalConverter(context);
-    
+
     if ((parsed == null || !parsed.isReference()) && additionalConverter != null) {
       String value = additionalConverter.fromString(s, context);
       if (value != null) {
@@ -261,7 +250,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
       return myAdditionalConverter;
     }
 
-    final AdditionalConverter additionalConverterAnnotation = 
+    final AdditionalConverter additionalConverterAnnotation =
       context.getInvocationElement().getAnnotation(AdditionalConverter.class);
 
     if (additionalConverterAnnotation != null) {
@@ -299,11 +288,20 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
             }
             final String resourceName = resourceValue.getResourceName();
             final ResourceType resType = resTypeName != null ? ResourceType.getEnum(resTypeName) : null;
-            if (aPackage == null && resType != null && resourceName != null) {
-              if ((AndroidResourceUtil.VALUE_RESOURCE_TYPES.contains(resType) || XML_FILE_RESOURCE_TYPES.contains(resType)) &&
-                  AndroidResourceUtil.isCorrectAndroidResourceName(resourceName)) {
-                return new LocalQuickFix[]{new MyLocalQuickFix(facet, resType.getName(), resourceName, context.getFile())};
+
+            if (aPackage == null &&
+                resType != null &&
+                resourceName != null &&
+                AndroidResourceUtil.isCorrectAndroidResourceName(resourceName)) {
+              final List<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+
+              if (AndroidResourceUtil.VALUE_RESOURCE_TYPES.contains(resType)) {
+                fixes.add(new CreateValueResourceQuickFix(facet, resType, resourceName, context.getFile(), false));
               }
+              if (AndroidResourceUtil.XML_FILE_RESOURCE_TYPES.contains(resType)) {
+                fixes.add(new CreateFileResourceQuickFix(facet, resType, resourceName, context.getFile(), false));
+              }
+              return fixes.toArray(new LocalQuickFix[fixes.size()]);
             }
           }
         }
@@ -329,66 +327,10 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
           if (resValue.getPackage() == null && "+id".equals(resValue.getResourceType())) {
             return PsiReference.EMPTY_ARRAY;
           }
-          return new PsiReference[] {new AndroidResourceReference(value, facet, resValue)};
+          return new PsiReference[]{new AndroidResourceReference(value, facet, resValue)};
         }
       }
     }
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  private static class MyLocalQuickFix implements LocalQuickFix {
-    private final AndroidFacet myFacet;
-    private final String myResourceType;
-    private final String myResourceName;
-    private final PsiFile myFile;
-
-    public MyLocalQuickFix(@NotNull AndroidFacet facet, @NotNull String resourceType, @NotNull String resourceName, @NotNull PsiFile file) {
-      myFacet = facet;
-      myResourceType = resourceType;
-      myResourceName = resourceName;
-      myFile = file;
-    }
-
-    @NotNull
-    public String getName() {
-      String containerName;
-      if (AndroidResourceUtil.isValueResourceType(myResourceType)) {
-        containerName = AndroidResourceUtil.getDefaultResourceFileName(myResourceType);
-      }
-      else {
-        containerName = '"' + myResourceType + "\" directory";
-      }
-      return AndroidBundle.message("create.resource.quickfix.name", myResourceName, containerName);
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return AndroidBundle.message("quick.fixes.family");
-    }
-
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      LocalResourceManager manager = myFacet.getLocalResourceManager();
-
-      if (AndroidResourceUtil.isValueResourceType(myResourceType)) {
-        String initialValue = !myResourceType.equals("id") ? "value" : null;
-        ResourceElement resElement = manager.addValueResource(myResourceType, myResourceName, initialValue);
-        if (resElement != null) {
-          if (!(resElement instanceof Item)) {
-            // then it is ID
-            List<ResourceElement> list = manager.findValueResources(myResourceType, myResourceName);
-            if (list.size() == 1) {
-              ResourceElement element = list.get(0);
-              XmlTag tag = element.getXmlTag();
-              PsiNavigateUtil.navigate(tag.getValue().getTextElements()[0]);
-              tag.getValue().setText("");
-            }
-          }
-        }
-      }
-      else {
-        manager.addResourceFileAndNavigate(myResourceName, myResourceType);
-      }
-      UndoUtil.markPsiFileForUndo(myFile);
-    }
   }
 }

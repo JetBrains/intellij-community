@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,7 +46,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -95,15 +95,18 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
           ((XDebuggerTreeNodeHyperlink)tag).onClick(event);
         }
       }
-    }.install(this);
+    }.installOn(this);
     setRootVisible(false);
     setShowsRootHandles(true);
-    addMouseListener(new MouseAdapter() {
+
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2) expandIfEllipsis();
+      protected boolean onDoubleClick(MouseEvent e) {
+        expandIfEllipsis();
+        return true;
       }
-    });
+    }.installOn(this);
+
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {

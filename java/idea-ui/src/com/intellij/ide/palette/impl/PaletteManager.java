@@ -71,7 +71,7 @@ public class PaletteManager implements ProjectComponent {
                                ToolWindowAnchor.RIGHT,
                                myProject,
                                true);
-          myPaletteToolWindow.setIcon(AllIcons.General.ToolWindowPalette);
+          myPaletteToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
           setContent();
           final MyFileEditorManagerListener myListener = new MyFileEditorManagerListener();
           myFileEditorManager.addFileEditorManagerListener(myListener, myProject);

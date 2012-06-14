@@ -45,6 +45,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -84,6 +85,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   public PropertyTable() {
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    showColumns(false);
 
     addMouseListener(new MouseTableListener());
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -96,6 +98,12 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     });
 
     // TODO: Updates UI after LAF updated
+  }
+
+  public void showColumns(boolean value) {
+    JTableHeader tableHeader = getTableHeader();
+    tableHeader.setVisible(value);
+    tableHeader.setPreferredSize(value ? null : new Dimension());
   }
 
   public void initQuickFixManager(JViewport viewPort) {

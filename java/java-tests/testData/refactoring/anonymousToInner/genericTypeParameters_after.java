@@ -2,7 +2,7 @@ import java.util.*;
 
 class A<K, V> {
     public Iterator<Map.Entry<K, V>> iterator(long revision) {
-        return new MyIterator<K, V>();
+        return new MyIterator<>();
     }
 
     private static class MyIterator<K, V> implements Iterator<Map.Entry<K, V>> {

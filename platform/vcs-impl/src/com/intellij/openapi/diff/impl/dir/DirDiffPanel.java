@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableSpeedSearch;
@@ -131,10 +132,10 @@ public class DirDiffPanel implements Disposable, DataProvider {
           changeOperationForSelection();
         }
       }.registerCustomShortcutSet(CustomShortcutSet.fromString("SPACE"), myTable);
-      myTable.addMouseListener(new MouseAdapter() {
+      new ClickListener() {
         @Override
-        public void mouseClicked(MouseEvent e) {
-          if (e.getButton() == MouseEvent.BUTTON3) return;
+        public boolean onClick(MouseEvent e, int clickCount) {
+          if (e.getButton() == MouseEvent.BUTTON3) return false;
           if (myTable.getRowCount() > 0) {
             final int row = myTable.rowAtPoint(e.getPoint());
             final int col = myTable.columnAtPoint(e.getPoint());
@@ -143,8 +144,10 @@ public class DirDiffPanel implements Disposable, DataProvider {
               changeOperationForSelection();
             }
           }
-        }        
-      });
+          return true;
+        }
+      }.installOn(myTable);
+
     }
     myTable.addKeyListener(new KeyAdapter() {
       @Override

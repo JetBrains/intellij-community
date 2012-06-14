@@ -130,13 +130,14 @@ public class CommanderPanel extends JPanel {
         drillDown();
       }
     });
-    myList.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          drillDown();
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        drillDown();
+        return true;
       }
-    });
+    }.installOn(myList);
+
     myList.getInputMap(WHEN_FOCUSED)
       .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? KeyEvent.META_MASK : KeyEvent.CTRL_MASK), ACTION_GO_UP);
     myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);

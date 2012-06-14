@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -82,10 +83,11 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class GuiEditor extends JPanel implements DataProvider {
+public final class GuiEditor extends JPanel implements DataProvider, ModuleProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.GuiEditor");
 
-  @NotNull private final Module myModule;
+  private final Project myProject;
+  private Module myModule;
   @NotNull private final VirtualFile myFile;
 
   /**
@@ -212,9 +214,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
    *          if the <code>file</code>
    *          is <code>null</code> or <code>file</code> is not valid PsiFile
    */
-  public GuiEditor(@NotNull final Module module, @NotNull final VirtualFile file) {
+  public GuiEditor(Project project, @NotNull final Module module, @NotNull final VirtualFile file) {
     LOG.assertTrue(file.isValid());
 
+    myProject = project;
     myModule = module;
     myFile = file;
 
@@ -246,7 +249,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myGlassLayer.addFocusListener(new FocusListener() {
       public void focusGained(FocusEvent e) {
         myDecorationLayer.repaint();
-        fireSelectedComponentChanged();
+        //fireSelectedComponentChanged(); // EA-36478
       }
 
       public void focusLost(FocusEvent e) {
@@ -265,9 +268,9 @@ public final class GuiEditor extends JPanel implements DataProvider {
     myDocumentListener = new DocumentAdapter() {
       public void documentChanged(final DocumentEvent e) {
         if (!myInsideChange) {
-          UndoManager undoManager = UndoManager.getInstance(module.getProject());
+          UndoManager undoManager = UndoManager.getInstance(getProject());
           alarm.cancelAllRequests();
-          alarm.addRequest(new MySynchronizeRequest(module, undoManager.isUndoInProgress() || undoManager.isRedoInProgress()),
+          alarm.addRequest(new MySynchronizeRequest(undoManager.isUndoInProgress() || undoManager.isRedoInProgress()),
                            100/*any arbitrary delay*/, ModalityState.stateForComponent(GuiEditor.this));
         }
       }
@@ -318,7 +321,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     // PSI listener to restart error highlighter
     myPsiTreeChangeListener = new MyPsiTreeChangeListener();
-    PsiManager.getInstance(module.getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
+    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(myPsiTreeChangeListener);
 
     myQuickFixManager = new QuickFixManagerImpl(this, myGlassLayer, myScrollPane.getViewport());
 
@@ -364,18 +367,26 @@ public final class GuiEditor extends JPanel implements DataProvider {
     paletteManager.removeDragEventListener(myPaletteDragListener);
     paletteManager.removeSelectionListener(myPaletteSelectionListener);
     myDocument.removeDocumentListener(myDocumentListener);
-    PsiManager.getInstance(myModule.getProject()).removePsiTreeChangeListener(myPsiTreeChangeListener);
+    PsiManager.getInstance(getProject()).removePsiTreeChangeListener(myPsiTreeChangeListener);
     myPsiTreeChangeListener.dispose();
   }
 
   @NotNull
-  public Project getProject() {
-    return myModule.getProject();
+  @Override
+  public Module getModule() {
+    if (myModule.isDisposed()) {
+      myModule = ModuleUtil.findModuleForFile(myFile, myProject);
+      if (myModule == null) {
+        throw new IllegalArgumentException("No module for file " + myFile + " in project " + myModule);
+      }
+    }
+    return myModule;
   }
 
   @NotNull
-  public Module getModule() {
-    return myModule;
+  @Override
+  public Project getProject() {
+    return myProject;
   }
 
   @NotNull
@@ -400,7 +411,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
     if (!GuiDesignerConfiguration.getInstance(getProject()).INSTRUMENT_CLASSES) {
       final String classToBind = myRootContainer.getClassToBind();
       if (classToBind != null && classToBind.length() > 0) {
-        PsiClass psiClass = FormEditingUtil.findClassToBind(myModule, classToBind);
+        PsiClass psiClass = FormEditingUtil.findClassToBind(getModule(), classToBind);
         if (psiClass != null) {
           sourceFileToCheckOut = psiClass.getContainingFile().getVirtualFile();
         }
@@ -589,7 +600,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
   private void saveToFile() {
     LOG.debug("GuiEditor.saveToFile(): group ID=" + myNextSaveGroupId);
-    CommandProcessor.getInstance().executeCommand(myModule.getProject(), new Runnable() {
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
@@ -825,10 +836,10 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
       final String text = myDocument.getText();
 
-      final ClassLoader classLoader = LoaderFactory.getInstance(myModule.getProject()).getLoader(myFile);
+      final ClassLoader classLoader = LoaderFactory.getInstance(getProject()).getLoader(myFile);
 
       final LwRootContainer rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(classLoader));
-      final RadRootContainer container = XmlReader.createRoot(myModule, rootContainer, classLoader, oldLocale);
+      final RadRootContainer container = XmlReader.createRoot(this, rootContainer, classLoader, oldLocale);
       setRootContainer(container);
       if (keepSelection) {
         SelectionState.restoreSelection(this, selection);
@@ -853,7 +864,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private void showInvalidCard(final Throwable exc) {
     LOG.info(exc);
     // setting fictive container
-    setRootContainer(new RadRootContainer(myModule, "0"));
+    setRootContainer(new RadRootContainer(this, "0"));
     myFormInvalidLabel.setText(UIDesignerBundle.message("error.form.file.is.invalid.message", FormEditingUtil.getExceptionMessage(exc)));
     myInvalid = true;
     myCardLayout.show(this, CARD_INVALID);
@@ -1064,7 +1075,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
     private final Alarm myAlarm;
     private final MyRefreshPropertiesRequest myRefreshPropertiesRequest = new MyRefreshPropertiesRequest();
-    private final MySynchronizeRequest mySynchronizeRequest = new MySynchronizeRequest(myModule, true);
+    private final MySynchronizeRequest mySynchronizeRequest = new MySynchronizeRequest(true);
 
     public MyPsiTreeChangeListener() {
       myAlarm = new Alarm();
@@ -1128,24 +1139,29 @@ public final class GuiEditor extends JPanel implements DataProvider {
   }
 
   private class MySynchronizeRequest implements Runnable {
-    private final Module myModule;
     private final boolean myKeepSelection;
 
-    public MySynchronizeRequest(final Module module, final boolean keepSelection) {
-      myModule = module;
+    public MySynchronizeRequest(final boolean keepSelection) {
       myKeepSelection = keepSelection;
     }
 
     public void run() {
+      if (getModule().isDisposed()) {
+        return;
+      }
+      Project project = getProject();
+      if (project.isDisposed()) {
+        return;
+      }
       LOG.debug("Synchronizing GUI editor " + myFile.getName() + " to document");
-      PsiDocumentManager.getInstance(myModule.getProject()).commitDocument(myDocument);
+      PsiDocumentManager.getInstance(project).commitDocument(myDocument);
       readFromFile(myKeepSelection);
     }
   }
 
   private class MyRefreshPropertiesRequest implements Runnable {
     public void run() {
-      if (!myModule.isDisposed() && !getProject().isDisposed()) {
+      if (!getModule().isDisposed() && !getProject().isDisposed()) {
         refreshProperties();
       }
     }

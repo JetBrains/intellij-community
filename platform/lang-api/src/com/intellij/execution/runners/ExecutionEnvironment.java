@@ -41,6 +41,7 @@ public class ExecutionEnvironment {
   private RunProfile myRunProfile;
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
+  @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
 
   @TestOnly
   public ExecutionEnvironment() {
@@ -52,18 +53,29 @@ public class ExecutionEnvironment {
                               @NotNull final RunnerAndConfigurationSettings configuration,
                               Project project) {
     this(configuration.getConfiguration(), project, configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner),
-         null);
+         null, configuration);
   }
 
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               Project project,
                               RunnerSettings runnerSettings,
-                              ConfigurationPerRunnerSettings configurationSettings, @Nullable RunContentDescriptor contentToReuse) {
+                              ConfigurationPerRunnerSettings configurationSettings,
+                              @Nullable RunContentDescriptor contentToReuse) {
+    this(runProfile, project, runnerSettings, configurationSettings, contentToReuse, null);
+  }
+
+  public ExecutionEnvironment(@NotNull RunProfile runProfile,
+                                Project project,
+                                RunnerSettings runnerSettings,
+                                ConfigurationPerRunnerSettings configurationSettings,
+                                @Nullable RunContentDescriptor contentToReuse,
+                                @Nullable RunnerAndConfigurationSettings settings) {
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
     myProject = project;
     myContentToReuse = contentToReuse;
+    myRunnerAndConfigurationSettings = settings;
   }
 
   /**
@@ -71,7 +83,7 @@ public class ExecutionEnvironment {
    */
   @Deprecated
   public ExecutionEnvironment(@NotNull final ProgramRunner runner, @NotNull final RunnerAndConfigurationSettings configuration, final DataContext context) {
-    this(configuration.getConfiguration(), PlatformDataKeys.PROJECT.getData(context), configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner), null);
+    this(configuration.getConfiguration(), PlatformDataKeys.PROJECT.getData(context), configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner), null, configuration);
   }
 
   /**
@@ -91,6 +103,11 @@ public class ExecutionEnvironment {
                               final ConfigurationPerRunnerSettings configurationSettings,
                               final DataContext dataContext) {
     this(runProfile, PlatformDataKeys.PROJECT.getData(dataContext), runnerSettings, configurationSettings, null);
+  }
+
+  @Nullable
+  public RunnerAndConfigurationSettings getRunnerAndConfigurationSettings() {
+    return myRunnerAndConfigurationSettings;
   }
 
   @NotNull

@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
@@ -31,12 +32,12 @@ import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPane
 import javax.swing.*;
 
 /**
-* Created with IntelliJ IDEA.
-* User: intendia
-* Date: 10.05.12
-* Time: 1:14
-* To change this template use File | Settings | File Templates.
-*/
+ * Created with IntelliJ IDEA.
+ * User: intendia
+ * Date: 10.05.12
+ * Time: 1:14
+ * To change this template use File | Settings | File Templates.
+ */
 class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
 
@@ -81,7 +82,7 @@ class XBreakpointItem extends BreakpointItem {
     return ((XBreakpointBase)myBreakpoint).getType().getDisplayText(myBreakpoint);
   }
 
-  public void doUpdateDetailView(DetailView panel) {
+  public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
 
     XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
@@ -89,14 +90,28 @@ class XBreakpointItem extends BreakpointItem {
       if (!showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine())) {
         return;
       }
-    } else {
+    }
+    else {
       panel.clearEditor();
     }
 
-    XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
-      new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
-    propertiesPanel.loadProperties();
-    panel.setDetailPanel(propertiesPanel.getMainPanel());
+    if (!editorOnly) {
+
+      XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
+        new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
+      propertiesPanel.loadProperties();
+      panel.setDetailPanel(propertiesPanel.getMainPanel());
+    }
+  }
+
+  @Override
+  public boolean navigate() {
+    Navigatable navigatable = myBreakpoint.getNavigatable();
+    if (navigatable != null) {
+      navigatable.navigate(true);
+      return true;
+    }
+    return false;
   }
 
   private XBreakpointManagerImpl getManager() {
@@ -116,7 +131,6 @@ class XBreakpointItem extends BreakpointItem {
         breakpointManager.removeBreakpoint(myBreakpoint);
       }
     }.execute();
-
   }
 
   @Override

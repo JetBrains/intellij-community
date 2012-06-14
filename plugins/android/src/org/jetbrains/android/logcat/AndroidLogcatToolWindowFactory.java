@@ -65,16 +65,16 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
     final AndroidLogcatToolWindowView view = new AndroidLogcatToolWindowView(project) {
       @Override
       protected boolean isActive() {
-        return toolWindow.isVisible();
+        ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID);
+        return window.isVisible();
       }
     };
-    final ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
-    toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+    ToolWindowManagerEx.getInstanceEx(project).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
       boolean myToolWindowVisible;
 
       @Override
       public void stateChanged() {
-        ToolWindow window = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
+        ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID);
         if (window != null) {
           boolean visible = window.isVisible();
           if (visible != myToolWindowVisible) {
@@ -125,7 +125,7 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         view.activate();
-        final ToolWindow window = toolWindowManager.getToolWindow(TOOL_WINDOW_ID);
+        final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID);
         if (window != null && window.isVisible()) {
           checkFacetAndSdk(project, view);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
@@ -116,20 +117,34 @@ public class CompositeException extends Exception {
       stringProcessor.process(s);
       return s;
     }
-    String s = "CompositeException ("+myExceptions.size() +" nested exceptions):\n--------------------\n";
-    stringProcessor.process(s);
-    for (int i = 0; i < myExceptions.size(); i++) {
-      Throwable exception = myExceptions.get(i);
-      String line = "Nested Exception " + i + " (of " + myExceptions.size() + "):\n";
+
+    StringBuilder sb = StringBuilderSpinAllocator.alloc();
+    try {
+      String line = "CompositeException ("+myExceptions.size() +" nested):\n------------------------------\n";
       stringProcessor.process(line);
-      s += line;
-      String excString = exceptionProcessor.fun(exception);
-      stringProcessor.process(excString);
-      s += excString;
+      sb.append(line);
+
+      for (int i = 0; i < myExceptions.size(); i++) {
+        Throwable exception = myExceptions.get(i);
+
+        line = "[" + i + "]: ";
+        stringProcessor.process(line);
+        sb.append(line);
+
+        line = exceptionProcessor.fun(exception);
+        if (!line.endsWith("\n")) line += '\n';
+        stringProcessor.process(line);
+        sb.append(line);
+      }
+
+      line = "------------------------------\n";
+      stringProcessor.process(line);
+      sb.append(line);
+
+      return sb.toString();
     }
-    String footer = "\n-----------------------\n";
-    stringProcessor.process(footer);
-    s += footer;
-    return s;
+    finally {
+      StringBuilderSpinAllocator.dispose(sb);
+    }
   }
 }

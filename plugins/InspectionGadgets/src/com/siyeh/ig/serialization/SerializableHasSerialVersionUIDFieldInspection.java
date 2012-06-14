@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-public class SerializableHasSerialVersionUIDFieldInspection
-  extends SerializableInspection {
+public class SerializableHasSerialVersionUIDFieldInspection extends SerializableInspection {
 
   @Pattern("[a-zA-Z_0-9.-]+")
   @Override
@@ -59,31 +58,31 @@ public class SerializableHasSerialVersionUIDFieldInspection
     return new SerializableHasSerialVersionUIDFieldVisitor();
   }
 
-  private class SerializableHasSerialVersionUIDFieldVisitor
-    extends BaseInspectionVisitor {
+  private class SerializableHasSerialVersionUIDFieldVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      if (aClass.isInterface() || aClass.isAnnotationType() ||
-          aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
-      if (aClass instanceof PsiTypeParameter ||
-          aClass instanceof PsiEnumConstantInitializer) {
+      if (aClass instanceof PsiTypeParameter || aClass instanceof PsiEnumConstantInitializer) {
         return;
       }
-      if (ignoreAnonymousInnerClasses &&
-          aClass instanceof PsiAnonymousClass) {
+      if (ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
         return;
       }
-      final PsiField serialVersionUIDField = aClass.findFieldByName(
-        HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+      final PsiField serialVersionUIDField = aClass.findFieldByName(HardcodedMethodConstants.SERIAL_VERSION_UID, false);
       if (serialVersionUIDField != null) {
         return;
       }
       if (!SerializationUtils.isSerializable(aClass)) {
         return;
+      }
+      final PsiMethod[] methods = aClass.findMethodsByName("writeReplace", true);
+      for (PsiMethod method : methods) {
+        if (SerializationUtils.isWriteReplace(method)) {
+          return;
+        }
       }
       if (isIgnoredSubclass(aClass)) {
         return;

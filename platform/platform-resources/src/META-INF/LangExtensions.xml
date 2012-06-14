@@ -515,6 +515,7 @@
 
   <usageFilteringRuleProvider implementation="com.intellij.usages.impl.UsageFilteringRuleProviderImpl"/>
   <usageGroupingRuleProvider implementation="com.intellij.usages.impl.UsageGroupingRuleProviderImpl"/>
+  <usageGroupingRuleProvider implementation="com.intellij.ide.favoritesTreeView.WorkingSetUsageActionProvider"/>
 
   <projectService serviceInterface="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"
                   serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"/>
@@ -679,13 +680,13 @@
 
   <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 
-  <toolWindow id="Project" anchor="left" icon="AllIcons.General.ToolWindowProject"
+  <toolWindow id="Project" anchor="left" icon="AllIcons.Toolwindows.ToolWindowProject"
               factoryClass="com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory"/>
-  <toolWindow id="TODO" anchor="bottom" icon="AllIcons.General.ToolWindowTodo"
+  <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
               factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
-  <toolWindow id="Structure" anchor="left" icon="AllIcons.General.ToolWindowStructure" secondary="true"
+  <toolWindow id="Structure" anchor="left" icon="AllIcons.Toolwindows.ToolWindowStructure" secondary="true"
               factoryClass="com.intellij.ide.structureView.impl.StructureViewToolWindowFactory"/>
-  <toolWindow id="Favorites" anchor="left" icon="AllIcons.General.ToolWindowFavorites" secondary="true"
+  <toolWindow id="Favorites" anchor="left" icon="AllIcons.Toolwindows.ToolWindowFavorites" secondary="true"
               factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory"/>
 
   <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>

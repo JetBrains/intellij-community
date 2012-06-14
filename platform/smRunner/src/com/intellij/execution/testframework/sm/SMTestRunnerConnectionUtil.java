@@ -85,16 +85,22 @@ public class SMTestRunnerConnectionUtil {
                                                                           final RunnerSettings runnerSettings,
                                                                           final ConfigurationPerRunnerSettings configurationSettings,
                                                                           @Nullable final TestLocationProvider locator) {
-    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, runnerSettings,
-                                          configurationSettings, locator, false);
+    return createConsoleWithCustomLocator(testFrameworkName,
+                                          consoleProperties,
+                                          runnerSettings,
+                                          configurationSettings,
+                                          new CompositeTestLocationProvider(locator),
+                                          false,
+                                          null);
   }
 
-  public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull final String testFrameworkName,
-                                                                          @NotNull final TestConsoleProperties consoleProperties,
-                                                                          final RunnerSettings runnerSettings,
-                                                                          final ConfigurationPerRunnerSettings configurationSettings,
-                                                                          @Nullable final TestLocationProvider locator,
-                                                                          final boolean idBasedTreeConstruction) {
+  public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull final String testFrameworkName,
+                                                                    @NotNull final TestConsoleProperties consoleProperties,
+                                                                    final RunnerSettings runnerSettings,
+                                                                    final ConfigurationPerRunnerSettings configurationSettings,
+                                                                    @Nullable final TestLocationProvider locator,
+                                                                    final boolean idBasedTreeConstruction,
+                                                                    @Nullable final TestProxyPrinterProvider printerProvider) {
     // Console
     final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
     final SMTRunnerConsoleView console =
@@ -105,7 +111,8 @@ public class SMTestRunnerConnectionUtil {
           super.attachToProcess(processHandler);
           attachEventsProcessors(consoleProperties, getResultsViewer(),
                                  getResultsViewer().getStatisticsPane(),
-                                 processHandler, testFrameworkName, locator, idBasedTreeConstruction);
+                                 processHandler, testFrameworkName, locator, idBasedTreeConstruction,
+                                 printerProvider);
         }
       };
     console.setHelpId("reference.runToolWindow.testResultsTab");
@@ -209,7 +216,8 @@ public class SMTestRunnerConnectionUtil {
                                                        final ProcessHandler processHandler,
                                                        @NotNull final String testFrameworkName,
                                                        @Nullable final TestLocationProvider locator,
-                                                       boolean idBasedTreeConstruction) {
+                                                       boolean idBasedTreeConstruction,
+                                                       @Nullable TestProxyPrinterProvider printerProvider) {
     //build messages consumer
     final OutputToGeneralTestEventsConverter outputConsumer;
     if (consoleProperties instanceof SMCustomMessagesParsing) {
@@ -228,6 +236,9 @@ public class SMTestRunnerConnectionUtil {
     }
     if (locator != null) {
       eventsProcessor.setLocator(locator);
+    }
+    if (printerProvider != null) {
+      eventsProcessor.setPrinterProvider(printerProvider);
     }
 
     // ui actions

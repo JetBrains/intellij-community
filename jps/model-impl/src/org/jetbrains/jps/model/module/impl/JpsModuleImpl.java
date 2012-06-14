@@ -16,16 +16,17 @@ import java.util.List;
  */
 public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, JpsProjectImpl> implements JpsModule {
   private static final JpsTypedDataKind<JpsModuleType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleType<?>>();
-  private static final JpsElementKind<JpsUrlListImpl> CONTENT_ROOTS_KIND = new JpsElementKind<JpsUrlListImpl>();
-  private static final JpsElementKind<JpsUrlListImpl> EXCLUDED_ROOTS_KIND = new JpsElementKind<JpsUrlListImpl>();
-  public static final JpsElementKind<JpsDependenciesListImpl> DEPENDENCIES_LIST_KIND = new JpsElementKind<JpsDependenciesListImpl>();
+  private static final JpsUrlListKind CONTENT_ROOTS_KIND = new JpsUrlListKind("content roots");
+  private static final JpsUrlListKind EXCLUDED_ROOTS_KIND = new JpsUrlListKind("excluded roots");
+  public static final JpsElementKind<JpsDependenciesListImpl> DEPENDENCIES_LIST_KIND =
+    new JpsElementKindBase<JpsDependenciesListImpl>("dependencies");
 
   public JpsModuleImpl(JpsModuleType type,
                        @NotNull String name) {
     super(name);
     myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleType<?>>(type));
-    myContainer.setChild(CONTENT_ROOTS_KIND, new JpsUrlListImpl());
-    myContainer.setChild(EXCLUDED_ROOTS_KIND, new JpsUrlListImpl());
+    myContainer.setChild(CONTENT_ROOTS_KIND);
+    myContainer.setChild(EXCLUDED_ROOTS_KIND);
     myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl());
     myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
     myContainer.setChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
@@ -115,7 +116,12 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
   @NotNull
   @Override
   public JpsLibrary addModuleLibrary(@NotNull JpsLibraryType<?> type, @NotNull String name) {
-    final JpsElementCollectionImpl<JpsLibraryImpl> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
-    return collection.addChild(new JpsLibraryImpl(name, type));
+    return addModuleLibrary(new JpsLibraryImpl(name, type));
+  }
+
+  @NotNull
+  @Override
+  public JpsLibrary addModuleLibrary(final @NotNull JpsLibrary library) {
+    return myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND).addChild(library);
   }
 }

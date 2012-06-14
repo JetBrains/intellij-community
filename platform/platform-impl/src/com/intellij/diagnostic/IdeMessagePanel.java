@@ -28,8 +28,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -247,98 +245,5 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       }
     }
     return result;
-  }
-
-  private class IconPane extends JLabel {
-    private final IconWrapper myIcon;
-    private final String myEmptyText;
-    private boolean myIsActive;
-    private final ActionListener myListener;
-
-    public IconPane(Icon aIcon, Icon offIcon, String aEmptyText, ActionListener aListener) {
-      myIcon = new IconWrapper(aIcon, offIcon);
-      myEmptyText = aEmptyText;
-      myListener = aListener;
-      setIcon(myIcon);
-
-      setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
-
-      addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (myIsActive) {
-            myListener.actionPerformed(null);
-          }
-        }
-      });
-
-      deactivate();
-    }
-
-    public IconWrapper getIconWrapper() {
-      return myIcon;
-    }
-
-    public void activate(String aDisplayingText) {
-      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      myIsActive = true;
-      myIcon.setIconPainted(true);
-      setToolTipText(aDisplayingText);
-      repaint();
-    }
-
-    public void deactivate() {
-      setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      myIsActive = false;
-      myIcon.setIconPainted(false);
-      setToolTipText(myEmptyText);
-      repaint();
-    }
-
-    public boolean shouldBlink() {
-      return myMessagePool.hasUnreadMessages();
-    }
-  }
-
-  private class IconWrapper implements Icon {
-    private final Icon myIcon;
-    private boolean myEnabled;
-    private boolean myShouldPaint = true;
-    private Icon myOffIcon;
-
-    public IconWrapper(Icon aIcon, Icon offIcon) {
-      myIcon = aIcon;
-      myOffIcon = offIcon;
-    }
-
-    public void setIconPainted(boolean aPainted) {
-      myEnabled = aPainted;
-    }
-
-    public int getIconHeight() {
-      return myIcon.getIconHeight();
-    }
-
-    public int getIconWidth() {
-      return myIcon.getIconWidth();
-    }
-
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      if (myEnabled && myShouldPaint) {
-        myIcon.paintIcon(c, g, x, y);
-      } else if (myOffIcon != null) {
-        myOffIcon.paintIcon(c, g, x, y);
-      }
-    }
-
-    public void setVisible(final boolean visible) {
-      if (myShouldPaint != visible) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            repaint();
-          }
-        });
-      }
-      myShouldPaint = visible;
-    }
   }
 }

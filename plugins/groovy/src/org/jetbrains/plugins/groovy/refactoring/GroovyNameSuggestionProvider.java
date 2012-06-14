@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class GroovyNameSuggestionProvider implements NameSuggestionProvider {
         result.addAll(Arrays.asList(names));
         return new SuggestedNameInfo(names) {
           @Override
-          public void nameChoosen(String name) {
+          public void nameChosen(String name) {
             JavaStatisticsManager
               .incVariableNameUseCount(name, JavaCodeStyleManager.getInstance(element.getProject()).getVariableKind((GrVariable)element),
                                        ((GrVariable)element).getName(), type);

@@ -117,8 +117,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
     if (runManagerSettings != null) {
       runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+      runManagerSettings.setSingleton(myBeforeRunStepsPanel.isSingleton());
     } else {
       settings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+      settings.setSingleton(myBeforeRunStepsPanel.isSingleton());
     }
   }
 

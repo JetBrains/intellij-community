@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.IconUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.WaitForProgressToShow;
@@ -76,8 +77,6 @@ import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -279,28 +278,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
     getRepositoryBrowser().setRepositoryURLs(svnURLs.toArray(new SVNURL[svnURLs.size()]), myShowFiles);
-    getRepositoryBrowser().getRepositoryTree().addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        showPopup(e);
-      }
-      public void mousePressed(MouseEvent e) {
-        showPopup(e);
-      }
-      public void mouseReleased(MouseEvent e) {
-        showPopup(e);
-      }
-
-      private void showPopup(MouseEvent e) {
-        if (e.isPopupTrigger()) {
-          JTree tree = getRepositoryBrowser().getRepositoryTree();
-          int row = tree.getRowForLocation(e.getX(), e.getY());
-          if (row >= 0) {
-            tree.setSelectionRow(row);
-          }
-          JPopupMenu popupMenu = createPopup(toolWindow);
-          if (popupMenu != null) {
-            popupMenu.show(e.getComponent(), e.getX(), e.getY());
-          }
+    getRepositoryBrowser().getRepositoryTree().addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        JTree tree = getRepositoryBrowser().getRepositoryTree();
+        int row = tree.getRowForLocation(x, y);
+        if (row >= 0) {
+          tree.setSelectionRow(row);
+        }
+        JPopupMenu popupMenu = createPopup(toolWindow);
+        if (popupMenu != null) {
+          popupMenu.show(comp, x, y);
         }
       }
     });

@@ -20,7 +20,12 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -75,7 +80,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
       }
     }
 
-    return new GotoData(sourceElement, PsiUtilBase.toPsiElementArray(candidates), actions);
+    return new GotoData(sourceElement, PsiUtilCore.toPsiElementArray(candidates), actions);
   }
 
   @NotNull
@@ -100,6 +105,19 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
   @Override
   protected String getNotFoundMessage(Project project, Editor editor, PsiFile file) {
     return CodeInsightBundle.message("goto.test.notFound");
+  }
+
+  @Nullable
+  @Override
+  protected String getAdText(PsiElement source, int length) {
+    if (length > 0 && !TestFinderHelper.isTest(source)) {
+      final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+      final Shortcut[] shortcuts = keymap.getShortcuts(IdeActions.ACTION_DEFAULT_RUNNER);
+      if (shortcuts.length > 0) {
+        return ("Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to run selected tests");
+      }
+    }
+    return null;
   }
 
   @Override

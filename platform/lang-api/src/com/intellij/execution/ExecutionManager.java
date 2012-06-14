@@ -40,4 +40,9 @@ public abstract class ExecutionManager {
 
   public abstract void startRunProfile(@NotNull RunProfileStarter starter, @NotNull RunProfileState state,
                               @NotNull Project project, @NotNull Executor executor, @NotNull ExecutionEnvironment env);
+
+  public abstract void restartRunProfile(@NotNull Project project,
+                                         @NotNull Executor executor,
+                                         @NotNull RunnerAndConfigurationSettings configuration);
+
 }

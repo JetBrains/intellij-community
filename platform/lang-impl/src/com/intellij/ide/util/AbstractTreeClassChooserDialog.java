@@ -38,6 +38,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
@@ -61,7 +62,6 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -175,16 +175,17 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       }
     });
 
-    myTree.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-          if (path != null && myTree.isPathSelected(path)) {
-            doOKAction();
-          }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        TreePath path = myTree.getPathForLocation(event.getX(), event.getY());
+        if (path != null && myTree.isPathSelected(path)) {
+          doOKAction();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myTree);
 
     myTree.addTreeSelectionListener(
       new TreeSelectionListener() {

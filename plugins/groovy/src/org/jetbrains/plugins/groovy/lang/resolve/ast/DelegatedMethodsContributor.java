@@ -15,12 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightMirrorMethod;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.THashMap;
@@ -44,9 +46,6 @@ import java.util.*;
  * @author Max Medvedev
  */
 public class DelegatedMethodsContributor extends AstTransformContributor {
-
-  private static Key<CachedValue<PsiMethod[]>> CACHED_DELEGATED_METHODS = Key.create("cached delegated methods");
-
   @Override
   public void collectMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
     Set<PsiClass> processed = new HashSet<PsiClass>();
@@ -160,7 +159,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
    * @param collector result collection
    */
   private static void process(PsiClass clazz,
-                              PsiSubstitutor superClassSubsitutor,
+                              PsiSubstitutor superClassSubstitutor,
                               Set<PsiClass> processed,
                               List<PsiMethod> collector,
                               GrTypeDefinition classToDelegateTo) {
@@ -168,7 +167,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
 
     //process super methods before delegated methods
     for (PsiClassType superType : clazz.getSuperTypes()) {
-      processClassInner(superType, superClassSubsitutor, true, result, classToDelegateTo, processed);
+      processClassInner(superType, superClassSubstitutor, true, result, classToDelegateTo, processed);
     }
 
     if (clazz instanceof GrTypeDefinition) {
@@ -180,7 +179,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
         final PsiType type = field.getDeclaredType();
         if (!(type instanceof PsiClassType)) continue;
 
-        processClassInner((PsiClassType)type, superClassSubsitutor, shouldDelegateDeprecated(delegate), result, classToDelegateTo, processed);
+        processClassInner((PsiClassType)type, superClassSubstitutor, shouldDelegateDeprecated(delegate), result, classToDelegateTo, processed);
       }
     }
 

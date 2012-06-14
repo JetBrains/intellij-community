@@ -66,7 +66,7 @@ public class BasePathMacroManager extends PathMacroManager {
     VirtualFile dir = StandardFileSystems.local().findFileByPath(path);
     boolean check = false;
     while (dir != null && dir.getParent() != null) {
-      path = FileUtil.toSystemIndependentName(dir.getCanonicalPath());
+      path = dir.getPath();
 
       putIfAbsent(result, "file:" + path, "file:" + macro, check);
       putIfAbsent(result, "file:/" + path, "file:/" + macro, check);

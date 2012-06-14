@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointMasterDetailPopupBuilder;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +67,14 @@ public class BreakpointsMasterDetailPopupFactory {
     BreakpointMasterDetailPopupBuilder builder = new BreakpointMasterDetailPopupBuilder(myProject);
     builder.setInitialBreakpoint(initialBreakpoint);
     builder.setBreakpointsPanelProviders(collectPanelProviders());
+    builder.setCallback(new BreakpointMasterDetailPopupBuilder.BreakpointChosenCallback() {
+      @Override
+      public void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup) {
+        if (breakpointItem.navigate()) {
+          popup.cancel();
+        }
+      }
+    });
     final JBPopup popup = builder.createPopup();
     popup.addListener(new JBPopupListener() {
       @Override

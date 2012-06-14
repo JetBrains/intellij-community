@@ -358,7 +358,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   public static Icon getComponentIcon(final RadComponent component) {
     if (!(component instanceof RadErrorComponent)) {
-      final Palette palette = Palette.getInstance(component.getModule().getProject());
+      final Palette palette = Palette.getInstance(component.getProject());
       final ComponentItem item = palette.getItem(component.getComponentClassName());
       final Icon icon;
       if (item != null) {

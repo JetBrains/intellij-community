@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.TableView;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,14 +66,13 @@ public class StatisticsPanel implements DataProvider {
     myFrameworkRunningModel = model;
 
     final Runnable gotoSuiteOrParentAction = createGotoSuiteOrParentAction();
-    myStatisticsTableView.addMouseListener(new MouseAdapter(){
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          gotoSuiteOrParentAction.run();
-        }
+      protected boolean onDoubleClick(MouseEvent e) {
+        gotoSuiteOrParentAction.run();
+        return true;
       }
-    });
+    }.installOn(myStatisticsTableView);
 
     // Fire selection changed and move focus on SHIFT+ENTER
     final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);

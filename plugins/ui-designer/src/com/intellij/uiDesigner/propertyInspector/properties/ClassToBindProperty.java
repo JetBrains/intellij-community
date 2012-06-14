@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -125,7 +124,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     public JComponent getComponent(final RadComponent component, final String value, final InplaceContext inplaceContext) {
       myInitialValue = value;
       setEditorText(value != null ? value : "");
-      myActionListener.setModule(component.getModule());
+      myActionListener.setComponent(component);
       return myTfWithButton;
     }
 
@@ -142,17 +141,17 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     }
 
     private final class MyActionListener implements ActionListener{
-      private Module myModule;
+      RadComponent myComponent;
 
-      public void setModule(final Module module) {
-        myModule = module;
+      public void setComponent(RadComponent component) {
+        myComponent = component;
       }
 
       public void actionPerformed(final ActionEvent e){
         final String className = myEditorTextField.getText();
-        final PsiClass aClass = FormEditingUtil.findClassToBind(myModule, className);
+        final PsiClass aClass = FormEditingUtil.findClassToBind(myComponent.getModule(), className);
 
-        final Project project = myModule.getProject();
+        final Project project = myComponent.getProject();
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).createWithInnerClassesScopeChooser(
           UIDesignerBundle.message("title.choose.class.to.bind"),

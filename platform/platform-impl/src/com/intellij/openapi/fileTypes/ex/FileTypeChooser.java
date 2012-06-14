@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -93,16 +93,13 @@ public class FileTypeChooser extends DialogWrapper {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new FileTypeRenderer(myList.getCellRenderer()));
 
-    myList.addMouseListener(
-      new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2){
-            doOKAction();
-          }
-        }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        doOKAction();
+        return true;
       }
-    );
+    }.installOn(myList);
 
     myList.getSelectionModel().addListSelectionListener(
       new ListSelectionListener() {

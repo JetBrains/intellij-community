@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author dsl
  */
+
 public class RenameModuleHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
 
@@ -80,7 +81,6 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   private static class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final Module myModule;
-
     public MyInputValidator(Project project, Module module) {
       myProject = project;
       myModule = module;

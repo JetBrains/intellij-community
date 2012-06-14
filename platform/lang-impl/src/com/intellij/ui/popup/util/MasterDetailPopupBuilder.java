@@ -15,18 +15,14 @@
  */
 package com.intellij.ui.popup.util;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.Gray;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Alarm;
@@ -61,6 +57,7 @@ public class MasterDetailPopupBuilder {
   private JComponent myChooserComponent;
   private ActionToolbar myActionToolbar;
   private boolean myAddDetailViewToEast = true;
+  private Dimension myMinSize;
 
 
   public MasterDetailPopupBuilder setDetailView(DetailView detailView) {
@@ -148,12 +145,12 @@ public class MasterDetailPopupBuilder {
           public void run() {
             Object[] values = getSelectedItems();
             if (values.length == 1) {
-              myDelegate.itemChosen((ItemWrapper)values[0], myProject, myPopup);
+              myDelegate.itemChosen((ItemWrapper)values[0], myProject, myPopup, false);
             }
             else {
               for (Object value : values) {
                 if (value instanceof ItemWrapper) {
-                  myDelegate.itemChosen((ItemWrapper)value, myProject, myPopup);
+                  myDelegate.itemChosen((ItemWrapper)value, myProject, myPopup, false);
                 }
               }
             }
@@ -196,14 +193,18 @@ public class MasterDetailPopupBuilder {
       setItemChoosenCallback(runnable).
       setCloseOnEnter(myCloseOnEnter).
       setMayBeParent(true).
-      setMinSize(new Dimension(-1, 700)).
       setFilteringEnabled(new Function<Object, String>() {
         public String fun(Object o) {
           return ((ItemWrapper)o).speedSearchText();
         }
       });
 
+    if (myMinSize != null) {
+      builder.setMinSize(myMinSize);
+    }
+
     myPopup = builder.createPopup();
+    builder.getScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
     myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
@@ -235,14 +236,20 @@ public class MasterDetailPopupBuilder {
     return null;
   }
 
-  public Object[] getSelectedItems() {
+  public ItemWrapper[] getSelectedItems() {
+    Object[] values = new Object[0];
     if (myChooserComponent instanceof JList) {
-      return ((JList)myChooserComponent).getSelectedValues();
+      values = ((JList)myChooserComponent).getSelectedValues();
+
     }
     else if (myChooserComponent instanceof JTree) {
-      return myDelegate.getSelectedItemsInTree();
+      values = myDelegate.getSelectedItemsInTree();
     }
-    return new Object[0];
+    ItemWrapper[] items = new ItemWrapper[values.length];
+    for (int i = 0; i < values.length; i++) {
+      items[i] = (ItemWrapper)values[i];
+    }
+    return items;
   }
 
   private void updateDetailViewLater() {
@@ -257,6 +264,11 @@ public class MasterDetailPopupBuilder {
 
   public void setAddDetailViewToEast(boolean addDetailViewToEast) {
     myAddDetailViewToEast = addDetailViewToEast;
+  }
+
+  public MasterDetailPopupBuilder setMinSize(Dimension minSize) {
+    myMinSize = minSize;
+    return this;
   }
 
   public static boolean allowedToRemoveItems(Object[] values) {
@@ -357,6 +369,16 @@ public class MasterDetailPopupBuilder {
         }
       }
     });
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        ItemWrapper[] items = getSelectedItems();
+        if (items.length > 0) {
+          myDelegate.itemChosen(items[0], myProject, myPopup, true);
+        }
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), list);
+
   }
 
   public MasterDetailPopupBuilder setDelegate(Delegate delegate) {
@@ -380,7 +402,7 @@ public class MasterDetailPopupBuilder {
 
     Object[] getSelectedItemsInTree();
 
-    void itemChosen(ItemWrapper item, Project project, JBPopup popup);
+    void itemChosen(ItemWrapper item, Project project, JBPopup popup, boolean withEnterOrDoubleClick);
   }
 
   public static class ListItemRenderer extends JPanel implements ListCellRenderer {

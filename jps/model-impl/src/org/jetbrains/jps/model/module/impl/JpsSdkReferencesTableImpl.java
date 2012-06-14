@@ -2,6 +2,7 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementKind;
+import org.jetbrains.jps.model.impl.JpsElementKindBase;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsSdkType;
@@ -11,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
  * @author nik
  */
 public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkReferencesTableImpl> implements JpsSdkReferencesTable {
-  public static final JpsElementKind<JpsSdkReferencesTableImpl> KIND = new JpsElementKind<JpsSdkReferencesTableImpl>();
+  public static final JpsElementKind<JpsSdkReferencesTableImpl> KIND = new JpsElementKindBase<JpsSdkReferencesTableImpl>("sdk references");
 
   public JpsSdkReferencesTableImpl() {
     super();
@@ -37,10 +38,11 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
     return myContainer.getChild(new JpsSdkReferenceKind(type));
   }
 
-  private static class JpsSdkReferenceKind extends JpsElementKind<JpsLibraryReference> {
+  private static class JpsSdkReferenceKind extends JpsElementKindBase<JpsLibraryReference> {
     private final JpsSdkType<?> myType;
 
     private JpsSdkReferenceKind(@NotNull JpsSdkType<?> type) {
+      super("sdk reference " + type);
       myType = type;
     }
 

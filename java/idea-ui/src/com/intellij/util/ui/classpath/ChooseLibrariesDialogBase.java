@@ -44,6 +44,7 @@ import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -66,7 +67,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
@@ -188,15 +188,17 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
         updateOKAction();
       }
     });
-    myTree.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() != 2) return;
+      protected boolean onDoubleClick(MouseEvent e) {
         if (isOKActionEnabled()) {
           doOKAction();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myTree);
+
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
     myTree.getActionMap().put("ENTER", getOKAction());
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);

@@ -79,7 +79,7 @@ public class SendToFavoritesAction extends AnAction{
       if (name == null) {
         name = root.getFavoritesRoot().getName();
       }
-      favoritesManager.removeRoot(name, rootElement.getValue());
+      favoritesManager.removeRoot(name, Collections.singletonList(rootElement));
       favoritesManager.addRoots(toName, Collections.singletonList(rootElement));
     }
   }

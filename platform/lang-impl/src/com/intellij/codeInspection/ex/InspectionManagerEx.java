@@ -68,7 +68,7 @@ public class InspectionManagerEx extends InspectionManager {
           ToolWindow toolWindow =
             toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, myProject);
           ContentManager contentManager = toolWindow.getContentManager();
-          toolWindow.setIcon(AllIcons.General.ToolWindowInspection);
+          toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           new ContentManagerWatcher(toolWindow, contentManager);
           return contentManager;
         }

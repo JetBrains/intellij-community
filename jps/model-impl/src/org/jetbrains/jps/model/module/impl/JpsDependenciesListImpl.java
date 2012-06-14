@@ -1,7 +1,7 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementKind;
+import org.jetbrains.jps.model.impl.JpsElementKindBase;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.impl.JpsElementCollectionKind;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -15,8 +15,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependenciesListImpl> implements JpsDependenciesList {
-  public static final JpsElementKind<JpsDependencyElementBase<?>> DEPENDENCY_ELEMENT_KIND = new JpsElementKind<JpsDependencyElementBase<?>>();
-  public static final JpsElementCollectionKind<JpsDependencyElementBase<?>> DEPENDENCY_COLLECTION_KIND = new JpsElementCollectionKind<JpsDependencyElementBase<?>>(DEPENDENCY_ELEMENT_KIND);
+  public static final JpsElementCollectionKind<JpsDependencyElementBase<?>> DEPENDENCY_COLLECTION_KIND =
+    new JpsElementCollectionKind<JpsDependencyElementBase<?>>(new JpsElementKindBase<JpsDependencyElementBase<?>>("dependency"));
 
   public JpsDependenciesListImpl() {
     super();

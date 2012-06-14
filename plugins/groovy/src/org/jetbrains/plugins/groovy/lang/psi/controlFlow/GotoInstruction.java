@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 public abstract class GotoInstruction extends InstructionImpl {
   @NotNull private final ConditionInstruction myCondition;
 
-  public GotoInstruction(@Nullable PsiElement element, int num, @NotNull ConditionInstruction condition) {
-    super(element, num);
+  public GotoInstruction(@Nullable PsiElement element, @NotNull ConditionInstruction condition) {
+    super(element);
     myCondition = condition;
   }
 

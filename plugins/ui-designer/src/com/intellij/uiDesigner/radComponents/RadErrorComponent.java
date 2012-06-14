@@ -16,16 +16,14 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.XmlWriter;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import java.awt.*;
 
 /**
  * @author Anton Katilin
@@ -39,17 +37,17 @@ public final class RadErrorComponent extends RadAtomicComponent {
   private final String myErrorDescription;
 
   public static RadErrorComponent create(
-    final Module module,
+    final ModuleProvider module,
     final String id,
     final String componentClassName,
     final Element properties,
     @NotNull final String errorDescription
-  ){
+  ) {
     return new RadErrorComponent(module, id, componentClassName, properties, errorDescription);
   }
 
   private RadErrorComponent(
-    final Module module,
+    final ModuleProvider module,
     final String id,
     @NotNull final String componentClassName,
     @Nullable final Element properties,
@@ -63,7 +61,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
   }
 
   @NotNull
-  public String getComponentClassName(){
+  public String getComponentClassName() {
     return myComponentClassName;
   }
 
@@ -73,7 +71,7 @@ public final class RadErrorComponent extends RadAtomicComponent {
 
   public void write(final XmlWriter writer) {
     writer.startElement("component");
-    try{
+    try {
       writeId(writer);
 
       // write class
@@ -83,26 +81,28 @@ public final class RadErrorComponent extends RadAtomicComponent {
       writeConstraints(writer);
 
       // write properties (if any)
-      if(myProperties != null){
+      if (myProperties != null) {
         writer.writeElement(myProperties);
       }
-    }finally{
+    }
+    finally {
       writer.endElement(); // component
     }
   }
 
-  private static final class MyComponent extends JComponent{
-    public MyComponent(){
+  private static final class MyComponent extends JComponent {
+    public MyComponent() {
       setMinimumSize(new Dimension(20, 20));
     }
 
-    public void paint(final Graphics g){
+    public void paint(final Graphics g) {
       g.setColor(Color.red);
-      g.fillRect(0,0,getWidth(),getHeight());
+      g.fillRect(0, 0, getWidth(), getHeight());
     }
   }
 
-  @Override public boolean hasIntrospectedProperties() {
+  @Override
+  public boolean hasIntrospectedProperties() {
     return false;
   }
 }

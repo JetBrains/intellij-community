@@ -22,21 +22,31 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface ItemWrapper {
-  void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected);
+public abstract class ItemWrapper {
+  public abstract void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected);
 
-  void setupRenderer(ColoredTreeCellRenderer renderer);
+  public abstract void setupRenderer(ColoredTreeCellRenderer renderer);
 
-  void updateAccessoryView(JComponent label);
+  public abstract void updateAccessoryView(JComponent label);
 
-  String speedSearchText();
+  public abstract String speedSearchText();
 
   @Nullable
-  String footerText();
+  public abstract String footerText();
 
-  void updateDetailView(DetailView panel);
+  public void updateDetailView(DetailView panel) {
+    if (equals(panel.getCurrentItem())) {
+      return;
+    }
 
-  boolean allowedToRemove();
+    doUpdateDetailView(panel, panel.hasEditorOnly());
 
-  void removed(Project project);
+    panel.setCurrentItem(this);
+  }
+
+  protected abstract void doUpdateDetailView(DetailView panel, boolean editorOnly);
+
+  public abstract boolean allowedToRemove();
+
+  public abstract void removed(Project project);
 }

@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
@@ -196,11 +195,13 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
     for (int i = 0; i < myKeywordsLists.length; i++) {
       final int idx = i;
-      myKeywordsLists[i].addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) edit(idx);
+      new DoubleClickListener() {
+        @Override
+        protected boolean onDoubleClick(MouseEvent e) {
+          edit(idx);
+          return true;
         }
-      });
+      }.installOn(myKeywordsLists[i]);
     }
 
 

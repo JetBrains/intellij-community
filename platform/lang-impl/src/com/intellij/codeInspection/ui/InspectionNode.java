@@ -31,7 +31,7 @@ public class InspectionNode extends InspectionTreeNode {
   public static final Icon TOOL;
 
   static {
-    TOOL = LayeredIcon.create(AllIcons.General.ToolWindowInspection, IconUtil.getEmptyIcon(false));
+    TOOL = LayeredIcon.create(AllIcons.Toolwindows.ToolWindowInspection, IconUtil.getEmptyIcon(false));
   }
 
   public InspectionNode(InspectionTool tool) {

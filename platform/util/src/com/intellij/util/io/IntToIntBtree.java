@@ -16,7 +16,10 @@ import java.util.Arrays;
 * Time: 1:34 PM
 */
 class IntToIntBtree {
-  static final int VERSION = 3;
+  public static int version() {
+    return 3;
+  }
+
   private static final int HAS_ZERO_KEY_MASK = 0xFF000000;
   static final boolean doSanityCheck = false;
   static final boolean doDump = false;

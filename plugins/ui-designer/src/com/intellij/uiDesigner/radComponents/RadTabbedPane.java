@@ -16,7 +16,6 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,7 +52,7 @@ import java.awt.event.MouseEvent;
 public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
   public static class Factory extends RadComponentFactory {
-    public RadComponent newInstance(Module module, Class aClass, String id) {
+    public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadTabbedPane(module, aClass, id);
     }
 
@@ -72,7 +71,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
   private int mySelectedIndex = -1;
   private IntrospectedProperty mySelectedIndexProperty = null;
 
-  public RadTabbedPane(final Module module, Class componentClass, final String id){
+  public RadTabbedPane(final ModuleProvider module, Class componentClass, final String id){
     super(module, componentClass, id);
   }
 
@@ -342,7 +341,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
 
   private class MyTitleProperty extends Property<RadComponent, StringDescriptor> {
     protected final int myIndex;
-    private final StringEditor myEditor = new StringEditor(getModule().getProject());
+    private final StringEditor myEditor = new StringEditor(getProject());
     private final StringRenderer myRenderer = new StringRenderer();
 
     public MyTitleProperty(final Property parent, final int index) {

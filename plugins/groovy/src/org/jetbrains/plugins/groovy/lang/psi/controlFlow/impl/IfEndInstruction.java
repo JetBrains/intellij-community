@@ -21,8 +21,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
  * @author Maxim.Medvedev
  */
 public class IfEndInstruction extends InstructionImpl{
-  public IfEndInstruction(GrIfStatement ifStatement, int num) {
-    super(ifStatement, num);
+  public IfEndInstruction(GrIfStatement ifStatement) {
+    super(ifStatement);
   }
 
   @Override

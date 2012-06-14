@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
@@ -318,24 +319,21 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     }
 
     private class FocusRequester extends MouseAdapter {
-        public void mouseClicked(MouseEvent e) {
+        public void mousePressed(MouseEvent e) {
             requestFocus();
         }
     }
 
-    private static final class EditorMouseAdapter extends MouseAdapter {
-        public void mouseClicked(MouseEvent e) {
-            if (MouseEvent.BUTTON3 == e.getButton() && e.getClickCount() == 1) {
+    private static final class EditorMouseAdapter extends PopupHandler {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
                 // Single right click
                 ActionManager actionManager = ActionManager.getInstance();
                 ActionGroup actionGroup = (ActionGroup) actionManager.getAction(ImageEditorActions.GROUP_POPUP);
                 ActionPopupMenu menu = actionManager.createActionPopupMenu(ImageEditorActions.ACTION_PLACE, actionGroup);
                 JPopupMenu popupMenu = menu.getComponent();
                 popupMenu.pack();
-                popupMenu.show(e.getComponent(), e.getX(), e.getY());
-
-                e.consume();
-            }
+                popupMenu.show(comp, x, y);
         }
     }
 

@@ -15,7 +15,7 @@
  */
 package com.intellij.uiDesigner.radComponents;
 
-import com.intellij.openapi.module.Module;
+import com.intellij.uiDesigner.ModuleProvider;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
@@ -38,7 +38,7 @@ import java.awt.event.MouseEvent;
  */
 public final class RadSplitPane extends RadContainer {
   public static class Factory extends RadComponentFactory {
-    public RadComponent newInstance(Module module, Class aClass, String id) {
+    public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadSplitPane(module, aClass, id);
     }
 
@@ -47,7 +47,7 @@ public final class RadSplitPane extends RadContainer {
     }
   }
 
-  public RadSplitPane(final Module module, final Class componentClass, final String id) {
+  public RadSplitPane(final ModuleProvider module, final Class componentClass, final String id) {
     super(module, componentClass, id);
   }
 

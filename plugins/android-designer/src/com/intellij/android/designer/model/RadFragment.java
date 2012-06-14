@@ -20,10 +20,10 @@ import com.intellij.android.designer.propertyTable.IdProperty;
 import com.intellij.android.designer.propertyTable.JavadocParser;
 import com.intellij.android.designer.propertyTable.editors.ChooseClassDialog;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
+import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.editors.TextEditor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.Nullable;
@@ -81,9 +81,9 @@ public class RadFragment extends RadViewComponent implements IConfigurableCompon
 
   @Nullable
   private static String chooseFragment(RadComponent rootComponent) {
-    Module module = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
+    ModuleProvider moduleProvider = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
     ChooseClassDialog dialog =
-      new ChooseClassDialog(module, "Fragment Dialog", true, "android.app.Fragment", "android.support.v4.app.Fragment");
+      new ChooseClassDialog(moduleProvider.getModule(), "Fragment Dialog", true, "android.app.Fragment", "android.support.v4.app.Fragment");
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

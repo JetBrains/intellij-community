@@ -6,6 +6,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -29,6 +31,18 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
     parameterPropagationTest();
   }
 
+  public void testParamTypeSubst() throws Exception {
+    final PsiMethod method = getPrimaryMethod();
+    final HashSet<PsiMethod> methods = new HashSet<PsiMethod>();
+    for (PsiReference reference : ReferencesSearch.search(method)) {
+      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(reference.getElement(), PsiMethod.class);
+      if (psiMethod != null) {
+        methods.add(psiMethod);
+      }
+    }
+    parameterPropagationTest(method, methods, JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("T"));
+  }
+
   public void testExceptionSimple() throws Exception {
     exceptionPropagationTest();
   }
@@ -39,7 +53,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
 
   public void testParamWithNoConstructor() throws Exception {
     final PsiMethod method = getPrimaryMethod();
-    parameterPropagationTest(method, collectNonPhysicalMethodsToPropagate(method));
+    parameterPropagationTest(method, collectNonPhysicalMethodsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
   }
 
    public void testExceptionWithNoConstructor() throws Exception {
@@ -62,12 +76,12 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
 
   public void testParamWithImplicitConstructor() throws Exception {
     final PsiMethod method = getPrimaryMethod();
-    parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method));
+    parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
   }
 
   public void testParamWithImplicitConstructors() throws Exception {
     final PsiMethod method = getPrimaryMethod();
-    parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method));
+    parameterPropagationTest(method, collectDefaultConstructorsToPropagate(method), JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
   }
 
   public void testExceptionWithImplicitConstructor() throws Exception {
@@ -84,13 +98,18 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   }
 
   private void parameterPropagationTest() throws Exception {
-    final PsiMethod method = getPrimaryMethod();
-    parameterPropagationTest(method, new HashSet<PsiMethod>(Arrays.asList(method.getContainingClass().getMethods())));
+    parameterPropagationTest(JavaPsiFacade.getElementFactory(getProject())
+                               .createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject())));
   }
 
-  private void parameterPropagationTest(final PsiMethod method, final HashSet<PsiMethod> psiMethods) throws Exception {
-    PsiType newParamType = JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(getProject()));
-    final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "clazz", newParamType, "null")};
+  private void parameterPropagationTest(final PsiClassType paramType) throws Exception {
+    final PsiMethod method = getPrimaryMethod();
+    parameterPropagationTest(method, new HashSet<PsiMethod>(Arrays.asList(method.getContainingClass().getMethods())),
+                             paramType);
+  }
+
+  private void parameterPropagationTest(final PsiMethod method, final HashSet<PsiMethod> psiMethods, final PsiType paramType) throws Exception {
+    final ParameterInfoImpl[] newParameters = new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "clazz", paramType, "null")};
     doTest(newParameters, new ThrownExceptionInfo[0], psiMethods, null, method);
   }
 

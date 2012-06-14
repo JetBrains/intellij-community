@@ -15,7 +15,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl, JpsProjectImpl> implements JpsLibrary {
-  private static final JpsElementCollectionKind<JpsLibraryRootImpl> LIBRARY_ROOTS_COLLECTION = new JpsElementCollectionKind<JpsLibraryRootImpl>(JpsLibraryRootKind.INSTANCE);
+  private static final JpsElementCollectionKind<JpsLibraryRootImpl> LIBRARY_ROOTS_COLLECTION =
+    new JpsElementCollectionKind<JpsLibraryRootImpl>(JpsLibraryRootKind.INSTANCE);
   private static final JpsTypedDataKind<JpsLibraryType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsLibraryType<?>>();
 
   public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<?> type) {
@@ -65,8 +66,9 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl,
     getParent().removeChild(this);
   }
 
-  public JpsElementCollectionImpl<JpsLibraryImpl> getParent() {
-    return (JpsElementCollectionImpl<JpsLibraryImpl>)myParent;
+  public JpsElementCollectionImpl<JpsLibrary> getParent() {
+    //noinspection unchecked
+    return (JpsElementCollectionImpl<JpsLibrary>)myParent;
   }
 
   @NotNull
@@ -79,7 +81,8 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl,
   @Override
   public JpsLibraryReference createReference() {
     //noinspection unchecked
-    final JpsElementReference<JpsCompositeElement> parentReference = ((JpsReferenceableElement<JpsCompositeElement>)getParent().getParent()).createReference();
+    final JpsElementReference<JpsCompositeElement> parentReference =
+      ((JpsReferenceableElement<JpsCompositeElement>)getParent().getParent()).createReference();
     return new JpsLibraryReferenceImpl(getName(), parentReference);
   }
 }

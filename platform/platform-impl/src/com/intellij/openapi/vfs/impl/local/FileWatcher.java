@@ -57,6 +57,9 @@ public class FileWatcher {
   @NonNls private static final String EXIT_COMMAND = "EXIT";
   @NonNls private static final String MESSAGE_COMMAND = "MESSAGE";
 
+  private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
+  private static final int MAGIC_PROCESS_LAUNCH_ATTEMPT_COUNT = 88 * MAX_PROCESS_LAUNCH_ATTEMPT_COUNT;
+
   private final Object LOCK = new Object();
 
   private List<String> myDirtyPaths = new ArrayList<String>();
@@ -78,7 +81,6 @@ public class FileWatcher {
   private volatile BufferedWriter notifierWriter;
   private boolean myFailureShownToTheUser = false;
   private int attemptCount = 0;
-  private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
   private boolean isShuttingDown = false;
 
   private final ManagingFS myManagingFS;
@@ -323,7 +325,7 @@ public class FileWatcher {
     myFailureShownToTheUser = true;
     attemptCount = 0;
     startupProcess(false);
-    attemptCount = 2 * MAX_PROCESS_LAUNCH_ATTEMPT_COUNT;
+    attemptCount = MAGIC_PROCESS_LAUNCH_ATTEMPT_COUNT;
     if (notifierProcess != null) {
       new WatchForChangesThread().start();
     }
@@ -368,6 +370,11 @@ public class FileWatcher {
 
           final String command = readLine();
           if (command == null) {
+            if (attemptCount == MAGIC_PROCESS_LAUNCH_ATTEMPT_COUNT) {
+              LOG.debug("Leaving watcher thread");
+              return;
+            }
+
             // Unexpected process exit, relaunch attempt
             startupProcess(true);
             continue;
@@ -466,7 +473,7 @@ public class FileWatcher {
 
   private void writeLine(String line) throws IOException {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("to fsnotifier: " + line);
+      LOG.debug("<< " + line);
     }
 
     final Process process = notifierProcess;
@@ -502,7 +509,7 @@ public class FileWatcher {
 
     final String line = reader.readLine();
     if (LOG.isDebugEnabled()) {
-      LOG.debug("fsnotifier says: " + line);
+      LOG.debug(">> " + line);
     }
     return line;
   }

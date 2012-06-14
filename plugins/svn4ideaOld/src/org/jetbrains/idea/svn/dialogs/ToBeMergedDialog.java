@@ -22,7 +22,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.QuantitySelection;
@@ -212,7 +211,7 @@ public class ToBeMergedDialog extends DialogWrapper {
         return tag;
       }
     };
-    mouseListener.install(myRevisionsList);
+    mouseListener.installOn(myRevisionsList);
 
     final PagedListWithActions.InnerComponentManager<CommittedChangeList> listsManager =
       new PagedListWithActions.InnerComponentManager<CommittedChangeList>() {

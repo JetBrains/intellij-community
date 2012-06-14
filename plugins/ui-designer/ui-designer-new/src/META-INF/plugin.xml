@@ -12,6 +12,9 @@
     <component>
       <implementation-class>com.intellij.designer.DesignerToolWindowManager</implementation-class>
     </component>
+    <!--<component>
+      <implementation-class>com.intellij.designer.palette2.PaletteToolWindowManager</implementation-class>
+    </component>-->
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">

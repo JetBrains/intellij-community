@@ -113,6 +113,10 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     });
   }
 
+  @Override
+  public void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider) {
+  }
+
   public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {

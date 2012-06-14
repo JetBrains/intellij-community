@@ -687,4 +687,14 @@ public class ResolveUtil {
     }
     return null;
   }
+
+  public static boolean isEnumConstant(GrReferenceExpression ref, String name, String qName) {
+    PsiElement resolved = ref.resolve();
+    if (!(resolved instanceof PsiEnumConstant)) return false;
+    if (!name.equals(((PsiEnumConstant)resolved).getName())) return false;
+
+    PsiClass aClass = ((PsiEnumConstant)resolved).getContainingClass();
+    if (aClass == null) return false;
+    return qName.equals(aClass.getQualifiedName());
+  }
 }

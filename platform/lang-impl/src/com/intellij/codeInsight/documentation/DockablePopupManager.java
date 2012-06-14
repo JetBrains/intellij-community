@@ -83,7 +83,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     myToolWindow = toolWindow == null
                    ? toolWindowManagerEx.registerToolWindow(getToolwindowId(), true, ToolWindowAnchor.RIGHT, myProject)
                    : toolWindow;
-    myToolWindow.setIcon(AllIcons.General.Documentation);
+    myToolWindow.setIcon(AllIcons.Toolwindows.Documentation);
 
     myToolWindow.setAvailable(true, null);
     myToolWindow.setToHideOnEmptyContent(false);
@@ -100,14 +100,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void contentRemoved(ContentManagerEvent event) {
-        if (contentManager.getContentCount() == 0) {
-          final JComponent c = event.getContent().getComponent();
-          if (c instanceof Disposable) {
-            Disposer.dispose((Disposable)c);
-          }
-
-          restorePopupBehavior();
-        }
+        restorePopupBehavior();
       }
     });
 
@@ -214,10 +207,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
       final Content[] contents = myToolWindow.getContentManager().getContents();
       for (final Content content : contents) {
-        final JComponent c = content.getComponent();
-        if (c instanceof Disposable) {
-          Disposer.dispose((Disposable)c);
-        }
+        myToolWindow.getContentManager().removeContent(content, true);
       }
 
       ToolWindowManagerEx.getInstanceEx(myProject).unregisterToolWindow(getToolwindowId());

@@ -22,10 +22,8 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -33,13 +31,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.AndroidValueResourcesIndex;
-import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
@@ -56,8 +52,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
-
-import static org.jetbrains.android.util.AndroidUtils.loadDomElement;
 
 /**
  * @author Eugene.Kudelevsky
@@ -261,53 +255,6 @@ public class LocalResourceManager extends ResourceManager {
       LOG.error("Can't create resource file");
     }
     return result;
-  }
-
-  // must be invoked in a write action
-  @Nullable
-  public VirtualFile addResourceFileAndNavigate(@NotNull final String fileOrResourceName, @NotNull String resType) {
-    VirtualFile resDir = getResourceDir();
-    Project project = myModule.getProject();
-    if (resDir == null) {
-      Messages
-        .showErrorDialog(project, AndroidBundle.message("check.resource.dir.error", myModule.getName()), CommonBundle.getErrorTitle());
-      return null;
-    }
-    PsiElement[] createdElements = CreateResourceFileAction.createResourceFile(project, resDir, resType, fileOrResourceName);
-    if (createdElements.length == 0) return null;
-    assert createdElements.length == 1;
-    PsiElement element = createdElements[0];
-    assert element instanceof PsiFile;
-    return ((PsiFile)element).getVirtualFile();
-  }
-
-  // must be invoked in a write action
-  @Nullable
-  public ResourceElement addValueResource(@NotNull final String type, @NotNull final String name, @Nullable final String value) {
-    String resourceFileName = AndroidResourceUtil.getDefaultResourceFileName(type);
-    if (resourceFileName == null) {
-      throw new IllegalArgumentException("Incorrect resource type");
-    }
-    VirtualFile resFile = findOrCreateResourceFile(resourceFileName);
-    if (resFile == null ||
-        !ReadonlyStatusHandler.ensureFilesWritable(myModule.getProject(), resFile)) {
-      return null;
-    }
-    final Resources resources = loadDomElement(myModule, resFile, Resources.class);
-    if (resources == null) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new IncorrectOperationException("invalid strings.xml");
-      }
-      Messages.showErrorDialog(myModule.getProject(), AndroidBundle.message("not.resource.file.error", resourceFileName),
-                               CommonBundle.getErrorTitle());
-      return null;
-    }
-    ResourceElement element = AndroidResourceUtil.addValueResource(type, resources);
-    element.getName().setValue(name);
-    if (value != null) {
-      element.setStringValue(value);
-    }
-    return element;
   }
 
   @Nullable

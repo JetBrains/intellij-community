@@ -45,6 +45,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -84,7 +85,7 @@ public class GitCherryPicker {
   }
 
   public void cherryPick(@NotNull Map<GitRepository, List<GitCommit>> commitsInRoots) {
-    List<GitCommit> successfulCommits = new ArrayList<GitCommit>();
+    List<GitCommitWrapper> successfulCommits = new ArrayList<GitCommitWrapper>();
     for (Map.Entry<GitRepository, List<GitCommit>> entry : commitsInRoots.entrySet()) {
       if (!cherryPick(entry.getKey(), entry.getValue(), successfulCommits)) {
         return;
@@ -95,7 +96,7 @@ public class GitCherryPicker {
 
   // return true to continue with other roots, false to break execution
   private boolean cherryPick(@NotNull GitRepository repository, @NotNull List<GitCommit> commits,
-                             @NotNull List<GitCommit> successfulCommits) {
+                             @NotNull List<GitCommitWrapper> successfulCommits) {
     for (GitCommit commit : commits) {
       GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(CHERRY_PICK_CONFLICT);
       GitSimpleEventDetector localChangesOverwrittenDetector = new GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK);
@@ -103,14 +104,16 @@ public class GitCherryPicker {
                                                                                            repository.getRoot());
       GitCommandResult result = myGit.cherryPick(repository, commit.getHash().getValue(), myAutoCommit,
                                                  conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector);
+      GitCommitWrapper commitWrapper = new GitCommitWrapper(commit);
       if (result.success()) {
         if (myAutoCommit) {
-          successfulCommits.add(commit);
+          successfulCommits.add(commitWrapper);
         }
         else {
-          boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commit, successfulCommits);
+          boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commitWrapper,
+                                                                                                  successfulCommits);
           if (!committed) {
-            notifyCommitCancelled(commit, successfulCommits);
+            notifyCommitCancelled(commitWrapper, successfulCommits);
             return false;
           }
         }
@@ -121,20 +124,21 @@ public class GitCherryPicker {
                                                                 commit.getSubject()).merge();
 
         if (mergeCompleted) {
-          boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commit, successfulCommits);
+          boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commitWrapper,
+                                                                                                  successfulCommits);
           if (!committed) {
-            notifyCommitCancelled(commit, successfulCommits);
+            notifyCommitCancelled(commitWrapper, successfulCommits);
             return false;
           }
         }
         else {
           updateChangeListManager(commit);
-          notifyConflictWarning(repository, commit, successfulCommits);
+          notifyConflictWarning(repository, commitWrapper, successfulCommits);
           return false;
         }
       }
       else if (untrackedFilesDetector.wasMessageDetected()) {
-        String description = commitDetails(commit)
+        String description = commitDetails(commitWrapper)
                              + "<br/>Some untracked working tree files would be overwritten by cherry-pick.<br/>" +
                              "Please move, remove or add them before you can cherry-pick. <a href='view'>View them</a>";
         description += getSuccessfulCommitDetailsIfAny(successfulCommits);
@@ -145,11 +149,11 @@ public class GitCherryPicker {
       }
       else if (localChangesOverwrittenDetector.hasHappened()) {
         notifyError("Your local changes would be overwritten by cherry-pick.<br/>Commit your changes or stash them to proceed.",
-                    commit, successfulCommits);
+                    commitWrapper, successfulCommits);
         return false;
       }
       else {
-        notifyError(result.getErrorOutputAsHtmlString(), commit, successfulCommits);
+        notifyError(result.getErrorOutputAsHtmlString(), commitWrapper, successfulCommits);
         return false;
       }
     }
@@ -157,9 +161,9 @@ public class GitCherryPicker {
   }
 
   private boolean updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(@NotNull GitRepository repository,
-                                                                                      @NotNull GitCommit commit,
-                                                                                      @NotNull List<GitCommit> successfulCommits) {
-    CherryPickData data = updateChangeListManager(commit);
+                                                                                      @NotNull GitCommitWrapper commit,
+                                                                                      @NotNull List<GitCommitWrapper> successfulCommits) {
+    CherryPickData data = updateChangeListManager(commit.getCommit());
     boolean committed = showCommitDialog(repository, commit, data.myChangeList, data.myCommitMessage);
     if (committed) {
       removeChangeList(data);
@@ -176,10 +180,11 @@ public class GitCherryPicker {
     }
   }
 
-  private void notifyConflictWarning(@NotNull GitRepository repository, @NotNull GitCommit commit,
-                                     @NotNull List<GitCommit> successfulCommits) {
+  private void notifyConflictWarning(@NotNull GitRepository repository, @NotNull GitCommitWrapper commit,
+                                     @NotNull List<GitCommitWrapper> successfulCommits) {
     NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
-                                                                       commit.getShortHash().getString(), commit.getAuthor(),
+                                                                       commit.getCommit().getShortHash().getString(),
+                                                                       commit.getCommit().getAuthor(),
                                                                        commit.getSubject());
     String description = commitDetails(commit)
                          + "<br/>Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>";
@@ -187,7 +192,7 @@ public class GitCherryPicker {
     myPlatformFacade.getNotificator(myProject).notifyStrongWarning("Cherry-picked with conflicts", description, resolveLinkListener);
   }
 
-  private void notifyCommitCancelled(@NotNull GitCommit commit, @NotNull List<GitCommit> successfulCommits) {
+  private void notifyCommitCancelled(@NotNull GitCommitWrapper commit, @NotNull List<GitCommitWrapper> successfulCommits) {
     if (successfulCommits.isEmpty()) {
       // don't notify about cancelled commit. Notify just in the case when there were already successful commits in the queue.
       return;
@@ -239,20 +244,28 @@ public class GitCherryPicker {
     return message;
   }
 
-  private boolean showCommitDialog(@NotNull final GitRepository repository, @NotNull final GitCommit commit,
+  private boolean showCommitDialog(@NotNull final GitRepository repository, @NotNull final GitCommitWrapper commit,
                                    @NotNull final LocalChangeList changeList, @NotNull final String commitMessage) {
     final AtomicBoolean commitSucceeded = new AtomicBoolean();
     myPlatformFacade.invokeAndWait(new Runnable() {
       @Override
       public void run() {
         cancelCherryPick(repository);
-        List<Change> changes = commit.getChanges();
+        List<Change> changes = commit.getCommit().getChanges();
         CherryPickCommitExecutor executor = new CherryPickCommitExecutor(myProject, myPlatformFacade, changes, commitMessage);
         boolean commitNotCancelled = myPlatformFacade.getVcsHelper(myProject).commitChanges(changes, changeList, commitMessage, executor);
-        commitSucceeded.set(commitNotCancelled && !executor.hasCommitFailed());
+        boolean success = commitNotCancelled && !executor.hasCommitFailed();
+        if (success) {
+          commit.setActualSubject(getSubjectFromCommitMessage(executor.getActualCommitMessage()));
+        }
+        commitSucceeded.set(success);
       }
     }, ModalityState.NON_MODAL);
     return commitSucceeded.get();
+  }
+
+  private static String getSubjectFromCommitMessage(String commitMessage) {
+    return commitMessage.substring(0, commitMessage.indexOf("\n"));
   }
 
   /**
@@ -289,14 +302,14 @@ public class GitCherryPicker {
     }
   }
 
-  private void notifyError(@NotNull String content, @NotNull GitCommit failedCommit, @NotNull List<GitCommit> successfulCommits) {
+  private void notifyError(@NotNull String content, @NotNull GitCommitWrapper failedCommit, @NotNull List<GitCommitWrapper> successfulCommits) {
     String description = commitDetails(failedCommit) + "<br/>" + content;
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifyError("Cherry-pick failed", description);
   }
 
   @NotNull
-  private static String getSuccessfulCommitDetailsIfAny(@NotNull List<GitCommit> successfulCommits) {
+  private static String getSuccessfulCommitDetailsIfAny(@NotNull List<GitCommitWrapper> successfulCommits) {
     String description = "";
     if (!successfulCommits.isEmpty()) {
       description += "<hr/>However cherry-pick succeeded for the following " + pluralize("commit", successfulCommits.size()) + ":<br/>";
@@ -305,23 +318,23 @@ public class GitCherryPicker {
     return description;
   }
 
-  private void notifySuccess(@NotNull List<GitCommit> successfulCommits) {
+  private void notifySuccess(@NotNull List<GitCommitWrapper> successfulCommits) {
     String description = getCommitsDetails(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifySuccess("Cherry-pick successful", description);
   }
 
   @NotNull
-  private static String getCommitsDetails(@NotNull List<GitCommit> successfulCommits) {
+  private static String getCommitsDetails(@NotNull List<GitCommitWrapper> successfulCommits) {
     String description = "";
-    for (GitCommit commit : successfulCommits) {
+    for (GitCommitWrapper commit : successfulCommits) {
       description += commitDetails(commit) + "<br/>";
     }
     return description.substring(0, description.length() - "<br/>".length());
   }
 
   @NotNull
-  private static String commitDetails(@NotNull GitCommit commit) {
-    return commit.getShortHash().toString() + " \"" + commit.getSubject() + "\"";
+  private static String commitDetails(@NotNull GitCommitWrapper commit) {
+    return commit.getCommit().getShortHash().toString() + " \"" + commit.getSubject() + "\"";
   }
 
   private void refreshChangedFiles(@NotNull Collection<FilePath> filePaths) {
@@ -450,15 +463,17 @@ public class GitCherryPicker {
     @NotNull private final Project myProject;
     @NotNull private final PlatformFacade myPlatformFacade;
     @NotNull private final List<Change> myChanges;
-    @NotNull private final String myCommitMessage;
+    @NotNull private final String myOriginalCommitMessage;
     private boolean myCommitFailed;
 
+    @Nullable private CherryPickCommitExecutor.CherryPickCommitSession myCommitSession;
+
     CherryPickCommitExecutor(@NotNull Project project, @NotNull PlatformFacade platformFacade,
-                             @NotNull List<Change> changes, @NotNull String commitMessage) {
+                             @NotNull List<Change> changes, @NotNull String originalCommitMessage) {
       myProject = project;
       myPlatformFacade = platformFacade;
       myChanges = changes;
-      myCommitMessage = commitMessage;
+      myOriginalCommitMessage = originalCommitMessage;
     }
 
     @Nls
@@ -470,14 +485,22 @@ public class GitCherryPicker {
     @NotNull
     @Override
     public CommitSession createCommitSession() {
-      return new CherryPickCommitSession();
+      myCommitSession = new CherryPickCommitSession();
+      return myCommitSession;
     }
 
     public boolean hasCommitFailed() {
       return myCommitFailed;
     }
 
+    @NotNull
+    public String getActualCommitMessage() {
+      return myCommitSession == null ? myOriginalCommitMessage : myCommitSession.getActualCommitMessage();
+    }
+
     private class CherryPickCommitSession implements CommitSession {
+      private String myActualCommitMessage;
+
       @Override
       public JComponent getAdditionalConfigurationUI() {
         return null;
@@ -500,12 +523,13 @@ public class GitCherryPicker {
           GitCheckinEnvironment ce = ServiceManager.getService(myProject, GitCheckinEnvironment.class);
           try {
             ce.reset();
-            List<VcsException> exceptions = ce.commit(myChanges, myCommitMessage);
+            List<VcsException> exceptions = ce.commit(myChanges, commitMessage);
             VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(myChanges), null);
             if (exceptions != null && !exceptions.isEmpty()) {
               VcsException exception = exceptions.get(0);
               handleError(exception);
             }
+            myActualCommitMessage = commitMessage;
           }
           catch (Throwable e) {
             LOG.error(e);
@@ -557,6 +581,37 @@ public class GitCherryPicker {
         return committingDocs;
       }
 
+      public String getActualCommitMessage() {
+        return myActualCommitMessage;
+      }
+    }
+  }
+
+  /**
+   * This class is needed to hold both the original GitCommit, and the commit message which could be changed by the user.
+   * Only the subject of the commit message is needed.
+   */
+  private static class GitCommitWrapper {
+    @NotNull private final GitCommit myOriginalCommit;
+    @NotNull private String myActualSubject;
+
+    private GitCommitWrapper(@NotNull GitCommit commit) {
+      myOriginalCommit = commit;
+      myActualSubject = commit.getSubject();
+    }
+
+    @NotNull
+    public String getSubject() {
+      return myActualSubject;
+    }
+
+    public void setActualSubject(@NotNull String actualSubject) {
+      myActualSubject = actualSubject;
+    }
+
+    @NotNull
+    public GitCommit getCommit() {
+      return myOriginalCommit;
     }
   }
 

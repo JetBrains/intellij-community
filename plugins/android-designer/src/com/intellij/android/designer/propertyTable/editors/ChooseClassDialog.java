@@ -22,6 +22,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
@@ -47,14 +47,16 @@ public class ChooseClassDialog extends DialogWrapper implements ListSelectionLis
     super(module.getProject());
 
     myList.setPreferredSize(new Dimension(500, 400));
-    myList.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && myList.getSelectedValue() != null) {
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (myList.getSelectedValue() != null) {
           close(OK_EXIT_CODE);
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myList);
 
     DefaultListModel model = new DefaultListModel();
     for (String className : classes) {

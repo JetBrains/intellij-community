@@ -26,6 +26,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.DoubleClickListener;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
@@ -42,7 +43,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 
@@ -105,14 +105,17 @@ public class AvdChooser extends DialogWrapper {
       }
     });
     myAvdTable.setDefaultRenderer(Boolean.class, new BooleanCellRenderer());
-    myAvdTable.addMouseListener(new MouseAdapter() {
+    new DoubleClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && isOKActionEnabled()) {
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (isOKActionEnabled()) {
           doOKAction();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myAvdTable);
+
     final String androidToolPath = getAndroidToolPath(facet);
     myStartAvdManagerButton.setEnabled(new File(androidToolPath).exists());
     myStartAvdManagerButton.addActionListener(new ActionListener() {

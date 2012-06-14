@@ -70,7 +70,7 @@
     <typeName className="com.intellij.lang.ant.dom.AntDomTarget" name="target"/>
     <typeName className="com.intellij.lang.ant.dom.AntDomAntCallParam" name="antcall parameter"/>
 
-    <toolWindow anchor="right" icon="AllIcons.General.ToolWindowAnt" id="Ant Build"
+    <toolWindow anchor="right" icon="AllIcons.Toolwindows.ToolWindowAnt" id="Ant Build"
                 factoryClass="com.intellij.lang.ant.config.impl.AntToolWindowFactory"/>
   </extensions>
 

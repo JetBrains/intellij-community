@@ -390,6 +390,10 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference(" Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
+  public void testPreferEarlyMatching() {
+    assertPreference(" path", "getAbsolutePath", "findPath");
+  }
+
   public void testMeaningfulMatchingDegree() {
     assertTrue(new MinusculeMatcher(" EUC-", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
   }
