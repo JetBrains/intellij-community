@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -17,7 +18,6 @@ import java.util.List;
 
 public abstract class VariantsProcessor implements PsiScopeProcessor {
   protected final PsiElement myContext;
-  protected String myNotice;
   protected Condition<PsiElement> myNodeFilter;
   protected Condition<String> myNameFilter;
 
@@ -34,10 +34,6 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     myContext = context;
     myNodeFilter = nodeFilter;
     myNameFilter = nameFilter;
-  }
-
-  public void setNotice(@Nullable String notice) {
-    myNotice = notice;
   }
 
   public boolean isPlainNamesOnly() {
@@ -78,7 +74,10 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
         final NameDefiner definer = (NameDefiner)element;
         for (PyElement expr : definer.iterateNames()) {
           if (expr != null && expr != myContext) { // NOTE: maybe rather have SingleIterables skip nulls outright?
-            String referencedName = expr instanceof PyFile ? FileUtil.getNameWithoutExtension(((PyFile) expr).getName()) : expr.getName();
+            if (!expr.isValid()) {
+              throw new PsiInvalidElementAccessException(expr, "Definer: " + definer);
+            }
+            String referencedName = expr instanceof PyFile ? FileUtil.getNameWithoutExtension(((PyFile)expr).getName()) : expr.getName();
             if (referencedName != null && nameIsAcceptable(referencedName)) {
               addImportedElement(referencedName, definer, expr);
             }

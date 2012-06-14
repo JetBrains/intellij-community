@@ -96,7 +96,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    final PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset+1, PyStringLiteralExpression.class, false);
+    final PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
     if (string != null && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
       final String stringText = element.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);

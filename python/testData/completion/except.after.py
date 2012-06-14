@@ -1,3 +1,3 @@
 try:
     a = 1
-except <caret>:
+except<caret>
