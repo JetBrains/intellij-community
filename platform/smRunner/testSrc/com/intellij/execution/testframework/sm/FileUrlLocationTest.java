@@ -45,6 +45,7 @@ public class FileUrlLocationTest extends SMLightFixtureTestCase {
                       final String filePath, final int lineNum) {
     final SMTestProxy testProxy =
         new SMTestProxy("myTest", false, "file://" + filePath + ":" + lineNum);
+    testProxy.setLocator(new CompositeTestLocationProvider(null));
 
     final Location location = testProxy.getLocation(getProject());
     assertNotNull(location);
