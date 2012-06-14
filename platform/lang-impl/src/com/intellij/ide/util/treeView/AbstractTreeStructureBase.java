@@ -45,7 +45,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     LOG.assertTrue(element instanceof AbstractTreeNode, element != null ? element.getClass().getName() : null);
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
-    List<TreeStructureProvider> providers = getProvidersDumbAware();
+     List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (providers != null && !providers.isEmpty()) {
       ViewSettings settings = treeNode instanceof ProjectViewNode ? ((ProjectViewNode) treeNode).getSettings() : ViewSettings.DEFAULT;
       for (TreeStructureProvider provider : providers) {

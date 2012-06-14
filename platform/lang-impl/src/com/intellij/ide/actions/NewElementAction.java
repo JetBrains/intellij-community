@@ -90,6 +90,10 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
       presentation.setEnabled(false);
       return;
     }
+    if (Boolean.TRUE.equals(LangDataKeys.NO_NEW_ACTION.getData(context))) {
+      presentation.setEnabled(false);
+      return;
+    }
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(context);
     if (ideView == null) {
       presentation.setEnabled(false);

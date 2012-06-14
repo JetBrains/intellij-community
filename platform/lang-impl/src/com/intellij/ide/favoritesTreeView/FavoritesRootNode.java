@@ -39,8 +39,9 @@ public class FavoritesRootNode extends AbstractTreeNode<String> {
   public Collection<AbstractTreeNode> getChildren() {
     if (myFavoritesRoots == null) {
       myFavoritesRoots = new ArrayList<AbstractTreeNode>();
-      for (String list : FavoritesManager.getInstance(myProject).getAvailableFavoritesLists()) {
-        myFavoritesRoots.add(new FavoritesListNode(myProject, list));
+      final FavoritesManager favoritesManager = FavoritesManager.getInstance(myProject);
+      for (String list : favoritesManager.getAvailableFavoritesListNames()) {
+        myFavoritesRoots.add(new FavoritesListNode(myProject, list, favoritesManager.allowsTree(list)));
       }
     }
     return myFavoritesRoots;

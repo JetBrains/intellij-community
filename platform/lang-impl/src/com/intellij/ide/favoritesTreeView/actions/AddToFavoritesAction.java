@@ -106,6 +106,7 @@ public class AddToFavoritesAction extends AnAction {
     final boolean inProjectView = e.getPlace().equals(ActionPlaces.J2EE_VIEW_POPUP) ||
                                   e.getPlace().equals(ActionPlaces.STRUCTURE_VIEW_POPUP) ||
                                   e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP);
+    //com.intellij.openapi.actionSystem.ActionPlaces.USAGE_VIEW_TOOLBAR
     return getNodesToAdd(dataContext, inProjectView) != null;
   }
 

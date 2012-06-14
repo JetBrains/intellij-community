@@ -76,7 +76,7 @@ public class SendToFavoritesGroup extends ActionGroup{
     }
     
     
-    final String[] allLists = favoritesManager.getAvailableFavoritesLists();
+    final String[] allLists = favoritesManager.getAvailableFavoritesListNames();
     List<AnAction> actions = new ArrayList<AnAction>();
 
     for (String list : allLists) {

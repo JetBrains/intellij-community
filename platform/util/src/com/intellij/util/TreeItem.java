@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TreeItem <Data> {
-  private final Data myData;
+  private Data myData;
   private TreeItem<Data> myParent;
   private final List<TreeItem<Data>> myChildren = new ArrayList<TreeItem<Data>>();
 
@@ -29,6 +29,10 @@ public class TreeItem <Data> {
 
   public Data getData() {
     return myData;
+  }
+
+  public void setData(Data data) {
+    myData = data;
   }
 
   public TreeItem<Data> getParent() {
@@ -46,5 +50,22 @@ public class TreeItem <Data> {
   public void addChild(TreeItem<Data> child) {
     child.setParent(this);
     myChildren.add(child);
+  }
+
+  public void addChildAfter(TreeItem<Data> child, TreeItem<Data> after) {
+    child.setParent(this);
+    int idx = -1;
+    for (int i = 0; i < myChildren.size(); i++) {
+      TreeItem<Data> item = myChildren.get(i);
+      if (item.equals(after)) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx == -1) {
+      myChildren.add(child);
+    } else {
+      myChildren.add(idx, child);
+    }
   }
 }
