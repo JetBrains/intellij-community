@@ -67,6 +67,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -246,9 +247,10 @@ class DaemonListeners implements Disposable {
         String propertyName = event.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName)) {
           stopDaemonAndRestartAllFiles();
-          PsiFile psiFile = PsiManager.getInstance(myProject).findFile(event.getFile());
+          VirtualFile virtualFile = event.getFile();
+          PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager().getCachedPsiFile(virtualFile);
           if (psiFile != null && !myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
-            Document document = FileDocumentManager.getInstance().getCachedDocument(event.getFile());
+            Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
             if (document != null) {
               // highlight markers no more
               //todo clear all highlights regardless the pass id
@@ -303,6 +305,7 @@ class DaemonListeners implements Disposable {
     for (FileEditor fe : editors) {
       if (!(fe instanceof TextEditor)) continue;
       Editor editor = ((TextEditor)fe).getEditor();
+      if (editor.getProject() != myProject) continue;
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile == null) continue;
       // optimization: do expensive classloading outside readaction
