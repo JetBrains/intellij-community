@@ -138,6 +138,10 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.replace.list.comprehensions.with.for"));
   }
 
+  public void testReplaceListComprehension2() {    //PY-6731
+    doTest(PyBundle.message("INTN.replace.list.comprehensions.with.for"));
+  }
+
   public void testJoinIf() {
     doTest(PyBundle.message("INTN.join.if.text"));
   }
