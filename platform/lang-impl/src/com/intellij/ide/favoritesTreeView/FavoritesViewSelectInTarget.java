@@ -112,7 +112,7 @@ public class FavoritesViewSelectInTarget extends SelectInTargetPsiWrapper {
   public static String findSuitableFavoritesList(VirtualFile file, Project project, final String currentSubId) {
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     if (currentSubId != null && favoritesManager.contains(currentSubId, file)) return currentSubId;
-    final String[] lists = favoritesManager.getAvailableFavoritesLists();
+    final String[] lists = favoritesManager.getAvailableFavoritesListNames();
     for (String name : lists) {
       if (favoritesManager.contains(name, file)) return name;
     }

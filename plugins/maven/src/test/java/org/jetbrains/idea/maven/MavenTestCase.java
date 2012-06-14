@@ -144,9 +144,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
         }
       }
     });
-    if (!FileUtil.delete(myDir)) {
-      System.out.println("Cannot delete " + myDir);
-      printDirectoryContent(myDir);
+    if (!FileUtil.delete(myDir) && myDir.exists()) {
+      System.err.println("Cannot delete " + myDir);
+      //printDirectoryContent(myDir);
       myDir.deleteOnExit();
     }
 

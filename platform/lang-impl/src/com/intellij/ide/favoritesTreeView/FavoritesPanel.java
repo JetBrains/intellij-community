@@ -34,6 +34,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Konstantin Bulenkov
@@ -73,6 +74,7 @@ public class FavoritesPanel {
           return new DnDDragStartBean("");
         }
       })
+      // todo process drag-and-drop here for tasks
       .setTargetChecker(new DnDTargetChecker() {
         @Override
         public boolean update(DnDEvent event) {
@@ -132,9 +134,9 @@ public class FavoritesPanel {
             final String listFrom = getListNodeFromPath(path).getValue();
             if (listTo.equals(listFrom)) return;
             if (path.getPathCount() == 3) {
-              final Object element = ((FavoritesTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject())
+              final AbstractTreeNode element = (AbstractTreeNode)((FavoritesTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject())
                 .getElement().getValue();
-              mgr.removeRoot(listFrom, element);
+              mgr.removeRoot(listFrom, Collections.singletonList(element));
               mgr.addRoots(listTo, null, element);
             }
           }
@@ -143,7 +145,8 @@ public class FavoritesPanel {
             if (elements != null && elements.length > 0) {
               ArrayList<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
               for (PsiElement element : elements) {
-                final Collection<AbstractTreeNode> tmp = AddToFavoritesAction.createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());
+                final Collection<AbstractTreeNode> tmp = AddToFavoritesAction
+                  .createNodes(myProject, null, element, true, FavoritesManager.getInstance(myProject).getViewSettings());
                 nodes.addAll(tmp);
                 mgr.addRoots(listTo, nodes);
               }
@@ -171,7 +174,7 @@ public class FavoritesPanel {
     }
     return null;
   }
-  
+
 
   @Nullable
   private FavoritesListNode findFavoritesListNode(Point point) {

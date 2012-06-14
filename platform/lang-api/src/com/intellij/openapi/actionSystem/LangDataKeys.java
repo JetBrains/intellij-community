@@ -49,6 +49,7 @@ public class LangDataKeys extends PlatformDataKeys {
    * Returns {@link com.intellij.ide.IdeView} (one of project, packages, commander or favorites view).
    */
   public static final DataKey<IdeView> IDE_VIEW = DataKey.create("IDEView");
+  public static final DataKey<Boolean> NO_NEW_ACTION = DataKey.create("IDEview.no.create.element.action");
   public static final DataKey<Condition<AnAction>> PRESELECT_NEW_ACTION_CONDITION = DataKey.create("newElementAction.preselect.id");
 
   public static final DataKey<PsiElement> TARGET_PSI_ELEMENT = DataKey.create("psi.TargetElement");

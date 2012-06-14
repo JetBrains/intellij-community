@@ -50,6 +50,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.TreeItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -353,8 +354,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     if (favoritesManager != null) {
-      for (final String favorite : favoritesManager.getAvailableFavoritesLists()) {
-        final Collection<Pair<AbstractUrl,String>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
+      for (final String favorite : favoritesManager.getAvailableFavoritesListNames()) {
+        final Collection<TreeItem<Pair<AbstractUrl,String>>> rootUrls = favoritesManager.getFavoritesListRootUrls(favorite);
         if (rootUrls.isEmpty()) continue;  // ignore unused root
         result.add(new GlobalSearchScope(project) {
           @Override

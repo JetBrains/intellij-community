@@ -17,7 +17,6 @@ package com.intellij.profile;
 
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -26,9 +25,9 @@ import java.util.Collection;
  * Date: 09-Dec-2005
  */
 public interface ProfileManager {
-  @Nullable
   NamedScopesHolder getScopesManager();
 
+  @NotNull
   Collection<Profile> getProfiles();
 
   Profile getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
@@ -37,6 +36,7 @@ public interface ProfileManager {
 
   void updateProfile(Profile profile);
 
+  @NotNull
   String[] getAvailableProfileNames();
 
   void deleteProfile(String name);

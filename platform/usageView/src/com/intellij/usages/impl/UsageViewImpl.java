@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -1045,6 +1044,24 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
     return usages;
   }
+
+  /*public MultiMap<VirtualFile, Usage> getUsagesGroupedByFile() {
+    final MultiMap<VirtualFile, Usage> result = new MultiMap<VirtualFile, Usage>();
+    final ArrayDeque<Pair<Node, VirtualFile>> queue = new ArrayDeque<Pair<Node, VirtualFile>>();
+    final Node[] nodes = getSelectedNodes();
+    for (Node node : nodes) {
+      if (node instanceof UsageNode) {
+        final VirtualFile vf = fileForUsage((UsageNode) node);
+        if (vf != null) {
+          result.putValue(vf, ((UsageNode)node).getUsage());
+        }
+      } else if (node instanceof GroupNode) {
+        if (node instanceof TypeSafeDataProvider) {
+          ((TypeSafeDataProvider)node).calcData();
+        }
+      }
+    }
+  }*/
 
   @Override
   @NotNull

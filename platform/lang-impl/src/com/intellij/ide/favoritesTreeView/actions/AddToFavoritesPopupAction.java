@@ -29,7 +29,7 @@ import com.intellij.openapi.project.Project;
 public class AddToFavoritesPopupAction extends QuickSwitchSchemeAction {
   protected void fillActions(Project project, DefaultActionGroup group, DataContext dataContext) {
     group.removeAll();
-    final String[] availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesLists();
+    final String[] availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesListNames();
     for (String favoritesList : availableFavoritesLists) {
       group.add(new AddToFavoritesAction(favoritesList));
     }

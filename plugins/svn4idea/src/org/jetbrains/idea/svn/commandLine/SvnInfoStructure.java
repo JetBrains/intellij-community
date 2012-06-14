@@ -84,17 +84,17 @@ public class SvnInfoStructure {
   }
 
   private SVNConflictReason parseConflictReason(String reason) throws SAXException {
-    if (ConflictDescriptor.Reason.edited.equals(reason)) {
+    if (ConflictDescriptor.Reason.edited.name().equals(reason)) {
       return SVNConflictReason.EDITED;
-    } else if (ConflictDescriptor.Reason.obstructed.equals(reason)) {
+    } else if (ConflictDescriptor.Reason.obstructed.name().equals(reason)) {
       return SVNConflictReason.OBSTRUCTED;
-    } else if (ConflictDescriptor.Reason.deleted.equals(reason)) {
+    } else if (ConflictDescriptor.Reason.deleted.name().equals(reason)) {
       return SVNConflictReason.DELETED;
-    } else if (ConflictDescriptor.Reason.missing.equals(reason)) {
+    } else if (ConflictDescriptor.Reason.missing.name().equals(reason)) {
       return SVNConflictReason.MISSING;
-    } else if (ConflictDescriptor.Reason.unversioned.equals(reason)) {
+    } else if (ConflictDescriptor.Reason.unversioned.name().equals(reason)) {
       return SVNConflictReason.UNVERSIONED;
-    } else if (ConflictDescriptor.Reason.added.equals(reason)) {
+    } else if (ConflictDescriptor.Reason.added.name().equals(reason)) {
       return SVNConflictReason.ADDED;
     }
     if ("edit".equals(reason)) {

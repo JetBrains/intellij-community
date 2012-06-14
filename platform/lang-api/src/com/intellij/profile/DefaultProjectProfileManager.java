@@ -160,17 +160,20 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     }
   }
 
+  @NotNull
   @Override
   public NamedScopesHolder getScopesManager() {
     return myHolder;
   }
 
+  @NotNull
   @Override
   public synchronized Collection<Profile> getProfiles() {
     getProjectProfileImpl();
     return myProfiles.values();
   }
 
+  @NotNull
   @Override
   public synchronized String[] getAvailableProfileNames() {
     return ArrayUtil.toStringArray(myProfiles.keySet());

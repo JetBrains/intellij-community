@@ -90,7 +90,9 @@
       </component>
       <component id="86396" class="javax.swing.JCheckBox" binding="checkboxRecursive">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <preferred-size width="185" height="22"/>
+          </grid>
         </constraints>
         <properties>
           <margin top="2" left="0" bottom="2" right="3"/>
@@ -137,13 +139,12 @@
         </constraints>
         <properties/>
       </component>
-      <component id="902e5" class="javax.swing.JLabel">
+      <component id="b7797" class="com.intellij.ui.components.JBLabel">
         <constraints>
           <grid row="8" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <font style="2"/>
-          <foreground awt-color="gray"/>
+          <componentStyle value="SMALL"/>
           <text value="ignored by Maven 3+"/>
         </properties>
       </component>

@@ -43,7 +43,6 @@ public abstract class ApplicationProfileManager implements ProfileManager{
 
   public abstract void addProfile(Profile profile);
 
-  @Nullable
   public NamedScopesHolder getScopesManager() {
     return null;
   }
