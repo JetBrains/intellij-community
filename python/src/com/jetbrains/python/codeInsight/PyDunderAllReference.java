@@ -50,7 +50,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
     final List<String> dunderAll = containingFile.getDunderAll();
     containingFile.processDeclarations(new PsiScopeProcessor() {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {
           final String name = ((PsiNamedElement)element).getName();
           if (name != null && PyUtil.getInitialUnderscores(name) == 0 && (dunderAll == null || !dunderAll.contains(name))) {
@@ -67,7 +67,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
       }
 
       @Override
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return null;
       }
 

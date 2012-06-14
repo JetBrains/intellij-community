@@ -197,9 +197,6 @@ public class PyBuiltinCache {
   private final Map<String, Ref<PyType>> myStdlibTypeCache = new HashMap<String, Ref<PyType>>();
   private long myModStamp = -1;
 
-  /**
-  @return
-  */
   @Nullable
   public PyClassType getObjectType(@NonNls String name) {
     PyClassType val;
@@ -216,10 +213,14 @@ public class PyBuiltinCache {
       PyClass cls = getClass(name);
       if (cls != null) { // null may happen during testing
         val = new PyClassType(cls, false);
+        val.assertValid(name);
         synchronized (myTypeCache) {
           myTypeCache.put(name, val);
         }
       }
+    }
+    else {
+      val.assertValid(name);
     }
     return val;
   }

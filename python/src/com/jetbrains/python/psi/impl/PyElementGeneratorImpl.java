@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.Arrays;
 import java.util.Formatter;
 
 /**
@@ -202,17 +203,17 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     throw new IncorrectOperationException("could not parse text as expression: " + text);
   }
 
+  @NotNull
   public PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName) {
     final PsiFile dummyFile = createDummyFile(langLevel, functionName + "()");
     final PsiElement child = dummyFile.getFirstChild();
     if (child != null) {
       final PsiElement element = child.getFirstChild();
-      if (!(element instanceof PyCallExpression)) {
-        throw new IllegalArgumentException("Invalid call expression text " + functionName);
+      if (element instanceof PyCallExpression) {
+        return (PyCallExpression)element;
       }
-      return (PyCallExpression)element;
     }
-    return null;
+    throw new IllegalArgumentException("Invalid call expression text " + functionName);
   }
 
   public PyImportStatement createImportStatementFromText(final String text) {
@@ -227,6 +228,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   static final int[] FROM_ROOT = new int[]{0};
 
+  @NotNull
   public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text) {
     return createFromText(langLevel, aClass, text, FROM_ROOT);
   }
@@ -237,7 +239,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return createFromText(LanguageLevel.getDefault(), PyNamedParameter.class, "def f(" + name + "): pass", PATH_PARAMETER);
   }
 
-  // TODO: use to generate most other things
+  @NotNull
   public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path) {
     PsiElement ret = createDummyFile(langLevel, text);
     for (int skip : path) {
@@ -248,20 +250,24 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
             ret = ret.getNextSibling();
           }
           else {
-            return null;
+            ret = null;
+            break;
           }
         }
       }
       else {
-        return null;
+        break;
       }
+    }
+    if (ret == null) {
+      throw new IllegalArgumentException("Can't find element matching path " + Arrays.toString(path) + " in text '" + text + "'");
     }
     try {
       //noinspection unchecked
       return (T)ret;
     }
     catch (ClassCastException e) {
-      return null;
+      throw new IllegalArgumentException("Can't create an expression of type " + aClass + " from text '" + text + "'");
     }
   }
 

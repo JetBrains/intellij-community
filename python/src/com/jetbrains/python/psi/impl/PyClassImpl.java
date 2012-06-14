@@ -898,7 +898,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     else if (anchor != null) {
       PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
         @Override
-        public boolean execute(PsiElement element, ResolveState state) {
+        public boolean execute(@NotNull PsiElement element, ResolveState state) {
           if (element instanceof PyAssignmentStatement) {
             collectNewTargets(result, (PyAssignmentStatement)element);
           }
@@ -907,7 +907,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
         @Nullable
         @Override
-        public <T> T getHint(Key<T> hintKey) {
+        public <T> T getHint(@NotNull Key<T> hintKey) {
           return null;
         }
 

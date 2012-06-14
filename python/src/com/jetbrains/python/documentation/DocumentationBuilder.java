@@ -200,13 +200,19 @@ class DocumentationBuilder {
       final String target_name = myElement.getText();
       //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
       prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", target_name)).addItem(BR));
-      return ((PyTargetExpression)myElement).findAssignedValue();
+      final PyExpression assignedValue = ((PyTargetExpression)myElement).findAssignedValue();
+      if (assignedValue instanceof PyReferenceExpression) {
+        final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression) assignedValue);
+        if (resolved != null) {
+          return resolved;
+        }
+      }
+      return assignedValue;
     }
     if (myElement instanceof PyReferenceExpression) {
       //prolog_cat.add(TagSmall.apply($("Assigned to ", element.getText(), BR)));
       prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", myElement.getText())).addItem(BR));
-      final QualifiedResolveResult resolveResult = ((PyReferenceExpression)myElement).followAssignmentsChain(PyResolveContext.noImplicits());
-      return resolveResult.isImplicit() ? null : resolveResult.getElement();
+      return resolveWithoutImplicits((PyReferenceExpression)myElement);
     }
     // it may be a call to a standard wrapper
     if (myElement instanceof PyCallExpression) {
@@ -221,6 +227,11 @@ class DocumentationBuilder {
       }
     }
     return myElement;
+  }
+
+  private static PsiElement resolveWithoutImplicits(final PyReferenceExpression element) {
+    final QualifiedResolveResult resolveResult = element.followAssignmentsChain(PyResolveContext.noImplicits());
+    return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }
 
   private void addInheritedDocString(PyFunction fun, PyClass cls) {

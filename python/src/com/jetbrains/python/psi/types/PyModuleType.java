@@ -167,7 +167,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     final List<PyImportElement> visibleImports = new ArrayList<PyImportElement>();
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PyImportElement) {
           visibleImports.add((PyImportElement)element);
         }
@@ -176,7 +176,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
       @Nullable
       @Override
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return null;
       }
 

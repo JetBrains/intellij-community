@@ -51,7 +51,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
             superClasses.get(0).navigate(true);
           }
           else {
-            NavigationUtil.getPsiElementPopup(superClasses.toArray(new PyClass[superClasses.size()]), CodeInsightBundle.message("goto.super.class.chooser.title"))
+            NavigationUtil.getPsiElementPopup(superClasses.toArray(new PyClass[superClasses.size()]), "Choose superclass")
               .showInBestPositionFor(editor);
           }
         }

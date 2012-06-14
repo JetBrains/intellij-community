@@ -3,17 +3,12 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -33,20 +28,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.ref.SoftReference;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
   private ThreadLocal<List<String>> myFindExportedNameStack = new ArrayListThreadLocal();
 
-  private final CachedValue<List<PyImportElement>> myImportTargetsTransitive;
   //private volatile Boolean myAbsoluteImportEnabled;
   private final Map<FutureFeature, Boolean> myFutureFeatures;
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
-  private final Map<String, SoftReference<PsiElement>> myExportedNames = new ConcurrentHashMap<String, SoftReference<PsiElement>>();
   private volatile ExportedNameCache myExportedNameCache;
   private final PsiModificationTracker myModificationTracker;
 
@@ -231,12 +222,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   public PyFileImpl(FileViewProvider viewProvider, Language language) {
     super(viewProvider, language);
-    myImportTargetsTransitive = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<List<PyImportElement>>() {
-      @Override
-      public Result<List<PyImportElement>> compute() {
-        return new Result<List<PyImportElement>>(calculateImportTargetsTransitive(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-    }, false);
     myFutureFeatures = new HashMap<FutureFeature, Boolean>();
     myModificationTracker = PsiModificationTracker.SERVICE.getInstance(getProject());
   }
@@ -326,7 +311,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     final List<String> remainingDunderAll = dunderAll == null ? null : new ArrayList<String>(dunderAll);
     PsiScopeProcessor wrapper = new PsiScopeProcessor() {
       @Override
-      public boolean execute(PsiElement element, ResolveState state) {
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (!processor.execute(element, state)) return false;
         if (remainingDunderAll != null && element instanceof PyElement) {
           remainingDunderAll.remove(((PyElement) element).getName());
@@ -335,7 +320,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
 
       @Override
-      public <T> T getHint(Key<T> hintKey) {
+      public <T> T getHint(@NotNull Key<T> hintKey) {
         return processor.getHint(hintKey);
       }
 
@@ -411,36 +396,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Nullable
   public PsiElement findExportedName(String name) {
-    if (!Registry.is("python.exported.names.local.cache")) {
-      final SoftReference<PsiElement> ref = myExportedNames.get(name);
-      if (ref != null) {
-        final PsiElement result = ref.get();
-        if (result != null) {
-          return result;
-        }
-      }
-    }
-
     final List<String> stack = myFindExportedNameStack.get();
     if (stack.contains(name)) {
       return null;
     }
     stack.add(name);
     try {
-      if (Registry.is("python.exported.names.local.cache")) {
-        if (myExportedNameCache == null) {
-          myExportedNameCache = new ExportedNameCache();
-        }
-        PsiElement result = myExportedNameCache.resolve(name);
-        if (result != null) {
-          return result;
-        }
+      if (myExportedNameCache == null) {
+        myExportedNameCache = new ExportedNameCache();
       }
-      else {
-        final PsiElement result = findExportedNameOldStyle(name);
-        if (result != null) {
-          return result;
-        }
+      PsiElement result = myExportedNameCache.resolve(name);
+      if (result != null) {
+        return result;
       }
       List<String> allNames = getDunderAll();
       if (allNames != null && allNames.contains(name)) {
@@ -451,81 +418,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     finally {
       stack.remove(name);
     }
-  }
-
-  private PsiElement findExportedNameOldStyle(String name) {
-    final List<PsiElement> children = PyPsiUtils.collectAllStubChildren(this, getStub());
-    final List<PyExceptPart> exceptParts = new ArrayList<PyExceptPart>();
-    for (int i=children.size()-1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
-      PsiElement child = children.get(i);
-      if (child instanceof PyExceptPart) {
-        exceptParts.add((PyExceptPart) child);
-      }
-      else {
-        PsiElement element = findNameInStub(child, name);
-        if (element != null) {
-          myExportedNames.put(name, new SoftReference<PsiElement>(element));
-          return element;
-        }
-      }
-    }
-    for (int i = exceptParts.size() - 1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
-      PyExceptPart part = exceptParts.get(i);
-      final List<PsiElement> exceptChildren = PyPsiUtils.collectAllStubChildren(part, part.getStub());
-      for (int j = exceptChildren.size() - 1; j >= 0; j--) {
-        PsiElement child = exceptChildren.get(j);
-        PsiElement element = findNameInStub(child, name);
-        if (element != null) {
-          myExportedNames.put(name, new SoftReference<PsiElement>(element));
-          return element;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private PsiElement findNameInStub(PsiElement child, String name) {
-    if (child instanceof PsiNamedElement && name.equals(((PsiNamedElement)child).getName())) {
-      return child;
-    }
-    else if (child instanceof PyFromImportStatement) {
-      return findNameInFromImportStatement(name, (PyFromImportStatement)child);
-    }
-    else if (child instanceof PyImportStatement) {
-      return findNameInImportStatement(name, (PyImportStatement)child);
-    }
-    return null;
-  }
-
-  @Nullable
-  private PsiElement findNameInFromImportStatement(String name, PyFromImportStatement statement) {
-    if (statement.isStarImport()) {
-      return findNameInStarImport(name, statement);
-    }
-    else {
-      for (PyImportElement importElement : statement.getImportElements()) {
-        if (name.equals(importElement.getVisibleName())) {
-          final PsiElement resolved = importElement.getElementNamed(name);
-          if (resolved != null) {
-            return resolved;
-          }
-        }
-      }
-    }
-    // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
-    if (PyNames.INIT_DOT_PY.equals(getName())) {
-      final PyQualifiedName qName = statement.getImportSourceQName();
-      if (qName != null && qName.endsWith(name)) {
-        final PsiElement element = PyUtil.turnInitIntoDir(statement.resolveImportSource());
-        if (element != null && element.getParent() == getContainingDirectory()) {
-          return element;
-        }
-      }
-    }
-    return null;
   }
 
   @Nullable
@@ -551,17 +443,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         if (element != null && element.getParent() == getContainingDirectory()) {
           return element;
         }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private PsiElement findNameInImportStatement(String name, PyImportStatement child) {
-    for (PyImportElement importElement: child.getImportElements()) {
-      final PsiElement result = findNameInImportElement(name, importElement, false);
-      if (result != null) {
-        return result;
       }
     }
     return null;
@@ -623,33 +504,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       ContainerUtil.addAll(ret, one.getImportElements());
     }
     return ret;
-  }
-
-  public List<PyImportElement> getImportTargetsTransitive() {
-    return myImportTargetsTransitive.getValue();
-  }
-
-  private List<PyImportElement> calculateImportTargetsTransitive() {
-    Set<PyFile> visitedFiles = new HashSet<PyFile>();
-    visitedFiles.add(this);
-    List<PyImportElement> result = new ArrayList<PyImportElement>();
-    calculateImportTargetsRecursive(this, visitedFiles, result);
-    return result;
-  }
-
-  private static void calculateImportTargetsRecursive(PyFileImpl pyFile, Set<PyFile> visitedFiles, List<PyImportElement> result) {
-    final List<PyImportElement> imports = pyFile.getImportTargets();
-    for (PyImportElement anImport : imports) {
-      result.add(anImport);
-      final PsiElement resolveResult = ResolveImportUtil.resolveImportElement(anImport);
-      if (resolveResult instanceof PyFileImpl) {
-        PyFileImpl file = (PyFileImpl) resolveResult;
-        if (!visitedFiles.contains(file)) {
-          visitedFiles.add(file);
-          calculateImportTargetsRecursive((PyFileImpl) resolveResult, visitedFiles, result);
-        }
-      }
-    }
   }
 
   public List<PyFromImportStatement> getFromImports() {
@@ -814,7 +668,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     ControlFlowCache.clear(this);
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
-    myExportedNames.clear();
     myExportedNameCache = null;
   }
 

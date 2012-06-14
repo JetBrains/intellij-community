@@ -4,11 +4,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -16,7 +18,6 @@ import java.util.List;
 
 public abstract class VariantsProcessor implements PsiScopeProcessor {
   protected final PsiElement myContext;
-  protected String myNotice;
   protected Condition<PsiElement> myNodeFilter;
   protected Condition<String> myNameFilter;
 
@@ -35,10 +36,6 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     myNameFilter = nameFilter;
   }
 
-  public void setNotice(@Nullable String notice) {
-    myNotice = notice;
-  }
-
   public boolean isPlainNamesOnly() {
     return myPlainNamesOnly;
   }
@@ -48,7 +45,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
   }
 
 
-  public boolean execute(PsiElement element, ResolveState substitutor) {
+  public boolean execute(@NotNull PsiElement element, ResolveState substitutor) {
     if (myNodeFilter != null && !myNodeFilter.value(element)) return true; // skip whatever the filter rejects
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
@@ -77,7 +74,10 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
         final NameDefiner definer = (NameDefiner)element;
         for (PyElement expr : definer.iterateNames()) {
           if (expr != null && expr != myContext) { // NOTE: maybe rather have SingleIterables skip nulls outright?
-            String referencedName = expr instanceof PyFile ? FileUtil.getNameWithoutExtension(((PyFile) expr).getName()) : expr.getName();
+            if (!expr.isValid()) {
+              throw new PsiInvalidElementAccessException(expr, "Definer: " + definer);
+            }
+            String referencedName = expr instanceof PyFile ? FileUtil.getNameWithoutExtension(((PyFile)expr).getName()) : expr.getName();
             if (referencedName != null && nameIsAcceptable(referencedName)) {
               addImportedElement(referencedName, definer, expr);
             }
@@ -129,7 +129,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
   }
 
   @Nullable
-  public <T> T getHint(Key<T> hintKey) {
+  public <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }
 
