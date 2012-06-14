@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.Future;
@@ -49,6 +50,9 @@ public abstract class JobLauncher {
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException;
 
-  public abstract Job<Void> submitToJobThread(int priority, @NotNull final Runnable action);
-  public abstract Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, Consumer<Future> onDoneCallback);
+  public abstract Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, @Nullable Consumer<Future> onDoneCallback);
+
+  public Job<Void> submitToJobThread(int priority, @NotNull final Runnable action) {
+    return submitToJobThread(priority, action, null);
+  }
 }

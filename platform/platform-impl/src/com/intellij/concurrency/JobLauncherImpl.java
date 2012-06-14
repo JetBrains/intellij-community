@@ -121,11 +121,6 @@ public class JobLauncherImpl extends JobLauncher {
   }
 
   @Override
-  public Job<Void> submitToJobThread(int priority, @NotNull final Runnable action) {
-    return submitToJobThread(priority, action, null);
-  }
-
-  @Override
   public Job<Void> submitToJobThread(int priority, @NotNull final Runnable action, Consumer<Future> onDoneCallback) {
     final JobImpl<Void> job = new JobImpl<Void>(priority, false);
     Callable<Void> callable = new Callable<Void>() {
