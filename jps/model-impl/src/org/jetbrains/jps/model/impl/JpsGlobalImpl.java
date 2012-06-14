@@ -23,7 +23,7 @@ public class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements 
   @NotNull
   @Override
   public JpsLibrary addLibrary(@NotNull JpsLibraryType libraryType, @NotNull final String name) {
-    final JpsElementCollectionImpl<JpsLibraryImpl> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
+    final JpsElementCollectionImpl<JpsLibrary> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
     return collection.addChild(new JpsLibraryImpl(name, libraryType));
   }
 

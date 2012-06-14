@@ -24,4 +24,8 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
 
   @NotNull
   List<? extends JpsModule> getModules();
+
+  void addModule(JpsModule module);
+
+  void addLibrary(JpsLibrary library);
 }
