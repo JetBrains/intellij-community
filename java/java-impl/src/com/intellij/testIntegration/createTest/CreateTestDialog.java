@@ -69,6 +69,7 @@ import java.util.List;
 
 public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
+  private static final String RECENT_SUPERS_KEY = "CreateTestDialog.Recents.Supers";
   private static final String DEFAULT_LIBRARY_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrary";
   private static final String SHOW_INHERITED_MEMBERS_PROPERTY = CreateTestDialog.class.getName() + ".includeInheritedMembers";
 
@@ -81,7 +82,7 @@ public class CreateTestDialog extends DialogWrapper {
 
   private final List<JRadioButton> myLibraryButtons = new ArrayList<JRadioButton>();
   private EditorTextField myTargetClassNameField;
-  private ReferenceEditorWithBrowseButton mySuperClassField;
+  private ReferenceEditorComboWithBrowseButton mySuperClassField;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
   private JCheckBox myGenerateBeforeBox;
   private JCheckBox myGenerateAfterBox;
@@ -176,7 +177,8 @@ public class CreateTestDialog extends DialogWrapper {
       }
     });
 
-    mySuperClassField = JavaReferenceEditorUtil.createReferenceEditorWithBrowseButton(new MyChooseSuperClassAction(), "", myProject, true);
+    mySuperClassField = new ReferenceEditorComboWithBrowseButton(new MyChooseSuperClassAction(), null, myProject, true,
+                                                                 JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, RECENT_SUPERS_KEY);
     mySuperClassField.setMinimumSize(mySuperClassField.getPreferredSize());
 
     String targetPackageName = targetPackage != null ? targetPackage.getQualifiedName() : "";
@@ -209,7 +211,7 @@ public class CreateTestDialog extends DialogWrapper {
     myFixLibraryPanel.setVisible(!descriptor.isLibraryAttached(myTargetModule));
 
     String superClass = descriptor.getDefaultSuperClass();
-    mySuperClassField.setText(superClass == null ? "" : superClass);
+    mySuperClassField.appendItem(superClass == null ? "" : superClass);
     mySelectedFramework = descriptor;
   }
 
@@ -416,6 +418,7 @@ public class CreateTestDialog extends DialogWrapper {
 
   protected void doOKAction() {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, myTargetPackageField.getText());
+    RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_SUPERS_KEY, mySuperClassField.getText());
 
     String errorMessage;
     try {
