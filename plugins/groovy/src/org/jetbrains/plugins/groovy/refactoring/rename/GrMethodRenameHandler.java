@@ -24,11 +24,13 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 /**
@@ -37,8 +39,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 public class GrMethodRenameHandler implements RenameHandler, TitledHandler {
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
-    if (element instanceof GrMethod) return true;
-    return false;
+    return element instanceof GrMethod && !GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)element);
   }
 
   @Nullable
