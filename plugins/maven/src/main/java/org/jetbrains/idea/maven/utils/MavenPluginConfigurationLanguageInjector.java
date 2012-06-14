@@ -26,13 +26,16 @@ import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author Sergey Evdokimov
  */
 public class MavenPluginConfigurationLanguageInjector implements LanguageInjector {
 
   private final String myParameterName;
-  private final String myPluginGroupId;
+  private final Collection<String> myPluginGroupIds;
   private final String myPluginArtifactId;
   private final Language myLanguage;
 
@@ -40,8 +43,15 @@ public class MavenPluginConfigurationLanguageInjector implements LanguageInjecto
                                                      @NotNull String pluginGroupId,
                                                      @NotNull String pluginArtifactId,
                                                      @Nullable Language language) {
+    this(parameterName, Collections.singleton(pluginGroupId), pluginArtifactId, language);
+  }
+
+  protected MavenPluginConfigurationLanguageInjector(@NotNull String parameterName,
+                                                     @NotNull Collection<String> pluginGroupIds,
+                                                     @NotNull String pluginArtifactId,
+                                                     @Nullable Language language) {
     myParameterName = parameterName;
-    myPluginGroupId = pluginGroupId;
+    myPluginGroupIds = pluginGroupIds;
     myPluginArtifactId = pluginArtifactId;
     myLanguage = language;
   }
@@ -68,7 +78,7 @@ public class MavenPluginConfigurationLanguageInjector implements LanguageInjecto
     XmlTag plugin = (XmlTag)pluginTag;
 
     XmlTag groupId = plugin.findFirstSubTag("groupId");
-    if (groupId == null || !groupId.getValue().getText().trim().equals(myPluginGroupId)) return;
+    if (groupId == null || !myPluginGroupIds.contains(groupId.getValue().getText().trim())) return;
 
     XmlTag artifactId = plugin.findFirstSubTag("artifactId");
     if (artifactId == null || !artifactId.getValue().getText().trim().equals(myPluginArtifactId)) return;
