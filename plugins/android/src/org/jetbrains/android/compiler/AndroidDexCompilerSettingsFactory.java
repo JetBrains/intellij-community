@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nls;
@@ -43,6 +44,7 @@ public class AndroidDexCompilerSettingsFactory implements CompilerSettingsFactor
     private JSpinner myHeapSizeSpinner;
     private JLabel myVmOptionsLabel;
     private RawCommandLineEditor myVmOptionsEditor;
+    private JBCheckBox myOptimizeCheckBox;
 
     public AndroidDexCompilerSettingsConfigurable(Project project) {
       myConfig = AndroidDexCompilerConfiguration.getInstance(project);
@@ -74,22 +76,23 @@ public class AndroidDexCompilerSettingsFactory implements CompilerSettingsFactor
     @Override
     public boolean isModified() {
       int maxHeapSize = ((Integer)myHeapSizeSpinner.getValue()).intValue();
-      if (maxHeapSize != myConfig.MAX_HEAP_SIZE) {
-        return true;
-      }
-      return !myVmOptionsEditor.getText().equals(myConfig.VM_OPTIONS);
+      return maxHeapSize != myConfig.MAX_HEAP_SIZE ||
+             !myVmOptionsEditor.getText().equals(myConfig.VM_OPTIONS) ||
+             myOptimizeCheckBox.isSelected() != myConfig.OPTIMIZE;
     }
 
     @Override
     public void apply() throws ConfigurationException {
       myConfig.MAX_HEAP_SIZE = ((Integer)myHeapSizeSpinner.getValue()).intValue();
       myConfig.VM_OPTIONS = myVmOptionsEditor.getText();
+      myConfig.OPTIMIZE = myOptimizeCheckBox.isSelected();
     }
 
     @Override
     public void reset() {
       myHeapSizeSpinner.setModel(new SpinnerNumberModel(myConfig.MAX_HEAP_SIZE, 1, 10000000, 1));
       myVmOptionsEditor.setText(myConfig.VM_OPTIONS);
+      myOptimizeCheckBox.setSelected(myConfig.OPTIMIZE);
     }
 
     @Override

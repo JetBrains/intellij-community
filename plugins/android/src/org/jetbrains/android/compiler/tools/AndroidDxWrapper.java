@@ -51,9 +51,9 @@ public class AndroidDxWrapper {
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public static Map<AndroidCompilerMessageKind, List<String>> execute(@NotNull Module module,
-                                                                   @NotNull IAndroidTarget target,
-                                                                   @NotNull String outputDir,
-                                                                   @NotNull String[] compileTargets) {
+                                                                      @NotNull IAndroidTarget target,
+                                                                      @NotNull String outputDir,
+                                                                      @NotNull String[] compileTargets) {
     String outFile = outputDir + File.separatorChar + AndroidCommonUtils.CLASSES_FILE_NAME;
 
     final Map<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>(2);
@@ -79,15 +79,17 @@ public class AndroidDxWrapper {
     parameters.setJdk(sdk);
     parameters.setMainClass(AndroidDxRunner.class.getName());
 
+    final AndroidDexCompilerConfiguration configuration = AndroidDexCompilerConfiguration.getInstance(module.getProject());
+
     ParametersList programParamList = parameters.getProgramParametersList();
     programParamList.add(dxJarPath);
     programParamList.add(outFile);
+    programParamList.add("--optimize", Boolean.toString(configuration.OPTIMIZE));
     programParamList.addAll(compileTargets);
     programParamList.add("--exclude");
 
     ParametersList vmParamList = parameters.getVMParametersList();
 
-    AndroidDexCompilerConfiguration configuration = AndroidDexCompilerConfiguration.getInstance(module.getProject());
     String additionalVmParams = configuration.VM_OPTIONS;
     if (additionalVmParams.length() > 0) {
       vmParamList.addParametersString(additionalVmParams);

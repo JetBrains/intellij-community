@@ -32,6 +32,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 public class AndroidDexCompilerConfiguration implements PersistentStateComponent<AndroidDexCompilerConfiguration> {
   public String VM_OPTIONS = "";
   public int MAX_HEAP_SIZE = 1024;
+  public boolean OPTIMIZE = true;
 
   @Override
   public AndroidDexCompilerConfiguration getState() {

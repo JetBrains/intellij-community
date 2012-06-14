@@ -52,6 +52,7 @@ public class AndroidDxRunner {
   private static Field myJarOutputField;
   private static Field myFileNamesField;
   private static Field myStrictNameCheckField;
+  private static Field myOptimizeField;
 
   private static Field myConsoleOut;
   private static Field myConsoleErr;
@@ -83,6 +84,8 @@ public class AndroidDxRunner {
       myVerboseField = argClass.getField("verbose");
       myStrictNameCheckField = argClass.getField("strictNameCheck");
 
+      myOptimizeField = getFieldIfPossible(argClass);
+
       myConsoleOut = consoleClass.getField("out");
       myConsoleErr = consoleClass.getField("err");
     }
@@ -103,7 +106,17 @@ public class AndroidDxRunner {
     }
   }
 
-  private static int runDex(String dxPath, String outFilePath, String[] fileNames) {
+  @Nullable
+  private static Field getFieldIfPossible(Class<?> argClass) {
+    try {
+      return argClass.getField("optimize");
+    }
+    catch (NoSuchFieldException e) {
+      return null;
+    }
+  }
+
+  private static int runDex(String dxPath, String outFilePath, String[] fileNames, boolean optimize) {
     loadDex(dxPath);
 
     try {
@@ -116,6 +129,13 @@ public class AndroidDxRunner {
       myJarOutputField.set(args, false);
       myVerboseField.set(args, false);
       myStrictNameCheckField.set(args, false);
+
+      if (myOptimizeField != null) {
+        myOptimizeField.set(args, optimize);
+      }
+      else {
+        reportWarning("Cannot find 'optimize' field. The option won't be passed to DEX");
+      }
 
       Object res = myMethod.invoke(null, args);
 
@@ -204,8 +224,20 @@ public class AndroidDxRunner {
     Set<String> files = new HashSet<String>();
     HashSet<String> visited = new HashSet<String>();
     HashSet<String> qNames = new HashSet<String>();
+    boolean optimize = true;
 
     int i = 2;
+
+    while (i < args.length && args[i].startsWith("--")) {
+      if ("--optimize".equals(args[i])) {
+        i++;
+        if (i < args.length) {
+          optimize = Boolean.parseBoolean(args[i]);
+        }
+      }
+      i++;
+    }
+
     while (i < args.length) {
       String arg = args[i];
       if ("--exclude".equals(arg)) {
@@ -227,7 +259,7 @@ public class AndroidDxRunner {
     files.removeAll(Arrays.asList(excludedFiles));
     String[] filesArray = files.toArray(new String[files.size()]);
     //System.out.println("file names: " + concat(filesArray));
-    runDex(dxPath, outFilePath, filesArray);
+    runDex(dxPath, outFilePath, filesArray, optimize);
   }
 
   private static String concat(String[] ar) {
