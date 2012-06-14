@@ -38,7 +38,7 @@ public abstract class NextPrevParameterAction extends CodeInsightAction {
   }
 
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  public CodeInsightActionHandler getHandler() {
     return new Handler();
   }
 

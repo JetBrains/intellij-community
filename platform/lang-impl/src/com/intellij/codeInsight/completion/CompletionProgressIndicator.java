@@ -108,7 +108,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       setMergeCommand();
 
-      CodeCompletionHandlerBase.lookupItemSelected(CompletionProgressIndicator.this, item, event.getCompletionChar(), myLookup.getItems());
+      myHandler.lookupItemSelected(CompletionProgressIndicator.this, item, event.getCompletionChar(), myLookup.getItems());
     }
 
 
