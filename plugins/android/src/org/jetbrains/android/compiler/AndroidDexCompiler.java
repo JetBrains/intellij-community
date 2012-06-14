@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
@@ -78,7 +79,7 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
   }
 
   public ValidityState createValidityState(DataInput in) throws IOException {
-    return new ClassesAndJarsValidityState(in);
+    return new MyValidityState(in);
   }
 
   public static VirtualFile getOutputDirectoryForDex(@NotNull Module module) {
@@ -114,6 +115,9 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     }
 
     public ProcessingItem[] compute() {
+      final AndroidDexCompilerConfiguration dexConfig =
+        AndroidDexCompilerConfiguration.getInstance(myContext.getProject());
+
       Module[] modules = ModuleManager.getInstance(myContext.getProject()).getModules();
       List<ProcessingItem> items = new ArrayList<ProcessingItem>();
       for (Module module : modules) {
@@ -181,7 +185,8 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             continue;
           }
 
-          items.add(new DexItem(module, dexOutputDir, platform.getTarget(), files));
+          items.add(new DexItem(module, dexOutputDir, platform.getTarget(), files, dexConfig.VM_OPTIONS, dexConfig.MAX_HEAP_SIZE,
+                                dexConfig.OPTIMIZE));
         }
       }
       return items.toArray(new ProcessingItem[items.size()]);
@@ -214,8 +219,9 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
             files[i++] = FileUtil.toSystemDependentName(file.getPath());
           }
 
-          Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(
-            AndroidDxWrapper.execute(dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files));
+          Map<CompilerMessageCategory, List<String>> messages = AndroidCompileUtil.toCompilerMessageCategoryKeys(AndroidDxWrapper.execute(
+            dexItem.myModule, dexItem.myAndroidTarget, outputDirPath, files, dexItem.myAdditionalVmParams, dexItem.myMaxHeapSize,
+            dexItem.myOptimize));
 
           addMessages(messages, dexItem.myModule);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
@@ -241,15 +247,24 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
     final VirtualFile myClassDir;
     final IAndroidTarget myAndroidTarget;
     final Collection<VirtualFile> myFiles;
+    final String myAdditionalVmParams;
+    final int myMaxHeapSize;
+    final boolean myOptimize;
 
     public DexItem(@NotNull Module module,
                    @NotNull VirtualFile classDir,
                    @NotNull IAndroidTarget target,
-                   Collection<VirtualFile> files) {
+                   Collection<VirtualFile> files,
+                   @NotNull String additionalVmParams,
+                   int maxHeapSize,
+                   boolean optimize) {
       myModule = module;
       myClassDir = classDir;
       myAndroidTarget = target;
       myFiles = files;
+      myAdditionalVmParams = additionalVmParams;
+      myMaxHeapSize = maxHeapSize;
+      myOptimize = optimize;
     }
 
     @NotNull
@@ -259,7 +274,49 @@ public class AndroidDexCompiler implements ClassPostProcessingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new ClassesAndJarsValidityState(myFiles);
+      return new MyValidityState(myFiles, myAdditionalVmParams, myMaxHeapSize, myOptimize);
+    }
+  }
+
+  private static class MyValidityState extends ClassesAndJarsValidityState {
+    private final String myAdditionalVmParams;
+    private final int myMaxHeapSize;
+    private final boolean myOptimize;
+
+    public MyValidityState(@NotNull Collection<VirtualFile> files, @NotNull String additionalVmParams, int maxHeapSize, boolean optimize) {
+      super(files);
+      myAdditionalVmParams = additionalVmParams;
+      myMaxHeapSize = maxHeapSize;
+      myOptimize = optimize;
+    }
+
+    public MyValidityState(@NotNull DataInput in) throws IOException {
+      super(in);
+      myAdditionalVmParams = in.readUTF();
+      myMaxHeapSize = in.readInt();
+      myOptimize = in.readBoolean();
+    }
+
+    @Override
+    public void save(DataOutput out) throws IOException {
+      super.save(out);
+      out.writeUTF(myAdditionalVmParams);
+      out.writeInt(myMaxHeapSize);
+      out.writeBoolean(myOptimize);
+    }
+
+    @Override
+    public boolean equalsTo(ValidityState otherState) {
+      if (!super.equalsTo(otherState)) {
+        return false;
+      }
+      if (!(otherState instanceof MyValidityState)) {
+        return false;
+      }
+      final MyValidityState state = (MyValidityState)otherState;
+      return state.myAdditionalVmParams.equals(myAdditionalVmParams) &&
+             state.myMaxHeapSize == myMaxHeapSize &&
+             state.myOptimize == myOptimize;
     }
   }
 }
