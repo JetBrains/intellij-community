@@ -42,6 +42,9 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   @NotNull
   JpsLibrary addModuleLibrary(@NotNull JpsLibraryType<?> type, @NotNull String name);
 
+  @NotNull
+  JpsLibrary addModuleLibrary(@NotNull JpsLibrary library);
+
   void delete();
 
   @NotNull

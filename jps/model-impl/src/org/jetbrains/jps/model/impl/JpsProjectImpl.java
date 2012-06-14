@@ -17,7 +17,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implements JpsProject {
-  private static final JpsElementCollectionKind<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_KIND = new JpsElementCollectionKind<JpsElementReference<?>>(new JpsElementKindBase<JpsElementReference<?>>("external reference"));
+  private static final JpsElementCollectionKind<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_KIND =
+    new JpsElementCollectionKind<JpsElementReference<?>>(new JpsElementKindBase<JpsElementReference<?>>("external reference"));
 
   public JpsProjectImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
@@ -37,14 +38,14 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   @NotNull
   @Override
   public JpsModule addModule(@NotNull JpsModuleType<?> moduleType, @NotNull final String name) {
-    final JpsElementCollectionImpl<JpsModuleImpl> collection = myContainer.getChild(JpsModuleKind.MODULE_COLLECTION_KIND);
+    final JpsElementCollectionImpl<JpsModule> collection = myContainer.getChild(JpsModuleKind.MODULE_COLLECTION_KIND);
     return collection.addChild(new JpsModuleImpl(moduleType, name));
   }
 
   @NotNull
   @Override
   public JpsLibrary addLibrary(@NotNull JpsLibraryType<?> libraryType, @NotNull final String name) {
-    final JpsElementCollectionImpl<JpsLibraryImpl> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
+    final JpsElementCollectionImpl<JpsLibrary> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
     return collection.addChild(new JpsLibraryImpl(name, libraryType));
   }
 
@@ -58,6 +59,16 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   @Override
   public List<? extends JpsModule> getModules() {
     return myContainer.getChild(JpsModuleKind.MODULE_COLLECTION_KIND).getElements();
+  }
+
+  @Override
+  public void addModule(JpsModule module) {
+    myContainer.getChild(JpsModuleKind.MODULE_COLLECTION_KIND).addChild(module);
+  }
+
+  @Override
+  public void addLibrary(JpsLibrary library) {
+    myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND).addChild(library);
   }
 
   @NotNull

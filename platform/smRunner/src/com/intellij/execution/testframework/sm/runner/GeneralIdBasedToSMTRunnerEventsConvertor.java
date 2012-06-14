@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -48,6 +49,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   private final String myTestFrameworkName;
   private boolean myIsTestingFinished = false;
   private TestLocationProvider myLocator = null;
+  private TestProxyPrinterProvider myTestProxyPrinterProvider = null;
 
   public GeneralIdBasedToSMTRunnerEventsConvertor(@NotNull SMTestProxy.SMRootTestProxy testsRootProxy,
                                                   @NotNull String testFrameworkName) {
@@ -112,6 +114,11 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
     });
   }
 
+  @Override
+  public void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider) {
+    myTestProxyPrinterProvider = printerProvider;
+  }
+
   public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
@@ -145,6 +152,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
     }
 
     SMTestProxy childProxy = new SMTestProxy(startedNodeEvent.getName(), suite, startedNodeEvent.getLocationUrl(), true);
+    TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;
+    String nodeType = startedNodeEvent.getNodeType();
+    if (printerProvider != null && nodeType != null) {
+      Printer printer = printerProvider.getPrinterByType(nodeType, startedNodeEvent.getNodeArgs());
+      if (printer != null) {
+        childProxy.setPreferredPrinter(printer);
+      }
+    }
     childNode = new Node(startedNodeEvent.getId(), parentNode, childProxy);
     myNodeByIdMap.put(nodeId, childNode);
     myRunningNodes.add(childNode);

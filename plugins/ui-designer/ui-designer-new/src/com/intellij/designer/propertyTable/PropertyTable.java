@@ -85,10 +85,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   public PropertyTable() {
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-    JTableHeader tableHeader = getTableHeader();
-    tableHeader.setVisible(false);
-    tableHeader.setPreferredSize(new Dimension());
+    showColumns(false);
 
     addMouseListener(new MouseTableListener());
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -101,6 +98,12 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     });
 
     // TODO: Updates UI after LAF updated
+  }
+
+  public void showColumns(boolean value) {
+    JTableHeader tableHeader = getTableHeader();
+    tableHeader.setVisible(value);
+    tableHeader.setPreferredSize(value ? null : new Dimension());
   }
 
   public void initQuickFixManager(JViewport viewPort) {
