@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import java.util.Collection;
-
 /**
  * @author peter
  */
@@ -25,23 +23,7 @@ public class VcsConnectionProblem extends VcsException {
     super(message);
   }
 
-  public VcsConnectionProblem(Throwable throwable, boolean isWarning) {
-    super(throwable, isWarning);
-  }
-
-  public VcsConnectionProblem(Throwable throwable) {
-    super(throwable);
-  }
-
-  public VcsConnectionProblem(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public VcsConnectionProblem(String message, boolean isWarning) {
-    super(message, isWarning);
-  }
-
-  public VcsConnectionProblem(Collection<String> messages) {
-    super(messages);
+  public boolean attemptQuickFix(boolean mayDisplayDialogs) {
+    return false;
   }
 }
