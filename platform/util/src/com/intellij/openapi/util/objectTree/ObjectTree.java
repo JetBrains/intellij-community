@@ -38,13 +38,7 @@ public final class ObjectTree<T> {
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
   private final THashSet<T> myRootObjects = new MyTHashSet<T>();
-  private final THashMap<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY) {
-    public void compact() {
-      if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
-        super.compact();
-      }
-    }
-  };
+  private final THashMap<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY);
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
   private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
