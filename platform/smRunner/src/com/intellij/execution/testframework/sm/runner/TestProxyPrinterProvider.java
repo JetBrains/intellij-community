@@ -13,28 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.testframework.sm.runner.events;
+package com.intellij.execution.testframework.sm.runner;
 
-import jetbrains.buildServer.messages.serviceMessages.TestStarted;
+import com.intellij.execution.testframework.Printer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey Simonchik
  */
-public class TestStartedEvent extends BaseStartedNodeEvent {
+public interface TestProxyPrinterProvider {
 
-  public TestStartedEvent(@NotNull TestStarted testStarted,
-                          @Nullable String locationUrl) {
-    super(testStarted.getTestName(),
-          TreeNodeEvent.getNodeId(testStarted),
-          getParentNodeId(testStarted),
-          locationUrl,
-          BaseStartedNodeEvent.getNodeType(testStarted),
-          BaseStartedNodeEvent.getNodeArgs(testStarted));
-  }
+  @Nullable
+  Printer getPrinterByType(@NotNull String nodeType, @Nullable String arguments);
 
-  public TestStartedEvent(@NotNull String name, @Nullable String locationUrl) {
-    super(name, -1, -1, locationUrl, null, null);
-  }
 }
