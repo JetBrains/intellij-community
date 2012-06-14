@@ -16,10 +16,7 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.propertyTable.actions.IPropertyTableAction;
-import com.intellij.designer.propertyTable.actions.RestoreDefault;
-import com.intellij.designer.propertyTable.actions.ShowExpert;
-import com.intellij.designer.propertyTable.actions.ShowJavadoc;
+import com.intellij.designer.propertyTable.actions.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.ui.IdeBorderFactory;
@@ -61,10 +58,6 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
 
     actionGroup.add(new ShowExpert(myPropertyTable));
 
-    PopupHandler.installPopupHandler(myPropertyTable, actionGroup,
-                                     ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
-                                     actionManager);
-
     myActions = actionGroup.getChildren(null);
     for (int i = 0; i < myActions.length; i++) {
       AnAction action = myActions[i];
@@ -74,6 +67,12 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
                                    new Insets(2, 0, 2, i == myActions.length - 1 ? 2 : 0), 0, 0));
       }
     }
+
+    actionGroup.add(new ShowColumns(myPropertyTable));
+
+    PopupHandler.installPopupHandler(myPropertyTable, actionGroup,
+                                     ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
+                                     actionManager);
 
     myPropertyTable.getSelectionModel().addListSelectionListener(this);
     valueChanged(null);
