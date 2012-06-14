@@ -31,7 +31,6 @@ public abstract class LinkMouseListenerBase extends ClickListener implements Mou
     if (e.getButton() == 1) {
       Object tag = getTagAt(e);
       handleTagClick(tag, e);
-      return true;
     }
     return false;
   }

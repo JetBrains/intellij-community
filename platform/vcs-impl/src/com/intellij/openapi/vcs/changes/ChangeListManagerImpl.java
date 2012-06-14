@@ -625,8 +625,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           builder.setCurrent(scope, foldersCutDownWorker);
           changeProvider.getChanges(scope, builder, myUpdateChangesProgressIndicator, gate);
         }
-        catch (VcsException e) {
+        catch (final VcsException e) {
           LOG.info(e);
+          if (e instanceof VcsConnectionProblem) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                ((VcsConnectionProblem)e).attemptQuickFix(false);
+              }
+            });
+          }
           if (myUpdateException == null) {
             if (ApplicationManager.getApplication().isUnitTestMode()) {
               e.printStackTrace();

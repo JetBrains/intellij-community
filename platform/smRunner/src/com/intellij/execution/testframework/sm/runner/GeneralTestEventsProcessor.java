@@ -74,4 +74,6 @@ public interface GeneralTestEventsProcessor extends Disposable {
   void addEventsListener(@NotNull SMTRunnerEventsListener viewer);
 
   void onFinishTesting();
+
+  void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider);
 }

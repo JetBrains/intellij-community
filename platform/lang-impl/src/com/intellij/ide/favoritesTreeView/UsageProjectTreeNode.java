@@ -19,6 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleTextAttributes;
@@ -26,6 +27,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsagePresentation;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -64,6 +66,12 @@ public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageI
     presentation.setTooltip(myUsagePresentation.getTooltipText());
     final TextChunk[] text = myUsagePresentation.getText();
     updatePresentationWithTextChunks(presentation, text);
+    presentation.setPresentableText(StringUtil.join(text, new Function<TextChunk, String>() {
+      @Override
+      public String fun(TextChunk chunk) {
+        return chunk.getText();
+      }
+    }, ""));
   }
 
   public static void updatePresentationWithTextChunks(PresentationData presentation, TextChunk[] text) {
