@@ -19,12 +19,10 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
+import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.*;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
@@ -44,7 +42,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,14 +63,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.io.File;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -228,6 +228,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         AddNewFavoritesListAction.doAddNewFavoritesList(myProject);
       }
     };
+    CommonActionsManager actionsManager = CommonActionsManager.getInstance();
+    final AnAction exportToTextFileAction = actionsManager.createExportToTextFileAction(createTextExporter());
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree)
       .setAddAction(addListOrNoteAction)
       .setLineBorder(0, 0, 1, 0)
@@ -286,6 +288,22 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           }
           return false;
         }
+      }).addExtraAction(new AnActionButton(exportToTextFileAction.getTemplatePresentation().getText(),
+                                           exportToTextFileAction.getTemplatePresentation().getIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          exportToTextFileAction.actionPerformed(e);
+        }
+
+        @Override
+        public ShortcutSet getShortcut() {
+          return exportToTextFileAction.getShortcutSet();
+        }
+
+        @Override
+        public boolean isEnabled() {
+          return true;
+        }
       });
 
     final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT);
@@ -307,6 +325,95 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
     };
     myAutoScrollToSourceHandler.install(myTree);
+  }
+
+  private ExporterToTextFile createTextExporter() {
+    return new ExporterToTextFile() {
+      @Override
+      public JComponent getSettingsEditor() {
+        return null;
+      }
+      @Override
+      public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {
+      }
+      @Override
+      public void removeSettingsChangedListener(ChangeListener listener) {
+      }
+
+      @Override
+      public String getReportText() {
+        final StringBuilder sb = new StringBuilder();
+
+        final Ref<AbstractTreeNode> previousNode = new Ref<AbstractTreeNode>();
+        final int[] depth = new int[1];
+        depth[0] = 0;
+        final Object[] elements = myBuilder.getStructure().getChildElements(myBuilder.getRoot());
+
+        final TreeUtil.Traverse traverse = new TreeUtil.Traverse() {
+          @Override
+          public boolean accept(Object node) {
+            if (node instanceof LoadingNode) return true;
+            final AbstractTreeNode abstractTreeNode = (AbstractTreeNode)node;
+            final AbstractTreeNode parent = abstractTreeNode.getParent();
+            if (Comparing.equal(previousNode.get(), parent)) {
+              ++depth[0];
+            }
+            else if (previousNode.get() != null && Comparing.equal(previousNode.get().getParent(), parent)) {
+              //-- depth[0];
+            }
+            else if (previousNode.get() != null) {
+              --depth[0];
+            }
+            if (sb.length() > 0) {
+              sb.append('\n');
+            }
+            assert depth[0] >= 0;
+            for (int i = 0; i < depth[0]; i++) {
+              sb.append('\t');
+            }
+            abstractTreeNode.update();
+            final PresentationData presentation = abstractTreeNode.getPresentation();
+            sb.append(presentation.getPresentableText());
+            String locationString = presentation.getLocationString();
+            if (locationString == null) {
+              locationString = FavoritesTreeNodeDescriptor.getLocation(abstractTreeNode, myProject);
+            }
+            if (locationString != null) {
+              sb.append(" (").append(locationString).append(")");
+            }
+            previousNode.set(abstractTreeNode);
+            return true;
+          }
+        };
+        for (Object element : elements) {
+          traveseDepth((AbstractTreeNode)element, traverse);
+        }
+        return sb.toString();
+      }
+
+      @Override
+      public String getDefaultFilePath() {
+        return myProject.getBasePath() + File.separator + "CurrentTask.txt";
+      }
+
+      @Override
+      public void exportedTo(String filePath) {
+      }
+
+      @Override
+      public boolean canExport() {
+        return true;
+      }
+    };
+  }
+
+  private boolean traveseDepth(final AbstractTreeNode node, final TreeUtil.Traverse traverse) {
+    if (! traverse.accept(node)) return false;
+    final Collection children = node.getChildren();
+    for (Object child : children) {
+      if (! traveseDepth((AbstractTreeNode)child, traverse)) return false;
+    }
+    return true;
   }
 
   public void selectElement(final Object selector, final VirtualFile file, final boolean requestFocus) {
