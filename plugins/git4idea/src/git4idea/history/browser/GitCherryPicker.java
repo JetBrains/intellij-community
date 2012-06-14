@@ -45,6 +45,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -462,17 +463,17 @@ public class GitCherryPicker {
     @NotNull private final Project myProject;
     @NotNull private final PlatformFacade myPlatformFacade;
     @NotNull private final List<Change> myChanges;
-    @NotNull private final String myCommitMessage;
+    @NotNull private final String myOriginalCommitMessage;
     private boolean myCommitFailed;
 
-    private CherryPickCommitExecutor.CherryPickCommitSession myCommitSession;
+    @Nullable private CherryPickCommitExecutor.CherryPickCommitSession myCommitSession;
 
     CherryPickCommitExecutor(@NotNull Project project, @NotNull PlatformFacade platformFacade,
-                             @NotNull List<Change> changes, @NotNull String commitMessage) {
+                             @NotNull List<Change> changes, @NotNull String originalCommitMessage) {
       myProject = project;
       myPlatformFacade = platformFacade;
       myChanges = changes;
-      myCommitMessage = commitMessage;
+      myOriginalCommitMessage = originalCommitMessage;
     }
 
     @Nls
@@ -494,7 +495,7 @@ public class GitCherryPicker {
 
     @NotNull
     public String getActualCommitMessage() {
-      return myCommitSession.getActualCommitMessage();
+      return myCommitSession == null ? myOriginalCommitMessage : myCommitSession.getActualCommitMessage();
     }
 
     private class CherryPickCommitSession implements CommitSession {
