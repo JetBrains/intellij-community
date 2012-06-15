@@ -293,8 +293,8 @@ public class GenerateMembersUtil {
                                                                  @NotNull PsiTypeParameter typeParam,
                                                                  @NotNull PsiSubstitutor substitutor) {
     for (PsiType type : substitutor.getSubstitutionMap().values()) {
-      if (Comparing.equal(type.getCanonicalText(), typeParam.getName())) {
-        final String newName = suggestUniqueTypeParameterName(typeParam.getName(), sourceTypeParameterList, PsiTreeUtil.getParentOfType(target, PsiClass.class,false));
+      if (type != null && Comparing.equal(type.getCanonicalText(), typeParam.getName())) {
+        final String newName = suggestUniqueTypeParameterName(typeParam.getName(), sourceTypeParameterList, PsiTreeUtil.getParentOfType(target, PsiClass.class, false));
         final PsiTypeParameter newTypeParameter = factory.createTypeParameter(newName, typeParam.getSuperTypes());
         substitutor.put(typeParam, factory.createType(newTypeParameter));
         return newTypeParameter;
@@ -305,10 +305,10 @@ public class GenerateMembersUtil {
 
   @NotNull
   private static String suggestUniqueTypeParameterName(@NonNls String baseName, @NotNull PsiTypeParameterList typeParameterList, @Nullable PsiClass targetClass) {
-    int i =0;
+    int i = 0;
     while (true) {
       final String newName = baseName + ++i;
-      if (checkUniqueTypeParameterName(newName, typeParameterList) && (targetClass == null || checkUniqueTypeParameterName(newName, targetClass.getTypeParameterList()))){
+      if (checkUniqueTypeParameterName(newName, typeParameterList) && (targetClass == null || checkUniqueTypeParameterName(newName, targetClass.getTypeParameterList()))) {
         return newName;
       }
     }
@@ -430,10 +430,10 @@ public class GenerateMembersUtil {
 
   private static void substituteReturnType(@NotNull PsiManager manager,
                                            @NotNull PsiMethod method,
-                                           @NotNull PsiType returnType,
+                                           @Nullable PsiType returnType,
                                            @NotNull PsiSubstitutor substitutor) {
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
-    if (returnTypeElement == null) {
+    if (returnTypeElement == null || returnType == null) {
       return;
     }
     final PsiType substitutedReturnType = substituteType(substitutor, returnType);

@@ -371,6 +371,10 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.siyeh.ipp.concatenation.MergeCallSequenceToChainIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.exceptions.DetailExceptionsIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

@@ -93,8 +93,8 @@ public class FileUrlProvider implements TestLocationProvider, DumbAware {
   }
 
   @Nullable
-  protected static Location createLocationFor(final Project project,
-                                            @NotNull final VirtualFile virtualFile, final int lineNum) {
+  public static Location createLocationFor(final Project project,
+                                           @NotNull final VirtualFile virtualFile, final int lineNum) {
     assert lineNum > 0;
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);

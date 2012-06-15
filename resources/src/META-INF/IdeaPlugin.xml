@@ -459,8 +459,8 @@
     <localInspection language="JAVA" shortName="FieldCanBeLocal" bundle="messages.InspectionsBundle" key="inspection.field.can.be.local.display.name"
                      groupName="Class structure" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection"/>
-    <localInspection language="JAVA" shortName="ParameterCanBeLocal" displayName="inspection.parameter.can.be.local.display.name"
-                     groupName="Class structure" enabledByDefault="true" level="WARNING"
+    <localInspection language="JAVA" shortName="ParameterCanBeLocal" key="inspection.parameter.can.be.local.display.name"
+                     groupName="Class structure" enabledByDefault="true" level="WARNING" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.ParameterCanBeLocalInspection" />
     <localInspection language="JAVA" shortName="NullableProblems" bundle="messages.InspectionsBundle" key="inspection.nullable.problems.display.name"
                      groupName="Probable bugs" enabledByDefault="true" level="WARNING"
