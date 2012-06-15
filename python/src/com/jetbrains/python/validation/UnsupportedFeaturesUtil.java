@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
 import org.xml.sax.InputSource;
@@ -84,6 +85,25 @@ public class UnsupportedFeaturesUtil {
           element = element.getNextSibling();
         }
         if (element != null && ",".equals(element.getText())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean raiseHasFromKeyword(PyRaiseStatement node, LanguageLevel versionToProcess) {
+    final PyExpression[] expressions = node.getExpressions();
+    if (expressions.length > 0) {
+      if (expressions.length < 2) {
+        return false;
+      }
+      if (!versionToProcess.isPy3K()) {
+        PsiElement element = expressions[0].getNextSibling();
+        while (element instanceof PsiWhiteSpace) {
+          element = element.getNextSibling();
+        }
+        if (element != null && element.getNode().getElementType() == PyTokenTypes.FROM_KEYWORD) {
           return true;
         }
       }

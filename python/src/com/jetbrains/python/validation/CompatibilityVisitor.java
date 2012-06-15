@@ -250,6 +250,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyRaiseStatement(PyRaiseStatement node) {
     super.visitPyRaiseStatement(node);
+    // empty raise
     int len = 0;
     StringBuilder message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
@@ -261,13 +262,26 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
     commonRegisterProblem(message, " not support this syntax. Raise with no arguments can only be used in an except block",
                           len, node, null);
-
+    // raise 1, 2, 3
     len = 0;
     message = new StringBuilder(myCommonMessage);
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
       boolean hasTwoArgs = UnsupportedFeaturesUtil.raiseHasMoreThenOneArg(node, languageLevel);
       if (hasTwoArgs) {
+        len = appendLanguageLevel(message, len, languageLevel);
+      }
+    }
+    commonRegisterProblem(message, " not support this syntax.",
+                          len, node, new ReplaceRaiseStatementQuickFix());
+
+    // raise exception from cause
+    len = 0;
+    message = new StringBuilder(myCommonMessage);
+    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
+      final LanguageLevel languageLevel = myVersionsToProcess.get(i);
+      final boolean hasFrom = UnsupportedFeaturesUtil.raiseHasFromKeyword(node, languageLevel);
+      if (hasFrom) {
         len = appendLanguageLevel(message, len, languageLevel);
       }
     }
