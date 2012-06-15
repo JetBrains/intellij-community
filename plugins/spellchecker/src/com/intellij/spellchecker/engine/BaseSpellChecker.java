@@ -33,6 +33,7 @@ import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionaryLoader;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -49,11 +50,11 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private final Transformation transform = new Transformation();
 
   private final Set<EditableDictionary> dictionaries = new THashSet<EditableDictionary>();
-  private final List<Dictionary> bundledDictionaries = new CopyOnWriteArrayList<Dictionary>();
+  private final List<Dictionary> bundledDictionaries = ContainerUtil.createEmptyCOWList();
   private final Metrics metrics = new LevenshteinDistance();
 
   private AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false); 
-  private List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = new CopyOnWriteArrayList<Pair<Loader, Consumer<Dictionary>>>();
+  private List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = ContainerUtil.createEmptyCOWList();
   private Project myProject;
 
   public BaseSpellChecker(final Project project) {
