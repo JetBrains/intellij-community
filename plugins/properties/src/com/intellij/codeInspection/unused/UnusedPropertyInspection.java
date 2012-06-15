@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.properties;
+package com.intellij.codeInspection.unused;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.properties.PropertiesBundle;
+import com.intellij.lang.properties.PropertySuppressableInspectionBase;
+import com.intellij.lang.properties.RemovePropertyLocalFix;
 import com.intellij.lang.properties.findUsages.PropertySearcher;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.extensions.Extensions;
@@ -75,6 +78,8 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
           original.setText(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));
         }
 
+        if (ImplicitPropertyUsageProvider.isImplicitlyUsed(property)) return;
+
         String name = property.getName();
         if (name == null) return;
         if (searcher != null) {
@@ -97,7 +102,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
         PsiElement key = nodes.length == 0 ? property : nodes[0].getPsi();
         String description = PropertiesBundle.message("unused.property.problem.descriptor.name");
 
-        holder.registerProblem(key, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL,RemovePropertyLocalFix.INSTANCE);
+        holder.registerProblem(key, description, ProblemHighlightType.LIKE_UNUSED_SYMBOL, RemovePropertyLocalFix.INSTANCE);
       }
     };
   }

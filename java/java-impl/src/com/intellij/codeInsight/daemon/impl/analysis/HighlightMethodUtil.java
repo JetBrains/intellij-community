@@ -1278,6 +1278,7 @@ public class HighlightMethodUtil {
           if (classReference != null) {
             ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
             ChangeMethodSignatureFromUsageFix.registerIntentions(results, list, info, null);
+            ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
             ConvertDoubleToFloatFix.registerIntentions(results, list, info, null);
             PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
             ChangeParameterClassFix.registerQuickFixActions(constructorCall, list, info);

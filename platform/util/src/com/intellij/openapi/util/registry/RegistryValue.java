@@ -17,10 +17,11 @@ package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.awt.*;
+import java.util.List;
 import java.util.MissingResourceException;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author Kirill Kalishev
@@ -31,7 +32,7 @@ public class RegistryValue {
   private final Registry myRegistry;
   private final String myKey;
 
-  private final CopyOnWriteArraySet<RegistryValueListener> myListeners = new CopyOnWriteArraySet<RegistryValueListener>();
+  private final List<RegistryValueListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   private boolean myChangedSinceStart;
 

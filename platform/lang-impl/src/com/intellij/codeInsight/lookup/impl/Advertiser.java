@@ -18,6 +18,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ClickListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author peter
  */
 public class Advertiser {
-  private final List<String> myTexts = new CopyOnWriteArrayList<String>();
+  private final List<String> myTexts = ContainerUtil.createEmptyCOWList();
   private volatile Dimension myCachedPrefSize;
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
     private JLabel mySample = createLabel();

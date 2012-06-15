@@ -47,6 +47,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -344,7 +345,7 @@ public class EventLog implements Notifications {
 
   public static class ProjectTracker extends AbstractProjectComponent {
     private volatile EventLogConsole myConsole;
-    private final List<Notification> myInitial = new CopyOnWriteArrayList<Notification>();
+    private final List<Notification> myInitial = ContainerUtil.createEmptyCOWList();
     private final LogModel myProjectModel;
 
     public ProjectTracker(@NotNull final Project project) {

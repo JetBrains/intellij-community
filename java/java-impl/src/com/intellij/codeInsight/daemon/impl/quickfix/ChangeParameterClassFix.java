@@ -122,6 +122,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     if (rClass instanceof PsiAnonymousClass) return;
     if (rClass.isInheritor(lClass, true)) return;
     if (lClass.isInheritor(rClass, true)) return;
+    if (lClass == rClass) return;
 
     QuickFixAction.registerQuickFixAction(info, new ChangeParameterClassFix(rClass, (PsiClassType)lType));
   }
