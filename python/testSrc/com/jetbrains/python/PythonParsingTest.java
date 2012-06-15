@@ -323,6 +323,21 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON33);
   }
 
+  // PY-6733
+  public void testYieldFromNoExpr() {
+    doTest(LanguageLevel.PYTHON33);
+  }
+
+  // PY-6734
+  public void testRaiseFromNoExpr() {
+    doTest(LanguageLevel.PYTHON30);
+  }
+
+  // PY-6781
+  public void testComprehensionErrors() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

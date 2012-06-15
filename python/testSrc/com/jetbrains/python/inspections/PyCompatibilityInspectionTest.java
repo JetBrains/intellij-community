@@ -64,6 +64,11 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testRaiseFrom() {
+    setLanguageLevel(LanguageLevel.PYTHON32);
+    doTest();
+  }
+
   public void testReprExpression() {
     doTest();
   }
