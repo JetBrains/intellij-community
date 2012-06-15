@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -37,6 +38,8 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * @return the instance.
    */
   public static ProjectRootManager getInstance(Project project) {
+    final ProjectRootManager service = ServiceManager.getService(ProjectRootManager.class);
+    if (service != null) return service;
     return project.getComponent(ProjectRootManager.class);
   }
 
