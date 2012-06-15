@@ -127,8 +127,8 @@ public class IdeaApplication {
       final Method getWMName = netProtocol.getClass().getDeclaredMethod("getWMName");
       getWMName.setAccessible(true);
       final String wmName = (String)getWMName.invoke(netProtocol);
-      if (wmName == null) return;
       LOG.info("WM detected: " + wmName);
+      if (wmName == null) return;
 
       if ("Mutter".equals(wmName)) {
         try {
