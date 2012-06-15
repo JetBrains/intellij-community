@@ -645,7 +645,7 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.IntroduceVariableAction</className>
+      <className>com.intellij.codeInsight.intention.impl.IntroduceVariableIntentionAction</className>
       <category>Refactorings</category>
     </intentionAction>
     <intentionAction>
