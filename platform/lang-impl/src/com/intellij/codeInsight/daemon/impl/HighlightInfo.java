@@ -179,6 +179,7 @@ public class HighlightInfo implements Segment {
     return EditorColorsManager.getInstance().getGlobalScheme();
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type,
                                                   @NotNull PsiElement element,
                                                   @Nullable String description)
@@ -192,6 +193,7 @@ public class HighlightInfo implements Segment {
     return description == null ? null : "<html><body>"+ XmlStringUtil.escapeString(description)+"</body></html>";
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
@@ -199,10 +201,11 @@ public class HighlightInfo implements Segment {
     return createHighlightInfo(type, element, start, end, description, toolTip);
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description,
                                                   String toolTip,
                                                   boolean isEndOfLine,
-                                                  TextAttributes forcedAttributes) {
+                                                  @Nullable TextAttributes forcedAttributes) {
     LOG.assertTrue(element != null || ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1, "Custom type demands element to detect its text attributes");
     HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, null, type, start, end, description, toolTip,
                                                     type.getSeverity(element), isEndOfLine, null, false);
@@ -214,18 +217,22 @@ public class HighlightInfo implements Segment {
     }
     return highlightInfo;
   }
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description, String toolTip) {
     return createHighlightInfo(type, element, start, end, description, toolTip, false, null);
   }
 
-  @NotNull private static HighlightInfoFilter[] getFilters() {
+  @NotNull
+  private static HighlightInfoFilter[] getFilters() {
     return ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, String description) {
     return createHighlightInfo(type, null, start, end, description, htmlEscapeToolTip(description));
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description) {
     return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description);
   }
@@ -346,6 +353,7 @@ public class HighlightInfo implements Segment {
     return s;
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull ASTNode childByRole, String localizedMessage) {
     return createHighlightInfo(type, childByRole.getPsi(), localizedMessage);
   }
@@ -369,8 +377,8 @@ public class HighlightInfo implements Segment {
 
   public static HighlightInfo createHighlightInfo(@NotNull final HighlightInfoType type,
                                                   @NotNull final PsiElement element,
-                                                  final String message,
-                                                  final TextAttributes attributes) {
+                                                  @Nullable final String message,
+                                                  @Nullable final TextAttributes attributes) {
     TextRange textRange = element.getTextRange();
     // do not use HighlightInfoFilter
     return new HighlightInfo(attributes, null, type, textRange.getStartOffset(), textRange.getEndOffset(), message,
@@ -470,11 +478,11 @@ public class HighlightInfo implements Segment {
       this(action, null, null, icon);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon) {
       this(action, options, displayName, icon, null);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon, HighlightDisplayKey key) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon, @Nullable HighlightDisplayKey key) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;

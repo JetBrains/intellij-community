@@ -17,6 +17,9 @@
 
 package standardDsls
 
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.plugins.groovy.dgm.GroovyExtensionProvider
+
 /**
  * @author Maxim.Medvedev
  */
@@ -35,4 +38,12 @@ contributor([:]) {
   category "org.codehaus.groovy.runtime.SwingGroovyMethods"
   category "org.codehaus.groovy.runtime.XmlGroovyMethods"
 
+  def pair = GroovyExtensionProvider.getInstance(project).collectExtensions(GlobalSearchScope.allScope(project))
+  for (def inst : pair.first) {
+    category inst, false
+  }
+
+  for (def stat : pair.second) {
+    category stat, true
+  }
 }

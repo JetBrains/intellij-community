@@ -85,8 +85,10 @@ public class DuplicateAction extends EditorAction {
     final int lineToCheck = nextLineStart.line - 1;
 
     int newOffset = end + offset - start;
-    if(lineToCheck == document.getLineCount () /*empty document*/ ||
-       document.getLineSeparatorLength(lineToCheck) == 0) {
+    if(lineToCheck == document.getLineCount () /* empty document */
+       || nextLineStart.line == document.getLineCount() - 1 /* last line*/
+       || document.getLineSeparatorLength(lineToCheck) == 0)
+    {
       s = "\n"+s;
       newOffset++;
     }

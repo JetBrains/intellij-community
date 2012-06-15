@@ -16,12 +16,12 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author pegov
@@ -37,7 +37,7 @@ public class AltStateManager implements AWTEventListener {
     }
   }
   
-  private final List<AltListener> myListeners = new CopyOnWriteArrayList<AltListener>();
+  private final List<AltListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   public interface AltListener {
     void altPressed();

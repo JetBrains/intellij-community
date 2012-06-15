@@ -228,6 +228,8 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       findModel.setStringToReplace(replaceWith);
       findModel.setReplaceState(true);
       findModel.setPromptOnReplace(true);
+      findModel.setCaseSensitive(true);
+      findModel.setRegularExpressions(false);
 
       return findModel;
     }

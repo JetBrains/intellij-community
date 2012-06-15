@@ -10,6 +10,8 @@
     <orderEntry type="module" module-name="projectModel-api" exported="" />
     <orderEntry type="module" module-name="core-impl" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="jps-model-api" />
+    <orderEntry type="module" module-name="jps-model-impl" />
   </component>
 </module>
 

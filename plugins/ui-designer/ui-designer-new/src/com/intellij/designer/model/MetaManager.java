@@ -15,9 +15,8 @@
  */
 package com.intellij.designer.model;
 
-import com.intellij.designer.palette.Group;
-import com.intellij.designer.palette.Item;
-import com.intellij.ide.palette.PaletteGroup;
+import com.intellij.designer.palette.DefaultPaletteItem;
+import com.intellij.designer.palette.PaletteGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +48,7 @@ public abstract class MetaManager {
 
   private final Map<String, MetaModel> myTag2Model = new HashMap<String, MetaModel>();
   private final Map<String, MetaModel> myTarget2Model = new HashMap<String, MetaModel>();
-  private final List<Group> myPaletteGroups = new ArrayList<Group>();
+  private final List<PaletteGroup> myPaletteGroups = new ArrayList<PaletteGroup>();
 
   private PropertyChangeSupport myPaletteChangeSupport;
 
@@ -71,7 +70,7 @@ public abstract class MetaManager {
       }
 
       for (Object element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
-        loadGroup(name, (Element)element);
+        loadGroup((Element)element);
       }
 
       for (Map.Entry<MetaModel, List<String>> entry : modelToMorphing.entrySet()) {
@@ -122,7 +121,7 @@ public abstract class MetaManager {
     Element palette = element.getChild("palette");
     if (palette != null) {
       meta.setPaletteItem(
-        new Item(palette.getAttributeValue("title"), palette.getAttributeValue("icon"), palette.getAttributeValue("tooltip")));
+        new DefaultPaletteItem(palette.getAttributeValue("title"), palette.getAttributeValue("icon"), palette.getAttributeValue("tooltip")));
     }
 
     Element creation = element.getChild("creation");
@@ -177,8 +176,8 @@ public abstract class MetaManager {
     }
   }
 
-  private void loadGroup(String tab, Element element) throws Exception {
-    Group group = new Group(tab, element.getAttributeValue(NAME));
+  private void loadGroup(Element element) throws Exception {
+    PaletteGroup group = new PaletteGroup(element.getAttributeValue(NAME));
 
     for (Object child : element.getChildren(ITEM)) {
       String tag = ((Element)child).getAttributeValue(TAG);
@@ -207,8 +206,8 @@ public abstract class MetaManager {
     return myTarget2Model.get(target);
   }
 
-  public PaletteGroup[] getPaletteGroups() {
-    return myPaletteGroups.toArray(new PaletteGroup[myPaletteGroups.size()]);
+  public List<PaletteGroup> getPaletteGroups() {
+    return myPaletteGroups;
   }
 
   public void setPaletteChangeSupport(PropertyChangeSupport paletteChangeSupport) {

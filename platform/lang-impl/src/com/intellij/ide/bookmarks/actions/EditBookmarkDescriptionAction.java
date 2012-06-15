@@ -35,7 +35,7 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
   private JBPopup myPopup;
 
   EditBookmarkDescriptionAction(Project project, JList list) {
-    super("Edit Description", "Assign short description for the bookmark to be shown along the file name", AllIcons.Actions.Properties);
+    super("Edit Description", "Assign short description for the bookmark to be shown along the file name", AllIcons.Actions.Edit);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(SystemInfo.isMac ? "meta ENTER" : "control ENTER")), list);

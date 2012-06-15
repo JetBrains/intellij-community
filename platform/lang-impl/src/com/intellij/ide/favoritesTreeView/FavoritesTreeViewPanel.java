@@ -258,7 +258,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
 
         @Override
         public ShortcutSet getShortcut() {
-          return CustomShortcutSet.fromString("DELETE");
+          return CustomShortcutSet.fromString("DELETE", "BACK_SPACE");
         }
       }).addExtraAction(new AnActionButton("Edit", AllIcons.Actions.Edit) {
         @Override
