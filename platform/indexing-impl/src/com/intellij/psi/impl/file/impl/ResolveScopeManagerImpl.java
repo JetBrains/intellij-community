@@ -15,10 +15,9 @@
  */
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
@@ -85,8 +84,9 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {
-      boolean includeTests = projectFileIndex.isInTestSourceContent(vFile) ||
-                             !(vFile.getFileType() == StdFileTypes.JAVA && projectFileIndex.isContentSourceFile(vFile));
+      boolean includeTests = projectFileIndex.isInTestSourceContent(vFile);
+                             // TODO: dmitrylomov: removed this line to see what fails.
+                             //!(vFile.getFileType() == StdFileTypes.JAVA && projectFileIndex.isContentSourceFile(vFile));
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
     else {
@@ -96,8 +96,6 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
 
       LibraryOrderEntry lib = null;
       for (OrderEntry entry : orderEntries) {
-        ProgressManager.checkCanceled();
-
         if (entry instanceof JdkOrderEntry) {
           return LibraryScopeCache.getInstance(myProject).getScopeForSdk((JdkOrderEntry)entry);
         }
@@ -134,7 +132,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   @Override
   @NotNull
   public GlobalSearchScope getResolveScope(@NotNull PsiElement element) {
-    ProgressManager.checkCanceled();
+    ProgressIndicatorProvider.checkCanceled();
 
     VirtualFile vFile;
     final PsiFile contextFile;
