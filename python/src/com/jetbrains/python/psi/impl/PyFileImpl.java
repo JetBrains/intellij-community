@@ -102,8 +102,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           addImportElementDeclaration(importElement, localDeclarations, ambiguousDeclarations);
           if (PyNames.INIT_DOT_PY.equals(getName())) {
             final PyQualifiedName qName = importElement.getImportedQName();
-            String parentPackage = getContainingDirectory().getName();
-            if (qName != null && qName.getComponentCount() > 1) {
+            final PsiDirectory containingDirectory = getContainingDirectory();
+            if (qName != null && qName.getComponentCount() > 1 && containingDirectory != null) {
+              String parentPackage = containingDirectory.getName();
               final List<String> components = qName.getComponents();
               if (components.get(components.size() - 2).equals(parentPackage)) {
                 localDeclarations.put(components.get(components.size()-1), importElement);
