@@ -26,6 +26,9 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +43,15 @@ public class PalettePanel extends JPanel {
   private List<PaletteItemsComponent> myItemsComponents = Collections.emptyList();
   private List<PaletteGroup> myGroups = Collections.emptyList();
   private DesignerEditorPanel myDesigner;
+
+  private final FocusListener myFocusListener = new FocusAdapter() {
+    @Override
+    public void focusGained(FocusEvent e) {
+      for (PaletteItemsComponent itemsComponent : myItemsComponents) {
+        itemsComponent.clearSelection();
+      }
+    }
+  };
   private final ListSelectionListener mySelectionListener = new ListSelectionListener() {
     @Override
     public void valueChanged(ListSelectionEvent event) {
@@ -121,13 +133,14 @@ public class PalettePanel extends JPanel {
       PaletteItemsComponent itemsComponent = new PaletteItemsComponent(group);
 
       groupComponent.setItemsComponent(itemsComponent);
-      myPaletteContainer.add(groupComponent);
-      myPaletteContainer.add(itemsComponent);
-
+      groupComponent.addFocusListener(myFocusListener);
       myGroupComponents.add(groupComponent);
 
       itemsComponent.addListSelectionListener(mySelectionListener);
       myItemsComponents.add(itemsComponent);
+
+      myPaletteContainer.add(groupComponent);
+      myPaletteContainer.add(itemsComponent);
     }
 
     myPaletteContainer.revalidate();
