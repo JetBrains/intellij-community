@@ -316,7 +316,7 @@ public class PreparedFragmentedContent {
     highlighter.setText(oldDocument.getText());
     HighlighterIterator iterator = highlighter.createIterator(ranges.get(0).getBefore().getStartOffset());
     FragmentedEditorHighlighter beforeHighlighter =
-      new FragmentedEditorHighlighter(iterator, getBeforeFragments(), 1);
+      new FragmentedEditorHighlighter(iterator, getBeforeFragments(), 1, true);
     setBeforeHighlighter(beforeHighlighter);
 
     final EditorHighlighter highlighter1 =
@@ -325,7 +325,7 @@ public class PreparedFragmentedContent {
     highlighter1.setText(document.getText());
     HighlighterIterator iterator1 = highlighter1.createIterator(ranges.get(0).getAfter().getStartOffset());
     FragmentedEditorHighlighter afterHighlighter =
-      new FragmentedEditorHighlighter(iterator1, getAfterFragments(), 1);
+      new FragmentedEditorHighlighter(iterator1, getAfterFragments(), 1, true);
     setAfterHighlighter(afterHighlighter);
   }
 
