@@ -148,6 +148,10 @@ public class IdeaApplication {
           setWM(xwm, "METACITY_WM");
         }
       }
+      else if ("Marco".equals(wmName)) {
+        // Marco is another useless Metacity clone
+        setWM(xwm, "METACITY_WM");
+      }
       else if ("awesome".equals(wmName)) {
         try {
           xwmClass.getDeclaredField("OTHER_NONREPARENTING_WM");
