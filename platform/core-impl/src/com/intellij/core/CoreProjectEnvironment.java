@@ -74,7 +74,7 @@ public class CoreProjectEnvironment {
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
   }
 
-  protected CoreProjectScopeBuilder createProjectScopeBuilder() {
+  protected ProjectScopeBuilder createProjectScopeBuilder() {
     return new CoreProjectScopeBuilder(myProject, myFileIndexFacade);
   }
 
