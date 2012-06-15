@@ -160,6 +160,21 @@ public class PaletteItemsComponent extends JBList {
     }
   }
 
+  public void restoreSelection(PaletteItem paletteItem) {
+    if (paletteItem == null) {
+      clearSelection();
+    }
+    else {
+      int index = myGroup.getItems().indexOf(paletteItem);
+      if (index == -1) {
+        clearSelection();
+      }
+      else {
+        takeFocusFrom(index);
+      }
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   //

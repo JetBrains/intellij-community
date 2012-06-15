@@ -111,6 +111,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   protected QuickFixManager myQuickFixManager;
 
+  private PaletteItem myActivePaletteItem;
   private List<?> myExpandedComponents;
   private Property mySelectionProperty;
   private int[][] myExpandedState;
@@ -317,7 +318,13 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     mySurfaceArea.addSelectionListener(mySourceSelectionListener);
   }
 
+  @Nullable
+  public final PaletteItem getActivePaletteItem() {
+    return myActivePaletteItem;
+  }
+
   public final void activatePaletteItem(@Nullable PaletteItem paletteItem) {
+    myActivePaletteItem = paletteItem;
     if (paletteItem != null) {
       myToolProvider.setActiveTool(new CreationTool(true, createCreationFactory(paletteItem)));
     }

@@ -89,6 +89,15 @@ public class PalettePanel extends JPanel {
   }
 
   public void loadPalette(@Nullable DesignerEditorPanel designer) {
+    if (myDesigner == null && designer == null) {
+      return;
+    }
+    if (myDesigner != null && designer != null && myGroups.equals(designer.getPaletteGroups())) {
+      myDesigner = designer;
+      restoreSelection();
+      return;
+    }
+
     for (PaletteItemsComponent itemsComponent : myItemsComponents) {
       itemsComponent.removeListSelectionListener(mySelectionListener);
     }
@@ -122,6 +131,17 @@ public class PalettePanel extends JPanel {
     }
 
     myPaletteContainer.revalidate();
+
+    if (myDesigner != null) {
+      restoreSelection();
+    }
+  }
+
+  private void restoreSelection() {
+    PaletteItem paletteItem = myDesigner.getActivePaletteItem();
+    for (PaletteItemsComponent itemsComponent : myItemsComponents) {
+      itemsComponent.restoreSelection(paletteItem);
+    }
   }
 
   private void notifySelection(@Nullable ListSelectionEvent event) {
