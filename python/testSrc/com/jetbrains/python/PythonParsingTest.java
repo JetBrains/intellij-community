@@ -333,6 +333,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON30);
   }
 
+  // PY-6781
+  public void testComprehensionErrors() {
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }
