@@ -29,12 +29,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class IntroduceVariableAction extends BaseRunRefactoringAction<IntroduceVariableHandler> {
+public class IntroduceVariableIntentionAction extends BaseRunRefactoringAction {
 
   @NotNull
   @Override
   public String getText() {
     return CodeInsightBundle.message("intention.introduce.variable.text");
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return getText();
   }
 
   @Override

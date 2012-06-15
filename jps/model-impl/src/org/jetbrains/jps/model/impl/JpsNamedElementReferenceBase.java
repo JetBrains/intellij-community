@@ -8,8 +8,10 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Self extends JpsNamedElementReferenceBase<T, Self>> extends JpsCompositeElementBase<Self> implements JpsElementReference<T> {
-  private static final JpsElementKind<JpsElementReference<? extends JpsCompositeElement>> PARENT_REFERENCE_KIND = new JpsElementKindBase<JpsElementReference<? extends JpsCompositeElement>>("parent");
+public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Self extends JpsNamedElementReferenceBase<T, Self>>
+  extends JpsCompositeElementBase<Self> implements JpsElementReference<T> {
+  private static final JpsElementKind<JpsElementReference<? extends JpsCompositeElement>> PARENT_REFERENCE_KIND =
+    new JpsElementKindBase<JpsElementReference<? extends JpsCompositeElement>>("parent");
   private final JpsElementCollectionKind<? extends T> myCollectionKind;
   protected final String myElementName;
 
@@ -30,7 +32,7 @@ public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Se
 
   @Override
   public T resolve() {
-    final JpsCompositeElement parent = myContainer.getChild(PARENT_REFERENCE_KIND).resolve();
+    final JpsCompositeElement parent = getParentReference().resolve();
     if (parent == null) return null;
 
     final List<? extends T> elements = parent.getContainer().getChild(myCollectionKind).getElements();
@@ -40,5 +42,9 @@ public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Se
       }
     }
     return null;
+  }
+
+  public JpsElementReference<? extends JpsCompositeElement> getParentReference() {
+    return myContainer.getChild(PARENT_REFERENCE_KIND);
   }
 }

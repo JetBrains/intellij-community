@@ -26,10 +26,10 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ModuleOrderEnumerator extends OrderEnumeratorBase {
-  private final RootModelImpl myRootModel;
+  private final ModuleRootModel myRootModel;
 
-  public ModuleOrderEnumerator(RootModelImpl rootModel, final OrderRootsCache cache) {
-    super(rootModel.getModule(), rootModel.getProject(), cache);
+  public ModuleOrderEnumerator(ModuleRootModel rootModel, final OrderRootsCache cache) {
+    super(rootModel.getModule(), rootModel.getModule().getProject(), cache);
     myRootModel = rootModel;
   }
 

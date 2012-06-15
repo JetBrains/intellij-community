@@ -150,7 +150,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       validate();
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
-      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.NONE));
 
       clearHightlighting();
       if (lineAttributes != null) {

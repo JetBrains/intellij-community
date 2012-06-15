@@ -137,29 +137,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       myHolder = null;
     }
-    else {
-      final IElementType token = element.getNode().getElementType();
-      if (TokenSets.KEYWORDS.contains(token)) {
-        highlightKeyword(element, holder, token);
-      }
-    }
-  }
-
-  private static void highlightKeyword(PsiElement element, AnnotationHolder holder, IElementType token) {
-    final PsiElement parent = element.getParent();
-    if (parent instanceof GrArgumentLabel) return; //don't highlight: print (void:'foo')
-
-    if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement.class) != null) {
-      if (token == GroovyTokenTypes.kDEF || token == GroovyTokenTypes.kIN || token == GroovyTokenTypes.kAS) {
-        return; //It is allowed to name packages 'as', 'in' or 'def'
-      }
-    }
-    else if (parent instanceof GrReferenceExpression && element == ((GrReferenceExpression)parent).getReferenceNameElement()) {
-      return; //don't highlight foo.def
-    }
-
-    final Annotation annotation = holder.createInfoAnnotation(element, null);
-    annotation.setTextAttributes(DefaultHighlighter.KEYWORD);
   }
 
   @Override
