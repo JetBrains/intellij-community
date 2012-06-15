@@ -15,7 +15,7 @@ sys 1.101
 thread 1.102
 _thread 1.102
 _struct 1.103
-datetime 1.106
+datetime 1.111
 
 PyQt4.Qsci 1.94
 PyQt4.QtAssistant 1.94
