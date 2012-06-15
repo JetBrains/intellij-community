@@ -28,14 +28,8 @@ import javax.swing.*;
 /**
  * @author Danila Ponomarenko
  */
-public abstract class BaseRunRefactoringAction<T extends RefactoringActionHandler> implements IntentionAction, Iconable, LowPriorityAction {
+public abstract class BaseRunRefactoringAction implements IntentionAction, Iconable, LowPriorityAction {
   public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
-
-  @NotNull
-  @Override
-  public final String getFamilyName() {
-    return CodeInsightBundle.message("intention.refactoring.family");
-  }
 
   @Override
   public final boolean startInWriteAction() {
