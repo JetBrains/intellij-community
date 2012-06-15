@@ -189,14 +189,16 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
     @Nullable
     private PsiElement findNameInNameDefiners(String name) {
-      long oocbModCount = myModificationTracker.getOutOfCodeBlockModificationCount();
-      if (oocbModCount != myNameDefinerOOCBModCount) {
-        myNameDefinerNegativeCache.clear();
-        myNameDefinerOOCBModCount = oocbModCount;
-      }
-      else {
-        if (myNameDefinerNegativeCache.contains(name)) {
-          return null;
+      synchronized (myNameDefinerNegativeCache) {
+        long oocbModCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+        if (oocbModCount != myNameDefinerOOCBModCount) {
+          myNameDefinerNegativeCache.clear();
+          myNameDefinerOOCBModCount = oocbModCount;
+        }
+        else {
+          if (myNameDefinerNegativeCache.contains(name)) {
+            return null;
+          }
         }
       }
       for (PsiElement definer : myNameDefiners) {
@@ -205,13 +207,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           result = findNameInStarImport(name, (PyFromImportStatement)definer);
         }
         else {
-          result = ((NameDefiner) definer).getElementNamed(name);
+          result = ((NameDefiner)definer).getElementNamed(name);
         }
         if (result != null) {
           return result;
         }
       }
-      myNameDefinerNegativeCache.add(name);
+      synchronized (myNameDefinerNegativeCache) {
+        myNameDefinerNegativeCache.add(name);
+      }
       return null;
     }
 
