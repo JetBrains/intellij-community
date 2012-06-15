@@ -66,8 +66,11 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
         if (containingClass == null) continue;
         for (PsiClass classToAnalyze : classes) {
           if (InheritanceUtil.isInheritorOrSelf(classToAnalyze, containingClass, true)) {
-            addOccurrence(method.getNameIdentifier());
-            break;
+            PsiIdentifier identifier = method.getNameIdentifier();
+            if (identifier != null) {
+              addOccurrence(identifier);
+              break;
+            }
           }
         }
       }
