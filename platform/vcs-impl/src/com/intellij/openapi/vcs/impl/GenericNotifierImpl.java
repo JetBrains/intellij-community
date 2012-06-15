@@ -38,7 +38,7 @@ public abstract class GenericNotifierImpl<T, Key> {
   @NotNull
   private final NotificationType myType;
   @NotNull
-  private final Map<Key, MyNotification<T>> myState;
+  private final Map<Key, MyNotification> myState;
   private final MyListener myListener;
   private final Object myLock;
 
@@ -47,7 +47,7 @@ public abstract class GenericNotifierImpl<T, Key> {
     myTitle = title;
     myType = type;
     myProject = project;
-    myState = new HashMap<Key, MyNotification<T>>();
+    myState = new HashMap<Key, MyNotification>();
     myListener = new MyListener();
     myLock = new Object();
   }
@@ -71,15 +71,15 @@ public abstract class GenericNotifierImpl<T, Key> {
   }
 
   public void clear() {
-    final List<MyNotification<T>> notifications;
+    final List<MyNotification> notifications;
     synchronized (myLock) {
-      notifications = new ArrayList<MyNotification<T>>(myState.values());
+      notifications = new ArrayList<MyNotification>(myState.values());
       myState.clear();
     }
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       public void run() {
-        for (MyNotification<T> notification : notifications) {
+        for (MyNotification notification : notifications) {
           notification.expire();
         }
       }
@@ -91,7 +91,7 @@ public abstract class GenericNotifierImpl<T, Key> {
     }
   }
 
-  private void expireNotification(final MyNotification<T> notification) {
+  private void expireNotification(final MyNotification notification) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
         notification.expire();
@@ -100,13 +100,13 @@ public abstract class GenericNotifierImpl<T, Key> {
   }
 
   public boolean ensureNotify(final T obj) {
-    final MyNotification<T> notification;
+    final MyNotification notification;
     synchronized (myLock) {
       final Key key = getKey(obj);
       if (myState.containsKey(key)) {
         return false;
       }
-      notification = new MyNotification<T>(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj);
+      notification = new MyNotification(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj);
       myState.put(key, notification);
     }
     final boolean state = onFirstNotification(obj);
@@ -123,7 +123,7 @@ public abstract class GenericNotifierImpl<T, Key> {
   }
 
   public void removeLazyNotificationByKey(final Key key) {
-    final MyNotification<T> notification;
+    final MyNotification notification;
     synchronized (myLock) {
       notification = myState.get(key);
       if (notification != null) {
@@ -136,7 +136,7 @@ public abstract class GenericNotifierImpl<T, Key> {
   }
 
   public void removeLazyNotification(final T obj) {
-    final MyNotification<T> notification;
+    final MyNotification notification;
     synchronized (myLock) {
       final Key key = getKey(obj);
       notification = myState.get(key);
@@ -151,18 +151,15 @@ public abstract class GenericNotifierImpl<T, Key> {
 
   private class MyListener implements NotificationListener {
     public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      final String description = event.getDescription();
-      if (notification instanceof MyNotification) {
-        final MyNotification<T> concreteNotification = (MyNotification<T>) notification;
-        final T obj = concreteNotification.getObj();
-        final boolean state = ask(obj, description);
-        if (state) {
-          synchronized (myLock) {
-            final Key key = getKey(obj);
-            myState.remove(key);
-          }
-          expireNotification(concreteNotification);
+      final MyNotification concreteNotification = (MyNotification) notification;
+      final T obj = concreteNotification.getObj();
+      final boolean state = ask(obj, event.getDescription());
+      if (state) {
+        synchronized (myLock) {
+          final Key key = getKey(obj);
+          myState.remove(key);
         }
+        expireNotification(concreteNotification);
       }
     }
   }
@@ -170,12 +167,12 @@ public abstract class GenericNotifierImpl<T, Key> {
   @Nullable
   protected T getObj(final Key key) {
     synchronized (myLock) {
-      final MyNotification<T> notification = myState.get(key);
+      final MyNotification notification = myState.get(key);
       return notification == null ? null : notification.getObj();
     }
   }
 
-  protected static class MyNotification<T> extends Notification {
+  protected class MyNotification extends Notification {
     private final T myObj;
 
     protected MyNotification(@NotNull String groupId,
@@ -192,6 +189,13 @@ public abstract class GenericNotifierImpl<T, Key> {
       return myObj;
     }
 
+    @Override
+    public void expire() {
+      super.expire();
+      synchronized (myLock) {
+        myState.remove(getKey(myObj));
+      }
+    }
   }
 
   private static void log(final String s) {
