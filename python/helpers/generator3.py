@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.110" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.111" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
@@ -832,7 +832,7 @@ class ModuleRedeclarator(object):
     else:
         bin_collections_name = '_collections' # Win / Lin
 
-    if version[0] < 3:
+    if version < (3, 3):
         datetime_mod = "datetime"
     else:
         datetime_mod = "_datetime"
