@@ -375,9 +375,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     return virtualFilePointerContainer;
   }
 
-  @Nullable private List<EventDescriptor> myEvents = null;
-  @Nullable private List<FilePointerPartNode> myPointersToUpdateUrl = null;
-  @Nullable private List<FilePointerPartNode> myPointersToFire = null;
+  @Nullable private List<EventDescriptor> myEvents = Collections.emptyList();
+  @Nullable private List<FilePointerPartNode> myPointersToUpdateUrl = Collections.emptyList();
+  @Nullable private List<FilePointerPartNode> myPointersToFire = Collections.emptyList();
 
   @Override
   public void before(@NotNull final List<? extends VFileEvent> events) {
@@ -501,9 +501,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myBus.syncPublisher(VirtualFilePointerListener.TOPIC).validityChanged(pointersToFireArray);
     }
 
-    myPointersToUpdateUrl = null;
-    myEvents = null;
-    myPointersToFire = null;
+    myPointersToUpdateUrl = Collections.emptyList();
+    myEvents = Collections.emptyList();
+    myPointersToFire = Collections.emptyList();
     for (FilePointerPartNode root : myPointers.values()) {
       root.checkStructure();
     }
