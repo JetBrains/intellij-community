@@ -16,8 +16,10 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
@@ -43,6 +45,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -264,14 +267,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private void addFocusedDocumentAsAffected() {
-    VirtualFile[] selected = FileEditorManager.getInstance(myProject).getSelectedFiles();
-    if (selected.length == 0) return;
+    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(DataManager.getInstance().getDataContext());
+    if (psiFile == null) return;
 
-    final DocumentReference[] refs = new DocumentReference[selected.length];
-    for (int i = 0; i < refs.length; i++) {
-      refs[i] = DocumentReferenceManager.getInstance().create(selected[i]);
-    }
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file == null) return;
 
+    final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(file)};
     myCurrentMerger.addAction(new BasicUndoableAction() {
       @Override
       public void undo() throws UnexpectedUndoException {
