@@ -256,7 +256,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCommandLevel--;
     if (myCommandLevel > 0) return;
 
-    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isGlobal()) {
+    if (myProject != null && !myCurrentMerger.isGlobal() && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent()) {
       addFocusedDocumentAsAffected();
     }
 
@@ -269,6 +269,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private void addFocusedDocumentAsAffected() {
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(DataManager.getInstance().getDataContext());
     if (psiFile == null) return;
+
 
     VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return;
