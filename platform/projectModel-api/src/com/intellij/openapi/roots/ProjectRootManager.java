@@ -38,7 +38,7 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * @return the instance.
    */
   public static ProjectRootManager getInstance(Project project) {
-    final ProjectRootManager service = ServiceManager.getService(ProjectRootManager.class);
+    final ProjectRootManager service = ServiceManager.getService(project, ProjectRootManager.class);
     if (service != null) return service;
     return project.getComponent(ProjectRootManager.class);
   }
