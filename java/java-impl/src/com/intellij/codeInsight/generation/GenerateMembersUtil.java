@@ -305,13 +305,13 @@ public class GenerateMembersUtil {
 
   @NotNull
   private static String suggestUniqueTypeParameterName(@NonNls String baseName, @NotNull PsiTypeParameterList typeParameterList, @Nullable PsiClass targetClass) {
-    String newName = baseName;
-    int index = 0;
-    while ((!checkUniqueTypeParameterName(newName, typeParameterList)) || (targetClass != null && !checkUniqueTypeParameterName(newName, targetClass.getTypeParameterList()))) {
-      newName = baseName + ++index;
+    int i =0;
+    while (true) {
+      final String newName = baseName + ++i;
+      if (checkUniqueTypeParameterName(newName, typeParameterList) && (targetClass == null || checkUniqueTypeParameterName(newName, targetClass.getTypeParameterList()))){
+        return newName;
+      }
     }
-
-    return newName;
   }
 
 
