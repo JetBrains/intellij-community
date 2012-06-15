@@ -60,14 +60,17 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiClass containingClass = myField == null ? null : myField.getContainingClass();
-    return myField != null
-           && myField.getManager().isInProject(myField)
-           && !myField.hasModifierProperty(PsiModifier.STATIC)
-           && myField.isValid()
-           && !myField.hasInitializer()
-           && containingClass != null
-           && containingClass.getName() != null;
+    if (myField == null || myField.hasModifierProperty(PsiModifier.STATIC) || !myField.isValid() || myField.hasInitializer()) {
+      return false;
+    }
+
+    final PsiClass containingClass = myField.getContainingClass();
+    if (containingClass == null || containingClass.getName() == null){
+      return false;
+    }
+
+    final PsiManager manager = myField.getManager();
+    return manager != null && manager.isInProject(myField);
   }
 
   @Override
@@ -75,7 +78,9 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     final PsiClass myClass = myField.getContainingClass();
-
+    if (myClass == null) {
+      return;
+    }
     if (myClass.getConstructors().length == 0) {
       createDefaultConstructor(myClass, project, editor, file);
     }
