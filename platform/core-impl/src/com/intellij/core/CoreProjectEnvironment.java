@@ -59,13 +59,14 @@ public class CoreProjectEnvironment {
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
-    myProject.registerService(ResolveScopeManager.class, createResolveScopeManager());
     myProject.registerService(ResolveCache.class, new ResolveCache(myMessageBus));
 
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
     myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, myMessageBus, modificationTracker);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerProjectComponent(PsiManager.class, myPsiManager);
+
+    myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
@@ -86,7 +87,7 @@ public class CoreProjectEnvironment {
     return new MockFileIndexFacade(myProject);
   }
 
-  protected ResolveScopeManager createResolveScopeManager() {
+  protected ResolveScopeManager createResolveScopeManager(PsiManager psiManager) {
     return new MockResolveScopeManager(myProject);
   }
 
