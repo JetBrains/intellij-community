@@ -141,7 +141,9 @@ public class ExpressionParsing extends Parsing {
       parseComprehensionRange();
       while (myBuilder.getTokenType() == PyTokenTypes.IF_KEYWORD) {
         myBuilder.advanceLexer();
-        parseOldExpression();
+        if (!parseOldExpression()) {
+          myBuilder.error(message("PARSE.expected.expression"));
+        }
       }
       if (atToken(endToken)) {
         if (leaveEndTokenOutside) {
