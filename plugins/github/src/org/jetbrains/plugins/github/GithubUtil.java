@@ -430,10 +430,9 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static GitRemote findGitHubRemoteBranch(final GitRepository repository) {
+  public static GitRemote findGitHubRemoteBranch(@NotNull GitRepository repository) {
     // i.e. find origin which points on my github repo
     // Check that given repository is properly configured git repository
-
     for (GitRemote gitRemote : repository.getRemotes()) {
       if (getGithubUrl(gitRemote) != null){
         return gitRemote;
