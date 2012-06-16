@@ -177,25 +177,14 @@ public class GithubRebaseAction extends DumbAwareAction {
             addRemoteHandler.run();
             if (addRemoteHandler.getExitCode() != 0) {
               showErrorMessageInEDT(project, "Failed to add GitHub remote: '" + parentRepoUrl + "'");
-              return;
             }
 
-            LOG.info("Updating remotes");
-            ProgressManager.getInstance().getProgressIndicator().setText("Updating remotes");
-            final GitSimpleHandler updateRemotesHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-            updateRemotesHandler.setNoSSH(true);
-            updateRemotesHandler.setSilent(true);
-            updateRemotesHandler.addParameters("update");
-            updateRemotesHandler.run();
-            if (updateRemotesHandler.getExitCode() != 0) {
-              showErrorMessageInEDT(project, "Failed to update remotes");
-              return;
-            }
+            // catch newly added remote
+            gitRepository.update(GitRepository.TrackedTopic.CONFIG);
           }
           catch (VcsException e1) {
             final String message = "Error happened during git operation: " + e1.getMessage();
             showErrorMessageInEDT(project, message);
-            return;
           }
         }
       });
