@@ -222,19 +222,19 @@ public class GithubShareAction extends DumbAwareAction {
         gitPushHandler.addParameters("-u", "origin", "master");
         GitPushUtils.trackPushRejectedAsError(gitPushHandler, "Rejected push (" + root.getPresentableUrl() + "): ");
         errors.addAll(GitHandlerUtil.doSynchronouslyWithExceptions(gitPushHandler));
-        if (!errors.isEmpty()) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              GitUIUtil.showOperationErrors(project, errors, GitBundle.getString("push.active.pushing"));
+              if (!errors.isEmpty()) {
+                GitUIUtil.showOperationErrors(project, errors, GitBundle.getString("push.active.pushing"));
+              }
+              else {
+                RefreshAction.doRefresh(project);
+                Notifications.Bus.notify(new Notification("github", "Success", "Successfully created project ''" + name + "'' on github",
+                                                          NotificationType.INFORMATION));
+              }
             }
           });
-        }
-        else {
-          RefreshAction.doRefresh(project);
-          Notifications.Bus.notify(new Notification("github", "Success", "Successfully created project ''" + name + "'' on github",
-                                                    NotificationType.INFORMATION));
-        }
       }
     }.queue();
   }
