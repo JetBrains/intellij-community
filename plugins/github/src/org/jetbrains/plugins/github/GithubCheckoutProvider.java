@@ -50,7 +50,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     Collections.sort(availableRepos, new Comparator<RepositoryInfo>() {
       @Override
       public int compare(final RepositoryInfo r1, final RepositoryInfo r2) {
-        final int comparedOwners = r1.getOwner().compareTo(r2.getOwner());
+        final int comparedOwners = r1.getOwnerName().compareTo(r2.getOwnerName());
         return comparedOwners != 0 ? comparedOwners : r1.getName().compareTo(r2.getName());
       }
     });
@@ -58,7 +58,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     final GitCloneDialog dialog = new GitCloneDialog(project);
     // Add predefined repositories to history
     for (int i = availableRepos.size() - 1; i>=0; i--){
-      dialog.prependToHistory(availableRepos.get(i).getUrl());
+      dialog.prependToHistory(availableRepos.get(i).getCloneUrl());
     }
     dialog.show();
     if (!dialog.isOK()) {
