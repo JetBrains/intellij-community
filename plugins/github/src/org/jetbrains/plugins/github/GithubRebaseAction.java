@@ -108,6 +108,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     final VirtualFile root = project.getBaseDir();
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     if (manager == null) {
+      LOG.info("No GitRepositoryManager instance available. Action cancelled.");
       return;
     }
     final GitRepository gitRepository = manager.getRepositoryForFile(project.getBaseDir());
