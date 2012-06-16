@@ -391,6 +391,10 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.siyeh.ipp.exceptions.MergeNestedTryStatementsIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.exceptions.ObscureThrownExceptionsIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
