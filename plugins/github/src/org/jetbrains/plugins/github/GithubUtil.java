@@ -15,6 +15,10 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,35 +41,41 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import javax.swing.*;
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
+ * Various utility methods for the GutHub plugin.
+ *
  * @author oleg
+ * @author Kirill Likhodedov
  */
 public class GithubUtil {
-  private static final String API_URL = "/api/v2/xml";
-  private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());
+
   public static final Icon GITHUB_ICON = IconLoader.getIcon("/org/jetbrains/plugins/github/github_icon.png");
 
+  private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());
 
+  /**
+   * @deprecated The host may be defined in different formats. Use {@link #getApiUrl(String)} instead.
+   */
+  @Deprecated
   public static String getHttpsUrl() {
     return "https://" + GithubSettings.getInstance().getHost();
   }
 
-  public static String getHostByUrl(final String url) {
-    return url.startsWith("https://") ? url.substring(8) : url.startsWith("http://") ? url.substring(7) : url.startsWith("git@") ? url.substring(4) : url;
-  }
-
+  /**
+   * @deprecated TODO Use background progress
+   */
+  @Deprecated
   public static <T> T accessToGithubWithModalProgress(final Project project, final Computable<T> computable) {
     final Ref<T> result = new Ref<T>();
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
@@ -76,6 +86,10 @@ public class GithubUtil {
     return result.get();
   }
 
+  /**
+   * @deprecated TODO Use background progress
+   */
+  @Deprecated
   public static void accessToGithubWithModalProgress(final Project project, final Runnable runnable) {
     ProgressManager.getInstance().run(new Task.Modal(project, "Access to GitHub", true) {
       public void run(@NotNull ProgressIndicator indicator) {
@@ -84,38 +98,113 @@ public class GithubUtil {
     });
   }
 
-  public static boolean testConnection(final String url, final String login, final String password) {
+  @Nullable
+  public static JsonElement getRequest(@NotNull String host, @NotNull String login, @NotNull String password,
+                                       @NotNull String path) throws IOException {
+    return request(host, login, password, path, null, false);
+  }
+
+  @Nullable
+  public static JsonElement postRequest(@NotNull String host, @Nullable String login, @Nullable String password,
+                                        @NotNull String path, @Nullable String requestBody) throws IOException {
+    return request(host, login, password, path, requestBody, true);
+  }
+
+  @Nullable
+  private static JsonElement request(@NotNull String host, @Nullable String login, @Nullable String password,
+                                     @NotNull String path, @Nullable String requestBody, boolean post) throws IOException {
     HttpMethod method = null;
     try {
-      method = doREST(url, login, password, "/user/show/" + login, false);
-      final InputStream stream = method.getResponseBodyAsStream();
-      final Element element = new SAXBuilder(false).build(stream).getRootElement();
-      if ("error".equals(element.getName())){
-        return false;
+      method = doREST(host, login, password, path, requestBody, post);
+      String resp = method.getResponseBodyAsString();
+      if (resp == null) {
+        LOG.info(String.format("Unexpectedly empty response: %s", resp));
+        return null;
       }
-      // In case if authentification was successful we should see some extra fields
-      return element.getChild("total-private-repo-count") != null;
-    }
-    catch (Exception e) {
-      // Ignore
+      return parseResponse(resp);
     }
     finally {
-      if (method!=null) {
+      if (method != null) {
         method.releaseConnection();
       }
     }
-    return false;
   }
 
-  public static HttpMethod doREST(final String url, final String login, final String password, final String request, final boolean post) throws Exception {
+  @NotNull
+  private static HttpMethod doREST(@NotNull String host, @Nullable String login, @Nullable String password, @NotNull String path,
+                                   @Nullable String requestBody, final boolean post) throws IOException {
     final HttpClient client = getHttpClient(login, password);
-    final String uri = "https://" + getHostByUrl(url) + API_URL + request;
-    final HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
+    final String uri = getApiUrl(host) + path;
+    final HttpMethod method;
+    if (post) {
+      method = new PostMethod(uri);
+      if (requestBody != null) {
+        ((PostMethod)method).setRequestEntity(new StringRequestEntity(requestBody, "application/json", "UTF-8"));
+      }
+    }
+    else {
+      method = new GetMethod(uri);
+    }
+
     client.executeMethod(method);
     return method;
   }
 
-  public static HttpClient getHttpClient(@Nullable final String login, @Nullable final String password) {
+  @NotNull
+  private static String removeProtocolPrefix(final String url) {
+    if (url.startsWith("https://")) {
+      return url.substring(8);
+    }
+    else if (url.startsWith("http://")) {
+        return url.substring(7);
+    }
+    else if (url.startsWith("git@")) {
+      return url.substring(4);
+    }
+    else {
+      return url;
+    }
+  }
+
+  @NotNull
+  private static String getApiUrl(@NotNull String urlFromSettings) {
+    return "https://" + getApiUrlWithoutProtocol(urlFromSettings);
+  }
+
+  /*
+    All API access is over HTTPS, and accessed from the api.github.com domain
+    (or through yourdomain.com/api/v3/ for enterprise).
+    http://developer.github.com/v3/
+   */
+  @NotNull
+  private static String getApiUrlWithoutProtocol(String urlFromSettings) {
+    String url = removeTrailingSlash(removeProtocolPrefix(urlFromSettings));
+    final String API_PREFIX = "api.";
+    final String ENTERPRISE_API_SUFFIX = "/api/v3";
+
+    if (url.equals(GithubSettings.DEFAULT_GITHUB_HOST)) {
+      return API_PREFIX + url;
+    }
+    else if (url.equals(API_PREFIX + GithubSettings.DEFAULT_GITHUB_HOST)) {
+      return url;
+    }
+    else if (url.endsWith(ENTERPRISE_API_SUFFIX)) {
+      return url;
+    }
+    else {
+      return url + ENTERPRISE_API_SUFFIX;
+    }
+  }
+
+  private static String removeTrailingSlash(String s) {
+    if (s.endsWith("/")) {
+      return s.substring(0, s.length() - 1);
+    }
+    return s;
+  }
+
+  @NotNull
+  private static HttpClient getHttpClient(@Nullable final String login, @Nullable final String password) {
     final HttpClient client = new HttpClient();
     client.getParams().setContentCharset("UTF-8");
     // Configure proxySettings if it is required
@@ -135,87 +224,127 @@ public class GithubUtil {
     return client;
   }
 
-  public static List<RepositoryInfo> getAvailableRepos(final String url, final String login, final String password, final boolean ownOnly) {
-    HttpMethod method = null;
-    try {
-      final String request = (ownOnly ? "/repos/show/" : "/repos/watched/") + login;
-      method = doREST(url, login, password, request, false);
-      final InputStream stream = method.getResponseBodyAsStream();
-      final Element element = new SAXBuilder(false).build(stream).getRootElement();
-      if ("error".equals(element.getName())){
-        LOG.warn("Got error element by request: " + request);
-        return Collections.emptyList();
-      }
-      final List repositories = element.getChildren();
-      final List<RepositoryInfo> result = new ArrayList<RepositoryInfo>();
-      for (int i = 0; i < repositories.size(); i++) {
-        final Element repo = (Element)repositories.get(i);
-        result.add(new RepositoryInfo(repo));
-      }
-      return result;
-    }
-    catch (Exception e) {
-      // ignore
-    }
-    finally {
-      if (method != null){
-        method.releaseConnection();
-      }
-    }
-    return Collections.emptyList();
+  private static boolean testConnection(final String url, final String login, final String password) {
+    GithubUser user = retrieveCurrentUserInfo(url, login, password);
+    return user != null;
   }
 
+  @Nullable
+  private static GithubUser retrieveCurrentUserInfo(@NotNull String url, @NotNull String login, @NotNull String password) {
+    try {
+      JsonElement result = getRequest(url, login, password, "/user");
+      return parseUserInfo(result);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return null;
+    }
+  }
 
   @Nullable
-  public static RepositoryInfo getDetailedRepoInfo(final String url, final String login, final String password, final String owner, final String name) {
-    HttpMethod method = null;
+  private static GithubUser parseUserInfo(@Nullable JsonElement result) {
+    if (result == null) {
+      return null;
+    }
+    if (!result.isJsonObject()) {
+      LOG.error(String.format("Unexpected JSON result format: %s", result));
+      return null;
+    }
+
+    JsonObject obj = (JsonObject)result;
+    if (!obj.has("plan")) {
+      return null;
+    }
+    GithubUser.Plan plan = parsePlan(obj.get("plan"));
+    return new GithubUser(plan);
+  }
+
+  @NotNull
+  private static GithubUser.Plan parsePlan(JsonElement plan) {
+    if (!plan.isJsonObject()) {
+      return GithubUser.Plan.FREE;
+    }
+    return GithubUser.Plan.fromString(plan.getAsJsonObject().get("name").getAsString());
+  }
+
+  @NotNull
+  private static JsonElement parseResponse(@NotNull String githubResponse) throws IOException {
     try {
-      final String request = "/repos/show/" + owner + "/" + name;
-      method = doREST(url, login, password, request, false);
-      final InputStream stream = method.getResponseBodyAsStream();
-      final Element element = new SAXBuilder(false).build(stream).getRootElement();
-      if ("error".equals(element.getName())){
-        LOG.warn("Got error element by request: " + request);
+      return new JsonParser().parse(githubResponse);
+    }
+    catch (JsonSyntaxException jse) {
+      throw new IOException(String.format("Couldn't parse GitHub response:%n%s", githubResponse), jse);
+    }
+  }
+
+  @NotNull
+  private static List<RepositoryInfo> getAvailableRepos(@NotNull String url, @NotNull String login, @NotNull String password,
+                                                       boolean ownOnly) {
+    final String request = (ownOnly ? "/user/repos" : "/user/watched");
+    try {
+      JsonElement result = getRequest(url, login, password, request);
+      if (result == null) {
+        return Collections.emptyList();
+      }
+      return parseRepositoryInfos(result);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
+  private static List<RepositoryInfo> parseRepositoryInfos(@NotNull JsonElement result) {
+    if (!result.isJsonArray()) {
+      LOG.assertTrue(result.isJsonObject(), String.format("Unexpected JSON result format: %s", result));
+      return Collections.singletonList(parseSingleRepositoryInfo(result.getAsJsonObject()));
+    }
+
+    List<RepositoryInfo> repositories = new ArrayList<RepositoryInfo>();
+    for (JsonElement element : result.getAsJsonArray()) {
+      LOG.assertTrue(element.isJsonObject(),
+                     String.format("This element should be a JsonObject: %s%nTotal JSON response: %n%s", element, result));
+      repositories.add(parseSingleRepositoryInfo(element.getAsJsonObject()));
+    }
+    return repositories;
+  }
+
+  @NotNull
+  private static RepositoryInfo parseSingleRepositoryInfo(@NotNull JsonObject result) {
+    String name = result.get("name").getAsString();
+    String cloneUrl = result.get("clone_url").getAsString();
+    String ownerName = result.get("owner").getAsJsonObject().get("login").getAsString();
+    String parentName = result.has("parent") ? result.get("parent").getAsJsonObject().get("full_name").getAsString(): null;
+    boolean fork = result.get("fork").getAsBoolean();
+    return new RepositoryInfo(name, cloneUrl, ownerName, parentName, fork);
+  }
+
+  @Nullable
+  private static RepositoryInfo getDetailedRepoInfo(@NotNull String url, @NotNull String login, @NotNull String password,
+                                                   @NotNull String owner, @NotNull String name) {
+    try {
+      final String request = "/repos/" + owner + "/" + name;
+      JsonElement jsonObject = getRequest(url, login, password, request);
+      if (jsonObject == null) {
+        LOG.info(String.format("Information about repository is unavailable. Owner: %s, Name: %s", owner, name));
         return null;
       }
-      return (new RepositoryInfo(element));
+      return parseSingleRepositoryInfo(jsonObject.getAsJsonObject());
     }
-    catch (Exception e) {
-      // ignore
+    catch (IOException e) {
+      LOG.info(String.format("Exception was thrown when trying to retrieve information about repository.  Owner: %s, Name: %s",
+                             owner, name));
+      return null;
     }
-    finally {
-      if (method != null){
-        method.releaseConnection();
-      }
-    }
-    return null;
   }
 
   public static boolean isPrivateRepoAllowed(final String url, final String login, final String password) {
-    HttpMethod method = null;
-    try {
-      final String request = "/user/show/" + login;
-      method = doREST(url, login, password, request, false);
-      final InputStream stream = method.getResponseBodyAsStream();
-      final Element element = new SAXBuilder(false).build(stream).getRootElement();
-      if ("error".equals(element.getName())){
-        LOG.warn("Got error element by request: " + request);
-        return false;
-      }
-      final Element plan = element.getChild("plan");
-      assert plan != null : "Authentification failed";
-      final String privateRepos = plan.getChildText("private-repos");
-      return privateRepos != null && Integer.valueOf(privateRepos) > 0;
+    GithubUser user = retrieveCurrentUserInfo(url, login, password);
+    if (user == null) {
+      return false;
     }
-    catch (Exception e) {
-      // ignore
-    }
-    finally {
-      if (method != null){
-        method.releaseConnection();
-      }
-    }
-    return false;
+    return user.getPlan().isPrivateRepoAllowed();
   }
 
   public static boolean checkCredentials(final Project project) {
@@ -291,6 +420,7 @@ public class GithubUtil {
     // Otherwise our credentials are valid and they are successfully stored in settings
     final String validPassword = settings.getPassword();
     return accessToGithubWithModalProgress(project, new Computable<RepositoryInfo>() {
+      @Nullable
       @Override
       public RepositoryInfo compute() {
         ProgressManager.getInstance().getProgressIndicator().setText("Extracting detailed info about repository ''" + name + "''");
@@ -327,7 +457,7 @@ public class GithubUtil {
     }
     return null;
   }
-  
+
   public static boolean testGitExecutable(final Project project) {
     final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
     final String executable = settings.getPathToGit();

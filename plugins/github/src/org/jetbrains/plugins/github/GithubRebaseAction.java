@@ -139,7 +139,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       return;
     }
 
-    final String parent = repositoryInfo.getParent();
+    final String parent = repositoryInfo.getParentName();
     LOG.assertTrue(parent != null, "Parent repository not found!");
     final String parentRepoSuffix = parent + ".git";
     final String parentRepoUrl = "git://github.com/" + parentRepoSuffix;
