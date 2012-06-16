@@ -10,3 +10,5 @@ public class Simple {
       try (FileInputStream in = new FileInputStream(file1); FileOutputStream out = new FileOutputStream(file2)) {
           // do something
       }
+  }
+}
