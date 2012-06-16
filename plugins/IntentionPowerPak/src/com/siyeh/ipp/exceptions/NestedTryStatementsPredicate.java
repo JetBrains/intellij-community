@@ -22,7 +22,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 /**
  * @author Bas Leijdekkers
  */
-public class NestedTryStatementsPredicate implements PsiElementPredicate {
+class NestedTryStatementsPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
