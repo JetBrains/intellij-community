@@ -70,6 +70,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
         if (manager != null) {
           manager.updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
         }
+        root.refresh(false, true);
         notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
       }
     });
