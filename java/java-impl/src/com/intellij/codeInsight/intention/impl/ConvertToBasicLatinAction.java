@@ -27,9 +27,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
@@ -43,7 +43,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ConvertToBasicLatinAction");
@@ -152,13 +151,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     private static Map<Character, String> ourEntities = null;
 
     public PsiElement findApplicable(final PsiElement element) {
-      if (element instanceof PsiDocComment) return element;
-      if (element instanceof PsiDocToken) return element.getParent();
-      if (element instanceof PsiWhiteSpace) {
-        final PsiElement parent = element.getParent();
-        if (parent instanceof PsiDocComment) return parent;
-      }
-      return null;
+      return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
     }
 
     @Override
