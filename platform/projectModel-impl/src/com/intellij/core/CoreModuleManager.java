@@ -74,4 +74,8 @@ public class CoreModuleManager extends ModuleManagerImpl {
   public void loadModules() {
     loadModules(myModuleModel);
   }
+
+  protected Disposable getLifetime() {
+    return myParentDisposable;
+  }
 }
