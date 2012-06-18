@@ -427,7 +427,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(myApplicationName.replace("\\", "\\\\"));
 
     if (appNameResElement == null) {
-      final String fileName = AndroidResourceUtil.getDefaultResourceFileName(ResourceType.STRING.getName());
+      final String fileName = AndroidResourceUtil.getDefaultResourceFileName(ResourceType.STRING);
       assert fileName != null;
       AndroidResourceUtil.createValueResource(facet.getModule(), appNameResource, ResourceType.STRING, fileName, Collections
               .singletonList(AndroidConstants.FD_RES_VALUES), normalizedAppName);

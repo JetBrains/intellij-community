@@ -131,7 +131,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       myModuleCombo.setRenderer(new ModuleListCellRendererWrapper(myModuleCombo.getRenderer()));
     }
 
-    final String defaultResFileName = AndroidResourceUtil.getDefaultResourceFileName(resourceType.getName());
+    final String defaultResFileName = AndroidResourceUtil.getDefaultResourceFileName(resourceType);
     if (defaultResFileName != null) {
       myFileNameField.setText(defaultResFileName);
     }
@@ -393,7 +393,15 @@ public class CreateXmlResourceDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameField.getText().length() == 0 ? myNameField : myValueField;
+    if (myNameField.getText().length() == 0) {
+      return myNameField;
+    }
+    else if (myValueField.isVisible()) {
+      return myValueField;
+    }
+    else {
+      return myFileNameField;
+    }
   }
 
   @Override
