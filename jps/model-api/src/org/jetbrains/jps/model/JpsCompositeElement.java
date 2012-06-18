@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public interface JpsCompositeElement extends JpsParentElement {
+public interface JpsCompositeElement extends JpsElement {
   @NotNull
   JpsElementContainer getContainer();
 }

@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public interface JpsElementCollection<E extends JpsElement> extends JpsParentElement {
+public interface JpsElementCollection<E extends JpsElement> extends JpsElement {
   List<E> getElements();
 
   @NotNull
