@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -593,12 +594,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         String def = item.parameter.defaultValue;
         def = def.trim();
         if (!(type instanceof PsiEllipsisType)) {
-          if (def.length() == 0) {
-            return RefactoringBundle.message("changeSignature.no.default.value", item.parameter.getName());
-          }
-
           try {
-            factory.createExpressionFromText(def, null);
+            if (!StringUtil.isEmpty(def)) {
+              factory.createExpressionFromText(def, null);
+            }
           }
           catch (IncorrectOperationException e) {
             return e.getMessage();
@@ -659,6 +658,21 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     catch (PsiTypeCodeFragment.IncorrectTypeException ignored) {
     }
     return null;
+  }
+
+  @Override
+  protected ValidationInfo doValidate() {
+    for (final ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
+      if (item.parameter.oldParameterIndex < 0) {
+        if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText())) return new ValidationInfo("Default value is missed. In the method call place new parameter value would be leaved blank");
+      }
+    }
+    return super.doValidate();
+  }
+
+  @Override
+  protected boolean postponeValidation() {
+    return false;
   }
 
   @Override
