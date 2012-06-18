@@ -7,10 +7,8 @@ package com.intellij.compiler;
 import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.IOException;
 import java.util.Set;
@@ -86,19 +84,16 @@ public class CompilationClasspathTest extends CompilerTestCase{
       @Override
       public void run() {
         try {
-          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
           if (different) {
             myTestsOutput = myModuleRoot.createChildDirectory(this, "test_" + CLASSES);
           }
           else {
             myTestsOutput = myClassesDir;
           }
-          final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
-          compilerModuleExtension.setCompilerOutputPathForTests(myTestsOutput);
+          PsiTestUtil.setCompilerOutputPath(myModule, myTestsOutput.getUrl(), true);
           if (removeProductionOutput) {
-            compilerModuleExtension.setCompilerOutputPath((String)null);
+            PsiTestUtil.setCompilerOutputPath(myModule, null, false);
           }
-          rootModel.commit();
         }
         catch (IOException e) {
           e.printStackTrace();

@@ -122,21 +122,8 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     }.execute().getResultObject();
   }
 
-  protected static Library addModuleLibrary(final Module module, final VirtualFile... jars) {
-    return new WriteAction<Library>() {
-      @Override
-      protected void run(final Result<Library> result) {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        final Library library = rootModel.getModuleLibraryTable().createLibrary();
-        final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        for (VirtualFile jar : jars) {
-          libraryModel.addRoot(jar, OrderRootType.CLASSES);
-        }
-        libraryModel.commit();
-        rootModel.commit();
-        result.setResult(library);
-      }
-    }.execute().getResultObject();
+  protected static void addModuleLibrary(final Module module, final VirtualFile jar) {
+    ModuleRootModificationUtil.addModuleLibrary(module, jar.getUrl());
   }
 
   protected static void addModuleDependency(final Module module, final Module dependency) {
