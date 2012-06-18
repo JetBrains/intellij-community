@@ -19,16 +19,16 @@ import com.intellij.execution.CantRunException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
-import com.intellij.testFramework.PsiTestUtil;
 
 /**
  * @author nik
  */
 public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
     assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                     getRtJar(), getJDomJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
@@ -54,8 +54,8 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   }
 
   public void testLibraryScope() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary(), DependencyScope.RUNTIME, false);
-    addLibraryDependency(myModule, createAsmLibrary(), DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.RUNTIME, false);
+    ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.TEST, false);
 
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
                     getJDomJar(), getAsmJar());
@@ -64,7 +64,7 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   }
 
   public void testProvidedScope() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary(), DependencyScope.PROVIDED, false);
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.PROVIDED, false);
 
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getJDomJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
@@ -74,19 +74,19 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
     final Module dep = createModule("dep");
     final VirtualFile depOutput = setModuleOutput(dep, false);
     final VirtualFile depTestOutput = setModuleOutput(dep, true);
-    addLibraryDependency(dep, createJDomLibrary());
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
                     depOutput, getJDomJar());
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
                     depTestOutput, depOutput, getJDomJar());
   }
-  
+
   public void testModuleDependencyScope() throws Exception {
     final Module dep = createModule("dep");
-    addLibraryDependency(dep, createJDomLibrary());
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
 
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,

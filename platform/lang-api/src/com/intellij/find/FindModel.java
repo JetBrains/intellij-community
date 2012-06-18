@@ -19,11 +19,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -49,7 +50,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     void findModelChanged(FindModel findModel);
   }
 
-  private final CopyOnWriteArrayList<FindModelObserver> myObservers = new CopyOnWriteArrayList<FindModelObserver>();
+  private final List<FindModelObserver> myObservers = ContainerUtil.createEmptyCOWList();
 
   public void addObserver(FindModelObserver observer) {
     myObservers.add(observer);

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 9/5/11
  */
-public class RunRefactoringAction extends BaseRunRefactoringAction<RefactoringActionHandler> {
+public class RunRefactoringAction extends BaseRunRefactoringAction {
   private final RefactoringActionHandler myHandler;
   private final String myCommandName;
 
@@ -39,6 +39,12 @@ public class RunRefactoringAction extends BaseRunRefactoringAction<RefactoringAc
   @Override
   public String getText() {
     return myCommandName;
+  }
+
+  @NotNull
+  @Override
+  public final String getFamilyName() {
+    return getText();
   }
 
   @Override

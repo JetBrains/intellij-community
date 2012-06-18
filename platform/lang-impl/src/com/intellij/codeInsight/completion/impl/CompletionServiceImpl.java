@@ -237,14 +237,14 @@ public class CompletionServiceImpl extends CompletionService{
     final CompletionLocation location = new CompletionLocation(parameters);
 
     CompletionSorterImpl sorter = emptySorter();
-    sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("prefixHumps") {
+    sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("startMatching") {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-        return new ComparingClassifier<LookupElement>(next, "prefixHumps") {
+        return new ComparingClassifier<LookupElement>(next, "startMatching") {
           @NotNull
           @Override
           public Comparable getWeight(LookupElement element) {
-            return PrefixMatchingWeigher.getStartMatchingDegree(element, location);
+            return PrefixMatchingWeigher.isMiddleMatch(element, location);
           }
         };
       }

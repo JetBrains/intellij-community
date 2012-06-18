@@ -21,10 +21,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -57,12 +54,9 @@ public class ExportingModulesTest extends IdeaTestCase {
         configureModule(moduleB, testRoot, "B");
         configureModule(moduleC, testRoot, "C");
 
-        final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
-        final ModuleOrderEntry moduleBAentry = rootModelB.addModuleOrderEntry(moduleA);
-        moduleBAentry.setExported(true);
-        rootModelB.commit();
+        ModuleRootModificationUtil.addDependency(moduleB, moduleA, DependencyScope.COMPILE, true);
 
-        PsiTestUtil.addDependency(moduleC, moduleB);
+        ModuleRootModificationUtil.addDependency(moduleC, moduleB);
 
         final PsiClass pCClass =
           JavaPsiFacade.getInstance(myProject).findClass("p.C", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(moduleC));
@@ -79,16 +73,9 @@ public class ExportingModulesTest extends IdeaTestCase {
     });
   }
 
-  private void configureModule(final Module module, final VirtualFile testRoot, final String name) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        final VirtualFile contentRoot = testRoot.findChild(name);
-        final ContentEntry contentEntry = rootModel.addContentEntry(contentRoot);
-        contentEntry.addSourceFolder(contentRoot.findChild("src"), false);
-        rootModel.commit();
-      }
-    });
+  private static void configureModule(final Module module, final VirtualFile testRoot, final String name) {
+    final VirtualFile contentRoot = testRoot.findChild(name);
+    PsiTestUtil.addContentRoot(module, contentRoot);
+    PsiTestUtil.addSourceRoot(module, contentRoot.findChild("src"));
   }
 }

@@ -11,8 +11,8 @@ import java.awt.event.*;
  * @author evgeny zakrevsky
  */
 public class HideableTitledPanel extends JPanel {
-  private final static Icon OFF_ICON = AllIcons.General.ComboArrow;
-  private final static Icon ON_ICON = AllIcons.General.ComboUpPassive;
+  private final static Icon OFF_ICON = AllIcons.General.ComboArrowRight;
+  private final static Icon ON_ICON = AllIcons.General.ComboArrowDown;
 
   private TitledSeparatorWithMnemonic myTitledSeparator;
   private boolean myOn;
@@ -25,8 +25,6 @@ public class HideableTitledPanel extends JPanel {
     add(myContent, BorderLayout.CENTER);
     myTitledSeparator = new TitledSeparatorWithMnemonic("", null);
     add(myTitledSeparator, BorderLayout.NORTH);
-    myTitledSeparator.getLabel().setIcon(OFF_ICON);
-
     myTitledSeparator.getLabel().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myTitledSeparator.getLabel().addMouseListener(new MouseAdapter() {
       @Override
@@ -65,6 +63,7 @@ public class HideableTitledPanel extends JPanel {
   protected void on() {
     myOn = true;
     myTitledSeparator.getLabel().setIcon(ON_ICON);
+    myTitledSeparator.getLabel().setIconTextGap(5);
     myContent.setVisible(true);
     adjustWindow();
     invalidate();
@@ -74,6 +73,7 @@ public class HideableTitledPanel extends JPanel {
   protected void off() {
     myOn = false;
     myTitledSeparator.getLabel().setIcon(OFF_ICON);
+    myTitledSeparator.getLabel().setIconTextGap(5 + ON_ICON.getIconWidth() - OFF_ICON.getIconWidth());
     myContent.setVisible(false);
     myPreviousContentSize = myContent.getSize();
     adjustWindow();

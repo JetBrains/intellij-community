@@ -12,6 +12,7 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,7 +33,8 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   protected void setUpProject() throws Exception {
     final String root = PathManagerEx.getTestDataPath() + BASE_PATH;
 
-    VirtualFile tempProjectRootDir = PsiTestUtil.createTestProjectStructure(getTestName(true), null, FileUtil.toSystemIndependentName(root), myFilesToDelete, false);
+    VirtualFile tempProjectRootDir =
+      PsiTestUtil.createTestProjectStructure(getTestName(true), null, FileUtil.toSystemIndependentName(root), myFilesToDelete, false);
 
     VirtualFile projectFile = tempProjectRootDir.findChild("orderEntry.ipr");
 
@@ -57,7 +59,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
     VirtualFile virtualFile = root.findFileByRelativePath(fileName);
     configureByExistingFile(virtualFile);
-    Pair<String,Boolean> pair = LightQuickFixTestCase.parseActionHint(getFile(), getFile().getText());
+    Pair<String, Boolean> pair = LightQuickFixTestCase.parseActionHint(getFile(), getFile().getText());
     final String text = pair.getFirst();
     final boolean actionShouldBeAvailable = pair.getSecond().booleanValue();
     Collection<HighlightInfo> infosBefore = highlightErrors();
@@ -65,9 +67,9 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
     if (action == null) {
       if (actionShouldBeAvailable) {
-        fail("Action with text '" + text + "' is not available in test " + testFullPath+"." +
-             "\nAvailable actions are: "+LightQuickFixTestCase.getAvailableActions(getEditor(), getFile())
-             +"\nInfos are: "+infosBefore
+        fail("Action with text '" + text + "' is not available in test " + testFullPath + "." +
+             "\nAvailable actions are: " + LightQuickFixTestCase.getAvailableActions(getEditor(), getFile())
+             + "\nInfos are: " + infosBefore
         );
       }
     }
@@ -87,7 +89,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       if (afterAction != null) {
         fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
       }
-      assertEquals(infosBefore.size()-1, infosAfter.size());
+      assertEquals(infosBefore.size() - 1, infosAfter.size());
     }
   }
 
@@ -96,12 +98,18 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     return LightQuickFixTestCase.findActionWithText(actions, actionText);
   }
 
-  public void testAddDependency() throws Exception { doTest("B/src/y/AddDependency.java"); }
-  public void testAddLibrary() throws Exception { doTest("B/src/y/AddLibrary.java"); }
+  public void testAddDependency() throws Exception {
+    doTest("B/src/y/AddDependency.java");
+  }
+
+  public void testAddLibrary() throws Exception {
+    doTest("B/src/y/AddLibrary.java");
+  }
+
   public void testAddCircularDependency() throws Exception {
     final Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
     final Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
-    PsiTestUtil.addDependency(a, b);
+    ModuleRootModificationUtil.addDependency(a, b);
 
     try {
       doTest("B/src/y/AddDependency.java");
@@ -109,12 +117,13 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     }
     catch (RuntimeException e) {
       final String expected = "Adding dependency on module '" + a.getName() + "'" +
-                             " will introduce circular dependency between modules '" + a.getName() + "' and '" +
-                             b.getName() + "'.\n" + "Add dependency anyway?";
+                              " will introduce circular dependency between modules '" + a.getName() + "' and '" +
+                              b.getName() + "'.\n" + "Add dependency anyway?";
       String message = e.getMessage();
       assertEquals(expected, message);
     }
   }
+
   public void testAddJunit() throws Exception {
     doTest("A/src/x/DoTest.java");
   }

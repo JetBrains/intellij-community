@@ -51,10 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -158,7 +155,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             @Override
             public void run() {
               final LocateLibraryDialog dialog = new LocateLibraryDialog(currentModule, PathManager.getLibPath(), "annotations.jar",
-                                                                   QuickFixBundle.message("add.library.annotations.description"));
+                                                                         QuickFixBundle.message("add.library.annotations.description"));
               dialog.show();
               if (dialog.isOK()) {
                 new WriteCommandAction(project) {
@@ -212,12 +209,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             final Runnable doit = new Runnable() {
               @Override
               public void run() {
-                ModifiableRootModel model = ModuleRootManager.getInstance(currentModule).getModifiableModel();
-                final ModuleOrderEntry entry = model.addModuleOrderEntry(classModule);
-                if (ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile)) {
-                  entry.setScope(DependencyScope.TEST);
-                }
-                model.commit();
+                final boolean test = ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile);
+                ModuleRootModificationUtil.addDependency(currentModule, classModule,
+                                                         test ? DependencyScope.TEST : DependencyScope.COMPILE, false);
                 if (editor != null) {
                   final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
                   for (PsiClass psiClass : classes) {
@@ -257,7 +251,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             if (entryForFile instanceof ExportableOrderEntry &&
                 ((ExportableOrderEntry)entryForFile).getScope() == DependencyScope.TEST &&
                 !ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile)) {
-            } else {
+            }
+            else {
               continue;
             }
           }
@@ -339,31 +334,24 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
     assert libVirtFile != null : libPath;
 
-    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = manager.getModifiableModel();
-    final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
-    final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-    libraryModel.addRoot(libVirtFile, OrderRootType.CLASSES);
-    libraryModel.commit();
-
+    boolean inTests = false;
     if (location != null) {
       final VirtualFile vFile = location.getContainingFile().getVirtualFile();
       if (vFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(vFile)) {
-        final LibraryOrderEntry orderEntry = rootModel.findLibraryOrderEntry(jarLibrary);
-        orderEntry.setScope(DependencyScope.TEST);
+        inTests = true;
       }
     }
-
-    rootModel.commit();
+    ModuleRootModificationUtil.addModuleLibrary(module, null, Collections.singletonList(libVirtFile.getUrl()),
+                                                Collections.<String>emptyList(), inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
   }
 
   private static void showCircularWarningAndContinue(final Project project, final Pair<Module, Module> circularModules,
                                                      final Module classModule,
                                                      final Runnable doit) {
     final String message = QuickFixBundle.message("orderEntry.fix.circular.dependency.warning", classModule.getName(),
-                                                     circularModules.getFirst().getName(), circularModules.getSecond().getName());
+                                                  circularModules.getFirst().getName(), circularModules.getSecond().getName());
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
-    ApplicationManager.getApplication().invokeLater(new Runnable(){
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         if (!project.isOpen()) return;

@@ -19,6 +19,7 @@ import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.openapi.ui.ComboBox;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.event.ActionEvent;
@@ -30,10 +31,11 @@ import java.awt.event.KeyEvent;
  */
 public abstract class ComboEditor extends PropertyEditor {
   protected final ComboBox myCombo;
+  protected final Border myComboBorder;
 
   public ComboEditor() {
     myCombo = new ComboBox(-1);
-    myCombo.setBorder(null);
+    myComboBorder = myCombo.getBorder();
     addEditorSupport(this, myCombo);
   }
 

@@ -16,6 +16,8 @@
 package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -36,12 +38,18 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   private final TreeMap<Integer, Element> myPieces;
   private final Document myDocument;
   private final int myAdditionalOffset;
+  private TextAttributes myUsualAttributes;
+  private final boolean myMergeByTextAttributes;
 
   public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<TextRange> ranges) {
-    this(sourceIterator, ranges, 0);
+    this(sourceIterator, ranges, 0, false);
   }
 
-  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<TextRange> ranges, final int additionalOffset) {
+  public FragmentedEditorHighlighter(HighlighterIterator sourceIterator,
+                                     List<TextRange> ranges,
+                                     final int additionalOffset,
+                                     boolean mergeByTextAttributes) {
+    myMergeByTextAttributes = mergeByTextAttributes;
     myDocument = sourceIterator.getDocument();
     myPieces = new TreeMap<Integer, Element>();
     myAdditionalOffset = additionalOffset;
@@ -58,8 +66,23 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
       }
       while (range.getEndOffset() >= iterator.getEnd()) {
         int relativeStart = iterator.getStart() - range.getStartOffset();
-        myPieces.put(offset + relativeStart, new Element(offset + relativeStart,
-          offset + (iterator.getEnd() - range.getStartOffset()), iterator.getTokenType(), iterator.getTextAttributes()));
+        boolean merged = false;
+        if (myMergeByTextAttributes && ! myPieces.isEmpty()) {
+          final Integer first = myPieces.descendingKeySet().first();
+          final Element element = myPieces.get(first);
+          if (element.getEnd() >= offset + relativeStart && myPieces.get(first).getAttributes().equals(iterator.getTextAttributes())) {
+            // merge
+            merged = true;
+            myPieces.put(element.getStart(), new Element(element.getStart(),
+                                                         offset + (iterator.getEnd() - range.getStartOffset()), iterator.getTokenType(),
+                                                         iterator.getTextAttributes()));
+          }
+        }
+        if (! merged) {
+          myPieces.put(offset + relativeStart, new Element(offset + relativeStart,
+                                                           offset + (iterator.getEnd() - range.getStartOffset()), iterator.getTokenType(),
+                                                           iterator.getTextAttributes()));
+        }
         iterator.advance();
         if (iterator.atEnd()) return;
       }
@@ -151,6 +174,22 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     public Document getDocument() {
       return myDocument;
     }
+  }
+
+  private boolean isUsualAttributes(final TextAttributes ta) {
+    if (myUsualAttributes == null) {
+      final EditorColorsManager manager = EditorColorsManager.getInstance();
+      final EditorColorsScheme[] schemes = manager.getAllSchemes();
+      EditorColorsScheme defaultScheme = schemes[0];
+      for (EditorColorsScheme scheme : schemes) {
+        if (manager.isDefaultScheme(scheme)) {
+          defaultScheme = scheme;
+          break;
+        }
+      }
+      myUsualAttributes = defaultScheme.getAttributes(HighlighterColors.TEXT);
+    }
+    return myUsualAttributes.equals(ta);
   }
   
   private static class Element {

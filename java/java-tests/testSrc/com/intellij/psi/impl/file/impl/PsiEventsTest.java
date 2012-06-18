@@ -6,11 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -19,8 +15,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
-import com.intellij.util.io.ReadOnlyAttributeUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.WaitFor;
+import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -66,17 +63,13 @@ public class PsiEventsTest extends PsiTestCase {
 
           myExcludedDir1 = mySrcDir1.createChildDirectory(null, "excluded");
 
-          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          final ContentEntry contentEntry1 = rootModel.addContentEntry(myPrjDir1);
-          contentEntry1.addSourceFolder(mySrcDir1, false);
-          contentEntry1.addSourceFolder(mySrcDir2, false);
-          contentEntry1.addExcludeFolder(myExcludedDir1);
-          final Library.ModifiableModel libraryModel = rootModel.getModuleLibraryTable().createLibrary().getModifiableModel();
-          libraryModel.addRoot(myClsDir1, OrderRootType.CLASSES);
-          libraryModel.commit();
-          final ContentEntry contentEntry2 = rootModel.addContentEntry(myPrjDir2);
-          contentEntry2.addSourceFolder(mySrcDir3, false);
-          rootModel.commit();
+          PsiTestUtil.addContentRoot(myModule, myPrjDir1);
+          PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
+          PsiTestUtil.addSourceRoot(myModule, mySrcDir2);
+          PsiTestUtil.addContentRoot(myModule, myPrjDir2);
+          PsiTestUtil.addExcludedRoot(myModule, myExcludedDir1);
+          ModuleRootModificationUtil.addModuleLibrary(myModule, myClsDir1.getUrl());
+          PsiTestUtil.addSourceRoot(myModule, mySrcDir3);
         } catch (IOException e) {
           LOG.error(e);
         }
@@ -463,15 +456,7 @@ public class PsiEventsTest extends PsiTestCase {
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry contentEntry1 = rootModel.getContentEntries()[0];
-        contentEntry1.addExcludeFolder(dir);
-        rootModel.commit();
-      }
-    });
+    PsiTestUtil.addExcludedRoot(myModule, dir);
 
 
     String string = listener.getEventsString();
@@ -487,16 +472,7 @@ public class PsiEventsTest extends PsiTestCase {
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry contentEntry1 = rootModel.getContentEntries()[0];
-        contentEntry1.addSourceFolder(dir, false);
-        rootModel.commit();
-      }
-    });
-
+    PsiTestUtil.addSourceRoot(myModule, dir);
 
     String string = listener.getEventsString();
     String expected =

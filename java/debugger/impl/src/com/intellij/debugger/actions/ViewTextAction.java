@@ -20,8 +20,10 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -89,7 +91,15 @@ public class ViewTextAction extends BaseValueAction {
   private static class TextViewer extends EditorTextField {
 
     private TextViewer(Project project) {
-      super(EditorFactory.getInstance().createDocument(""), project, FileTypes.PLAIN_TEXT, true, false);
+      super(createDocument(), project, FileTypes.PLAIN_TEXT, true, false);
+    }
+
+    private static Document createDocument() {
+      final Document document = EditorFactory.getInstance().createDocument("");
+      if (document instanceof DocumentImpl) {
+        ((DocumentImpl)document).setAcceptSlashR(true);
+      }
+      return document;
     }
 
     protected EditorEx createEditor() {

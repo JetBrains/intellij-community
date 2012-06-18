@@ -418,7 +418,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   
   protected Collection<Profile> getProfiles() {
     final Collection<Profile> result = new ArrayList<Profile>();
-    result.addAll(myProfileManager.getProfiles());
+    result.addAll(new TreeSet<Profile>(myProfileManager.getProfiles()));
     result.addAll(myProjectProfileManager.getProfiles());
     return result;
   }

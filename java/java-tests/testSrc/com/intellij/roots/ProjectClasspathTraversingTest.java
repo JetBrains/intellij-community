@@ -16,12 +16,8 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.ProjectClasspathTraversing;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 
 /**
@@ -30,7 +26,7 @@ import com.intellij.util.PathsList;
 @SuppressWarnings({"deprecation"})
 public class ProjectClasspathTraversingTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     doTest(ProjectClasspathTraversing.FULL_CLASSPATH, getRtJar(), getJDomJar());
     doTest(ProjectClasspathTraversing.FULL_CLASS_RECURSIVE_WO_JDK, getJDomJar());
@@ -38,7 +34,7 @@ public class ProjectClasspathTraversingTest extends ModuleRootManagerTestCase {
     doTest(ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS, getJDomJar());
     doTest(ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS, getRtJar(), getJDomJar());
   }
-  
+
   public void testModuleOutput() throws Exception {
     addSourceRoot(myModule, false);
     final VirtualFile output = setModuleOutput(myModule, false);
@@ -52,7 +48,7 @@ public class ProjectClasspathTraversingTest extends ModuleRootManagerTestCase {
   }
 
   public void testLibraryScope() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary(), DependencyScope.TEST, true);
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.TEST, true);
 
     doTest(ProjectClasspathTraversing.FULL_CLASSPATH, getRtJar(), getJDomJar());
     doTest(ProjectClasspathTraversing.FULL_CLASS_RECURSIVE_WO_JDK, getJDomJar());
@@ -65,8 +61,8 @@ public class ProjectClasspathTraversingTest extends ModuleRootManagerTestCase {
     final Module dep = createModule("dep");
     final VirtualFile output = setModuleOutput(dep, false);
     final VirtualFile testOutput = setModuleOutput(dep, true);
-    addLibraryDependency(dep, createJDomLibrary());
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     doTest(ProjectClasspathTraversing.FULL_CLASSPATH, getRtJar());
     doTest(ProjectClasspathTraversing.FULL_CLASS_RECURSIVE_WO_JDK, testOutput, output, getJDomJar());

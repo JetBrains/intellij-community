@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
@@ -38,6 +39,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
 
   public PsiMethodPattern withParameterCount(@NonNls final int paramCount) {
     return with(new PatternCondition<PsiMethod>("withParameterCount") {
+      @Override
       public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
         return method.getParameterList().getParametersCount() == paramCount;
       }
@@ -46,12 +48,14 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
 
   /**
    * Selects the corrected method by argument types
-   * @param types the array of FQN of the parameter types or wildcards.
+   * @param inputTypes the array of FQN of the parameter types or wildcards.
    * The special values are:<bl><li>"?" - means any type</li><li>".." - instructs pattern to accept the rest of the arguments</li></bl>
    * @return
    */
-  public PsiMethodPattern withParameters(@NonNls final String... types) {
+  public PsiMethodPattern withParameters(@NonNls final String... inputTypes) {
+    final String[] types = inputTypes.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : inputTypes;
     return with(new PatternCondition<PsiMethod>("withParameters") {
+      @Override
       public boolean accepts(@NotNull final PsiMethod psiMethod, final ProcessingContext context) {
         final PsiParameterList parameterList = psiMethod.getParameterList();
         int dotsIndex = -1;
@@ -91,7 +95,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
     });
   }
 
-  public PsiMethodPattern definedInClass(final @NonNls String qname) {
+  public PsiMethodPattern definedInClass(@NonNls final String qname) {
     return definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(qname));
   }
 
@@ -103,6 +107,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
         if (!processor.process(t.getContainingClass(), context)) return false;
         final Ref<Boolean> result = Ref.create(Boolean.TRUE);
         SuperMethodsSearch.search(t, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
+          @Override
           public boolean process(final MethodSignatureBackedByPsiMethod signature) {
             if (!processor.process(signature.getMethod().getContainingClass(), context)) {
               result.set(Boolean.FALSE);
@@ -118,6 +123,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
 
   public PsiMethodPattern constructor(final boolean isConstructor) {
     return with(new PatternCondition<PsiMethod>("constructor") {
+      @Override
       public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
         return method.isConstructor() == isConstructor;
       }
@@ -127,6 +133,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
 
   public PsiMethodPattern withThrowsList(final ElementPattern<?> pattern) {
     return with(new PatternCondition<PsiMethod>("withThrowsList") {
+      @Override
       public boolean accepts(@NotNull final PsiMethod method, final ProcessingContext context) {
         return pattern.accepts(method.getThrowsList());
       }

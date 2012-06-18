@@ -1,12 +1,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -52,24 +47,11 @@ public class SearchInLibsTest extends PsiTestCase {
     final VirtualFile libClassesRoot = libRoot.findChild("classes");
     final VirtualFile libSrcRoot = libRoot.findChild("src");
     assertNotNull(libRoot);
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.clear();
-        rootModel.setSdk(null);
-        final ContentEntry contentEntry = rootModel.addContentEntry(projectRoot);
-        contentEntry.addSourceFolder(projectRoot, false);
-        contentEntry.addSourceFolder(innerSourceRoot, false);
-        final Library.ModifiableModel libraryModel = rootModel.getModuleLibraryTable().createLibrary().getModifiableModel();
-        libraryModel.addRoot(libSrcRoot, OrderRootType.SOURCES);
-        libraryModel.addRoot(libClassesRoot, OrderRootType.CLASSES);
-        libraryModel.commit();
-        rootModel.commit();
-      }
-    });
-
+    PsiTestUtil.removeAllRoots(myModule, null);
+    PsiTestUtil.addSourceRoot(myModule, projectRoot);
+    PsiTestUtil.addSourceRoot(myModule, innerSourceRoot);
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(libClassesRoot.getUrl()), Collections.singletonList(libSrcRoot.getUrl()));
 
     final PsiClass aClass = myJavaFacade.findClass(classNameToSearch);
     assertNotNull(aClass);

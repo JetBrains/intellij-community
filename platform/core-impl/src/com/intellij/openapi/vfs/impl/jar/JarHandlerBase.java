@@ -69,9 +69,9 @@ public class JarHandlerBase {
         map = new THashMap<String, EntryInfo>();
         if (zip != null) {
           map.put("", new EntryInfo("", null, true));
-          final Enumeration<? extends ZipEntry> entries = zip.entries();
+          final Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
           while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
+            JarFile.JarEntry entry = entries.nextElement();
             final String name = entry.getName();
             final boolean isDirectory = name.endsWith("/");
             getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
@@ -104,20 +104,70 @@ public class JarHandlerBase {
   protected JarFile createJarFile() {
     try {
       final ZipFile zipFile = new ZipFile(getMirrorFile(getOriginalFile()));
+
+      class MyJarEntry implements JarFile.JarEntry {
+        private ZipEntry myEntry;
+
+        MyJarEntry(ZipEntry entry) {
+          myEntry = entry;
+        }
+
+        public ZipEntry getEntry() {
+          return myEntry;
+        }
+
+        @Override
+        public String getName() {
+          return myEntry.getName();
+        }
+
+        @Override
+        public long getSize() {
+          return myEntry.getSize();
+        }
+
+        @Override
+        public long getTime() {
+          return myEntry.getTime();
+        }
+
+        @Override
+        public boolean isDirectory() {
+          return myEntry.isDirectory();
+        }
+      }
+
       return new JarFile() {
         @Override
-        public ZipEntry getEntry(String name) {
-          return zipFile.getEntry(name);
+        public JarFile.JarEntry getEntry(String name) {
+          ZipEntry entry = zipFile.getEntry(name);
+          if (entry == null)
+            return null;
+          return new MyJarEntry(entry);
         }
 
         @Override
-        public InputStream getInputStream(ZipEntry entry) throws IOException {
-          return zipFile.getInputStream(entry);
+        public InputStream getInputStream(JarFile.JarEntry entry) throws IOException {
+          return zipFile.getInputStream(((MyJarEntry)entry).myEntry);
         }
 
         @Override
-        public Enumeration<? extends ZipEntry> entries() {
-          return zipFile.entries();
+        public Enumeration<? extends JarFile.JarEntry> entries() {
+          final Enumeration<? extends ZipEntry> entries = zipFile.entries();
+          return new Enumeration<JarEntry>() {
+            @Override
+            public boolean hasMoreElements() {
+              return entries.hasMoreElements();
+            }
+
+            @Override
+            public JarEntry nextElement() {
+              ZipEntry entry = entries.nextElement();
+              if (entry == null)
+                return null;
+              return new MyJarEntry(entry);
+            }
+          };
         }
 
         @Override
@@ -187,7 +237,7 @@ public class JarHandlerBase {
   }
 
   @Nullable
-  private ZipEntry convertToEntry(VirtualFile file) {
+  private JarFile.JarEntry convertToEntry(VirtualFile file) {
     String path = getRelativePath(file);
     final JarFile jar = getJar();
     return jar != null ? jar.getEntry(path) : null;
@@ -195,7 +245,7 @@ public class JarHandlerBase {
 
   public long getLength(@NotNull final VirtualFile file) {
     synchronized (lock) {
-      final ZipEntry entry = convertToEntry(file);
+      final JarFile.JarEntry entry = convertToEntry(file);
       return entry != null ? entry.getSize() : 0;
     }
   }
@@ -208,7 +258,7 @@ public class JarHandlerBase {
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     synchronized (lock) {
-      final ZipEntry entry = convertToEntry(file);
+      final JarFile.JarEntry entry = convertToEntry(file);
       if (entry == null) {
         return new byte[0];
       }
@@ -231,7 +281,7 @@ public class JarHandlerBase {
   public long getTimeStamp(@NotNull final VirtualFile file) {
     if (file.getParent() == null) return getOriginalFile().lastModified(); // Optimization
     synchronized (lock) {
-      final ZipEntry entry = convertToEntry(file);
+      final JarFile.JarEntry entry = convertToEntry(file);
       return entry != null ? entry.getTime() : -1L;
     }
   }
@@ -257,7 +307,7 @@ public class JarHandlerBase {
   @Nullable
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
     synchronized (lock) {
-      final ZipEntry entry = convertToEntry(file);
+      final JarFile.JarEntry entry = convertToEntry(file);
       return entry != null ? new FileAttributes(entry.isDirectory(), false, false, entry.getSize(), entry.getTime(), false) : null;
     }
   }

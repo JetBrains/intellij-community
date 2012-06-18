@@ -250,20 +250,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry[] content = rootModel.getContentEntries();
-        for (ContentEntry contentEntry : content) {
-          if (root.equals(contentEntry.getFile())) {
-            contentEntry.addExcludeFolder(dir);
-            break;
-          }
-        }
-        rootModel.commit();
-      }
-    });
-
+    PsiTestUtil.addExcludedRoot(myModule, dir);
 
     PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception",GlobalSearchScope.allScope(getProject()));
     assertNotNull(exceptionClass);
@@ -277,20 +264,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     final VirtualFile dir = root.findChild("aDir");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry[] content = rootModel.getContentEntries();
-        for (ContentEntry contentEntry : content) {
-          if (root.equals(contentEntry.getFile())) {
-            contentEntry.addExcludeFolder(dir);
-            break;
-          }
-        }
-        rootModel.commit();
-      }
-    });
-
+    PsiTestUtil.addExcludedRoot(myModule, dir);
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
@@ -341,9 +315,7 @@ public class UpdateCacheTest extends PsiTestCase{
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        rootModel.addContentEntry(root);
-        rootModel.commit();
+        PsiTestUtil.addContentRoot(myModule, root);
 
         VirtualFile newFile = root.createChildData(null, "New.java");
         VfsUtil.saveText(newFile, "class A{ Exception e;} //todo");
@@ -354,20 +326,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel1 = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry[] content = rootModel1.getContentEntries();
-        for (ContentEntry contentEntry : content) {
-          if (root.equals(contentEntry.getFile())) {
-            contentEntry.addSourceFolder(root, false);
-            break;
-          }
-        }
-        rootModel1.commit();
-      }
-    });
-
+    PsiTestUtil.addSourceRoot(myModule, root);
 
     PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     assertNotNull(exceptionClass);
@@ -432,9 +391,7 @@ public class UpdateCacheTest extends PsiTestCase{
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        rootModel.addContentEntry(root).addSourceFolder(root, false);
-        rootModel.commit();
+        PsiTestUtil.addSourceRoot(myModule, root);
 
         VirtualFile newFile = root.createChildData(null, "New.java");
         VfsUtil.saveText(newFile, "class A{ Exception e;} //todo");
@@ -480,20 +437,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry[] content = rootModel.getContentEntries();
-        for (ContentEntry contentEntry : content) {
-          if (root.equals(contentEntry.getFile())) {
-            contentEntry.addExcludeFolder(root);
-            break;
-          }
-        }
-        rootModel.commit();
-      }
-    });
-
+    PsiTestUtil.addExcludedRoot(myModule, root);
 
     PsiClass exceptionClass = myJavaFacade.findClass("java.lang.Exception", GlobalSearchScope.allScope(getProject()));
     assertNotNull(exceptionClass);

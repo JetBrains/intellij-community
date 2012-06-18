@@ -34,7 +34,7 @@
 
     <presentation title=" - %layout:xml%"/>
 
-    <palette title="include" icon="/com/intellij/android/designer/icons/include.png"
+    <palette title="&lt;Include&gt;" icon="/com/intellij/android/designer/icons/include.png"
              tooltip="Lets you statically include XML layout inside other XML layouts."/>
 
     <properties inplace="layout:xml"/>
@@ -46,7 +46,7 @@
 
     <presentation title=" - %name%"/>
 
-    <palette title="fragment" icon="/com/intellij/android/designer/icons/fragment.png"
+    <palette title="&lt;Fragment&gt;" icon="/com/intellij/android/designer/icons/fragment.png"
              tooltip="A Fragment is a piece of an application's user interface or behavior that can be placed in an Activity."/>
 
     <properties inplace="name"/>
@@ -87,7 +87,7 @@
     <properties
         inplace="text"
         important="text hint textColor typeface textStyle gravity editable enabled"
-        expert="bufferType textScaleX cursorVisible scrollHorizontally includeFontPadding shadowDx shadowDy shadowRadius freezesText drawableTop drawableLeft drawableStart drawablePadding lineSpacingExtra lineSpacingMultiplier imeOptions privateImeOptions imeActionLabel imeActionId editorExtras textSelectHandleLeft textSelectHandleRight textSelectHandle textEditPasteWindowLayout textEditNoPasteWindowLayout textEditSideNoPasteWindowLayout textEditSuggestionItemLayout textCursorDrawable textAllCaps maxEms ems minEms"
+        expert="selectAllOnFocus bufferType textScaleX cursorVisible scrollHorizontally includeFontPadding shadowDx shadowDy shadowRadius freezesText drawableTop drawableLeft drawableStart drawablePadding drawableBottom drawableEnd drawableRight lineSpacingExtra lineSpacingMultiplier imeOptions privateImeOptions imeActionLabel imeActionId editorExtras marqueeRepeatLimit textSelectHandleLeft textSelectHandleRight textSelectHandle textEditPasteWindowLayout textEditNoPasteWindowLayout textEditSidePasteWindowLayout textEditSideNoPasteWindowLayout textEditSuggestionItemLayout textCursorDrawable textAllCaps maxEms ems minEms"
         />
 
     <creation>
@@ -257,6 +257,8 @@
 
     <morphing to="TextView CheckedTextView ImageView SearchView"/>
 
+    <properties normal="selectAllOnFocus" important="inputType"/>
+
     <creation>
       <![CDATA[
           <EditText
@@ -279,7 +281,7 @@
 
     <morphing to="TextView CheckedTextView EditText MultiAutoCompleteTextView ImageView SearchView"/>
 
-    <properties inplace="text inputType"/>
+    <properties inplace="text"/>
 
     <creation>
       <![CDATA[
@@ -343,6 +345,8 @@
 
     <morphing to="DigitalClock"/>
 
+    <properties important="dial hand_hour hand_minute"/>
+
     <creation>
       <![CDATA[
           <AnalogClock
@@ -376,10 +380,12 @@
         class="android.widget.Chronometer"
         tag="Chronometer">
 
+    <presentation title=" - &quot;%format%&quot;"/>
+
     <palette title="Chronometer" icon="/com/intellij/android/designer/icons/Chronometer.png"
              tooltip="Class that implements a simple timer."/>
 
-    <properties inplace="text format"
+    <properties inplace="format text"
                 important="format"/>
 
     <creation>
@@ -473,6 +479,8 @@
              tooltip="A SeekBar is an extension of ProgressBar that adds a draggable thumb."/>
 
     <morphing to="ProgressBar RatingBar"/>
+
+    <properties inplace="max progress indeterminate"/>
 
     <creation>
       <![CDATA[
@@ -574,6 +582,8 @@
     <palette title="QuickContactBadge" icon="/com/intellij/android/designer/icons/QuickContactBadge.png"
              tooltip="Widget used to show an image with the standard QuickContact badge and on-click behavior."/>
 
+    <properties important="quickContactWindowSize"/>
+
     <creation>
       <![CDATA[
           <QuickContactBadge
@@ -607,8 +617,6 @@
 
     <palette title="KeyboardView" icon="/com/intellij/android/designer/icons/TextView.png"
              tooltip="A view that renders a virtual Keyboard. It handles rendering of keys and detecting key presses and touch movements."/>
-
-    <properties important="keyTextColor"/>
 
     <creation>
       <![CDATA[
@@ -735,6 +743,8 @@
     <palette title="NumberPicker" icon="/com/intellij/android/designer/icons/NumberPicker.png"
              tooltip="A widget that enables the user to select a number form a predefined range. The widget presents an input field and up and down buttons for selecting the current value. Pressing/long-pressing the up and down buttons increments and decrements the current value respectively."/>
 
+    <properties important="solidColor flingable selectionDivider selectionDividerHeight"/>
+
     <creation>
       <![CDATA[
           <NumberPicker
@@ -769,7 +779,7 @@
     <palette title="SearchView" icon="/com/intellij/android/designer/icons/SearchView.png"
              tooltip="A widget that provides a user interface for the user to enter a search query and submit a request to a search provider. Shows a list of query suggestions or results, if available, and allows the user to pick a suggestion or result to launch into."/>
 
-    <properties inplace="queryHint inputType"
+    <properties inplace="queryHint"
                 important="iconifiedByDefault queryHint imeOptions inputType"/>
 
     <creation>
@@ -838,7 +848,7 @@
 
     <morphing to="ListView ExpandableListView"/>
 
-    <properties inplace="numColumns"
+    <properties inplace="numColumns choiceMode"
                 important="horizontalSpacing verticalSpacing stretchMode columnWidth numColumns gravity"/>
 
     <creation>
@@ -921,8 +931,7 @@
     <palette title="Gallery" icon="/com/intellij/android/designer/icons/Gallery.png"
              tooltip="A view that shows items in a center-locked, horizontally scrolling list."/>
 
-    <properties inplace="gravity"
-                important="gravity"/>
+    <properties important="gravity animationDuration spacing unselectedAlpha"/>
 
     <creation>
       <![CDATA[
@@ -1115,7 +1124,7 @@
 
     <morphing to="LinearLayout TableLayout GridLayout RelativeLayout"/>
 
-    <properties inplace="orientation checkedButton"
+    <properties inplace="orientation"
                 important="orientation checkedButton"
                 top="gravity orientation"/>
 
@@ -1390,8 +1399,8 @@
         class="android.widget.GridLayout"
         tag="GridLayout">
 
-    <properties inplace="orientation rowCount columnCount"
-                important="orientation rowCount columnCount"
+    <properties inplace="rowCount columnCount orientation "
+                important="orientation rowCount columnCount useDefaultMargins alignmentMode rowOrderPreserved columnOrderPreserved"
                 top="rowCount columnCount"
                 expert="layout:gravity.clip layout:gravity.start layout:gravity.end"
         />
@@ -1416,8 +1425,7 @@
         class="android.widget.RelativeLayout"
         tag="RelativeLayout">
 
-    <properties inplace="gravity"
-                important="gravity"/>
+    <properties important="gravity ignoreGravity"/>
 
     <palette title="RelativeLayout" icon="/com/intellij/android/designer/icons/RelativeLayout.png"
              tooltip="A Layout where the positions of the children can be described in relation to each other or to the parent."/>
@@ -1444,57 +1452,61 @@
       <item tag="RelativeLayout"/>
     </group>
     <group name="Widgets">
+      <item tag="TextView"/>
+      <item tag="EditText"/>
       <item tag="Button"/>
       <item tag="RadioButton"/>
       <item tag="CheckBox"/>
       <item tag="Switch"/>
       <item tag="ToggleButton"/>
       <item tag="ImageButton"/>
-      <item tag="ZoomButton"/>
       <item tag="ImageView"/>
-      <item tag="TextView"/>
-      <item tag="EditText"/>
-      <item tag="CheckedTextView"/>
-      <item tag="ExtractEditText"/>
-      <item tag="AutoCompleteTextView"/>
-      <item tag="MultiAutoCompleteTextView"/>
-      <item tag="Chronometer"/>
-      <item tag="AnalogClock"/>
-      <item tag="DigitalClock"/>
-      <item tag="QuickContactBadge"/>
       <item tag="ProgressBar"/>
       <item tag="SeekBar"/>
       <item tag="RatingBar"/>
-      <item tag="Space"/>
-      <item tag="ViewStub"/>
-      <item tag="VideoView"/>
-      <item tag="MediaController"/>
+      <item tag="Spinner"/>
       <item tag="WebView"/>
       <item tag="KeyboardView"/>
-      <item tag="GestureOverlayView"/>
-      <item tag="SurfaceView"/>
-      <item tag="TextureView"/>
     </group>
     <group name="Containers">
-      <item tag="DatePicker"/>
-      <item tag="CalendarView"/>
-      <item tag="TimePicker"/>
-      <item tag="NumberPicker"/>
-      <item tag="ZoomControls"/>
-      <item tag="SearchView"/>
       <item tag="RadioGroup"/>
       <item tag="ListView"/>
       <item tag="GridView"/>
+      <item tag="ExpandableListView"/>
+      <item tag="ScrollView"/>
+      <item tag="HorizontalScrollView"/>
+      <item tag="SearchView"/>
       <item tag="TabHost"/>
       <item tag="SlidingDrawer"/>
       <item tag="Gallery"/>
-      <item tag="Spinner"/>
-      <item tag="ExpandableListView"/>
-      <item tag="HorizontalScrollView"/>
-      <item tag="ScrollView"/>
-      <item tag="StackView"/>
+      <item tag="VideoView"/>
       <item tag="TwoLineListItem"/>
       <item tag="DialerFilter"/>
+    </group>
+    <group name="Date &amp; Time">
+      <item tag="AnalogClock"/>
+      <item tag="DigitalClock"/>
+      <item tag="Chronometer"/>
+      <item tag="DatePicker"/>
+      <item tag="TimePicker"/>
+      <item tag="CalendarView"/>
+    </group>
+    <group name="Expert">
+      <item tag="Space"/>
+      <item tag="CheckedTextView"/>
+      <item tag="QuickContactBadge"/>
+      <item tag="ExtractEditText"/>
+      <item tag="AutoCompleteTextView"/>
+      <item tag="MultiAutoCompleteTextView"/>
+      <item tag="NumberPicker"/>
+      <item tag="ZoomButton"/>
+      <item tag="ZoomControls"/>
+      <item tag="MediaController"/>
+      <item tag="GestureOverlayView"/>
+      <item tag="SurfaceView"/>
+      <item tag="TextureView"/>
+      <item tag="StackView"/>
+      <item tag="ViewStub"/>
       <item tag="ViewAnimator"/>
       <item tag="ViewFlipper"/>
       <item tag="ViewSwitcher"/>

@@ -62,36 +62,38 @@ public abstract class InspectionTestCase extends PsiTestCase {
   private VirtualFile ext_src;
 
   public InspectionManagerEx getManager() {
-    return (InspectionManagerEx) InspectionManager.getInstance(myProject);
+    return (InspectionManagerEx)InspectionManager.getInstance(myProject);
   }
 
-  public void doTest(@NonNls String folderName, LocalInspectionTool tool) throws Exception {
+  public void doTest(@NonNls String folderName, LocalInspectionTool tool) {
     doTest(folderName, new LocalInspectionToolWrapper(tool));
   }
-  public void doTest(@NonNls String folderName, GlobalInspectionTool tool) throws Exception {
+
+  public void doTest(@NonNls String folderName, GlobalInspectionTool tool) {
     doTest(folderName, new GlobalInspectionToolWrapper(tool));
   }
-  public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange) throws Exception {
+
+  public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange) {
     doTest(folderName, new GlobalInspectionToolWrapper(tool), checkRange);
   }
 
-  public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange, boolean runDeadCodeFirst) throws Exception {
+  public void doTest(@NonNls String folderName, GlobalInspectionTool tool, boolean checkRange, boolean runDeadCodeFirst) {
     doTest(folderName, new GlobalInspectionToolWrapper(tool), "java 1.4", checkRange, runDeadCodeFirst);
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool) throws Exception {
+  public void doTest(@NonNls String folderName, InspectionTool tool) {
     doTest(folderName, tool, "java 1.4");
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool, final boolean checkRange) throws Exception {
+  public void doTest(@NonNls String folderName, InspectionTool tool, final boolean checkRange) {
     doTest(folderName, tool, "java 1.4", checkRange);
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName) throws Exception {
+  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName) {
     doTest(folderName, tool, jdkName, false);
   }
 
-  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName, boolean checkRange) throws Exception {
+  public void doTest(@NonNls String folderName, InspectionTool tool, @NonNls final String jdkName, boolean checkRange) {
     doTest(folderName, tool, jdkName, checkRange, false);
   }
 
@@ -100,7 +102,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
                      @NonNls final String jdkName,
                      boolean checkRange,
                      boolean runDeadCodeFirst,
-                     InspectionTool... additional) throws Exception {
+                     InspectionTool... additional) {
     final String testDir = getTestDataPath() + "/" + folderName;
     runTool(testDir, jdkName, runDeadCodeFirst, tool, additional);
 
@@ -122,17 +124,19 @@ public abstract class InspectionTestCase extends PsiTestCase {
       public void run() {
         try {
           setupRootModel(testDir, sourceDir, jdkName);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
           LOG.error(e);
         }
       }
     });
     AnalysisScope scope = createAnalysisScope(sourceDir[0].getParent());
 
-    InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(getProject());
+    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
     InspectionTool[] tools = runDeadCodeFirst ? new InspectionTool[]{new UnusedDeclarationInspection(), tool} : new InspectionTool[]{tool};
     tools = ArrayUtil.mergeArrays(tools, additional);
-    final GlobalInspectionContextImpl globalContext = CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, tools);
+    final GlobalInspectionContextImpl globalContext =
+      CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, tools);
 
     InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);
   }
@@ -236,7 +240,6 @@ public abstract class InspectionTestCase extends PsiTestCase {
   @Override
   @NonNls
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath()+"/inspection/";
+    return PathManagerEx.getTestDataPath() + "/inspection/";
   }
-
 }

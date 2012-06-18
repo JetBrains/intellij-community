@@ -202,7 +202,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testLocalVarsOverMethods() {
-    checkPreferredItems(0, "value");
+    checkPreferredItems(0, "value", "valueOf");
   }
 
   public void testCurrentClassBest() {
@@ -329,12 +329,12 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testCaseInsensitivePrefixMatch() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    try {
-      checkPreferredItems(1, "Foo", "foo1", "foo2");
-    }
-    finally {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
-    }
+    checkPreferredItems(1, "Foo", "foo1", "foo2");
+  }
+
+  public void testExpectedTypeIsMoreImportantThanCase() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    checkPreferredItems(0, "ENABLED", "enable");
   }
 
   public void testPreferKeywordsToVoidMethodsInExpectedTypeContext() {

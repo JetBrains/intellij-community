@@ -1,12 +1,8 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 
 /**
@@ -15,7 +11,7 @@ import com.intellij.util.PathsList;
 @SuppressWarnings({"deprecation"})
 public class OrderEntriesTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
     assertOrderFiles(OrderRootType.CLASSES, getRtJar(), getJDomJar());
     assertOrderFiles(OrderRootType.SOURCES, getJDomSources());
     assertOrderFiles(OrderRootType.CLASSES_AND_OUTPUT, getRtJar(), getJDomJar());
@@ -37,7 +33,7 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
   }
 
   public void testLibraryScope() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary(), DependencyScope.TEST, false);
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.TEST, false);
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar(), getJDomJar());
     assertOrderFiles(OrderRootType.SOURCES, getJDomSources());
@@ -52,8 +48,8 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
     final VirtualFile testRoot = addSourceRoot(dep, true);
     final VirtualFile output = setModuleOutput(dep, false);
     final VirtualFile testOutput = setModuleOutput(dep, true);
-    addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar(), getJDomJar());
     assertOrderFiles(OrderRootType.SOURCES, srcRoot, testRoot, getJDomSources());
@@ -64,8 +60,8 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
 
   public void testModuleDependencyScope() throws Exception {
     final Module dep = createModule("dep");
-    addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar(), getJDomJar());
     assertOrderFiles(OrderRootType.SOURCES, getJDomSources());
@@ -76,8 +72,8 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
 
   public void testNotExportedLibraryDependency() throws Exception {
     final Module dep = createModule("dep");
-    addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false);
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertOrderFiles(OrderRootType.CLASSES, getRtJar());
     assertOrderFiles(OrderRootType.SOURCES);

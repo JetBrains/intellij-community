@@ -30,8 +30,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -71,10 +70,10 @@ public class SdkConfigurationUtil {
     if (SystemInfo.isMac) {
       descriptor.putUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES, Boolean.TRUE);
     }
-    String suggestedPath = sdkTypes [0].suggestHomePath();
+    String suggestedPath = sdkTypes[0].suggestHomePath();
     VirtualFile suggestedDir = suggestedPath == null
                                ? null
-                               :  LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
+                               : LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new Consumer<List<VirtualFile>>() {
       @Override
       public void consume(List<VirtualFile> selectedFiles) {
@@ -90,7 +89,7 @@ public class SdkConfigurationUtil {
   }
 
   private static FileChooserDescriptor createCompositeDescriptor(final SdkType... sdkTypes) {
-    FileChooserDescriptor descriptor0 = sdkTypes [0].getHomeChooserDescriptor();
+    FileChooserDescriptor descriptor0 = sdkTypes[0].getHomeChooserDescriptor();
     FileChooserDescriptor descriptor = new FileChooserDescriptor(descriptor0.isChooseFiles(), descriptor0.isChooseFolders(),
                                                                  descriptor0.isChooseJars(), descriptor0.isChooseJarsAsFiles(),
                                                                  descriptor0.isChooseJarContents(), descriptor0.isChooseMultiple()) {
@@ -105,8 +104,8 @@ public class SdkConfigurationUtil {
           }
         }
         String message = files.length > 0 && files[0].isDirectory()
-                         ? ProjectBundle.message("sdk.configure.home.invalid.error", sdkTypes [0].getPresentableName())
-                         : ProjectBundle.message("sdk.configure.home.file.invalid.error", sdkTypes [0].getPresentableName());
+                         ? ProjectBundle.message("sdk.configure.home.invalid.error", sdkTypes[0].getPresentableName())
+                         : ProjectBundle.message("sdk.configure.home.file.invalid.error", sdkTypes[0].getPresentableName());
         throw new Exception(message);
       }
     };
@@ -174,15 +173,15 @@ public class SdkConfigurationUtil {
         ProjectRootManager.getInstance(project).setProjectSdk(sdk);
         final Module[] modules = ModuleManager.getInstance(project).getModules();
         if (modules.length > 0) {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(modules[0]).getModifiableModel();
-          model.inheritSdk();
-          model.commit();
+          ModuleRootModificationUtil.setSdkInherited(modules[0]);
         }
       }
     });
   }
 
-  public static void configureDirectoryProjectSdk(final Project project, @Nullable Comparator<Sdk> preferredSdkComparator, final SdkType... sdkTypes) {
+  public static void configureDirectoryProjectSdk(final Project project,
+                                                  @Nullable Comparator<Sdk> preferredSdkComparator,
+                                                  final SdkType... sdkTypes) {
     Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (existingSdk != null && ArrayUtil.contains(existingSdk.getSdkType(), sdkTypes)) {
       return;
@@ -226,7 +225,8 @@ public class SdkConfigurationUtil {
 
   /**
    * Tries to create an SDK identified by path; if successful, add the SDK to the global SDK table.
-   * @param path identifies the SDK
+   *
+   * @param path    identifies the SDK
    * @param sdkType
    * @return newly created SDK, or null.
    */
@@ -264,7 +264,7 @@ public class SdkConfigurationUtil {
     return newSdkName;
   }
 
-  public static void selectSdkHome(final SdkType sdkType, @NotNull final Consumer<String> consumer){
+  public static void selectSdkHome(final SdkType sdkType, @NotNull final Consumer<String> consumer) {
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
     FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), new Consumer<List<VirtualFile>>() {
       @Override
@@ -291,10 +291,10 @@ public class SdkConfigurationUtil {
   }
 
   public static void suggestAndAddSdk(@Nullable final Project project,
-                                       final Sdk[] existingSdks,
-                                       JComponent popupOwner,
-                                       final Consumer<Sdk> callback,
-                                       final SdkType... sdkTypes) {
+                                      final Sdk[] existingSdks,
+                                      JComponent popupOwner,
+                                      final Consumer<Sdk> callback,
+                                      final SdkType... sdkTypes) {
     assert sdkTypes.length > 0;
     final Map<String, SdkType> suggestedSdkHomes = new LinkedHashMap<String, SdkType>();
     for (SdkType sdkType : sdkTypes) {
@@ -339,7 +339,7 @@ public class SdkConfigurationUtil {
         }
         else {
           Sdk sdk = setupSdk(existingSdks, LocalFileSystem.getInstance().findFileByPath(selectedValue),
-                                                  sdkType, false, null, null);
+                             sdkType, false, null, null);
           callback.consume(sdk);
         }
         return FINAL_CHOICE;

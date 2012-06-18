@@ -37,7 +37,8 @@ public class JavaColorProvider implements ElementColorProvider {
       if (type != null) {
         final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
         if (aClass != null) {
-          if ("java.awt.Color".equals(aClass.getQualifiedName())) {
+          final String fqn = aClass.getQualifiedName();
+          if ("java.awt.Color".equals(fqn) || "javax.swing.plaf.ColorUIResource".equals(fqn)) {
             return getColor(expr.getArgumentList());
           }
         }
@@ -106,8 +107,7 @@ public class JavaColorProvider implements ElementColorProvider {
     
     PsiExpression[] expr = argumentList.getExpressions();
     ColorConstructors type = getConstructorType(argumentList.getExpressionTypes());
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    
+
     assert type != null;
 
     switch (type) {

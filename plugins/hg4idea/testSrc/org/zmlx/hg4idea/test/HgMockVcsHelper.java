@@ -95,7 +95,7 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
-  public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider,
+  public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(@NotNull CommittedChangesProvider<T, U> provider,
                                                                                                       RepositoryLocation location) {
     return null;
   }

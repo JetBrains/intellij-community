@@ -17,8 +17,6 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -34,9 +32,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.Notificator;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
@@ -130,41 +125,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        // Using GitHub Gist API v3: http://developer.github.com/v3/gists/
-        final HttpClient client = anonymous ? GithubUtil.getHttpClient(null, null) : GithubUtil.getHttpClient(settings.getLogin(), password);
-        final PostMethod method = new PostMethod("https://api.github.com/gists");
-
-        String request = prepareJsonRequest(description, isPrivate, text, file);
-
-        String response;
-        try {
-          method.setRequestEntity(new StringRequestEntity(request, "application/json", "UTF-8"));
-          client.executeMethod(method);
-          response = method.getResponseBodyAsString();
-        }
-        catch (IOException e1) {
-          showError(project, "Failed to create gist", "", null, e1);
-          return;
-        }
-        finally {
-          method.releaseConnection();
-        }
-
-        JsonObject jsonResponse;
-        try {
-          jsonResponse = new JsonParser().parse(response).getAsJsonObject();
-        }
-        catch (JsonSyntaxException jse) {
-          showError(project, "Couldn't parse GitHub response", "", response, jse);
-          return;
-        }
-
-        JsonElement htmlUrl = jsonResponse.get("html_url");
-        if (htmlUrl == null) {
-          showError(project, "Invalid GitHub response", "No html_url property", response, null);
-          return;
-        }
-        url.set(htmlUrl.getAsString());
+        url.set(createGist(project, settings.getLogin(), password, anonymous, text, isPrivate, file, description));
       }
     }, "Communicating With GitHub", false, project);
 
@@ -185,6 +146,40 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                                   }
                                                 }
                                               });
+    }
+  }
+
+  @Nullable
+  private static String createGist(@NotNull Project project, @Nullable String login, @Nullable String password, boolean anonymous,
+                                   @NotNull String text, boolean isPrivate, @NotNull VirtualFile file, @NotNull String description) {
+    if (anonymous) {
+      login = null;
+      password = null;
+    }
+    String requestBody = prepareJsonRequest(description, isPrivate, text, file);
+    try {
+      JsonElement jsonElement = GithubUtil.postRequest("https://api.github.com", login, password, "/gists", requestBody);
+      if (jsonElement == null) {
+        LOG.info("Null JSON response returned by GitHub");
+        showError(project, "Failed to create gist", "Empty JSON response returned by GitHub", null, null);
+        return null;
+      }
+      if (!jsonElement.isJsonObject()) {
+        LOG.error(String.format("Unexpected JSON result format: %s", jsonElement));
+        return null;
+      }
+      JsonElement htmlUrl = jsonElement.getAsJsonObject().get("html_url");
+      if (htmlUrl == null) {
+        LOG.info("Invalid JSON response: " + jsonElement);
+        showError(project, "Invalid GitHub response", "No html_url property", jsonElement.toString(), null);
+        return null;
+      }
+      return htmlUrl.getAsString();
+    }
+    catch (IOException e) {
+      LOG.info("Exception when creating a Gist", e);
+      showError(project, "Failed to create gist", "", null, e);
+      return null;
     }
   }
 

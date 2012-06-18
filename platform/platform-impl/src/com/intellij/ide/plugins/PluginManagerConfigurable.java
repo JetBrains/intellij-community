@@ -161,16 +161,36 @@ public class PluginManagerConfigurable extends BaseConfigurable implements Searc
     return myPluginManagerMain;
   }
 
-  private static int showShutDownIDEADialog() {
+  public static int showShutDownIDEADialog() {
+    return showShutDownIDEADialog(IdeBundle.message("title.plugins.changed"));
+  }
+
+  public static int showShutDownIDEADialog(final String title) {
     String message = IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getProductName());
-    String title = IdeBundle.message("title.plugins.changed");
-    return Messages.showYesNoDialog(message, title, "Shut Down", POSTPONE,Messages.getQuestionIcon());
+    return Messages.showYesNoDialog(message, title, "Shut Down", POSTPONE, Messages.getQuestionIcon());
   }
 
   public static int showRestartIDEADialog() {
+    return showRestartIDEADialog(IdeBundle.message("title.plugins.changed"));
+  }
+
+  public static int showRestartIDEADialog(final String title) {
     String message = IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName());
-    String title = IdeBundle.message("title.plugins.changed");
     return Messages.showYesNoDialog(message, title, "Restart", POSTPONE, Messages.getQuestionIcon());
+  }
+
+  public static void shutdownOrRestartApp(String title) {
+    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    if (app.isRestartCapable()) {
+      if (showRestartIDEADialog(title) == 0) {
+        app.restart();
+      }
+    }
+    else {
+      if (showShutDownIDEADialog(title) == 0) {
+        app.exit(true);
+      }
+    }
   }
 
   public boolean isModified() {

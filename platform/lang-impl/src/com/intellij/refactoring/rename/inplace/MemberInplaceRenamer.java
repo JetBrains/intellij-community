@@ -262,7 +262,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
         if (Comparing.strEqual(myOldName, ((PsiNameIdentifierOwner)mySubstituted).getName())) return mySubstituted;
 
         final RangeMarker rangeMarker = mySubstitutedRange != null ? mySubstitutedRange : myRenameOffset;
-        return PsiTreeUtil.getParentOfType(mySubstituted.getContainingFile().findElementAt(rangeMarker.getStartOffset()), PsiNameIdentifierOwner.class);
+        if (rangeMarker != null) return PsiTreeUtil.getParentOfType(mySubstituted.getContainingFile().findElementAt(rangeMarker.getStartOffset()), PsiNameIdentifierOwner.class);
       }
       return mySubstituted;
     }

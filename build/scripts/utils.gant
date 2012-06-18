@@ -226,6 +226,7 @@ binding.setVariable("platformApiModules", [
         "core-api",
         "indexing-api",
         "projectModel-api",
+        "jps-model-api",
         "platform-api",
         "lvcs-api",
         "lang-api",
@@ -239,6 +240,8 @@ binding.setVariable("platformApiModules", [
 binding.setVariable("platformImplementationModules", [
         "core-impl",
         "indexing-impl",
+        "jps-model-impl",
+        "jps-model-serialization",
         "projectModel-impl",
         "platform-impl",
         "vcs-impl",

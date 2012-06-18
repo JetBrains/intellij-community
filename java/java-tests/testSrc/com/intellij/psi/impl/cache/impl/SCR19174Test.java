@@ -1,17 +1,14 @@
 package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,11 +43,7 @@ public class SCR19174Test extends PsiTestCase {
           writer1.write("package p; public class A{ public void foo(); }");
           writer1.close();
           */
-
-          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          final ContentEntry contentEntry1 = rootModel.addContentEntry(myDir);
-          contentEntry1.addSourceFolder(myDir, false);
-          rootModel.commit();
+          PsiTestUtil.addSourceRoot(myModule, myDir);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -60,17 +53,7 @@ public class SCR19174Test extends PsiTestCase {
   }
 
   private void changeRoots() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-
-        final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
-        final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-        libraryModel.addRoot(myDir, OrderRootType.CLASSES);
-        libraryModel.commit();
-        rootModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.addModuleLibrary(myModule, myDir.getUrl());
   }
 
   public void testBug() throws Exception {

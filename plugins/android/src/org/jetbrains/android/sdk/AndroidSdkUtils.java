@@ -35,10 +35,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
-import com.intellij.openapi.roots.JavadocOrderRootType;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
@@ -133,7 +130,8 @@ public class AndroidSdkUtils {
     if (sdkPath != null) {
       // todo: check if we should do it for new android platforms (api_level >= 15)
       final VirtualFile annotationsJar = JarFileSystem.getInstance()
-        .findFileByPath(FileUtil.toSystemIndependentName(sdkPath) + AndroidCommonUtils.ANNOTATIONS_JAR_RELATIVE_PATH + JarFileSystem.JAR_SEPARATOR);
+        .findFileByPath(
+          FileUtil.toSystemIndependentName(sdkPath) + AndroidCommonUtils.ANNOTATIONS_JAR_RELATIVE_PATH + JarFileSystem.JAR_SEPARATOR);
       if (annotationsJar != null) {
         result.add(new OrderRoot(annotationsJar, OrderRootType.CLASSES));
       }
@@ -289,21 +287,10 @@ public class AndroidSdkUtils {
   private static boolean tryToSetAndroidPlatform(Module module, Sdk sdk) {
     AndroidPlatform platform = AndroidPlatform.parse(sdk);
     if (platform != null) {
-      setSdk(module, sdk);
+      ModuleRootModificationUtil.setModuleSdk(module, sdk);
       return true;
     }
     return false;
-  }
-
-  private static void setSdk(Module module, Sdk sdk) {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    model.setSdk(sdk);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
-    });
   }
 
   private static void setupPlatform(@NotNull Module module) {
@@ -359,7 +346,7 @@ public class AndroidSdkUtils {
 
     final Sdk sdk = findSuitableAndroidSdk(targetHashString, sdkDir);
     if (sdk != null) {
-      setSdk(module, sdk);
+      ModuleRootModificationUtil.setModuleSdk(module, sdk);
       return true;
     }
 
@@ -388,7 +375,7 @@ public class AndroidSdkUtils {
       if (target != null) {
         final Sdk androidSdk = createNewAndroidPlatform(target, sdkData.getLocation(), true);
         if (androidSdk != null) {
-          setSdk(module, androidSdk);
+          ModuleRootModificationUtil.setModuleSdk(module, androidSdk);
           return true;
         }
       }

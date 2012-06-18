@@ -2,12 +2,11 @@ package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
@@ -36,27 +35,13 @@ public class RootsTest extends PsiTestCase {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
 
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.addContentEntry(rootFile);
-        rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
-        rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(classesFile);
-        rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
-        rootModel.commit();
-      }
-    });
+    PsiTestUtil.addContentRoot(myModule, rootFile);
+    PsiTestUtil.setCompilerOutputPath(myModule, classesFile.getUrl(), false);
+    PsiTestUtil.setExcludeCompileOutput(myModule, false);
     assertTrue(rootManager.getFileIndex().isInContent(childOfContent));
     assertTrue(rootManager.getFileIndex().isInContent(childOfClasses));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(true);
-        rootModel.commit();
-      }
-    });
+
+    PsiTestUtil.setExcludeCompileOutput(myModule, true);
     assertTrue(rootManager.getFileIndex().isInContent(childOfContent));
     assertFalse(rootManager.getFileIndex().isInContent(childOfClasses));
   }

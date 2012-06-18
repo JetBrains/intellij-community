@@ -60,7 +60,7 @@ public abstract class AutoScrollToSourceHandler {
         TreePath location = tree.getPathForLocation(e.getPoint().x, e.getPoint().y);
         if (location != null) {
           onMouseClicked(tree);
-          return true;
+          return isAutoScrollMode();
         }
 
         return false;
@@ -91,7 +91,7 @@ public abstract class AutoScrollToSourceHandler {
         Component location = table.getComponentAt(e.getPoint());
         if (location != null) {
           onMouseClicked(table);
-          return true;
+          return isAutoScrollMode();
         }
         return false;
       }

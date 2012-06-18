@@ -186,61 +186,66 @@ class FTManager {
   }
 
   void saveTemplates() {
-    try {
-      final File configRoot = getConfigRoot(true);
-      
-      final File[] files = configRoot.listFiles();
+    final File configRoot = getConfigRoot(true);
 
-      final Set<String> allNames = new HashSet<String>();
-      final Map<String, File> templatesOnDisk = files != null && files.length > 0? new HashMap<String, File>() : Collections.<String, File>emptyMap();
-      if (files != null) {
-        for (File file : files) {
-          if (!file.isDirectory()) {
-            final String name = file.getName();
-            templatesOnDisk.put(name, file);
-            allNames.add(name);
-          }
-        }
-      }
+    final File[] files = configRoot.listFiles();
 
-      final Map<String, FileTemplateBase> templatesToSave = new HashMap<String, FileTemplateBase>();
-      
-      for (FileTemplateBase template : getAllTemplates(true)) {
-        if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isTextModified()) {
-          continue;
-        }
-        final String name = template.getQualifiedName();
-        templatesToSave.put(name, template);
-        allNames.add(name);
-      }
-
-      if (!allNames.isEmpty()) {
-        final String lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
-        for (String name : allNames) {
-          final File customizedTemplateFile = templatesOnDisk.get(name);
-          final FileTemplateBase templateToSave = templatesToSave.get(name);
-          if (customizedTemplateFile == null) {
-            // template was not saved before
-            saveTemplate(configRoot, templateToSave, lineSeparator);
-          }
-          else if (templateToSave == null) {
-            // template was removed
-            FileUtil.delete(customizedTemplateFile);
-          }
-          else {
-            // both customized content on disk and corresponding template are present
-            final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CONTENT_ENCODING));
-            final String templateText = templateToSave.getText();
-            if (!diskText.equals(templateText)) {
-              // save only if texts differ to avoid unnecessary file touching 
-              saveTemplate(configRoot, templateToSave, lineSeparator);
-            }
-          }
+    final Set<String> allNames = new HashSet<String>();
+    final Map<String, File> templatesOnDisk = files != null && files.length > 0? new HashMap<String, File>() : Collections.<String, File>emptyMap();
+    if (files != null) {
+      for (File file : files) {
+        if (!file.isDirectory()) {
+          final String name = file.getName();
+          templatesOnDisk.put(name, file);
+          allNames.add(name);
         }
       }
     }
-    catch (IOException e) {
-      LOG.error("Unable to save templates", e);
+
+    final Map<String, FileTemplateBase> templatesToSave = new HashMap<String, FileTemplateBase>();
+
+    for (FileTemplateBase template : getAllTemplates(true)) {
+      if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isTextModified()) {
+        continue;
+      }
+      final String name = template.getQualifiedName();
+      templatesToSave.put(name, template);
+      allNames.add(name);
+    }
+
+    if (!allNames.isEmpty()) {
+      final String lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+      for (String name : allNames) {
+        final File customizedTemplateFile = templatesOnDisk.get(name);
+        final FileTemplateBase templateToSave = templatesToSave.get(name);
+        if (customizedTemplateFile == null) {
+          // template was not saved before
+          try {
+            saveTemplate(configRoot, templateToSave, lineSeparator);
+          }
+          catch (IOException e) {
+            LOG.error("Unable to save template " + name, e);
+          }
+        }
+        else if (templateToSave == null) {
+          // template was removed
+          FileUtil.delete(customizedTemplateFile);
+        }
+        else {
+          // both customized content on disk and corresponding template are present
+          try {
+            final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CONTENT_ENCODING));
+            final String templateText = templateToSave.getText();
+            if (!diskText.equals(templateText)) {
+              // save only if texts differ to avoid unnecessary file touching
+              saveTemplate(configRoot, templateToSave, lineSeparator);
+            }
+          }
+          catch (IOException e) {
+            LOG.error("Unable to save template " + name, e);
+          }
+        }
+      }
     }
   }
 
@@ -251,7 +256,15 @@ class FTManager {
   private static void saveTemplate(File parentDir, FileTemplateBase template, final String lineSeparator) throws IOException {
     final File templateFile = new File(parentDir, template.getName() + "." + template.getExtension());
 
-    FileOutputStream fileOutputStream = new FileOutputStream(templateFile);
+    FileOutputStream fileOutputStream;
+    try {
+      fileOutputStream = new FileOutputStream(templateFile);
+    }
+    catch (FileNotFoundException e) {
+      // try to recover from the situation 'file exists, but is a directory'
+      FileUtil.delete(templateFile);
+      fileOutputStream = new FileOutputStream(templateFile);
+    }
     OutputStreamWriter outputStreamWriter;
     try{
       outputStreamWriter = new OutputStreamWriter(fileOutputStream, CONTENT_ENCODING);

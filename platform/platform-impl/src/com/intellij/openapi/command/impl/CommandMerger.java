@@ -180,7 +180,7 @@ public class CommandMerger {
     myForcedGlobal = true;
   }
 
-  private boolean isTransparent() {
+  public boolean isTransparent() {
     return myTransparent;
   }
 

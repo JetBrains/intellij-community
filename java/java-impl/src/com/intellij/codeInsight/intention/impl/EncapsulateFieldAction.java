@@ -28,12 +28,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class EncapsulateFieldAction extends BaseRunRefactoringAction<EncapsulateFieldsHandler> {
+public class EncapsulateFieldAction extends BaseRunRefactoringAction {
 
   @NotNull
   @Override
   public String getText() {
     return CodeInsightBundle.message("intention.encapsulate.field.text");
+  }
+
+  @NotNull
+  @Override
+  public final String getFamilyName() {
+    return getText();
   }
 
   @Override

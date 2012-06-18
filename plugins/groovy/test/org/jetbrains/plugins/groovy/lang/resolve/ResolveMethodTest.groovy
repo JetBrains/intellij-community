@@ -1053,4 +1053,21 @@ class Category2 {
     assertNotNull(ref.resolve())
   }
 
+
+  void testGroovyExtensions() {
+    def ref = configureByText('pack._a.groovy', '''\
+package pack
+
+class StringExt {
+  static sub(String s) {}
+}
+
+"".su<caret>b()''')
+
+    myFixture.addFileToProject("META-INF/services/org.codehaus.groovy.runtime.ExtensionModule", """\
+extensionClasses=pack.StringExt
+""")
+
+    assertNotNull(ref.resolve())
+  }
 }

@@ -2,14 +2,12 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,13 +44,11 @@ public class OverlappingSourceRootsTest extends PsiTestCase {
                   mySourceRoot11 = mySourceRoot1.createChildDirectory(null, "root11");
                   mySourceRoot21 = mySourceRoot2.createChildDirectory(null, "root21");
 
-                  final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-                  final ContentEntry contentEntry = rootModel.addContentEntry(myProjectRoot);
-                  contentEntry.addSourceFolder(mySourceRoot21, false);
-                  contentEntry.addSourceFolder(mySourceRoot1, false);
-                  contentEntry.addSourceFolder(mySourceRoot2, false);
-                  contentEntry.addSourceFolder(mySourceRoot11, false);
-                  rootModel.commit();
+                  PsiTestUtil.addContentRoot(myModule, myProjectRoot);
+                  PsiTestUtil.addSourceRoot(myModule, mySourceRoot21);
+                  PsiTestUtil.addSourceRoot(myModule, mySourceRoot1);
+                  PsiTestUtil.addSourceRoot(myModule, mySourceRoot2);
+                  PsiTestUtil.addSourceRoot(myModule, mySourceRoot11);
 
                   myFile1 = mySourceRoot1.createChildData(null, "File1.java");
                   myFile2 = mySourceRoot2.createChildData(null, "File2.java");

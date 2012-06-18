@@ -43,7 +43,7 @@ public interface ClasspathStorageProvider {
   @Nls
   String getDescription();
 
-  void assertCompatible(final ModifiableRootModel model) throws ConfigurationException;
+  void assertCompatible(final ModuleRootModel model) throws ConfigurationException;
 
   void detach(Module module);
 
@@ -51,7 +51,7 @@ public interface ClasspathStorageProvider {
 
   ClasspathConverter createConverter(Module module);
 
-  String getContentRoot(ModifiableRootModel model);
+  String getContentRoot(ModuleRootModel model);
 
   void modulePathChanged(Module module, String path);
 

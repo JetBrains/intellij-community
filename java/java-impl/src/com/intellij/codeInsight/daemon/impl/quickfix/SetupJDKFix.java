@@ -24,8 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -34,15 +33,17 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
- * Date: Aug 20, 2002
+ *         Date: Aug 20, 2002
  */
 public class SetupJDKFix implements IntentionAction, HighPriorityAction {
   private static final SetupJDKFix ourInstance = new SetupJDKFix();
+
   public static SetupJDKFix getInstance() {
     return ourInstance;
   }
 
-  private SetupJDKFix() { }
+  private SetupJDKFix() {
+  }
 
   @Override
   @NotNull
@@ -70,9 +71,7 @@ public class SetupJDKFix implements IntentionAction, HighPriorityAction {
       public void run() {
         Module module = ModuleUtil.findModuleForPsiElement(file);
         if (module != null) {
-          ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-          modifiableModel.inheritSdk();
-          modifiableModel.commit();
+          ModuleRootModificationUtil.setSdkInherited(module);
         }
       }
     });

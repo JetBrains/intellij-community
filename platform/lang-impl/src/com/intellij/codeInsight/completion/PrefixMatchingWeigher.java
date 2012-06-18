@@ -54,8 +54,7 @@ public class PrefixMatchingWeigher extends CompletionWeigher {
     return new MinusculeMatcher(CamelHumpMatcher.applyMiddleMatching(prefix), sensitivity);
   }
 
-  public static StartMatchingDegree getStartMatchingDegree(LookupElement element, CompletionLocation location) {
-    StartMatchingDegree result = StartMatchingDegree.middleMatch;
+  public static boolean isMiddleMatch(LookupElement element, CompletionLocation location) {
     String prefix = location.getCompletionParameters().getLookup().itemPattern(element);
     if (StringUtil.isNotEmpty(prefix)) {
       MinusculeMatcher matcher = getMinusculeMatcher(prefix);
@@ -64,18 +63,15 @@ public class PrefixMatchingWeigher extends CompletionWeigher {
         if (fragments != null) {
           Iterator<TextRange> iterator = fragments.iterator();
           if (!ls.isEmpty() && prefix.charAt(0) == ls.charAt(0)) {
-            return StartMatchingDegree.startMatchSameCase;
+            return false;
           }
           if (iterator.hasNext() && iterator.next().contains(0)) {
-            result = StartMatchingDegree.startMatchDifferentCase;
+            return false;
           }
         }
       }
     }
-    return result;
+    return true;
   }
 
-  public enum StartMatchingDegree {
-    startMatchSameCase, startMatchDifferentCase, middleMatch
-  }
 }

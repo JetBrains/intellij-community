@@ -448,11 +448,14 @@ public abstract class InplaceRefactoring {
   protected PsiNamedElement getVariable() {
     if (myElementToRename != null && myElementToRename.isValid()) {
       if (Comparing.strEqual(myOldName, myElementToRename.getName())) return myElementToRename;
-      return PsiTreeUtil.getParentOfType(myElementToRename.getContainingFile().findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
+      if (myRenameOffset != null) return PsiTreeUtil.getParentOfType(myElementToRename.getContainingFile().findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
     }
-    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-    if (psiFile != null) {
-      return PsiTreeUtil.getParentOfType(psiFile.findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
+
+    if (myRenameOffset != null) {
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      if (psiFile != null) {
+        return PsiTreeUtil.getParentOfType(psiFile.findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
+      }
     }
     return myElementToRename;
   }

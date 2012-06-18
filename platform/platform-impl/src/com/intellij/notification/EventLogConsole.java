@@ -134,7 +134,7 @@ class EventLogConsole {
     }
 
     Document document = editor.getDocument();
-    boolean scroll = document.getTextLength() == editor.getCaretModel().getOffset();
+    boolean scroll = document.getTextLength() == editor.getCaretModel().getOffset() || !editor.getContentComponent().hasFocus();
 
     Long notificationTime = myProjectModel.getNotificationTime(notification);
     if (notificationTime == null) {

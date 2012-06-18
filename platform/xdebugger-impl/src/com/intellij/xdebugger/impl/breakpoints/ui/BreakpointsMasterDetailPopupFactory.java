@@ -38,7 +38,6 @@ public class BreakpointsMasterDetailPopupFactory {
 
   public BreakpointsMasterDetailPopupFactory(Project project) {
     myProject = project;
-    collectPanelProviders();
   }
 
   public static List<BreakpointPanelProvider> collectPanelProviders() {
@@ -84,7 +83,9 @@ public class BreakpointsMasterDetailPopupFactory {
 
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        for (BreakpointPanelProvider provider : collectPanelProviders()) {
+          provider.onDialogClosed(myProject);
+        }
       }
     });
     return popup;

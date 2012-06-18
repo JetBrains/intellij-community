@@ -85,7 +85,7 @@ public abstract class AbstractVcsHelper {
   public abstract void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title);
 
   @Nullable
-  public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider,
+  public abstract <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(@NotNull CommittedChangesProvider<T, U> provider,
                                                                                                                RepositoryLocation location);
 
   public abstract void openCommittedChangesTab(AbstractVcs vcs,

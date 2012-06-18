@@ -25,6 +25,7 @@ import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageViewUtil;
@@ -39,7 +40,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author dsl
@@ -153,10 +156,19 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private String validateAndCommitData() {
+    final PsiTypeParameter[] parameters = myClass.getTypeParameters();
+    final Map<String, TypeParameterInfo> infos = new HashMap<String, TypeParameterInfo>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
-      if (!info.isForExistingParameter() && !JavaPsiFacade.getInstance(myClass.getProject()).getNameHelper().isIdentifier(info.getNewName())) {
+      if (!info.isForExistingParameter() &&
+          !JavaPsiFacade.getInstance(myClass.getProject()).getNameHelper().isIdentifier(info.getNewName())) {
         return RefactoringBundle.message("error.wrong.name.input", info.getNewName());
       }
+      final String newName = info.isForExistingParameter() ? parameters[info.getOldParameterIndex()].getName() : info.getNewName();
+      TypeParameterInfo existing = infos.get(newName);
+      if (existing != null) {
+        return myClass.getName() + " already contains type parameter " + newName;
+      }
+      infos.put(newName, info);
     }
     LOG.assertTrue(myTypeCodeFragments.size() == myTypeParameterInfos.size());
     for (int i = 0; i < myTypeCodeFragments.size(); i++) {

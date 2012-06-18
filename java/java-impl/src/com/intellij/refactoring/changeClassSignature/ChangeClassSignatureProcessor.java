@@ -19,16 +19,19 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -60,6 +63,23 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new ChangeClassSigntaureViewDescriptor(myClass);
+  }
+
+  @Override
+  protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+
+    final PsiTypeParameter[] parameters = myClass.getTypeParameters();
+    final Map<String, TypeParameterInfo> infos = new HashMap<String, TypeParameterInfo>();
+    for (TypeParameterInfo info : myNewSignature) {
+      final String newName = info.isForExistingParameter() ? parameters[info.getOldParameterIndex()].getName() : info.getNewName();
+      TypeParameterInfo existing = infos.get(newName);
+      if (existing != null) {
+        conflicts.putValue(myClass, RefactoringUIUtil.getDescription(myClass, false) + " already contains type parameter " + newName);
+      }
+      infos.put(newName, info);
+    }
+    return showConflicts(conflicts, refUsages.get());
   }
 
   @NotNull
