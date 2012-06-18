@@ -670,7 +670,11 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
     boolean isNewValue;
     try {
-      isNewValue = !Comparing.equal(getValue(property), newValue);
+      Object oldValue = getValue(property);
+      isNewValue = !Comparing.equal(oldValue, newValue);
+      if (newValue == null && oldValue instanceof String && ((String)oldValue).length() == 0) {
+        isNewValue = false;
+      }
     }
     catch (Throwable e) {
       isNewValue = true;
