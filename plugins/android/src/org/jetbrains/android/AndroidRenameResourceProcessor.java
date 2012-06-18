@@ -144,28 +144,21 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
   private static void prepareResourceFieldRenaming(PsiField field, String newName, Map<PsiElement, String> allRenames) {
     new RenameJavaVariableProcessor().prepareRenaming(field, newName, allRenames);
     List<PsiElement> resources = AndroidResourceUtil.findResourcesByField(field);
-    int r = 0;
-    if (ASK) {
-      r = Messages.showYesNoDialog(field.getProject(), message("rename.resource.question", field.getName()), message("rename.dialog.title"),
-                                   Messages.getQuestionIcon());
-    }
-    if (r == 0) {
-      PsiElement res = resources.get(0);
-      String resName = res instanceof XmlAttributeValue ? ((XmlAttributeValue)res).getValue() : ((PsiFile)res).getName();
-      String newResName = getResourceName(field.getProject(), newName, resName);
-      for (PsiElement resource : resources) {
-        if (resource instanceof PsiFile) {
-          PsiFile file = (PsiFile)resource;
-          String extension = FileUtil.getExtension(file.getName());
-          allRenames.put(resource, newResName + '.' + extension);
+    PsiElement res = resources.get(0);
+    String resName = res instanceof XmlAttributeValue ? ((XmlAttributeValue)res).getValue() : ((PsiFile)res).getName();
+    String newResName = getResourceName(field.getProject(), newName, resName);
+    for (PsiElement resource : resources) {
+      if (resource instanceof PsiFile) {
+        PsiFile file = (PsiFile)resource;
+        String extension = FileUtil.getExtension(file.getName());
+        allRenames.put(resource, newResName + '.' + extension);
+      }
+      else if (resource instanceof XmlAttributeValue) {
+        XmlAttributeValue value = (XmlAttributeValue)resource;
+        if (AndroidResourceUtil.isIdDeclaration(value)) {
+          newResName = AndroidResourceUtil.NEW_ID_PREFIX + newResName;
         }
-        else if (resource instanceof XmlAttributeValue) {
-          XmlAttributeValue value = (XmlAttributeValue)resource;
-          if (AndroidResourceUtil.isIdDeclaration(value)) {
-            newResName = AndroidResourceUtil.NEW_ID_PREFIX + newResName;
-          }
-          allRenames.put(new ValueResourceElementWrapper(value), newResName);
-        }
+        allRenames.put(new ValueResourceElementWrapper(value), newResName);
       }
     }
   }

@@ -236,12 +236,7 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     doTestJavaCompletion("p1.p2");
   }
 
-  public void testJavaHighlighting1() throws Throwable {
-    copyFileToProject("value_resources.xml", "res/values/value_resources.xml");
-    doTestJavaHighlighting("p1.p2");
-  }
-
-  public void testJavaHighlighting2() throws Throwable {
+  public void testJavaHighlighting() throws Throwable {
     copyFileToProject("value_resources.xml", "res/values/value_resources.xml");
     doTestJavaHighlighting("p1.p2");
   }

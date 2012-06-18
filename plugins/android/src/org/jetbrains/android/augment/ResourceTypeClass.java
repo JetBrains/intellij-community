@@ -1,5 +1,6 @@
 package org.jetbrains.android.augment;
 
+import com.android.resources.ResourceType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -40,14 +41,17 @@ class ResourceTypeClass extends AndroidLightClass {
 
   @NotNull
   private static PsiField[] buildResourceFields(@NotNull AndroidFacet facet,
-                                                @NotNull String resType,
+                                                @NotNull String resClassName,
                                                 @NotNull final AndroidLightClass context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(facet.getModule().getProject());
-    final Collection<String> resNames = facet.getLocalResourceManager().getResourceNames(resType);
+    final Collection<String> resNames = facet.getLocalResourceManager().getResourceNames(resClassName);
     final PsiField[] result = new PsiField[resNames.size()];
     int i = 0;
     for (String resName : resNames) {
-      final AndroidLightField field = new AndroidLightField(AndroidResourceUtil.getFieldNameByResourceName(resName), context, PsiType.INT);
+      final PsiType type = ResourceType.STYLEABLE.getName().equals(resClassName)
+                           ? PsiType.INT.createArrayType()
+                           : PsiType.INT;
+      final AndroidLightField field = new AndroidLightField(AndroidResourceUtil.getFieldNameByResourceName(resName), context, type);
       field.setModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
       field.setInitializer(factory.createExpressionFromText("0", field));
       result[i++] = field;
