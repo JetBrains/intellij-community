@@ -85,8 +85,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    final PsiElement elementParent = element.getParent();
-    if (elementParent instanceof PyParenthesizedExpression) return Result.Continue;
+    PsiElement elementParent = element.getParent();
+    if (element.getNode().getElementType() == PyTokenTypes.LPAR) elementParent = elementParent.getParent();
+    if (elementParent instanceof PyParenthesizedExpression || elementParent instanceof PyGeneratorExpression) return Result.Continue;
 
     if (offset > 0 && !(PyTokenTypes.STRING_NODES.contains(element.getNode().getElementType()))) {
       final PsiElement prevElement = file.findElementAt(offset - 1);
