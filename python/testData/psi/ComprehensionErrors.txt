@@ -1,0 +1,18 @@
+PyFile:ComprehensionErrors.py
+  PyExpressionStatement
+    PyListCompExpression
+      PsiElement(Py:LBRACKET)('[')
+      PsiErrorElement:expression expected
+        <empty list>
+      PsiElement(Py:FOR_KEYWORD)('for')
+      PsiErrorElement:expression expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(Py:IN_KEYWORD)('in')
+      PsiErrorElement:expression expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiElement(Py:IF_KEYWORD)('if')
+      PsiErrorElement:expression expected
+        <empty list>
+      PsiElement(Py:RBRACKET)(']')

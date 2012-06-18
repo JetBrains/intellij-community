@@ -581,6 +581,24 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       new PyKeywordCompletionProvider(TailType.SPACE, "else"));
   }
 
+  private void addRaiseFrom() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(PY3K)
+             .afterLeaf(psiElement().inside(PyRaiseStatement.class)),
+           new PyKeywordCompletionProvider("from"));
+  }
+
+  private void addYieldFrom() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(PY3K)
+             .afterLeaf(psiElement().withElementType(PyTokenTypes.YIELD_KEYWORD)),
+           new PyKeywordCompletionProvider("from"));
+  }
+
   public PyKeywordCompletionContributor() {
     addStatements();
     addPreColonStatements();
@@ -597,6 +615,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     addPy3kLiterals();
     //addExprIf();
     addExprElse();
+    addRaiseFrom();
+    addYieldFrom();
   }
 
   private static class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {

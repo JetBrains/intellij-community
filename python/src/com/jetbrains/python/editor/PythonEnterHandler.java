@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
+  private boolean needPostProcess = false;
+
   private static final Class[] IMPLICIT_WRAP_CLASSES = new Class[]{
     PsiComment.class,
     PyParenthesizedExpression.class,
@@ -96,8 +98,11 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    final PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
-    if (string != null && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
+    final PsiElement prevElement = file.findElementAt(offset - 1);
+    PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
+
+    if (string != null && PyTokenTypes.STRING_NODES.contains(prevElement.getNode().getElementType())
+        && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
       final String stringText = element.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       if (string.getTextOffset() + prefixLength >= offset) {
@@ -112,6 +117,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
       final PsiElement parent = string.getParent();
       final StringBuilder replacementString = new StringBuilder();
+      needPostProcess = true;
       if (parent instanceof PySequenceExpression || parent instanceof PyParenthesizedExpression ||
           parent instanceof PyBinaryExpression || parent instanceof PyKeyValueExpression ||
           parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
@@ -290,5 +296,17 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public Result postProcessEnter(@NotNull PsiFile file,
+                                 @NotNull Editor editor,
+                                 @NotNull DataContext dataContext) {
+    if (needPostProcess) {
+      needPostProcess = false;
+      editor.getCaretModel().moveCaretRelatively(1, 0, false, false, false);
+    }
+    return super.postProcessEnter(file, editor,
+                                  dataContext);
   }
 }
