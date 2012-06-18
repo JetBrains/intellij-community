@@ -73,7 +73,7 @@ public class MvcRunTargetHistoryService implements PersistentStateComponent<Stri
       }
 
       for (int i = start; i < state.length; i++) {
-        myHistory.add(state[i]);
+        myHistory.add(state[i].trim());
       }
     }
   }
@@ -89,6 +89,8 @@ public class MvcRunTargetHistoryService implements PersistentStateComponent<Stri
   }
 
   public void addCommand(@NotNull String command, @NotNull String vmOptions) {
+    command = command.trim();
+
     synchronized (myHistory) {
       myVmOptions = vmOptions;
 
