@@ -19,7 +19,7 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointTypeGroup;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointTypeGroup;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.breakpoints.ui;
+package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,6 +48,13 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
 
   @Override
   public int compareTo(XBreakpointGroup o) {
+    if (o instanceof XBreakpointTypeGroup) {
+      return indexOfType(myBreakpointType) - indexOfType(((XBreakpointTypeGroup)o).getBreakpointType());
+    }
     return -o.compareTo(this);
+  }
+
+  private static int indexOfType(XBreakpointType type) {
+    return ArrayUtil.find(XBreakpointUtil.getBreakpointTypes(), type);
   }
 }
