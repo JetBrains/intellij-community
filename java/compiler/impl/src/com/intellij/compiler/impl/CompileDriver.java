@@ -648,7 +648,10 @@ public class CompileDriver {
       new CompilerTask(myProject, compileInBackground, contentName, ApplicationManager.getApplication().isUnitTestMode());
 
     StatusBar.Info.set("", myProject, "Compiler");
-
+    if (useOutOfProcessBuild() && BuildManager.getInstance().rescanRequired(myProject)) {
+      // ensure the project model seen by build process is up-to-date
+      myProject.save();
+    }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -686,7 +689,7 @@ public class CompileDriver {
               compileContext.addMessage(message);
             }
             final Collection<String> paths = fetchFiles(compileContext);
-            final List<Module> modules = paths.isEmpty()? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
+            final List<Module> modules = paths.isEmpty() && !isRebuild && !allProjectModulesAffected(compileContext)? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
             final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true);
             final RequestFuture future = compileInExternalProcess(compileContext, modules, artifacts, paths, callback);
             if (future != null) {
@@ -778,6 +781,12 @@ public class CompileDriver {
         startup(scope, isRebuild, forceCompile, callback, message, checkCachesVersion);
       }
     });
+  }
+
+  private static boolean allProjectModulesAffected(CompileContextImpl compileContext) {
+    final Set<Module> allModules = new HashSet<Module>(Arrays.asList(compileContext.getProjectCompileScope().getAffectedModules()));
+    allModules.removeAll(Arrays.asList(compileContext.getCompileScope().getAffectedModules()));
+    return allModules.isEmpty();
   }
 
   private static List<String> fetchFiles(CompileContextImpl context) {

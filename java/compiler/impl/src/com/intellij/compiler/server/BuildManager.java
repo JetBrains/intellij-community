@@ -78,7 +78,8 @@ import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -219,6 +220,14 @@ public class BuildManager implements ApplicationComponent{
       if (data != null) {
         data.dropChanges();
       }
+    }
+  }
+
+  public boolean rescanRequired(Project project) {
+    final String projectPath = getProjectPath(project);
+    synchronized (myProjectDataMap) {
+      final ProjectData data = myProjectDataMap.get(projectPath);
+      return data == null || data.myNeedRescan;
     }
   }
 
