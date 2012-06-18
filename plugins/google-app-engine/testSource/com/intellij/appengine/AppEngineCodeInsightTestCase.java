@@ -2,21 +2,16 @@ package com.intellij.appengine;
 
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.facet.FacetManager;
-import com.intellij.javaee.JavaeeUtil;
+import com.intellij.facet.impl.FacetUtil;
 import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.javaee.web.facet.WebFacetType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -50,17 +45,12 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
   protected abstract String getBaseDirectoryPath();
 
   private static void addAppEngineSupport(Module module, String version) {
-    final WebFacet webFacet = JavaeeUtil.addFacet(module, WebFacetType.getInstance());
+    final WebFacet webFacet = FacetUtil.addFacet(module, WebFacetType.getInstance());
     final AppEngineFacet appEngine = FacetManager.getInstance(module).addFacet(AppEngineFacet.getFacetType(), "AppEngine", webFacet);
     final String sdkPath = FileUtil.toSystemIndependentName(getTestDataPath()) + "sdk/" + version;
     appEngine.getConfiguration().setSdkHomePath(sdkPath);
 
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-    final Library library = model.getModuleLibraryTable().createLibrary();
-    final Library.ModifiableModel libraryModel = library.getModifiableModel();
-    libraryModel.addJarDirectory(VfsUtil.pathToUrl(sdkPath) + "/lib", true);
-    libraryModel.commit();
-    model.commit();
+    ModuleRootModificationUtil.addModuleLibrary(module, VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, sdkPath) + "/lib/user/orm/jdo.jar!/");
   }
 
   @Override
