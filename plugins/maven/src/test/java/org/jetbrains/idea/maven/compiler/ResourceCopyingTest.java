@@ -19,13 +19,11 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
+import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 public class ResourceCopyingTest extends MavenImportingTestCase {
   public void testBasic() throws Exception {
@@ -499,10 +497,8 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         for (String each : moduleNames) {
-          ModifiableRootModel model = ModuleRootManager.getInstance(getModule(each)).getModifiableModel();
-          model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(output);
-          model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(output);
-          model.commit();
+          PsiTestUtil.setCompilerOutputPath(getModule(each), output.getUrl(), false);
+          PsiTestUtil.setCompilerOutputPath(getModule(each), output.getUrl(), true);
         }
       }
     });

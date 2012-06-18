@@ -51,10 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -337,22 +334,15 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
     assert libVirtFile != null : libPath;
 
-    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-    final ModifiableRootModel rootModel = manager.getModifiableModel();
-    final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
-    final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-    libraryModel.addRoot(libVirtFile, OrderRootType.CLASSES);
-    libraryModel.commit();
-
+    boolean inTests = false;
     if (location != null) {
       final VirtualFile vFile = location.getContainingFile().getVirtualFile();
       if (vFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(vFile)) {
-        final LibraryOrderEntry orderEntry = rootModel.findLibraryOrderEntry(jarLibrary);
-        orderEntry.setScope(DependencyScope.TEST);
+        inTests = true;
       }
     }
-
-    rootModel.commit();
+    ModuleRootModificationUtil.addModuleLibrary(module, null, Collections.singletonList(libVirtFile.getUrl()),
+                                                Collections.<String>emptyList(), inTests ? DependencyScope.TEST : DependencyScope.COMPILE);
   }
 
   private static void showCircularWarningAndContinue(final Project project, final Pair<Module, Module> circularModules,

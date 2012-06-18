@@ -2,17 +2,14 @@ package com.intellij.psi.impl.cache.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,14 +43,8 @@ public class SCR17650Test extends PsiTestCase {
           VfsUtil.saveText(file1, "package p; public class A{ public void foo(); }");
           VfsUtilCore.copyFile(null, getClassFile(), myDir);
 
-          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          final ContentEntry contentEntry1 = rootModel.addContentEntry(myDir);
-          contentEntry1.addSourceFolder(myDir, false);
-          final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
-          final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-          libraryModel.addRoot(myDir, OrderRootType.CLASSES);
-          libraryModel.commit();
-          rootModel.commit();
+          PsiTestUtil.addSourceRoot(myModule, myDir);
+          ModuleRootModificationUtil.addModuleLibrary(myModule, myDir.getUrl());
         }
         catch (IOException e) {
           LOG.error(e);

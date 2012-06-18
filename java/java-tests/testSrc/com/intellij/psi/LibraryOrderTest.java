@@ -3,14 +3,13 @@ package com.intellij.psi;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestCase;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -76,18 +75,9 @@ public class LibraryOrderTest extends PsiTestCase {
     assertTrue(lib1SrcFile != null);
     assertTrue(lib2SrcFile != null);
 
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    final LibraryTable libraryTable = rootModel.getModuleLibraryTable();
+    addLibraryWithSourcePath("lib1", lib1classes, lib1SrcFile);
+    addLibraryWithSourcePath("lib2", lib2classes, lib2SrcFile);
 
-    addLibraryWithSourcePath("lib1", libraryTable, lib1SrcFile, lib1classes);
-    addLibraryWithSourcePath("lib2", libraryTable, lib2SrcFile, lib2classes);
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
     final List<VirtualFile> list = Arrays.asList(OrderEnumerator.orderEntries(myModule).getClassesRoots());
     assertTrue(list.contains(lib1classes));
     assertTrue(list.contains(lib2classes));
@@ -99,12 +89,8 @@ public class LibraryOrderTest extends PsiTestCase {
     return lib1SrcFile;
   }
 
-  private void addLibraryWithSourcePath(String name, final LibraryTable libraryTable, final VirtualFile libSource,
-                                        VirtualFile libClasses) {
-    final Library lib = libraryTable.createLibrary(name);
-    final Library.ModifiableModel libModel = lib.getModifiableModel();
-    libModel.addRoot(libClasses, OrderRootType.CLASSES);
-    libModel.addRoot(libSource, OrderRootType.SOURCES);
-    libModel.commit();
+  private void addLibraryWithSourcePath(String name, VirtualFile libClasses, final VirtualFile libSource) {
+    ModuleRootModificationUtil.addModuleLibrary(myModule, name, Collections.singletonList(libClasses.getUrl()),
+                                                Collections.singletonList(libSource.getUrl()));
   }
 }

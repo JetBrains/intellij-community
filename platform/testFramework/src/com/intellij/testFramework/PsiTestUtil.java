@@ -311,23 +311,17 @@ public class PsiTestUtil {
                                 final String libName, final String libDir,
                                 final String[] classRoots,
                                 final String[] sourceRoots) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final String parentUrl =
-          VirtualFileManager.constructUrl(classRoots[0].endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
-        final Library library = model.getModuleLibraryTable().createLibrary(libName);
-        final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
-        for (String classRoot : classRoots) {
-          libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
-        }
-        for (String sourceRoot : sourceRoots) {
-          libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
-        }
-        libModifiableModel.commit();
-        model.commit();
-      }
-    });
+    final String parentUrl =
+      VirtualFileManager.constructUrl(classRoots[0].endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
+    List<String> classesUrls = new ArrayList<String>();
+    List<String> sourceUrls = new ArrayList<String>();
+    for (String classRoot : classRoots) {
+      classesUrls.add(parentUrl + classRoot);
+    }
+    for (String sourceRoot : sourceRoots) {
+      sourceUrls.add(parentUrl + sourceRoot);
+    }
+    ModuleRootModificationUtil.addModuleLibrary(module, libName, classesUrls, sourceUrls);
   }
 
   public static Module addModule(final Project project, final ModuleType type, final String name, final VirtualFile root) {
@@ -347,5 +341,25 @@ public class PsiTestUtil {
         result.setResult(dep);
       }
     }.execute().getResultObject();
+  }
+
+  public static void setCompilerOutputPath(Module module, String url, boolean forTests) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
+    extension.inheritCompilerOutputPath(false);
+    if (forTests) {
+      extension.setCompilerOutputPathForTests(url);
+    }
+    else {
+      extension.setCompilerOutputPath(url);
+    }
+    commitModel(model);
+  }
+
+  public static void setExcludeCompileOutput(Module module, boolean exclude) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
+    extension.setExcludeOutput(exclude);
+    commitModel(model);
   }
 }

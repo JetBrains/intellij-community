@@ -3,15 +3,13 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
@@ -34,15 +32,7 @@ public class BindToElementTest extends CodeInsightTestCase {
       }
     });
     assertNotNull(root);
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    final ContentEntry contentEntry = rootModel.addContentEntry(root);
-    contentEntry.addSourceFolder(root, false);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    PsiTestUtil.addSourceRoot(myModule, root);
   }
 
   public void testSingleClassImport() throws Exception {

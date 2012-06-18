@@ -18,15 +18,16 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor;
+import com.intellij.testFramework.PsiTestUtil;
 import junit.framework.Assert;
 
 import java.util.Arrays;
@@ -113,21 +114,13 @@ public class MovePackageAsDirectoryTest extends MultiFileTestCase {
 
   @Override
   protected void prepareProject(VirtualFile rootDir) {
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    final ContentEntry contentEntry = rootModel.addContentEntry(rootDir);
+    PsiTestUtil.addContentRoot(myModule, rootDir);
     final VirtualFile[] children = rootDir.getChildren();
     for (VirtualFile child : children) {
       if (child.getName().startsWith("src")) {
-        contentEntry.addSourceFolder(child, false);
+        PsiTestUtil.addSourceRoot(myModule, child);
       }
     }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
   }
 
   private class MyPerformAction implements PerformAction {

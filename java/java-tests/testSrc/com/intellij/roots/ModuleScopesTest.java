@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -12,6 +11,7 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.util.PathsList;
 
 import java.io.IOException;
+import java.util.Collections;
 
 /**
  * @author yole
@@ -86,13 +86,8 @@ public class ModuleScopesTest extends ModuleTestCase {
 
         ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false);
 
-        final ModifiableRootModel modelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
-        final ContentEntry contentEntry = modelB.addContentEntry(rootB);
-        contentEntry.addSourceFolder(rootB, false);
-        final CompilerModuleExtension extension = modelB.getModuleExtension(CompilerModuleExtension.class);
-        extension.inheritCompilerOutputPath(false);
-        extension.setCompilerOutputPath(outB);
-        modelB.commit();
+        PsiTestUtil.addSourceRoot(moduleB, rootB);
+        PsiTestUtil.setCompilerOutputPath(moduleB, outB.getUrl(), false);
       }
     });
 
@@ -187,20 +182,8 @@ public class ModuleScopesTest extends ModuleTestCase {
   private VirtualFile addLibrary(final Module m, final DependencyScope scope) {
     final VirtualFile libraryRoot = myFixture.findOrCreateDir("lib");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(m).getModifiableModel();
-        final Library library = model.getModuleLibraryTable().createLibrary("l");
-        final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        libraryModel.addRoot(libraryRoot, OrderRootType.CLASSES);
-        libraryModel.commit();
-
-        model.findLibraryOrderEntry(library).setScope(scope);
-        model.commit();
-      }
-    });
-
+    ModuleRootModificationUtil.addModuleLibrary(m, "l", Collections.singletonList(libraryRoot.getUrl()),
+                                                Collections.<String>emptyList(), scope);
     return libraryRoot;
   }
 

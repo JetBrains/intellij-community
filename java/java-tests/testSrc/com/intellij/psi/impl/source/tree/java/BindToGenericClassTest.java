@@ -1,7 +1,5 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -16,13 +14,7 @@ public class BindToGenericClassTest extends GenericsTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final ModifiableRootModel rootModel = setupGenericSampleClasses();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    setupGenericSampleClasses();
     final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
 
     myOldFQNamesSetting = currentSettings.USE_FQ_CLASS_NAMES;
