@@ -268,10 +268,17 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public void run() {
     final Project project = myFile.getProject();
     VirtualFile file = myFile.getVirtualFile();
+    assert file != null;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
     final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
 
-    final Template template = buildTemplate();
+    assert editor != null : "Editor is null";
+    run(editor, false);
+  }
+
+  @Override
+  public void run(@NotNull final Editor editor, final boolean inline) {
+    final Template template = inline ? buildInlineTemplate() : buildTemplate();
 
     editor.getDocument().replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
     editor.getCaretModel().moveToOffset(myContainerElement.getStartOffset());
