@@ -111,6 +111,7 @@ public class FileStructurePopup implements Disposable {
   private final FilteringTreeStructure myFilteringStructure;
   private PsiElement myInitialPsiElement;
   private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
+  private List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private boolean myInitialNodeIsLeaf;
@@ -312,6 +313,7 @@ public class FileStructurePopup implements Disposable {
                         if (myFilteringStructure.getRootElement().getChildren().length == 0) {
                           for (JCheckBox box : myCheckBoxes.values()) {
                             if (!box.isSelected()) {
+                              myAutoClicked.add(box);
                               box.doClick();
                               filter = "";
                               break;
@@ -586,7 +588,9 @@ public class FileStructurePopup implements Disposable {
     chkFilter.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final boolean state = chkFilter.isSelected();
-        saveState(action, state);
+        if (!myAutoClicked.contains(chkFilter)) {
+          saveState(action, state);
+        }
         myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
         //final String filter = mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
         //mySpeedSearch.hidePopup();

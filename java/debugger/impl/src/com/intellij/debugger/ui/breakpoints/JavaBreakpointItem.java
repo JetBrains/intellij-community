@@ -133,4 +133,14 @@ class JavaBreakpointItem extends BreakpointItem {
   public void setEnabled(boolean state) {
     myBreakpoint.ENABLED = state;
   }
+
+  @Override
+  public boolean isDefaultBreakpoint() {
+    return myBreakpoint.getCategory().equals(AnyExceptionBreakpoint.CATEGORY);
+  }
+
+  @Override
+  public int compareTo(BreakpointItem breakpointItem) {
+    return getDisplayText().compareTo(breakpointItem.getDisplayText());
+  }
 }

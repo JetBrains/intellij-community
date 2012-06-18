@@ -390,6 +390,11 @@ public abstract class BreakpointPropertiesPanel {
       }
 
       @Override
+      public boolean isDefaultBreakpoint() {
+        return true;
+      }
+
+      @Override
       protected void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
         renderer.clear();
         renderer.append(getDisplayText());
@@ -433,6 +438,11 @@ public abstract class BreakpointPropertiesPanel {
       @Override
       public void removed(Project project) {
         //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public int compareTo(BreakpointItem breakpointItem) {
+        return 1;
       }
     });
     return items;

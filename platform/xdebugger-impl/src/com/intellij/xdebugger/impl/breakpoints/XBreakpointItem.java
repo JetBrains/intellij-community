@@ -147,4 +147,19 @@ class XBreakpointItem extends BreakpointItem {
   public void setEnabled(boolean state) {
     myBreakpoint.setEnabled(state);
   }
+
+  @Override
+  public boolean isDefaultBreakpoint() {
+    return getManager().isDefaultBreakpoint(myBreakpoint);
+  }
+
+  @Override
+  public int compareTo(BreakpointItem breakpointItem) {
+    if (breakpointItem.getBreakpoint() instanceof XBreakpointBase) {
+      return ((XBreakpointBase)myBreakpoint).compareTo((XBreakpoint)breakpointItem.getBreakpoint());
+    }
+    else {
+      return 0;
+    }
+  }
 }
