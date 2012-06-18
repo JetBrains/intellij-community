@@ -41,8 +41,7 @@ import javax.swing.*;
  * Time: 4:48 AM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class BreakpointItem extends ItemWrapper {
-  protected static final Key<Object> BREAKPOINT_ITEM = Key.create("BreakpointItem");
+public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem> {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
 
   public abstract Object getBreakpoint();
@@ -50,6 +49,8 @@ public abstract class BreakpointItem extends ItemWrapper {
   public abstract boolean isEnabled();
 
   public abstract void setEnabled(boolean state);
+
+  public abstract boolean isDefaultBreakpoint();
 
   protected boolean showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
     TextAttributes attributes =

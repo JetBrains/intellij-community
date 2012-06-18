@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsSdkType;
@@ -11,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsSdkDependency;
  */
 public class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDependencyImpl> implements JpsSdkDependency {
   private final JpsSdkType<?> mySdkType;
-  
+
   public JpsSdkDependencyImpl(@NotNull JpsSdkType<?> sdkType) {
     super();
     mySdkType = sdkType;
@@ -36,8 +37,19 @@ public class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDepende
 
   @Override
   public JpsLibrary resolveSdk() {
-    final JpsLibraryReference reference = getDependenciesList().getParent().getSdkReferencesTable().getSdkReference(mySdkType);
+    final JpsLibraryReference reference = getSdkReference();
     return reference != null ? reference.resolve() : null;
+  }
+
+  @Override
+  @Nullable
+  public JpsLibraryReference getSdkReference() {
+    return getDependenciesList().getParent().getSdkReferencesTable().getSdkReference(mySdkType);
+  }
+
+  @Override
+  public boolean isInherited() {
+    return false;
   }
 
   public JpsDependenciesListImpl getDependenciesList() {

@@ -26,8 +26,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -51,11 +51,12 @@ import java.util.List;
  */
 public class ModuleAttachProcessor extends ProjectAttachProcessor {
   private static final Logger LOG = Logger.getInstance(ModuleAttachProcessor.class);
-  
+
   @Override
   public boolean attachToProject(Project project, File projectDir, @Nullable ProjectOpenedCallback callback) {
     if (!projectDir.exists()) {
-      Project newProject = ((ProjectManagerEx) ProjectManager.getInstance()).newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
+      Project newProject = ((ProjectManagerEx)ProjectManager.getInstance())
+        .newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
       if (newProject == null) {
         return false;
       }
@@ -72,7 +73,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     }
     final String[] files = projectDir.list();
     if (files != null) {
-      for(String file: files) {
+      for (String file : files) {
         if (FileUtil.getExtension(file).equals("iml")) {
           VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(projectDir, file));
           if (imlFile != null) {
@@ -82,7 +83,8 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
         }
       }
     }
-    int rc = Messages.showYesNoDialog(project, "The project at " + FileUtil.toSystemDependentName(projectDir.getPath()) +
+    int rc = Messages.showYesNoDialog(project, "The project at " +
+                                               FileUtil.toSystemDependentName(projectDir.getPath()) +
                                                " uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
                                       "Open Project", Messages.getQuestionIcon());
 
@@ -147,15 +149,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   private static Module addPrimaryModuleDependency(Project project, @NotNull Module newModule) {
     final Module module = getPrimaryModule(project);
     if (module != null && module != newModule) {
-      final ModifiableRootModel modifiableRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      modifiableRootModel.addModuleOrderEntry(newModule);
-      AccessToken token = WriteAction.start();
-      try {
-        modifiableRootModel.commit();
-      }
-      finally {
-        token.finish();
-      }
+      ModuleRootModificationUtil.addDependency(module, newModule);
       return module;
     }
     return null;
@@ -188,5 +182,4 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     }
     return result;
   }
-
 }

@@ -22,12 +22,16 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -89,26 +93,13 @@ public class ProjectMacrosUtil {
     // there are undefined macros, need to define them before loading components
     final boolean[] result = new boolean[1];
 
-    try {
-      final Runnable r = new Runnable() {
-        public void run() {
-          result[0] = showMacrosConfigurationDialog(project, usedMacros);
-        }
-      };
+    final Runnable r = new Runnable() {
+      public void run() {
+        result[0] = showMacrosConfigurationDialog(project, usedMacros);
+      }
+    };
 
-      if (!ApplicationManager.getApplication().isDispatchThread()) {
-        SwingUtilities.invokeAndWait(r);
-      }
-      else {
-        r.run();
-      }
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(r, ModalityState.NON_MODAL);
     return result[0];
   }
 

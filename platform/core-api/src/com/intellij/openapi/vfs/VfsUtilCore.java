@@ -17,7 +17,9 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class VfsUtilCore {
@@ -237,5 +240,14 @@ public class VfsUtilCore {
   @NotNull
   public static String pathToUrl(@NonNls @NotNull String path) {
     return VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, path);
+  }
+
+  public static List<File> virtualToIoFiles(Collection<VirtualFile> scope) {
+    return ContainerUtil.map2List(scope, new Function<VirtualFile, File>() {
+      @Override
+      public File fun(VirtualFile file) {
+        return virtualToIoFile(file);
+      }
+    });
   }
 }

@@ -80,7 +80,8 @@ public class ClasspathStorage implements StateStorage {
   public ClasspathStorage(Module module) {
     myConverter = getProvider(getStorageType(module)).createConverter(module);
     final MessageBus messageBus = module.getMessageBus();
-    final VirtualFileTracker virtualFileTracker = (VirtualFileTracker)module.getPicoContainer().getComponentInstanceOfType(VirtualFileTracker.class);
+    final VirtualFileTracker virtualFileTracker =
+      (VirtualFileTracker)module.getPicoContainer().getComponentInstanceOfType(VirtualFileTracker.class);
     if (virtualFileTracker != null && messageBus != null) {
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       try {
@@ -125,7 +126,7 @@ public class ClasspathStorage implements StateStorage {
           model.dispose();
         }
       }
-      
+
       final boolean macrosOk = ProjectMacrosUtil.checkNonIgnoredMacros(module.getProject(), macros);
       PathMacroManager.getInstance(module).expandPaths(element);
       ModuleRootManagerImpl.ModuleRootManagerState moduleRootManagerState = new ModuleRootManagerImpl.ModuleRootManagerState();
@@ -195,7 +196,7 @@ public class ClasspathStorage implements StateStorage {
       }
 
       @Nullable
-      public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
+      public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
         return null;
       }
 
@@ -235,7 +236,8 @@ public class ClasspathStorage implements StateStorage {
   public void finishSave(final SaveSession saveSession) {
     try {
       LOG.assertTrue(mySession == saveSession);
-    } finally {
+    }
+    finally {
       mySession = null;
     }
   }
@@ -305,7 +307,7 @@ public class ClasspathStorage implements StateStorage {
     }
   }
 
-  public static void setStorageType(final ModifiableRootModel model, final String storageID) {
+  public static void setStorageType(final ModuleRootModel model, final String storageID) {
     final Module module = model.getModule();
     final String oldStorageType = getStorageType(module);
     if (oldStorageType.equals(storageID)) {
@@ -343,7 +345,7 @@ public class ClasspathStorage implements StateStorage {
       return DEFAULT_STORAGE_DESCR;
     }
 
-    public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
+    public void assertCompatible(final ModuleRootModel model) throws ConfigurationException {
     }
 
     public void detach(Module module) {
@@ -357,7 +359,7 @@ public class ClasspathStorage implements StateStorage {
       throw new UnsupportedOperationException(getDescription());
     }
 
-    public String getContentRoot(ModifiableRootModel model) {
+    public String getContentRoot(ModuleRootModel model) {
       return null;
     }
 
@@ -383,7 +385,7 @@ public class ClasspathStorage implements StateStorage {
       return "Unsupported classpath format " + myType;
     }
 
-    public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
+    public void assertCompatible(final ModuleRootModel model) throws ConfigurationException {
       throw new UnsupportedOperationException(getDescription());
     }
 
@@ -411,7 +413,7 @@ public class ClasspathStorage implements StateStorage {
       };
     }
 
-    public String getContentRoot(ModifiableRootModel model) {
+    public String getContentRoot(ModuleRootModel model) {
       return null;
     }
 

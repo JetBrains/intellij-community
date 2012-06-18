@@ -29,42 +29,52 @@ import java.lang.reflect.TypeVariable;
 @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
 public class ReflectionCache {
   private static final ConcurrentFactoryMap<Class,Class> ourSuperClasses = new ConcurrentFactoryMap<Class, Class>() {
+    @Override
     protected Class create(final Class key) {
       return key.getSuperclass();
     }
   };
   private static final ConcurrentFactoryMap<Class,Class[]> ourInterfaces = new ConcurrentFactoryMap<Class, Class[]>() {
+    @Override
     @NotNull
     protected Class[] create(final Class key) {
-      return key.getInterfaces();
+      Class[] classes = key.getInterfaces();
+      return classes.length == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : classes;
     }
   };
+  private static final Method[] EMPTY_METHODS = new Method[0];
   private static final ConcurrentFactoryMap<Class, Method[]> ourMethods = new ConcurrentFactoryMap<Class, Method[]>() {
+    @Override
     @NotNull
     protected Method[] create(final Class key) {
-      return key.getMethods();
+      Method[] methods = key.getMethods();
+      return methods.length == 0 ? EMPTY_METHODS : methods;
     }
   };
 
   private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
+    @Override
     @NotNull
     protected Boolean create(final Class key) {
       return key.isInterface();
     }
   };
   private static final ConcurrentFactoryMap<Class, TypeVariable[]> ourTypeParameters = new ConcurrentFactoryMap<Class, TypeVariable[]>() {
+    @Override
     @NotNull
     protected TypeVariable[] create(final Class key) {
       return key.getTypeParameters();
     }
   };
   private static final ConcurrentFactoryMap<Class, Type[]> ourGenericInterfaces = new ConcurrentFactoryMap<Class, Type[]>() {
+    @Override
     @NotNull
     protected Type[] create(final Class key) {
       return key.getGenericInterfaces();
     }
   };
   private static final ConcurrentFactoryMap<ParameterizedType, Type[]> ourActualTypeArguments = new ConcurrentFactoryMap<ParameterizedType, Type[]>() {
+    @Override
     @NotNull
     protected Type[] create(final ParameterizedType key) {
       return key.getActualTypeArguments();

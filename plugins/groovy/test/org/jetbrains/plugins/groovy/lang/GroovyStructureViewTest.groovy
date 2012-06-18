@@ -101,4 +101,27 @@ class Bar extends Foo {
 
   }
 
+  public void testTupleConstructor() {
+    myFixture.addClass 'package groovy.transform; public @interface TupleConstructor{}'
+    myFixture.configureByText 'a.groovy', '''
+@groovy.transform.TupleConstructor
+class Foo {
+  int prop
+  void foo() {}
+}
+'''
+    myFixture.testStructureView(new Consumer<StructureViewComponent>() {
+      @Override
+      public void consume(StructureViewComponent component) {
+        component.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+        assertTreeEqual(component.getTree(), """-a.groovy
+ -Foo
+  foo():void
+  prop:int
+""");
+      }
+    });
+
+  }
+
 }

@@ -38,7 +38,7 @@ import java.util.*;
  * @author nik, zajac
  */
 public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.Delegate {
-  //private final TreeNodeComparator myComparator;
+  private final TreeNodeComparator myComparator = new TreeNodeComparator();
   private final CheckedTreeNode myRoot;
   private final Map<BreakpointItem, BreakpointItemNode> myNodes = new HashMap<BreakpointItem, BreakpointItemNode>();
   private List<XBreakpointGroupingRule> myGroupingRules;
@@ -52,7 +52,6 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
 
   public BreakpointItemsTreeController(Collection<XBreakpointGroupingRule> groupingRules) {
     myRoot = new CheckedTreeNode("root");
-    //myComparator = new TreeNodeComparator<B>(type, breakpointManager);
     setGroupingRulesInternal(groupingRules);
   }
 
@@ -84,7 +83,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
       parent.add(node);
       myNodes.put(breakpoint, node);
     }
-    //TreeUtil.sort(myRoot, myComparator);
+    TreeUtil.sort(myRoot, myComparator);
     ((DefaultTreeModel)(myTreeView.getModel())).nodeStructureChanged(myRoot);
     state.applyTo(myTreeView, myRoot);
     TreeUtil.expandAll(myTreeView);
@@ -204,26 +203,18 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     return myRoot;
   }
 
-  private static class TreeNodeComparator<B extends XBreakpoint<?>> implements Comparator<TreeNode> {
-    private final Comparator<B> myBreakpointComparator;
-    private final XBreakpointManager myBreakpointManager;
-
-    public TreeNodeComparator(final XBreakpointType<B, ?> type, XBreakpointManager breakpointManager) {
-      myBreakpointManager = breakpointManager;
-      myBreakpointComparator = type.getBreakpointComparator();
-    }
-
+  private static class TreeNodeComparator implements Comparator<TreeNode> {
     public int compare(final TreeNode o1, final TreeNode o2) {
       if (o1 instanceof BreakpointItemNode && o2 instanceof BreakpointItemNode) {
         //noinspection unchecked
-        B b1 = (B)((BreakpointItemNode)o1).getBreakpointItem();
+        BreakpointItem b1 = ((BreakpointItemNode)o1).getBreakpointItem();
         //noinspection unchecked
-        B b2 = (B)((BreakpointItemNode)o2).getBreakpointItem();
-        boolean default1 = myBreakpointManager.isDefaultBreakpoint(b1);
-        boolean default2 = myBreakpointManager.isDefaultBreakpoint(b2);
+        BreakpointItem b2 = ((BreakpointItemNode)o2).getBreakpointItem();
+        boolean default1 = b1.isDefaultBreakpoint();
+        boolean default2 = b2.isDefaultBreakpoint();
         if (default1 && !default2) return -1;
         if (!default1 && default2) return 1;
-        return myBreakpointComparator.compare(b1, b2);
+        return b1.compareTo(b2);
       }
       if (o1 instanceof BreakpointsGroupNode && o2 instanceof BreakpointsGroupNode) {
         final BreakpointsGroupNode group1 = (BreakpointsGroupNode)o1;

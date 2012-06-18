@@ -52,7 +52,7 @@ public class MethodUpDownUtil {
     TIntArrayList offsets = new TIntArrayList(array.size());
     for (PsiElement element : array) {
       int offset = element.getTextOffset();
-      assert offset >= 0 : element + "; offset: " + offset;
+      assert offset >= 0 : element + " ("+element.getClass()+"); offset: " + offset;
       offsets.add(offset);
     }
     offsets.sort();

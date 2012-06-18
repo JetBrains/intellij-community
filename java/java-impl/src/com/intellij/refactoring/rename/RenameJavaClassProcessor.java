@@ -34,7 +34,9 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
@@ -153,6 +155,22 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
       }
     }
     findSubmemberHidesMemberCollisions(aClass, newName, result);
+
+    if (aClass instanceof PsiTypeParameter) {
+      final PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
+      if (owner != null) {
+        for (PsiTypeParameter typeParameter : owner.getTypeParameters()) {
+          if (Comparing.equal(newName, typeParameter.getName())) {
+            result.add(new UnresolvableCollisionUsageInfo(aClass, typeParameter) {
+              @Override
+              public String getDescription() {
+                return "There is already type parameter in " + RefactoringUIUtil.getDescription(aClass, false) + " with name " + newName;
+              }
+            });
+          }
+        }
+      }
+    }
   }
 
   public static void findSubmemberHidesMemberCollisions(final PsiClass aClass, final String newName, final List<UsageInfo> result) {

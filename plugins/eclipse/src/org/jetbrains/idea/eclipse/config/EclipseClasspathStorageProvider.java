@@ -63,7 +63,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     return DESCR;
   }
 
-  public void assertCompatible(final ModifiableRootModel model) throws ConfigurationException {
+  public void assertCompatible(final ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
@@ -74,7 +74,11 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
               libraryEntry.getRootUrls(OrderRootType.CLASSES).length != 1 ||
               library.isJarDirectory(library.getUrls(OrderRootType.CLASSES)[0])) {
             throw new ConfigurationException(
-              "Library \'" + entry.getPresentableName() + "\' from module \'" + moduleName + "\' dependencies is incompatible with eclipse format which supports only one library content root");
+              "Library \'" +
+              entry.getPresentableName() +
+              "\' from module \'" +
+              moduleName +
+              "\' dependencies is incompatible with eclipse format which supports only one library content root");
           }
         }
       }
@@ -84,8 +88,12 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
     final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
     final String contentRoot = getContentRoot(model);
-    if (output == null || !StringUtil.startsWith(VfsUtil.urlToPath(output), contentRoot) && PathMacroManager.getInstance(model.getModule()).collapsePath(output).equals(output)) {
-      throw new ConfigurationException("Module \'" + moduleName + "\' output path is incompatible with eclipse format which supports output under content root only.\nPlease make sure that \"Inherit project compile output path\" is not selected");
+    if (output == null ||
+        !StringUtil.startsWith(VfsUtil.urlToPath(output), contentRoot) &&
+        PathMacroManager.getInstance(model.getModule()).collapsePath(output).equals(output)) {
+      throw new ConfigurationException("Module \'" +
+                                       moduleName +
+                                       "\' output path is incompatible with eclipse format which supports output under content root only.\nPlease make sure that \"Inherit project compile output path\" is not selected");
     }
   }
 
@@ -97,7 +105,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     return new EclipseClasspathConverter(module);
   }
 
-  public String getContentRoot(ModifiableRootModel model) {
+  public String getContentRoot(ModuleRootModel model) {
     final VirtualFile contentRoot = EPathUtil.getContentRoot(model);
     if (contentRoot != null) return contentRoot.getPath();
     return model.getContentRoots()[0].getPath();
@@ -111,7 +119,10 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
   }
 
-  public static void registerFiles(final CachedXmlDocumentSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
+  public static void registerFiles(final CachedXmlDocumentSet fileCache,
+                                   final Module module,
+                                   final String moduleRoot,
+                                   final String storageRoot) {
     fileCache.register(EclipseXml.CLASSPATH_FILE, storageRoot);
     fileCache.register(EclipseXml.PROJECT_FILE, storageRoot);
     fileCache.register(EclipseXml.PLUGIN_XML_FILE, storageRoot);
@@ -185,13 +196,15 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         if (documentSet.exists(EclipseXml.CLASSPATH_FILE)) {
           classpathReader.readClasspath(model, new ArrayList<String>(), new ArrayList<String>(), usedVariables, new HashSet<String>(), null,
                                         documentSet.read(EclipseXml.CLASSPATH_FILE).getRootElement());
-        } else {
+        }
+        else {
           EclipseClasspathReader.setupOutput(model, path + "/bin");
         }
         final String eml = model.getModule().getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
         if (documentSet.exists(eml)) {
           IdeaSpecificSettings.readIDEASpecific(documentSet.read(eml).getRootElement(), model);
-        } else {
+        }
+        else {
           model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
         }
 

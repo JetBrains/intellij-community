@@ -21,6 +21,7 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
@@ -578,7 +579,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
           }
         );
       }
-    }, UIBundle.message("file.cache.conflict.action"), null);
+    }, UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
 
     myUnsavedDocuments.remove(document);
 

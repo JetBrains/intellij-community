@@ -19,6 +19,7 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointTypeGroup;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,5 +56,26 @@ public class XBreakpointCategoryGroup extends XBreakpointGroup {
   @Override
   public String getName() {
     return myName;
+  }
+
+  @Override
+  public int compareTo(XBreakpointGroup o) {
+    if (o instanceof XBreakpointTypeGroup) {
+      return -1;
+    }
+    if (o instanceof XBreakpointCategoryGroup) {
+      return getFactoryIndex() - ((XBreakpointCategoryGroup)o).getFactoryIndex();
+    }
+    return super.compareTo(o);
+  }
+
+  private int getFactoryIndex() {
+    BreakpointFactory[] breakpointFactories = BreakpointFactory.getBreakpointFactories();
+    for (int i = 0; i < breakpointFactories.length; ++i) {
+      if (breakpointFactories[i].getBreakpointCategory().equals(myCategory)) {
+        return i;
+      }
+    }
+    return -1;
   }
 }

@@ -220,10 +220,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         element.replace(newRef);
       }
     }
-    else if (element instanceof PsiThisExpression && mySettings.isMakeClassParameter()) {
-      element.replace(factory.createExpressionFromText(convertToFieldName(mySettings.getClassParameterName()), null));
-    }
-    else if (element instanceof PsiSuperExpression && mySettings.isMakeClassParameter()) {
+    else if (mySettings.isMakeClassParameter() && (element instanceof PsiThisExpression || element instanceof PsiSuperExpression)) {
       element.replace(factory.createExpressionFromText(convertToFieldName(mySettings.getClassParameterName()), null));
     }
     else if (element instanceof PsiNewExpression && mySettings.isMakeClassParameter()) {

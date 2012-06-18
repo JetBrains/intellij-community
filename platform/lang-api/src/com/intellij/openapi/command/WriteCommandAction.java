@@ -85,9 +85,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       }
     } catch (Throwable e) {
       if (e instanceof InvocationTargetException) e = e.getCause();
-      if (e instanceof Error) throw (Error)e;
-      if (e instanceof RuntimeException) throw (RuntimeException)e;
-      throw new Error(e);
+      throw new RuntimeException(e);
     }
     return result;
   }

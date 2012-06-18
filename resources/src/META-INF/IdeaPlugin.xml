@@ -459,8 +459,8 @@
     <localInspection language="JAVA" shortName="FieldCanBeLocal" bundle="messages.InspectionsBundle" key="inspection.field.can.be.local.display.name"
                      groupName="Class structure" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection"/>
-    <localInspection language="JAVA" shortName="ParameterCanBeLocal" displayName="inspection.parameter.can.be.local.display.name"
-                     groupName="Class structure" enabledByDefault="true" level="WARNING"
+    <localInspection language="JAVA" shortName="ParameterCanBeLocal" key="inspection.parameter.can.be.local.display.name"
+                     groupName="Class structure" enabledByDefault="true" level="WARNING" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.ParameterCanBeLocalInspection" />
     <localInspection language="JAVA" shortName="NullableProblems" bundle="messages.InspectionsBundle" key="inspection.nullable.problems.display.name"
                      groupName="Probable bugs" enabledByDefault="true" level="WARNING"
@@ -640,17 +640,17 @@
       <category>Declaration</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.IntroduceVariableAction</className>
-      <category>Declaration</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.EncapsulateFieldAction</className>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
       <category>Declaration</category>
     </intentionAction>
 
     <intentionAction>
-      <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
-      <category>Declaration</category>
+      <className>com.intellij.codeInsight.intention.impl.IntroduceVariableIntentionAction</className>
+      <category>Refactorings</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.EncapsulateFieldAction</className>
+      <category>Refactorings</category>
     </intentionAction>
 
     <intentionAction>

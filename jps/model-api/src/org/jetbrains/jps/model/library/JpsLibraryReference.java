@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.library;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsModel;
 
@@ -13,4 +14,6 @@ public interface JpsLibraryReference extends JpsElementReference<JpsLibrary> {
 
   @Override
   JpsLibraryReference asExternal(@NotNull JpsModel model);
+
+  JpsElementReference<? extends JpsCompositeElement> getParentReference();
 }

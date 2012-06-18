@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.TreeSet;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
@@ -147,7 +148,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   private static void fillModel(final ProfileManager inspectionProfileManager, final DefaultComboBoxModel model) {
-    Collection<Profile> profiles = inspectionProfileManager.getProfiles();
+    Collection<Profile> profiles = new TreeSet<Profile>(inspectionProfileManager.getProfiles());
     for (Profile profile : profiles) {
       model.addElement(profile);
     }

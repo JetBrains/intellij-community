@@ -24,8 +24,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -53,61 +53,62 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
 
   public void update(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    e.getPresentation().setEnabled( project != null );
+    e.getPresentation().setEnabled(project != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if ( project == null ) return;
+    if (project == null) return;
     project.save(); // to flush iml files
 
     final List<Module> modules = new ArrayList<Module>();
     final List<Module> incompatibleModules = new ArrayList<Module>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (!EclipseClasspathStorageProvider.ID.equals(ClasspathStorage.getStorageType(module))) {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         try {
-          ClasspathStorage.getProvider(EclipseClasspathStorageProvider.ID).assertCompatible(model);
+          ClasspathStorage.getProvider(EclipseClasspathStorageProvider.ID).assertCompatible(ModuleRootManager.getInstance(module));
           modules.add(module);
         }
         catch (ConfigurationException e1) {
           incompatibleModules.add(module);
-        } finally {
-          model.dispose();
         }
       }
     }
 
     //todo suggest smth with hierarchy modules
     if (!incompatibleModules.isEmpty()) {
-      if (Messages.showOkCancelDialog(project, "<html><body>Eclipse incompatible modules found:<ul><br><li>" + StringUtil.join(incompatibleModules, new Function<Module, String>() {
-        public String fun(Module module) {
-          return module.getName();
-        }
-      }, "<br><li>") + "</ul><br>Would you like to proceed and possibly lose your configurations?</body></html>", "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
+      if (Messages.showOkCancelDialog(project, "<html><body>Eclipse incompatible modules found:<ul><br><li>" +
+                                               StringUtil.join(incompatibleModules, new Function<Module, String>() {
+                                                 public String fun(Module module) {
+                                                   return module.getName();
+                                                 }
+                                               }, "<br><li>") +
+                                               "</ul><br>Would you like to proceed and possibly lose your configurations?</body></html>",
+                                      "Eclipse Incompatible Modules Found", Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
         return;
       }
-    } else if (modules.isEmpty()){
-      Messages.showInfoMessage(project, EclipseBundle.message("eclipse.export.nothing.to.do"), EclipseBundle.message("eclipse.export.dialog.title"));
+    }
+    else if (modules.isEmpty()) {
+      Messages.showInfoMessage(project, EclipseBundle.message("eclipse.export.nothing.to.do"),
+                               EclipseBundle.message("eclipse.export.dialog.title"));
       return;
     }
 
     modules.addAll(incompatibleModules);
     final ExportEclipseProjectsDialog dialog = new ExportEclipseProjectsDialog(project, modules);
-    dialog.show ();
-    if(dialog.isOK()){
+    dialog.show();
+    if (dialog.isOK()) {
       if (dialog.isLink()) {
         for (Module module : dialog.getSelectedModules()) {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-          ClasspathStorage.setStorageType(model, EclipseClasspathStorageProvider.ID);
-          model.dispose();
+          ClasspathStorage.setStorageType(ModuleRootManager.getInstance(module), EclipseClasspathStorageProvider.ID);
         }
       }
       else {
         for (Module module : dialog.getSelectedModules()) {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+          final ModuleRootModel model = ModuleRootManager.getInstance(module);
           final VirtualFile[] contentRoots = model.getContentRoots();         //todo
-          final String storageRoot = contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);
+          final String storageRoot =
+            contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);
           try {
             final Element classpathEleemnt = new Element(EclipseXml.CLASSPATH_TAG);
 
@@ -135,9 +136,6 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
           catch (WriteExternalException e1) {
             LOG.error(e1);
           }
-          finally {
-            model.dispose();
-          }
         }
       }
       try {
@@ -149,5 +147,4 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
       project.save();
     }
   }
-
 }

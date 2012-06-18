@@ -57,7 +57,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P> {
+public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   @NonNls private static final String BR_NBSP = "<br>&nbsp;";
   private final XBreakpointType<Self, P> myType;
@@ -345,6 +345,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public void clearIcon() {
     myIcon = null;
+  }
+
+  @Override
+  public int compareTo(Self self) {
+    return myType.getBreakpointComparator().compare((Self)this, self);
   }
 
   protected class BreakpointGutterIconRenderer extends GutterIconRenderer {

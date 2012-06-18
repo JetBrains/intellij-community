@@ -31,6 +31,7 @@ class SimpleStringConcatenationPredicate implements PsiElementPredicate {
     this.excludeConcatenationsInsideAnnotations = excludeConcatenationsInsideAnnotations;
   }
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!ConcatenationUtils.isConcatenation(element)) {
       return false;

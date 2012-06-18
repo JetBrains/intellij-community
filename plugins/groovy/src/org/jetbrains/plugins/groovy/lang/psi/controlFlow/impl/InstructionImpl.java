@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.NegatingGotoInstruction;
 
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedHashSet;
 
@@ -30,9 +31,9 @@ import java.util.LinkedHashSet;
  * @author ven
  */
 public class InstructionImpl implements Instruction {
-  private final LinkedHashSet<InstructionImpl> myPredecessors = new LinkedHashSet<InstructionImpl>();
-  private final LinkedHashSet<InstructionImpl> mySuccessors = new LinkedHashSet<InstructionImpl>();
-  private final LinkedHashSet<NegatingGotoInstruction> myNegations = new LinkedHashSet<NegatingGotoInstruction>();
+  private final LinkedHashSet<InstructionImpl> myPredecessors = new LinkedHashSet<InstructionImpl>(1);
+  private final LinkedHashSet<InstructionImpl> mySuccessors = new LinkedHashSet<InstructionImpl>(1);
+  private LinkedHashSet<NegatingGotoInstruction> myNegations;
 
   PsiElement myPsiElement;
   private int myNumber = -1;
@@ -97,6 +98,9 @@ public class InstructionImpl implements Instruction {
   @NotNull
   @Override
   public Iterable<? extends NegatingGotoInstruction> getNegatingGotoInstruction() {
+    if (myNegations == null) {
+      return Collections.emptyList();
+    }
     return myNegations;
   }
 
@@ -109,6 +113,9 @@ public class InstructionImpl implements Instruction {
   }
 
   void addNegationsFrom(Instruction instruction) {
+    if (myNegations == null) {
+      myNegations = new LinkedHashSet<NegatingGotoInstruction>(1);
+    }
     for (NegatingGotoInstruction negation : instruction.getNegatingGotoInstruction()) {
       myNegations.add(negation);
     }

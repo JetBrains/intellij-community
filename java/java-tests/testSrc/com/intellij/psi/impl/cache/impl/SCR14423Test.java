@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -36,7 +37,8 @@ public class SCR14423Test extends PsiTestCase {
       @Override
       public void run() {
         try {
-          VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+          VirtualFile rootVFile =
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
           myPrjDir1 = rootVFile.createChildDirectory(null, "prj1");
           mySrcDir1 = myPrjDir1.createChildDirectory(null, "src1");
@@ -121,9 +123,7 @@ public class SCR14423Test extends PsiTestCase {
 
         LocalFileSystem.getInstance().refresh(false);
 
-        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        rootModel.setSdk(null);
-        rootModel.commit();
+        ModuleRootModificationUtil.setModuleSdk(myModule, null);
 
         psiClass = myJavaFacade.findClass("p.A");
         assertNotNull(psiClass);

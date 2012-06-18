@@ -1,16 +1,15 @@
 package org.jetbrains.android.importDependencies;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author Eugene.Kudelevsky
-*/
+ * @author Eugene.Kudelevsky
+ */
 class AddModuleDependencyTask extends ImportDependenciesTask {
   private final ModuleProvider myModuleProvider;
   private final ModuleProvider myDepModuleProvider;
@@ -31,14 +30,7 @@ class AddModuleDependencyTask extends ImportDependenciesTask {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
     if (!rootManager.isDependsOn(depModule)) {
-      final ModifiableRootModel model = rootManager.getModifiableModel();
-      model.addModuleOrderEntry(depModule);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          model.commit();
-        }
-      });
+      ModuleRootModificationUtil.addDependency(module, depModule);
     }
     return null;
   }

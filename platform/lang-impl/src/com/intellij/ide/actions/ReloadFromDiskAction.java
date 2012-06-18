@@ -22,8 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -53,7 +53,6 @@ public class ReloadFromDiskAction extends AnAction implements DumbAware {
             new Runnable() {
               public void run() {
                 PsiManager.getInstance(project).reloadFromDisk(psiFile);
-                CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
               }
             }
           );

@@ -47,8 +47,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -270,7 +269,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile(getName()+"_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    File tempFile = FileUtil.createTempFile(getName() + "_", ProjectFileType.DOT_DEFAULT_EXTENSION);
     myFilesToDelete.add(tempFile);
     return tempFile;
   }
@@ -499,7 +498,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       if (myProject != null) {
         try {
           PsiDocumentManager documentManager = myProject.getComponent(PsiDocumentManager.class, null);
-          if (documentManager != null) EditorFactory.getInstance().getEventMulticaster().removeDocumentListener((DocumentListener)documentManager);
+          if (documentManager != null) {
+            EditorFactory.getInstance().getEventMulticaster().removeDocumentListener((DocumentListener)documentManager);
+          }
         }
         catch (Exception ignored) {
 
@@ -560,15 +561,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 //    ProjectJdkImpl jdk = ProjectJdkTable.getInstance().addJdk(defaultJdk);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-          rootModel.setSdk(jdk);
-          rootModel.commit();
-        }
-      });
+      ModuleRootModificationUtil.setModuleSdk(module, jdk);
     }
   }
 
@@ -665,6 +658,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     */
   }
+
   private static int LEAK_WALKS;
 
   private static void waitForAllLaters() throws InterruptedException, InvocationTargetException {
@@ -775,7 +769,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Retention(RetentionPolicy.RUNTIME)
   @Target({ElementType.METHOD, ElementType.TYPE})
-  public @interface WrapInCommand {}
+  public @interface WrapInCommand {
+  }
 
   protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
@@ -785,6 +780,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException().getResultObject();
   }
+
   protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
     return new WriteAction<VirtualFile>() {
       @Override
@@ -793,6 +789,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException().getResultObject();
   }
+
   protected static void delete(@NotNull final VirtualFile file) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -806,6 +803,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     });
   }
+
   protected static void rename(@NotNull final VirtualFile vFile1, @NotNull final String newName) {
     new WriteCommandAction.Simple(null) {
       @Override

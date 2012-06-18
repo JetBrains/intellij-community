@@ -18,8 +18,7 @@ public final class Alphabet {
   */
 
   public int getIndex(char letter, boolean forceAdd) {
-    final int r = getNextIndex(0, letter, forceAdd);
-    return r;
+    return getNextIndex(0, letter, forceAdd);
   }
 
   /*
@@ -28,6 +27,7 @@ public final class Alphabet {
   */
   public int getNextIndex(int startFrom, char letter, boolean forceAdd) {
     for (int i = startFrom; i <= lastIndexUsed; i++) {
+      if (i == letters.length) return -1;
       if (letters[i] != 0 && letters[i] == letter) {
         return i;
       }

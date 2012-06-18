@@ -18,6 +18,7 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -77,7 +78,10 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
 
   private static void addPhysicalElements(PsiElement[] elements, LinkedHashSet<PsiElement> to) {
     for (PsiElement element : elements) {
-      to.add(PsiImplUtil.handleMirror(element));
+      PsiElement mirror = PsiImplUtil.handleMirror(element);
+      if (!(mirror instanceof LightElement)) {
+        to.add(mirror);
+      }
     }
   }
 

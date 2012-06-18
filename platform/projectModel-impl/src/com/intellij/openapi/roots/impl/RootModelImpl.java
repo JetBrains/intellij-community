@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +45,7 @@ import java.util.*;
 /**
  * @author dsl
  */
-public class RootModelImpl implements ModifiableRootModel {
+public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
 
   private final Set<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
@@ -74,7 +73,8 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private final Set<ModuleExtension> myExtensions = new TreeSet<ModuleExtension>();
 
-  private final Map<PersistentOrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<PersistentOrderRootType, VirtualFilePointerContainer>();
+  private final Map<PersistentOrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers =
+    new HashMap<PersistentOrderRootType, VirtualFilePointerContainer>();
 
   private final RootConfigurationAccessor myConfigurationAccessor;
 
@@ -83,7 +83,9 @@ public class RootModelImpl implements ModifiableRootModel {
   // have to register all child disposables using this fake object since all clients just call ModifiableModel.dispose()
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  RootModelImpl(@NotNull ModuleRootManagerImpl moduleRootManager, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
+  RootModelImpl(@NotNull ModuleRootManagerImpl moduleRootManager,
+                ProjectRootManagerImpl projectRootManager,
+                VirtualFilePointerManager filePointerManager) {
     myModuleRootManager = moduleRootManager;
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
@@ -145,7 +147,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
     myWritable = true;
 
-    for(PersistentOrderRootType orderRootType: OrderRootType.getAllPersistentTypes()) {
+    for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
       String paths = orderRootType.getModulePathsName();
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);
@@ -223,7 +225,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private void copyContainersFrom(@NotNull RootModelImpl rootModel) {
     myOrderRootPointerContainers.clear();
-    for(PersistentOrderRootType orderRootType: OrderRootType.getAllPersistentTypes()) {
+    for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
       final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
       if (otherContainer != null) {
         myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(myDisposable, null));
@@ -269,110 +271,6 @@ public class RootModelImpl implements ModifiableRootModel {
 
   @Override
   @NotNull
-  public VirtualFile[] getContentRoots() {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-
-    for (ContentEntry contentEntry : myContent) {
-      final VirtualFile file = contentEntry.getFile();
-      if (file != null) {
-        result.add(file);
-      }
-    }
-    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
-  }
-
-  @Override
-  @NotNull
-  public String[] getContentRootUrls() {
-    if (myContent.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final ArrayList<String> result = new ArrayList<String>(myContent.size());
-
-    for (ContentEntry contentEntry : myContent) {
-      result.add(contentEntry.getUrl());
-    }
-
-    return ContainerUtil.toArray(result, new String[result.size()]);
-  }
-
-  @Override
-  @NotNull
-  public String[] getExcludeRootUrls() {
-    final List<String> result = new SmartList<String>();
-    for (ContentEntry contentEntry : myContent) {
-      final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (ExcludeFolder excludeFolder : excludeFolders) {
-        result.add(excludeFolder.getUrl());
-      }
-    }
-    return ContainerUtil.toArray(result, new String[result.size()]);
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile[] getExcludeRoots() {
-    final List<VirtualFile> result = new SmartList<VirtualFile>();
-    for (ContentEntry contentEntry : myContent) {
-      final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-      for (ExcludeFolder excludeFolder : excludeFolders) {
-        final VirtualFile file = excludeFolder.getFile();
-        if (file != null) {
-          result.add(file);
-        }
-      }
-    }
-    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
-  }
-
-  @Override
-  @NotNull
-  public String[] getSourceRootUrls() {
-    return getSourceRootUrls(true);
-  }
-
-  @Override
-  @NotNull
-  public String[] getSourceRootUrls(boolean includingTests) {
-    List<String> result = new SmartList<String>();
-    for (ContentEntry contentEntry : myContent) {
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (SourceFolder sourceFolder : sourceFolders) {
-        if (includingTests || !sourceFolder.isTestSource()) {
-          result.add(sourceFolder.getUrl());
-        }
-      }
-    }
-    return ContainerUtil.toArray(result, new String[result.size()]);
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile[] getSourceRoots() {
-    return getSourceRoots(true);
-  }
-
-  @Override
-  @NotNull
-  public VirtualFile[] getSourceRoots(final boolean includingTests) {
-    List<VirtualFile> result = new SmartList<VirtualFile>();
-    for (ContentEntry contentEntry : myContent) {
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (SourceFolder sourceFolder : sourceFolders) {
-        final VirtualFile file = sourceFolder.getFile();
-        if (file != null && (includingTests || !sourceFolder.isTestSource())) {
-          result.add(file);
-        }
-      }
-    }
-    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
-  }
-
-  @Override
-  public ContentEntry[] getContentEntries() {
-    return myContent.toArray(new ContentEntry[myContent.size()]);
-  }
-
-  @Override
-  @NotNull
   public OrderEntry[] getOrderEntries() {
     OrderEntry[] cachedOrderEntries = myCachedOrderEntries;
     if (cachedOrderEntries == null) {
@@ -388,8 +286,8 @@ public class RootModelImpl implements ModifiableRootModel {
   @Override
   public void removeContentEntry(@NotNull ContentEntry entry) {
     assertWritable();
-    LOG.assertTrue(myContent.contains(entry));
-    myContent.remove(entry);
+    LOG.assertTrue(getContent().contains(entry));
+    getContent().remove(entry);
   }
 
   @Override
@@ -473,6 +371,7 @@ public class RootModelImpl implements ModifiableRootModel {
     String error = checkValidRearrangement(newEntries);
     LOG.assertTrue(error == null, error);
   }
+
   @Nullable
   private String checkValidRearrangement(@NotNull OrderEntry[] newEntries) {
     if (newEntries.length != myOrderEntries.size()) {
@@ -548,21 +447,6 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Override
-  public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
-    R result = initialValue;
-    for (OrderEntry orderEntry : getOrderEntries()) {
-      result = orderEntry.accept(policy, result);
-    }
-    return result;
-  }
-
-  @NotNull
-  @Override
-  public OrderEnumerator orderEntries() {
-    return new ModuleOrderEnumerator(this, null);
-  }
-
-  @Override
   public Project getProject() {
     return myProjectRootManager.getProject();
   }
@@ -610,7 +494,7 @@ public class RootModelImpl implements ModifiableRootModel {
       element.addContent(new Element(EXCLUDE_EXPLODED_TAG));
     }
 
-    for (ContentEntry contentEntry : myContent) {
+    for (ContentEntry contentEntry : getContent()) {
       if (contentEntry instanceof ContentEntryImpl) {
         final Element subElement = new Element(ContentEntryImpl.ELEMENT_NAME);
         ((ContentEntryImpl)contentEntry).writeExternal(subElement);
@@ -624,7 +508,7 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    for(PersistentOrderRootType orderRootType: myOrderRootPointerContainers.keySet()) {
+    for (PersistentOrderRootType orderRootType : myOrderRootPointerContainers.keySet()) {
       VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
       if (container != null && container.size() > 0) {
         final Element javaDocPaths = new Element(orderRootType.getModulePathsName());
@@ -645,7 +529,6 @@ public class RootModelImpl implements ModifiableRootModel {
       jdkLibraryEntry = null;
     }
     replaceEntryOfType(JdkOrderEntry.class, jdkLibraryEntry);
-
   }
 
   @Override
@@ -681,26 +564,6 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Override
-  public Sdk getSdk() {
-    for (OrderEntry orderEntry : getOrderEntries()) {
-      if (orderEntry instanceof JdkOrderEntry) {
-        return ((JdkOrderEntry)orderEntry).getJdk();
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public boolean isSdkInherited() {
-    for (OrderEntry orderEntry : getOrderEntries()) {
-      if (orderEntry instanceof InheritedJdkOrderEntry) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
   public String getSdkName() {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof JdkOrderEntry) {
@@ -731,6 +594,11 @@ public class RootModelImpl implements ModifiableRootModel {
       if (entry instanceof RootModelComponentBase && ((RootModelComponentBase)entry).isDisposed()) return true;
     }
     return false;
+  }
+
+  @Override
+  protected Set<ContentEntry> getContent() {
+    return myContent;
   }
 
   private static class ContentComparator implements Comparator<ContentEntry> {
@@ -800,7 +668,8 @@ public class RootModelImpl implements ModifiableRootModel {
       final VirtualFilePointerContainer otherContainer = getSourceModel().myOrderRootPointerContainers.get(type);
       if (container == null || otherContainer == null) {
         if (container != otherContainer) return true;
-      } else {
+      }
+      else {
         final String[] urls = container.getUrls();
         final String[] otherUrls = otherContainer.getUrls();
         if (urls.length != otherUrls.length) return true;
@@ -998,18 +867,12 @@ public class RootModelImpl implements ModifiableRootModel {
     private void clearCachedEntries() {
       myCachedOrderEntries = null;
     }
+
     private void setIndicies(int startIndex) {
       for (int j = startIndex; j < size(); j++) {
         ((OrderEntryBaseImpl)get(j)).setIndex(j);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String[] getDependencyModuleNames() {
-    List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries().process(new CollectDependentModules(), new ArrayList<String>());
-    return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
   @Override
@@ -1036,46 +899,9 @@ public class RootModelImpl implements ModifiableRootModel {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  @Override
-  @NotNull
-  public Module[] getModuleDependencies() {
-    return getModuleDependencies(true);
-  }
-
-  @Override
-  @NotNull
-  public Module[] getModuleDependencies(boolean includeTests) {
-    final List<Module> result = new ArrayList<Module>();
-
-    for (OrderEntry entry : getOrderEntries()) {
-      if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
-        final DependencyScope scope = moduleOrderEntry.getScope();
-        if (!includeTests && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) {
-          continue;
-        }
-        final Module module1 = moduleOrderEntry.getModule();
-        if (module1 != null) {
-          result.add(module1);
-        }
-      }
-    }
-
-    return ContainerUtil.toArray(result, new Module[result.size()]);
-  }
-
   private RootModelImpl getSourceModel() {
     assertWritable();
     return myModuleRootManager.getRootModel();
-  }
-
-  private static class CollectDependentModules extends RootPolicy<List<String>> {
-    @NotNull
-    @Override
-    public List<String> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, @NotNull List<String> arrayList) {
-      arrayList.add(moduleOrderEntry.getModuleName());
-      return arrayList;
-    }
   }
 
   @Override
@@ -1084,7 +910,7 @@ public class RootModelImpl implements ModifiableRootModel {
     VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
     if (container == null) {
       container = myFilePointerManager.createContainer(myDisposable, null);
-      myOrderRootPointerContainers.put((PersistentOrderRootType) orderRootType, container);
+      myOrderRootPointerContainers.put((PersistentOrderRootType)orderRootType, container);
     }
     container.clear();
     for (final String url : urls) {

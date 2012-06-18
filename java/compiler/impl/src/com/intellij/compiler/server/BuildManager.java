@@ -597,6 +597,7 @@ public class BuildManager implements ApplicationComponent{
     Sdk projectJdk = internalJdk;
     final String versionString = projectJdk.getVersionString();
     JavaSdkVersion sdkVersion = versionString != null? ((JavaSdk)projectJdk.getSdkType()).getVersion(versionString) : null;
+    int sdkMinorVersion = getMinorVersion(versionString);
     if (sdkVersion != null) {
       final Set<Sdk> candidates = new HashSet<Sdk>();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -611,8 +612,11 @@ public class BuildManager implements ApplicationComponent{
         if (vs != null) {
           final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
           if (candidateVersion != null) {
-            if (candidateVersion.compareTo(sdkVersion) > 0) {
+            final int candidateMinorVersion = getMinorVersion(vs);
+            final int result = candidateVersion.compareTo(sdkVersion);
+            if (result > 0 || (result == 0 && candidateMinorVersion > sdkMinorVersion)) {
               sdkVersion = candidateVersion;
+              sdkMinorVersion = candidateMinorVersion;
               projectJdk = candidate;
             }
           }
@@ -725,6 +729,30 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.setWorkDirectory(workDirectory);
 
     return cmdLine.createProcess();
+  }
+
+  private static int getMinorVersion(String vs) {
+    final int dashIndex = vs.lastIndexOf('_');
+    if (dashIndex >= 0) {
+      StringBuilder builder = new StringBuilder();
+      for (int idx = dashIndex + 1; idx < vs.length(); idx++) {
+        final char ch = vs.charAt(idx);
+        if (Character.isDigit(ch)) {
+          builder.append(ch);
+        }
+        else {
+          break;
+        }
+      }
+      if (builder.length() > 0) {
+        try {
+          return Integer.parseInt(builder.toString());
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+    }
+    return 0;
   }
 
   private static void ensureLogConfigExists(File workDirectory) {

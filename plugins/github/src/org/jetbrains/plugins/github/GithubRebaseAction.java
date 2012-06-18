@@ -108,6 +108,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     final VirtualFile root = project.getBaseDir();
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     if (manager == null) {
+      LOG.info("No GitRepositoryManager instance available. Action cancelled.");
       return;
     }
     final GitRepository gitRepository = manager.getRepositoryForFile(project.getBaseDir());
@@ -139,7 +140,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       return;
     }
 
-    final String parent = repositoryInfo.getParent();
+    final String parent = repositoryInfo.getParentName();
     LOG.assertTrue(parent != null, "Parent repository not found!");
     final String parentRepoSuffix = parent + ".git";
     final String parentRepoUrl = "git://github.com/" + parentRepoSuffix;
@@ -177,25 +178,14 @@ public class GithubRebaseAction extends DumbAwareAction {
             addRemoteHandler.run();
             if (addRemoteHandler.getExitCode() != 0) {
               showErrorMessageInEDT(project, "Failed to add GitHub remote: '" + parentRepoUrl + "'");
-              return;
             }
 
-            LOG.info("Updating remotes");
-            ProgressManager.getInstance().getProgressIndicator().setText("Updating remotes");
-            final GitSimpleHandler updateRemotesHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
-            updateRemotesHandler.setNoSSH(true);
-            updateRemotesHandler.setSilent(true);
-            updateRemotesHandler.addParameters("update");
-            updateRemotesHandler.run();
-            if (updateRemotesHandler.getExitCode() != 0) {
-              showErrorMessageInEDT(project, "Failed to update remotes");
-              return;
-            }
+            // catch newly added remote
+            gitRepository.update(GitRepository.TrackedTopic.CONFIG);
           }
           catch (VcsException e1) {
             final String message = "Error happened during git operation: " + e1.getMessage();
             showErrorMessageInEDT(project, message);
-            return;
           }
         }
       });

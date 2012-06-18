@@ -67,6 +67,29 @@ public class MavenRunConfigurationType implements ConfigurationType {
       }
 
       @Override
+      public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+        MavenRunConfiguration cfg = (MavenRunConfiguration)super.createConfiguration(name, template);
+
+        if (!StringUtil.isEmptyOrSpaces(cfg.getRunnerParameters().getWorkingDirPath())) return cfg;
+
+        Project project = cfg.getProject();
+        if (project == null) return cfg;
+
+        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+
+        List<MavenProject> projects = projectsManager.getProjects();
+        if (projects.size() != 1) {
+          return cfg;
+        }
+
+        VirtualFile directory = projects.get(0).getDirectoryFile();
+
+        cfg.getRunnerParameters().setWorkingDirPath(directory.getPath());
+
+        return cfg;
+      }
+
+      @Override
       public void configureBeforeRunTaskDefaults(Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
         if (providerID == CompileStepBeforeRun.ID) {
           task.setEnabled(false);

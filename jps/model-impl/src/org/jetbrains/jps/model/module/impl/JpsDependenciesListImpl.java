@@ -63,7 +63,7 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
 
   @Override
   public void addModuleSourceDependency() {
-    myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(new JpsModuleSourceDependency());
+    myContainer.getChild(DEPENDENCY_COLLECTION_KIND).addChild(new JpsModuleSourceDependencyImpl());
   }
 
   @Override
