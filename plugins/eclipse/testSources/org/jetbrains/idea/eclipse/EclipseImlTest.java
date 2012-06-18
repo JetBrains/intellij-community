@@ -31,7 +31,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.RootModelImpl;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -61,8 +61,6 @@ public class EclipseImlTest extends IdeaTestCase {
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
     FileUtil.copyDir(currentTestRoot, new File(getProject().getBaseDir().getPath()));
-
-
   }
 
   private void doTest() throws Exception {
@@ -95,24 +93,24 @@ public class EclipseImlTest extends IdeaTestCase {
     final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
     classpathReader
-      .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null, classpathElement);
+      .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null,
+                     classpathElement);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         rootModel.commit();
       }
     });
 
-    final RootModelImpl model = (RootModelImpl)ModuleRootManager.getInstance(module).getModifiableModel();
     final Element actualImlElement = new Element("root");
-    model.writeExternal(actualImlElement);
-    model.dispose();
+    ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getState().writeExternal(actualImlElement);
 
     PathMacros.getInstance().setMacro(JUNIT, communityAppDir);
     PathMacroManager.getInstance(module).collapsePaths(actualImlElement);
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
     PathMacros.getInstance().removeMacro(JUNIT);
 
-    final Element expectedIml = JDOMUtil.loadDocument(new File(project.getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
+    final Element expectedIml =
+      JDOMUtil.loadDocument(new File(project.getBaseDir().getPath() + "/expected", "expected.iml")).getRootElement();
     Assert.assertTrue(new String(JDOMUtil.printDocument(new Document(actualImlElement), "\n")),
                       JDOMUtil.areElementsEqual(expectedIml, actualImlElement));
   }
@@ -138,5 +136,4 @@ public class EclipseImlTest extends IdeaTestCase {
   public void testRoot() throws Exception {
     doTest();
   }
-
 }

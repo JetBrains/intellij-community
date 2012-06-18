@@ -29,6 +29,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -62,8 +63,6 @@ public class EclipseClasspathTest extends IdeaTestCase {
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
     FileUtil.copyDir(currentTestRoot, new File(getProject().getBaseDir().getPath()));
-
-
   }
 
   private void doTest() throws Exception {
@@ -113,16 +112,14 @@ public class EclipseClasspathTest extends IdeaTestCase {
       fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
     final Element classpathElement1 = JDOMUtil.loadDocument(fileText1).getRootElement();
-    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final ModuleRootModel model = ModuleRootManager.getInstance(module);
     final Element resultClasspathElement = new Element(EclipseXml.CLASSPATH_TAG);
     new EclipseClasspathWriter(model).writeClasspath(resultClasspathElement, classpathElement1);
-    model.dispose();
 
     String resulted = new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n"));
     Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(module.getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
                       JDOMUtil.areElementsEqual(classpathElement1, resultClasspathElement));
   }
-
 
 
   public void testAbsolutePaths() throws Exception {
