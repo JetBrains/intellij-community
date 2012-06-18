@@ -20,10 +20,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -405,7 +402,8 @@ public class HighlightInfo implements Segment {
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
-        QuickFixAction.registerQuickFixAction(info, fixedRange != null? fixedRange : quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.key);
+        QuickFixAction.registerQuickFixAction(info, fixedRange != null ? fixedRange : quickFixInfo.textRange, quickFixInfo.quickFix,
+                                              quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME));
       }
     }
     return info;
@@ -524,6 +522,13 @@ public class HighlightInfo implements Segment {
         newOptions.add(new CleanupInspectionIntention((LocalInspectionToolWrapper)tool, aClass));
       } else if (tool instanceof GlobalInspectionToolWrapper) {
         wrappedTool = ((GlobalInspectionToolWrapper)tool).getTool();
+        if (wrappedTool instanceof GlobalSimpleInspectionTool && (myAction instanceof LocalQuickFix || myAction instanceof QuickFixWrapper)) {
+          Class aClass = myAction.getClass();
+          if (myAction instanceof QuickFixWrapper) {
+            aClass = ((QuickFixWrapper)myAction).getFix().getClass();
+          }
+          newOptions.add(new CleanupInspectionIntention((GlobalInspectionToolWrapper)tool, aClass));
+        }
       }
 
       if (wrappedTool instanceof CustomSuppressableInspectionTool) {

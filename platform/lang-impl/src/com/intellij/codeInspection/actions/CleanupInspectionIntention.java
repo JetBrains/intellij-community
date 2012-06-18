@@ -21,9 +21,7 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
-import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,10 +42,10 @@ import java.util.List;
  * Date: 21-Feb-2006
  */
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
-  private final LocalInspectionToolWrapper myTool;
+  private final InspectionToolWrapper myTool;
   private final Class myQuickfixClass;
 
-  public CleanupInspectionIntention(final LocalInspectionToolWrapper tool, Class quickFixClass) {
+  public CleanupInspectionIntention(final InspectionToolWrapper tool, Class quickFixClass) {
     myTool = tool;
     myQuickfixClass = quickFixClass;
   }
@@ -64,12 +62,13 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
-    final List<CommonProblemDescriptor> descriptions = ProgressManager.getInstance().runProcess(new Computable<List<CommonProblemDescriptor>>() {
-      @Override
-      public List<CommonProblemDescriptor> compute() {
-        return InspectionRunningUtil.runInspectionOnFile(file, myTool.getTool());
-      }
-    }, new EmptyProgressIndicator());
+    final List<CommonProblemDescriptor> descriptions =
+      ProgressManager.getInstance().runProcess(new Computable<List<CommonProblemDescriptor>>() {
+        @Override
+        public List<CommonProblemDescriptor> compute() {
+          return InspectionRunningUtil.runInspectionOnFile(file, myTool);
+        }
+      }, new EmptyProgressIndicator());
 
     Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
@@ -95,8 +94,12 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     }
   }
 
+  
+
+
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myTool.isUnfair());
+    return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myTool instanceof LocalInspectionToolWrapper &&
+                                                                                         ((LocalInspectionToolWrapper)myTool).isUnfair());
   }
 
   public boolean startInWriteAction() {
