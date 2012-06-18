@@ -4,10 +4,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -17,7 +14,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
@@ -119,9 +115,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
         }
         libraryModel.commit();
         if (module != null) {
-          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-          rootModel.addLibraryEntry(library).setScope(scope);
-          rootModel.commit();
+          ModuleRootModificationUtil.addDependency(module, library, scope, false);
         }
         result.setResult(library);
       }
@@ -146,7 +140,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected static void addModuleDependency(final Module module, final Module dependency) {
-    PsiTestUtil.addDependency(module, dependency);
+    ModuleRootModificationUtil.addDependency(module, dependency);
   }
 
   protected class PackagingElementBuilder {

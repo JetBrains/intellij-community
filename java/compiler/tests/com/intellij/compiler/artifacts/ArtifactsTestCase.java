@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
@@ -108,9 +109,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
         if (sourceRoot != null) {
           PsiTestUtil.addSourceContentToRoots(module, sourceRoot);
         }
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        model.setSdk(getTestProjectJdk());
-        model.commit();
+        ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
         result.setResult(module);
       }
     }.execute().getResultObject();
@@ -160,7 +159,8 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
   public class MockArtifactsStructureConfigurableContext implements ArtifactsStructureConfigurableContext {
     private ModifiableArtifactModel myModifiableModel;
     private final Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<Module, ModifiableRootModel>();
-    private final Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles = new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
+    private final Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles =
+      new HashMap<CompositePackagingElement<?>, ManifestFileConfiguration>();
     private final ArtifactEditorManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
 
     @Override
@@ -288,5 +288,4 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
       throw new UnsupportedOperationException("'getOrCreateArtifactElement' not implemented in " + getClass().getName());
     }
   }
-
 }
