@@ -15,7 +15,6 @@
  */
 package org.jetbrains.android.compiler;
 
-import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
@@ -35,7 +34,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
@@ -57,18 +55,16 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.artifact.*;
 import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.dom.resources.Attr;
-import org.jetbrains.android.dom.resources.DeclareStyleable;
-import org.jetbrains.android.dom.resources.ResourceElement;
-import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
-import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.util.*;
+import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.android.util.AndroidExecutionUtil;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,18 +134,6 @@ public class AndroidCompileUtil {
 
   public static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages, @Nullable Module module) {
     addMessages(context, messages, null, module);
-  }
-
-  public static void addMessages(@NotNull Map<CompilerMessageCategory, List<String>> messages,
-                                 @NotNull Map<CompilerMessageCategory, List<String>> toAdd) {
-    for (Map.Entry<CompilerMessageCategory, List<String>> entry : toAdd.entrySet()) {
-      List<String> list = messages.get(entry.getKey());
-      if (list == null) {
-        list = new ArrayList<String>();
-        messages.put(entry.getKey(), list);
-      }
-      list.addAll(entry.getValue());
-    }
   }
 
   static void addMessages(final CompileContext context,
@@ -708,95 +692,6 @@ public class AndroidCompileUtil {
     }
     if (sourceRoot != null && exclude) {
       excludeFromCompilation(module.getProject(), sourceRoot);
-    }
-  }
-
-  public static void collectAllResources(@NotNull final AndroidFacet facet, final Set<ResourceEntry> resourceSet) {
-    final LocalResourceManager manager = facet.getLocalResourceManager();
-    final Project project = facet.getModule().getProject();
-
-    for (final ResourceType resType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
-      for (final ResourceElement element : manager.getValueResources(resType.getName())) {
-        waitForSmartMode(project);
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!element.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
-              return;
-            }
-            final String name = element.getName().getValue();
-
-            if (name != null) {
-              resourceSet.add(new ResourceEntry(resType.getName(), name));
-            }
-          }
-        });
-      }
-    }
-
-    for (final Pair<Resources, VirtualFile> pair : manager.getResourceElements()) {
-      final Resources resources = pair.getFirst();
-      waitForSmartMode(project);
-
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (!resources.isValid() || facet.getModule().isDisposed() || project.isDisposed()) {
-            return;
-          }
-
-          for (final Attr attr : resources.getAttrs()) {
-            final String name = attr.getName().getValue();
-
-            if (name != null) {
-              resourceSet.add(new ResourceEntry(ResourceType.ATTR.getName(), name));
-            }
-          }
-
-          for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
-            final String name = styleable.getName().getValue();
-
-            if (name != null) {
-              resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
-            }
-          }
-        }
-      });
-    }
-
-    waitForSmartMode(project);
-
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (facet.getModule().isDisposed() || project.isDisposed()) {
-          return;
-        }
-
-        for (String id : manager.getIds()) {
-          resourceSet.add(new ResourceEntry(ResourceType.ID.getName(), id));
-        }
-      }
-    });
-    final HashSet<VirtualFile> visited = new HashSet<VirtualFile>();
-
-    for (VirtualFile subdir : manager.getResourceSubdirs(null)) {
-      final HashSet<VirtualFile> resourceFiles = new HashSet<VirtualFile>();
-      AndroidUtils.collectFiles(subdir, visited, resourceFiles);
-
-      for (VirtualFile file : resourceFiles) {
-        final String subdirName = subdir.getName();
-        final int index = subdirName.indexOf('-');
-        final String type = index >= 0 ? subdirName.substring(0, index) : subdirName;
-        resourceSet.add(new ResourceEntry(type, FileUtil.getNameWithoutExtension(file.getName())));
-      }
-    }
-  }
-
-  private static void waitForSmartMode(Project project) {
-    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
-      DumbService.getInstance(project).waitForSmartMode();
     }
   }
 

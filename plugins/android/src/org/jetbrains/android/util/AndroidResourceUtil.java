@@ -572,6 +572,15 @@ public class AndroidResourceUtil {
     return false;
   }
 
+  public static boolean isManifestJavaFile(@NotNull AndroidFacet facet, @NotNull PsiFile file) {
+    if (file.getName().equals(AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME) && file instanceof PsiJavaFile) {
+      final Manifest manifest = facet.getManifest();
+      final PsiJavaFile javaFile = (PsiJavaFile)file;
+      return manifest != null && javaFile.getPackageName().equals(manifest.getPackage().getValue());
+    }
+    return false;
+  }
+
   public static List<String> getNames(@NotNull Collection<ResourceType> resourceTypes) {
     if (resourceTypes.size() == 0) {
       return Collections.emptyList();
@@ -802,5 +811,10 @@ public class AndroidResourceUtil {
       return AndroidFileTemplateProvider.LAYOUT_RESOURCE_FILE_TEMPLATE;
     }
     return AndroidFileTemplateProvider.RESOURCE_FILE_TEMPLATE;
+  }
+
+  @NotNull
+  public static String getFieldNameByResourceName(@NotNull String fieldName) {
+    return fieldName.replace('.', '_').replace('-', '_');
   }
 }

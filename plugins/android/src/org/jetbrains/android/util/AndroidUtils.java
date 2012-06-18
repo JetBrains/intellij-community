@@ -109,6 +109,7 @@ public class AndroidUtils {
   @NonNls public static final String APPLICATION_CLASS_NAME = "android.app.Application";
   @NonNls public static final String ACTIVITY_BASE_CLASS_NAME = "android.app.Activity";
   @NonNls public static final String R_CLASS_NAME = "R";
+  @NonNls public static final String MANIFEST_CLASS_NAME = "Manifest";
   @NonNls public static final String LAUNCH_ACTION_NAME = "android.intent.action.MAIN";
   @NonNls public static final String LAUNCH_CATEGORY_NAME = "android.intent.category.LAUNCHER";
   @NonNls public static final String INSTRUMENTATION_RUNNER_BASE_CLASS = "android.app.Instrumentation";
