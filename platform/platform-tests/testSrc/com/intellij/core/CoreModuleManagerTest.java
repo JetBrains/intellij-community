@@ -31,12 +31,12 @@ import java.io.IOException;
  * @author yole
  */
 public class CoreModuleManagerTest extends UsefulTestCase {
-  public void _testLoadingModules() throws IOException, JDOMException, InvalidDataException {
+  public void testLoadingModules() throws IOException, JDOMException, InvalidDataException {
     CoreApplicationEnvironment appEnv = new CoreApplicationEnvironment(getTestRootDisposable());
-    ProjectModelEnvironment.registerApplicationEnvironment(appEnv);
+    new ProjectModel.InitApplicationEnvironment(appEnv);
 
     CoreProjectEnvironment prjEnv = new CoreProjectEnvironment(getTestRootDisposable(), appEnv);
-    ProjectModelEnvironment.registerProjectEnvironment(prjEnv);
+    new ProjectModel.InitProjectEnvironment(prjEnv);
 
     final String projectPath = PathManagerEx.getTestDataPath("/core/loadingTest");
     VirtualFile vFile = StandardFileSystems.local().findFileByPath(projectPath);
