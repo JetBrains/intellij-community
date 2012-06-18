@@ -39,8 +39,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -758,37 +756,6 @@ public class AndroidResourceUtil {
       return null;
     }
     return new Pair<String, String>(resClassName, resFieldName);
-  }
-
-  public static void createStubResourceField(@NotNull final Module module,
-                                             @NotNull final String aPackage,
-                                             @NotNull final String resClassName,
-                                             @NotNull final String resFieldName) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Project project = module.getProject();
-        final PsiClass[] classes =
-          JavaPsiFacade.getInstance(project).findClasses(aPackage + ".R", GlobalSearchScope.moduleScope(module));
-        if (classes.length == 1) {
-          final PsiClass aClass = classes[0];
-          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-
-          PsiClass resTypeClass = aClass.findInnerClassByName(resClassName, false);
-
-          if (resTypeClass == null) {
-            resTypeClass = (PsiClass)aClass.add(factory.createClass(resClassName));
-          }
-          else if (resTypeClass.findFieldByName(resFieldName, false) != null) {
-            return;
-          }
-          final PsiField psiField = (PsiField)resTypeClass.add(factory.createField(resFieldName, PsiType.INT));
-          PsiUtil.setModifierProperty(psiField, PsiModifier.PUBLIC, true);
-          PsiUtil.setModifierProperty(psiField, PsiModifier.STATIC, true);
-          PsiUtil.setModifierProperty(psiField, PsiModifier.FINAL, true);
-        }
-      }
-    });
   }
 
   @NotNull
