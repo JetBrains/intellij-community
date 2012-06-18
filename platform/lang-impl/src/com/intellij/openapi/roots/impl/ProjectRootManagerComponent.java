@@ -27,6 +27,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -304,7 +305,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     super.clearScopesCachesForModules();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      ((ModuleImpl)module).clearScopesCache();
+      ((ModuleEx)module).clearScopesCache();
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.impl.ModuleEx;
+import com.intellij.openapi.module.impl.ModuleScopeProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 public class CoreModule extends MockComponentManager implements ModuleEx {
   private String myPath;
   private final Project myProject;
+  private final ModuleScopeProvider myModuleScopeProvider;
 
   public CoreModule(@NotNull Disposable parentDisposable, Project project, String moduleFilePath) {
     super(project.getPicoContainer(), parentDisposable);
@@ -65,6 +67,11 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
                                                                         VirtualFilePointerManager.getInstance());
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, new ModulePathMacroManager(PathMacros.getInstance(), this));
+    myModuleScopeProvider = createModuleScopeProvider();
+  }
+
+  protected ModuleScopeProvider createModuleScopeProvider() {
+    return new CoreModuleScopeProvider();
   }
 
   @Override
@@ -89,6 +96,11 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   @Override
   public void rename(String newName) {
+  }
+
+  @Override
+  public void clearScopesCache() {
+    myModuleScopeProvider.clearCache();
   }
 
   @Override
@@ -136,51 +148,51 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   @Override
   public GlobalSearchScope getModuleScope() {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleScope();
   }
 
   @Override
   public GlobalSearchScope getModuleScope(boolean includeTests) {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleScope(includeTests);
   }
 
   @Override
   public GlobalSearchScope getModuleWithLibrariesScope() {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleWithLibrariesScope();
   }
 
   @Override
   public GlobalSearchScope getModuleWithDependenciesScope() {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleWithDependenciesScope();
   }
 
   @Override
   public GlobalSearchScope getModuleContentScope() {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleContentScope();
   }
 
   @Override
   public GlobalSearchScope getModuleContentWithDependenciesScope() {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleContentWithDependenciesScope();
   }
 
   @Override
   public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleWithDependenciesAndLibrariesScope(includeTests);
   }
 
   @Override
   public GlobalSearchScope getModuleWithDependentsScope() {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleWithDependentsScope();
   }
 
   @Override
   public GlobalSearchScope getModuleTestsWithDependentsScope() {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleTestsWithDependentsScope();
   }
 
   @Override
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
-    throw new UnsupportedOperationException();
+    return myModuleScopeProvider.getModuleRuntimeScope(includeTests);
   }
 }

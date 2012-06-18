@@ -27,4 +27,6 @@ public interface ModuleEx extends Module {
   void projectOpened();
   void projectClosed();
   void rename(String newName);
+
+  void clearScopesCache();
 }
