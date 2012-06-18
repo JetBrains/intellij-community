@@ -1,9 +1,11 @@
 package org.jetbrains.android.augment;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
@@ -21,7 +23,8 @@ public class AndroidPsiAugmentProvider extends PsiAugmentProvider {
   @Override
   public <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
     if (type != PsiClass.class ||
-        !(element instanceof PsiClass)) {
+        !(element instanceof PsiClass) ||
+        DumbService.isDumb(element.getProject())) {
       return Collections.emptyList();
     }
     final PsiClass aClass = (PsiClass)element;
@@ -33,7 +36,7 @@ public class AndroidPsiAugmentProvider extends PsiAugmentProvider {
     }
 
     final AndroidFacet facet = AndroidFacet.getInstance(element);
-    if (facet == null) {
+    if (facet == null || !AndroidAptCompiler.isToCompileModule(facet.getModule(), facet.getConfiguration())) {
       return Collections.emptyList();
     }
 
