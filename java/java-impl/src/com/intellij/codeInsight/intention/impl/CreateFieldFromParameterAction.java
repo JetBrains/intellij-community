@@ -54,16 +54,8 @@ public class CreateFieldFromParameterAction extends BaseIntentionAction {
   private static boolean isAvailable(PsiParameter psiParameter) {
     final PsiType type = FieldFromParameterUtils.getSubstitutedType(psiParameter);
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
-    return psiParameter.isValid()
-           && psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE)
-           && psiParameter.getDeclarationScope() instanceof PsiMethod
-           && ((PsiMethod)psiParameter.getDeclarationScope()).getBody() != null
-           && psiParameter.getManager().isInProject(psiParameter)
-           && type != null
-           && type.isValid()
-           && FieldFromParameterUtils.getParameterAssignedToField(psiParameter) == null
-           && targetClass != null
-           && !targetClass.isInterface();
+    return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass) &&
+           psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
   @Override

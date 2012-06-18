@@ -50,7 +50,8 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
   public CreateFieldFromParameterDialog(Project project,
                                         String[] names,
                                         PsiClass targetClass,
-                                        final boolean fieldMayBeFinal, PsiType... types) {
+                                        boolean fieldMayBeFinal,
+                                        PsiType... types) {
     super(project, true);
     myProject = project;
     myNames = names;

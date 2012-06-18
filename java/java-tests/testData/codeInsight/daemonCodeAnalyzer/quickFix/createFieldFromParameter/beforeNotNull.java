@@ -1,4 +1,4 @@
-// "Create Field For Parameter 'name'" "true"
+// "Create Field for Parameter 'name'" "true"
 
 import org.jetbrains.annotations.NotNull;
 

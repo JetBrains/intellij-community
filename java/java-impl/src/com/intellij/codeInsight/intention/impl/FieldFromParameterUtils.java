@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -254,6 +253,20 @@ public final class FieldFromParameterUtils {
     }
   }
 
+  public static boolean isAvailable(@Nullable PsiParameter myParameter,
+                                     @Nullable PsiType type,
+                                     @Nullable PsiClass targetClass){
+    return myParameter != null
+           && myParameter.isValid()
+           && myParameter.getManager().isInProject(myParameter)
+           && myParameter.getDeclarationScope() instanceof PsiMethod
+           && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
+           && type != null
+           && type.isValid()
+           && targetClass != null
+           && !targetClass.isInterface()
+           && getParameterAssignedToField(myParameter) == null;
+  }
   private FieldFromParameterUtils() {
   }
 }

@@ -33,8 +33,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -70,7 +68,8 @@ public class CreateAssignFieldsFromParametersAction extends BaseIntentionAction 
       for (PsiParameter parameter : parameters) {
         params.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parameter));
       }
-      if (params.size() <= 1) return false;
+      if (params.isEmpty()) return false;
+      if (params.size() == 1 && psiParameter != null) return false;
       if (psiParameter == null) {
         psiParameter = params.iterator().next().getElement();
         LOG.assertTrue(psiParameter != null);
@@ -115,18 +114,9 @@ public class CreateAssignFieldsFromParametersAction extends BaseIntentionAction 
 
   private static boolean isAvailable(PsiParameter psiParameter) {
     final PsiType type = FieldFromParameterUtils.getSubstitutedType(psiParameter);
-    PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
-    return psiParameter.isValid()
-           && psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE)
-           && psiParameter.getDeclarationScope() instanceof PsiMethod
-           && ((PsiMethod)psiParameter.getDeclarationScope()).getBody() != null
-           && psiParameter.getManager().isInProject(psiParameter)
-           && type != null
-           && type.isValid()
-           && FieldFromParameterUtils.getParameterAssignedToField(psiParameter) == null
-           && targetClass != null
-           && !targetClass.isInterface()
-      ;
+    final PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
+    return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass) &&
+           psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
   @NotNull
