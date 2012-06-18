@@ -18,6 +18,9 @@ package org.jetbrains.android.maven;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.facet.FacetType;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -107,11 +110,19 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     String mavenProjectDirPath = FileUtil.toSystemIndependentName(mavenProject.getDirectory());
     facet.getConfiguration().init(facet.getModule(), mavenProjectDirPath);
     AndroidMavenProviderImpl.setPathsToDefault(mavenProject, facet.getModule(), facet.getConfiguration());
-    AndroidMavenProviderImpl.configureAaptCompilation(mavenProject, facet.getModule(), facet.getConfiguration(),
-                                                      AndroidMavenProviderImpl.hasApkSourcesDependency(mavenProject));
+
+    final boolean hasApkSources = AndroidMavenProviderImpl.hasApkSourcesDependency(mavenProject);
+    AndroidMavenProviderImpl.configureAaptCompilation(mavenProject, facet.getModule(), facet.getConfiguration(), hasApkSources);
 
     if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(mavenProject.getPackaging())) {
       facet.getConfiguration().LIBRARY_PROJECT = true;
+    }
+
+    if (hasApkSources) {
+      Notifications.Bus.notify(new Notification("Importing Error", "Error when importing module " + facet.getModule().getName(),
+                                                "'apksources' dependency is deprecated and can be poorly supported by IDE. " +
+                                                "It is strongly recommended to use 'apklib' dependency instead.",
+                                                NotificationType.ERROR, null));
     }
   }
 
