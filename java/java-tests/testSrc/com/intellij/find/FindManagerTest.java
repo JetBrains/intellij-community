@@ -11,9 +11,6 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -315,19 +312,12 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
           }
           VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(new File(testDir).getCanonicalPath().replace(File.separatorChar, '/'));
 
-          final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-          final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-          rootModel.clear();
-          // configure source and output path
-          final ContentEntry contentEntry = rootModel.addContentEntry(projectDir);
-          for (VirtualFile sourceDir : mySourceDirs) {
-            contentEntry.addSourceFolder(sourceDir, false);
-          }
-
           Sdk jdk = JavaSdkImpl.getMockJdk17();
-          rootModel.setSdk(jdk);
-
-          rootModel.commit();
+          PsiTestUtil.removeAllRoots(myModule, jdk);
+          PsiTestUtil.addContentRoot(myModule, projectDir);
+          for (VirtualFile sourceDir : mySourceDirs) {
+            PsiTestUtil.addSourceRoot(myModule, sourceDir);
+          }
         }
         catch (Exception e){
           throw new RuntimeException(e);

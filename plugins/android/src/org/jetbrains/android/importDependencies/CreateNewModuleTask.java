@@ -58,7 +58,7 @@ class CreateNewModuleTask extends ModuleProvidingTask {
       }
     });
     if (AndroidFacet.getInstance(depModule) == null) {
-      AndroidUtils.addAndroidFacet(depModule, myContentRoot, true);
+      AndroidUtils.addAndroidFacetInWriteAction(depModule, myContentRoot, true);
     }
     AndroidSdkUtils.setupAndroidPlatformInNeccessary(depModule);
     setDepModule(depModule);

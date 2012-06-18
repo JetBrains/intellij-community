@@ -3,9 +3,6 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -13,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,10 +45,8 @@ public class SCR20733Test extends PsiTestCase {
           VirtualFile file1 = myPackDir.createChildData(null, "A.java");
           VfsUtil.saveText(file1, "package p; public class A{ public void foo(); }");
 
-          final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          final ContentEntry contentEntry1 = rootModel.addContentEntry(myPrjDir1);
-          contentEntry1.addSourceFolder(mySrcDir1, false);
-          rootModel.commit();
+          PsiTestUtil.addContentRoot(myModule, myPrjDir1);
+          PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -75,9 +71,7 @@ public class SCR20733Test extends PsiTestCase {
         Module anotherModule = createModule("another");
         myFilesToDelete.add(new File(anotherModule.getModuleFilePath()));
 
-        ModifiableRootModel rootModel = ModuleRootManager.getInstance(anotherModule).getModifiableModel();
-        rootModel.addContentEntry(mySrcDir1).addSourceFolder(mySrcDir1, false);
-        rootModel.commit();
+        PsiTestUtil.addSourceRoot(anotherModule, mySrcDir1);
 
         assertEquals(anotherModule, ModuleUtil.findModuleForFile(file, myProject));
       }

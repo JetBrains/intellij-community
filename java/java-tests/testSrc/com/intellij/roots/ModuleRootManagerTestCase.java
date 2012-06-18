@@ -1,11 +1,10 @@
 package com.intellij.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -71,28 +70,8 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
 
   protected VirtualFile setModuleOutput(final Module module, final boolean test) throws IOException {
     final VirtualFile output = getVirtualFile(createTempDir(module.getName() + (test ? "Test" : "Prod") + "Output"));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
-        assertNotNull(extension);
-        extension.inheritCompilerOutputPath(false);
-        if (test) {
-          extension.setCompilerOutputPathForTests(output);
-        }
-        else {
-          extension.setCompilerOutputPath(output);
-        }
-        model.commit();
-      }
-    });
-
+    PsiTestUtil.setCompilerOutputPath(module, output != null ? output.getUrl() : null, test);
     return output;
-  }
-
-  protected Library createLibrary(final String name, final VirtualFile classesRoot) {
-    return createLibrary(name, classesRoot, null);
   }
 
   protected Library createLibrary(final String name, final VirtualFile classesRoot, final VirtualFile sourceRoot) {

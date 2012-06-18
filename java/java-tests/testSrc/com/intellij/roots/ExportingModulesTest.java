@@ -28,6 +28,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
@@ -72,16 +73,9 @@ public class ExportingModulesTest extends IdeaTestCase {
     });
   }
 
-  private void configureModule(final Module module, final VirtualFile testRoot, final String name) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-        final VirtualFile contentRoot = testRoot.findChild(name);
-        final ContentEntry contentEntry = rootModel.addContentEntry(contentRoot);
-        contentEntry.addSourceFolder(contentRoot.findChild("src"), false);
-        rootModel.commit();
-      }
-    });
+  private static void configureModule(final Module module, final VirtualFile testRoot, final String name) {
+    final VirtualFile contentRoot = testRoot.findChild(name);
+    PsiTestUtil.addContentRoot(module, contentRoot);
+    PsiTestUtil.addSourceRoot(module, contentRoot.findChild("src"));
   }
 }

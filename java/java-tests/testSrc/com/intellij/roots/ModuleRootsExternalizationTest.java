@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
@@ -79,23 +80,13 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
     final ModuleRootManagerImpl moduleRootManager =
       (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = moduleRootManager.getModifiableModel();
-        final ContentEntry contentEntry = rootModel.addContentEntry(contentFile);
-        final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
-        compilerModuleExtension.setCompilerOutputPath(classesFile);
-        compilerModuleExtension.setCompilerOutputPathForTests(testClassesFile);
-        compilerModuleExtension.inheritCompilerOutputPath(false);
-        rootModel.setSdk(JavaSdkImpl.getMockJdk17());
-        contentEntry.addSourceFolder(sourceFile, false);
-        contentEntry.addSourceFolder(testSourceFile, true);
-        contentEntry.addExcludeFolder(excludeFile);
-        rootModel.commit();
-      }
-    });
-
+    PsiTestUtil.addContentRoot(module, contentFile);
+    PsiTestUtil.addSourceRoot(module, sourceFile);
+    PsiTestUtil.addSourceRoot(module, testSourceFile, true);
+    ModuleRootModificationUtil.setModuleSdk(module, JavaSdkImpl.getMockJdk17());
+    PsiTestUtil.addExcludedRoot(module, excludeFile);
+    PsiTestUtil.setCompilerOutputPath(module, classesFile.getUrl(), false);
+    PsiTestUtil.setCompilerOutputPath(module, testClassesFile.getUrl(), true);
 
     final Element element = new Element("root");
     moduleRootManager.getState().writeExternal(element);

@@ -22,10 +22,42 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author nik
  */
 public class ModuleRootModificationUtil {
+  public static void addModuleLibrary(Module module, String libName, List<String> classesRoots, List<String> sourceRoots) {
+    addModuleLibrary(module, libName, classesRoots, sourceRoots, DependencyScope.COMPILE);
+  }
+
+  public static void addModuleLibrary(Module module, String libName, List<String> classesRoots, List<String> sourceRoots,
+                                      final DependencyScope scope) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final Library library = model.getModuleLibraryTable().createLibrary(libName);
+    final Library.ModifiableModel libraryModel = library.getModifiableModel();
+    for (String root : classesRoots) {
+      libraryModel.addRoot(root, OrderRootType.CLASSES);
+    }
+    for (String root : sourceRoots) {
+      libraryModel.addRoot(root, OrderRootType.SOURCES);
+    }
+    model.findLibraryOrderEntry(library).setScope(scope);
+    new WriteAction() {
+      @Override
+      protected void run(Result result) throws Throwable {
+        libraryModel.commit();
+        model.commit();
+      }
+    }.execute();
+  }
+
+  public static void addModuleLibrary(Module module, String classesRootUrl) {
+    addModuleLibrary(module, null, Collections.singletonList(classesRootUrl), Collections.<String>emptyList());
+  }
+
   public static void addDependency(Module module, Library library) {
     addDependency(module, library, DependencyScope.COMPILE, false);
   }

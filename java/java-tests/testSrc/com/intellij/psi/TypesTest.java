@@ -2,13 +2,12 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
 
@@ -19,7 +18,7 @@ public class TypesTest extends GenericsTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final ModifiableRootModel rootModel = setupGenericSampleClasses();
+    setupGenericSampleClasses();
 
     final String testPath = PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') + "/psi/types/" + getTestName(true);
     final VirtualFile[] testRoot = { null };
@@ -30,15 +29,8 @@ public class TypesTest extends GenericsTestCase {
       }
     });
     if (testRoot[0] != null) {
-      final ContentEntry testContentEntry = rootModel.addContentEntry(testRoot[0]);
-      testContentEntry.addSourceFolder(testRoot[0], false);
+      PsiTestUtil.addSourceRoot(myModule, testRoot[0]);
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
   }
 
   public void testSimpleStuff() throws Exception {
