@@ -7,11 +7,7 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -22,6 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
@@ -30,38 +27,18 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     final Java15APIUsageInspection usageInspection = new Java15APIUsageInspection();
     doTest("usage1.5/" + getTestName(true), new LocalInspectionToolWrapper(usageInspection), "java 1.5");
   }
 
   public void testConstructor() throws Exception {
-    final LanguageLevel[] languageLevel = {null};
-    try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-          LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
-          languageLevel[0] = extension.getLanguageLevel();
-          extension.setLanguageLevel(LanguageLevel.JDK_1_4);
-          model.commit();
-        }
-      });
-
-      doTest();
-    }
-    finally {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-          LanguageLevelModuleExtension extension = model.getModuleExtension(LanguageLevelModuleExtension.class);
-          extension.setLanguageLevel(languageLevel[0]);
-          model.commit();
-        }
-      });
-    }
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_4, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
   }
 
   public void testIgnored() throws Exception {
@@ -75,7 +52,7 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
       public boolean processFile(VirtualFile fileOrDir) {
         final PsiFile file = PsiManager.getInstance(getProject()).findFile(fileOrDir);
         if (file instanceof PsiJavaFile) {
-          file.accept(new JavaRecursiveElementVisitor(){
+          file.accept(new JavaRecursiveElementVisitor() {
             @Override
             public void visitElement(PsiElement element) {
               super.visitElement(element);

@@ -1,12 +1,8 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.OrderRootsEnumerator;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
@@ -22,7 +18,7 @@ import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   public void testLibrary() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     assertClassRoots(orderEntries(myModule), getRtJar(), getJDomJar());
     assertClassRoots(orderEntries(myModule).withoutSdk(), getJDomJar());
@@ -47,7 +43,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
   }
 
   public void testLibraryScope() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary(), DependencyScope.RUNTIME, false);
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.RUNTIME, false);
 
     assertClassRoots(orderEntries(myModule).withoutSdk(), getJDomJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().exportedOnly());
@@ -60,8 +56,8 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     final VirtualFile depTestRoot = addSourceRoot(dep, true);
     final VirtualFile depOutput = setModuleOutput(dep, false);
     final VirtualFile depTestOutput = setModuleOutput(dep, true);
-    addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, true);
 
     final VirtualFile srcRoot = addSourceRoot(myModule, false);
     final VirtualFile testRoot = addSourceRoot(myModule, true);
@@ -93,8 +89,8 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   public void testModuleDependencyScope() throws Exception {
     final Module dep = createModule("dep");
-    addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, true);
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
 
     assertClassRoots(orderEntries(myModule).withoutSdk());
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getJDomJar());
@@ -107,9 +103,9 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
 
   public void testNotExportedLibrary() throws Exception {
     final Module dep = createModule("dep");
-    addLibraryDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false);
-    addLibraryDependency(myModule, createAsmLibrary(), DependencyScope.COMPILE, false);
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertClassRoots(orderEntries(myModule).withoutSdk(), getAsmJar());
     assertClassRoots(orderEntries(myModule).withoutSdk().recursively(), getAsmJar(), getJDomJar());
@@ -130,7 +126,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertSame(roots, orderEntries(myModule).classes().usingCache().getRoots());
     assertSame(rootsWithoutSdk, orderEntries(myModule).withoutSdk().classes().usingCache().getRoots());
 
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     assertRoots(orderEntries(myModule).classes().usingCache().getPathsList(), getRtJar(), getJDomJar());
     assertRoots(orderEntries(myModule).withoutSdk().classes().usingCache().getPathsList(), getJDomJar());
@@ -146,13 +142,13 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
     assertSame(urls, orderEntries(myModule).classes().usingCache().getUrls());
     assertSame(sourceUrls, orderEntries(myModule).sources().usingCache().getUrls());
 
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
     assertOrderedEquals(orderEntries(myModule).classes().usingCache().getUrls(), getRtJar().getUrl(), getJDomJar().getUrl());
     assertOrderedEquals(orderEntries(myModule).sources().usingCache().getUrls(), getJDomSources().getUrl());
   }
 
   public void testProject() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     final VirtualFile srcRoot = addSourceRoot(myModule, false);
     final VirtualFile testRoot = addSourceRoot(myModule, true);
@@ -164,7 +160,7 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
   }
 
   public void testModules() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
     final VirtualFile srcRoot = addSourceRoot(myModule, false);
     final VirtualFile testRoot = addSourceRoot(myModule, true);

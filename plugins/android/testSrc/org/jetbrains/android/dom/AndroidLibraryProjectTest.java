@@ -5,11 +5,11 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -48,7 +48,8 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
+    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder =
+      IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     myFixture.enableInspections(AndroidDomInspection.class);
 
@@ -81,8 +82,8 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myLibFacet = AndroidTestCase.addAndroidFacet(myLibModule, getTestSdkPath());
     myLibFacet.getConfiguration().LIBRARY_PROJECT = true;
 
-    PsiTestUtil.addDependency(myAppModule, myLibModule);
-    PsiTestUtil.addDependency(myLibModule, myLibGenModule);
+    ModuleRootModificationUtil.addDependency(myAppModule, myLibModule);
+    ModuleRootModificationUtil.addDependency(myLibModule, myLibGenModule);
   }
 
   private void createInitialStructure() {

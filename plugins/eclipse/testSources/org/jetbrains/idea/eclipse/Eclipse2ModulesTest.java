@@ -23,13 +23,12 @@ package org.jetbrains.idea.eclipse;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +68,6 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
   }
 
   protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {
-    final ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
     final VirtualFile file =
       ApplicationManager.getApplication().runWriteAction(
         new Computable<VirtualFile>() {
@@ -78,22 +76,17 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
           public VirtualFile compute() {
             final VirtualFile baseDir = getProject().getBaseDir();
             assert baseDir != null;
-            return LocalFileSystem.getInstance().refreshAndFindFileByPath(baseDir.getPath() + "/" + workspaceRoot + "/" + myDependantModulePath);
+            return LocalFileSystem.getInstance()
+              .refreshAndFindFileByPath(baseDir.getPath() + "/" + workspaceRoot + "/" + myDependantModulePath);
           }
         }
       );
     if (file != null) {
-      model.addContentEntry(file);
-    } else {
-      model.dispose();
+      PsiTestUtil.addContentRoot(getModule(), file);
+    }
+    else {
       Assert.assertTrue("File not found", false);
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run(){
-        model.commit();
-      }
-    });
   }
 
   public void setDependantModulePath(String dependantModulePath) {

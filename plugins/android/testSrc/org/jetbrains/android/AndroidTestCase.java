@@ -26,8 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -80,7 +79,8 @@ public abstract class AndroidTestCase extends UsefulTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
+    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder =
+      IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     tuneModule(moduleFixtureBuilder, myFixture.getTempDirPath());
@@ -144,14 +144,7 @@ public abstract class AndroidTestCase extends UsefulTestCase {
 
   private static void addAndroidSdk(Module module, String sdkPath) {
     Sdk androidSdk = createAndroidSdk(sdkPath);
-    final ModifiableRootModel moduleModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    moduleModel.setSdk(androidSdk);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        moduleModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.setModuleSdk(module, androidSdk);
   }
 
   private static Sdk createAndroidSdk(String sdkPath) {

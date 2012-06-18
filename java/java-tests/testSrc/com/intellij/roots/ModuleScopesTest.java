@@ -84,7 +84,7 @@ public class ModuleScopesTest extends ModuleTestCase {
         VirtualFile rootB = myFixture.findOrCreateDir("b");
         VirtualFile outB = myFixture.findOrCreateDir("out");
 
-        PsiTestUtil.addDependency(moduleA, moduleB, scope, false);
+        ModuleRootModificationUtil.addDependency(moduleA, moduleB, scope, false);
 
         final ModifiableRootModel modelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
         final ContentEntry contentEntry = modelB.addContentEntry(rootB);
@@ -176,7 +176,8 @@ public class ModuleScopesTest extends ModuleTestCase {
   }
 
   private static VirtualFile[] getProductionCompileClasspath(Module moduleA) {
-    return ModuleRootManager.getInstance(moduleA).orderEntries().productionOnly().compileOnly().recursively().exportedOnly().getClassesRoots();
+    return ModuleRootManager.getInstance(moduleA).orderEntries().productionOnly().compileOnly().recursively().exportedOnly()
+      .getClassesRoots();
   }
 
   private static VirtualFile[] getCompilationClasspath(Module m) {

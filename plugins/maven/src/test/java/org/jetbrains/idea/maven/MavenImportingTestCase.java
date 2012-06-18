@@ -492,14 +492,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected Sdk setupJdkForModule(final String moduleName) {
     final Sdk sdk = createJdk("Java 1.5");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel m = ModuleRootManager.getInstance(getModule(moduleName)).getModifiableModel();
-        m.setSdk(sdk);
-        m.commit();
-      }
-    });
-
+    ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
     return sdk;
   }
 
@@ -524,7 +517,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     CompilerManagerImpl.testSetup();
 
     List<VirtualFile> roots = Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots());
-    TranslatingCompilerFilesMonitor.getInstance().scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(myProject), roots, roots.size(), true);
+    TranslatingCompilerFilesMonitor.getInstance()
+      .scanSourceContent(new TranslatingCompilerFilesMonitor.ProjectRef(myProject), roots, roots.size(), true);
 
     final CompileScope scope = new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
 

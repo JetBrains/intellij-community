@@ -2,10 +2,10 @@ package com.intellij.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 
 /**
@@ -15,7 +15,7 @@ import com.intellij.util.PathsList;
 public class ProjectRootsTraversingTest extends ModuleRootManagerTestCase {
 
   public void testLibrary() throws Exception {
-    addLibraryDependency(myModule, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
     doTest(ProjectRootsTraversing.LIBRARIES_AND_JDK, getRtJar(), getJDomJar());
     doTest(ProjectRootsTraversing.PROJECT_LIBRARIES, getJDomJar());
     doTest(ProjectRootsTraversing.PROJECT_SOURCES);
@@ -43,8 +43,8 @@ public class ProjectRootsTraversingTest extends ModuleRootManagerTestCase {
     setModuleOutput(dep, true);
     addSourceRoot(dep, false);
     addSourceRoot(dep, true);
-    addLibraryDependency(dep, createJDomLibrary());
-    PsiTestUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
+    ModuleRootModificationUtil.addDependency(dep, createJDomLibrary());
+    ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     doTest(ProjectRootsTraversing.PROJECT_LIBRARIES, getJDomJar());
     doTest(ProjectRootsTraversing.PROJECT_SOURCES);

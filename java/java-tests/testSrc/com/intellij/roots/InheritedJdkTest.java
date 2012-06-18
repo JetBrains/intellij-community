@@ -4,10 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.InheritedJdkOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.testFramework.ModuleTestCase;
 import junit.framework.Assert;
@@ -35,23 +32,14 @@ public class InheritedJdkTest extends ModuleTestCase {
       public void run() {
         final ProjectRootManagerEx rootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
         rootManagerEx.setProjectSdkName(jdk.getName());
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.inheritSdk();
-        rootModel.commit();
+        ModuleRootModificationUtil.setSdkInherited(myModule);
       }
     });
 
     assertTrue("JDK is inherited after explicit inheritSdk()", rootManager.isSdkInherited());
     assertEquals("Correct jdk inherited", jdk, rootManager.getSdk());
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.setSdk(null);
-        rootModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.setModuleSdk(myModule, null);
 
     assertFalse("JDK is not inherited after setJdk(null)", rootManager.isSdkInherited());
     assertNull("No JDK assigned", rootManager.getSdk());
@@ -63,14 +51,7 @@ public class InheritedJdkTest extends ModuleTestCase {
         ProjectJdkTable.getInstance().addJdk(jdk1);
       }
     });
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        rootModel.setSdk(jdk1);
-        rootModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.setModuleSdk(myModule, jdk1);
 
     assertFalse("JDK is not inherited after setJdk(jdk1)", rootManager.isSdkInherited());
     assertEquals("jdk1 is assigned", jdk1, rootManager.getSdk());
@@ -78,14 +59,7 @@ public class InheritedJdkTest extends ModuleTestCase {
 
   public void test2() throws Exception {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-    rootModel.inheritSdk();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.setSdkInherited(myModule);
 
     assertTrue("JDK is inherited after inheritSdk()", rootManager.isSdkInherited());
     assertNull("No JDK assigned", rootManager.getSdk());
@@ -118,12 +92,12 @@ public class InheritedJdkTest extends ModuleTestCase {
 
     assertTrue(rootManager.isSdkInherited());
     Assert.assertEquals("Correct non-existing JDK inherited", "jdk1",
-                 rootManager.orderEntries().process(new RootPolicy<String>() {
-                   @Override
-                   public String visitInheritedJdkOrderEntry(InheritedJdkOrderEntry inheritedJdkOrderEntry, String s) {
-                     return inheritedJdkOrderEntry.getJdkName();
-                   }
-                 }, null));
+                        rootManager.orderEntries().process(new RootPolicy<String>() {
+                          @Override
+                          public String visitInheritedJdkOrderEntry(InheritedJdkOrderEntry inheritedJdkOrderEntry, String s) {
+                            return inheritedJdkOrderEntry.getJdkName();
+                          }
+                        }, null));
     assertNull("Non-existing JDK", rootManager.getSdk());
 
     final Sdk jdk1 = JavaSdkImpl.getMockJdk17("jdk1");

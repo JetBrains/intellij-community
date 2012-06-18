@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,25 +30,25 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
 
 public class ResolveClassTest extends ResolveTestCase {
-  public void testFQName() throws Exception{
+  public void testFQName() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
   }
 
-  public void testVarInNew() throws Exception{
+  public void testVarInNew() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
   }
 
-  public void testVarInNew1() throws Exception{
+  public void testVarInNew1() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
   }
 
-  public void testPrivateInExtends() throws Exception{
+  public void testPrivateInExtends() throws Exception {
     PsiReference ref = configure();
     final JavaResolveResult result = ((PsiJavaReference)ref).advancedResolve(true);
     PsiElement target = result.getElement();
@@ -55,13 +56,13 @@ public class ResolveClassTest extends ResolveTestCase {
     assertFalse(result.isAccessible());
   }
 
-  public void testQNew1() throws Exception{
+  public void testQNew1() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
   }
 
-  public void testInnerPrivateMember1() throws Exception{
+  public void testInnerPrivateMember1() throws Exception {
     PsiReference ref = configure();
     final JavaResolveResult result = ((PsiJavaReference)ref).advancedResolve(true);
     PsiElement target = result.getElement();
@@ -70,7 +71,7 @@ public class ResolveClassTest extends ResolveTestCase {
   }
 
 
-  public void testQNew2() throws Exception{
+  public void testQNew2() throws Exception {
     PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)configure();
     PsiElement target = ref.advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
@@ -82,7 +83,7 @@ public class ResolveClassTest extends ResolveTestCase {
     assertEquals(target, ((PsiAnonymousClass)parent).getBaseClassType().resolve());
   }
 
-  public void testClassExtendsItsInner1() throws Exception{
+  public void testClassExtendsItsInner1() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
@@ -96,7 +97,7 @@ public class ResolveClassTest extends ResolveTestCase {
     assertEquals("B.Foo", ((PsiClass)target1).getQualifiedName());
   }
 
-  public void testClassExtendsItsInner2() throws Exception{
+  public void testClassExtendsItsInner2() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertNull(target);  //[ven] this should not be resolved
@@ -104,26 +105,26 @@ public class ResolveClassTest extends ResolveTestCase {
     assertEquals("TTT.Bar", ((PsiClass)target).getQualifiedName());*/
   }
 
-   public void testSCR40332() throws Exception{
+  public void testSCR40332() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertNull(target);
   }
 
-  public void testImportConflict1() throws Exception{
+  public void testImportConflict1() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target == null);
   }
 
-  public void testImportConflict2() throws Exception{
+  public void testImportConflict2() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
     assertEquals("java.util.Date", ((PsiClass)target).getQualifiedName());
   }
 
-  public void testLocals1() throws Exception{
+  public void testLocals1() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
@@ -131,7 +132,7 @@ public class ResolveClassTest extends ResolveTestCase {
     assertNull(((PsiClass)target).getQualifiedName());
   }
 
-  public void testLocals2() throws Exception{
+  public void testLocals2() throws Exception {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
@@ -155,14 +156,14 @@ public class ResolveClassTest extends ResolveTestCase {
     assertTrue("Outer.Double".equals(((PsiClass)element).getQualifiedName()));
   }
 
-  public void testTwoModules() throws Exception{
+  public void testTwoModules() throws Exception {
     configureDependency();
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertTrue(target instanceof PsiClass);
   }
 
-  public void testTwoModules2() throws Exception{
+  public void testTwoModules2() throws Exception {
     configureDependency();
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
@@ -220,7 +221,7 @@ public class ResolveClassTest extends ResolveTestCase {
         PsiTestUtil.addSourceRoot(module, root.findChild("src"));
         PsiTestUtil.addSourceRoot(module, root.findChild("test"), true);
 
-        PsiTestUtil.addDependency(getModule(), module);
+        ModuleRootModificationUtil.addDependency(getModule(), module);
       }
     });
   }

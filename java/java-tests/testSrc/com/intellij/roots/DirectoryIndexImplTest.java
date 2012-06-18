@@ -33,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
@@ -120,15 +121,10 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
           // fill roots of module1
           {
-            ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-
-            rootModel.setSdk(null);
-
-            ContentEntry contentEntry1 = rootModel.addContentEntry(myModule1Dir);
-            contentEntry1.addSourceFolder(myTestSrc1, true);
-            contentEntry1.addSourceFolder(mySrcDir1, false);
-
-            rootModel.commit();
+            ModuleRootModificationUtil.setModuleSdk(myModule, null);
+            PsiTestUtil.addContentRoot(myModule, myModule1Dir);
+            PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
+            PsiTestUtil.addSourceRoot(myModule, myTestSrc1, true);
           }
 
           ModuleManager moduleManager = ModuleManager.getInstance(myProject);
@@ -156,11 +152,8 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
             VirtualFile moduleFile = myModule3Dir.createChildData(null, "module3.iml");
             myModule3 = moduleManager.newModule(moduleFile.getPath(), StdModuleTypes.JAVA.getId());
 
-            ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule3).getModifiableModel();
-            rootModel.addContentEntry(myModule3Dir);
-            rootModel.addModuleOrderEntry(myModule2); // module3 depends on module2
-
-            rootModel.commit();
+            PsiTestUtil.addContentRoot(myModule3, myModule3Dir);
+            ModuleRootModificationUtil.addDependency(myModule3, myModule2);
           }
         }
         catch (IOException e) {
