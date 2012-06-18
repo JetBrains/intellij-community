@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class PermissionGroupClass extends ManifestInnerClass {
+class PermissionGroupClass extends ManifestInnerClass {
   PermissionGroupClass(@NotNull AndroidFacet facet, @NotNull PsiClass context) {
     super(facet, "permission_group", context);
   }

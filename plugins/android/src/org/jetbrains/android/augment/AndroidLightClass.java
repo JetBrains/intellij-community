@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class AndroidLightClass extends LightElement implements PsiClass, SyntheticElement {
+abstract class AndroidLightClass extends LightElement implements PsiClass, SyntheticElement {
   private final PsiClass myContainingClass;
   protected final String myName;
 
