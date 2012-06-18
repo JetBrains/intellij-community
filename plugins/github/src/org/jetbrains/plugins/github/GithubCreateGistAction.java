@@ -23,11 +23,13 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
@@ -63,11 +65,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
       }
       final Editor editor = e.getData(PlatformDataKeys.EDITOR);
       if (editor == null){
-        e.getPresentation().setVisible(false);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-      if (!editor.getSelectionModel().hasSelection()){
         e.getPresentation().setVisible(false);
         e.getPresentation().setEnabled(false);
         return;
@@ -151,10 +148,17 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Nullable
   private static String createGist(@NotNull Project project, @Nullable String login, @Nullable String password, boolean anonymous,
-                                   @NotNull String text, boolean isPrivate, @NotNull VirtualFile file, @NotNull String description) {
+                                   @Nullable String text, boolean isPrivate, @NotNull VirtualFile file, @NotNull String description) {
     if (anonymous) {
       login = null;
       password = null;
+    }
+    if (text == null) {
+      text = readFile(file);
+      if (text == null) {
+        showError(project, "Failed to create gist", "Couldn't read the contents of the file " + file, null, null);
+        return null;
+      }
     }
     String requestBody = prepareJsonRequest(description, isPrivate, text, file);
     try {
@@ -183,13 +187,29 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
   }
 
+  @Nullable
+  private static String readFile(@NotNull final VirtualFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        try {
+          return new String(file.contentsToByteArray(), file.getCharset());
+        }
+        catch (IOException e) {
+          LOG.info("Couldn't read contents of the file " + file);
+          return null;
+        }
+      }
+    });
+  }
+
   private static void showError(@NotNull Project project, @NotNull String title, @NotNull String content,
                                 @Nullable String details, @Nullable Exception e) {
     Notificator.getInstance(project).notifyError(title, content);
     LOG.info("Couldn't parse response as json data: \n" + content + "\n" + details, e);
   }
 
-  private static String prepareJsonRequest(String description, boolean isPrivate, String text, VirtualFile file) {
+  private static String prepareJsonRequest(@NotNull String description, boolean isPrivate, @NotNull String text, @NotNull VirtualFile file) {
     JsonObject json = new JsonObject();
     json.addProperty("description", description);
     json.addProperty("public", Boolean.toString(!isPrivate));

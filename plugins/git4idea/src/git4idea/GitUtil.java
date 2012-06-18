@@ -104,7 +104,13 @@ public class GitUtil {
     }
 
     // this is standard for submodules, although probably it can
-    String content = readFile(child);
+    String content;
+    try {
+      content = readFile(child);
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Couldn't read " + child, e);
+    }
     String pathToDir;
     String prefix = "gitdir:";
     if (content.startsWith(prefix)) {
@@ -124,18 +130,24 @@ public class GitUtil {
     return VcsUtil.getVirtualFile(pathToDir);
   }
 
+  /**
+   * Makes 3 attempts to get the contents of the file. If all 3 fail with an IOException, rethrows the exception.
+   */
   @NotNull
-  private static String readFile(@NotNull VirtualFile file) {
-    Exception exception = null;
-    for (int attempts = 0; attempts < 3; attempts++) {
+  public static String readFile(@NotNull VirtualFile file) throws IOException {
+    final int ATTEMPTS = 3;
+    for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
       try {
         return new String(file.contentsToByteArray());
       }
       catch (IOException e) {
-        exception = e;
+        LOG.info(String.format("IOException while reading %s (attempt #%s)", file, attempt));
+        if (attempt >= ATTEMPTS - 1) {
+          throw e;
+        }
       }
     }
-    throw new RuntimeException("Couldn't read " + file, exception);
+    throw new AssertionError("Shouldn't get here. Couldn't read " + file);
   }
 
   /**
