@@ -188,7 +188,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
           @Override
           protected void killAbandonedHighlightsUnder(@NotNull TextRange range,
-                                                      @NotNull HighlightInfoHolder holder,
+                                                      @Nullable List<HighlightInfo> holder,
                                                       @NotNull ProgressIndicator progress) {
             // do not mess with real editor highlights
           }

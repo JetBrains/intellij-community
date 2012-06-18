@@ -66,6 +66,7 @@ import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -595,9 +596,11 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final Runnable action = new Runnable() {
       @Override
       public void run() {
+        Stack<Pair<TextRange, List<HighlightInfo>>> nested = new Stack<Pair<TextRange, List<HighlightInfo>>>();
         boolean failed = false;
         //noinspection unchecked
         for (List<PsiElement> elements : new List[]{elements1, elements2}) {
+          nested.clear();
           int nextLimit = chunkSize;
           for (int i = 0; i < elements.size(); i++) {
             PsiElement element = elements.get(i);
@@ -641,7 +644,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             }
 
             TextRange elementRange = element.getTextRange();
-            //noinspection ForLoopReplaceableByForEach
+            List<HighlightInfo> infosForThisRange = holder.size() == 0 ? null : new ArrayList<HighlightInfo>(holder.size());
             for (int j = 0; j < holder.size(); j++) {
               final HighlightInfo info = holder.get(j);
               assert info != null;
@@ -659,9 +662,28 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               info.bijective = elementRange.equalsToRange(info.startOffset, info.endOffset);
 
               myTransferToEDTQueue.offer(info);
+              infosForThisRange.add(info);
             }
+            // include infos which we got while visiting nested elements with the same range
+            while (true) {
+              if (!nested.isEmpty() && elementRange.contains(nested.peek().first)) {
+                Pair<TextRange, List<HighlightInfo>> old = nested.pop();
+                if (elementRange.equals(old.first)) {
+                  if (infosForThisRange == null) {
+                    infosForThisRange = old.second;
+                  }
+                  else if (old.second != null){
+                    infosForThisRange.addAll(old.second);
+                  }
+                }
+              }
+              else {
+                break;
+              }
+            }
+            nested.push(Pair.create(elementRange, infosForThisRange));
             if (parent == null || !Comparing.equal(elementRange, parent.getTextRange())) {
-              killAbandonedHighlightsUnder(elementRange, holder, progress);
+              killAbandonedHighlightsUnder(elementRange, infosForThisRange, progress);
             }
           }
           advanceProgress(elements.size() - (nextLimit-chunkSize));
@@ -674,7 +696,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   protected void killAbandonedHighlightsUnder(@NotNull final TextRange range,
-                                              @NotNull final HighlightInfoHolder holder,
+                                              @Nullable final List<HighlightInfo> holder,
                                               @NotNull final ProgressIndicator progress) {
     DaemonCodeAnalyzerImpl.processHighlights(getDocument(), myProject, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override
@@ -682,9 +704,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (existing.bijective &&
             existing.group == Pass.UPDATE_ALL &&
             range.equalsToRange(existing.getActualStartOffset(), existing.getActualEndOffset())) {
-          for (int j = 0; j < holder.size(); j++) {
-            HighlightInfo created = holder.get(j);
-            if (existing.equalsByActualOffset(created)) return true;
+          if (holder != null) {
+            for (HighlightInfo created : holder) {
+              if (existing.equalsByActualOffset(created)) return true;
+            }
           }
           // seems that highlight info "existing" is going to disappear
           // remove it earlier
@@ -706,7 +729,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private void analyzeByVisitors(@NotNull final ProgressIndicator progress,
                                  @NotNull final HighlightVisitor[] visitors,
                                  @NotNull final HighlightInfoHolder holder,
-                                 final int i, @NotNull final Runnable action) {
+                                 final int i,
+                                 @NotNull final Runnable action) {
     if (i == visitors.length) {
       action.run();
     }

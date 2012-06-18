@@ -93,7 +93,7 @@ public class HighlightInfo implements Segment {
 
   private GutterIconRenderer gutterIconRenderer;
   private String myProblemGroup;
-  public boolean bijective;
+  public volatile boolean bijective;
 
   public HighlightSeverity getSeverity() {
     return severity;
