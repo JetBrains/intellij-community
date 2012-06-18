@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
 
 public class JdkUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.JdkUtil");
@@ -96,7 +95,7 @@ public class JdkUtil {
       return null;
     }
     try {
-      ZipEntry entry = manifestJarFile.getEntry(JarFile.MANIFEST_NAME);
+      com.intellij.openapi.vfs.JarFile.JarEntry entry = manifestJarFile.getEntry(JarFile.MANIFEST_NAME);
       if (entry == null) {
         return null;
       }
