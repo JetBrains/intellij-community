@@ -20,13 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 23.05.12
- * Time: 15:55
- * To change this template use File | Settings | File Templates.
- */
 public class XBreakpointTypeGroup extends XBreakpointGroup {
 
   private XBreakpointType myBreakpointType;
@@ -48,5 +41,10 @@ public class XBreakpointTypeGroup extends XBreakpointGroup {
   @Override
   public Icon getIcon(boolean isOpen) {
     return myBreakpointType.getEnabledIcon();
+  }
+
+  @Override
+  public int compareTo(XBreakpointGroup o) {
+    return -o.compareTo(this);
   }
 }
