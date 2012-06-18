@@ -761,6 +761,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myPsiTree.expandRow(0);
     myPsiTree.setRootVisible(false);
 
+    if (!myShowBlocksCheckBox.isSelected()) {
+      return;
+    }
     Block rootBlock = rootElement == null ? null : buildBlocks(rootElement);
     if (rootBlock == null) {
       myBlockTreeBuilder = null;
@@ -849,7 +852,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myPsiToBlockMap.put(currentElem, rootBlockNode);
 
 //nested PSI elements with same ranges will be mapped to one blockNode
-    assert currentElem != null;
+//    assert currentElem != null;      //for Scala-language plugin etc it can be null, because formatterBlocks is not instance of ASTBlock
     TextRange curTextRange = currentElem.getTextRange();
     PsiElement parentElem = currentElem.getParent();
     while (parentElem != null && parentElem.getTextRange().equals(curTextRange)) {
