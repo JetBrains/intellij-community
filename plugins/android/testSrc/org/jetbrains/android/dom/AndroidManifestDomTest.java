@@ -192,4 +192,11 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     copyFileToProject("myIntResource.xml", "res/values/myIntResource.xml");
     doTestCompletion();
   }
+
+  public void testJavaHighlighting() throws Throwable {
+    copyFileToProject("PermissionsManifest.xml", "AndroidManifest.xml");
+    copyFileToProject("Manifest.java", "src/p1/p2/Manifest.java");
+    doTestJavaHighlighting("p1.p2");
+  }
+
 }

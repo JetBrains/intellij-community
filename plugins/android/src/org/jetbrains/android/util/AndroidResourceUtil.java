@@ -74,6 +74,8 @@ public class AndroidResourceUtil {
                                                                           ResourceType.STRING, ResourceType.STYLE, ResourceType.ARRAY,
                                                                           ResourceType.ID, ResourceType.BOOL, ResourceType.INTEGER);
 
+  public static final Set<ResourceType> ALL_VALUE_RESOURCE_TYPES = EnumSet.noneOf(ResourceType.class);
+
   public static final Set<ResourceType> REFERRABLE_RESOURCE_TYPES = EnumSet.noneOf(ResourceType.class);
   public static final Set<ResourceType> XML_FILE_RESOURCE_TYPES = EnumSet.of(ResourceType.ANIM, ResourceType.ANIMATOR,
                                                                              ResourceType.INTERPOLATOR, ResourceType.LAYOUT,
@@ -93,6 +95,10 @@ public class AndroidResourceUtil {
     REFERRABLE_RESOURCE_TYPES.addAll(Arrays.asList(ResourceType.values()));
     REFERRABLE_RESOURCE_TYPES.remove(ResourceType.ATTR);
     REFERRABLE_RESOURCE_TYPES.remove(ResourceType.STYLEABLE);
+
+    ALL_VALUE_RESOURCE_TYPES.addAll(VALUE_RESOURCE_TYPES);
+    ALL_VALUE_RESOURCE_TYPES.add(ResourceType.ATTR);
+    ALL_VALUE_RESOURCE_TYPES.add(ResourceType.STYLEABLE);
   }
 
   public static boolean isValueResourceType(@NotNull String resTypeName) {
@@ -572,6 +578,15 @@ public class AndroidResourceUtil {
     return false;
   }
 
+  public static boolean isManifestJavaFile(@NotNull AndroidFacet facet, @NotNull PsiFile file) {
+    if (file.getName().equals(AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME) && file instanceof PsiJavaFile) {
+      final Manifest manifest = facet.getManifest();
+      final PsiJavaFile javaFile = (PsiJavaFile)file;
+      return manifest != null && javaFile.getPackageName().equals(manifest.getPackage().getValue());
+    }
+    return false;
+  }
+
   public static List<String> getNames(@NotNull Collection<ResourceType> resourceTypes) {
     if (resourceTypes.size() == 0) {
       return Collections.emptyList();
@@ -802,5 +817,10 @@ public class AndroidResourceUtil {
       return AndroidFileTemplateProvider.LAYOUT_RESOURCE_FILE_TEMPLATE;
     }
     return AndroidFileTemplateProvider.RESOURCE_FILE_TEMPLATE;
+  }
+
+  @NotNull
+  public static String getFieldNameByResourceName(@NotNull String fieldName) {
+    return fieldName.replace('.', '_').replace('-', '_');
   }
 }

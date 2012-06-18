@@ -16,12 +16,7 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,18 +56,7 @@ public class InvalidateClassFileTest extends PsiTestCase {
 
     assertNotNull(rootVFile);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        Module module = myModule;
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-        final Library library = rootModel.getModuleLibraryTable().createLibrary();
-        final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        libraryModel.addRoot(rootVFile.getUrl(), OrderRootType.CLASSES);
-        libraryModel.commit();
-        rootModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.addModuleLibrary(myModule, rootVFile.getUrl());
 
     PsiClass clazz = getJavaFacade().findClass("Clazz", GlobalSearchScope.allScope(myProject));
     assertNotNull(clazz);

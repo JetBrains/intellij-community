@@ -21,13 +21,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
+
+import java.util.Collections;
 
 public class ResolveClassTest extends ResolveTestCase {
   public void testFQName() throws Exception {
@@ -175,7 +176,7 @@ public class ResolveClassTest extends ResolveTestCase {
     final VirtualFile file = ref.getElement().getContainingFile().getVirtualFile();
     assertNotNull(file);
     createFile(myModule, file.getParent(), "ModuleSourceAsLibrarySourceDep.java", loadFile("class/ModuleSourceAsLibrarySourceDep.java"));
-    addLibraryToRoots(file.getParent(), OrderRootType.SOURCES);
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.<String>emptyList(), Collections.singletonList(file.getParent().getUrl()));
 
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }

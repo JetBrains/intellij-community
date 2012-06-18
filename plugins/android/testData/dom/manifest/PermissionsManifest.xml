@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="p1.p2">
+    <permission android:name="android.permission.perm1"/>
+    <permission android:name="aba.perm2"/>
+    <permission android:name="android.aba-perm"/>
+    <permission-group android:name="android.permission-group.group1"/>
+    <permission-group android:name="group2"/>
+    <permission-group android:name="android.permission-group.aba_group"/>
+</manifest>

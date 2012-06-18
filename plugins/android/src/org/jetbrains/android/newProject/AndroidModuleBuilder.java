@@ -124,7 +124,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
       final VirtualFile contentRoot = files[0];
-      final AndroidFacet facet = AndroidUtils.addAndroidFacet(rootModel, contentRoot, myProjectType == ProjectType.LIBRARY);
+      final AndroidFacet facet = AndroidUtils.addAndroidFacet(rootModel.getModule(), contentRoot, myProjectType == ProjectType.LIBRARY);
 
       if (myProjectType == null) {
         ImportDependenciesUtil.importDependencies(rootModel.getModule(), true);

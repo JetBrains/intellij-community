@@ -27,6 +27,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
 import com.intellij.JavaTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 
 /**
  *  @author dsl
@@ -70,21 +71,12 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
 
   @Override
   protected void prepareProject(VirtualFile rootDir) {
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    final ContentEntry contentEntry = rootModel.addContentEntry(rootDir);
+    PsiTestUtil.addContentRoot(myModule, rootDir);
     final VirtualFile[] children = rootDir.getChildren();
-    for (int i = 0; i < children.length; i++) {
-      VirtualFile child = children[i];
+    for (VirtualFile child : children) {
       if (child.getName().startsWith("src")) {
-        contentEntry.addSourceFolder(child, false);
+        PsiTestUtil.addSourceRoot(myModule, child);
       }
     }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
   }
 }

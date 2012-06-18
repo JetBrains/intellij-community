@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.template;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +66,15 @@ public interface TemplateBuilder {
 
   /**
    * Shows the live template and initiates editing process.
+   * @deprecated doesn't work correctly for files with multiple editors use #run(Editor, boolean) instead
    */
+  @Deprecated
   void run();
+
+  /**
+   * Shows the live template and initiates editing process.
+   * @param editor editor to use to start editing process.
+   * @param inline if true then inline template will be created, regular otherwise
+   */
+  void run(@NotNull Editor editor, boolean inline);
 }

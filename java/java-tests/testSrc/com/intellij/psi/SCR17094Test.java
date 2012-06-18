@@ -2,10 +2,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,16 +26,7 @@ public class SCR17094Test extends PsiTestCase {
       }
     });
     assertNotNull(classesRoot);
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    final Library.ModifiableModel libraryModel = rootModel.getModuleLibraryTable().createLibrary().getModifiableModel();
-    libraryModel.addRoot(classesRoot, OrderRootType.CLASSES);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        libraryModel.commit();
-        rootModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.addModuleLibrary(myModule, classesRoot.getUrl());
   }
 
   @Override

@@ -25,6 +25,7 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
 import com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction;
+import com.intellij.codeInsight.intention.impl.FieldFromParameterUtils;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -385,12 +386,12 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       }
 
       if (o1 instanceof PsiField && o2 instanceof PsiParameter) {
-        final PsiField field = CreateFieldFromParameterAction.getParameterAssignedToField((PsiParameter)o2);
+        final PsiField field = FieldFromParameterUtils.getParameterAssignedToField((PsiParameter)o2);
         if (field == null) return 1;
         return o1.getTextOffset() - field.getTextOffset();
       }
       if (o1 instanceof PsiParameter && o2 instanceof PsiField) {
-        final PsiField field = CreateFieldFromParameterAction.getParameterAssignedToField((PsiParameter)o1);
+        final PsiField field = FieldFromParameterUtils.getParameterAssignedToField((PsiParameter)o1);
         if (field == null) return -1;
         return field.getTextOffset() - o2.getTextOffset();
       }

@@ -20,11 +20,9 @@ import com.android.resources.ResourceFolderType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.compiler.AndroidAptCompiler;
@@ -35,14 +33,12 @@ import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static org.jetbrains.android.util.AndroidUtils.findSourceRoot;
 
@@ -58,9 +54,6 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
   private final MergingUpdateQueue myQueue;
   private final AndroidFacet myFacet;
   private String myCachedPackage = null;
-
-  private volatile Set<ResourceEntry> myResourceSet = new HashSet<ResourceEntry>();
-  private static final Object RESOURCES_SET_LOCK = new Object();
 
   public AndroidResourceFilesListener(final AndroidFacet facet) {
     myFacet = facet;
@@ -128,12 +121,6 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
     }
   }
 
-  public void setResourceSet(@NotNull Set<ResourceEntry> resourceSet) {
-    synchronized (RESOURCES_SET_LOCK) {
-      myResourceSet = resourceSet;
-    }
-  }
-
   private class MyUpdate extends Update {
     private final VirtualFileEvent myEvent;
 
@@ -160,23 +147,6 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       }
 
       for (AndroidAutogeneratorMode autogenerationMode : autogenerationModes) {
-        if (autogenerationMode == AndroidAutogeneratorMode.AAPT &&
-            AndroidRootUtil.getManifestFile(myFacet) != myEvent.getFile()) {
-
-          final HashSet<ResourceEntry> resourceSet = new HashSet<ResourceEntry>();
-
-          DumbService.getInstance(myFacet.getModule().getProject()).waitForSmartMode();
-
-          AndroidCompileUtil.collectAllResources(myFacet, resourceSet);
-
-          synchronized (RESOURCES_SET_LOCK) {
-            if (resourceSet.equals(myResourceSet) &&
-                !myFacet.areSourcesGeneratedWithErrors(AndroidAutogeneratorMode.AAPT)) {
-              return;
-            }
-            myResourceSet = resourceSet;
-          }
-        }
         AndroidCompileUtil.generate(myFacet.getModule(), autogenerationMode, true);
       }
     }
@@ -216,7 +186,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       final List<AndroidAutogeneratorMode> modes = new ArrayList<AndroidAutogeneratorMode>();
 
-      if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) && (gp == resourceDir || manifestFile == file)) {
+      if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) && manifestFile == file) {
         final Manifest manifest = myFacet.getManifest();
         final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
 

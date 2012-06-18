@@ -422,10 +422,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     String absLibsPath = myNativeLibsFolder.getText().trim();
     myConfiguration.LIBS_FOLDER_RELATIVE_PATH = absLibsPath.length() > 0 ? '/' + getAndCheckRelativePath(absLibsPath, false) : "";
 
-    if (myConfiguration.LIBRARY_PROJECT != myIsLibraryProjectCheckbox.isSelected()) {
-      runApt = true;
-    }
-    
     myConfiguration.CUSTOM_DEBUG_KEYSTORE_PATH = getSelectedCustomKeystorePath();
 
     myConfiguration.LIBRARY_PROJECT = myIsLibraryProjectCheckbox.isSelected();
@@ -454,9 +450,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
     boolean useCustomAptSrc = myUseCustomSourceDirectoryRadio.isSelected();
 
-    if (myConfiguration.USE_CUSTOM_APK_RESOURCE_FOLDER != useCustomAptSrc) {
-      runApt = true;
-    }
     myConfiguration.USE_CUSTOM_APK_RESOURCE_FOLDER = useCustomAptSrc;
 
     String absAptSourcePath = myCustomAptSourceDirField.getText().trim();
@@ -464,11 +457,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       if (absAptSourcePath.length() == 0) {
         throw new ConfigurationException("Resources folder not specified");
       }
-      String newCustomAptSourceFolder = '/' + getAndCheckRelativePath(absAptSourcePath, false);
-      if (!newCustomAptSourceFolder.equals(myConfiguration.CUSTOM_APK_RESOURCE_FOLDER)) {
-        runApt = true;
-      }
-      myConfiguration.CUSTOM_APK_RESOURCE_FOLDER = newCustomAptSourceFolder;
+      myConfiguration.CUSTOM_APK_RESOURCE_FOLDER = '/' + getAndCheckRelativePath(absAptSourcePath, false);
     }
     else {
       String relPath = toRelativePath(absAptSourcePath);

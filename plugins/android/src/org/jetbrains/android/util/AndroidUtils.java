@@ -109,6 +109,7 @@ public class AndroidUtils {
   @NonNls public static final String APPLICATION_CLASS_NAME = "android.app.Application";
   @NonNls public static final String ACTIVITY_BASE_CLASS_NAME = "android.app.Activity";
   @NonNls public static final String R_CLASS_NAME = "R";
+  @NonNls public static final String MANIFEST_CLASS_NAME = "Manifest";
   @NonNls public static final String LAUNCH_ACTION_NAME = "android.intent.action.MAIN";
   @NonNls public static final String LAUNCH_CATEGORY_NAME = "android.intent.category.LAUNCHER";
   @NonNls public static final String INSTRUMENTATION_RUNNER_BASE_CLASS = "android.app.Instrumentation";
@@ -495,21 +496,20 @@ public class AndroidUtils {
   }
 
   @NotNull
-  public static AndroidFacet addAndroidFacet(@NotNull final Module module, @NotNull final VirtualFile contentRoot, final boolean library) {
+  public static AndroidFacet addAndroidFacetInWriteAction(@NotNull final Module module,
+                                                          @NotNull final VirtualFile contentRoot,
+                                                          final boolean library) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<AndroidFacet>() {
       @Override
       public AndroidFacet compute() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final AndroidFacet facet = addAndroidFacet(model, contentRoot, library);
-        model.commit();
-        return facet;
+        return addAndroidFacet(module, contentRoot, library);
       }
     });
   }
 
   @NotNull
-  public static AndroidFacet addAndroidFacet(@NotNull ModifiableRootModel rootModel, @NotNull VirtualFile contentRoot, boolean library) {
-    Module module = rootModel.getModule();
+  public static AndroidFacet addAndroidFacet(final Module module, @NotNull VirtualFile contentRoot,
+                                             boolean library) {
     final FacetManager facetManager = FacetManager.getInstance(module);
     ModifiableFacetModel model = facetManager.createModifiableModel();
     AndroidFacet facet = model.getFacetByType(AndroidFacet.ID);

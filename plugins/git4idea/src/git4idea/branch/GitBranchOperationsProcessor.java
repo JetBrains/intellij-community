@@ -257,7 +257,7 @@ public final class GitBranchOperationsProcessor {
     if (remoteUrl != null && GitHttpAdapter.shouldUseJGit(remoteUrl)) {
       String fullBranchName = branchName.startsWith(GitBranch.REFS_HEADS_PREFIX) ? branchName : GitBranch.REFS_HEADS_PREFIX + branchName;
       String spec = ":" + fullBranchName;
-      GitSimplePushResult simplePushResult = GitHttpAdapter.push(repository, remote, remoteUrl, spec);
+      GitSimplePushResult simplePushResult = GitHttpAdapter.push(repository, remote.getName(), remoteUrl, spec);
       return convertSimplePushResultToCommandResult(simplePushResult);
     }
     else {

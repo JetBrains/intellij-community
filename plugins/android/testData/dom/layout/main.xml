@@ -1,0 +1,3 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+  <TextView android:id="@+id/myComponent"/>
+</LinearLayout>

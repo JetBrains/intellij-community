@@ -385,5 +385,50 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     copyFileToProject("OnClick_Class3.java", "src/p1/p2/OnClick_Class3.java");
     copyFileToProject("OnClick_Class4.java", "src/p1/p2/OnClick_Class4.java");
   }
+
+  public void testJavaCompletion1() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaCompletion("p1.p2");
+  }
+
+  public void testJavaCompletion2() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaCompletion("p1.p2");
+  }
+
+  public void testJavaCompletion3() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaCompletion("p1.p2");
+  }
+
+  public void testJavaIdCompletion() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaCompletion("p1.p2");
+  }
+
+  public void testJavaHighlighting1() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaHighlighting("p1.p2");
+  }
+
+  public void testJavaHighlighting2() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaHighlighting("p1");
+  }
+
+  public void testJavaHighlighting3() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaHighlighting("p1.p2");
+  }
+
+  public void testJavaHighlighting4() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaHighlighting("p1.p2");
+  }
+
+  public void testJavaHighlighting5() throws Throwable {
+    copyFileToProject("main.xml", "res/layout/main.xml");
+    doTestJavaHighlighting("p1");
+  }
 }
 

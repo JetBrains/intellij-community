@@ -23,11 +23,8 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -477,13 +474,8 @@ public class TestNGUtil
       }
       final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
       if (module == null) return false;
-      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      final Library.ModifiableModel libraryModel = model.getModuleLibraryTable().createLibrary().getModifiableModel();
       String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Assert.class)));
-      VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
-      libraryModel.addRoot(libVirtFile, OrderRootType.CLASSES);
-      libraryModel.commit();
-      model.commit();
+      ModuleRootModificationUtil.addModuleLibrary(module, url);
     }
     return true;
   }

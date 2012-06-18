@@ -21,6 +21,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +37,7 @@ import java.util.UUID;
 *         Date: 4/25/12
 */
 class AutoMakeMessageHandler extends DefaultMessageHandler {
+  private static final Key<Notification> LAST_AUTO_MAKE_NOFITICATION = Key.create("LAST_AUTO_MAKE_NOFITICATION");
   private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
   private final Project myProject;
   private final WolfTheProblemSolver myWolf;
@@ -110,6 +112,13 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, MessageType.INFO);
       if (!myProject.isDisposed()) {
         notification.notify(myProject);
+      }
+      myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, notification);
+    } else {
+      Notification notification = myProject.getUserData(LAST_AUTO_MAKE_NOFITICATION);
+      if (notification != null) {
+        notification.expire();
+        myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, null);
       }
     }
   }
