@@ -258,6 +258,11 @@ public abstract class FileColorSettingsTable extends JBTable {
       myConfigurations.add(newIndex, myConfigurations.remove(oldIndex));
       fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
     }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return true;
+    }
   }
 
   private static class ScopeNameRenderer extends JLabel implements TableCellRenderer {

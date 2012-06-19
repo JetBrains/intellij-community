@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
@@ -80,12 +81,13 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   private Comparator<AnActionButton> myButtonComparator;
   private boolean myAsTopToolbar = false;
   private Icon myAddIcon;
+  private boolean myForcedDnD = false;
 
   protected abstract JComponent getComponent();
 
   protected abstract void updateButtons();
 
-  final CommonActionsPanel getPanel() {
+  public final CommonActionsPanel getPanel() {
     return myPanel;
   }
 
@@ -273,6 +275,20 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;
   }
 
+  public ToolbarDecorator setForcedDnD() {
+    myForcedDnD = true;
+    return this;
+
+  }
+
+  public ToolbarDecorator setActionGroup(@NotNull ActionGroup actionGroup) {
+    AnAction[] actions = actionGroup.getChildren(null);
+    for (AnAction action : actions) {
+      addExtraAction(AnActionButton.fromAction(action));
+    }
+    return this;
+  }
+
   public ToolbarDecorator setPreferredSize(Dimension size) {
     myPreferredSize = size;
     return this;
@@ -354,7 +370,17 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   }
 
   protected void installDnD() {
+    if ((myForcedDnD || (myUpAction != null && myUpActionEnabled
+        && myDownAction != null && myDownActionEnabled))
+        && !ApplicationManager.getApplication().isHeadlessEnvironment()
+        && isModelEditable()) {
+      installDnDSupport();
+    }
   }
+
+  protected abstract void installDnDSupport();
+
+  protected abstract boolean isModelEditable();
 
   @Override
   public Object getData(@NonNls String dataId) {

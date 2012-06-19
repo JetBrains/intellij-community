@@ -256,6 +256,11 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       fireTableDataChanged();
       //fireTableRowsUpdated(Math.min(index1, index2), Math.max(index1, index2));
     }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return true;
+    }
   }
 
   private class MyCellRenderer extends ColoredTableCellRenderer {

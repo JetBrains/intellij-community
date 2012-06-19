@@ -400,6 +400,13 @@ public abstract class ParameterTablePanel extends JPanel {
       myTable.getSelectionModel().setSelectionInterval(targetRow, targetRow);
       updateSignature();
     }
+
+    @Override
+    public boolean canExchangeRows(int row, int targetRow) {
+      if (row < 0 || row >= getVariableData().length) return false;
+      if (targetRow < 0 || targetRow >= getVariableData().length) return false;
+      return true;
+    }
   }
 
   private class CheckBoxTableCellRenderer extends BooleanTableCellRenderer {
