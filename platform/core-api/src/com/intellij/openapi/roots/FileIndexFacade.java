@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -54,4 +55,8 @@ public abstract class FileIndexFacade {
    * @return true if it's a valid ancestor, false otherwise.
    */
   public abstract boolean isValidAncestor(final VirtualFile baseDir, final VirtualFile child);
+
+  public boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile) {
+    return (scope.isSearchOutsideRootModel() || isInContent(virtualFile) || isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
+  }
 }

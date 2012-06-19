@@ -18,7 +18,7 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +87,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     }
 
     if (result == null) {
-      final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(file, start);
+      final PsiElement injectedStartElement = InjectedLanguageFacadeImpl.findElementAtNoCommit(file, start);
       if (processingInfoStorage != null) {
         processingInfoStorage.append(String.format(
           "Trying to find injected element starting from the '%s'%s%n",

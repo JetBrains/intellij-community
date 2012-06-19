@@ -34,7 +34,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -151,7 +151,7 @@ public class FoldingUpdate {
     Object lastTimeStamp = editor.getUserData(LAST_UPDATE_INJECTED_STAMP_KEY);
     if (lastTimeStamp instanceof Long && ((Long)lastTimeStamp).longValue() == timeStamp) return null;
 
-    List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+    List<DocumentWindow> injectedDocuments = InjectedLanguageFacadeImpl.getCachedInjectedDocuments(file);
     if (injectedDocuments.isEmpty()) return null;
     final List<EditorWindow> injectedEditors = new ArrayList<EditorWindow>();
     final List<PsiFile> injectedFiles = new ArrayList<PsiFile>();
@@ -159,7 +159,7 @@ public class FoldingUpdate {
     for (DocumentWindow injectedDocument : injectedDocuments) {
       PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
       if (injectedFile == null || !injectedFile.isValid() || !injectedDocument.isValid()) continue;
-      Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+      Editor injectedEditor = InjectedLanguageFacadeImpl.getInjectedEditorForInjectedFile(editor, injectedFile);
       if (!(injectedEditor instanceof EditorWindow)) continue;
 
       injectedEditors.add((EditorWindow)injectedEditor);

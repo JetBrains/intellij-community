@@ -26,7 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.checkin.StepIntersection;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.util.containers.Convertor;
 
@@ -104,7 +104,7 @@ public abstract class TodoForRanges {
 
   protected abstract TodoItem[] getTodoItems();
 
-  protected TodoItem[] getTodoForText(PsiSearchHelper helper) {
+  protected TodoItem[] getTodoForText(PsiTodoSearchHelper helper) {
     final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {

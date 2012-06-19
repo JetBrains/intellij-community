@@ -18,7 +18,7 @@ package com.intellij.spellchecker.tokenizer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
@@ -30,7 +30,7 @@ import java.util.List;
 public class XmlTextTokenizer extends Tokenizer<XmlText> {
   @Override
   public void tokenize(@NotNull XmlText element, TokenConsumer consumer) {
-    List<Pair<PsiElement,TextRange>> list = InjectedLanguageUtil.getInjectedPsiFiles(element);
+    List<Pair<PsiElement,TextRange>> list = InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(element);
     if (list != null && list.size() > 0) return;
     final PsiElement[] children = element.getChildren();
     for (PsiElement child : children) {

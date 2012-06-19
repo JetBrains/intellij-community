@@ -25,26 +25,17 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
-import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
-import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
-import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class IdTableBuilding {
   private IdTableBuilding() {
@@ -74,41 +65,6 @@ public class IdTableBuilding {
     }
   }
 
-  public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
-    @Override
-    @NotNull
-    public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
-      final CharSequence chars = inputData.getContentAsText();
-
-
-      final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();
-      if (indexPatterns.length > 0) {
-        final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
-        for (IndexPattern indexPattern : indexPatterns) {
-          Pattern pattern = indexPattern.getPattern();
-          if (pattern != null) {
-            Matcher matcher = pattern.matcher(chars);
-            while (matcher.find()) {
-              if (matcher.start() != matcher.end()) {
-                occurrenceConsumer.incTodoOccurrence(indexPattern);
-              }
-            }
-          }
-        }
-        Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
-        for (IndexPattern indexPattern : indexPatterns) {
-          final int count = occurrenceConsumer.getOccurrenceCount(indexPattern);
-          if (count > 0) {
-            map.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
-          }
-        }
-        return map;
-      }
-      return Collections.emptyMap();
-    }
-
-  }
-
   private static final HashMap<FileType, FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
 
   @Deprecated
@@ -119,11 +75,6 @@ public class IdTableBuilding {
   public static boolean isIdIndexerRegistered(FileType fileType) {
     return ourIdIndexers.containsKey(fileType) || IdIndexers.INSTANCE.forFileType(fileType) != null;
   }
-
-  public static boolean isTodoIndexerRegistered(FileType fileType) {
-    return ourIdIndexers.containsKey(fileType) || TodoIndexers.INSTANCE.forFileType(fileType) != null;
-  }
-
 
 
   @Nullable
@@ -249,5 +200,4 @@ public class IdTableBuilding {
       processor.run(chars, charArray, index1, index);
     }
   }
-
 }

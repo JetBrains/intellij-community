@@ -46,7 +46,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -225,7 +225,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   private static void setupEditorForInjectedLanguage() {
-    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
+    Editor editor = InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
     if (editor instanceof EditorWindow) {
       myFile = ((EditorWindow)editor).getInjectedFile();
       myEditor = editor;
@@ -444,13 +444,13 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       return myEditor;
     }
     if (dataId.equals(AnActionEvent.injectedId(PlatformDataKeys.EDITOR.getName()))) {
-      return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
+      return InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
     }
     if (LangDataKeys.PSI_FILE.is(dataId)) {
       return myFile;
     }
     if (dataId.equals(AnActionEvent.injectedId(LangDataKeys.PSI_FILE.getName()))) {
-      Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
+      Editor editor = InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
       return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
     }
     return super.getData(dataId);

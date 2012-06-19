@@ -23,6 +23,7 @@ import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -69,7 +70,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightVirtualFile;
@@ -821,7 +821,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
     if (currentElem == null) {
       currentElem =
-        InjectedLanguageUtil.findElementAtNoCommit(psiEl.getContainingFile(), rootBlockNode.getBlock().getTextRange().getStartOffset());
+        InjectedLanguageFacadeImpl
+          .findElementAtNoCommit(psiEl.getContainingFile(), rootBlockNode.getBlock().getTextRange().getStartOffset());
     }
     myPsiToBlockMap.put(currentElem, rootBlockNode);
 
@@ -979,7 +980,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       BlockTreeNode descriptor = (BlockTreeNode)blockElementsSet.iterator().next();
       PsiElement rootPsi = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
       int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
-      PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(rootPsi.getContainingFile(), blockStart);
+      PsiElement currentPsiEl = InjectedLanguageFacadeImpl.findElementAtNoCommit(rootPsi.getContainingFile(), blockStart);
       int blockLength = descriptor.getBlock().getTextRange().getLength();
       while (currentPsiEl.getParent() != null &&
              currentPsiEl.getTextRange().getStartOffset() == blockStart &&
@@ -1236,7 +1237,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       final PsiElement rootElement = ((ViewerTreeStructure)myPsiTreeBuilder.getTreeStructure()).getRootPsiElement();
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;
-      final PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), offset);
+      final PsiElement element = InjectedLanguageFacadeImpl.findElementAtNoCommit(rootElement.getContainingFile(), offset);
       if (element != null && myBlockTreeBuilder != null) {
         TextRange rangeInHostFile = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, element.getTextRange());
         selectBlockNode(findBlockNode(rangeInHostFile, true));
@@ -1257,8 +1258,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       final int start = selection.getSelectionStart()+baseOffset;
       final int end = selection.getSelectionEnd()+baseOffset - 1;
       final PsiElement element =
-        findCommonParent(InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), start),
-                         InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), end));
+        findCommonParent(InjectedLanguageFacadeImpl.findElementAtNoCommit(rootElement.getContainingFile(), start),
+                         InjectedLanguageFacadeImpl.findElementAtNoCommit(rootElement.getContainingFile(), end));
       if (element != null  && myBlockTreeBuilder != null) {
         if (myEditor.getContentComponent().hasFocus()) {
           TextRange rangeInHostFile = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, element.getTextRange());

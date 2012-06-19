@@ -48,7 +48,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -86,7 +86,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     myEditor = editor;
     myAction = action;
     myOrigDocument = editor.getDocument();
-    final Place shreds = InjectedLanguageUtil.getShreds(myInjectedFile);
+    final Place shreds = InjectedLanguageFacadeImpl.getShreds(myInjectedFile);
     final FileType fileType = injectedFile.getFileType();
     final Language language = injectedFile.getLanguage();
 

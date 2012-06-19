@@ -51,13 +51,14 @@ public class CoreProjectEnvironment {
     myEnvironment = applicationEnvironment;
     myProject = new MockProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
 
+    preregisterServices();
+
     myFileIndexFacade = createFileIndexFacade();
     myMessageBus = new MessageBusImpl();
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);
     myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
-    myProject.registerService(ResolveScopeManager.class, new MockResolveScopeManager(myProject));
     myProject.registerService(ResolveCache.class, new ResolveCache(myMessageBus));
 
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
@@ -65,15 +66,29 @@ public class CoreProjectEnvironment {
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerProjectComponent(PsiManager.class, myPsiManager);
 
+    myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
+
     myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
     myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myPsiManager)));
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
-    myProject.registerService(ProjectScopeBuilder.class, new CoreProjectScopeBuilder(myProject, myFileIndexFacade));
+    myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+  }
+
+  protected ProjectScopeBuilder createProjectScopeBuilder() {
+    return new CoreProjectScopeBuilder(myProject, myFileIndexFacade);
+  }
+
+  protected void preregisterServices() {
+
   }
 
   protected FileIndexFacade createFileIndexFacade() {
     return new MockFileIndexFacade(myProject);
+  }
+
+  protected ResolveScopeManager createResolveScopeManager(PsiManager psiManager) {
+    return new MockResolveScopeManager(myProject);
   }
 
   public <T> void registerProjectExtensionPoint(final ExtensionPointName<T> extensionPointName,

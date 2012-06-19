@@ -18,7 +18,7 @@ package com.intellij.codeInspection.duplicatePropertyInspection;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.concurrency.JobUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -162,7 +162,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final ProgressIndicator progress = ProgressWrapper.wrap(original);
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        if (!JobUtil.invokeConcurrentlyUnderProgress(properties, progress, false, new Processor<IProperty>() {
+        if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(properties, progress, false, new Processor<IProperty>() {
           public boolean process(final IProperty property) {
             if (original != null) {
               if (original.isCanceled()) return false;

@@ -233,7 +233,7 @@ public class UpdateCacheTest extends PsiTestCase{
   }
 
   public void testAddExcludeRoot() throws Exception{
-    PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
     ProjectRootManagerEx rootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(myProject);
     final VirtualFile root = rootManager.getContentRoots()[0];
@@ -266,7 +266,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiTestUtil.addExcludedRoot(myModule, dir);
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
@@ -278,7 +278,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
+    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -324,7 +324,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
     PsiTestUtil.addSourceRoot(myModule, root);
 
@@ -338,7 +338,7 @@ public class UpdateCacheTest extends PsiTestCase{
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
     final VirtualFile root = rootManager.getContentRoots()[0];
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
@@ -350,7 +350,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
+    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -423,7 +423,7 @@ public class UpdateCacheTest extends PsiTestCase{
     ProjectRootManagerEx rootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(myProject);
     final VirtualFile root = rootManager.getContentRoots()[0];
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
+    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to initialize caches
 
     new WriteCommandAction.Simple(getProject()) {
       @Override
@@ -435,7 +435,7 @@ public class UpdateCacheTest extends PsiTestCase{
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
+    PsiTodoSearchHelper.SERVICE.getInstance(myProject).findFilesWithTodoItems(); // to update caches
 
     PsiTestUtil.addExcludedRoot(myModule, root);
 
@@ -474,7 +474,7 @@ public class UpdateCacheTest extends PsiTestCase{
   }
 
   private void checkTodos(@NonNls String[] expectedFiles){
-    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myProject);
+    PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
 
     PsiFile[] files = helper.findFilesWithTodoItems();
 

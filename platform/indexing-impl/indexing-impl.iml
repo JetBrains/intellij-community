@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="core-impl" />
     <orderEntry type="module" module-name="indexing-api" exported="" />
+    <orderEntry type="module" module-name="projectModel-impl" />
   </component>
 </module>
 

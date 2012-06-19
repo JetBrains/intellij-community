@@ -31,7 +31,7 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
 import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
@@ -50,6 +50,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Author: dmitrylomov
@@ -114,6 +116,9 @@ public abstract class PlatformIdTableBuilding {
     ourTodoIndexers.put(fileType, indexer);
   }
 
+  public static boolean isTodoIndexerRegistered(FileType fileType) {
+    return ourTodoIndexers.containsKey(fileType) || TodoIndexers.INSTANCE.forFileType(fileType) != null;
+  }
 
   private static class CompositeTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
 
@@ -201,9 +206,44 @@ public abstract class PlatformIdTableBuilding {
     }
   }
 
+  public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
+    @Override
+    @NotNull
+    public Map<TodoIndexEntry, Integer> map(final FileContent inputData) {
+      final CharSequence chars = inputData.getContentAsText();
+
+
+      final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();
+      if (indexPatterns.length > 0) {
+        final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
+        for (IndexPattern indexPattern : indexPatterns) {
+          Pattern pattern = indexPattern.getPattern();
+          if (pattern != null) {
+            Matcher matcher = pattern.matcher(chars);
+            while (matcher.find()) {
+              if (matcher.start() != matcher.end()) {
+                occurrenceConsumer.incTodoOccurrence(indexPattern);
+              }
+            }
+          }
+        }
+        Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
+        for (IndexPattern indexPattern : indexPatterns) {
+          final int count = occurrenceConsumer.getOccurrenceCount(indexPattern);
+          if (count > 0) {
+            map.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
+          }
+        }
+        return map;
+      }
+      return Collections.emptyMap();
+    }
+
+  }
+
   static {
     IdTableBuilding.registerIdIndexer(FileTypes.PLAIN_TEXT, new IdTableBuilding.PlainTextIndexer());
-    registerTodoIndexer(FileTypes.PLAIN_TEXT, new IdTableBuilding.PlainTextTodoIndexer());
+    registerTodoIndexer(FileTypes.PLAIN_TEXT, new PlainTextTodoIndexer());
 
     IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_MODULE, null);
     IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_WORKSPACE, null);

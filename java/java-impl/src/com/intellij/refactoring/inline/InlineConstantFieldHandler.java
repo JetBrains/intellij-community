@@ -29,8 +29,6 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
-import java.util.Collection;
-
 /**
  * @author ven
  */

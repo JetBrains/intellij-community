@@ -21,7 +21,9 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import org.jdom.Document;
@@ -45,20 +47,19 @@ public class DirectoryStorageData {
     return myStates.keySet();
   }
 
-  public void loadFrom(IFile dir, TrackingPathMacroSubstitutor pathMacroSubstitutor) {
-    if (!dir.exists()) {
+  public void loadFrom(final @Nullable VirtualFile dir, TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+    if (dir == null || !dir.exists()) {
       return;
     }
-    final IFile[] files = dir.listFiles();
 
-    for (IFile file : files) {
+    for (VirtualFile file : dir.getChildren()) {
       if (!StringUtil.endsWithIgnoreCase(file.getName(), ".xml")) {
         //do not load system files like .DS_Store on Mac
         continue;
       }
 
       try {
-        final Document document = JDOMUtil.loadDocument(file);
+        final Document document = JDOMUtil.loadDocument(file.contentsToByteArray());
         final Element element = document.getRootElement();
         assert element.getName().equals(StorageData.COMPONENT);
 
@@ -72,7 +73,7 @@ public class DirectoryStorageData {
           pathMacroSubstitutor.addUnknownMacros(componentName, unknownMacros);
         }
 
-        put(componentName, file, element, true);
+        put(componentName, FileSystem.FILE_SYSTEM.createFile(file.getCanonicalPath()), element, true);
       }
       catch (IOException e) {
         LOG.info("Unable to load state", e);

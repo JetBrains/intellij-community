@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.concurrency.JobUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -146,18 +146,19 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
   public void testAsyncRefresh() throws Throwable {
     final Throwable[] ex = {null};
-    JobUtil.invokeConcurrentlyUnderProgress(Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), false, new Processor<Object>() {
-      @Override
-      public boolean process(Object o) {
-        try {
-          doAsyncRefreshTest();
-        }
-        catch (Throwable t) {
-          ex[0] = t;
-        }
-        return true;
-      }
-    });
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), false,
+                                                new Processor<Object>() {
+                                                  @Override
+                                                  public boolean process(Object o) {
+                                                    try {
+                                                      doAsyncRefreshTest();
+                                                    }
+                                                    catch (Throwable t) {
+                                                      ex[0] = t;
+                                                    }
+                                                    return true;
+                                                  }
+                                                });
     if (ex[0] != null) throw ex[0];
   }
 

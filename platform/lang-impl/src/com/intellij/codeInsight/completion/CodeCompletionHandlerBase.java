@@ -60,7 +60,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Consumer;
@@ -223,7 +223,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       int offset = editor.getCaretModel().getOffset();
       int psiOffset = Math.max(0, offset - 1);
 
-      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, psiOffset);
+      PsiElement elementAt = InjectedLanguageFacadeImpl.findInjectedElementNoCommit(psiFile, psiOffset);
       if (elementAt == null) {
         elementAt = psiFile.findElementAt(psiOffset);
       }
@@ -528,10 +528,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
       }
     });
-    final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(fileCopy[0]);
+    final PsiFile hostFile = InjectedLanguageFacadeImpl.getTopLevelFile(fileCopy[0]);
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
     final int hostStartOffset = injectedLanguageManager.injectedToHost(fileCopy[0], initContext.getStartOffset());
-    final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
+    final Editor hostEditor = InjectedLanguageFacadeImpl.getTopLevelEditor(initContext.getEditor());
 
     final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
     final OffsetMap original = initContext.getOffsetMap();
@@ -595,13 +595,14 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
     CompletionContext context;
-    PsiFile injected = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, hostStartOffset);
+    PsiFile injected = InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(hostFile, hostStartOffset);
     if (injected != null) {
       TextRange host = injectedLanguageManager.injectedToHost(injected, injected.getTextRange());
       assert hostStartOffset >= host.getStartOffset() : "startOffset before injected";
       assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
 
-      EditorWindow injectedEditor = (EditorWindow)InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile, hostStartOffset);
+      EditorWindow injectedEditor = (EditorWindow)InjectedLanguageFacadeImpl
+        .getEditorForInjectedLanguageNoCommit(hostEditor, hostFile, hostStartOffset);
       assert injected == injectedEditor.getInjectedFile();
       final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
       for (final OffsetKey key : hostMap.getAllOffsets()) {
@@ -825,7 +826,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private static Runnable rememberDocumentState(final Editor _editor) {
-    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(_editor);
+    final Editor editor = InjectedLanguageFacadeImpl.getTopLevelEditor(_editor);
     final String documentText = editor.getDocument().getText();
     final int caret = editor.getCaretModel().getOffset();
     final int selStart = editor.getSelectionModel().getSelectionStart();

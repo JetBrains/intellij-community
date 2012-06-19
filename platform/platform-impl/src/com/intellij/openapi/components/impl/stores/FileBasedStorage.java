@@ -154,8 +154,10 @@ public class FileBasedStorage extends XmlElementStorage {
 
     @Override
     protected boolean physicalContentNeedsSave() {
-      if (!myFile.exists()) return !myStorageData.isEmpty();
-      return !StorageUtil.contentEquals(getDocumentToSave(), myFile);
+      VirtualFile file = getVirtualFile();
+      if (file == null || !file.exists())
+        return !myStorageData.isEmpty();
+      return !StorageUtil.contentEquals(getDocumentToSave(), file);
     }
 
     @Override
@@ -321,7 +323,8 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   protected boolean physicalContentNeedsSave(final Document doc) {
-    return !myFile.exists() || !StorageUtil.contentEquals(doc, myFile);
+    VirtualFile file = getVirtualFile();
+    return file == null || !file.exists() || !StorageUtil.contentEquals(doc, file);
   }
 
   @Nullable

@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.LayeredIcon;
@@ -88,7 +88,7 @@ public class XsltSupport {
       final XmlAttributeValue value = attribute.getValueElement();
       if (value != null) {
         final List<PsiFile> files = new SmartList<PsiFile>();
-        InjectedLanguageUtil.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        InjectedLanguageFacadeImpl.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             if (injectedPsi instanceof XPathFile) {
               files.add(injectedPsi);

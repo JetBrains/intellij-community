@@ -16,12 +16,14 @@
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
+
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlText
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
 import org.jetbrains.plugins.groovy.GroovyFileType
+
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl
 
 /**
  * @author peter
@@ -52,7 +54,7 @@ s.codePointAt(<caret>0)
 
     def offset = psiFile.getText().indexOf('"') + 1
     assertNotNull(psiFile.findElementAt(offset));
-    assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, offset)
+    assert InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(psiFile, offset)
   }
 
   public void testRegexInjections() {
@@ -60,8 +62,8 @@ s.codePointAt(<caret>0)
     final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate(/ blah-blah-blah \\ language won\'t be injected here /)');
     assertNotNull(psiFile);
 
-    assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('blah') + 1)
-    assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('injected') + 1)
+    assert InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('blah') + 1)
+    assert InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('injected') + 1)
   }
 
 }
