@@ -39,6 +39,7 @@ import com.intellij.xml.refactoring.XmlTagInplaceRenamer;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,7 +198,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
       case ANIMATOR:
         return "set";
       case LAYOUT:
-        return "LinearLayout";
+        return AndroidUtils.TAG_LINEAR_LAYOUT;
       default:
     }
     throw new IllegalArgumentException("Incorrect resource folder type");
