@@ -795,6 +795,6 @@ public class AndroidResourceUtil {
 
   @NotNull
   public static String getFieldNameByResourceName(@NotNull String fieldName) {
-    return fieldName.replace('.', '_').replace('-', '_');
+    return fieldName.replace('.', '_').replace('-', '_').replace(':', '_');
   }
 }

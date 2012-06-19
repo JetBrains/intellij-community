@@ -75,11 +75,13 @@ public abstract class ValueResourcesFileParser implements IXMLBuilder {
   @Override
   public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
     if (myLastNameAttr != null && name != null) {
-      final String resType = "item".equals(name)
+      final String resTypeStr = "item".equals(name)
                              ? myLastTypeAttr
                              : AndroidCommonUtils.getResourceTypeByTagName(name);
-      if (resType != null && ResourceType.getEnum(resType) != null) {
-        process(new ResourceEntry(resType, myLastNameAttr));
+      final ResourceType resType = resTypeStr != null ? ResourceType.getEnum(resTypeStr) : null;
+      if (resType != null &&
+          !(resType == ResourceType.ATTR && myLastNameAttr.startsWith("android:"))) {
+        process(new ResourceEntry(resTypeStr, myLastNameAttr));
       }
     }
   }
