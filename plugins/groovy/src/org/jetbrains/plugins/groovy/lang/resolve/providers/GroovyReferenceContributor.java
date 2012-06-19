@@ -19,8 +19,6 @@ import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
-import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 import org.jetbrains.plugins.groovy.spock.SpockUnrollReferenceProvider;
 
@@ -32,8 +30,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 public class GroovyReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(psiElement(GrLiteral.class), new PropertiesReferenceProvider());
-
-    registrar.registerReferenceProvider(psiElement(GroovyDocPsiElement.class), new GroovyDocReferenceProvider());
 
     registrar.registerReferenceProvider(GroovyPatterns.stringLiteral().withParent(GrAnnotationNameValuePair.class),
                                         new SpockUnrollReferenceProvider());
