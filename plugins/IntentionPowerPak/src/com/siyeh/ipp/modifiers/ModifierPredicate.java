@@ -51,6 +51,10 @@ class ModifierPredicate implements PsiElementPredicate {
           (myModifier.equals(PsiModifier.PRIVATE) || myModifier.equals(PsiModifier.PROTECTED))) {
         return false;
       }
+    } else if (parent instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)parent;
+      final PsiClass containingClass = method.getContainingClass();
+      return containingClass != null && !containingClass.isInterface();
     }
     final PsiModifierListOwner owner = (PsiModifierListOwner)parent;
     final PsiModifierList modifierList = owner.getModifierList();
