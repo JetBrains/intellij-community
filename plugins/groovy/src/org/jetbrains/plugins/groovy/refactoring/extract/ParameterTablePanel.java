@@ -249,6 +249,13 @@ public abstract class ParameterTablePanel extends JPanel {
       updateSignature();
     }
 
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      if (oldIndex < 0 || newIndex < 0) return false;
+      if (oldIndex >= myParameterInfos.length || newIndex >= myParameterInfos.length) return false;
+      return true;
+    }
+
     public int getRowCount() {
       return myParameterInfos.length;
     }

@@ -529,11 +529,21 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
           }
         }
       }
-      for (BeforeRunTask task : tasks) {
+      for (int i = 0, size = tasks.size(); i < size; i++) {
+        BeforeRunTask task = tasks.get(i);
         if (templateTasks != null) {
-          BeforeRunTask templateTask = templateTasks.get(task.getProviderId());
-          if (task.equals(templateTask))
-            continue; // not neccesary saving if the task is the same as template
+          int j = 0;
+          BeforeRunTask templateTask = null;
+          for (Map.Entry<Key<BeforeRunTask>, BeforeRunTask> entry : templateTasks.entrySet()) {
+            if (entry.getKey() == task.getProviderId()) {
+              templateTask = entry.getValue();
+              break;
+            }
+            j++;
+          }
+          if (task.equals(templateTask) && i == j) {
+            continue; // not neccesary saving if the task is the same as template and on the same place
+          }
         }
         final Element child = new Element(OPTION);
         child.setAttribute(NAME_ATTR, task.getProviderId().toString());

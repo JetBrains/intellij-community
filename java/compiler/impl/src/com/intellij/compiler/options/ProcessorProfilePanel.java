@@ -304,6 +304,11 @@ public class ProcessorProfilePanel extends JPanel {
     public void exchangeRows(int oldIndex, int newIndex) {
     }
 
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return false;
+    }
+
     public void addRow() {
       myRows.add(new KeyValuePair());
       final int index = myRows.size() - 1;
@@ -408,6 +413,11 @@ public class ProcessorProfilePanel extends JPanel {
 
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
+    }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return false;
     }
 
     public void addRow() {

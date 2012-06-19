@@ -86,6 +86,14 @@ public abstract class JBListTableModel extends AbstractTableModel implements Edi
   }
 
   @Override
+  public boolean canExchangeRows(int oldIndex, int newIndex) {
+    if (myModel instanceof EditableModel) {
+      return ((EditableModel)myModel).canExchangeRows(oldIndex, newIndex);
+    }
+    return false;
+  }
+
+  @Override
   public void exchangeRows(int oldIndex, int newIndex) {
     if (myModel instanceof EditableModel) {
       ((EditableModel)myModel).exchangeRows(oldIndex, newIndex);

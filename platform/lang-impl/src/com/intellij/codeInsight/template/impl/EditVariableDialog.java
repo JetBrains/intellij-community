@@ -268,5 +268,10 @@ class EditVariableDialog extends DialogWrapper {
     public void exchangeRows(int oldIndex, int newIndex) {
       Collections.swap(myVariables, oldIndex, newIndex);
     }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return true;
+    }
   }
 }

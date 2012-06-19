@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EditableTreeModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -122,5 +123,15 @@ class TreeToolbarDecorator extends ToolbarDecorator {
   public ToolbarDecorator setVisibleRowCount(int rowCount) {
     myTree.setVisibleRowCount(rowCount);
     return this;
+  }
+
+  @Override
+  protected boolean isModelEditable() {
+    return myTree.getModel() instanceof EditableModel;
+  }
+
+  @Override
+  protected void installDnDSupport() {
+    RowsDnDSupport.install(myTree, (EditableModel)myTree.getModel());
   }
 }

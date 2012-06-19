@@ -28,6 +28,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -66,12 +68,26 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   public static TestClassFilter create(final SourceScope sourceScope, Module module, final String pattern) throws JUnitUtil.NoJUnitException {
     if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
     PsiClass testCase = module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
-    final Pattern compilePattern = getCompilePattern(pattern);
+    final String[] patterns = pattern.split("\\|\\|");
+    final List<Pattern> compilePatterns = new ArrayList<Pattern>();
+    for (String p : patterns) {
+      final Pattern compilePattern = getCompilePattern(p);
+      if (compilePattern != null) {
+        compilePatterns.add(compilePattern);
+      }
+    }
     return new TestClassFilter(testCase, sourceScope.getGlobalSearchScope()){
-
       @Override
       public boolean isAccepted(PsiClass aClass) {
-        return super.isAccepted(aClass) && compilePattern != null && compilePattern.matcher(aClass.getQualifiedName()).matches();
+        if (super.isAccepted(aClass)) {
+          final String qualifiedName = aClass.getQualifiedName();
+          for (Pattern compilePattern : compilePatterns) {
+            if (compilePattern.matcher(qualifiedName).matches()) {
+              return true;
+            }
+          }
+        }
+        return false;
       }
     };
   }
@@ -79,7 +95,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   private static Pattern getCompilePattern(String pattern) {
     Pattern compilePattern;
     try {
-      compilePattern = Pattern.compile(pattern);
+      compilePattern = Pattern.compile(pattern.trim());
     }
     catch (PatternSyntaxException e) {
       compilePattern = null;

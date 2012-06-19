@@ -71,6 +71,10 @@ public class GrParameterTableModel extends AbstractTableModel implements Editabl
     fireTableRowsUpdated(Math.min(index1, index2), Math.max(index1, index2));
   }
 
+  @Override
+  public boolean canExchangeRows(int oldIndex, int newIndex) {
+    return true;
+  }
 
   public int getRowCount() {
     return infos.size();

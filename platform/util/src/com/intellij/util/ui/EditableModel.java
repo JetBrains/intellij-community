@@ -25,4 +25,6 @@ public interface EditableModel {
   void removeRow(int index);
 
   void exchangeRows(int oldIndex, int newIndex);
+
+  boolean canExchangeRows(int oldIndex, int newIndex);
 }

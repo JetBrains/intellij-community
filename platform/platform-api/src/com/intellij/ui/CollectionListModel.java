@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,7 +25,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class CollectionListModel<T> extends AbstractListModel {
+public class CollectionListModel<T> extends AbstractListModel implements EditableModel {
   private final List<T> myItems;
 
   public CollectionListModel(@NotNull final List<? extends T> items) {
@@ -97,6 +98,27 @@ public class CollectionListModel<T> extends AbstractListModel {
   public void replaceAll(@NotNull final List<? extends T> elements) {
     removeAll();
     add(elements);
+  }
+
+  @Override
+  public void addRow() {
+  }
+
+  @Override
+  public void removeRow(int index) {
+    remove(index);
+  }
+
+  @Override
+  public void exchangeRows(int oldIndex, int newIndex) {
+    Collections.swap(myItems, oldIndex, newIndex);
+    fireContentsChanged(this, oldIndex, oldIndex);
+    fireContentsChanged(this, newIndex, newIndex);
+  }
+
+  @Override
+  public boolean canExchangeRows(int oldIndex, int newIndex) {
+    return true;
   }
 
   @Override

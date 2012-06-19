@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.ListTableModel;
@@ -39,8 +38,8 @@ class TableToolbarDecorator extends ToolbarDecorator {
   TableToolbarDecorator(@NotNull JTable table, @Nullable final ElementProducer<?> producer) {
     myTable = table;
     myProducer = producer;
-    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTable.getModel() instanceof EditableModel;
-    if (myTable.getModel() instanceof EditableModel) {
+    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = isModelEditable();
+    if (isModelEditable()) {
       createDefaultTableActions(producer);
     }
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -191,12 +190,11 @@ class TableToolbarDecorator extends ToolbarDecorator {
   }
 
   @Override
-  protected void installDnD() {
-    if (myUpAction != null && myUpActionEnabled
-        && myDownAction != null && myDownActionEnabled
-        && !ApplicationManager.getApplication().isHeadlessEnvironment()
-        && myTable.getModel() instanceof EditableModel) {
-      TableRowsDnDSupport.install(myTable, (EditableModel)myTable.getModel());
-    }
+  protected void installDnDSupport() {
+    RowsDnDSupport.install(myTable, (EditableModel)myTable.getModel());
+  }
+
+  protected boolean isModelEditable() {
+    return myTable.getModel() instanceof EditableModel;
   }
 }
