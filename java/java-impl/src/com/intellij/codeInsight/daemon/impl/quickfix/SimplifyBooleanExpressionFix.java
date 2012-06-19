@@ -82,8 +82,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       expression = subExpression;
     }
     else {
-      PsiExpression constExpression = JavaPsiFacade.getInstance(project).getElementFactory()
-        .createExpressionFromText(Boolean.toString(subExpressionValue.booleanValue()), subExpression);
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiExpression constExpression = factory.createExpressionFromText(Boolean.toString(subExpressionValue.booleanValue()), subExpression);
       expression = (PsiExpression)subExpression.replace(constExpression);
     }
     while (expression.getParent() instanceof PsiExpression) {
@@ -268,7 +268,8 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
           final PsiJavaToken javaToken = expression.getTokenBeforeOperand(operand);
           if (javaToken != null && !PsiTreeUtil.hasErrorElements(operand) && !PsiTreeUtil.hasErrorElements(lExpr)) {
             resultExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(lExpr.getText() + javaToken.getText() + operand.getText(), expression);
-          } else {
+          }
+          else {
             resultExpression = null;
           }
         }
