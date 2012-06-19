@@ -20,8 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
-class VariableAssignedVisitor extends JavaRecursiveElementVisitor {
-
+class VariableAssignedVisitor extends JavaRecursiveElementWalkingVisitor {
   @NotNull private final PsiVariable variable;
   private final boolean recurseIntoClasses;
   private final boolean checkUnaryExpressions;
