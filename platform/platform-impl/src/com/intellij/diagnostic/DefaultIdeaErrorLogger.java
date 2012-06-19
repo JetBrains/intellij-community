@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
+import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
@@ -43,8 +44,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   public boolean canHandle(IdeaLoggingEvent event) {
     boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
+    ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
+    boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
+
     return notificationEnabled ||
-           !(IdeErrorsDialog.getSubmitter(event.getThrowable()) instanceof ITNReporter) ||
+           showPluginError ||
            ApplicationManagerEx.getApplicationEx().isInternal() ||
            isOOMError(event.getThrowable())     ||
            event.getThrowable() instanceof MappingFailedException;

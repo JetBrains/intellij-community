@@ -183,7 +183,7 @@ public class MinusculeMatcher implements Matcher {
       }
     }
 
-    String nextChar = String.valueOf(myPattern[patternIndex]);
+    char nextChar = myPattern[patternIndex];
     boolean upper = Character.isUpperCase(myPattern[patternIndex]);
 
     int fromIndex = nameIndex;

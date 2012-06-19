@@ -101,7 +101,7 @@ public class BreakpointMasterDetailPopupBuilder {
   }
 
   public interface BreakpointChosenCallback {
-    void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup);
+    void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup, boolean withEnterOrDoubleClick);
   }
 
   public void setInitialBreakpoint(@Nullable Object initialBreakpoint) {
@@ -186,8 +186,8 @@ public class BreakpointMasterDetailPopupBuilder {
 
       @Override
       public void itemChosen(ItemWrapper item, Project project, JBPopup popup, boolean withEnterOrDoubleClick) {
-        if (myCallback != null && item instanceof BreakpointItem && withEnterOrDoubleClick) {
-          myCallback.breakpointChosen(myProject, (BreakpointItem)item,  popup);
+        if (myCallback != null && item instanceof BreakpointItem) {
+          myCallback.breakpointChosen(myProject, (BreakpointItem)item,  popup, withEnterOrDoubleClick);
         }
       }
     };
@@ -207,7 +207,7 @@ public class BreakpointMasterDetailPopupBuilder {
       @Override
       public void execute(BreakpointItem item) {
         if (myCallback != null) {
-          myCallback.breakpointChosen(myProject, item, popup);
+          myCallback.breakpointChosen(myProject, item, popup, true);
         }
       }
     });

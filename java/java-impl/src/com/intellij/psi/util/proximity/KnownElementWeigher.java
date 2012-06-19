@@ -58,6 +58,9 @@ public class KnownElementWeigher extends ProximityWeigher {
             return -1;
           }
         }
+        if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+          return 0;
+        }
         return getJdkClassProximity(method.getContainingClass());
       }
     }

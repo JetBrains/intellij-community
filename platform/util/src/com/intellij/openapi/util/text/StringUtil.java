@@ -204,6 +204,34 @@ public class StringUtil extends StringUtilRt {
     return -1;
   }
 
+  public static int indexOfIgnoreCase(@NotNull String where, char what, int fromIndex) {
+    int sourceCount = where.length();
+
+    if (fromIndex >= sourceCount) {
+      return -1;
+    }
+
+    if (fromIndex < 0) {
+      fromIndex = 0;
+    }
+
+    int max = sourceCount - 1;
+
+    for (int i = fromIndex; i <= max; i++) {
+      /* Look for first character. */
+      if (!charsEqualIgnoreCase(where.charAt(i), what)) {
+        while (++i <= max && !charsEqualIgnoreCase(where.charAt(i), what)) ;
+      }
+
+      /* Found first character, now look at the rest of v2 */
+      if (i <= max) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
   public static boolean containsIgnoreCase(@NotNull String where, @NotNull String what) {
     return indexOfIgnoreCase(where, what, 0) >= 0;
   }

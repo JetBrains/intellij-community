@@ -112,7 +112,7 @@ public abstract class TailType {
    */
   public static final TailType INSERT_SPACE = new CharTailType(' ', false);
   /**
-   * insert a space unless there's one at the caret position already, followed by a sowrd
+   * insert a space unless there's one at the caret position already, followed by a word
    */
   public static final TailType HUMBLE_SPACE_BEFORE_WORD = new CharTailType(' ', false) {
 
