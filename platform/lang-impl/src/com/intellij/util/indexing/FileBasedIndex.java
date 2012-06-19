@@ -123,6 +123,7 @@ public class FileBasedIndex implements ApplicationComponent {
   @Nullable private ScheduledFuture<?> myFlushingFuture;
   private volatile int myLocalModCount;
   private volatile int myFilesModCount;
+  private volatile boolean myInitialized; // need this variable for memory barrier
 
   public void requestReindex(@NotNull final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, true);
@@ -336,7 +337,7 @@ public class FileBasedIndex implements ApplicationComponent {
           lastModCount = myLocalModCount;
         }
       });
-
+      myInitialized = true; // this will ensure that all changes to component's state will be visible to other threads
     }
   }
 
