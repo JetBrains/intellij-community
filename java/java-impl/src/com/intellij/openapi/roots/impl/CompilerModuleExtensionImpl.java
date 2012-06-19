@@ -24,11 +24,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -307,17 +306,6 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     myCompilerOutputForTests = null;
   }
 
-  @Nullable
-  @Override
-  public VirtualFile[] getRootPaths(final OrderRootType type) {
-    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) ||
-        OrderRootType.COMPILATION_CLASSES.equals(type) || 
-        OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
-      return getOutputRoots(!OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type));
-    }
-    return null;
-  }
-
   @Override
   public VirtualFile[] getOutputRoots(final boolean includeTests) {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
@@ -331,17 +319,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (outputRoot != null && !outputRoot.equals(outputPathForTests)) {
       result.add(outputRoot);
     }
-    return VfsUtil.toVirtualFileArray(result);
-  }
-
-  @Override
-  public String[] getRootUrls(final OrderRootType type) {
-    if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) ||
-        OrderRootType.COMPILATION_CLASSES.equals(type) ||
-        OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type)) {
-      return getOutputRootUrls(!OrderRootType.PRODUCTION_COMPILATION_CLASSES.equals(type));
-    }
-    return null;
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override

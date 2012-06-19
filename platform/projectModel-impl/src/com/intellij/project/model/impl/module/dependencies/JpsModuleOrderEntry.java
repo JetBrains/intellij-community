@@ -66,7 +66,7 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
     final Module module = getModule();
     if (module == null) return null;
 
-    return ModuleRootManagerImpl.getCachingEnumeratorForType(type, module, true);
+    return ModuleRootManagerImpl.getCachingEnumeratorForType(type, module);
   }
 
   @NotNull

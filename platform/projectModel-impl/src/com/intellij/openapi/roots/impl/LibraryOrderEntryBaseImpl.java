@@ -52,18 +52,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   @Override
   @NotNull
   public VirtualFile[] getFiles(@NotNull OrderRootType type) {
-    if (type == OrderRootType.COMPILATION_CLASSES) {
-      return getRootFiles(OrderRootType.CLASSES);
-    }
-    if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-      if (!myScope.isForProductionCompile()) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      return getRootFiles(OrderRootType.CLASSES);
-    }
-    else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return myScope == DependencyScope.PROVIDED ? VirtualFile.EMPTY_ARRAY : getRootFiles(OrderRootType.CLASSES);
-    }
     return getRootFiles(type);
   }
 
@@ -73,18 +61,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     LOG.assertTrue(!getRootModel().getModule().isDisposed());
     RootProvider rootProvider = getRootProvider();
     if (rootProvider == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    if (type == OrderRootType.COMPILATION_CLASSES) {
-      return rootProvider.getUrls(OrderRootType.CLASSES);
-    }
-    if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-      if (!myScope.isForProductionCompile()) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
-      }
-      return rootProvider.getUrls(OrderRootType.CLASSES);
-    }
-    else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return myScope == DependencyScope.PROVIDED ? ArrayUtil.EMPTY_STRING_ARRAY : rootProvider.getUrls(OrderRootType.CLASSES);
-    }
     return rootProvider.getUrls(type);
   }
 

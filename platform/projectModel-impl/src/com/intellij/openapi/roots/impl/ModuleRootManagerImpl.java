@@ -240,25 +240,15 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return new ModuleOrderEnumerator(myRootModel, myOrderRootsCache);
   }
 
-  public static OrderRootsEnumerator getCachingEnumeratorForType(OrderRootType type, Module module, final boolean forOtherModules) {
-    return getEnumeratorForType(type, module, forOtherModules).usingCache();
+  public static OrderRootsEnumerator getCachingEnumeratorForType(OrderRootType type, Module module) {
+    return getEnumeratorForType(type, module).usingCache();
   }
 
   @NotNull
-  private static OrderRootsEnumerator getEnumeratorForType(OrderRootType type, Module module, final boolean forOtherModules) {
+  private static OrderRootsEnumerator getEnumeratorForType(OrderRootType type, Module module) {
     OrderEnumerator base = OrderEnumerator.orderEntries(module);
-    if (forOtherModules && (type == OrderRootType.COMPILATION_CLASSES || type == OrderRootType.PRODUCTION_COMPILATION_CLASSES
-                  || type == OrderRootType.CLASSES || type == OrderRootType.SOURCES)) {
+    if (type == OrderRootType.CLASSES || type == OrderRootType.SOURCES) {
       base = base.exportedOnly();
-    }
-    if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return base.compileOnly().recursively().classes();
-    }
-    if (type == OrderRootType.COMPILATION_CLASSES) {
-      return base.recursively().exportedOnly().classes();
-    }
-    if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-      return base.compileOnly().productionOnly().recursively().exportedOnly().classes();
     }
     if (type == OrderRootType.CLASSES) {
       return base.withoutModuleSourceEntries().recursively().exportedOnly().classes();

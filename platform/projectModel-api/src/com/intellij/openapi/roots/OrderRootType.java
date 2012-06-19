@@ -39,54 +39,6 @@ public class OrderRootType {
   }
 
   /**
-   * Runtime classpath.
-   * Includes:
-   * <li>  production and test output for modules
-   * <li>  classes roots for libraries and jdk unless scope is 'provided'
-   * <li>  recursively for module dependencies with scope != 'provided'
-   *
-   * @deprecated
-   * <ul>
-   *   <li> for libraries and jdk use {@link #CLASSES}
-   *   <li> to get module output roots use {@link CompilerModuleExtension#getOutputRoots}<code>(true)</code>
-   *   <li> to recursively process module dependencies use <code>OrderEnumerator.orderEntries(module).compileOnly().recursively()</code>
-   * </ul>
-   */
-  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT");
-
-  /**
-   * Classpath for compilation.
-   * Includes:
-   * <li>  production and test output for modules
-   * <li>  classes roots for libraries and jdk
-   * <li>  recursively for module dependencies: only exported items
-
-   * @deprecated
-   * <ul>
-   *   <li> for libraries and jdk use {@link #CLASSES}
-   *   <li> to get module output roots use {@link CompilerModuleExtension#getOutputRoots}<code>(true)</code>
-   *   <li> to recursively process module dependencies use <code>OrderEnumerator.orderEntries(module).recursively().exportedOnly()</code>
-   * </ul>
-   */
-  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES");
-
-  /**
-   * Classpath for compilation without tests.
-   * Includes:
-   * <li>  production output for modules
-   * <li>  classes roots for libraries and jdk with scope suitable for production compile
-   * <li>  recursively for module dependencies with scope suitable for production compile: only exported items
-
-   * @deprecated
-   * <ul>
-   *   <li> for libraries and jdk use {@link #CLASSES}
-   *   <li> to get module output root use {@link CompilerModuleExtension#getCompilerOutputPath()}
-   *   <li> to recursively process module dependencies use <code>OrderEnumerator.orderEntries(module).compileOnly().productionOnly().recursively().exportedOnly()</code>
-   * </ul>
-   */
-  public static final OrderRootType PRODUCTION_COMPILATION_CLASSES = new OrderRootType("PRODUCTION_COMPILATION_CLASSES");
-
-  /**
    * Classpath without output directories for modules.
    * Includes:
    * <li>  classes roots for libraries and jdk

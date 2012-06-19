@@ -238,14 +238,11 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private Map<OrderRootType, VirtualFilePointerContainer> initRoots() {
     Disposer.register(this, myPointersDisposable);
 
-    Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<OrderRootType, VirtualFilePointerContainer>(5);
+    Map<OrderRootType, VirtualFilePointerContainer> result = new HashMap<OrderRootType, VirtualFilePointerContainer>(4);
 
     for (OrderRootType rootType : getAllRootTypes()) {
       result.put(rootType, VirtualFilePointerManager.getInstance().createContainer(myPointersDisposable));
     }
-    result.put(OrderRootType.COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
-    result.put(OrderRootType.PRODUCTION_COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
-    result.put(OrderRootType.CLASSES_AND_OUTPUT, result.get(OrderRootType.CLASSES));
 
     return result;
   }

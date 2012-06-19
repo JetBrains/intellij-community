@@ -314,7 +314,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (OrderEntry entry : orderEntries) {
         ContainerUtil.addAll(roots, entry.getFiles(OrderRootType.CLASSES));
         ContainerUtil.addAll(roots, entry.getFiles(OrderRootType.SOURCES));
-        ContainerUtil.addAll(roots, entry.getFiles(OrderRootType.CLASSES_AND_OUTPUT));
       }
     }
 
