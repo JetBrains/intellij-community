@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PythonReferenceImporter implements ReferenceImporter {
+  @Override
   public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
     if (!(file instanceof PyFile)) return false;
     int caretOffset = editor.getCaretModel().getOffset();
@@ -68,7 +69,27 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return false;
   }
 
-  private static TokenSet IS_IMPORT_STATEMENT = TokenSet.create(PyElementTypes.IMPORT_STATEMENT);
+  @Override
+  public boolean autoImportReferenceAt(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    if (!(file instanceof PyFile)) return false;
+    PsiReference element = file.findReferenceAt(offset);
+    if (element instanceof PyReferenceExpression && isImportable((PsiElement)element)) {
+      final PyReferenceExpression refExpr = (PyReferenceExpression)element;
+      if (refExpr.getQualifier() == null) {
+        final PsiPolyVariantReference reference = refExpr.getReference();
+        if (reference.resolve() == null) {
+          AutoImportQuickFix fix = proposeImportFix(refExpr, reference);
+          if (fix != null && fix.getCandidatesCount() == 1) {
+            fix.invoke(file);
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static final TokenSet IS_IMPORT_STATEMENT = TokenSet.create(PyElementTypes.IMPORT_STATEMENT);
 
   @Nullable
   public static AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference) {
@@ -87,7 +108,6 @@ public class PythonReferenceImporter implements ReferenceImporter {
       return null;
     }
 
-    PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
     AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seen_file_names = new HashSet<String>(); // true import names
     // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
@@ -95,7 +115,8 @@ public class PythonReferenceImporter implements ReferenceImporter {
     CollectProcessor import_prc = new CollectProcessor(IS_IMPORT_STATEMENT);
     PyResolveUtil.treeCrawlUp(import_prc, node);
     List<PsiElement> result = import_prc.getResult();
-    if (result.size() > 0) {
+    PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
+    if (!result.isEmpty()) {
       for (PsiElement stmt : import_prc.getResult()) {
         for (PyImportElement ielt : ((PyImportStatement)stmt).getImportElements()) {
           final PyReferenceExpression src = ielt.getImportReferenceExpression();
@@ -130,7 +151,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     if (isPossibleModuleReference(node)) {
       symbols.addAll(findImportableModules(node.getContainingFile(), refText, project, scope));
     }
-    if (symbols.size() > 0) {
+    if (!symbols.isEmpty()) {
       for (PsiElement symbol : symbols) {
         if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
@@ -171,10 +192,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
   }
 
   private static boolean isQualifier(PyElement node) {
-    if (node.getParent() instanceof PyReferenceExpression) {
-      return node == ((PyReferenceExpression) node.getParent()).getQualifier();
-    }
-    return false;
+    return node.getParent() instanceof PyReferenceExpression && node == ((PyReferenceExpression)node.getParent()).getQualifier();
   }
 
   private static boolean isPossibleModuleReference(PyElement node) {
@@ -227,7 +245,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return symbol instanceof PyTargetExpression;
   }
 
-  private final static String[] AS_PREFIXES = {"other_", "one_more_", "different_", "pseudo_", "true_"};
+  private static final String[] AS_PREFIXES = {"other_", "one_more_", "different_", "pseudo_", "true_"};
 
   // a no-frills recursive accumulating scan
   private static void collectIdentifiers(PsiElement node, Collection<String> dst) {
