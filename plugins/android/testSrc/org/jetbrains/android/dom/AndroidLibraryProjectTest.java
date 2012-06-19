@@ -141,6 +141,16 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myFixture.checkHighlighting(true, true, true);
   }
 
+  public void testJavaHighlighting() {
+    createInitialStructure();
+    myFixture.copyFileToProject(BASE_PATH + "FindUsagesR1.java", "lib/src/p1/p2/lib/R.java");
+    String to = "lib/src/p1/p2/lib" + getTestName(true) + ".java";
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".java", to);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.doHighlighting();
+    myFixture.checkHighlighting(true, true, true);
+  }
+
   private void doRename(final VirtualFile file, final String newName) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

@@ -1,11 +1,13 @@
 package org.jetbrains.android.augment;
 
 import com.android.resources.ResourceType;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,9 @@ class ResourceTypeClass extends AndroidLightClass {
   static PsiField[] buildResourceFields(@NotNull AndroidFacet facet,
                                         @NotNull String resClassName,
                                         @NotNull final PsiClass context) {
+    final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
+    final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
+
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(facet.getModule().getProject());
     final Collection<String> resNames = facet.getLocalResourceManager().getResourceNames(resClassName);
     final PsiField[] result = new PsiField[resNames.size()];
@@ -51,8 +56,8 @@ class ResourceTypeClass extends AndroidLightClass {
       final PsiType type = ResourceType.STYLEABLE.getName().equals(resClassName)
                            ? PsiType.INT.createArrayType()
                            : PsiType.INT;
-      final AndroidLightField field = new AndroidLightField(AndroidResourceUtil.getFieldNameByResourceName(resName), context, type);
-      field.setModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
+      final AndroidLightField field = new AndroidLightField(AndroidResourceUtil.getFieldNameByResourceName(resName), context,
+                                                            type, !generateNonFinalFields, generateNonFinalFields ? null : 0);
       field.setInitializer(factory.createExpressionFromText("0", field));
       result[i++] = field;
     }
