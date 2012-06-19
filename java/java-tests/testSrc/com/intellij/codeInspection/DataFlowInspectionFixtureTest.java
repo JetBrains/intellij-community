@@ -64,4 +64,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testComparingToNotNullShouldNotAffectNullity() throws Throwable { doTest(); }
   public void testStringTernaryAlwaysTrue() throws Throwable { doTest(); }
 
+  public void testBoxing128() throws Throwable { doTest(); }
+
 }
