@@ -44,33 +44,26 @@ public class VcsBackgroundOperationsConfigurationPanel implements SearchableConf
   private JCheckBox myCbCheckoutInBackground;
   private JCheckBox myPerformRevertInBackgroundCheckBox;
   private JCheckBox myTrackChangedOnServer;
-  private JCheckBox myEnableBackgroundProcesses;
   private JComponent myCachePanel;
   private JSpinner myChangedOnServerInterval;
-  private JPanel myBackgroundProcesses;
-  private JPanel myCachedCommittedChanges;
   private CacheSettingsPanel myCacheSettingsPanel;
 
   public VcsBackgroundOperationsConfigurationPanel(final Project project) {
     myProject = project;
 
     if (! myProject.isDefault()) {
-      myEnableBackgroundProcesses.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          final boolean backgroundEnabled = myEnableBackgroundProcesses.isSelected();
-          if (! backgroundEnabled) {
-            myCacheSettingsPanel.setEnableCaching(false);
-            myTrackChangedOnServer.setSelected(false);
-          }
-          myTrackChangedOnServer.setEnabled(backgroundEnabled);
-          myCacheSettingsPanel.setEnabled(backgroundEnabled);
-        }
-      });
       myCacheSettingsPanel.initPanel(project);
       final VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
       myChangedOnServerInterval.setModel(new SpinnerNumberModel(settings.CHANGED_ON_SERVER_INTERVAL, 5, 48 * 10 * 60, 5));
+
+      myTrackChangedOnServer.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          myChangedOnServerInterval.setEnabled(myTrackChangedOnServer.isSelected());
+        }
+      });
+
     }
-    myBackgroundProcesses.setVisible(! myProject.isDefault());
   }
 
   public void apply() throws ConfigurationException {
@@ -84,12 +77,10 @@ public class VcsBackgroundOperationsConfigurationPanel implements SearchableConf
     settings.PERFORM_ADD_REMOVE_IN_BACKGROUND = myCbAddRemoveInBackground.isSelected();
     settings.PERFORM_ROLLBACK_IN_BACKGROUND = myPerformRevertInBackgroundCheckBox.isSelected();
 
-    boolean remoteCacheStateChanged = (settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND != myTrackChangedOnServer.isSelected()) ||
-                                      (settings.ENABLE_BACKGROUND_PROCESSES = myEnableBackgroundProcesses.isSelected());
+    boolean remoteCacheStateChanged = settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND != myTrackChangedOnServer.isSelected();
     if (! myProject.isDefault()) {
       settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = myTrackChangedOnServer.isSelected();
       settings.CHANGED_ON_SERVER_INTERVAL = ((Number) myChangedOnServerInterval.getValue()).intValue();
-      settings.ENABLE_BACKGROUND_PROCESSES = myEnableBackgroundProcesses.isSelected();
 
       myCacheSettingsPanel.apply();
     }
@@ -130,7 +121,6 @@ public class VcsBackgroundOperationsConfigurationPanel implements SearchableConf
       if (settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND != myTrackChangedOnServer.isSelected()) {
         return true;
       }
-      if (settings.ENABLE_BACKGROUND_PROCESSES != myEnableBackgroundProcesses.isSelected()) return true;
       if (myCacheSettingsPanel.isModified()) return true;
       if (settings.CHANGED_ON_SERVER_INTERVAL != ((Number) myChangedOnServerInterval.getValue()).intValue()) return true;
     }
@@ -151,8 +141,8 @@ public class VcsBackgroundOperationsConfigurationPanel implements SearchableConf
     
     if (! myProject.isDefault()) {
       myTrackChangedOnServer.setSelected(settings.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND);
-      myEnableBackgroundProcesses.setSelected(settings.ENABLE_BACKGROUND_PROCESSES);
       myChangedOnServerInterval.setValue(settings.CHANGED_ON_SERVER_INTERVAL);
+      myChangedOnServerInterval.setEnabled(myTrackChangedOnServer.isSelected());
       myCacheSettingsPanel.reset();
     }
   }
