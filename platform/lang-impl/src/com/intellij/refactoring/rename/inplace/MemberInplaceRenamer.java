@@ -30,7 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchScope;
@@ -202,7 +202,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     }
     finally {
       try {
-        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+        ((EditorImpl)InjectedLanguageFacadeImpl.getTopLevelEditor(myEditor)).stopDumb();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -248,7 +248,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void revertStateOnFinish() {
-    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    final Editor editor = InjectedLanguageFacadeImpl.getTopLevelEditor(myEditor);
     if (editor == FileEditorManager.getInstance(myProject).getSelectedTextEditor()) {
       ((EditorImpl)editor).startDumb();
     }

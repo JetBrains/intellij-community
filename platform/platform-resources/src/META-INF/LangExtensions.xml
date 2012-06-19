@@ -15,6 +15,9 @@
   <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                       serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
 
+  <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
+                      serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
+
   <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
                       serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
 
@@ -47,6 +50,8 @@
   <applicationService serviceInterface="com.intellij.application.options.CodeStyleSettingsUtil"
                       serviceImplementation="com.intellij.application.options.CodeStyleSettingsUtilImpl"/>
 
+  <applicationService serviceInterface="com.intellij.psi.impl.InjectedLanguageFacade"
+                      serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl"/>
   <applicationService serviceInterface="com.intellij.ide.PsiActionSupportFactory"
                       serviceImplementation="com.intellij.ide.PsiActionSupportFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.codeInspection.ex.InspectionToolRegistrar"
@@ -72,6 +77,9 @@
 
   <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
                   serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
+
+  <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper"
+                  serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>
 
   <projectService serviceInterface="com.intellij.codeInsight.lookup.LookupManager"
                   serviceImplementation="com.intellij.codeInsight.lookup.impl.LookupManagerImpl"/>
@@ -296,6 +304,8 @@
 
   <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
                   serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
+  <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager"
+                  serviceImplementation="com.intellij.psi.impl.cache.impl.IndexTodoCacheManagerImpl"/>
   <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
                   serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"

@@ -5,7 +5,7 @@ public class Parent {
 }
 
 class Child extends Parent {
-  public void foo(float j, String s) {
+  public void foo(float j,  String s ) {
   }
 
   void bar() {

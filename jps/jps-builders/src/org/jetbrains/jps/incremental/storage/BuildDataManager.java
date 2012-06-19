@@ -18,7 +18,7 @@ import java.util.Map;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 4;
+  private static final int VERSION = 5;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_OUTPUTS_STORAGE = "src-out";
   private static final String SRC_TO_FORM_STORAGE = "src-form";
@@ -30,6 +30,7 @@ public class BuildDataManager implements StorageOwner {
 
   private final SourceToFormMapping mySrcToFormMap;
   private final ArtifactsBuildData myArtifactsBuildData;
+  private final ModuleOutputRootsLayout myOutputRootsLayout;
   private final Mappings myMappings;
   private final File myDataStorageRoot;
   private final File myVersionFile;
@@ -37,9 +38,14 @@ public class BuildDataManager implements StorageOwner {
   public BuildDataManager(final File dataStorageRoot, final boolean useMemoryTempCaches) throws IOException {
     myDataStorageRoot = dataStorageRoot;
     mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
+    myOutputRootsLayout = new ModuleOutputRootsLayout(new File(getOutputsLayoutRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
     myArtifactsBuildData = new ArtifactsBuildData(new File(dataStorageRoot, "artifacts"));
     myVersionFile = new File(myDataStorageRoot, "version.dat");
+  }
+
+  private File getOutputsLayoutRoot() {
+    return new File(myDataStorageRoot, "output-roots");
   }
 
   public SourceToOutputMapping getSourceToOutputMap(final String moduleName, final boolean testSources) throws IOException {
@@ -62,6 +68,10 @@ public class BuildDataManager implements StorageOwner {
 
   public SourceToFormMapping getSourceToFormMap() {
     return mySrcToFormMap;
+  }
+
+  public ModuleOutputRootsLayout getOutputRootsLayout() {
+    return myOutputRootsLayout;
   }
 
   public Mappings getMappings() {
@@ -88,14 +98,19 @@ public class BuildDataManager implements StorageOwner {
           wipeStorage(getSourceToFormsRoot(), mySrcToFormMap);
         }
         finally {
-          final Mappings mappings = myMappings;
-          if (mappings != null) {
-            synchronized (mappings) {
-              mappings.clean();
-            }
+          try {
+            wipeStorage(getOutputsLayoutRoot(), myOutputRootsLayout);
           }
-          else {
-            FileUtil.delete(getMappingsRoot());
+          finally {
+            final Mappings mappings = myMappings;
+            if (mappings != null) {
+              synchronized (mappings) {
+                mappings.clean();
+              }
+            }
+            else {
+              FileUtil.delete(getMappingsRoot());
+            }
           }
         }
       }
@@ -115,6 +130,7 @@ public class BuildDataManager implements StorageOwner {
       }
     }
     mySrcToFormMap.flush(memoryCachesOnly);
+    myOutputRootsLayout.flush(memoryCachesOnly);
     final Mappings mappings = myMappings;
     if (mappings != null) {
       synchronized (mappings) {
@@ -138,17 +154,22 @@ public class BuildDataManager implements StorageOwner {
           closeStorage(mySrcToFormMap);
         }
         finally {
-          final Mappings mappings = myMappings;
-          if (mappings != null) {
-            try {
-              mappings.close();
-            }
-            catch (RuntimeException e) {
-              final Throwable cause = e.getCause();
-              if (cause instanceof IOException) {
-                throw ((IOException)cause);
+          try {
+            closeStorage(myOutputRootsLayout);
+          }
+          finally {
+            final Mappings mappings = myMappings;
+            if (mappings != null) {
+              try {
+                mappings.close();
               }
-              throw e;
+              catch (RuntimeException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof IOException) {
+                  throw ((IOException)cause);
+                }
+                throw e;
+              }
             }
           }
         }

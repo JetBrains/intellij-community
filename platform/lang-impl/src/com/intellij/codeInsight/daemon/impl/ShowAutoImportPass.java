@@ -17,16 +17,21 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -70,9 +75,10 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     if (!application.isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    importUnambiguousImports(caretOffset);
     List<HighlightInfo> visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor);
 
-    int caretOffset = myEditor.getCaretModel().getOffset();
     for (int i = visibleHighlights.size() - 1; i >= 0; i--) {
       HighlightInfo info = visibleHighlights.get(i);
       if (info.startOffset <= caretOffset && showAddImportHint(info)) return;
@@ -80,6 +86,33 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     for (HighlightInfo visibleHighlight : visibleHighlights) {
       if (visibleHighlight.startOffset > caretOffset && showAddImportHint(visibleHighlight)) return;
+    }
+  }
+
+  private void importUnambiguousImports(final int caretOffset) {
+    if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return;
+    if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return;
+    if (!CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) return;
+
+    Document document = getDocument();
+    final List<HighlightInfo> infos = new ArrayList<HighlightInfo>();
+    DaemonCodeAnalyzerImpl.processHighlights(document, myProject, null, 0, document.getTextLength(), new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(HighlightInfo info) {
+        if (!info.hasHint() || info.getSeverity() != HighlightSeverity.ERROR) {
+          return true;
+        }
+        if (TextRange.create(info.getActualStartOffset(), info.getActualEndOffset()).containsOffset(caretOffset)) return true;
+        infos.add(info);
+        return true;
+      }
+    });
+
+    ReferenceImporter[] importers = Extensions.getExtensions(ReferenceImporter.EP_NAME);
+    for (HighlightInfo info : infos) {
+      for(ReferenceImporter importer: importers) {
+        if (importer.autoImportReferenceAt(myEditor, myFile, info.getActualStartOffset())) break;
+      }
     }
   }
 

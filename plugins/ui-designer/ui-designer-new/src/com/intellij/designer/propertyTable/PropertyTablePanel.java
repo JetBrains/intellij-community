@@ -82,6 +82,8 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     myPropertyTable.initQuickFixManager(scrollPane.getViewport());
     add(scrollPane, new GridBagConstraints(0, 1, myActions.length + 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
                                            new Insets(0, 0, 0, 0), 0, 0));
+
+    myPropertyTable.setPropertyTablePanel(this);
   }
 
   public PropertyTable getPropertyTable() {
@@ -90,6 +92,10 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
 
   @Override
   public void valueChanged(ListSelectionEvent e) {
+    updateActions();
+  }
+
+  public void updateActions() {
     for (AnAction action : myActions) {
       if (action instanceof IPropertyTableAction) {
         ((IPropertyTableAction)action).update();

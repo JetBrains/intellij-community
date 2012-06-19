@@ -218,6 +218,22 @@ public class IncProjectBuilder {
 
       context.processMessage(new ProgressMessage("Running 'after' tasks"));
       runTasks(context, myBuilderRegistry.getAfterTasks());
+
+      // cleanup output roots layout, commented for efficiency
+      //final ModuleOutputRootsLayout outputRootsLayout = context.getDataManager().getOutputRootsLayout();
+      //try {
+      //  final Iterator<String> keysIterator = outputRootsLayout.getKeysIterator();
+      //  final Map<String, Module> modules = myProjectDescriptor.project.getModules();
+      //  while (keysIterator.hasNext()) {
+      //    final String moduleName = keysIterator.next();
+      //    if (modules.containsKey(moduleName)) {
+      //      outputRootsLayout.remove(moduleName);
+      //    }
+      //  }
+      //}
+      //catch (IOException e) {
+      //  throw new ProjectBuildException(e);
+      //}
     }
     finally {
       for (ProjectLevelBuilder builder : myBuilderRegistry.getProjectLevelBuilders()) {

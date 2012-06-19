@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,7 +142,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
       if (psiElement == null) return -1;
       if (!psiElement.isValid()) return -1;
       LOG.assertTrue(psiElement.isPhysical());
-      PsiFile containingFile = InjectedLanguageUtil.getTopLevelFile(psiElement);
+      PsiFile containingFile = InjectedLanguageFacadeImpl.getTopLevelFile(psiElement);
       Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(containingFile);
       if (document == null) return -1;
       TextRange textRange = getTextRange();

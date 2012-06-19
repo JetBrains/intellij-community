@@ -15,6 +15,8 @@
  */
 package com.intellij.core;
 
+import com.intellij.concurrency.Job;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
@@ -50,12 +52,16 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Modifier;
+import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author yole
@@ -108,7 +114,6 @@ public class CoreApplicationEnvironment {
                                                          }
                               )
     );
-    //registerApplicationComponent(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
     myApplication.registerService(VirtualFilePointerManager.class, new CoreVirtualFilePointerManager());
 
     myApplication.registerService(DefaultASTFactory.class, new CoreASTFactory());
@@ -139,6 +144,54 @@ public class CoreApplicationEnvironment {
         };
       }
     };
+
+    myApplication.registerService(JobLauncher.class, new JobLauncher() {
+      @Override
+      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+                                                         ProgressIndicator progress,
+                                                         boolean failFastOnAcquireReadAction,
+                                                         @NotNull Processor<T> thingProcessor) throws ProcessCanceledException {
+        for (T thing : things) {
+          if (!thingProcessor.process(thing))
+            return false;
+        }
+        return true;
+      }
+
+      @Override
+      public Job<Void> submitToJobThread(int priority, @NotNull Runnable action, Consumer<Future> onDoneCallback) {
+        action.run();
+        if (onDoneCallback != null)
+          onDoneCallback.consume(new Future() {
+            @Override
+            public boolean cancel(boolean mayInterruptIfRunning) {
+              return false;
+            }
+
+            @Override
+            public boolean isCancelled() {
+              return false;
+            }
+
+            @Override
+            public boolean isDone() {
+              return true;
+            }
+
+            @Override
+            public Object get() throws InterruptedException, ExecutionException {
+              return null;
+            }
+
+            @Override
+            public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+              return null;
+            }
+          });
+        return null;
+      }
+    });
+
   }
 
   protected VirtualFileSystem createJarFileSystem() {

@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,7 +117,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
     Project project = containingFile.getProject();
     assert !PsiDocumentManager.getInstance(project).isUncommited(myDocumentModel.getDocument());
     // TODO:default project can not be used for injections, because latter might wants (unavailable) indices
-    PsiElement psiElement = project.isDefault() ? null : InjectedLanguageUtil.findInjectedElementNoCommit(containingFile, offset);
+    PsiElement psiElement = project.isDefault() ? null : InjectedLanguageFacadeImpl.findInjectedElementNoCommit(containingFile, offset);
     if (psiElement == null) psiElement = containingFile.findElementAt(offset);
     if (psiElement == null) return null;
     return psiElement.getNode();

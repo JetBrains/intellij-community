@@ -29,7 +29,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -145,8 +145,8 @@ public final class QuickFixAction {
       PsiFile fileToUse;
       if (info.fromInjection) {
         if (injectedEditor == null) {
-          injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
-          injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+          injectedFile = InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(file, offset);
+          injectedEditor = InjectedLanguageFacadeImpl.getInjectedEditorForInjectedFile(editor, injectedFile);
         }
         editorToUse = injectedEditor;
         fileToUse = injectedFile;

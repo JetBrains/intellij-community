@@ -215,12 +215,6 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     UndoUtil.markPsiFileForUndo(file);
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().saveAll();
-      }
-    });
   }
 
   private static void createJavaResourceReference(final Module module,
@@ -238,13 +232,6 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
     final TemplateImpl template;
     final boolean inStaticContext = RefactoringUtil.isInStaticContext(element, null);
     final Project project = module.getProject();
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        AndroidResourceUtil.createStubResourceField(module, aPackage, resType, rJavaFieldName);
-      }
-    });
 
     if (extendsContext && !inStaticContext) {
       if (ResourceType.STRING.getName().equals(resType)) {

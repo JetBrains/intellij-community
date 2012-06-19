@@ -143,7 +143,7 @@ public class GithubRebaseAction extends DumbAwareAction {
     final String parent = repositoryInfo.getParentName();
     LOG.assertTrue(parent != null, "Parent repository not found!");
     final String parentRepoSuffix = parent + ".git";
-    final String parentRepoUrl = "git://github.com/" + parentRepoSuffix;
+    final String parentRepoUrl = "https://github.com/" + parentRepoSuffix;
 
     // Check that corresponding remote branch is configured for the fork origin repo
     final Ref<String> remoteForForkParentRepo = new Ref<String>();

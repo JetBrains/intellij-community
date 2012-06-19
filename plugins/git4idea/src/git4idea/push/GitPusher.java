@@ -322,7 +322,7 @@ public final class GitPusher {
     GitSimplePushResult pushResult;
     boolean pushOverHttp = httpUrl != null;
     if (pushOverHttp) {
-      pushResult = GitHttpAdapter.push(repository, remote, httpUrl, formPushSpec(pushSpec, remote));
+      pushResult = GitHttpAdapter.push(repository, remote.getName(), httpUrl, formPushSpec(pushSpec, remote));
     }
     else {
       pushResult = pushNatively(repository, pushSpec);

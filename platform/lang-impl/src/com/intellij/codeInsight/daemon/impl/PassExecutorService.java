@@ -20,7 +20,7 @@ import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobImpl;
-import com.intellij.concurrency.JobUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -271,7 +271,7 @@ public abstract class PassExecutorService implements Disposable {
 
   private void submit(final ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobUtil.submitToJobThread(pass.myJobPriority, pass, new Consumer<Future>() {
+      Job<Void> job = JobLauncher.getInstance().submitToJobThread(pass.myJobPriority, pass, new Consumer<Future>() {
         @Override
         public void consume(Future future) {
           try {

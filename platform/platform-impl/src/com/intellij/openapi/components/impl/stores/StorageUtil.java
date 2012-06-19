@@ -100,7 +100,7 @@ public class StorageUtil {
     try {
       final Ref<IOException> refIOException = Ref.create(null);
 
-      final Pair<String, String> pair = loadFile(file);
+      final Pair<String, String> pair = loadFile(LocalFileSystem.getInstance().findFileByIoFile(file));
       final byte[] text = JDOMUtil.writeParent(element, pair.second).getBytes(CharsetToolkit.UTF8);
       if (file.exists()) {
         if (new String(text).equals(pair.first)) return null;
@@ -184,17 +184,17 @@ public class StorageUtil {
   /**
    * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
    */
-  public static Pair<String, String> loadFile(@NotNull final IFile file) throws IOException {
-    if (!file.exists()) return Pair.create(null, SystemProperties.getLineSeparator());
+  public static Pair<String, String> loadFile(@Nullable final VirtualFile file) throws IOException {
+    if (file == null || !file.exists()) return Pair.create(null, SystemProperties.getLineSeparator());
 
-    String fileText = new String(file.loadBytes(), CharsetToolkit.UTF8);
+    String fileText = new String(file.contentsToByteArray(), CharsetToolkit.UTF8);
     final int ndx = fileText.indexOf('\n');
     return Pair.create(fileText, ndx == -1
                                  ? SystemProperties.getLineSeparator()
-                                 : ndx - 1 >=0 ? fileText.charAt(ndx - 1) == '\r' ? "\r\n" : "\n" : "\n");
+                                 : ndx - 1 >= 0 ? fileText.charAt(ndx - 1) == '\r' ? "\r\n" : "\n" : "\n");
   }
 
-  public static boolean contentEquals(@NotNull final Document document, @NotNull final IFile file) {
+  public static boolean contentEquals(@NotNull final Document document, @NotNull final VirtualFile file) {
     try {
       final Pair<String, String> pair = loadFile(file);
       return pair.first != null && pair.first.equals(printDocumentToString(document, pair.second));
@@ -205,7 +205,7 @@ public class StorageUtil {
     }
   }
 
-  public static boolean contentEquals(@NotNull final Element element, @NotNull final IFile file) {
+  public static boolean contentEquals(@NotNull final Element element, @NotNull final VirtualFile file) {
     try {
       final Pair<String, String> pair = loadFile(file);
       return pair.first != null && pair.first.equals(printElement(element, pair.second));

@@ -122,7 +122,8 @@ class SlideComponent extends JComponent {
         .setTextBg(HintUtil.INFORMATION_COLOR)
         .setShowImmediately(true);
 
-      myTooltipHint.show(this, point.x, point.y, (JComponent)KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(), hint);
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      myTooltipHint.show(this, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hint);
     } else {
       myTooltipHint.setLocation(new RelativePoint(this, point));
     }

@@ -814,7 +814,7 @@ public class Messages {
           textField.setText(textArea.getText());
         }
       });
-      String s = textField.getText().replaceAll("[\\ ]*=[\\ ]*", "=");
+      String s = textField.getText().replaceAll("[ ]*=[ ]*", "=").replaceAll("\\-", "\\ \\-");
       List<String> lines = StringUtil.splitHonorQuotes(s, ' ');
       textArea.setText(StringUtil.join(lines, "\n"));
       InsertPathAction.copyFromTo(textField, textArea);

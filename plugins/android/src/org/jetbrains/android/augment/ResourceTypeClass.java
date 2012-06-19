@@ -40,9 +40,9 @@ class ResourceTypeClass extends AndroidLightClass {
   }
 
   @NotNull
-  private static PsiField[] buildResourceFields(@NotNull AndroidFacet facet,
-                                                @NotNull String resClassName,
-                                                @NotNull final AndroidLightClass context) {
+  static PsiField[] buildResourceFields(@NotNull AndroidFacet facet,
+                                        @NotNull String resClassName,
+                                        @NotNull final PsiClass context) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(facet.getModule().getProject());
     final Collection<String> resNames = facet.getLocalResourceManager().getResourceNames(resClassName);
     final PsiField[] result = new PsiField[resNames.size()];

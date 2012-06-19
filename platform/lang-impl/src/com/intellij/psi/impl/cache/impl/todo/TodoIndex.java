@@ -25,7 +25,6 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.TokenSet;
@@ -130,7 +129,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
         return commentTokens != null;
       }
       
-      return IdTableBuilding.isTodoIndexerRegistered(fileType) ||
+      return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
              fileType instanceof CustomSyntaxTableFileType;
     }
   };

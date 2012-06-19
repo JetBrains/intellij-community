@@ -28,7 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +56,7 @@ abstract class CodeStyleManagerRunnable<T> {
     Document document = documentManager.getDocument(file);
     if (document instanceof DocumentWindow) {
       final DocumentWindow documentWindow = (DocumentWindow)document;
-      final PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+      final PsiFile topLevelFile = InjectedLanguageFacadeImpl.getTopLevelFile(file);
       if (!file.equals(topLevelFile)) {
         if (range != null) {
           range = documentWindow.injectedToHost(range);
@@ -125,7 +125,7 @@ abstract class CodeStyleManagerRunnable<T> {
       return false;
     }
 
-    if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
+    if (element instanceof PsiLanguageInjectionHost && InjectedLanguageFacadeImpl.hasInjections((PsiLanguageInjectionHost)element)) {
       return false;
     }
 

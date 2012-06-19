@@ -50,7 +50,8 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
   public CreateFieldFromParameterDialog(Project project,
                                         String[] names,
                                         PsiClass targetClass,
-                                        final boolean fieldMayBeFinal, PsiType... types) {
+                                        boolean fieldMayBeFinal,
+                                        PsiType... types) {
     super(project, true);
     myProject = project;
     myNames = names;
@@ -66,7 +67,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (myCbFinal.isEnabled()) {
-      PropertiesComponent.getInstance().setValue(PROPERTY_NAME, ""+myCbFinal.isSelected());
+      PropertiesComponent.getInstance().setValue(PROPERTY_NAME, "" + myCbFinal.isSelected());
     }
 
     final PsiField[] fields = myTargetClass.getFields();
@@ -97,11 +98,11 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
   public String getEnteredName() {
     if (myNameField instanceof JComboBox) {
-      JComboBox combobox = (JComboBox) myNameField;
-      return (String) combobox.getEditor().getItem();
+      JComboBox combobox = (JComboBox)myNameField;
+      return (String)combobox.getEditor().getItem();
     }
     else {
-      return ((JTextField) myNameField).getText();
+      return ((JTextField)myNameField).getText();
     }
   }
 
@@ -123,46 +124,46 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
       combobox.setMaximumRowCount(8);
 
       combobox.registerKeyboardAction(
-          new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              if (combobox.isPopupVisible()) {
-                combobox.setPopupVisible(false);
-              }
-              else {
-                doCancelAction();
-              }
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            if (combobox.isPopupVisible()) {
+              combobox.setPopupVisible(false);
             }
-          },
-          KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-          JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+            else {
+              doCancelAction();
+            }
+          }
+        },
+        KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
       );
 
       combobox.addItemListener(
-          new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-              updateOkStatus();
-            }
+        new ItemListener() {
+          @Override
+          public void itemStateChanged(ItemEvent e) {
+            updateOkStatus();
           }
+        }
       );
       combobox.getEditor().getEditorComponent().addKeyListener(
-          new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-              updateOkStatus();
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-              updateOkStatus();
-            }
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-              updateOkStatus();
-            }
+        new KeyAdapter() {
+          @Override
+          public void keyPressed(KeyEvent e) {
+            updateOkStatus();
           }
+
+          @Override
+          public void keyReleased(KeyEvent e) {
+            updateOkStatus();
+          }
+
+          @Override
+          public void keyTyped(KeyEvent e) {
+            updateOkStatus();
+          }
+        }
       );
     }
     else {
@@ -203,7 +204,8 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     if (myTypes.length > 1) {
       myTypeSelector = new TypeSelector(myProject);
       myTypeSelector.setTypes(myTypes);
-    } else {
+    }
+    else {
       myTypeSelector = new TypeSelector(myTypes[0], myProject);
     }
     panel.add(myTypeSelector.getComponent(), gbConstraints);
@@ -240,7 +242,8 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     myCbFinal = new JCheckBox(CodeInsightBundle.message("dialog.create.field.from.parameter.declare.final.checkbox"));
     if (myFieldMayBeFinal) {
       myCbFinal.setSelected(PropertiesComponent.getInstance().isTrueValue(PROPERTY_NAME));
-    } else {
+    }
+    else {
       myCbFinal.setSelected(false);
       myCbFinal.setEnabled(false);
     }
@@ -264,7 +267,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
       myNameField.requestFocusInWindow();
     }
     else {
-      ((JComboBox) myNameField).getEditor().getEditorComponent().requestFocusInWindow();
+      ((JComboBox)myNameField).getEditor().getEditorComponent().requestFocusInWindow();
     }
   }
 

@@ -32,6 +32,8 @@ import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerStatementEditor;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.ide.util.ClassFilter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -115,6 +117,7 @@ public abstract class BreakpointPropertiesPanel {
   private JPanel myPassCountPanel;
   private JPanel myConditionsPanel;
   private JPanel myActionsPanel;
+  private JBCheckBox myConditionCheckbox;
 
   ButtonGroup mySuspendPolicyGroup;
   @NonNls public static final String CONTROL_LOG_MESSAGE = "logMessage";
@@ -275,6 +278,26 @@ public abstract class BreakpointPropertiesPanel {
     });
 
     myConditionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint condition");
+    myConditionCombo.addDocumentListener(new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent event) {
+        myConditionCheckbox.setSelected(true);
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
+
+      }
+    });
+
+    myConditionCombo.getEditorComponent().addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        myConditionCombo.setEnabled(true);
+        myConditionCheckbox.setSelected(true);
+      }
+    });
+
     if (myCompact) {
       myPanel.addFocusListener(new FocusAdapter() {
         @Override
@@ -544,12 +567,13 @@ public abstract class BreakpointPropertiesPanel {
 
     PsiElement context = breakpoint.getEvaluationElement();
     myPassCountCheckbox.setSelected(breakpoint.COUNT_FILTER_ENABLED);
-    if (!breakpoint.CONDITION_ENABLED) {
-      myConditionCombo.setText(emptyText());
-    }
-    else {
-      myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : emptyText());
-    }
+
+    myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED);
+
+    myConditionCombo.setEnabled(myBreakpoint.CONDITION_ENABLED);
+
+    myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : emptyText());
+
     myConditionCombo.setContext(context);
 
     mySuspendJBCheckBox.setSelected(!breakpoint.SUSPEND_POLICY.equals(DebuggerSettings.SUSPEND_NONE));
@@ -695,7 +719,7 @@ public abstract class BreakpointPropertiesPanel {
     }
     breakpoint.COUNT_FILTER_ENABLED = breakpoint.COUNT_FILTER > 0 && myPassCountCheckbox.isSelected();
     breakpoint.setCondition(myConditionCombo.getText());
-    breakpoint.CONDITION_ENABLED = !breakpoint.getCondition().isEmpty();
+    breakpoint.CONDITION_ENABLED = myConditionCheckbox.isSelected();
     breakpoint.setLogMessage(myLogExpressionCombo.getText());
     breakpoint.LOG_EXPRESSION_ENABLED = !breakpoint.getLogMessage().isEmpty() && myLogExpressionCheckBox.isSelected();
     breakpoint.LOG_ENABLED = myLogMessageCheckBox.isSelected();
@@ -861,10 +885,13 @@ public abstract class BreakpointPropertiesPanel {
 
     myPassCountField.setEditable(myPassCountCheckbox.isSelected());
     myPassCountField.setEnabled (myPassCountCheckbox.isSelected());
+
     myConditionCombo.setEnabled(true);
     myConditionMagnifierButton.setEnabled(true);
+
     myInstanceFiltersField.setEnabled(myInstanceFiltersCheckBox.isSelected());
     myInstanceFiltersField.getTextField().setEditable(myInstanceFiltersCheckBox.isSelected());
+
     myClassFiltersField.setEnabled(myClassFiltersCheckBox.isSelected());
     myClassFiltersField.getTextField().setEditable(myClassFiltersCheckBox.isSelected());
   }

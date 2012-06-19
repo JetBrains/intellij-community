@@ -160,11 +160,13 @@ public final class GitHttpAdapter {
   }
 
   @NotNull
-  public static GitSimplePushResult push(@NotNull final GitRepository repository, @NotNull final GitRemote remote, @NotNull final String remoteUrl, @NotNull String pushSpec) {
+  public static GitSimplePushResult push(@NotNull final GitRepository repository, @NotNull final String remoteName,
+                                         @NotNull final String remoteUrl, @NotNull String pushSpec) {
     try {
       final Git git = convertToGit(repository);
       final GitHttpCredentialsProvider provider = new GitHttpCredentialsProvider(repository.getProject(), remoteUrl);
-      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remote.getName(), remoteUrl, convertRefSpecs(Collections.singletonList(pushSpec)));
+      GitHttpRemoteCommand.Push pushCommand = new GitHttpRemoteCommand.Push(git, provider, remoteName, remoteUrl,
+                                                                            convertRefSpecs(Collections.singletonList(pushSpec)));
       GeneralResult result = callWithAuthRetry(pushCommand, repository.getProject());
       GitSimplePushResult pushResult = pushCommand.getResult();
       if (pushResult == null) {
@@ -180,15 +182,15 @@ public final class GitHttpAdapter {
                                        "If neither is possible, as a workaround you may add authentication data directly to the remote url in <code>.git/config</code>.");
     }
     catch (InvalidRemoteException e) {
-      logException(repository, remote.getName(), remoteUrl, e, "pushing");
+      logException(repository, remoteName, remoteUrl, e, "pushing");
       return makeErrorResultFromException(e);
     }
     catch (IOException e) {
-      logException(repository, remote.getName(), remoteUrl, e, "pushing");
+      logException(repository, remoteName, remoteUrl, e, "pushing");
       return makeErrorResultFromException(e);
     }
     catch (URISyntaxException e) {
-      logException(repository, remote.getName(), remoteUrl, e, "pushing");
+      logException(repository, remoteName, remoteUrl, e, "pushing");
       return makeErrorResultFromException(e);
     }
   }

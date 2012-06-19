@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.io.fs.FileSystem;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -77,8 +76,7 @@ public class CoreProjectLoader {
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
       DirectoryStorageData data = new DirectoryStorageData();
-      data.loadFrom(FileSystem.FILE_SYSTEM.createFile(libraries.getPath()),
-                    PathMacroManager.getInstance(project).createTrackingSubstitutor());
+      data.loadFrom(libraries, PathMacroManager.getInstance(project).createTrackingSubstitutor());
       final Element libraryTable = data.getMergedState("libraryTable", Element.class, new ProjectLibraryTable.LibraryStateSplitter(), null);
       ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
     }

@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class AndroidLightClass extends LightElement implements PsiClass, SyntheticElement {
+abstract class AndroidLightClass extends LightElement implements PsiClass, SyntheticElement {
   private final PsiClass myContainingClass;
   protected final String myName;
 
@@ -40,6 +40,26 @@ public abstract class AndroidLightClass extends LightElement implements PsiClass
   @Override
   public String toString() {
     return "AndroidRClass";
+  }
+
+  @Override
+  public void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException {
+    throw new IncorrectOperationException("Cannot add elements to R class");
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
+    return myContainingClass.add(element);
+  }
+
+  @Override
+  public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    return myContainingClass.addBefore(element, anchor);
+  }
+
+  @Override
+  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+    return myContainingClass.addAfter(element, anchor);
   }
 
   @Override

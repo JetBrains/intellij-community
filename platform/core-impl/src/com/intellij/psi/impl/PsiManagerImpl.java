@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;

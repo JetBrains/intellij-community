@@ -1,5 +1,6 @@
 package org.jetbrains.android.augment;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -14,11 +15,11 @@ import org.jetbrains.annotations.Nullable;
 * @author Eugene.Kudelevsky
 */
 class AndroidLightField extends LightFieldBuilder {
-  private final AndroidLightClass myContext;
+  private final PsiClass myContext;
   private final PsiType myType;
 
   public AndroidLightField(@NotNull String name,
-                           @NotNull AndroidLightClass context,
+                           @NotNull PsiClass context,
                            @NotNull PsiType type) {
     super(name, type, context);
     myContext = context;

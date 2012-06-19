@@ -19,7 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.util.Consumer;
 
@@ -51,7 +51,7 @@ public class TodoForBaseRevision extends TodoForRanges {
   protected TodoItem[] getTodoItems() {
     final TodoItem[] items = (TodoItem[])myGetter.get();
     if (items != null) return items;
-    final TodoItem[] todoItems = getTodoForText(PsiSearchHelper.SERVICE.getInstance(myProject));
+    final TodoItem[] todoItems = getTodoForText(PsiTodoSearchHelper.SERVICE.getInstance(myProject));
     if (todoItems != null) {
       mySaver.consume(todoItems);
     }

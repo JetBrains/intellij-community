@@ -107,11 +107,6 @@ public class CreateValueResourceQuickFix implements LocalQuickFix, IntentionActi
     }
     PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
     UndoUtil.markPsiFileForUndo(myFile);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().saveAll();
-      }
-    });
     return true;
   }
 

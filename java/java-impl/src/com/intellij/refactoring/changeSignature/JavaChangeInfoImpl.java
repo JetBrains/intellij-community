@@ -258,7 +258,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
   }
 
   protected void setupPropagationEnabled(final PsiParameter[] parameters, final ParameterInfoImpl[] newParms) {
-    if (parameters.length >= newParms.length) {
+    if (parameters.length != newParms.length) {
       isPropagationEnabled = false;
     }
     else {

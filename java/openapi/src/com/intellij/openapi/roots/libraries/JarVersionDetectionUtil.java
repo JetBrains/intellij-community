@@ -80,7 +80,7 @@ public class JarVersionDetectionUtil {
       return null;
     }
     try {
-      final ZipEntry zipEntry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+      final com.intellij.openapi.vfs.JarFile.JarEntry zipEntry = zipFile.getEntry(JarFile.MANIFEST_NAME);
       if (zipEntry == null) {
         return null;
       }

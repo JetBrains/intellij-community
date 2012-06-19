@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -46,6 +47,10 @@ public class ResourceEditor extends PropertyEditor {
   private final ResourceType[] myTypes;
   private ComponentWithBrowseButton myEditor;
   protected RadComponent myRootComponent;
+  private JCheckBox myCheckBox;
+  private final Border myCheckBoxBorder = new JTextField().getBorder();
+  private boolean myIgnoreCheckBoxValue;
+  private String myBooleanResourceValue;
 
   public ResourceEditor(Set<AttributeFormat> formats, String[] values) {
     this(convertTypes(formats), formats, values);
@@ -54,7 +59,25 @@ public class ResourceEditor extends PropertyEditor {
   public ResourceEditor(ResourceType[] types, Set<AttributeFormat> formats, String[] values) {
     myTypes = types;
 
-    if (formats.contains(AttributeFormat.Enum) || formats.contains(AttributeFormat.Boolean)) {
+    if (formats.contains(AttributeFormat.Boolean)) {
+      myCheckBox = new JCheckBox();
+      myEditor = new ComponentWithBrowseButton<JCheckBox>(myCheckBox, null) {
+        @Override
+        public Dimension getPreferredSize() {
+          return getComponentPreferredSize();
+        }
+      };
+      myCheckBox.addItemListener(new ItemListener() {
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          if (!myIgnoreCheckBoxValue) {
+            myBooleanResourceValue = null;
+            fireValueCommitted(true, true);
+          }
+        }
+      });
+    }
+    else if (formats.contains(AttributeFormat.Enum)) {
       ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton() {
         @Override
         public Dimension getPreferredSize() {
@@ -172,16 +195,44 @@ public class ResourceEditor extends PropertyEditor {
   @Override
   public JComponent getComponent(@NotNull RadComponent rootComponent,
                                  @Nullable RadComponent component,
-                                 Object value,
+                                 Object object,
                                  @Nullable InplaceContext inplaceContext) {
     myRootComponent = rootComponent;
+    String value = (String)object;
     JTextField text = getComboText();
-    text.setText((String)value);
-    if (inplaceContext != null) {
-      text.setColumns(0);
 
-      if (inplaceContext.isStartChar()) {
-        text.setText(inplaceContext.getText(text.getText()));
+    if (text == null) {
+      if (StringUtil.isEmpty(value) || value.equals("true") || value.equals("false")) {
+        myBooleanResourceValue = null;
+      }
+      else {
+        myBooleanResourceValue = value;
+      }
+
+      try {
+        myIgnoreCheckBoxValue = true;
+        myCheckBox.setSelected(Boolean.parseBoolean(value));
+      }
+      finally {
+        myIgnoreCheckBoxValue = false;
+      }
+
+      if (inplaceContext == null) {
+        myEditor.setBorder(null);
+        myCheckBox.setText(null);
+      }
+      else {
+        myEditor.setBorder(myCheckBoxBorder);
+        myCheckBox.setText(myBooleanResourceValue);
+      }
+    }
+    else {
+      text.setText(value);
+      if (inplaceContext != null) {
+        text.setColumns(0);
+        if (inplaceContext.isStartChar()) {
+          text.setText(inplaceContext.getText(text.getText()));
+        }
       }
     }
     return myEditor;
@@ -189,12 +240,17 @@ public class ResourceEditor extends PropertyEditor {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return getComboText();
+    JTextField text = getComboText();
+    return text == null ? myCheckBox : text;
   }
 
   @Override
   public Object getValue() throws Exception {
-    String value = getComboText().getText();
+    JTextField text = getComboText();
+    if (text == null) {
+      return myBooleanResourceValue == null ? Boolean.toString(myCheckBox.isSelected()) : myBooleanResourceValue;
+    }
+    String value = text.getText();
     return value == StringsComboEditor.UNSET || StringUtil.isEmpty(value) ? null : value;
   }
 
@@ -211,11 +267,21 @@ public class ResourceEditor extends PropertyEditor {
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       setValue(dialog.getResourceName());
     }
+    else if (myBooleanResourceValue != null) {
+      fireEditingCancelled();
+    }
   }
 
   protected final void setValue(String value) {
-    getComboText().setText(value);
-    fireValueCommitted(true, true);
+    JTextField text = getComboText();
+    if (text == null) {
+      myBooleanResourceValue = value;
+      fireValueCommitted(false, true);
+    }
+    else {
+      text.setText(value);
+      fireValueCommitted(true, true);
+    }
   }
 
   private JTextField getComboText() {
@@ -223,7 +289,10 @@ public class ResourceEditor extends PropertyEditor {
     if (component instanceof JTextField) {
       return (JTextField)component;
     }
-    JComboBox combo = (JComboBox)component;
-    return (JTextField)combo.getEditor().getEditorComponent();
+    if (component instanceof JComboBox) {
+      JComboBox combo = (JComboBox)component;
+      return (JTextField)combo.getEditor().getEditorComponent();
+    }
+    return null;
   }
 }

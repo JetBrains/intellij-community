@@ -45,7 +45,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
-import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;

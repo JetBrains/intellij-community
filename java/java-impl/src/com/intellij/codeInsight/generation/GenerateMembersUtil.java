@@ -242,7 +242,7 @@ public class GenerateMembersUtil {
 
     try {
       final PsiMethod resultMethod = createMethod(factory, sourceMethod);
-      copyDocComment(resultMethod, sourceMethod);
+      copyDocComment(sourceMethod, resultMethod);
       copyModifiers(sourceMethod.getModifierList(), resultMethod.getModifierList());
       final PsiSubstitutor collisionResolvedSubstitutor =
         substituteTypeParameters(factory, codeStyleManager, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor);

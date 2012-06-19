@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,7 +58,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     final PsiLanguageInjectionHost host =
       PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
     if (host == null) return null;
-    final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageUtil.getInjectedPsiFiles(host);
+    final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(host);
     if (injections == null || injections.isEmpty()) return null;
     final int offsetInElement = offset - host.getTextRange().getStartOffset();
     final Pair<PsiElement, TextRange> rangePair = ContainerUtil.find(injections, new Condition<Pair<PsiElement, TextRange>>() {

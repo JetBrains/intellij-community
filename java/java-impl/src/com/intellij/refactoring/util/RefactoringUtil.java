@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -42,6 +43,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -889,6 +891,7 @@ public class RefactoringUtil {
                                                       final Iterable<PsiTypeParameter> parametersIterable,
                                                       final PsiSubstitutor substitutor,
                                                       final PsiElementFactory factory) {
+    final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<PsiElement, PsiElement>();
     for (PsiTypeParameter parameter : parametersIterable) {
       PsiType substitutedType = substitutor.substitute(parameter);
       if (substitutedType == null) {
@@ -898,10 +901,15 @@ public class RefactoringUtil {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
-          parent.replace(factory.createTypeElement(substitutedType));
+          replacement.put(parent, factory.createTypeElement(substitutedType));
         } else if (element instanceof PsiJavaCodeReferenceElement && substitutedType instanceof PsiClassType) {
-          element.replace(factory.createReferenceElementByType((PsiClassType)substitutedType));
+          replacement.put(element, factory.createReferenceElementByType((PsiClassType)substitutedType));
         }
+      }
+    }
+    for (PsiElement element : replacement.keySet()) {
+      if (element.isValid()) {
+        element.replace(replacement.get(element));
       }
     }
   }
@@ -1046,6 +1054,12 @@ public class RefactoringUtil {
   }
 
   public static void fixJavadocsForParams(PsiMethod method, Set<PsiParameter> newParameters) throws IncorrectOperationException {
+    fixJavadocsForParams(method, newParameters, Condition.FALSE);
+  }
+
+  public static void fixJavadocsForParams(PsiMethod method,
+                                          Set<PsiParameter> newParameters,
+                                          Condition<Pair<PsiParameter, String>> eqCondition) throws IncorrectOperationException {
     final PsiDocComment docComment = method.getDocComment();
     if (docComment == null) return;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -1061,6 +1075,16 @@ public class RefactoringUtil {
           break;
         }
       }
+      if (!found) {
+        for (PsiDocTag paramTag : paramTags) {
+          final String paramName = getNameOfReferencedParameter(paramTag);
+          if (eqCondition.value(new Pair<PsiParameter, String>(parameter, paramName))) {
+            tagForParam.put(parameter, paramTag);
+            found = true;
+            break;
+          }
+        }
+      }
       if (!found && !newParameters.contains(parameter)) {
         tagForParam.put(parameter, null);
       }
@@ -1071,11 +1095,16 @@ public class RefactoringUtil {
       if (tagForParam.containsKey(parameter)) {
         final PsiDocTag psiDocTag = tagForParam.get(parameter);
         if (psiDocTag != null) {
-          newTags.add((PsiDocTag)psiDocTag.copy());
+          final PsiDocTag copy = (PsiDocTag)psiDocTag.copy();
+          final PsiDocTagValue valueElement = copy.getValueElement();
+          if (valueElement != null) {
+            valueElement.replace(createParamTag(parameter).getValueElement());
+          }
+          newTags.add(copy);
         }
       }
       else {
-        newTags.add(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createParamTag(parameter.getName(), ""));
+        newTags.add(createParamTag(parameter));
       }
     }
     PsiElement anchor = paramTags.length > 0 ? paramTags[0].getPrevSibling() : null;
@@ -1085,6 +1114,10 @@ public class RefactoringUtil {
     for (PsiDocTag psiDocTag : newTags) {
       anchor = docComment.addAfter(psiDocTag, anchor);
     }
+  }
+
+  private static PsiDocTag createParamTag(PsiParameter parameter) {
+    return JavaPsiFacade.getInstance(parameter.getProject()).getElementFactory().createParamTag(parameter.getName(), "");
   }
 
   public static PsiDirectory createPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot)

@@ -116,7 +116,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   private DirectoryStorageData loadState() throws StateStorageException {
     DirectoryStorageData storageData = new DirectoryStorageData();
-    storageData.loadFrom(myDir, myPathMacroSubstitutor);
+    storageData.loadFrom(LocalFileSystem.getInstance().findFileByIoFile(myDir), myPathMacroSubstitutor);
     return storageData;
   }
 
@@ -289,7 +289,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
               myPathMacroSubstitutor.collapsePaths(element);
             }
 
-            if (!StorageUtil.contentEquals(element, file)) {
+            VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+            if (virtualFile == null || !StorageUtil.contentEquals(element, virtualFile)) {
               filesToSave.add(file);
             }
           }

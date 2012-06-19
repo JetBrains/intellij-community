@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +60,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private static final Logger LOG = Logger.getInstance("#" + TemplateBuilderImpl.class.getName());
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
-    myFile = InjectedLanguageUtil.getTopLevelFile(element);
+    myFile = InjectedLanguageFacadeImpl.getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
   }
@@ -268,10 +268,17 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   public void run() {
     final Project project = myFile.getProject();
     VirtualFile file = myFile.getVirtualFile();
+    assert file != null;
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
     final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
 
-    final Template template = buildTemplate();
+    assert editor != null : "Editor is null";
+    run(editor, false);
+  }
+
+  @Override
+  public void run(@NotNull final Editor editor, final boolean inline) {
+    final Template template = inline ? buildInlineTemplate() : buildTemplate();
 
     editor.getDocument().replaceString(myContainerElement.getStartOffset(), myContainerElement.getEndOffset(), "");
     editor.getCaretModel().moveToOffset(myContainerElement.getStartOffset());

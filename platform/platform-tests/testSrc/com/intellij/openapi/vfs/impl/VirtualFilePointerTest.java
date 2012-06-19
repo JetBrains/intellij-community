@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.concurrency.JobUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -514,7 +514,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
   }
 
   private static void stressRead(@NotNull final VirtualFilePointer pointer) {
-    boolean b = JobUtil.invokeConcurrentlyUnderProgress(Collections.nCopies(10, null), null, false, new Processor<Object>() {
+    boolean b = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(10, null), null, false, new Processor<Object>() {
       @Override
       public boolean process(Object o) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {

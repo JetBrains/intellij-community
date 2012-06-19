@@ -63,6 +63,7 @@ public class GithubUtil {
   public static final Icon GITHUB_ICON = IconLoader.getIcon("/org/jetbrains/plugins/github/github_icon.png");
 
   private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());
+  static final String GITHUB_NOTIFICATION_GROUP = "github";
 
   /**
    * @deprecated The host may be defined in different formats. Use {@link #getApiUrl(String)} instead.

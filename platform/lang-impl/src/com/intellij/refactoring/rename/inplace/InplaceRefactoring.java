@@ -62,7 +62,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -151,7 +151,7 @@ public abstract class InplaceRefactoring {
 
   public boolean performInplaceRefactoring(final LinkedHashSet<String> nameSuggestions) {
     myNameSuggestions = nameSuggestions;
-    if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
+    if (InjectedLanguageFacadeImpl.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
       return false;
     }
 
@@ -274,7 +274,7 @@ public abstract class InplaceRefactoring {
       }
       else {
         revertState();
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageFacadeImpl.getTopLevelEditor(myEditor));
         if (templateState != null) {
           templateState.gotoEnd(true);
         }
@@ -332,7 +332,7 @@ public abstract class InplaceRefactoring {
     TextRange range = myScope.getTextRange();
     assert range != null;
     myHighlighters = new ArrayList<RangeHighlighter>();
-    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    Editor topLevelEditor = InjectedLanguageFacadeImpl.getTopLevelEditor(myEditor);
     topLevelEditor.getCaretModel().moveToOffset(range.getStartOffset());
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
@@ -508,7 +508,7 @@ public abstract class InplaceRefactoring {
     if (myOldName == null) return;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+        final Editor topLevelEditor = InjectedLanguageFacadeImpl.getTopLevelEditor(myEditor);
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             final TemplateState state = TemplateManagerImpl.getTemplateState(topLevelEditor);
@@ -751,7 +751,7 @@ public abstract class InplaceRefactoring {
       finally {
         if (!bind) {
           try {
-            ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+            ((EditorImpl)InjectedLanguageFacadeImpl.getTopLevelEditor(myEditor)).stopDumb();
           }
           finally {
             FinishMarkAction.finish(myProject, myEditor, myMarkAction);
