@@ -95,10 +95,25 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   }
 
   @Nullable
+  public DesignerEditor getActiveDesignerEditor() {
+    for (FileEditor editor : myFileEditorManager.getSelectedEditors()) {
+      if (editor instanceof DesignerEditor) {
+        return (DesignerEditor)editor;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public DesignerEditorPanel getActiveDesigner() {
-    FileEditor[] editors = myFileEditorManager.getSelectedEditors();
-    // TODO: check all editors instead first
-    return editors.length > 0 ? getDesigner(editors[0]) : null;
+    for (FileEditor editor : myFileEditorManager.getSelectedEditors()) {
+      DesignerEditorPanel designer = getDesigner(editor);
+      if (designer != null) {
+        return designer;
+      }
+    }
+
+    return null;
   }
 
   private void bindToDesigner(final DesignerEditorPanel designer) {

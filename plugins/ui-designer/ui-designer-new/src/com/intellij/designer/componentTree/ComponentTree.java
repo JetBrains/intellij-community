@@ -17,6 +17,7 @@ package com.intellij.designer.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.actions.StartInplaceEditing;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -26,6 +27,7 @@ import com.intellij.designer.inspection.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -124,6 +126,9 @@ public final class ComponentTree extends Tree implements DataProvider {
   public Object getData(@NonNls String dataId) {
     if (EditableArea.DATA_KEY.is(dataId)) {
       return myArea;
+    }
+    if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myProject != null) {
+      return DesignerToolWindowManager.getInstance(myProject).getActiveDesignerEditor();
     }
     if (myActionPanel != null) {
       return myActionPanel.getData(dataId);

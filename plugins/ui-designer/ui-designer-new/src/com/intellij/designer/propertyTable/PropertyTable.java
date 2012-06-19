@@ -17,12 +17,15 @@ package com.intellij.designer.propertyTable;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.designer.DesignerBundle;
+import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.inspection.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -38,6 +41,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IndentedIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,7 +64,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class PropertyTable extends JBTable implements ComponentSelectionListener {
+public final class PropertyTable extends JBTable implements DataProvider, ComponentSelectionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable");
 
   private final AbstractTableModel myModel = new PropertyTableModel();
@@ -155,6 +159,14 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
   public TableCellRenderer getCellRenderer(int row, int column) {
     return myCellRenderer;
+  }
+
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
+      return DesignerToolWindowManager.getInstance(myDesigner.getProject()).getActiveDesignerEditor();
+    }
+    return null;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

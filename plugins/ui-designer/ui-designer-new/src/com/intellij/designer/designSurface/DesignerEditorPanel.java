@@ -117,7 +117,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private int[][] myExpandedState;
   private int[][] mySelectionState;
   private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<String, int[][]>(16);
-  private ComponentSelectionListener mySourceSelectionListener;
 
   private JPanel myErrorPanel;
   private JPanel myErrorMessages;
@@ -309,13 +308,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myDesignerCard.add(content);
     add(myDesignerCard, DESIGNER_CARD);
 
-    mySourceSelectionListener = new ComponentSelectionListener() {
+    mySurfaceArea.addSelectionListener(new ComponentSelectionListener() {
       @Override
       public void selectionChanged(EditableArea area) {
         storeSourceSelectionState();
       }
-    };
-    mySurfaceArea.addSelectionListener(mySourceSelectionListener);
+    });
   }
 
   @Nullable
@@ -585,10 +583,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
       myExpandedComponents = null;
       myToolProvider.loadDefaultTool();
-
-      mySurfaceArea.removeSelectionListener(mySourceSelectionListener);
-      mySurfaceArea.deselectAll();
-      mySurfaceArea.addSelectionListener(mySourceSelectionListener);
     }
   }
 
