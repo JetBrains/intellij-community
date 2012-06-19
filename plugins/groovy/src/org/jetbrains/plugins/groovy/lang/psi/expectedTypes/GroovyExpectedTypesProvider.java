@@ -151,10 +151,8 @@ public class GroovyExpectedTypesProvider {
 
     public void visitVariable(GrVariable variable) {
       if (myExpression.equals(variable.getInitializerGroovy())) {
-        PsiType type = variable.getDeclaredType();
-        if (type != null) {
-          myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
-        }
+        PsiType type = variable.getType();
+        myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
       }
     }
 
