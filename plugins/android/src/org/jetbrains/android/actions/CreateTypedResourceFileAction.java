@@ -65,7 +65,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
           AndroidBundle.message("new.typed.resource.action.description", resourcePresentableName), StdFileTypes.XML.getIcon());
     myResourceType = resourceFolderType;
     myResourcePresentableName = resourcePresentableName;
-    myDefaultRootTag = getDefaultRootTabByResourceType(resourceFolderType);
+    myDefaultRootTag = getDefaultRootTagByResourceType(resourceFolderType);
     myValuesResourceFile = valuesResourceFile;
     myChooseTagName = chooseTagName;
   }
@@ -180,7 +180,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   }
 
   @NotNull
-  public static String getDefaultRootTabByResourceType(@NotNull ResourceFolderType resourceType) {
+  public static String getDefaultRootTagByResourceType(@NotNull ResourceFolderType resourceType) {
     switch (resourceType) {
       case XML:
         return "PreferenceScreen";
