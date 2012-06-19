@@ -41,9 +41,11 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.awt.event.MouseEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -147,6 +149,21 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   public int getEdgeSize() {
     return Math.max(5, ((JComponent)getCellRenderer()).getPreferredSize().height / 2 - 3);
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    TreePath path = getPathForLocation(event.getX(), event.getY());
+    if (path != null) {
+      RadComponent component = extractComponent(path.getLastPathComponent());
+      if (component != null) {
+        List<ErrorInfo> errorInfos = ErrorInfo.get(component);
+        if (!errorInfos.isEmpty()) {
+          return errorInfos.get(0).getName();
+        }
+      }
+    }
+    return super.getToolTipText(event);
   }
 
   @Nullable

@@ -62,5 +62,6 @@ public class RestoreDefault extends AnAction implements IPropertyTableAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     myTable.restoreDefaultValue();
+    setEnabled(myTable, getTemplatePresentation());
   }
 }

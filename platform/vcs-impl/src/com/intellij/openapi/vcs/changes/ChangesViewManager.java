@@ -501,9 +501,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       scheduleRefresh();
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       VcsException updateException = changeListManager.getUpdateException();
+      setBusy(false);
       if (updateException == null) {
         updateProgressText("", false);
-        setBusy(false);
         final Factory<JComponent> additionalUpdateInfo = changeListManager.getAdditionalUpdateInfo();
         if (additionalUpdateInfo != null) {
           updateProgressComponent(additionalUpdateInfo);

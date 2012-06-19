@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -111,9 +113,11 @@ public class FileStructurePopup implements Disposable {
   private final FilteringTreeStructure myFilteringStructure;
   private PsiElement myInitialPsiElement;
   private Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
+  private List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private boolean myInitialNodeIsLeaf;
+  private final boolean myDaemonUpdateEnabled;
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -122,6 +126,16 @@ public class FileStructurePopup implements Disposable {
                             final boolean applySortAndFilter) {
     myProject = project;
     myEditor = editor;
+
+    //Stop code analyzer to speedup EDT
+    final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    if (analyzer != null) {
+      myDaemonUpdateEnabled = ((DaemonCodeAnalyzerImpl)analyzer).isUpdateByTimerEnabled();
+      analyzer.setUpdateByTimerEnabled(false);
+    } else {
+      myDaemonUpdateEnabled = false;
+    }
+
     IdeFocusManager.getInstance(myProject).typeAheadUntil(myTreeHasBuilt);
     myBaseTreeModel = structureViewModel;
     Disposer.register(this, auxDisposable);
@@ -312,6 +326,7 @@ public class FileStructurePopup implements Disposable {
                         if (myFilteringStructure.getRootElement().getChildren().length == 0) {
                           for (JCheckBox box : myCheckBoxes.values()) {
                             if (!box.isSelected()) {
+                              myAutoClicked.add(box);
                               box.doClick();
                               filter = "";
                               break;
@@ -396,6 +411,10 @@ public class FileStructurePopup implements Disposable {
   }
 
   public void dispose() {
+    final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    if (analyzer != null) {
+      analyzer.setUpdateByTimerEnabled(myDaemonUpdateEnabled);
+    }
   }
 
   protected static String getDimensionServiceKey() {
@@ -586,7 +605,9 @@ public class FileStructurePopup implements Disposable {
     chkFilter.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final boolean state = chkFilter.isSelected();
-        saveState(action, state);
+        if (!myAutoClicked.contains(chkFilter)) {
+          saveState(action, state);
+        }
         myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !state : state);
         //final String filter = mySpeedSearch.isPopupActive() ? mySpeedSearch.getEnteredPrefix() : null;
         //mySpeedSearch.hidePopup();

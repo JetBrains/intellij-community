@@ -30,7 +30,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 
@@ -78,7 +78,7 @@ public class MyLookupExpression extends Expression {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
           if (shouldSelectAll) return;
-          final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(context.getEditor());
+          final Editor topLevelEditor = InjectedLanguageFacadeImpl.getTopLevelEditor(context.getEditor());
           final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
           if (templateState != null) {
             final TextRange range = templateState.getCurrentVariableRange();

@@ -42,7 +42,7 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.containers.HashMap;
@@ -77,7 +77,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   protected final HashMap<VirtualFile, EditorHighlighter> myFile2Highlighter;
 
-  protected final PsiSearchHelper mySearchHelper;
+  protected final PsiTodoSearchHelper mySearchHelper;
   /**
    * If this flag is false then the updateTree() method does nothing. But when
    * the flag becomes true and myDirtyFileSet isn't empty the update is invoked.
@@ -99,7 +99,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     myFile2Highlighter = new HashMap<VirtualFile, EditorHighlighter>();
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    mySearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
+    mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
     psiManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener());
 
     myFileStatusListener = new MyFileStatusListener();

@@ -1,55 +1,59 @@
 package org.jetbrains.plugins.github;
 
-import com.intellij.openapi.util.Comparing;
-import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
-* @author oleg
-* @date 10/21/10
-*/
+ * Information about Github repository.
+ *
+ * @author oleg
+ * @author Kirill Likhodedov
+ */
 public class RepositoryInfo {
-  private final Element myRepository;
 
-  public RepositoryInfo(final Element repository) {
-    myRepository = repository;
+  @NotNull private final String myName;
+  @NotNull private final String myCloneUrl;
+  @NotNull private final String myOwnerName;
+  @Nullable private final String myParentName;
+  private final boolean myFork;
+
+  public RepositoryInfo(@NotNull String name, @NotNull String cloneUrl, @NotNull String ownerName, @Nullable String parentName,
+                        boolean fork) {
+    myName = name;
+    myParentName = parentName;
+    myCloneUrl = cloneUrl;
+    myOwnerName = ownerName;
+    myFork = fork;
   }
 
+  @NotNull
   public String getName() {
-    return myRepository.getChildText("name");
+    return myName;
   }
 
-  public String getOwner() {
-    return myRepository.getChildText("owner");
+  @NotNull
+  public String getOwnerName() {
+    return myOwnerName;
   }
 
   public boolean isFork() {
-    return Boolean.valueOf(myRepository.getChildText("fork"));
+    return myFork;
   }
 
-  public String getParent() {
-    return myRepository.getChildText("parent");
+  /**
+   * @return The name of the parent of this repository, or null.
+   *         Null is returned if this repository doesn't have a parent, i. e. is not a fork,
+   *         or if the parent information was not retrieved by the time of constructing of this RepositoryInfo object.
+   *         To be sure use {@link #isFork()}.
+   */
+  @Nullable
+  public String getParentName() {
+    return myParentName;
   }
 
-  public String getId() {
-    return getOwner() + "/" + getName();
+  @NotNull
+  public String getCloneUrl() {
+    return myCloneUrl;
   }
 
-  public String getUrl() {
-    return myRepository.getChildText("url") + ".git";
-  }
-
-  @Override
-  public int hashCode() {
-    return myRepository != null ? myRepository.hashCode() : 0;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof RepositoryInfo)){
-      return false;
-    }
-    final RepositoryInfo repositoryInfo = (RepositoryInfo)obj;
-    return Comparing.equal(getName(), repositoryInfo.getName()) &&
-           Comparing.equal(getOwner(), repositoryInfo.getOwner());
-  }
 }

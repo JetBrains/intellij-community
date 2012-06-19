@@ -8,14 +8,10 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpression;
@@ -25,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.introduceField.LocalToFieldHandler;
 import com.intellij.util.PathUtil;
-import com.intellij.JavaTestUtil;
 import org.junit.Before;
 
 import java.io.File;
@@ -39,19 +34,8 @@ public class IntroduceFieldWitSetUpInitializationTest extends CodeInsightTestCas
   @Override
   protected Module createModule(final String name) {
     final Module module = super.createModule(name);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final LibraryTable.ModifiableModel modifiableModel = model.getModuleLibraryTable().getModifiableModel();
-        final Library library = modifiableModel.createLibrary("junit");
-        final Library.ModifiableModel libModel = library.getModifiableModel();
-        libModel.addRoot(VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Before.class))), OrderRootType.CLASSES);
-        libModel.commit();
-        model.commit();
-      }
-    });
-
+    final String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Before.class)));
+    ModuleRootModificationUtil.addModuleLibrary(module, url);
     return module;
   }
 

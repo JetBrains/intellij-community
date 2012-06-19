@@ -99,6 +99,7 @@ public final class Annotation implements Segment {
    */
   public Annotation(final int startOffset, final int endOffset, final HighlightSeverity severity, final String message, String tooltip) {
     assert startOffset <= endOffset : startOffset + ":" + endOffset;
+    assert startOffset >= 0 : "Start offset must not be negative: " +startOffset;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myMessage = message;
@@ -186,6 +187,7 @@ public final class Annotation implements Segment {
    *
    * @return the annotation start offset.
    */
+  @Override
   public int getStartOffset() {
     return myStartOffset;
   }
@@ -195,6 +197,7 @@ public final class Annotation implements Segment {
    *
    * @return the annotation end offset.
    */
+  @Override
   public int getEndOffset() {
     return myEndOffset;
   }

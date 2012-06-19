@@ -3,10 +3,7 @@ package com.intellij.psi;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,14 +26,7 @@ public class ConstantValuesTest extends PsiTestCase{
           try{
             String rootPath = JavaTestUtil.getJavaTestDataPath() + "/psi/constantValues";
             VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete, true);
-
-            ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-            ModifiableRootModel rootModel = rootManager.getModifiableModel();
-            Library lib = rootModel.getModuleLibraryTable().createLibrary("test");
-            Library.ModifiableModel libModel = lib.getModifiableModel();
-            libModel.addRoot(root, OrderRootType.CLASSES);
-            libModel.commit();
-            rootModel.commit();
+            ModuleRootModificationUtil.addModuleLibrary(myModule, root.getUrl());
           }
           catch(Exception e){
             LOG.error(e);

@@ -51,13 +51,9 @@ public class AndroidQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     final String resClassName = pair.getFirst();
     final String resFieldName = pair.getSecond();
 
-    final ResourceType resourceType = ResourceType.getEnum(resClassName);
-    if (resourceType == ResourceType.STYLEABLE || resourceType == ResourceType.ATTR) {
-      // todo: support
-      return;
-    }
+    ResourceType resourceType = ResourceType.getEnum(resClassName);
 
-    if (AndroidResourceUtil.VALUE_RESOURCE_TYPES.contains(resourceType)) {
+    if (AndroidResourceUtil.ALL_VALUE_RESOURCE_TYPES.contains(resourceType)) {
       registrar
         .register(new CreateValueResourceQuickFix(facet, resourceType, resFieldName, contextFile, true));
     }

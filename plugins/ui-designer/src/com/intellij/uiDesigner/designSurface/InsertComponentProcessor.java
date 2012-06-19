@@ -72,6 +72,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   private ComponentDropLocation myLastLocation;
 
   private static final Map<String, RadComponentFactory> myComponentClassMap = new HashMap<String, RadComponentFactory>();
+
   static {
     myComponentClassMap.put(JScrollPane.class.getName(), new RadScrollPane.Factory());
     myComponentClassMap.put(JPanel.class.getName(), new RadContainer.Factory());
@@ -158,11 +159,11 @@ public final class InsertComponentProcessor extends EventProcessor {
 
     // Here is euristic. Chop first 'J' letter for standard Swing classes.
     // Without 'J' bindings look better.
-    if(
+    if (
       shortClassName.length() > 1 && Character.isUpperCase(shortClassName.charAt(1)) &&
       componentClassName.startsWith("javax.swing.") &&
       StringUtil.startsWithChar(shortClassName, 'J')
-    ){
+      ) {
       shortClassName = shortClassName.substring(1);
     }
     shortClassName = StringUtil.decapitalize(shortClassName);
@@ -172,7 +173,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   public static String getUniqueBinding(RadRootContainer root, final String baseName) {
     // Generate member name based on current code style
     //noinspection ForLoopThatDoesntUseLoopVariable
-    for(int i = 0; true; i++){
+    for (int i = 0; true; i++) {
       final String nameCandidate = baseName + (i + 1);
       final String binding = JavaCodeStyleManager.getInstance(root.getProject()).propertyNameToVariableName(
         nameCandidate,
@@ -187,6 +188,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   /**
    * Tries to create binding for {@link #myInsertedComponent}
+   *
    * @param editor
    * @param insertedComponent
    * @param forceBinding
@@ -210,9 +212,9 @@ public final class InsertComponentProcessor extends EventProcessor {
   public static void createBindingField(final GuiEditor editor, final RadComponent insertedComponent) {
     // Try to create field in the corresponding bound class
     final String classToBind = editor.getRootContainer().getClassToBind();
-    if(classToBind != null){
+    if (classToBind != null) {
       final PsiClass aClass = FormEditingUtil.findClassToBind(editor.getModule(), classToBind);
-      if(aClass != null && aClass.findFieldByName(insertedComponent.getBinding(), true) == null) {
+      if (aClass != null && aClass.findFieldByName(insertedComponent.getBinding(), true) == null) {
         if (!CodeInsightUtilBase.preparePsiElementForWrite(aClass)) {
           return;
         }
@@ -233,7 +235,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
   }
 
-  protected void processMouseEvent(final MouseEvent e){
+  protected void processMouseEvent(final MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       final ComponentItem componentItem = getComponentToInsert();
       if (componentItem != null) {
@@ -302,8 +304,8 @@ public final class InsertComponentProcessor extends EventProcessor {
     if (location.canDrop(dragObject)) {
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
-        new Runnable(){
-          public void run(){
+        new Runnable() {
+          public void run() {
             createBindingWhenDrop(myEditor, myInsertedComponent, forceBinding);
 
             final RadComponent[] components = new RadComponent[]{myInsertedComponent};
@@ -331,7 +333,6 @@ public final class InsertComponentProcessor extends EventProcessor {
 
             myEditor.refreshAndSave(false);
           }
-
         }, UIDesignerBundle.message("command.insert.component"), null);
     }
     myComponentToInsert = null;
@@ -351,10 +352,10 @@ public final class InsertComponentProcessor extends EventProcessor {
       List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(componentClass.getContainingFile().getVirtualFile());
       if (entries.size() > 0) {
         if (entries.get(0) instanceof ModuleSourceOrderEntry) {
-          if (!checkAddModuleDependency(item, (ModuleSourceOrderEntry) entries.get(0))) return false;
+          if (!checkAddModuleDependency(item, (ModuleSourceOrderEntry)entries.get(0))) return false;
         }
         else if (entries.get(0) instanceof LibraryOrderEntry) {
-          if (!checkAddLibraryDependency(item, (LibraryOrderEntry) entries.get(0))) return false;
+          if (!checkAddLibraryDependency(item, (LibraryOrderEntry)entries.get(0))) return false;
         }
       }
     }
@@ -370,13 +371,7 @@ public final class InsertComponentProcessor extends EventProcessor {
       Messages.getQuestionIcon());
     if (rc == 2) return false;
     if (rc == 0) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(myEditor.getModule()).getModifiableModel();
-          model.addModuleOrderEntry(ownerModule);
-          model.commit();
-        }
-      });
+      ModuleRootModificationUtil.addDependency(myEditor.getModule(), ownerModule);
     }
     return true;
   }
@@ -384,7 +379,8 @@ public final class InsertComponentProcessor extends EventProcessor {
   private boolean checkAddLibraryDependency(final ComponentItem item, final LibraryOrderEntry libraryOrderEntry) {
     int rc = Messages.showYesNoCancelDialog(
       myEditor,
-      UIDesignerBundle.message("add.library.dependency.prompt", item.getClassName(), libraryOrderEntry.getPresentableName(), myEditor.getModule().getName()),
+      UIDesignerBundle.message("add.library.dependency.prompt", item.getClassName(), libraryOrderEntry.getPresentableName(),
+                               myEditor.getModule().getName()),
       UIDesignerBundle.message("add.library.dependency.title"),
       Messages.getQuestionIcon());
     if (rc == 2) return false;
@@ -409,8 +405,8 @@ public final class InsertComponentProcessor extends EventProcessor {
     final LibraryTable.ModifiableModel libraryTableModel = toModel.getModuleLibraryTable().getModifiableModel();
     Library library = libraryTableModel.createLibrary(null);
     final Library.ModifiableModel libraryModel = library.getModifiableModel();
-    for(OrderRootType rootType: OrderRootType.getAllTypes()) {
-      for(String url: fromLibrary.getUrls(rootType)) {
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+      for (String url : fromLibrary.getUrls(rootType)) {
         libraryModel.addRoot(url, rootType);
       }
     }
@@ -426,7 +422,7 @@ public final class InsertComponentProcessor extends EventProcessor {
         final String targetForm = FormEditingUtil.buildResourceName(myEditor.getPsiFile());
         Utils.validateNestedFormLoop(formName, new PsiNestedFormLoader(myEditor.getModule()), targetForm);
       }
-      catch(Exception ex) {
+      catch (Exception ex) {
         Messages.showErrorDialog(myEditor, ex.getMessage(), CommonBundle.getErrorTitle());
         return false;
       }
@@ -437,7 +433,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   public static RadContainer createPanelComponent(GuiEditor editor) {
     RadComponent c = createInsertedComponent(editor, Palette.getInstance(editor.getProject()).getPanelItem());
     LOG.assertTrue(c != null);
-    return (RadContainer) c;
+    return (RadContainer)c;
   }
 
   @Nullable
@@ -447,7 +443,7 @@ public final class InsertComponentProcessor extends EventProcessor {
       ComponentItemDialog dlg = new ComponentItemDialog(editor.getProject(), editor, newItem, true);
       dlg.setTitle(title);
       dlg.show();
-      if(!dlg.isOK()) {
+      if (!dlg.isOK()) {
         return null;
       }
 
@@ -479,9 +475,9 @@ public final class InsertComponentProcessor extends EventProcessor {
         try {
           result = new RadNestedForm(editor, formFileName, id);
         }
-        catch(Exception ex) {
+        catch (Exception ex) {
           String errorMessage = UIDesignerBundle.message("error.instantiating.nested.form", formFileName,
-                                (ex.getMessage() != null ? ex.getMessage() : ex.toString()));
+                                                         (ex.getMessage() != null ? ex.getMessage() : ex.toString()));
           result = RadErrorComponent.create(
             editor,
             id,
@@ -502,9 +498,9 @@ public final class InsertComponentProcessor extends EventProcessor {
             result = new RadAtomicComponent(editor, aClass, id);
           }
         }
-        catch(final UnsupportedClassVersionError ucve) {
+        catch (final UnsupportedClassVersionError ucve) {
           result = RadErrorComponent.create(editor, id, item.getClassName(), null,
-            UIDesignerBundle.message("unsupported.component.class.version")
+                                            UIDesignerBundle.message("unsupported.component.class.version")
           );
         }
         catch (final Exception exc) {
@@ -551,7 +547,7 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   @Nullable
   public static RadComponentFactory getRadComponentFactory(Class componentClass) {
-    while(componentClass != null) {
+    while (componentClass != null) {
       RadComponentFactory c = myComponentClassMap.get(componentClass.getName());
       if (c != null) return c;
       componentClass = componentClass.getSuperclass();
@@ -567,7 +563,7 @@ public final class InsertComponentProcessor extends EventProcessor {
       final RadComponent component = myEditor.getRootContainer().getComponent(0);
       if (component.getBinding() == null) {
         if (component == myInsertedComponent ||
-            (component instanceof RadContainer && ((RadContainer) component).getComponentCount() == 1 &&
+            (component instanceof RadContainer && ((RadContainer)component).getComponentCount() == 1 &&
              component == myInsertedComponent.getParent())) {
           doCreateBindingWhenDrop(myEditor, component);
         }
@@ -589,7 +585,8 @@ public final class InsertComponentProcessor extends EventProcessor {
     return FormEditingUtil.getMoveNoDropCursor();
   }
 
-  @Override public boolean needMousePressed() {
+  @Override
+  public boolean needMousePressed() {
     return true;
   }
 }

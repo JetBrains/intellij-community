@@ -124,7 +124,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
       final VirtualFile contentRoot = files[0];
-      final AndroidFacet facet = AndroidUtils.addAndroidFacet(rootModel, contentRoot, myProjectType == ProjectType.LIBRARY);
+      final AndroidFacet facet = AndroidUtils.addAndroidFacet(rootModel.getModule(), contentRoot, myProjectType == ProjectType.LIBRARY);
 
       if (myProjectType == null) {
         ImportDependenciesUtil.importDependencies(rootModel.getModule(), true);
@@ -427,7 +427,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(myApplicationName.replace("\\", "\\\\"));
 
     if (appNameResElement == null) {
-      final String fileName = AndroidResourceUtil.getDefaultResourceFileName(ResourceType.STRING.getName());
+      final String fileName = AndroidResourceUtil.getDefaultResourceFileName(ResourceType.STRING);
       assert fileName != null;
       AndroidResourceUtil.createValueResource(facet.getModule(), appNameResource, ResourceType.STRING, fileName, Collections
               .singletonList(AndroidConstants.FD_RES_VALUES), normalizedAppName);

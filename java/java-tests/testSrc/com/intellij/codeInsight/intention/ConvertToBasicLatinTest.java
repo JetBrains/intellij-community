@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
@@ -21,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-
 
 public class ConvertToBasicLatinTest extends JavaCodeInsightFixtureTestCase {
   private String myIntention;
@@ -33,24 +31,19 @@ public class ConvertToBasicLatinTest extends JavaCodeInsightFixtureTestCase {
     EncodingManager.getInstance().setDefaultCharsetName("UTF-8");
   }
 
-  public void testConvertCharLiteral() throws Exception {
-    CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, "CharLiteral.java", "CharLiteral_after.java");
-  }
-
-  public void testConvertStringLiteral() throws Exception {
-    CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, "StringLiteral.java", "StringLiteral_after.java");
-  }
-
-  public void testConvertPlainComment() throws Exception {
-    CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, "PlainComment.java", "PlainComment_after.java");
-  }
-
-  public void testConvertDocComment() throws Exception {
-    CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, "DocComment.java", "DocComment_after.java");
-  }
-
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/convertToBasicLatin/";
+  }
+
+  public void testCharLiteral() { doTest(); }
+  public void testStringLiteral() { doTest(); }
+  public void testPlainComment() { doTest(); }
+  public void testDocComment() { doTest(); }
+  public void testDocTag() { doTest(); }
+
+  private void doTest() {
+    final String name = getTestName(false);
+    CodeInsightTestUtil.doIntentionTest(myFixture, myIntention, name + ".java", name + "_after.java");
   }
 }

@@ -69,7 +69,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
         myProjectView.addProjectPane(FavoritesProjectViewPane.this);
         myFavoritesManager.addFavoritesListener(myFavoritesListener);
 
-        if (ArrayUtil.find(myFavoritesManager.getAvailableFavoritesLists(), listName) == -1) {
+        if (ArrayUtil.find(myFavoritesManager.getAvailableFavoritesListNames(), listName) == -1) {
           listName = null;
         }
         myProjectView.changeView(ID, listName);
@@ -113,7 +113,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
   @NotNull
   public String[] getSubIds() {
-    return myFavoritesManager.getAvailableFavoritesLists();
+    return myFavoritesManager.getAvailableFavoritesListNames();
   }
 
   @NotNull

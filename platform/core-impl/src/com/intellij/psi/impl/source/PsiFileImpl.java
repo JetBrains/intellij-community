@@ -39,7 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -305,9 +305,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
             return;
           }
 
-          final PsiElement psi = stub.getPsi();
+          PsiElement psi = stub.getPsi();
+          assert psi != null : "Stub " + stub + " (" + stub.getClass() + ") has returned null PSI";
           ((CompositeElement)tree).setPsi(psi);
-          final StubBasedPsiElementBase<?> base = (StubBasedPsiElementBase)psi;
+          StubBasedPsiElementBase<?> base = (StubBasedPsiElementBase)psi;
           base.setNode(tree);
           base.setStub(null);
         }

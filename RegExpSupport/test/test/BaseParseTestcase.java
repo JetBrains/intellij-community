@@ -26,7 +26,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import junit.framework.TestCase;
 import org.intellij.lang.regexp.RegExpFileType;
 
 import java.io.File;

@@ -23,12 +23,13 @@ import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.tools.*;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.palette.Item;
+import com.intellij.designer.palette.PaletteGroup;
+import com.intellij.designer.palette.PaletteItem;
+import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
-import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -59,8 +60,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -105,7 +104,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private FeedbackLayer myFeedbackLayer;
   private InplaceEditingLayer myInplaceEditingLayer;
 
-  private ListSelectionListener myPaletteListener;
   protected ToolProvider myToolProvider;
   protected EditableArea mySurfaceArea;
 
@@ -113,6 +111,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   protected QuickFixManager myQuickFixManager;
 
+  private PaletteItem myActivePaletteItem;
   private List<?> myExpandedComponents;
   private Property mySelectionProperty;
   private int[][] myExpandedState;
@@ -205,21 +204,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
     };
 
-    myPaletteListener = new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (DesignerToolWindowManager.getInstance(getProject()).getActiveDesigner() == DesignerEditorPanel.this) {
-          Item paletteItem = (Item)PaletteManager.getInstance(getProject()).getActiveItem();
-          if (paletteItem != null) {
-            myToolProvider.setActiveTool(new CreationTool(true, createCreationFactory(paletteItem)));
-          }
-          else if (myToolProvider.getActiveTool() instanceof CreationTool) {
-            myToolProvider.loadDefaultTool();
-          }
-        }
-      }
-    };
-
     myToolProvider = new ToolProvider() {
       @Override
       public void loadDefaultTool() {
@@ -229,7 +213,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       @Override
       public void setActiveTool(InputTool tool) {
         if (getActiveTool() instanceof CreationTool && !(tool instanceof CreationTool)) {
-          PaletteManager.getInstance(getProject()).clearActiveItem();
+          PaletteToolWindowManager.getInstance(getProject()).clearActiveItem();
         }
         if (!(tool instanceof SelectionTool)) {
           hideInspections();
@@ -325,8 +309,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myDesignerCard.add(content);
     add(myDesignerCard, DESIGNER_CARD);
 
-    PaletteManager.getInstance(getProject()).addSelectionListener(myPaletteListener);
-
     mySourceSelectionListener = new ComponentSelectionListener() {
       @Override
       public void selectionChanged(EditableArea area) {
@@ -334,6 +316,21 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
     };
     mySurfaceArea.addSelectionListener(mySourceSelectionListener);
+  }
+
+  @Nullable
+  public final PaletteItem getActivePaletteItem() {
+    return myActivePaletteItem;
+  }
+
+  public final void activatePaletteItem(@Nullable PaletteItem paletteItem) {
+    myActivePaletteItem = paletteItem;
+    if (paletteItem != null) {
+      myToolProvider.setActiveTool(new CreationTool(true, createCreationFactory(paletteItem)));
+    }
+    else if (myToolProvider.getActiveTool() instanceof CreationTool) {
+      myToolProvider.loadDefaultTool();
+    }
   }
 
   protected final void showDesignerCard() {
@@ -691,8 +688,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   protected abstract void execute(List<EditOperation> operations);
 
+  public abstract List<PaletteGroup> getPaletteGroups();
+
   @NotNull
-  protected abstract ComponentCreationFactory createCreationFactory(Item paletteItem);
+  protected abstract ComponentCreationFactory createCreationFactory(PaletteItem paletteItem);
 
   @Nullable
   public abstract ComponentPasteFactory createPasteFactory(String xmlComponents);
@@ -720,7 +719,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public void dispose() {
-    PaletteManager.getInstance(getProject()).removeSelectionListener(myPaletteListener);
     Disposer.dispose(myProgressIcon);
   }
 

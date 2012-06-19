@@ -56,9 +56,7 @@ public class LibraryTest extends IdeaTestCase {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final LibraryTable.ModifiableModel modifiableModel = libraryTable.getModifiableModel();
-        modifiableModel.removeLibrary(library);
-        modifiableModel.commit();
+        libraryTable.removeLibrary(library);
       }
     });
   }

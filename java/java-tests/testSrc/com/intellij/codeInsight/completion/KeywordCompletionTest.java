@@ -90,6 +90,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNullInMethodCall() throws Exception { doTest(false); }
   public void testNullInMethodCall2() throws Exception { doTest(false); }
   public void testNewInMethodRefs() throws Exception { doTest(false); }
+  public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
 
   public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");

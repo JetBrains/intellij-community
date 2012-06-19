@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,30 +47,19 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    PsiPolyadicExpression expression =
-      (PsiPolyadicExpression)element;
+  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
-    if (parent == null) {
-      return;
-    }
     while (ConcatenationUtils.isConcatenation(parent)) {
       expression = (PsiPolyadicExpression)parent;
       parent = expression.getParent();
-      if (parent == null) {
-        return;
-      }
     }
     @NonNls final StringBuilder newExpression = new StringBuilder();
     if (isPartOfStringBufferAppend(expression)) {
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)parent.getParent();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent.getParent();
       assert methodCallExpression != null;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression =
-        methodExpression.getQualifierExpression();
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression != null) {
         final String qualifierText = qualifierExpression.getText();
         newExpression.append(qualifierText);
@@ -91,8 +80,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
     }
   }
 
-  private static boolean isPartOfStringBufferAppend(
-    PsiExpression expression) {
+  private static boolean isPartOfStringBufferAppend(PsiExpression expression) {
     PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiExpressionList)) {
       return false;
@@ -101,35 +89,57 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
     if (!(parent instanceof PsiMethodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCall =
-      (PsiMethodCallExpression)parent;
-    final PsiReferenceExpression methodExpression =
-      methodCall.getMethodExpression();
+    final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)parent;
+    final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
     final PsiType type = methodExpression.getType();
     if (type == null) {
       return false;
     }
     final String className = type.getCanonicalText();
-    if (!CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) &&
-        !CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className)) {
+    if (!CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) && !CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className)) {
       return false;
     }
     @NonNls final String methodName = methodExpression.getReferenceName();
     return "append".equals(methodName);
   }
 
-  private static void turnExpressionIntoChainedAppends(
-    PsiExpression expression, @NonNls StringBuilder result) {
-    if (ConcatenationUtils.isConcatenation(expression)) {
-      final PsiPolyadicExpression concatenation =
-        (PsiPolyadicExpression)expression;
-      for (PsiExpression op : concatenation.getOperands()) {
-        turnExpressionIntoChainedAppends(op, result);
+  private static void turnExpressionIntoChainedAppends(PsiExpression expression, @NonNls StringBuilder result) {
+    if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression concatenation = (PsiPolyadicExpression)expression;
+      final PsiType type = concatenation.getType();
+      if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        result.append(".append(").append(concatenation.getText()).append(')');
+        return;
+      }
+      final PsiExpression[] operands = concatenation.getOperands();
+      final PsiType startType = operands[0].getType();
+      if (startType == null || startType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        for (PsiExpression operand : operands) {
+          turnExpressionIntoChainedAppends(operand, result);
+        }
+        return;
+      }
+      final StringBuilder newExpressionText = new StringBuilder(operands[0].getText());
+      boolean string = false;
+      for (int i = 1; i < operands.length; i++) {
+        final PsiExpression operand = operands[i];
+        if (!string) {
+          final PsiType operandType = operand.getType();
+          if (operandType == null || operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+            final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText.toString(), expression);
+            turnExpressionIntoChainedAppends(newExpression, result);
+            turnExpressionIntoChainedAppends(operand, result);
+            string = true;
+          }
+          newExpressionText.append('+').append(operand.getText());
+        } else {
+          turnExpressionIntoChainedAppends(operand, result);
+        }
       }
     }
     else {
-      final PsiExpression strippedExpression =
-        ParenthesesUtils.stripParentheses(expression);
+      final PsiExpression strippedExpression = ParenthesesUtils.stripParentheses(expression);
       result.append(".append(");
       if (strippedExpression != null) {
         result.append(strippedExpression.getText());

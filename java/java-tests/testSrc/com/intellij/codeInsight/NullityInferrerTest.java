@@ -17,12 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.inferNullity.NullityInferrer;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,25 +78,13 @@ public class NullityInferrerTest extends CodeInsightTestCase {
 
   private void doTest(boolean annotateLocalVariables) throws Exception  {
     final String nullityPath = "/codeInsight/nullityinferrer";
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final VirtualFile aLib = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + nullityPath + "/lib/annotations.jar");
-        if (aLib != null) {
-          final VirtualFile file = JarFileSystem.getInstance().getJarRootForLocalFile(aLib);
-          if (file != null) {
-            final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-            final LibraryTable libraryTable = model.getModuleLibraryTable();
-            final Library library = libraryTable.createLibrary("test");
-
-            final Library.ModifiableModel libraryModel = library.getModifiableModel();
-            libraryModel.addRoot(file.getUrl(), OrderRootType.CLASSES);
-            libraryModel.commit();
-            model.commit();
-          }
-        }
+    final VirtualFile aLib = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + nullityPath + "/lib/annotations.jar");
+    if (aLib != null) {
+      final VirtualFile file = JarFileSystem.getInstance().getJarRootForLocalFile(aLib);
+      if (file != null) {
+        ModuleRootModificationUtil.addModuleLibrary(myModule, file.getUrl());
       }
-    });
+    }
 
     configureByFile(nullityPath + "/before" + getTestName(false) + ".java");
     final NullityInferrer nullityInferrer = new NullityInferrer(annotateLocalVariables, getProject());

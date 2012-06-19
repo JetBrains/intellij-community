@@ -75,12 +75,12 @@ public class ChangeSignatureUtil {
           }
         }
       } else {
-        if (newElements.size() > 1) {
+        if (newElements.size() > 1 && (!elements.isEmpty() || index < newElements.size() - 1)) {
           PsiElement anchor;
           if (index == 0) {
             anchor = list.getFirstChild();
           } else {
-            anchor = elements.get(index - 1);
+            anchor = index - 1 < elements.size() ? elements.get(index - 1) : null;
           }
           final PsiElement psi = Factory
             .createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, SharedImplUtil.findCharTableByTree(list.getNode()), list.getManager())

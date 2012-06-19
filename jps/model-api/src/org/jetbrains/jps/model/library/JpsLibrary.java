@@ -12,11 +12,13 @@ import java.util.List;
 public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<JpsLibrary> {
 
   @NotNull
-  List<String> getUrls(@NotNull JpsLibraryRootType rootType);
+  List<JpsLibraryRoot> getRoots(@NotNull JpsOrderRootType rootType);
 
-  void addUrl(@NotNull String url, @NotNull JpsLibraryRootType rootType);
+  void addRoot(@NotNull String url, @NotNull JpsOrderRootType rootType);
 
-  void removeUrl(@NotNull String url, @NotNull JpsLibraryRootType rootType);
+  void addRoot(@NotNull String url, @NotNull JpsOrderRootType rootType, @NotNull JpsLibraryRoot.InclusionOptions options);
+
+  void removeUrl(@NotNull String url, @NotNull JpsOrderRootType rootType);
 
   void delete();
 

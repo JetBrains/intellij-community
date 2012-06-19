@@ -38,6 +38,7 @@ import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
 import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.TimedDeadzone;
@@ -80,8 +81,8 @@ public class JBTabsImpl extends JComponent
 
   private Insets myInnerInsets = JBInsets.NONE;
 
-  private final List<EventListener> myTabMouseListeners = new CopyOnWriteArrayList<EventListener>();
-  private final List<TabsListener> myTabListeners = new CopyOnWriteArrayList<TabsListener>();
+  private final List<EventListener> myTabMouseListeners = ContainerUtil.createEmptyCOWList();
+  private final List<TabsListener> myTabListeners = ContainerUtil.createEmptyCOWList();
   private boolean myFocused;
 
   private Getter<ActionGroup> myPopupGroup;

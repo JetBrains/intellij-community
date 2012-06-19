@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,34 +33,6 @@ public abstract class ModuleRootManager implements ModuleRootModel {
   public static ModuleRootManager getInstance(@NotNull Module module) {
     return module.getComponent(ModuleRootManager.class);
   }
-
-  /**
-   * Returns the list of roots of the specified type for the current module and all modules it depends on.
-   *
-   * @param type the type of roots requested.
-   * @return the list of roots.
-   *
-   * @deprecated
-   * <ul>
-   *   <li> to get {@link OrderRootType#CLASSES} use <code>OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots()<code>
-   *   <li> to get {@link OrderRootType#SOURCES} use <code>OrderEnumerator.orderEntries(module).getAllSourceRoots()<code>
-   */
-  @NotNull
-  public abstract VirtualFile[] getFiles(OrderRootType type);
-
-  /**
-   * Returns the list of URLs of roots of the specified type for the current module and all modules it depends on.
-   *
-   * @param type the type of roots requested.
-   * @return the list of root URLs.
-
-   * @deprecated
-   * <ul>
-   *   <li> to get {@link OrderRootType#CLASSES} use <code>OrderEnumerator.orderEntries(module).withoutModuleSourceEntries().recursively().exportedOnly().classes().getUrls()<code>
-   *   <li> to get {@link OrderRootType#SOURCES} use <code>OrderEnumerator.orderEntries(module).recursively().exportedOnly().sources().getUrls()<code>
-   */
-  @NotNull
-  public abstract String[] getUrls(OrderRootType type);
 
   /**
    * Returns the file index for the current module.

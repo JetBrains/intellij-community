@@ -36,12 +36,12 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected String getReferenceName(PsiJavaCodeReferenceElement reference) {
+  protected String getReferenceName(@NotNull PsiJavaCodeReferenceElement reference) {
     return reference.getReferenceName();
   }
 
   @Override
-  protected PsiElement getReferenceNameElement(PsiJavaCodeReferenceElement reference) {
+  protected PsiElement getReferenceNameElement(@NotNull PsiJavaCodeReferenceElement reference) {
     return reference.getReferenceNameElement();
   }
 
@@ -56,7 +56,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected boolean hasTypeParameters(PsiJavaCodeReferenceElement reference) {
+  protected boolean hasTypeParameters(@NotNull PsiJavaCodeReferenceElement reference) {
     final PsiReferenceParameterList refParameters = reference.getParameterList();
     return refParameters != null && refParameters.getTypeParameterElements().length > 0;
   }
@@ -97,8 +97,9 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
 
   @Override
   protected String getRequiredMemberName(PsiJavaCodeReferenceElement reference) {
-    if (reference.getParent() instanceof PsiJavaCodeReferenceElement) {
-      return ((PsiJavaCodeReferenceElement)reference.getParent()).getReferenceName();
+    PsiElement parent = reference.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement) {
+      return ((PsiJavaCodeReferenceElement)parent).getReferenceName();
     }
 
     return super.getRequiredMemberName(reference);

@@ -18,16 +18,12 @@ package org.jetbrains.plugins.groovy.refactoring.rename;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -76,9 +72,10 @@ public class RenamePropertyUtil {
 
     final PsiClass containingClass = m.getContainingClass();
     if (containingClass == null) return member(m);
-    final boolean isStatic = m.hasModifierProperty(GrModifier.STATIC);
+    final boolean isStatic = m.hasModifierProperty(PsiModifier.STATIC);
 
     List<PsiElement> property = new ArrayList<PsiElement>();
+    assert name != null;
     ContainerUtil.addAll(property, GroovyPropertyUtils.getAllGetters(containingClass, name, isStatic, false));
     ContainerUtil.addAll(property, GroovyPropertyUtils.getAllSetters(containingClass, name, isStatic, false));
 

@@ -55,7 +55,11 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
   }*/
 
   public String getLocation(){
-    Object nodeElement = myElement.getValue();
+    return getLocation(myElement, myProject);
+  }
+
+  public static String getLocation(final AbstractTreeNode element, final Project project) {
+    Object nodeElement = element.getValue();
     if (nodeElement instanceof SmartPsiElementPointer){
       nodeElement = ((SmartPsiElementPointer)nodeElement).getElement();
     }
@@ -78,8 +82,8 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
       final Module module = namedLibraryElement.getModule();
       return (module != null ? module.getName() : "") + ":" + namedLibraryElement.getOrderEntry().getPresentableName();
     }
-    
-    final FavoriteNodeProvider[] nodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject);
+
+    final FavoriteNodeProvider[] nodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project);
     for(FavoriteNodeProvider provider: nodeProviders) {
       String location = provider.getElementLocation(nodeElement);
       if (location != null) return location;

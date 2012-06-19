@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
@@ -877,14 +878,11 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     new WriteCommandAction.Simple(myProject) {
       @Override
       protected void run() throws Throwable {
-        ModifiableRootModel model = ModuleRootManager.getInstance(user).getModifiableModel();
-        model.addModuleOrderEntry(getModule("m1"));
+        ModuleRootModificationUtil.addDependency(user, getModule("m1"));
         VirtualFile out = user.getModuleFile().getParent().createChildDirectory(this, "output");
         VirtualFile testOut = user.getModuleFile().getParent().createChildDirectory(this, "test-output");
-        model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(out);
-        model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(testOut);
-        model.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
-        model.commit();
+        PsiTestUtil.setCompilerOutputPath(user, out.getUrl(), false);
+        PsiTestUtil.setCompilerOutputPath(user, testOut.getUrl(), true);
       }
     }.execute().throwException();
 

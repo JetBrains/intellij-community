@@ -45,7 +45,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.TestOnly;
@@ -168,7 +168,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         if (changeSet == null) return;
         final PsiElement psiElement = changeSet.getRootElement().getPsi();
         if (psiElement == null) return;
-        PsiFile containingFile = InjectedLanguageUtil.getTopLevelFile(psiElement);
+        PsiFile containingFile = InjectedLanguageFacadeImpl.getTopLevelFile(psiElement);
         final FileViewProvider viewProvider = containingFile.getViewProvider();
 
         if (!viewProvider.isEventSystemEnabled()) return;

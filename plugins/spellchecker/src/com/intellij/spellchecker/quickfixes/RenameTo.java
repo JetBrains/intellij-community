@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
@@ -86,7 +86,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
         HashMap<String, Object> map = new HashMap<String, Object>();
         PsiElement psiElement = descriptor.getPsiElement();
         PsiFile containingFile = psiElement.getContainingFile();
-        Editor editor = InjectedLanguageUtil.openEditorFor(containingFile, project);
+        Editor editor = InjectedLanguageFacadeImpl.openEditorFor(containingFile, project);
         if (editor == null) {
           return;
         }

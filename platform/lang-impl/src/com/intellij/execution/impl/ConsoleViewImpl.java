@@ -344,7 +344,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public void scrollTo(final int offset) {
-    if (myEditor == null) return;
+    if (myEditor == null || myFlushAlarm.isDisposed()) return;
     class ScrollRunnable extends MyFlushRunnable {
       private int myOffset = offset;
       public void doRun() {
@@ -367,7 +367,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void requestScrollingToEnd() {
-    if (myEditor == null) return;
+    if (myEditor == null || myFlushAlarm.isDisposed()) return;
     final MyFlushRunnable scrollRunnable = new MyFlushRunnable() {
       @Override
       public void doRun() {
@@ -556,7 +556,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void requestFlushImmediately() {
-    if (myEditor != null) {
+    if (myEditor != null && !myFlushAlarm.isDisposed()) {
       addFlushRequest(new MyFlushRunnable());
     }
   }

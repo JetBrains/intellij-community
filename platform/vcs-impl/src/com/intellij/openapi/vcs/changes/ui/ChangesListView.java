@@ -686,7 +686,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
         final TreePath path = getPathForLocation(e.getPoint().x, e.getPoint().y);
         if (path != null) {
           setSelectionPath(path);
-          e.consume();
         }
       }
     }

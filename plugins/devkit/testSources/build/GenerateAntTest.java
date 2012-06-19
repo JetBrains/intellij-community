@@ -22,11 +22,7 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.ant.BuildTargetsFactory;
 import com.intellij.compiler.ant.ModuleChunk;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.idea.devkit.build.ant.BuildJarTarget;
 
@@ -44,18 +41,9 @@ import java.io.StringWriter;
 public class GenerateAntTest extends IdeaTestCase {
 
   public void testP1() throws Exception {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final VirtualFile parent = myModule.getModuleFile().getParent();
-        assertNotNull(parent);
-        final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
-        extension.inheritCompilerOutputPath(false);
-        extension.setCompilerOutputPath(parent.getUrl() + "/classes");
-        model.commit();
-      }
-    });
+    final VirtualFile parent = myModule.getModuleFile().getParent();
+    assertNotNull(parent);
+    PsiTestUtil.setCompilerOutputPath(myModule, parent.getUrl() + "/classes", false);
     checkJarTarget(new ModuleChunk(new Module[]{getModule()}));
   }
 

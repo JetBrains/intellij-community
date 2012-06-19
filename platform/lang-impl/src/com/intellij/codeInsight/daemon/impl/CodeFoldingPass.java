@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import org.jetbrains.annotations.NotNull;
 
 class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
@@ -72,7 +72,7 @@ class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
       }
     }
 
-    if (InjectedLanguageUtil.getTopLevelFile(myFile) == myFile) {
+    if (InjectedLanguageFacadeImpl.getTopLevelFile(myFile) == myFile) {
       clearFirstTimeFlag(myFile, myEditor, THE_FIRST_TIME);
     }
   }

@@ -49,6 +49,9 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   public static class AnnotatorBasedInspection extends DefaultHighlightVisitorBasedInspection {
+
+    public static final String ANNOTATOR_SHORT_NAME = "Annotator";
+
     public AnnotatorBasedInspection() {
       super(false, true);
     }
@@ -62,7 +65,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     @NotNull
     @Override
     public String getShortName() {
-      return "Annotator";
+      return ANNOTATOR_SHORT_NAME;
     }
 
   }
@@ -185,7 +188,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
 
           @Override
           protected void killAbandonedHighlightsUnder(@NotNull TextRange range,
-                                                      @NotNull HighlightInfoHolder holder,
+                                                      @Nullable List<HighlightInfo> holder,
                                                       @NotNull ProgressIndicator progress) {
             // do not mess with real editor highlights
           }

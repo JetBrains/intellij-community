@@ -29,7 +29,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
@@ -43,13 +42,14 @@ import org.jetbrains.annotations.Nullable;
 )
 public class GithubSettings implements PersistentStateComponent<Element> {
 
+  public static final String DEFAULT_GITHUB_HOST = "github.com";
+
   private static final String GITHUB_SETTINGS_TAG = "GithubSettings";
   private static final String LOGIN = "Login";
   private static final String HOST = "Host";
   private static final String ANONIMOUS_GIST = "Anonymous";
   private static final String OPEN_IN_BROWSER_GIST = "OpenInBrowser";
   private static final String PRIVATE_GIST = "Private";
-  private static final String GITHUB = "github.com";
   private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
 
   private String myLogin;
@@ -117,7 +117,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     return myLogin != null ? myLogin : "";
   }
 
-  @Nullable
+  @NotNull
   public String getPassword() {
     LOG.assertTrue(!ProgressManager.getInstance().hasProgressIndicator(), "Password should not be accessed under modal progress");
     String password;
@@ -154,7 +154,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public String getHost() {
-    return myHost != null ? myHost : GITHUB;
+    return myHost != null ? myHost : DEFAULT_GITHUB_HOST;
   }
 
   public boolean isAnonymous() {
@@ -187,7 +187,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setHost(final String host) {
-    myHost = host != null ? host : GITHUB;
+    myHost = host != null ? host : DEFAULT_GITHUB_HOST;
   }
 
   public void setAnonymousGist(final boolean anonymousGist) {

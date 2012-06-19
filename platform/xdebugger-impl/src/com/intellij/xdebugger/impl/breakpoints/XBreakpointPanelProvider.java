@@ -24,11 +24,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingByTypeRule;
+import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
@@ -40,14 +41,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author nik
  */
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
 
-  private List<MyXBreakpointListener> myListeners = new CopyOnWriteArrayList<MyXBreakpointListener>();
+  private final List<MyXBreakpointListener> myListeners = ContainerUtil.createEmptyCOWList();
 
   @Override
   public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
@@ -173,7 +173,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
   private class AddXBreakpointAction extends AnAction {
 
-    private XBreakpointType<?, ?> myType;
+    private final XBreakpointType<?, ?> myType;
 
     public AddXBreakpointAction(XBreakpointType<?, ?> type) {
       myType = type;

@@ -17,26 +17,23 @@ package org.jetbrains.plugins.github;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.Notificator;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
@@ -68,11 +65,6 @@ public class GithubCreateGistAction extends DumbAwareAction {
       }
       final Editor editor = e.getData(PlatformDataKeys.EDITOR);
       if (editor == null){
-        e.getPresentation().setVisible(false);
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-      if (!editor.getSelectionModel().hasSelection()){
         e.getPresentation().setVisible(false);
         e.getPresentation().setEnabled(false);
         return;
@@ -130,41 +122,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        // Using GitHub Gist API v3: http://developer.github.com/v3/gists/
-        final HttpClient client = anonymous ? GithubUtil.getHttpClient(null, null) : GithubUtil.getHttpClient(settings.getLogin(), password);
-        final PostMethod method = new PostMethod("https://api.github.com/gists");
-
-        String request = prepareJsonRequest(description, isPrivate, text, file);
-
-        String response;
-        try {
-          method.setRequestEntity(new StringRequestEntity(request, "application/json", "UTF-8"));
-          client.executeMethod(method);
-          response = method.getResponseBodyAsString();
-        }
-        catch (IOException e1) {
-          showError(project, "Failed to create gist", "", null, e1);
-          return;
-        }
-        finally {
-          method.releaseConnection();
-        }
-
-        JsonObject jsonResponse;
-        try {
-          jsonResponse = new JsonParser().parse(response).getAsJsonObject();
-        }
-        catch (JsonSyntaxException jse) {
-          showError(project, "Couldn't parse GitHub response", "", response, jse);
-          return;
-        }
-
-        JsonElement htmlUrl = jsonResponse.get("html_url");
-        if (htmlUrl == null) {
-          showError(project, "Invalid GitHub response", "No html_url property", response, null);
-          return;
-        }
-        url.set(htmlUrl.getAsString());
+        url.set(createGist(project, settings.getLogin(), password, anonymous, text, isPrivate, file, description));
       }
     }, "Communicating With GitHub", false, project);
 
@@ -188,13 +146,70 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
   }
 
+  @Nullable
+  private static String createGist(@NotNull Project project, @Nullable String login, @Nullable String password, boolean anonymous,
+                                   @Nullable String text, boolean isPrivate, @NotNull VirtualFile file, @NotNull String description) {
+    if (anonymous) {
+      login = null;
+      password = null;
+    }
+    if (text == null) {
+      text = readFile(file);
+      if (text == null) {
+        showError(project, "Failed to create gist", "Couldn't read the contents of the file " + file, null, null);
+        return null;
+      }
+    }
+    String requestBody = prepareJsonRequest(description, isPrivate, text, file);
+    try {
+      JsonElement jsonElement = GithubUtil.postRequest("https://api.github.com", login, password, "/gists", requestBody);
+      if (jsonElement == null) {
+        LOG.info("Null JSON response returned by GitHub");
+        showError(project, "Failed to create gist", "Empty JSON response returned by GitHub", null, null);
+        return null;
+      }
+      if (!jsonElement.isJsonObject()) {
+        LOG.error(String.format("Unexpected JSON result format: %s", jsonElement));
+        return null;
+      }
+      JsonElement htmlUrl = jsonElement.getAsJsonObject().get("html_url");
+      if (htmlUrl == null) {
+        LOG.info("Invalid JSON response: " + jsonElement);
+        showError(project, "Invalid GitHub response", "No html_url property", jsonElement.toString(), null);
+        return null;
+      }
+      return htmlUrl.getAsString();
+    }
+    catch (IOException e) {
+      LOG.info("Exception when creating a Gist", e);
+      showError(project, "Failed to create gist", "", null, e);
+      return null;
+    }
+  }
+
+  @Nullable
+  private static String readFile(@NotNull final VirtualFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        try {
+          return new String(file.contentsToByteArray(), file.getCharset());
+        }
+        catch (IOException e) {
+          LOG.info("Couldn't read contents of the file " + file);
+          return null;
+        }
+      }
+    });
+  }
+
   private static void showError(@NotNull Project project, @NotNull String title, @NotNull String content,
                                 @Nullable String details, @Nullable Exception e) {
     Notificator.getInstance(project).notifyError(title, content);
     LOG.info("Couldn't parse response as json data: \n" + content + "\n" + details, e);
   }
 
-  private static String prepareJsonRequest(String description, boolean isPrivate, String text, VirtualFile file) {
+  private static String prepareJsonRequest(@NotNull String description, boolean isPrivate, @NotNull String text, @NotNull VirtualFile file) {
     JsonObject json = new JsonObject();
     json.addProperty("description", description);
     json.addProperty("public", Boolean.toString(!isPrivate));

@@ -44,7 +44,9 @@ public abstract class PerThreadMap<T, KeyT extends UserDataHolder> {
     }
   };
 
-  private List<T> cloneTemplates(Collection<T> templates) {
+  @SuppressWarnings("unchecked")
+  @NotNull
+  private List<T> cloneTemplates(@NotNull Collection<T> templates) {
     List<T> result = new ArrayList<T>(templates.size());
     PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
     for (T template : templates) {

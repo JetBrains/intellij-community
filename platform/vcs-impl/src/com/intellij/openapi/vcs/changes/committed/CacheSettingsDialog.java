@@ -19,7 +19,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
 
 import javax.swing.*;
 
@@ -45,9 +44,6 @@ public class CacheSettingsDialog extends DialogWrapper {
 
   protected void doOKAction() {
     try {
-      if (myPanel.isCachingEnabled()) {
-        VcsConfiguration.getInstance(myProject).ENABLE_BACKGROUND_PROCESSES = true;
-      }
       myPanel.apply();
     }
     catch (ConfigurationException e) {

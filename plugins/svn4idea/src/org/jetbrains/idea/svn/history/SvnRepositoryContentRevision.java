@@ -30,8 +30,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +49,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class SvnRepositoryContentRevision implements ContentRevision {
+public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsContentRevision {
   private final String myRepositoryRoot;
   private final SvnVcs myVcs;
   private final String myPath;
@@ -179,5 +181,10 @@ public class SvnRepositoryContentRevision implements ContentRevision {
 
   public String getPath() {
     return myPath;
+  }
+
+  @Override
+  public VcsKey getVcsKey() {
+    return SvnVcs.getKey();
   }
 }

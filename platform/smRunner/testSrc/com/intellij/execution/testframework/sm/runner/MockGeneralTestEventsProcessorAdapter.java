@@ -101,6 +101,10 @@ public class MockGeneralTestEventsProcessorAdapter implements GeneralTestEventsP
   }
 
   @Override
+  public void setPrinterProvider(@NotNull TestProxyPrinterProvider printerProvider) {
+  }
+
+  @Override
   public void dispose() {
     myOutputBuffer.setLength(0);
   }

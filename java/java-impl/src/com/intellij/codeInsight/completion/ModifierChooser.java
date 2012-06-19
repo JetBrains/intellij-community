@@ -71,7 +71,7 @@ public class ModifierChooser {
     return addKeywords(list, inInterface ? new String[][]{
       new String[]{"public", "protected"},
       new String[]{"static"},
-      new String[]{"final"}
+      new String[]{"final", "abstract"}
     } : new String[][]{
       new String[]{"public", "protected", "private"},
       new String[]{"static"},

@@ -45,7 +45,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.LightVirtualFile;
@@ -88,7 +88,7 @@ public class CodeFormatterFacade {
     final Document document = file.getViewProvider().getDocument();
     final RangeMarker rangeMarker = document != null && endOffset < document.getTextLength()? document.createRangeMarker(startOffset, endOffset):null;
 
-    PsiElement elementToFormat = document instanceof DocumentWindow ? InjectedLanguageUtil.getTopLevelFile(file) : psiElement;
+    PsiElement elementToFormat = document instanceof DocumentWindow ? InjectedLanguageFacadeImpl.getTopLevelFile(file) : psiElement;
     final PsiFile fileToFormat = elementToFormat.getContainingFile();
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(fileToFormat);
@@ -137,7 +137,7 @@ public class CodeFormatterFacade {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     final List<FormatTextRanges.FormatTextRange> textRanges = ranges.getRanges();
     if (document instanceof DocumentWindow) {
-      file = InjectedLanguageUtil.getTopLevelFile(file);
+      file = InjectedLanguageFacadeImpl.getTopLevelFile(file);
       final DocumentWindow documentWindow = (DocumentWindow)document;
       for (FormatTextRanges.FormatTextRange range : textRanges) {
         range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));

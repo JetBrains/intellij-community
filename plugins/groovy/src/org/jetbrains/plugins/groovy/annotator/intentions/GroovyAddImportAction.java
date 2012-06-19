@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -35,17 +36,17 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
   }
 
   @Override
-  protected String getReferenceName(GrReferenceElement reference) {
+  protected String getReferenceName(@NotNull GrReferenceElement reference) {
     return reference.getReferenceName();
   }
 
   @Override
-  protected PsiElement getReferenceNameElement(GrReferenceElement reference) {
+  protected PsiElement getReferenceNameElement(@NotNull GrReferenceElement reference) {
     return reference.getReferenceNameElement();
   }
 
   @Override
-  protected boolean hasTypeParameters(GrReferenceElement reference) {
+  protected boolean hasTypeParameters(@NotNull GrReferenceElement reference) {
     return reference.getTypeArguments().length > 0;
   }
 

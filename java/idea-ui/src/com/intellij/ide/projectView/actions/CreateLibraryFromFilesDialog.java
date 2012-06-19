@@ -22,6 +22,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -61,8 +62,10 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
     myProject = project;
     myRoots = roots;
     final FormBuilder builder = LibraryNameAndLevelPanel.createFormBuilder();
-    myDefaultName = LibrariesContainerFactory.createContainer(project).suggestUniqueLibraryName(LibraryTypeServiceImpl.suggestLibraryName(roots));
-    myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, Arrays.asList(LibrariesContainer.LibraryLevel.values()), LibrariesContainer.LibraryLevel.PROJECT);
+    myDefaultName =
+      LibrariesContainerFactory.createContainer(project).suggestUniqueLibraryName(LibraryTypeServiceImpl.suggestLibraryName(roots));
+    myNameAndLevelPanel = new LibraryNameAndLevelPanel(builder, myDefaultName, Arrays.asList(LibrariesContainer.LibraryLevel.values()),
+                                                       LibrariesContainer.LibraryLevel.PROJECT);
     myNameAndLevelPanel.setDefaultName(myDefaultName);
     myModulesCombobox = new ModulesCombobox();
     myModulesCombobox.fillModules(myProject);
@@ -141,9 +144,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
       else {
         final Library library = LibrariesContainerFactory.createContainer(myProject).createLibrary(libraryName, level, myRoots);
         if (module != null) {
-          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-          model.addLibraryEntry(library);
-          model.commit();
+          ModuleRootModificationUtil.addDependency(module, library);
         }
       }
     }

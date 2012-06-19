@@ -312,6 +312,18 @@ public class JDOMUtil {
     return getSaxBuilder().build(new CharArrayReader(chars, 0, length));
   }
 
+  @NotNull
+  public static Document loadDocument(byte[] bytes) throws IOException, JDOMException {
+    final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+    try {
+      return loadDocument(inputStream);
+    }
+    finally {
+      inputStream.close();
+    }
+
+  }
+
   private static SAXBuilder getSaxBuilder() {
     SoftReference<SAXBuilder> reference = ourSaxBuilder.get();
     SAXBuilder saxBuilder = reference != null ? reference.get() : null;

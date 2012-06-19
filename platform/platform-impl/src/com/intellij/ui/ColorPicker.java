@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -440,7 +441,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     private Color myColor;
 
-    private CopyOnWriteArrayList<ColorListener> myListeners = new CopyOnWriteArrayList<ColorListener>();
+    private CopyOnWriteArrayList<ColorListener> myListeners = ContainerUtil.createEmptyCOWList();
     private int myOpacity;
 
     private ColorWheel() {

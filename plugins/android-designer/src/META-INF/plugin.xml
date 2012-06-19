@@ -20,8 +20,6 @@
 
     <projectService serviceInterface="com.intellij.android.designer.model.ViewsMetaManager"
                     serviceImplementation="com.intellij.android.designer.model.ViewsMetaManager"/>
-
-    <paletteItemProvider implementation="com.intellij.android.designer.palette.ViewsPaletteProvider"/>
   </extensions>
 
 </idea-plugin>

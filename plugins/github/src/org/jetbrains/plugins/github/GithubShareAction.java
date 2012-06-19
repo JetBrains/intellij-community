@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,17 +27,16 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.actions.RefreshAction;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
@@ -44,15 +44,18 @@ import com.intellij.util.containers.HashSet;
 import git4idea.GitDeprecatedRemote;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.Notificator;
 import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
-import git4idea.push.GitPushUtils;
+import git4idea.jgit.GitHttpAdapter;
+import git4idea.push.GitSimplePushResult;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 
 import java.io.IOException;
@@ -83,7 +86,7 @@ public class GithubShareAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (!GithubUtil.testGitExecutable(project)){
+    if (project == null || !GithubUtil.testGitExecutable(project)){
       return;
     }
     final VirtualFile root = project.getBaseDir();
@@ -136,22 +139,49 @@ public class GithubShareAction extends DumbAwareAction {
     final String description = shareDialog.getDescription();
     try {
       LOG.info("Creating GitHub repository");
-      final String escapedDescription = JDOMUtil.escapeText(description, true, true).replace("&#", "%");
-      GithubUtil.doREST(settings.getHost(), settings.getLogin(), settings.getPassword(),
-                        "/repos/create?name=" + name + "&public=" + (isPrivate ? "0" : "1") + "&description=" + escapedDescription, true).releaseConnection();
-      LOG.info("Successfully created GitHub repository");
+      boolean repositoryCreated =
+        createGithubRepository(settings.getHost(), settings.getLogin(), settings.getPassword(), name, description, isPrivate);
+      if (repositoryCreated) {
+        LOG.info("Successfully created GitHub repository");
+      }
+      else {
+        Messages.showErrorDialog(project, "Failed to create new GitHub repository", "Create GitHub Repository");
+        return;
+      }
     }
     catch (final Exception e1) {
       Messages.showErrorDialog(e1.getMessage(), "Failed to create new GitHub repository");
       return;
     }
-    if (bindToGithub(project, root, gitDetected, settings.getLogin(), name)) {
-      Notifications.Bus.notify(new Notification("github", "Success", "Successfully created project ''" + name + "'' on github",
-                                                NotificationType.INFORMATION));
-    }
+
+    bindToGithub(project, root, gitDetected, settings.getLogin(), name);
   }
 
-  private boolean bindToGithub(final Project project, final VirtualFile root, final boolean gitDetected, final String login, String name) {
+  private static boolean createGithubRepository(@NotNull String host, @NotNull String login, @NotNull String password, @NotNull String name,
+                                                @NotNull String description, boolean aPrivate) throws IOException {
+    String path = "/user/repos";
+    String requestBody = prepareRequest(name, description, aPrivate);
+    JsonElement result = GithubUtil.postRequest(host, login, password, path, requestBody);
+    if (result == null) {
+      return false;
+    }
+    if (!result.isJsonObject()) {
+      LOG.error(String.format("Unexpected JSON result format: %s", result));
+      return false;
+    }
+    return result.getAsJsonObject().has("url");
+  }
+
+  private static String prepareRequest(String name, String description, boolean isPrivate) {
+    JsonObject json = new JsonObject();
+    json.addProperty("name", name);
+    json.addProperty("description", description);
+    json.addProperty("public", Boolean.toString(!isPrivate));
+    return json.toString();
+
+  }
+
+  private void bindToGithub(final Project project, final VirtualFile root, boolean gitDetected, final String login, final String name) {
     LOG.info("Binding local project with GitHub");
     // creating empty git repo if git isnot initialized
     if (!gitDetected) {
@@ -162,7 +192,7 @@ public class GithubShareAction extends DumbAwareAction {
       if (!h.errors().isEmpty()) {
         GitUIUtil.showOperationErrors(project, h.errors(), "git init");
         LOG.info("Failed to create empty git repo: " + h.errors());
-        return false;
+        return;
       }
       final ProgressManager manager = ProgressManager.getInstance();
       manager.runProcessWithProgressSynchronously(new Runnable() {
@@ -175,49 +205,71 @@ public class GithubShareAction extends DumbAwareAction {
 
     // In this case we should create sample commit for binding project
     if (!performFirstCommitIfRequired(project, root)) {
-      return false;
+      return;
     }
+
+    GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+    final GitRepository repository = repositoryManager.getRepositoryForRoot(root);
+    LOG.assertTrue(repository != null, "GitRepository is null for root " + root);
 
     //git remote add origin git@github.com:login/name.git
     LOG.info("Adding GitHub as a remote host");
     final GitSimpleHandler addRemoteHandler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     addRemoteHandler.setNoSSH(true);
     addRemoteHandler.setSilent(true);
-    addRemoteHandler.addParameters("add", "origin", "git@github.com:" + login + "/" + name + ".git");
+    final String remoteUrl = "https://github.com/" + login + "/" + name + ".git";
+    addRemoteHandler.addParameters("add", "origin", remoteUrl);
     try {
       addRemoteHandler.run();
+      repository.update(GitRepository.TrackedTopic.CONFIG);
       if (addRemoteHandler.getExitCode() != 0) {
         Messages.showErrorDialog("Failed to add GitHub repository as remote", "Failed to add GitHub repository as remote");
-        return false;
+        return;
       }
     }
     catch (VcsException e) {
       Messages.showErrorDialog(e.getMessage(), "Failed to add GitHub repository as remote");
       LOG.info("Failed to add GitHub as remote: " + e.getMessage());
-      return false;
+      return;
     }
 
     //git push origin master
-    final ProgressManager manager = ProgressManager.getInstance();
-    final ArrayList<VcsException> errors = new ArrayList<VcsException>();
-    manager.runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        final ProgressIndicator progressIndicator = manager.getProgressIndicator();
-        if (progressIndicator != null){
-            progressIndicator.setText("Pushing to GitHub");
-          }
-          final GitLineHandler gitPushHandler = new GitLineHandler(project, root, GitCommand.PUSH);
-          gitPushHandler.addParameters("-u", "origin", "master");
-          GitPushUtils.trackPushRejectedAsError(gitPushHandler, "Rejected push (" + root.getPresentableUrl() + "): ");
-          errors.addAll(GitHandlerUtil.doSynchronouslyWithExceptions(gitPushHandler));
+
+    new Task.Backgroundable(project, "Pushing to GitHub", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        GitSimplePushResult pushResult = GitHttpAdapter.push(repository, "origin", remoteUrl, "refs/heads/master:refs/heads/master");
+        switch (pushResult.getType()) {
+          case NOT_PUSHED:
+            showPushError(project, "Push failed: <br/>" + pushResult.getOutput());
+            break;
+          case REJECT:
+            showPushError(project, "Push was rejected: <br/>" + pushResult.getOutput());
+            break;
+          case CANCEL:
+            Notificator.getInstance(project).notify(new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Push cancelled",
+                                                    "The project was created on GitHub but wasn't pushed yet.", NotificationType.WARNING));
+            break;
+          case NOT_AUTHORIZED:
+            showPushError(project, "Push authorization failure: <br/>" + pushResult.getOutput());
+            break;
+          case ERROR:
+            showPushError(project, "Push failed: <br/>" + pushResult.getOutput());
+            break;
+          case SUCCESS:
+            Notificator.getInstance(project).notify(new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Success",
+                                                                     "Successfully created project ''" + name + "'' on github",
+                                                                     NotificationType.INFORMATION));
+            break;
         }
-      }, GitBundle.getString("push.active.pushing"), false, project);
-      if (!errors.isEmpty()) {
-        GitUIUtil.showOperationErrors(project, errors, GitBundle.getString("push.active.pushing"));
-    }
-    // refresh vcs manually
-    RefreshAction.doRefresh(project);
-    return true;
+      }
+    }.queue();
+  }
+
+  private static void showPushError(@NotNull Project project, @NotNull String message) {
+    Notification notification = new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Push to GitHub failed", message,
+                                                 NotificationType.ERROR);
+    Notificator.getInstance(project).notify(notification);
   }
 
   private boolean performFirstCommitIfRequired(final Project project, final VirtualFile root) {

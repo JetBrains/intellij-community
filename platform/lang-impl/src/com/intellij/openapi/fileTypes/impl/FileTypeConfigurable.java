@@ -374,23 +374,27 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           public void run(AnActionButton button) {
             myController.addFileType();
           }
-        }).setRemoveAction(new AnActionButtonRunnable() {
+        })
+        .setRemoveAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton button) {
             myController.removeFileType();
           }
-        }).setEditAction(new AnActionButtonRunnable() {
+        })
+        .setEditAction(new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton button) {
             myController.editFileType();
           }
-        }).setEditActionUpdater(new AnActionButtonUpdater() {
+        })
+        .setEditActionUpdater(new AnActionButtonUpdater() {
           @Override
           public boolean isEnabled(AnActionEvent e) {
             final FileType fileType = getSelectedFileType();
             return canBeModified(fileType);
           }
-        }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+        })
+        .setRemoveActionUpdater(new AnActionButtonUpdater() {
           @Override
           public boolean isEnabled(AnActionEvent e) {
             final FileType fileType = getSelectedFileType();
@@ -398,7 +402,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
             final boolean shared = getSchemesManager().isShared(fileType);
             return shared || modified;
           }
-        }).disableUpDownActions();
+        })
+        .disableUpDownActions();
 
       if (getSchemesManager().isImportAvailable()) {
         toolbarDecorator.addExtraAction(new AnActionButton("Import Shared...", PlatformIcons.IMPORT_ICON) {
@@ -435,6 +440,16 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
       add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
       setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetypes.recognized.group"), false));
+
+      new ListSpeedSearch(myFileTypesList) {
+        @Override
+        protected String getElementText(Object element) {
+          if (element instanceof FileType) {
+            return ((FileType)element).getDescription();
+          }
+          return super.getElementText(element);
+        }
+      };
     }
 
     private SchemesManager<FileType, AbstractFileType> getSchemesManager() {

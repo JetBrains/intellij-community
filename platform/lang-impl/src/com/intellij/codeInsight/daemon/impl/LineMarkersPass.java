@@ -47,7 +47,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import gnu.trove.THashSet;
@@ -211,7 +211,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
       }
     };
     for (int i = 0, size = elements.size(); i < size; ++i) {
-      InjectedLanguageUtil.enumerate(elements.get(i), file, false, collectingVisitor);
+      InjectedLanguageFacadeImpl.enumerate(elements.get(i), file, false, collectingVisitor);
     }
     for (PsiFile injectedPsi : injectedFiles) {
       final Project project = injectedPsi.getProject();

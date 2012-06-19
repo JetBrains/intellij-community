@@ -34,8 +34,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -79,6 +78,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         scope.accept(new PsiElementVisitor() {
           private int myFileCount = 0;
           final private Set<Module> processed = new HashSet<Module>();
+
           @Override
           public void visitFile(PsiFile file) {
             myFileCount++;
@@ -94,7 +94,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             if (module != null && !processed.contains(module)) {
               processed.add(module);
               if (JavaPsiFacade.getInstance(project)
-                    .findClass(NullableNotNullManager.getInstance(project).getDefaultNullable(), GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
+                    .findClass(NullableNotNullManager.getInstance(project).getDefaultNullable(),
+                               GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) == null) {
                 modulesWithoutAnnotations.add(module);
               }
               if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -104,13 +105,17 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           }
         });
       }
-    }, "Check applicability...", true, project)) return;
+    }, "Check applicability...", true, project)) {
+      return;
+    }
     if (!modulesWithLL.isEmpty()) {
-      Messages.showErrorDialog(project, "Infer Nullity Annotations requires the project language level be set to 1.5 or greater.", INFER_NULLITY_ANNOTATIONS);
+      Messages.showErrorDialog(project, "Infer Nullity Annotations requires the project language level be set to 1.5 or greater.",
+                               INFER_NULLITY_ANNOTATIONS);
       return;
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
-      final Library annotationsLib = LibraryUtil.findLibraryByClass(NullableNotNullManager.getInstance(project).getDefaultNullable(), project);
+      final Library annotationsLib =
+        LibraryUtil.findLibraryByClass(NullableNotNullManager.getInstance(project).getDefaultNullable(), project);
       if (annotationsLib != null) {
         String message = "Module" + (modulesWithoutAnnotations.size() == 1 ? " " : "s ");
         message += StringUtil.join(modulesWithoutAnnotations, new Function<Module, String>() {
@@ -120,25 +125,27 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           }
         }, ", ");
         message += (modulesWithoutAnnotations.size() == 1 ? " doesn't" : " don't");
-        message += " refer to the existing '" + annotationsLib.getName() + "' library with IDEA nullity annotations. Would you like to add the dependenc";
-        message += (modulesWithoutAnnotations.size() == 1 ? "y" : "ies")+ " now?";
-        if (Messages.showOkCancelDialog(project, message, INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
+        message += " refer to the existing '" +
+                   annotationsLib.getName() +
+                   "' library with IDEA nullity annotations. Would you like to add the dependenc";
+        message += (modulesWithoutAnnotations.size() == 1 ? "y" : "ies") + " now?";
+        if (Messages.showOkCancelDialog(project, message, INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) ==
+            DialogWrapper.OK_EXIT_CODE) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
               for (Module module : modulesWithoutAnnotations) {
-                final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-                modifiableModel.addLibraryEntry(annotationsLib);
-                modifiableModel.commit();
+                ModuleRootModificationUtil.addDependency(module, annotationsLib);
               }
             }
           });
         }
-      } else if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
-                                               " be available in all your project sources.\n\nYou will need to add annotations.jar as a library. " +
-                                               "It is possible to configure custom jar in e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
-                                               " The IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license. Would you like to do it now?",
-                                      INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
+      }
+      else if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
+                                                    " be available in all your project sources.\n\nYou will need to add annotations.jar as a library. " +
+                                                    "It is possible to configure custom jar in e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
+                                                    " The IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license. Would you like to do it now?",
+                                           INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             final LocateLibraryDialog dialog =
@@ -169,6 +176,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       public void run() {
         scope.accept(new PsiElementVisitor() {
           int myFileCount = 0;
+
           @Override
           public void visitFile(final PsiFile file) {
             myFileCount++;
@@ -189,7 +197,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
           }
         });
       }
-    }, INFER_NULLITY_ANNOTATIONS, true, project)) return;
+    }, INFER_NULLITY_ANNOTATIONS, true, project)) {
+      return;
+    }
 
     final Runnable applyRunnable = new Runnable() {
       @Override

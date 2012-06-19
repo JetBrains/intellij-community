@@ -127,8 +127,8 @@ public class IdeaApplication {
       final Method getWMName = netProtocol.getClass().getDeclaredMethod("getWMName");
       getWMName.setAccessible(true);
       final String wmName = (String)getWMName.invoke(netProtocol);
-      if (wmName == null) return;
       LOG.info("WM detected: " + wmName);
+      if (wmName == null) return;
 
       if ("Mutter".equals(wmName)) {
         try {
@@ -147,6 +147,10 @@ public class IdeaApplication {
         catch (NoSuchFieldException e) {
           setWM(xwm, "METACITY_WM");
         }
+      }
+      else if ("Marco".equals(wmName)) {
+        // Marco is another useless Metacity clone
+        setWM(xwm, "METACITY_WM");
       }
       else if ("awesome".equals(wmName)) {
         try {

@@ -95,7 +95,7 @@ import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -955,7 +955,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Nullable
   protected Editor getCompletionEditor() {
-    return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
+    return InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
   }
 
   @Override

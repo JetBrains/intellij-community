@@ -35,6 +35,8 @@ import com.intellij.openapi.extensions.LogProvider;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -582,7 +584,7 @@ public class PluginManager {
             final String description = event.getDescription();
             if (EDIT.equals(description)) {
               final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-              final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+              final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
               ShowSettingsUtil.getInstance().editConfigurable(focusOwner, configurable);
               return;
             }

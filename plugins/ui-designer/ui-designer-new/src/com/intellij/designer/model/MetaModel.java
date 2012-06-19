@@ -15,7 +15,7 @@
  */
 package com.intellij.designer.model;
 
-import com.intellij.designer.palette.Item;
+import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.util.IconLoader;
@@ -33,7 +33,7 @@ public class MetaModel {
   private Class<RadLayout> myLayout;
   private final String myTarget;
   private final String myTag;
-  private Item myPaletteItem;
+  private DefaultPaletteItem myPaletteItem;
   private String myTitle;
   private String myIconPath;
   private Icon myIcon;
@@ -109,11 +109,11 @@ public class MetaModel {
     myIcon = null;
   }
 
-  public Item getPaletteItem() {
+  public DefaultPaletteItem getPaletteItem() {
     return myPaletteItem;
   }
 
-  public void setPaletteItem(@NotNull Item paletteItem) {
+  public void setPaletteItem(@NotNull DefaultPaletteItem paletteItem) {
     myPaletteItem = paletteItem;
     myPaletteItem.setMetaModel(this);
   }

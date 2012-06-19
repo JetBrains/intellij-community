@@ -29,10 +29,10 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -62,8 +62,10 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
         return super.getChildElements(favTreeElement);
       }      
     
-      final Set<AbstractTreeNode> result = new HashSet<AbstractTreeNode>();
-      for (AbstractTreeNode<?> abstractTreeNode : FavoritesListNode.getFavoritesRoots(myProject, ((FavoritesListNode)element).getName())) {
+      final List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+      final FavoritesListNode listNode = (FavoritesListNode)element;
+      final Collection<AbstractTreeNode> roots = FavoritesListNode.getFavoritesRoots(myProject, listNode.getName(), listNode);
+      for (AbstractTreeNode<?> abstractTreeNode : roots) {
         final Object value = abstractTreeNode.getValue();
 
         if (value == null) continue;

@@ -19,7 +19,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobUtil;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -131,7 +131,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     if (hostPsiFile == null) return;
 
     final CopyOnWriteArrayList<DocumentWindow> injected =
-      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageFacadeImpl.getCachedInjectedDocuments(hostPsiFile);
     if (injected.isEmpty()) return;
 
     if (myProgress.isCanceled()) {
@@ -157,7 +157,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         }
         final DocumentWindow[] stillInjectedDocument = {null};
         // it is here where the reparse happens and old file contents replaced
-        InjectedLanguageUtil.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        InjectedLanguageFacadeImpl.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
           @Override
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
@@ -181,7 +181,8 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       @Override
       public void run() {
         if (myProgress.isCanceled()) return;
-        JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously, commitProcessor);
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<DocumentWindow>(injected), myProgress, !synchronously,
+                                                                  commitProcessor);
       }
     };
 
@@ -196,7 +197,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       }
     }
     else {
-      JobUtil.submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+      JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
         @Override
         public void run() {
           ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable);
@@ -332,7 +333,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @SuppressWarnings({"ConstantConditions", "unchecked"})
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
-    Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);
+    Place shreds = InjectedLanguageFacadeImpl.getShreds(injectedPsi);
     if (shreds == null) return Collections.emptyList();
     Object result = null; // optimization: TextRange or ArrayList
     int count = 0;
@@ -380,12 +381,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @Override
   public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
-    return InjectedLanguageUtil.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
+    return InjectedLanguageFacadeImpl.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
   }
 
   @Override
   public void dropFileCaches(@NotNull PsiFile file) {
-    InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
+    InjectedLanguageFacadeImpl.clearCachedInjectedFragmentsForFile(file);
   }
 
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();

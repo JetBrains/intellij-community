@@ -39,6 +39,14 @@ abstract class AndroidDomTest extends AndroidTestCase {
     return "dom/res";
   }
 
+  protected void doTestJavaCompletion(String aPackage) throws Throwable {
+    final String fileName = getTestName(false) + ".java";
+    final VirtualFile file = copyFileToProject(fileName, "src/" + aPackage.replace('/', '.') + '/' + fileName);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(false) + "_after.java");
+  }
+
   protected static String[] withNamespace(String... arr) {
     List<String> list = new ArrayList<String>();
     for (String s : arr) {
@@ -62,6 +70,13 @@ abstract class AndroidDomTest extends AndroidTestCase {
 
   protected void doTestHighlighting(String file) throws Throwable {
     VirtualFile virtualFile = copyFileToProject(file);
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  protected void doTestJavaHighlighting(String aPackage) throws Throwable {
+    final String fileName = getTestName(false) + ".java";
+    final VirtualFile virtualFile = copyFileToProject(fileName, "src/" + aPackage.replace('.', '/') + '/' + fileName);
     myFixture.configureFromExistingVirtualFile(virtualFile);
     myFixture.checkHighlighting(true, false, false);
   }

@@ -19,7 +19,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ public abstract class LookupManager {
     final LookupEx lookup = getInstance(project).getActiveLookup();
     if (lookup == null) return null;
 
-    return InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor()) == InjectedLanguageUtil.getTopLevelEditor(editor) ? lookup : null;
+    return InjectedLanguageFacadeImpl.getTopLevelEditor(lookup.getEditor()) == InjectedLanguageFacadeImpl.getTopLevelEditor(editor) ? lookup : null;
   }
 
   @Nullable

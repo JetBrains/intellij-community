@@ -366,7 +366,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     public GroovyResolveResult[] resolve(@NotNull GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
       final GroovyResolveResult[] results = _resolve(reference, reference.getManager(), reference.getKind(false));
-      if (results == null) return results;
+      if (results.length == 0) return results;
+
       List<GroovyResolveResult> imported = new ArrayList<GroovyResolveResult>();
       final PsiType[] args = reference.getTypeArguments();
       for (int i = 0; i < results.length; i++) {
@@ -390,6 +391,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       return results;
     }
 
+    @NotNull
     private static GroovyResolveResult[] _resolve(GrCodeReferenceElementImpl ref, PsiManager manager, ReferenceKind kind) {
       final String refName = ref.getReferenceName();
       if (refName == null) {

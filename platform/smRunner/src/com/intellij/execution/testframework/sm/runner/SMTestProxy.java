@@ -60,6 +60,7 @@ public class SMTestProxy extends AbstractTestProxy {
   private boolean myIsEmpty = true;
   TestLocationProvider myLocator = null;
   private final boolean myPreservePresentableName;
+  private Printer myPreferredPrinter = null;
 
   public SMTestProxy(final String testName, final boolean isSuite,
                      @Nullable final String locationUrl) {
@@ -77,6 +78,10 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setLocator(@NotNull TestLocationProvider locator) {
     myLocator = locator;
+  }
+
+  public void setPreferredPrinter(@NotNull Printer preferredPrinter) {
+    myPreferredPrinter = preferredPrinter;
   }
 
   public boolean isInProgress() {
@@ -172,7 +177,23 @@ public class SMTestProxy extends AbstractTestProxy {
     // if parent is being printed then all childs output
     // should be also send to the same printer
     child.setPrinter(myPrinter);
+    if (myPreferredPrinter != null && child.myPreferredPrinter == null) {
+      child.setPreferredPrinter(myPreferredPrinter);
+    }
   }
+
+  @Nullable
+  private Printer getRightPrinter(@Nullable Printer printer) {
+    if (myPreferredPrinter != null && printer != null) {
+      return myPreferredPrinter;
+    }
+    return printer;
+  }
+
+  public void setPrinter(Printer printer) {
+    super.setPrinter(getRightPrinter(printer));
+  }
+
 
   public String getName() {
     return myName;
@@ -397,13 +418,14 @@ public class SMTestProxy extends AbstractTestProxy {
    * @param printer Printer
    */
   public void printOn(final Printer printer) {
-    super.printOn(printer);
+    final Printer rightPrinter = getRightPrinter(printer);
+    super.printOn(rightPrinter);
 
     invokeInAlarm(new Runnable() {
       @Override
       public void run() {
         //Tests State, that provide and formats additional output
-        myState.printOn(printer);
+        myState.printOn(rightPrinter);
       }
     });
   }

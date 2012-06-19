@@ -28,4 +28,5 @@ public interface ReferenceImporter {
   ExtensionPointName<ReferenceImporter> EP_NAME = ExtensionPointName.create("com.intellij.referenceImporter");
 
   boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
+  boolean autoImportReferenceAt(@NotNull Editor editor, @NotNull PsiFile file, int offset);
 }

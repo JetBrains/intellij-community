@@ -59,6 +59,7 @@ public class StringsComboEditor extends ComboEditor {
                                  Object value,
                                  @Nullable InplaceContext inplaceContext) {
     myCombo.setSelectedItem(value);
+    myCombo.setBorder(inplaceContext == null ? null : myComboBorder);
     return myCombo;
   }
 }

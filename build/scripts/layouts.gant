@@ -532,6 +532,8 @@ def layout_core_upsource(String home, String target) {
       module("projectModel-api")
       module("projectModel-impl")
       module("java-indexing-impl")
+      module("platform-resources")
+      module("platform-resources-en")
     }
 
     jar("annotations.jar") {

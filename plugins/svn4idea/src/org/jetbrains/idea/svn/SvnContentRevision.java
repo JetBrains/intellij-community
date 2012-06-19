@@ -20,7 +20,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.CurrentRevisionProvider;
@@ -39,7 +41,7 @@ import java.io.IOException;
 /**
  * @author yole
 */
-public class SvnContentRevision implements ContentRevision {
+public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevision {
   private final SvnVcs myVcs;
   protected final FilePath myFile;
   private final SVNRevision myRevision;
@@ -144,5 +146,10 @@ public class SvnContentRevision implements ContentRevision {
   @NonNls
   public String toString() {
     return myFile.getPath();
+  }
+
+  @Override
+  public VcsKey getVcsKey() {
+    return SvnVcs.getKey();
   }
 }

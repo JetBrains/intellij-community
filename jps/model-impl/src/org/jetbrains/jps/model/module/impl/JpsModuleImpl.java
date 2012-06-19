@@ -1,11 +1,14 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElementKind;
+import org.jetbrains.jps.model.JpsElementProperties;
+import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.impl.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
-import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
+import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryKind;
 import org.jetbrains.jps.model.module.*;
 
@@ -16,24 +19,26 @@ import java.util.List;
  */
 public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, JpsProjectImpl> implements JpsModule {
   private static final JpsTypedDataKind<JpsModuleType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleType<?>>();
-  private static final JpsElementKind<JpsUrlListImpl> CONTENT_ROOTS_KIND = new JpsElementKindBase<JpsUrlListImpl>("content roots");
-  private static final JpsElementKind<JpsUrlListImpl> EXCLUDED_ROOTS_KIND = new JpsElementKindBase<JpsUrlListImpl>("excluded roots");
+  private static final JpsUrlListKind CONTENT_ROOTS_KIND = new JpsUrlListKind("content roots");
+  private static final JpsUrlListKind EXCLUDED_ROOTS_KIND = new JpsUrlListKind("excluded roots");
   public static final JpsElementKind<JpsDependenciesListImpl> DEPENDENCIES_LIST_KIND = new JpsElementKindBase<JpsDependenciesListImpl>("dependencies");
+  private final JpsLibraryCollection myLibraryCollection;
 
   public JpsModuleImpl(JpsModuleType type,
                        @NotNull String name) {
     super(name);
     myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleType<?>>(type));
-    myContainer.setChild(CONTENT_ROOTS_KIND, new JpsUrlListImpl());
-    myContainer.setChild(EXCLUDED_ROOTS_KIND, new JpsUrlListImpl());
+    myContainer.setChild(CONTENT_ROOTS_KIND);
+    myContainer.setChild(EXCLUDED_ROOTS_KIND);
     myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl());
-    myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
+    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
     myContainer.setChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
     myContainer.setChild(JpsSdkReferencesTableImpl.KIND, new JpsSdkReferencesTableImpl());
   }
 
   private JpsModuleImpl(JpsModuleImpl original) {
     super(original);
+    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
   }
 
   @NotNull
@@ -115,7 +120,17 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
   @NotNull
   @Override
   public JpsLibrary addModuleLibrary(@NotNull JpsLibraryType<?> type, @NotNull String name) {
-    final JpsElementCollectionImpl<JpsLibraryImpl> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
-    return collection.addChild(new JpsLibraryImpl(name, type));
+    return myLibraryCollection.addLibrary(type, name);
+  }
+
+  @Override
+  public void addModuleLibrary(final @NotNull JpsLibrary library) {
+    myLibraryCollection.addLibrary(library);
+  }
+
+  @NotNull
+  @Override
+  public JpsLibraryCollection getLibraryCollection() {
+    return myLibraryCollection;
   }
 }

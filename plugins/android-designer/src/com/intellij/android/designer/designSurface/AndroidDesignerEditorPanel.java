@@ -21,10 +21,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.inspection.ErrorAnalyzer;
-import com.intellij.android.designer.model.IConfigurableComponent;
-import com.intellij.android.designer.model.ModelParser;
-import com.intellij.android.designer.model.PropertyParser;
-import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.*;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
@@ -36,7 +33,9 @@ import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.palette.Item;
+import com.intellij.designer.palette.DefaultPaletteItem;
+import com.intellij.designer.palette.PaletteGroup;
+import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
@@ -446,13 +445,18 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   @Override
+  public List<PaletteGroup> getPaletteGroups() {
+    return ViewsMetaManager.getInstance(getProject()).getPaletteGroups();
+  }
+
+  @Override
   @NotNull
-  protected ComponentCreationFactory createCreationFactory(final Item paletteItem) {
+  protected ComponentCreationFactory createCreationFactory(final PaletteItem paletteItem) {
     return new ComponentCreationFactory() {
       @NotNull
       @Override
       public RadComponent create() throws Exception {
-        RadViewComponent component = ModelParser.createComponent(null, paletteItem.getMetaModel());
+        RadViewComponent component = ModelParser.createComponent(null, ((DefaultPaletteItem)paletteItem).getMetaModel());
         if (component instanceof IConfigurableComponent) {
           ((IConfigurableComponent)component).configure(myRootComponent);
         }

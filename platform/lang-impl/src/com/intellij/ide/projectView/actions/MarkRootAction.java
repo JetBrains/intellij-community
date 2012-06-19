@@ -23,8 +23,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -88,11 +89,11 @@ public class MarkRootAction extends AnAction {
   }
 
   @Nullable
-  private static ContentEntry findContentEntry(ModifiableRootModel model, VirtualFile vFile) {
+  public static ContentEntry findContentEntry(@NotNull ModuleRootModel model, @NotNull VirtualFile vFile) {
     final ContentEntry[] contentEntries = model.getContentEntries();
     for (ContentEntry contentEntry : contentEntries) {
       final VirtualFile contentEntryFile = contentEntry.getFile();
-      if (contentEntryFile != null && VfsUtil.isAncestor(contentEntryFile, vFile, false)) {
+      if (contentEntryFile != null && VfsUtilCore.isAncestor(contentEntryFile, vFile, false)) {
         return contentEntry;
       }
     }

@@ -160,7 +160,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
   }
 
   @NotNull
-  private static Set<String> getResourceTypesInCurrentModule(@NotNull AndroidFacet facet) {
+  public static Set<String> getResourceTypesInCurrentModule(@NotNull AndroidFacet facet) {
     final Set<String> result = new HashSet<String>();
     final LocalResourceManager manager = facet.getLocalResourceManager();
 
@@ -173,6 +173,9 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     }
 
     result.addAll(manager.getValueResourceTypes());
+    if (manager.getIds().size() > 0) {
+      result.add(ResourceType.ID.getName());
+    }
     return result;
   }
 
@@ -205,17 +208,10 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
                                           String resPackage,
                                           Collection<ResourceValue> result,
                                           boolean explicitResourceType) {
-    ResourceManager manager = facet.getResourceManager(resPackage);
-    if (manager == null) return;
-    for (String name : manager.getValueResourceNames(type)) {
-      result.add(referenceTo(type, resPackage, name, explicitResourceType));
-    }
-    for (String file : manager.getFileResourcesNames(type)) {
-      result.add(referenceTo(type, resPackage, file, explicitResourceType));
-    }
-    if (type.equals("id")) {
-      for (String id : manager.getIds()) {
-        result.add(referenceTo(type, resPackage, id, explicitResourceType));
+    final ResourceManager manager = facet.getResourceManager(resPackage);
+    if (manager != null) {
+      for (String name : manager.getResourceNames(type)) {
+        result.add(referenceTo(type, resPackage, name, explicitResourceType));
       }
     }
   }

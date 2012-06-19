@@ -49,7 +49,7 @@ public class CreateValueResourceQuickFix implements LocalQuickFix, IntentionActi
   @NotNull
   public String getName() {
     return AndroidBundle.message("create.value.resource.quickfix.name", myResourceName,
-                                 AndroidResourceUtil.getDefaultResourceFileName(myResourceType.getName()));
+                                 AndroidResourceUtil.getDefaultResourceFileName(myResourceType));
   }
 
   @NotNull
@@ -75,7 +75,7 @@ public class CreateValueResourceQuickFix implements LocalQuickFix, IntentionActi
 
   protected boolean doInvoke() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final String fileName = AndroidResourceUtil.getDefaultResourceFileName(myResourceType.getName());
+      final String fileName = AndroidResourceUtil.getDefaultResourceFileName(myResourceType);
       assert fileName != null;
 
       if (!AndroidResourceUtil.createValueResource(myFacet.getModule(), myResourceName, myResourceType, fileName,
@@ -84,8 +84,10 @@ public class CreateValueResourceQuickFix implements LocalQuickFix, IntentionActi
       }
     }
     else {
-      final CreateXmlResourceDialog dialog = new CreateXmlResourceDialog(myFacet.getModule(), myResourceType, myResourceName, null,
-                                                                         myChooseName);
+      final String value = myResourceType == ResourceType.STYLEABLE ||
+                           myResourceType == ResourceType.ATTR ? "\n" : null;
+      final CreateXmlResourceDialog dialog =
+        new CreateXmlResourceDialog(myFacet.getModule(), myResourceType, myResourceName, value, myChooseName);
       dialog.setTitle("New " + StringUtil.capitalize(myResourceType.getDisplayName()) + " Value Resource");
       dialog.show();
 
@@ -107,11 +109,6 @@ public class CreateValueResourceQuickFix implements LocalQuickFix, IntentionActi
     }
     PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
     UndoUtil.markPsiFileForUndo(myFile);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().saveAll();
-      }
-    });
     return true;
   }
 

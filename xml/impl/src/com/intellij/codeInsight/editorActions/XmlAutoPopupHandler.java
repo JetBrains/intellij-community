@@ -26,7 +26,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
@@ -61,7 +61,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
       public boolean value(PsiFile file) {
         int offset = editor.getCaretModel().getOffset();
 
-        PsiElement lastElement = InjectedLanguageUtil.findElementAtNoCommit(file, offset - 1);
+        PsiElement lastElement = InjectedLanguageFacadeImpl.findElementAtNoCommit(file, offset - 1);
         if (lastElement instanceof PsiFile) { //the very end of an injected file
           lastElement = file.findElementAt(offset - 1);
         }

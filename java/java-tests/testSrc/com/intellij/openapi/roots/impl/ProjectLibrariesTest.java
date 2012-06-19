@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
@@ -31,14 +32,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
         return libraryTable.createLibrary("LIB");
       }
     });
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    rootModel.addLibraryEntry(lib);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.addDependency(myModule, lib);
     final JavaPsiFacade manager = getJavaFacade();
     assertNull(manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
     final File file = new File(PathManagerEx.getTestDataPath() + "/psi/repositoryUse/cls");
@@ -69,14 +63,7 @@ public class ProjectLibrariesTest extends IdeaTestCase {
         return libraryTable.createLibrary("LIB");
       }
     });
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    rootModel.addLibraryEntry(lib);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        rootModel.commit();
-      }
-    });
+    ModuleRootModificationUtil.addDependency(myModule, lib);
     final JavaPsiFacade manager = getJavaFacade();
     assertNull(manager.findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
 

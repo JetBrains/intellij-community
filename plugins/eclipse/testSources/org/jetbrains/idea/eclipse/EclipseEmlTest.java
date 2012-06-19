@@ -28,6 +28,8 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,10 +56,7 @@ public class EclipseEmlTest extends IdeaTestCase {
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
     FileUtil.copyDir(currentTestRoot, new File(getProject().getBaseDir().getPath()));
-
-
   }
-
 
 
   protected static void doTest(String relativePath, final Project project) throws Exception {
@@ -84,7 +83,8 @@ public class EclipseEmlTest extends IdeaTestCase {
       new EclipseClasspathStorageProvider.EclipseClasspathConverter(module);
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
 
-    final Element classpathElement = JDOMUtil.loadDocument(FileUtil.loadFile(new File(path, EclipseXml.DOT_CLASSPATH_EXT))).getRootElement();
+    final Element classpathElement =
+      JDOMUtil.loadDocument(FileUtil.loadFile(new File(path, EclipseXml.DOT_CLASSPATH_EXT))).getRootElement();
     converter.getClasspath(rootModel, classpathElement);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -95,11 +95,9 @@ public class EclipseEmlTest extends IdeaTestCase {
   }
 
   protected static void checkModule(String path, Module module) throws WriteExternalException, IOException, JDOMException {
-    ModifiableRootModel rootModel;
-    rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    ModuleRootModel rootModel = ModuleRootManager.getInstance(module);
     final Element root = new Element("component");
     IdeaSpecificSettings.writeIDEASpecificClasspath(root, rootModel);
-    rootModel.dispose();
 
     final String resulted = new String(JDOMUtil.printDocument(new Document(root), "\n"));
 
@@ -128,9 +126,7 @@ public class EclipseEmlTest extends IdeaTestCase {
 
     final Module module = doLoadModule(path, project);
 
-    final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    modifiableModel.inheritSdk();
-    modifiableModel.commit();
+    ModuleRootModificationUtil.setSdkInherited(module);
 
     checkModule(projectBasePath + "/test/expected", module);
   }

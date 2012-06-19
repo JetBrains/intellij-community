@@ -99,9 +99,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
           JavaAwareProjectJdkTableImpl jdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
           Sdk internalJdk = jdkTable.getInternalJdk();
           jdkTable.addJdk(internalJdk);
-          final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          modifiableModel.setSdk(internalJdk);
-          modifiableModel.commit();
+          ModuleRootModificationUtil.setModuleSdk(myModule, internalJdk);
         }
       }
     }.execute();
@@ -166,7 +164,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   protected Module addDependentModule() {
     Module module = addModule("dependent");
-    PsiTestUtil.addDependency(module, myModule);
+    ModuleRootModificationUtil.addDependency(module, myModule);
     return module;
   }
 
@@ -181,12 +179,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         moduleModel.commit();
 
         final Module dep = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
-        final ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
-        final ContentEntry entry = model.addContentEntry(depRoot);
-        entry.addSourceFolder(depRoot, false);
-        model.setSdk(ModuleRootManager.getInstance(myModule).getSdk());
-        model.commit();
-
+        ModuleRootModificationUtil.setModuleSdk(dep, ModuleRootManager.getInstance(myModule).getSdk());
+        PsiTestUtil.addSourceRoot(dep, depRoot);
         IdeaTestUtil.setModuleLanguageLevel(dep, LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel());
 
         result.setResult(dep);
@@ -200,7 +194,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       if (useJps()) {
         //noinspection ConstantConditions
         touch(JavaPsiFacade.getInstance(getProject()).findClass(className).getContainingFile().getVirtualFile());
-      } else {
+      }
+      else {
         //noinspection ConstantConditions
         findClassFile(className).delete(this);
       }
@@ -210,10 +205,13 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     }
   }
 
-  @Nullable protected VirtualFile findClassFile(String className) {
+  @Nullable
+  protected VirtualFile findClassFile(String className) {
     return findClassFile(className, myModule);
   }
-  @Nullable protected VirtualFile findClassFile(String className, Module module) {
+
+  @Nullable
+  protected VirtualFile findClassFile(String className, Module module) {
     //noinspection ConstantConditions
     VirtualFile path = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
     path.getChildren();
@@ -344,7 +342,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                                       Module module,
                                       final Class<? extends Executor> executorClass,
                                       final ProcessListener listener, final ProgramRunner runner) throws ExecutionException {
-    final ApplicationConfiguration configuration = new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
+    final ApplicationConfiguration configuration =
+      new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
     configuration.setModule(module);
     configuration.setMainClassName(className);
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);

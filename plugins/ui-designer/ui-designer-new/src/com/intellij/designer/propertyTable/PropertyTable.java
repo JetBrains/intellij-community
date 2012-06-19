@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -82,13 +83,12 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
   private QuickFixManager myQuickFixManager;
 
+  private PropertyTablePanel myPropertyTablePanel;
+
   public PropertyTable() {
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-    JTableHeader tableHeader = getTableHeader();
-    tableHeader.setVisible(false);
-    tableHeader.setPreferredSize(new Dimension());
+    showColumns(false);
 
     addMouseListener(new MouseTableListener());
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -103,8 +103,18 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     // TODO: Updates UI after LAF updated
   }
 
+  public void showColumns(boolean value) {
+    JTableHeader tableHeader = getTableHeader();
+    tableHeader.setVisible(value);
+    tableHeader.setPreferredSize(value ? null : new Dimension());
+  }
+
   public void initQuickFixManager(JViewport viewPort) {
     myQuickFixManager = new QuickFixManager(this, viewPort);
+  }
+
+  public void setPropertyTablePanel(PropertyTablePanel propertyTablePanel) {
+    myPropertyTablePanel = propertyTablePanel;
   }
 
   public void setUI(TableUI ui) {
@@ -278,6 +288,10 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
         }
 
         restoreSelection(selection);
+      }
+
+      if (myPropertyTablePanel != null) {
+        myPropertyTablePanel.updateActions();
       }
     }
     finally {
@@ -656,7 +670,11 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
     boolean isNewValue;
     try {
-      isNewValue = !Comparing.equal(getValue(property), newValue);
+      Object oldValue = getValue(property);
+      isNewValue = !Comparing.equal(oldValue, newValue);
+      if (newValue == null && oldValue instanceof String && ((String)oldValue).length() == 0) {
+        isNewValue = false;
+      }
     }
     catch (Throwable e) {
       isNewValue = true;
@@ -675,8 +693,13 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
       }, DesignerBundle.message("command.set.property.value"), false);
     }
 
-    if (property.needRefreshPropertyList() && isSetValue) {
-      updateProperties();
+    if (isSetValue) {
+      if (property.needRefreshPropertyList()) {
+        updateProperties();
+      }
+      else if (myPropertyTablePanel != null) {
+        myPropertyTablePanel.updateActions();
+      }
     }
 
     return isSetValue;
@@ -1026,14 +1049,17 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
       column = table.convertColumnIndexToModel(column);
       Property property = (Property)value;
       Color background = table.getBackground();
+      boolean isDefault = true;
 
       try {
-        if (isDefault(property)) {
-          background = Gray._240;
-        }
+        isDefault = isDefault(property);
       }
       catch (Throwable e) {
         LOG.debug(e);
+      }
+
+      if (isDefault) {
+        background = Gray._240;
       }
 
       if (!selected) {
@@ -1113,7 +1139,12 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
         }
 
         if (!selected) {
-          myPropertyNameRenderer.setForeground(property.isExpert() ? Color.LIGHT_GRAY : table.getForeground());
+          if (isDefault) {
+            myPropertyNameRenderer.setForeground(property.isExpert() ? Color.LIGHT_GRAY : table.getForeground());
+          }
+          else {
+            myPropertyNameRenderer.setForeground(FileStatus.MODIFIED.getColor());
+          }
         }
       }
       else {

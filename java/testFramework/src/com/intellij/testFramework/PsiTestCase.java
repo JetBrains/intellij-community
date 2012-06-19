@@ -15,16 +15,14 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -217,18 +215,8 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   protected static void addLibraryToRoots(final Module module, final VirtualFile root, final OrderRootType rootType) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-        final ModifiableRootModel rootModel = manager.getModifiableModel();
-        final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
-        final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-        libraryModel.addRoot(root, rootType);
-        libraryModel.commit();
-        rootModel.commit();
-      }
-    });
+    assertEquals(OrderRootType.CLASSES, rootType);
+    ModuleRootModificationUtil.addModuleLibrary(module, root.getUrl());
   }
 
 

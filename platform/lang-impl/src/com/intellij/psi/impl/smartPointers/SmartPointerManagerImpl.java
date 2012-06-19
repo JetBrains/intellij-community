@@ -29,7 +29,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.UnsafeWeakList;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +72,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         }
       }
 
-      for (DocumentWindow injectedDoc : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+      for (DocumentWindow injectedDoc : InjectedLanguageFacadeImpl.getCachedInjectedDocuments(file)) {
         PsiFile injectedFile = psiDocumentManager.getPsiFile(injectedDoc);
         if (injectedFile == null) continue;
         RangeMarker cachedMarker = getCachedRangeMarkerToInjectedFragment(injectedFile);
@@ -114,7 +114,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
         }
       }
 
-      for (DocumentWindow injectedDoc : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+      for (DocumentWindow injectedDoc : InjectedLanguageFacadeImpl.getCachedInjectedDocuments(file)) {
         PsiFile injectedFile = psiDocumentManager.getPsiFile(injectedDoc);
         if (injectedFile == null) continue;
         unfastenBelts(injectedFile, 0);
@@ -145,7 +145,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-    for (Document document : InjectedLanguageUtil.getCachedInjectedDocuments(file)) {
+    for (Document document : InjectedLanguageFacadeImpl.getCachedInjectedDocuments(file)) {
       PsiFile injectedfile = psiDocumentManager.getPsiFile(document);
       if (injectedfile == null) continue;
       _synchronizePointers(injectedfile);

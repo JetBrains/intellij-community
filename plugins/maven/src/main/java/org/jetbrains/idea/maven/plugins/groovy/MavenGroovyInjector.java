@@ -18,12 +18,14 @@ package org.jetbrains.idea.maven.plugins.groovy;
 import org.jetbrains.idea.maven.utils.MavenPluginConfigurationLanguageInjector;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
+import java.util.Arrays;
+
 /**
  * @author Sergey Evdokimov
  */
 public class MavenGroovyInjector extends MavenPluginConfigurationLanguageInjector {
   public MavenGroovyInjector() {
-    super("source", "org.codehaus.groovy.maven", "gmaven-plugin", GroovyFileType.GROOVY_LANGUAGE);
+    super("source", Arrays.asList("org.codehaus.groovy.maven", "org.codehaus.gmaven"), "gmaven-plugin", GroovyFileType.GROOVY_LANGUAGE);
   }
 
 }

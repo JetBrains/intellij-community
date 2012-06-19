@@ -18,11 +18,12 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -39,7 +40,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
  * Date: 2/22/12
  * Time: 10:28 AM
  */
-public class SvnLazyPropertyContentRevision implements ContentRevision {
+public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVcsContentRevision {
   private final FilePath myPath;
   private final VcsRevisionNumber myNumber;
   private final Project myProject;
@@ -100,5 +101,10 @@ public class SvnLazyPropertyContentRevision implements ContentRevision {
   @Override
   public VcsRevisionNumber getRevisionNumber() {
     return myNumber;
+  }
+
+  @Override
+  public VcsKey getVcsKey() {
+    return SvnVcs.getKey();
   }
 }

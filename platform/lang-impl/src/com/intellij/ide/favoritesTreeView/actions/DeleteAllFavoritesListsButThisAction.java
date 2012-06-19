@@ -40,7 +40,7 @@ public class DeleteAllFavoritesListsButThisAction extends AnAction implements Du
     }
     FavoritesManager favoritesManager = FavoritesManager.getInstance(project);
     String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
-    String[] lists = favoritesManager.getAvailableFavoritesLists();
+    String[] lists = favoritesManager.getAvailableFavoritesListNames();
     for (String list : lists) {
       if (!list.equals(listName)) {
         favoritesManager.removeFavoritesList(list);
@@ -59,7 +59,7 @@ public class DeleteAllFavoritesListsButThisAction extends AnAction implements Du
     final String listName = FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(dataContext);
     presentation.setEnabled(false);
     if (listName != null) {
-      final String[] favoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesLists();
+      final String[] favoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesListNames();
       if (listName.equals(project.getName())) {
         presentation.setEnabled(favoritesLists.length > 1);
       }  else {

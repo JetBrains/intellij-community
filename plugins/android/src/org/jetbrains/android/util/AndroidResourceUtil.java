@@ -39,8 +39,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -74,6 +72,8 @@ public class AndroidResourceUtil {
                                                                           ResourceType.STRING, ResourceType.STYLE, ResourceType.ARRAY,
                                                                           ResourceType.ID, ResourceType.BOOL, ResourceType.INTEGER);
 
+  public static final Set<ResourceType> ALL_VALUE_RESOURCE_TYPES = EnumSet.noneOf(ResourceType.class);
+
   public static final Set<ResourceType> REFERRABLE_RESOURCE_TYPES = EnumSet.noneOf(ResourceType.class);
   public static final Set<ResourceType> XML_FILE_RESOURCE_TYPES = EnumSet.of(ResourceType.ANIM, ResourceType.ANIMATOR,
                                                                              ResourceType.INTERPOLATOR, ResourceType.LAYOUT,
@@ -93,11 +93,10 @@ public class AndroidResourceUtil {
     REFERRABLE_RESOURCE_TYPES.addAll(Arrays.asList(ResourceType.values()));
     REFERRABLE_RESOURCE_TYPES.remove(ResourceType.ATTR);
     REFERRABLE_RESOURCE_TYPES.remove(ResourceType.STYLEABLE);
-  }
 
-  public static boolean isValueResourceType(@NotNull String resTypeName) {
-    final ResourceType type = ResourceType.getEnum(resTypeName);
-    return type != null && VALUE_RESOURCE_TYPES.contains(type);
+    ALL_VALUE_RESOURCE_TYPES.addAll(VALUE_RESOURCE_TYPES);
+    ALL_VALUE_RESOURCE_TYPES.add(ResourceType.ATTR);
+    ALL_VALUE_RESOURCE_TYPES.add(ResourceType.STYLEABLE);
   }
 
   @NotNull
@@ -380,38 +379,36 @@ public class AndroidResourceUtil {
   }
 
   @NotNull
-  public static ResourceElement addValueResource(@NotNull final String type, @NotNull final Resources resources) {
-    if (type.equals("string")) {
-      return resources.addString();
+  public static ResourceElement addValueResource(@NotNull final ResourceType resType, @NotNull final Resources resources) {
+    switch (resType) {
+      case STRING:
+        return resources.addString();
+      case DIMEN:
+        return resources.addDimen();
+      case COLOR:
+        return resources.addColor();
+      case DRAWABLE:
+        return resources.addDrawable();
+      case STYLE:
+        return resources.addStyle();
+      case ARRAY:
+        // todo: choose among string-array, integer-array and array
+        return resources.addStringArray();
+      case INTEGER:
+        return resources.addInteger();
+      case BOOL:
+        return resources.addBool();
+      case ID:
+        final Item item = resources.addItem();
+        item.getType().setValue("id");
+        return item;
+      case ATTR:
+        return resources.addAttr();
+      case STYLEABLE:
+        return resources.addDeclareStyleable();
+      default:
+        throw new IllegalArgumentException("Incorrect resource type");
     }
-    else if (type.equals("dimen")) {
-      return resources.addDimen();
-    }
-    else if (type.equals("color")) {
-      return resources.addColor();
-    }
-    else if (type.equals("drawable")) {
-      return resources.addDrawable();
-    }
-    else if (type.equals("style")) {
-      return resources.addStyle();
-    }
-    else if (type.equals("array")) {
-      // todo: choose among string-array, integer-array and array
-      return resources.addStringArray();
-    }
-    else if (type.equals("integer")) {
-      return resources.addInteger();
-    }
-    else if (type.equals("bool")) {
-      return resources.addBool();
-    }
-    else if (type.equals("id")) {
-      Item item = resources.addItem();
-      item.getType().setValue("id");
-      return item;
-    }
-    throw new IllegalArgumentException("Incorrect resource type");
   }
 
   @NotNull
@@ -439,8 +436,15 @@ public class AndroidResourceUtil {
   }
 
   @Nullable
-  public static String getDefaultResourceFileName(@NotNull String resourceType) {
-    return isValueResourceType(resourceType) ? resourceType + "s.xml" : null;
+  public static String getDefaultResourceFileName(@NotNull ResourceType type) {
+    if (VALUE_RESOURCE_TYPES.contains(type)) {
+      return type.getName() + "s.xml";
+    }
+    if (ResourceType.ATTR == type ||
+        ResourceType.STYLEABLE == type) {
+      return "attrs.xml";
+    }
+    return null;
   }
 
   @NotNull
@@ -572,6 +576,15 @@ public class AndroidResourceUtil {
     return false;
   }
 
+  public static boolean isManifestJavaFile(@NotNull AndroidFacet facet, @NotNull PsiFile file) {
+    if (file.getName().equals(AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME) && file instanceof PsiJavaFile) {
+      final Manifest manifest = facet.getManifest();
+      final PsiJavaFile javaFile = (PsiJavaFile)file;
+      return manifest != null && javaFile.getPackageName().equals(manifest.getPackage().getValue());
+    }
+    return false;
+  }
+
   public static List<String> getNames(@NotNull Collection<ResourceType> resourceTypes) {
     if (resourceTypes.size() == 0) {
       return Collections.emptyList();
@@ -654,11 +667,16 @@ public class AndroidResourceUtil {
       @Override
       public void run() {
         for (Resources resources : resourcesElements) {
-          final ResourceElement element = addValueResource(resourceType.getName(), resources);
+          final ResourceElement element = addValueResource(resourceType, resources);
           element.getName().setValue(resourceName);
 
           if (value.length() > 0) {
             element.setStringValue(value);
+          }
+          else if (resourceType == ResourceType.STYLEABLE ||
+                   resourceType == ResourceType.STYLE) {
+            element.setStringValue("value");
+            element.getXmlTag().getValue().setText("");
           }
         }
       }
@@ -745,37 +763,6 @@ public class AndroidResourceUtil {
     return new Pair<String, String>(resClassName, resFieldName);
   }
 
-  public static void createStubResourceField(@NotNull final Module module,
-                                             @NotNull final String aPackage,
-                                             @NotNull final String resClassName,
-                                             @NotNull final String resFieldName) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final Project project = module.getProject();
-        final PsiClass[] classes =
-          JavaPsiFacade.getInstance(project).findClasses(aPackage + ".R", GlobalSearchScope.moduleScope(module));
-        if (classes.length == 1) {
-          final PsiClass aClass = classes[0];
-          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-
-          PsiClass resTypeClass = aClass.findInnerClassByName(resClassName, false);
-
-          if (resTypeClass == null) {
-            resTypeClass = (PsiClass)aClass.add(factory.createClass(resClassName));
-          }
-          else if (resTypeClass.findFieldByName(resFieldName, false) != null) {
-            return;
-          }
-          final PsiField psiField = (PsiField)resTypeClass.add(factory.createField(resFieldName, PsiType.INT));
-          PsiUtil.setModifierProperty(psiField, PsiModifier.PUBLIC, true);
-          PsiUtil.setModifierProperty(psiField, PsiModifier.STATIC, true);
-          PsiUtil.setModifierProperty(psiField, PsiModifier.FINAL, true);
-        }
-      }
-    });
-  }
-
   @NotNull
   public static XmlFile createFileResource(@NotNull String fileName,
                                            @NotNull PsiDirectory resSubdir,
@@ -802,5 +789,10 @@ public class AndroidResourceUtil {
       return AndroidFileTemplateProvider.LAYOUT_RESOURCE_FILE_TEMPLATE;
     }
     return AndroidFileTemplateProvider.RESOURCE_FILE_TEMPLATE;
+  }
+
+  @NotNull
+  public static String getFieldNameByResourceName(@NotNull String fieldName) {
+    return fieldName.replace('.', '_').replace('-', '_');
   }
 }

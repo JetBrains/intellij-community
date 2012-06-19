@@ -19,12 +19,13 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
 
 /**
 * @author Alexey Pegov
@@ -37,9 +38,9 @@ class SlideComponent extends JComponent {
   private final boolean myVertical;
   private final String myTitle;
 
-  private CopyOnWriteArrayList<Consumer<Integer>> myListeners = new CopyOnWriteArrayList<Consumer<Integer>>();
+  private final List<Consumer<Integer>> myListeners = ContainerUtil.createEmptyCOWList();
   private LightweightHint myTooltipHint;
-  private JLabel myLabel = new JLabel();
+  private final JLabel myLabel = new JLabel();
 
   SlideComponent(String title, boolean vertical) {
     myTitle = title;
@@ -121,7 +122,8 @@ class SlideComponent extends JComponent {
         .setTextBg(HintUtil.INFORMATION_COLOR)
         .setShowImmediately(true);
 
-      myTooltipHint.show(this, point.x, point.y, (JComponent)KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(), hint);
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      myTooltipHint.show(this, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hint);
     } else {
       myTooltipHint.setLocation(new RelativePoint(this, point));
     }

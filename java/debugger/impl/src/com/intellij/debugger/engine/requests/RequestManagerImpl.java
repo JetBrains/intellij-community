@@ -151,7 +151,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     }
 
-    if (requestor.COUNT_FILTER_ENABLED) {
+    if (requestor.COUNT_FILTER_ENABLED && requestor.COUNT_FILTER > 0) {
       request.addCountFilter(requestor.COUNT_FILTER);
     }
 

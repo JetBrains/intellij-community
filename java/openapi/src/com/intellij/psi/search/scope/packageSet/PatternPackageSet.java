@@ -106,6 +106,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(file.isDirectory() ? file :  file.getParent()), file.getNameWithoutExtension());
   }
 
+  @NotNull
   @Override
   public PackageSet createCopy() {
     return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText);
@@ -116,6 +117,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     return 0;
   }
 
+  @NotNull
   @Override
   public String getText() {
     StringBuilder buf = new StringBuilder();

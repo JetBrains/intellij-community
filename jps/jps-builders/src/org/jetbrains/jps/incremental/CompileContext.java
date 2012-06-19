@@ -2,6 +2,8 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +16,7 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.incremental.storage.ModuleOutputRootsLayout;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ProjectDescriptor;
@@ -350,17 +353,20 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     for (Module module : chunk.getModules()) {
       if (isProjectRebuild()) {
         markDirtyFiles(module, myTimestamps, true, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
+        updateOutputRootsLayout(module);
       }
       else {
         if (isMake()) {
           if (myProjectDescriptor.fsState.markInitialScanPerformed(module.getName(), isCompilingTests())) {
             initModuleFSState(module);
+            updateOutputRootsLayout(module);
           }
         }
         else {
           // forced compilation mode
           if (getScope().isRecompilationForced(module.getName())) {
             markDirtyFiles(module, myTimestamps, true, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
+            updateOutputRootsLayout(module);
           }
         }
       }
@@ -368,9 +374,24 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   private void initModuleFSState(Module module) throws IOException {
-    final HashSet<File> currentFiles = new HashSet<File>();
-    markDirtyFiles(module, myTimestamps, false, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, currentFiles);
+    boolean forceMarkDirty = false;
+    final File currentOutput = getProjectPaths().getModuleOutputDir(module, isCompilingTests());
+    if (currentOutput != null) {
+      Pair<String, String> outputsPair = getDataManager().getOutputRootsLayout().getState(module.getName());
+      if (outputsPair != null) {
+        final String previousPath = isCompilingTests() ? outputsPair.second : outputsPair.first;
+        forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
+      }
+      else {
+        forceMarkDirty = true;
+      }
+    }
 
+    final HashSet<File> currentFiles = new HashSet<File>();
+    markDirtyFiles(module, myTimestamps, forceMarkDirty, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, currentFiles);
+
+    // handle deleted paths
+    myProjectDescriptor.fsState.clearDeletedPaths(module.getName(), isCompilingTests());
     final SourceToOutputMapping sourceToOutputMap = getDataManager().getSourceToOutputMap(module.getName(), isCompilingTests());
     for (final Iterator<String> it = sourceToOutputMap.getKeysIterator(); it.hasNext();) {
       final String path = it.next();
@@ -380,6 +401,27 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
         myProjectDescriptor.fsState.registerDeleted(module.getName(), file, isCompilingTests(), myTimestamps);
       }
     }
+  }
+
+  private void updateOutputRootsLayout(Module module) throws IOException {
+    final File currentOutput = getProjectPaths().getModuleOutputDir(module, isCompilingTests());
+    if (currentOutput == null) {
+      return;
+    }
+    final ModuleOutputRootsLayout outputRootsLayout = getDataManager().getOutputRootsLayout();
+    Pair<String, String> outputsPair = outputRootsLayout.getState(module.getName());
+    // update data
+    final String productionPath;
+    final String testPath;
+    if (isCompilingTests()) {
+      productionPath = outputsPair != null? outputsPair.first : "";
+      testPath = FileUtil.toSystemIndependentName(currentOutput.getPath());
+    }
+    else {
+      productionPath = FileUtil.toSystemIndependentName(currentOutput.getPath());
+      testPath = outputsPair != null? outputsPair.second : "";
+    }
+    outputRootsLayout.update(module.getName(), Pair.create(productionPath, testPath));
   }
 
   public boolean hasRemovedSources() {
@@ -447,7 +489,6 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
         continue;
       }
       myProjectDescriptor.fsState.clearRecompile(rd);
-      myProjectDescriptor.fsState.clearDeletedPaths(module.getName(), isCompilingTests());
       traverseRecursively(rd, rd.root, excludes, tsStorage, forceMarkDirty, currentFiles);
     }
   }

@@ -20,16 +20,22 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
  * Encapsulates operations with .jar file
  */
 public interface JarFile {
-  ZipEntry getEntry(String name);
-  InputStream getInputStream(ZipEntry entry) throws IOException;
-  Enumeration<? extends ZipEntry> entries();
+  interface JarEntry {
+    String getName();
+    long getSize();
+    long getTime();
+    boolean isDirectory();
+  }
+
+  JarEntry getEntry(String name);
+  InputStream getInputStream(JarEntry entry) throws IOException;
+  Enumeration<? extends JarEntry> entries();
 
   @Nullable ZipFile getZipFile();
 }

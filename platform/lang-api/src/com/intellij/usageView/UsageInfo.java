@@ -69,6 +69,31 @@ public class UsageInfo {
     this.isNonCodeUsage = isNonCodeUsage;
   }
 
+  public UsageInfo(@NotNull SmartPsiElementPointer<?> smartPointer,
+                   SmartPsiFileRange psiFileRange, boolean dynamicUsage,
+                   boolean nonCodeUsage) {
+    myDynamicUsage = dynamicUsage;
+    isNonCodeUsage = nonCodeUsage;
+    myPsiFileRange = psiFileRange;
+    mySmartPointer = smartPointer;
+  }
+
+  public SmartPsiElementPointer<?> getSmartPointer() {
+    return mySmartPointer;
+  }
+
+  public SmartPsiFileRange getPsiFileRange() {
+    return myPsiFileRange;
+  }
+
+  public boolean isNonCodeUsage() {
+    return isNonCodeUsage;
+  }
+
+  public void setDynamicUsage(boolean dynamicUsage) {
+    myDynamicUsage = dynamicUsage;
+  }
+
   public UsageInfo(@NotNull PsiElement element, boolean isNonCodeUsage) {
     this(element, -1, -1, isNonCodeUsage);
   }

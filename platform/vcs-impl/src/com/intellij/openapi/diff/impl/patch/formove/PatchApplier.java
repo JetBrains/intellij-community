@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchAction;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -372,6 +373,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
       }
     };
 
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    for (FilePath filePath : directlyAffected) {
+      lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
+    }
     final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
       public void run() {
         if (project.isDisposed()) return;
@@ -401,6 +406,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
           final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
           // will schedule update
           vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
+          vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
           scheduleProjectFilesReload.run();
           if (context != null) {
             context.ping();

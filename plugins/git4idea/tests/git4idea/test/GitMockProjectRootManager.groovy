@@ -45,10 +45,6 @@ class GitMockProjectRootManager extends ProjectRootManager {
 
 
 
-  @Override
-  VirtualFile[] getFilesFromAllModules(OrderRootType type) {
-    throw new UnsupportedOperationException()
-  }
 
   @Override
   OrderEnumerator orderEntries() {

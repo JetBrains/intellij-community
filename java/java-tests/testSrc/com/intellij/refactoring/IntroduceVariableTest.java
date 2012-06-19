@@ -306,6 +306,19 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     });
   }
 
+
+  public void testIncorrectExpressionSelected() throws Exception {
+    try {
+      doTest(new MockIntroduceVariableHandler("toString", false, false, false, "java.lang.String"));
+    }
+    catch (Exception e) {
+      assertEquals(e.getMessage(), "Error message:Cannot perform refactoring.\n" +
+                                   "Selected block should represent an expression.");
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+  
   public void testMultiCatchSimple() throws Exception {
     doTest(new MockIntroduceVariableHandler("e", true, true, false, "java.lang.Exception", true));
   }

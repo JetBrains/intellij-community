@@ -20,10 +20,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -96,7 +93,7 @@ public class HighlightInfo implements Segment {
 
   private GutterIconRenderer gutterIconRenderer;
   private String myProblemGroup;
-  public boolean bijective;
+  public volatile boolean bijective;
 
   public HighlightSeverity getSeverity() {
     return severity;
@@ -179,6 +176,7 @@ public class HighlightInfo implements Segment {
     return EditorColorsManager.getInstance().getGlobalScheme();
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type,
                                                   @NotNull PsiElement element,
                                                   @Nullable String description)
@@ -192,6 +190,7 @@ public class HighlightInfo implements Segment {
     return description == null ? null : "<html><body>"+ XmlStringUtil.escapeString(description)+"</body></html>";
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull PsiElement element, String description, String toolTip) {
     TextRange range = element.getTextRange();
     int start = range.getStartOffset();
@@ -199,10 +198,11 @@ public class HighlightInfo implements Segment {
     return createHighlightInfo(type, element, start, end, description, toolTip);
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description,
                                                   String toolTip,
                                                   boolean isEndOfLine,
-                                                  TextAttributes forcedAttributes) {
+                                                  @Nullable TextAttributes forcedAttributes) {
     LOG.assertTrue(element != null || ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1, "Custom type demands element to detect its text attributes");
     HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, null, type, start, end, description, toolTip,
                                                     type.getSeverity(element), isEndOfLine, null, false);
@@ -214,18 +214,22 @@ public class HighlightInfo implements Segment {
     }
     return highlightInfo;
   }
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @Nullable PsiElement element, int start, int end, String description, String toolTip) {
     return createHighlightInfo(type, element, start, end, description, toolTip, false, null);
   }
 
-  @NotNull private static HighlightInfoFilter[] getFilters() {
+  @NotNull
+  private static HighlightInfoFilter[] getFilters() {
     return ApplicationManager.getApplication().getExtensions(HighlightInfoFilter.EXTENSION_POINT_NAME);
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, String description) {
     return createHighlightInfo(type, null, start, end, description, htmlEscapeToolTip(description));
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description) {
     return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description);
   }
@@ -346,6 +350,7 @@ public class HighlightInfo implements Segment {
     return s;
   }
 
+  @Nullable
   public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull ASTNode childByRole, String localizedMessage) {
     return createHighlightInfo(type, childByRole.getPsi(), localizedMessage);
   }
@@ -369,8 +374,8 @@ public class HighlightInfo implements Segment {
 
   public static HighlightInfo createHighlightInfo(@NotNull final HighlightInfoType type,
                                                   @NotNull final PsiElement element,
-                                                  final String message,
-                                                  final TextAttributes attributes) {
+                                                  @Nullable final String message,
+                                                  @Nullable final TextAttributes attributes) {
     TextRange textRange = element.getTextRange();
     // do not use HighlightInfoFilter
     return new HighlightInfo(attributes, null, type, textRange.getStartOffset(), textRange.getEndOffset(), message,
@@ -397,7 +402,8 @@ public class HighlightInfo implements Segment {
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
-        QuickFixAction.registerQuickFixAction(info, fixedRange != null? fixedRange : quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.key);
+        QuickFixAction.registerQuickFixAction(info, fixedRange != null ? fixedRange : quickFixInfo.textRange, quickFixInfo.quickFix,
+                                              quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME));
       }
     }
     return info;
@@ -470,11 +476,11 @@ public class HighlightInfo implements Segment {
       this(action, null, null, icon);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon) {
       this(action, options, displayName, icon, null);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon, HighlightDisplayKey key) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName, Icon icon, @Nullable HighlightDisplayKey key) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
@@ -516,6 +522,13 @@ public class HighlightInfo implements Segment {
         newOptions.add(new CleanupInspectionIntention((LocalInspectionToolWrapper)tool, aClass));
       } else if (tool instanceof GlobalInspectionToolWrapper) {
         wrappedTool = ((GlobalInspectionToolWrapper)tool).getTool();
+        if (wrappedTool instanceof GlobalSimpleInspectionTool && (myAction instanceof LocalQuickFix || myAction instanceof QuickFixWrapper)) {
+          Class aClass = myAction.getClass();
+          if (myAction instanceof QuickFixWrapper) {
+            aClass = ((QuickFixWrapper)myAction).getFix().getClass();
+          }
+          newOptions.add(new CleanupInspectionIntention((GlobalInspectionToolWrapper)tool, aClass));
+        }
       }
 
       if (wrappedTool instanceof CustomSuppressableInspectionTool) {

@@ -20,12 +20,15 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
@@ -790,7 +793,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                        methodThrowsList.getTextRange().getEndOffset());
   }
 
-  private static void fixJavadocsForChangedMethod(PsiMethod method, JavaChangeInfo changeInfo, int newParamsLength) throws IncorrectOperationException {
+  private static void fixJavadocsForChangedMethod(final PsiMethod method, final JavaChangeInfo changeInfo, int newParamsLength) throws IncorrectOperationException {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final JavaParameterInfo[] newParms = changeInfo.getNewParameters();
     LOG.assertTrue(parameters.length <= newParamsLength);
@@ -799,11 +802,19 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (int i = 0; i < newParamsLength; i++) {
       JavaParameterInfo newParm = newParms[i];
       if (newParm.getOldIndex() < 0 ||
-          !newParm.getName().equals(oldParameterNames[newParm.getOldIndex()])) {
+          !(newParm.getName().equals(oldParameterNames[newParm.getOldIndex()]) || newParm.getOldIndex() == i || newParm.getTypeText().equals(changeInfo.getOldParameterTypes()[newParm.getOldIndex()]))) {
         newParameters.add(parameters[i]);
       }
     }
-    RefactoringUtil.fixJavadocsForParams(method, newParameters);
+    RefactoringUtil.fixJavadocsForParams(method, newParameters, new Condition<Pair<PsiParameter, String>>() {
+      @Override
+      public boolean value(Pair<PsiParameter, String> pair) {
+        final PsiParameter parameter = pair.first;
+        final String oldParamName = pair.second;
+        final int idx = Arrays.binarySearch(oldParameterNames, oldParamName);
+        return idx >= 0 && (parameter.getType().equalsToText(changeInfo.getOldParameterTypes()[idx]) || idx == method.getParameterList().getParameterIndex(parameter));
+      }
+    });
   }
 
   private static PsiParameter createNewParameter(JavaChangeInfo changeInfo, JavaParameterInfo newParm,

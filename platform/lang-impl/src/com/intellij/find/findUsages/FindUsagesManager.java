@@ -46,8 +46,11 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.*;
-import com.intellij.psi.search.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchRequestCollector;
+import com.intellij.psi.search.SearchSession;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -62,6 +65,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -195,7 +199,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    return PsiUtilBase.toPsiElementArray(elements);
+    return PsiUtilCore.toPsiElementArray(elements);
   }
 
   private void initLastSearchElement(final FindUsagesOptions findUsagesOptions,
@@ -220,6 +224,22 @@ public class FindUsagesManager implements JDOMExternalizable {
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
+        if (handler == FindUsagesHandler.NULL_HANDLER) return null;
+        if (handler != null) {
+          return handler;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public FindUsagesHandler getNewFindUsagesHandler(PsiElement element, final boolean forHighlightUsages) {
+    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
+      if (factory.canFindUsages(element)) {
+        Class<? extends FindUsagesHandlerFactory> aClass = factory.getClass();
+        FindUsagesHandlerFactory copy = (FindUsagesHandlerFactory)new ConstructorInjectionComponentAdapter(aClass.getName(), aClass).getComponentInstance(myProject.getPicoContainer());
+        final FindUsagesHandler handler = copy.createFindUsagesHandler(element, forHighlightUsages);
         if (handler == FindUsagesHandler.NULL_HANDLER) return null;
         if (handler != null) {
           return handler;
@@ -449,11 +469,11 @@ public class FindUsagesManager implements JDOMExternalizable {
     String usagesString = generateUsagesString(findUsagesOptions);
     presentation.setUsagesString(usagesString);
     String title;
-    if (scopeString != null) {
-      title = FindBundle.message("find.usages.of.element.in.scope.panel.title", usagesString, UsageViewUtil.getLongName(psiElement), scopeString);
+    if (scopeString == null) {
+      title = FindBundle.message("find.usages.of.element.panel.title", usagesString, UsageViewUtil.getLongName(psiElement));
     }
     else {
-      title = FindBundle.message("find.usages.of.element.panel.title", usagesString, UsageViewUtil.getLongName(psiElement));
+      title = FindBundle.message("find.usages.of.element.in.scope.panel.title", usagesString, UsageViewUtil.getLongName(psiElement), scopeString);
     }
     presentation.setTabText(title);
     presentation.setTabName(FindBundle.message("find.usages.of.element.tab.name", usagesString, UsageViewUtil.getShortName(psiElement)));
@@ -477,7 +497,7 @@ public class FindUsagesManager implements JDOMExternalizable {
     final UsageSearcher usageSearcher = createUsageSearcher(descriptor, handler, findUsagesOptions, scopeFile);
     final boolean[] usagesWereFound = {false};
 
-    Usage fUsage = findSiblingUsage(myProject, usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
+    Usage fUsage = findSiblingUsage(usageSearcher, direction, currentLocation, usagesWereFound, fileEditor);
 
     if (fUsage != null) {
       fUsage.navigate(true);
@@ -508,21 +528,20 @@ public class FindUsagesManager implements JDOMExternalizable {
     if (direction == FileSearchScope.AFTER_CARET) {
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
       String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(action);
-      if (shortcutsText.length() > 0) {
-        message = FindBundle.message("find.search.again.from.top.hotkey.message", message, shortcutsText);
+      if (shortcutsText.isEmpty()) {
+        message = FindBundle.message("find.search.again.from.top.action.message", message);
       }
       else {
-        message = FindBundle.message("find.search.again.from.top.action.message", message);
+        message = FindBundle.message("find.search.again.from.top.hotkey.message", message, shortcutsText);
       }
     }
     else {
-      String shortcutsText =
-        KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS));
-      if (shortcutsText.length() > 0) {
-        message = FindBundle.message("find.search.again.from.bottom.hotkey.message", message, shortcutsText);
+      String shortcutsText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_PREVIOUS));
+      if (shortcutsText.isEmpty()) {
+        message = FindBundle.message("find.search.again.from.bottom.action.message", message);
       }
       else {
-        message = FindBundle.message("find.search.again.from.bottom.action.message", message);
+        message = FindBundle.message("find.search.again.from.bottom.hotkey.message", message, shortcutsText);
       }
     }
     return message;
@@ -538,12 +557,11 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  private static Usage findSiblingUsage(@NotNull final Project project,
-                                        @NotNull final UsageSearcher usageSearcher,
-                                 FileSearchScope dir,
-                                 final FileEditorLocation currentLocation,
-                                 @NotNull final boolean[] usagesWereFound,
-                                 @NotNull FileEditor fileEditor) {
+  private static Usage findSiblingUsage(@NotNull final UsageSearcher usageSearcher,
+                                        FileSearchScope dir,
+                                        final FileEditorLocation currentLocation,
+                                        @NotNull final boolean[] usagesWereFound,
+                                        @NotNull FileEditor fileEditor) {
     if (fileEditor.getUserData(KEY_START_USAGE_AGAIN) != null) {
       dir = dir == FileSearchScope.AFTER_CARET ? FileSearchScope.FROM_START : FileSearchScope.FROM_END;
     }
@@ -561,7 +579,7 @@ public class FindUsagesManager implements JDOMExternalizable {
           foundUsage[0] = usage;
           return false;
         }
-        else if (direction == FileSearchScope.FROM_END) {
+        if (direction == FileSearchScope.FROM_END) {
           foundUsage[0] = usage;
         }
         else if (direction == FileSearchScope.AFTER_CARET) {

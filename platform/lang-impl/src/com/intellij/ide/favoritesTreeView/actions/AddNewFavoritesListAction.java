@@ -50,7 +50,7 @@ public class AddNewFavoritesListAction extends AnAction {
       }
 
       public boolean canClose(String inputString) {
-        final boolean isNew = ArrayUtil.find(favoritesManager.getAvailableFavoritesLists(), inputString.trim()) == -1;
+        final boolean isNew = ArrayUtil.find(favoritesManager.getAvailableFavoritesListNames(), inputString.trim()) == -1;
         if (!isNew) {
           Messages.showErrorDialog(project,
                                    IdeBundle.message("error.favorites.list.already.exists", inputString.trim()),
@@ -61,12 +61,12 @@ public class AddNewFavoritesListAction extends AnAction {
       }
     });
     if (name == null || name.length() == 0) return null;
-    favoritesManager.createNewList(name);
+    favoritesManager.createNewList(name, false, false);
     return name;
   }
 
   private static String getUniqueName(Project project) {
-      String[] names = FavoritesManager.getInstance(project).getAvailableFavoritesLists();
+      String[] names = FavoritesManager.getInstance(project).getAvailableFavoritesListNames();
       for (int i = 0; ; i++) {
         String newName = IdeBundle.message("favorites.list.unnamed", i > 0 ? i : "");
         if (ArrayUtil.find(names, newName) > -1) continue;

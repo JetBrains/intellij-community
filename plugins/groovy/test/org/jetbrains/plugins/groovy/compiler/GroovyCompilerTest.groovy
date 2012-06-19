@@ -26,8 +26,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.PsiTestUtil
+
 import junit.framework.AssertionFailedError
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 
 /**
  * @author peter
@@ -134,9 +135,9 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   public void testTransitiveJavaDependencyThroughGroovy() throws Throwable {
     myFixture.addClass("public class IFoo { void foo() {} }").getContainingFile().getVirtualFile();
     myFixture.addFileToProject("Foo.groovy", "class Foo {\n" +
-                       "  static IFoo f\n" +
-                       "  public int foo() { return 239; }\n" +
-                       "}");
+                                             "  static IFoo f\n" +
+                                             "  public int foo() { return 239; }\n" +
+                                             "}");
     final PsiFile bar = myFixture.addFileToProject("Bar.groovy", "class Bar extends Foo {" +
                                                                  "public static void main(String[] args) { " +
                                                                  "  System.out.println(new Foo().foo());" +
@@ -216,11 +217,11 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertEmpty(make());
 
     myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
-                                                                       "  Super xxx() {}\n" +
-                                                                       "  static void main(String[] args) {" +
-                                                                       "    println 'hello'" +
-                                                                       "  }" +
-                                                                       "}");
+                                                   "  Super xxx() {}\n" +
+                                                   "  static void main(String[] args) {" +
+                                                   "    println 'hello'" +
+                                                   "  }" +
+                                                   "}");
     myFixture.addFileToProject("tests/Java.java", "public class Java {}");
     assertEmpty(make());
     assertOutput("Sub", "hello");
@@ -231,9 +232,9 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     myFixture.addFileToProject("src/com/Bar.groovy", "package com\n" +
                                                      "class Bar {}");
     myFixture.addFileToProject("src/com/ToGenerateStubs.java", "package com;\n" +
-                                                     "public class ToGenerateStubs {}");
+                                                               "public class ToGenerateStubs {}");
     myFixture.addFileToProject("tests/com/BarTest.groovy", "package com\n" +
-                                                       "class BarTest extends Bar {}");
+                                                           "class BarTest extends Bar {}");
     assertEmpty(make());
   }
 
@@ -307,8 +308,8 @@ public class Transf implements ASTTransformation {
 
     Module dep1 = addModule('dependent1')
     Module dep2 = addModule('dependent2')
-    PsiTestUtil.addDependency dep2, dep1
-    PsiTestUtil.addDependency myModule, dep2
+    ModuleRootModificationUtil.addDependency dep2, dep1
+    ModuleRootModificationUtil.addDependency myModule, dep2
 
     addGroovyLibrary(dep1);
     addGroovyLibrary(dep2);
@@ -335,7 +336,7 @@ class Foo {
 }"""
     def javaFile = myFixture.addFileToProject("AJava.java", "public class AJava extends Foo.Bar {}")
     assertEmpty make()
-    
+
     touch(javaFile.virtualFile)
     assertEmpty make()
   }
@@ -516,7 +517,7 @@ class Indirect {
 
     assertEmpty compileModule(myModule)
     assertEmpty compileModule(myModule)
-    
+
     setFileText(used, 'class Used2 {}')
     shouldFail { make() }
     assert findClassFile('Used') == null
@@ -569,7 +570,7 @@ class Main {
 
   public void "test module cycle"() {
     def dep = addDependentModule()
-    PsiTestUtil.addDependency(myModule, dep)
+    ModuleRootModificationUtil.addDependency(myModule, dep)
     addGroovyLibrary(dep)
 
     myFixture.addFileToProject('Foo.groovy', 'class Foo extends Bar { static void main(String[] args) { println "Hello from Foo" } }')
@@ -734,7 +735,5 @@ string
         }
       }
     }
-
   }
-
 }

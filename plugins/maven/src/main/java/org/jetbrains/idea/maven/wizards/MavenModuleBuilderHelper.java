@@ -123,6 +123,7 @@ public class MavenModuleBuilderHelper {
     if (myArchetype == null) {
       try {
         VfsUtil.createDirectories(root.getPath() + "/src/main/java");
+        VfsUtil.createDirectories(root.getPath() + "/src/main/resources");
         VfsUtil.createDirectories(root.getPath() + "/src/test/java");
       }
       catch (IOException e) {

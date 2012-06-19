@@ -134,6 +134,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return InspectionsBundle.message("inspection.profiles.presentable.name");
   }
 
+  @NotNull
   public Collection<Profile> getProfiles() {
     initProfiles();
     return mySchemesManager.getAllSchemes();
@@ -343,6 +344,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return directory;
   }
 
+  @NotNull
   public String[] getAvailableProfileNames() {
     final Collection<String> names = mySchemesManager.getAllSchemeNames();
     return ArrayUtil.toStringArray(names);

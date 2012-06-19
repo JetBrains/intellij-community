@@ -216,8 +216,8 @@ minextents
 minimizable
 minvalue
 miny
-mlslabel
 mixin
+mlslabel
 multi
 multilinestring
 multipoint
@@ -225,6 +225,7 @@ multipolygon
 multiset
 mutex
 mutexes
+mxml
 mysql
 namespace
 namespaces
@@ -239,9 +240,9 @@ nocopy
 nocreate
 nocycle
 nodegroup
+nohistory
 noinspection
 noinspections
-nohistory
 nologging
 nomapping
 nomaxvalue
@@ -268,9 +269,9 @@ nvarchar
 oauth
 objc
 oidindex
-online
 onchange
 onclick
+online
 openid
 openssl
 outfile

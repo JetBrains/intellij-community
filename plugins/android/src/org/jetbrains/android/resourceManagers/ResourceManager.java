@@ -262,6 +262,17 @@ public abstract class ResourceManager {
     return result;
   }
 
+  @NotNull
+  public Collection<String> getResourceNames(@NotNull String type) {
+    final Set<String> result = new HashSet<String>();
+    result.addAll(getValueResourceNames(type));
+    result.addAll(getFileResourcesNames(type));
+    if (type.equals("id")) {
+      result.addAll(getIds());
+    }
+    return result;
+  }
+
   @Nullable
   public abstract AttributeDefinitions getAttributeDefinitions();
 

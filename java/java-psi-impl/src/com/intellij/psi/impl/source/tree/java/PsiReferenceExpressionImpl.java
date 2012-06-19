@@ -317,7 +317,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     final PsiManagerEx manager = getManager();
     if (manager == null) {
       LOG.error("getManager() == null!");
-      return null;
+      return JavaResolveResult.EMPTY_ARRAY;
     }
     ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;

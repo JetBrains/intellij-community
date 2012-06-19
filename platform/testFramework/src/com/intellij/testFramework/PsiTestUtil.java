@@ -51,7 +51,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-@NonNls public class PsiTestUtil {
+@NonNls
+public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
                                                        Module module,
                                                        String rootPath,
@@ -80,18 +81,20 @@ import java.util.List;
                                                        final String rootPath,
                                                        final Collection<File> filesToDelete,
                                                        final boolean addProjectRoots) throws Exception {
-    return createTestProjectStructure("unitTest",module, rootPath, filesToDelete, addProjectRoots);
+    return createTestProjectStructure("unitTest", module, rootPath, filesToDelete, addProjectRoots);
   }
+
   public static VirtualFile createTestProjectStructure(String tempName,
                                                        final Module module,
                                                        final String rootPath,
                                                        final Collection<File> filesToDelete,
                                                        final boolean addProjectRoots) throws Exception {
-    File dir = FileUtil.createTempDirectory(tempName, null,false);
+    File dir = FileUtil.createTempDirectory(tempName, null, false);
     filesToDelete.add(dir);
 
-    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-    assert vDir.isDirectory(): vDir;
+    final VirtualFile vDir =
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    assert vDir.isDirectory() : vDir;
 
     final Exception[] exception = {null};
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -256,7 +259,10 @@ import java.util.List;
     commitModel(modifiableModel);
   }
 
-  private static void addProjectLibrary(final Module module, final ModifiableRootModel model, final String libName, final VirtualFile... classesRoots) {
+  private static void addProjectLibrary(final Module module,
+                                        final ModifiableRootModel model,
+                                        final String libName,
+                                        final VirtualFile... classesRoots) {
     new WriteCommandAction.Simple(module.getProject()) {
       @Override
       protected void run() throws Throwable {
@@ -277,7 +283,11 @@ import java.util.List;
     }.execute().throwException();
   }
 
-  public static void addLibrary(final Module module, final ModifiableRootModel model, final String libName, final String libPath, final String... jarArr) {
+  public static void addLibrary(final Module module,
+                                final ModifiableRootModel model,
+                                final String libName,
+                                final String libPath,
+                                final String... jarArr) {
     List<VirtualFile> classesRoots = new ArrayList<VirtualFile>();
     for (String jar : jarArr) {
       if (!libPath.endsWith("/") && !jar.startsWith("/")) {
@@ -287,7 +297,8 @@ import java.util.List;
       VirtualFile root;
       if (path.endsWith(".jar")) {
         root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
-      } else {
+      }
+      else {
         root = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
       }
       assert root != null : "Library root folder not found: " + path + "!/";
@@ -300,22 +311,17 @@ import java.util.List;
                                 final String libName, final String libDir,
                                 final String[] classRoots,
                                 final String[] sourceRoots) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final String parentUrl = VirtualFileManager.constructUrl(classRoots[0].endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
-        final Library library = model.getModuleLibraryTable().createLibrary(libName);
-        final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
-        for (String classRoot : classRoots) {
-          libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
-        }
-        for (String sourceRoot : sourceRoots) {
-          libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
-        }
-        libModifiableModel.commit();
-        model.commit();
-      }
-    });
+    final String parentUrl =
+      VirtualFileManager.constructUrl(classRoots[0].endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
+    List<String> classesUrls = new ArrayList<String>();
+    List<String> sourceUrls = new ArrayList<String>();
+    for (String classRoot : classRoots) {
+      classesUrls.add(parentUrl + classRoot);
+    }
+    for (String sourceRoot : sourceRoots) {
+      sourceUrls.add(parentUrl + sourceRoot);
+    }
+    ModuleRootModificationUtil.addModuleLibrary(module, libName, classesUrls, sourceUrls);
   }
 
   public static Module addModule(final Project project, final ModuleType type, final String name, final VirtualFile root) {
@@ -337,20 +343,23 @@ import java.util.List;
     }.execute().getResultObject();
   }
 
-  public static void addDependency(final Module from, final Module to) {
-    addDependency(from, to, DependencyScope.COMPILE, false);
+  public static void setCompilerOutputPath(Module module, String url, boolean forTests) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
+    extension.inheritCompilerOutputPath(false);
+    if (forTests) {
+      extension.setCompilerOutputPathForTests(url);
+    }
+    else {
+      extension.setCompilerOutputPath(url);
+    }
+    commitModel(model);
   }
 
-  public static void addDependency(final Module from, final Module to, final DependencyScope scope, final boolean exported) {
-    new WriteCommandAction(from.getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(from).getModifiableModel();
-        final ModuleOrderEntry entry = model.addModuleOrderEntry(to);
-        entry.setScope(scope);
-        entry.setExported(exported);
-        model.commit();
-      }
-    }.execute();
+  public static void setExcludeCompileOutput(Module module, boolean exclude) {
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+    final CompilerModuleExtension extension = model.getModuleExtension(CompilerModuleExtension.class);
+    extension.setExcludeOutput(exclude);
+    commitModel(model);
   }
 }

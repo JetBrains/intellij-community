@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -15,8 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -48,38 +46,113 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     return JavaSdkImpl.getMockJdk14();
   }
 
-  public void testPackageLocals() throws Exception { doTest(BASE_PATH+"/packageLocals/x/sub/UsingMain.java", BASE_PATH+"/packageLocals", false, false); }
-  public void testPackageLocalClassInTheMiddle() throws Exception { doTest(BASE_PATH+"/packageLocals/x/A.java", BASE_PATH+"/packageLocals", false, false); }
+  public void testPackageLocals() throws Exception {
+    doTest(BASE_PATH + "/packageLocals/x/sub/UsingMain.java", BASE_PATH + "/packageLocals", false, false);
+  }
 
-  public void testEffectiveAccessLevel() throws Exception { doTest(BASE_PATH+"/accessLevel/effectiveAccess/p2/p3.java", BASE_PATH+"/accessLevel", false, false); }
-  public void testSingleImportConflict() throws Exception { doTest(BASE_PATH+"/singleImport/d.java", BASE_PATH+"/singleImport", false, false); }
+  public void testPackageLocalClassInTheMiddle() throws Exception {
+    doTest(BASE_PATH + "/packageLocals/x/A.java", BASE_PATH + "/packageLocals", false, false);
+  }
 
-  public void testDuplicateTopLevelClass() throws Exception { doTest(BASE_PATH+"/duplicateClass/A.java", BASE_PATH+"/duplicateClass", false, false); }
-  public void testDuplicateTopLevelClass2() throws Exception { doTest(BASE_PATH+"/duplicateClass/java/lang/Runnable.java", BASE_PATH+"/duplicateClass", false, false); }
+  public void testEffectiveAccessLevel() throws Exception {
+    doTest(BASE_PATH + "/accessLevel/effectiveAccess/p2/p3.java", BASE_PATH + "/accessLevel", false, false);
+  }
 
-  public void testProtectedConstructorCall() throws Exception { doTest(BASE_PATH+"/protectedConstructor/p2/C2.java", BASE_PATH+"/protectedConstructor", false, false); }
-  public void testProtectedConstructorCallInSamePackage() throws Exception { doTest(BASE_PATH+"/protectedConstructor/samePackage/C2.java", BASE_PATH+"/protectedConstructor", false, false); }
-  public void testProtectedConstructorCallInInner() throws Exception { doTest(BASE_PATH+"/protectedConstructorInInner/p2/C2.java", BASE_PATH+"/protectedConstructorInInner", false, false); }
-  public void testArrayLengthAccessFromSubClass() throws Exception { doTest(BASE_PATH+"/arrayLength/p2/SubTest.java", BASE_PATH+"/arrayLength", false, false); }
-  public void testAccessibleMember() throws Exception { doTest(BASE_PATH+"/accessibleMember/com/red/C.java", BASE_PATH+"/accessibleMember", false, false); }
-  public void testOnDemandImportConflict() throws Exception { doTest(BASE_PATH+"/onDemandImportConflict/Outer.java", BASE_PATH+"/onDemandImportConflict", false, false); }
-  public void testPackageLocalOverride() throws Exception { doTest(BASE_PATH+"/packageLocalOverride/y/C.java", BASE_PATH+"/packageLocalOverride", false, false); }
-  public void testPackageLocalOverrideJustCheckThatPackageLocalMethodDoesNotGetOverridden() throws Exception { doTest(BASE_PATH+"/packageLocalOverride/y/B.java", BASE_PATH+"/packageLocalOverride", false, false); }
-  public void testProtectedAccessFromOtherPackage() throws Exception { doTest(BASE_PATH+"/protectedAccessFromOtherPackage/a/Main.java", BASE_PATH+"/protectedAccessFromOtherPackage", false, false); }
-  public void testProtectedFieldAccessFromOtherPackage() throws Exception { doTest(BASE_PATH+"/protectedAccessFromOtherPackage/a/A.java", BASE_PATH+"/protectedAccessFromOtherPackage", false, false); }
-  public void testPackageLocalClassInTheMiddle1() throws Exception { doTest(BASE_PATH+"/foreignPackageInBetween/a/A1.java", BASE_PATH+"/foreignPackageInBetween", false, false); }
+  public void testSingleImportConflict() throws Exception {
+    doTest(BASE_PATH + "/singleImport/d.java", BASE_PATH + "/singleImport", false, false);
+  }
 
-  public void testImportOnDemand() throws Exception { doTest(BASE_PATH+"/importOnDemand/y/Y.java", BASE_PATH+"/importOnDemand", false, false); }
-  public void testImportOnDemandVsSingle() throws Exception { doTest(BASE_PATH+"/importOnDemandVsSingle/y/Y.java", BASE_PATH+"/importOnDemandVsSingle", false, false); }
-  public void testImportSingleVsSamePackage() throws Exception { doTest(BASE_PATH+"/importSingleVsSamePackage/y/Y.java", BASE_PATH+"/importSingleVsSamePackage", false, false); }
-  public void testImportSingleVsInherited() throws Exception { doTest(BASE_PATH + "/importSingleVsInherited/Test.java", BASE_PATH + "/importSingleVsInherited", false, false); }
-  public void testImportOnDemandVsInherited() throws Exception { doTest(BASE_PATH + "/importOnDemandVsInherited/Test.java", BASE_PATH + "/importOnDemandVsInherited", false, false); }
+  public void testDuplicateTopLevelClass() throws Exception {
+    doTest(BASE_PATH + "/duplicateClass/A.java", BASE_PATH + "/duplicateClass", false, false);
+  }
 
-  public void testOverridePackageLocal() throws Exception { doTest(BASE_PATH+"/overridePackageLocal/x/y/Derived.java", BASE_PATH+"/overridePackageLocal", false, false); }
-  public void testAlreadyImportedClass() throws Exception { doTest(BASE_PATH+"/alreadyImportedClass/pack/AlreadyImportedClass.java", BASE_PATH+"/alreadyImportedClass", false, false); }
-  public void testImportDefaultPackage() throws Exception { doTest(BASE_PATH+"/importDefaultPackage/x/Usage.java", BASE_PATH+"/importDefaultPackage", false, false); }
-  public void testImportDefaultPackage2() throws Exception { doTest(BASE_PATH+"/importDefaultPackage/x/ImportOnDemandUsage.java", BASE_PATH+"/importDefaultPackage", false, false); }
-  public void testImportDefaultPackageInvalid() throws Exception { doTest(BASE_PATH+"/importDefaultPackage/x/InvalidUse.java", BASE_PATH+"/importDefaultPackage", false, false); }
+  public void testDuplicateTopLevelClass2() throws Exception {
+    doTest(BASE_PATH + "/duplicateClass/java/lang/Runnable.java", BASE_PATH + "/duplicateClass", false, false);
+  }
+
+  public void testProtectedConstructorCall() throws Exception {
+    doTest(BASE_PATH + "/protectedConstructor/p2/C2.java", BASE_PATH + "/protectedConstructor", false, false);
+  }
+
+  public void testProtectedConstructorCallInSamePackage() throws Exception {
+    doTest(BASE_PATH + "/protectedConstructor/samePackage/C2.java", BASE_PATH + "/protectedConstructor", false, false);
+  }
+
+  public void testProtectedConstructorCallInInner() throws Exception {
+    doTest(BASE_PATH + "/protectedConstructorInInner/p2/C2.java", BASE_PATH + "/protectedConstructorInInner", false, false);
+  }
+
+  public void testArrayLengthAccessFromSubClass() throws Exception {
+    doTest(BASE_PATH + "/arrayLength/p2/SubTest.java", BASE_PATH + "/arrayLength", false, false);
+  }
+
+  public void testAccessibleMember() throws Exception {
+    doTest(BASE_PATH + "/accessibleMember/com/red/C.java", BASE_PATH + "/accessibleMember", false, false);
+  }
+
+  public void testOnDemandImportConflict() throws Exception {
+    doTest(BASE_PATH + "/onDemandImportConflict/Outer.java", BASE_PATH + "/onDemandImportConflict", false, false);
+  }
+
+  public void testPackageLocalOverride() throws Exception {
+    doTest(BASE_PATH + "/packageLocalOverride/y/C.java", BASE_PATH + "/packageLocalOverride", false, false);
+  }
+
+  public void testPackageLocalOverrideJustCheckThatPackageLocalMethodDoesNotGetOverridden() throws Exception {
+    doTest(BASE_PATH + "/packageLocalOverride/y/B.java", BASE_PATH + "/packageLocalOverride", false, false);
+  }
+
+  public void testProtectedAccessFromOtherPackage() throws Exception {
+    doTest(BASE_PATH + "/protectedAccessFromOtherPackage/a/Main.java", BASE_PATH + "/protectedAccessFromOtherPackage", false, false);
+  }
+
+  public void testProtectedFieldAccessFromOtherPackage() throws Exception {
+    doTest(BASE_PATH + "/protectedAccessFromOtherPackage/a/A.java", BASE_PATH + "/protectedAccessFromOtherPackage", false, false);
+  }
+
+  public void testPackageLocalClassInTheMiddle1() throws Exception {
+    doTest(BASE_PATH + "/foreignPackageInBetween/a/A1.java", BASE_PATH + "/foreignPackageInBetween", false, false);
+  }
+
+  public void testImportOnDemand() throws Exception {
+    doTest(BASE_PATH + "/importOnDemand/y/Y.java", BASE_PATH + "/importOnDemand", false, false);
+  }
+
+  public void testImportOnDemandVsSingle() throws Exception {
+    doTest(BASE_PATH + "/importOnDemandVsSingle/y/Y.java", BASE_PATH + "/importOnDemandVsSingle", false, false);
+  }
+
+  public void testImportSingleVsSamePackage() throws Exception {
+    doTest(BASE_PATH + "/importSingleVsSamePackage/y/Y.java", BASE_PATH + "/importSingleVsSamePackage", false, false);
+  }
+
+  public void testImportSingleVsInherited() throws Exception {
+    doTest(BASE_PATH + "/importSingleVsInherited/Test.java", BASE_PATH + "/importSingleVsInherited", false, false);
+  }
+
+  public void testImportOnDemandVsInherited() throws Exception {
+    doTest(BASE_PATH + "/importOnDemandVsInherited/Test.java", BASE_PATH + "/importOnDemandVsInherited", false, false);
+  }
+
+  public void testOverridePackageLocal() throws Exception {
+    doTest(BASE_PATH + "/overridePackageLocal/x/y/Derived.java", BASE_PATH + "/overridePackageLocal", false, false);
+  }
+
+  public void testAlreadyImportedClass() throws Exception {
+    doTest(BASE_PATH + "/alreadyImportedClass/pack/AlreadyImportedClass.java", BASE_PATH + "/alreadyImportedClass", false, false);
+  }
+
+  public void testImportDefaultPackage() throws Exception {
+    doTest(BASE_PATH + "/importDefaultPackage/x/Usage.java", BASE_PATH + "/importDefaultPackage", false, false);
+  }
+
+  public void testImportDefaultPackage2() throws Exception {
+    doTest(BASE_PATH + "/importDefaultPackage/x/ImportOnDemandUsage.java", BASE_PATH + "/importDefaultPackage", false, false);
+  }
+
+  public void testImportDefaultPackageInvalid() throws Exception {
+    doTest(BASE_PATH + "/importDefaultPackage/x/InvalidUse.java", BASE_PATH + "/importDefaultPackage", false, false);
+  }
 
   public void testScopeBased() throws Exception {
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_SOURCE, null));
@@ -107,6 +180,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
       scopeManager.removeAllSets();
     }
   }
+
   public void testSharedScopeBased() throws Exception {
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_ANY, null));
     NamedScope utilScope = new NamedScope("util", new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null));
@@ -132,7 +206,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     scheme.setAttributes(projectKey, projectAttributes);
 
     try {
-      testFile(BASE_PATH+"/scopeBased/x/Shared.java").projectRoot(BASE_PATH+"/scopeBased").checkSymbolNames().test();
+      testFile(BASE_PATH + "/scopeBased/x/Shared.java").projectRoot(BASE_PATH + "/scopeBased").checkSymbolNames().test();
     }
     finally {
       scopeManager.removeAllSets();
@@ -146,20 +220,9 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
     final Module java4 = moduleManager.findModuleByName("java4");
     Module java5 = moduleManager.findModuleByName("java5");
-    final ModuleRootManager rootManager4 = ModuleRootManager.getInstance(java4);
-    final ModuleRootManager rootManager5 = ModuleRootManager.getInstance(java5);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ModifiableRootModel rootModel4 = rootManager4.getModifiableModel();
-        rootModel4.setSdk(JavaSdkImpl.getMockJdk17("java 1.4"));
-        rootModel4.commit();
-        final ModifiableRootModel rootModel5 = rootManager5.getModifiableModel();
-        rootModel5.setSdk(JavaSdkImpl.getMockJdk17("java 1.5"));
-        rootModel5.addModuleOrderEntry(java4);
-        rootModel5.commit();
-      }
-    });
+    ModuleRootModificationUtil.setModuleSdk(java4, JavaSdkImpl.getMockJdk17("java 1.4"));
+    ModuleRootModificationUtil.setModuleSdk(java5, JavaSdkImpl.getMockJdk17("java 1.5"));
+    ModuleRootModificationUtil.addDependency(java5, java4);
 
     assert root != null;
     configureByExistingFile(root.findFileByRelativePath("moduleJava5/com/Java5.java"));

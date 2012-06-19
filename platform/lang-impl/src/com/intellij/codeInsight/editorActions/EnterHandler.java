@@ -124,7 +124,9 @@ public class EnterHandler extends BaseEnterHandler {
         throw new AssertionError("Wrong caret offset change by " + delegate);
       }
 
-      if (result == EnterHandlerDelegate.Result.Stop) return;
+      if (result == EnterHandlerDelegate.Result.Stop) {
+        return;
+      }
       if (result != EnterHandlerDelegate.Result.Continue) {
         if (result == EnterHandlerDelegate.Result.DefaultForceIndent) {
           forceIndent = true;

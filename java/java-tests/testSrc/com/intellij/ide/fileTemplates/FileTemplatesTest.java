@@ -1,10 +1,7 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,6 +12,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.properties.EncodingAwareProperties;
 
 import java.io.File;
@@ -105,19 +103,9 @@ public class FileTemplatesTest extends IdeaTestCase {
       myFilesToDelete.add(temp);
       final VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
 
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ModifiableRootModel model = rootManager.getModifiableModel();
-          ContentEntry contentEntry = model.addContentEntry(tempDir);
-          contentEntry.addSourceFolder(tempDir, false);
-          model.commit();
-        }
-      });
+      PsiTestUtil.addSourceRoot(getModule(), tempDir);
 
-
-      VirtualFile sourceRoot = rootManager.getSourceRoots()[0];
+      VirtualFile sourceRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0];
       PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(sourceRoot);
 
       PsiClass psiClass = JavaDirectoryService.getInstance().createClass(psiDirectory, "XXX", name);

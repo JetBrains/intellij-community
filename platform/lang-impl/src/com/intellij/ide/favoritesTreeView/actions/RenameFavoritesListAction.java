@@ -56,7 +56,7 @@ public class RenameFavoritesListAction extends AnAction implements DumbAware {
           }
 
           public boolean canClose(String inputString) {
-            String[] lists = favoritesManager.getAvailableFavoritesLists();
+            String[] lists = favoritesManager.getAvailableFavoritesListNames();
             final boolean isNew = ArrayUtil.find(lists, inputString.trim()) == -1;
             if (!isNew) {
               Messages.showErrorDialog(project, IdeBundle.message("error.favorites.list.already.exists", inputString.trim()),

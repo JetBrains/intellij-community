@@ -89,7 +89,7 @@ public class MvcModuleStructureUtil {
         sourceRoots.put(folder.getFile(), folder.isTestSource());
       }
     }
-    
+
     root.refresh(false, true);
 
     final List<Consumer<ContentEntry>> actions = CollectionFactory.arrayList();
@@ -139,7 +139,9 @@ public class MvcModuleStructureUtil {
     };
   }
 
-  public static void removeSrcFolderFromRoots(final VirtualFile file, List<Consumer<ContentEntry>> actions, Map<VirtualFile, Boolean> sourceRoots) {
+  public static void removeSrcFolderFromRoots(final VirtualFile file,
+                                              List<Consumer<ContentEntry>> actions,
+                                              Map<VirtualFile, Boolean> sourceRoots) {
     if (sourceRoots.containsKey(file)) {
       actions.add(new Consumer<ContentEntry>() {
         public void consume(ContentEntry contentEntry) {
@@ -198,7 +200,10 @@ public class MvcModuleStructureUtil {
     return library.getModifiableModel();
   }
 
-  public static void addSourceFolder(@NotNull VirtualFile root, @NotNull String relativePath, final boolean isTest, List<Consumer<ContentEntry>> actions,
+  public static void addSourceFolder(@NotNull VirtualFile root,
+                                     @NotNull String relativePath,
+                                     final boolean isTest,
+                                     List<Consumer<ContentEntry>> actions,
                                      Map<VirtualFile, Boolean> sourceRoots) {
     final VirtualFile src = root.findFileByRelativePath(relativePath);
     if (src == null) {
@@ -412,7 +417,7 @@ public class MvcModuleStructureUtil {
 
   public static List<Module> getAllModulesWithSupport(Project project, MvcFramework framework) {
     List<Module> modules = new ArrayList<Module>();
-    for (Module module : ModuleManager.getInstance(project).getModules()){
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (framework.hasSupport(module)) {
         modules.add(module);
       }
@@ -576,10 +581,7 @@ public class MvcModuleStructureUtil {
 
   public static void ensureDependency(@NotNull Module from, @NotNull Module to, boolean exported) {
     if (!from.equals(to) && !hasDependency(from, to)) {
-      final ModifiableRootModel fromModel = ModuleRootManager.getInstance(from).getModifiableModel();
-      ModuleOrderEntry entry = fromModel.addModuleOrderEntry(to);
-      entry.setExported(exported);
-      fromModel.commit();
+      ModuleRootModificationUtil.addDependency(from, to, DependencyScope.COMPILE, exported);
     }
   }
 
@@ -613,7 +615,8 @@ public class MvcModuleStructureUtil {
   public static void copySdk(ModuleRootModel from, ModifiableRootModel to) {
     if (from.isSdkInherited()) {
       to.inheritSdk();
-    } else {
+    }
+    else {
       to.setSdk(from.getSdk());
     }
   }
@@ -670,7 +673,7 @@ public class MvcModuleStructureUtil {
     if (userLibraryTo == null) {
       if (userLibraryFrom == null) return;
 
-      userLibraryTo = to.getModuleLibraryTable().createLibrary(framework.getUserLibraryName() + " (" +to.getModule().getName() + ')');
+      userLibraryTo = to.getModuleLibraryTable().createLibrary(framework.getUserLibraryName() + " (" + to.getModule().getName() + ')');
     }
     else {
       OrderEntry[] orderEntries = to.getOrderEntries().clone();
@@ -812,7 +815,8 @@ public class MvcModuleStructureUtil {
     for (VirtualFile virtualFile : map.keySet()) {
       if (!globalAuxModules.containsKey(virtualFile)) {
         Module appModule = map.get(virtualFile).iterator().next();
-        Module module = createAuxiliaryModule(appModule, generateUniqueModuleName(project, framework.getGlobalPluginsModuleName()), framework);
+        Module module =
+          createAuxiliaryModule(appModule, generateUniqueModuleName(project, framework.getGlobalPluginsModuleName()), framework);
         globalAuxModules.put(virtualFile, module);
       }
     }
@@ -853,7 +857,8 @@ public class MvcModuleStructureUtil {
       i++;
 
       if (manager.findModuleByName(res) == null) return res;
-    } while (true);
+    }
+    while (true);
   }
 
   @Nullable

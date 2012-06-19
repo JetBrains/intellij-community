@@ -365,6 +365,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
       final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(toBeExpression.findElementAt(refIdx[0]), PsiReferenceExpression.class);
       assert refExpr != null;
+      if (toBeExpression == refExpr && refIdx[0] > 0) {
+        return null;
+      }
       if (ReplaceExpressionUtil.isNeedParenthesis(refExpr.getNode(), tempExpr.getNode())) {
         tempExpr.putCopyableUserData(NEED_PARENTHESIS, Boolean.TRUE);
         return tempExpr;

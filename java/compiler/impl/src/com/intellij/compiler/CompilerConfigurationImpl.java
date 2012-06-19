@@ -79,6 +79,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       return o1.compareToIgnoreCase(o2);
     }
   };
+  private static final String ENTRY = "entry";
+  private static final String NAME = "name";
+  private static final String ENABLED = "enabled";
+  private static final String MODULE = "module";
 
   @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;
@@ -91,7 +95,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<CompiledPattern>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
-  private final ModuleManager myModuleManager;
   private final ExcludedEntriesConfiguration myExcludedEntriesConfiguration;
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<BackendCompiler>();
@@ -113,9 +116,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private String myBytecodeTargetLevel = null;  // null means compiler default
   private final Map<String, String> myModuleBytecodeTarget = new java.util.HashMap<String, String>();
 
-  public CompilerConfigurationImpl(Project project, ModuleManager moduleManager) {
+  public CompilerConfigurationImpl(Project project) {
     myProject = project;
-    myModuleManager = moduleManager;
     myExcludedEntriesConfiguration = new ExcludedEntriesConfiguration();
     Disposer.register(project, myExcludedEntriesConfiguration);
     project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
@@ -591,12 +593,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private static final String BYTECODE_TARGET_LEVEL = "bytecodeTargetLevel";
   private static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
   private static final String ADD_NOTNULL_ASSERTIONS = "addNotNullAssertions";
-  private static final String ENTRY = "entry";
-  private static final String NAME = "name";
-  private static final String VALUE = "value";
-  private static final String ENABLED = "enabled";
-  private static final String OPTION = "option";
-  private static final String MODULE = "module";
 
 
   public void readExternal(Element parentNode) throws InvalidDataException {
@@ -648,17 +644,24 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     final Element annotationProcessingSettings = parentNode.getChild(ANNOTATION_PROCESSING);
     if (annotationProcessingSettings != null) {
-      for (Object elem : annotationProcessingSettings.getChildren("profile")) {
-        final Element profileElement = (Element)elem;
-        final boolean isDefault = "true".equals(profileElement.getAttributeValue("default"));
-        if (isDefault) {
-          readProfile(profileElement, myDefaultProcessorsProfile);
+      final List profiles = annotationProcessingSettings.getChildren("profile");
+      if (!profiles.isEmpty()) {
+        for (Object elem : profiles) {
+          final Element profileElement = (Element)elem;
+          final boolean isDefault = "true".equals(profileElement.getAttributeValue("default"));
+          if (isDefault) {
+            myDefaultProcessorsProfile.readExternal(profileElement);
+          }
+          else {
+            final ProcessorConfigProfile profile = new ProcessorConfigProfile("");
+            profile.readExternal(profileElement);
+            myModuleProcessorProfiles.add(profile);
+          }
         }
-        else {
-          final ProcessorConfigProfile profile = new ProcessorConfigProfile("");
-          readProfile(profileElement, profile);
-          myModuleProcessorProfiles.add(profile);
-        }
+      }
+      else {
+        // assuming older format
+        loadProfilesFromOldFormat(annotationProcessingSettings);
       }
     }
 
@@ -678,6 +681,91 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         }
         myModuleBytecodeTarget.put(name, target);
       }
+    }
+  }
+
+  private void loadProfilesFromOldFormat(Element processing) {
+    // collect data
+    final boolean isEnabled = Boolean.parseBoolean(processing.getAttributeValue(ENABLED, "false"));
+    final boolean isUseClasspath = Boolean.parseBoolean(processing.getAttributeValue("useClasspath", "true"));
+    final StringBuilder processorPath = new StringBuilder();
+    final Set<String> optionPairs = new HashSet<String>();
+    final Set<String> processors = new HashSet<String>();
+    final List<Pair<String, String>> modulesToProcess = new ArrayList<Pair<String, String>>();
+
+    for (Object child : processing.getChildren("processorPath")) {
+      final Element pathElement = (Element)child;
+      final String path = pathElement.getAttributeValue("value", (String)null);
+      if (path != null) {
+        if (processorPath.length() > 0) {
+          processorPath.append(File.pathSeparator);
+        }
+        processorPath.append(path);
+      }
+    }
+
+    for (Object child : processing.getChildren("processor")) {
+      final Element processorElement = (Element)child;
+      final String proc = processorElement.getAttributeValue(NAME, (String)null);
+      if (proc != null) {
+        processors.add(proc);
+      }
+      final StringTokenizer tokenizer = new StringTokenizer(processorElement.getAttributeValue("options", ""), " ", false);
+      while (tokenizer.hasMoreTokens()) {
+        final String pair = tokenizer.nextToken();
+        optionPairs.add(pair);
+      }
+    }
+
+    for (Object child : processing.getChildren("processModule")) {
+      final Element moduleElement = (Element)child;
+      final String name = moduleElement.getAttributeValue(NAME, (String)null);
+      if (name == null) {
+        continue;
+      }
+      final String dir = moduleElement.getAttributeValue("generatedDirName", (String)null);
+      modulesToProcess.add(Pair.create(name, dir));
+    }
+
+    myDefaultProcessorsProfile.setEnabled(false);
+    myDefaultProcessorsProfile.setObtainProcessorsFromClasspath(isUseClasspath);
+    if (processorPath.length() > 0) {
+      myDefaultProcessorsProfile.setProcessorPath(processorPath.toString());
+    }
+    if (!optionPairs.isEmpty()) {
+      for (String pair : optionPairs) {
+        final int index = pair.indexOf("=");
+        if (index > 0) {
+          myDefaultProcessorsProfile.setOption(pair.substring(0, index), pair.substring(index + 1));
+        }
+      }
+    }
+    for (String processor : processors) {
+      myDefaultProcessorsProfile.addProcessor(processor);
+    }
+
+    final Map<String, Set<String>> dirNameToModulesMap = new HashMap<String, Set<String>>();
+    for (Pair<String, String> moduleDirPair : modulesToProcess) {
+      final String dir = moduleDirPair.getSecond();
+      Set<String> set = dirNameToModulesMap.get(dir);
+      if (set == null) {
+        set = new HashSet<String>();
+        dirNameToModulesMap.put(dir, set);
+      }
+      set.add(moduleDirPair.getFirst());
+    }
+
+    int profileIndex = 0;
+    for (Map.Entry<String, Set<String>> entry : dirNameToModulesMap.entrySet()) {
+      final String dirName = entry.getKey();
+      final ProcessorConfigProfile profile = new ProcessorConfigProfile(myDefaultProcessorsProfile);
+      profile.setName("Profile" + (++profileIndex));
+      profile.setEnabled(isEnabled);
+      profile.setGeneratedSourcesDirectoryName(dirName);
+      for (String moduleName : entry.getValue()) {
+        profile.addModuleName(moduleName);
+      }
+      myModuleProcessorProfiles.add(profile);
     }
   }
 
@@ -705,9 +793,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     final Element annotationProcessingSettings = addChild(parentNode, ANNOTATION_PROCESSING);
-    writeProfile(addChild(annotationProcessingSettings, "profile").setAttribute("default", "true"), myDefaultProcessorsProfile);
+    myDefaultProcessorsProfile.writeExternal(addChild(annotationProcessingSettings, "profile").setAttribute("default", "true"));
     for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
-      writeProfile(addChild(annotationProcessingSettings, "profile").setAttribute("default", "false"), profile);
+      profile.writeExternal(addChild(annotationProcessingSettings, "profile").setAttribute("default", "false"));
     }
 
     if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
@@ -726,109 +814,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         }
       }
     }
-  }
-
-  private static void readProfile(Element element, ProcessorConfigProfile profile) {
-    profile.setName(element.getAttributeValue(NAME, ""));
-    profile.setEnabled(Boolean.valueOf(element.getAttributeValue(ENABLED, "false")));
-
-    final Element srcOutput = element.getChild("sourceOutputDir");
-    profile.setGeneratedSourcesDirectoryName(srcOutput != null? srcOutput.getAttributeValue(NAME) : null);
-
-    profile.clearProcessorOptions();
-    for (Object optionElement : element.getChildren(OPTION)) {
-      final Element elem = (Element)optionElement;
-      final String key = elem.getAttributeValue(NAME);
-      final String value = elem.getAttributeValue(VALUE);
-      if (!StringUtil.isEmptyOrSpaces(key) && value != null) {
-        profile.setOption(key, value);
-      }
-    }
-
-    profile.clearProcessors();
-    for (Object procElement : element.getChildren("processor")) {
-      final String name = ((Element)procElement).getAttributeValue(NAME);
-      if (StringUtil.isEmptyOrSpaces(name)) {
-        profile.addProcessor(name);
-      }
-    }
-
-    final Element pathElement = element.getChild("processorPath");
-    if (pathElement != null) {
-      profile.setObtainProcessorsFromClasspath(Boolean.parseBoolean(pathElement.getAttributeValue("useClasspath", "true")));
-      final StringBuilder pathBuilder = new StringBuilder();
-      for (Object entry : pathElement.getChildren(ENTRY)) {
-        final String path = ((Element)entry).getAttributeValue(NAME);
-        if (!StringUtil.isEmptyOrSpaces(path)) {
-          if (pathBuilder.length() > 0) {
-            pathBuilder.append(File.pathSeparator);
-          }
-          pathBuilder.append(FileUtil.toSystemDependentName(path));
-        }
-      }
-      profile.setProcessorPath(pathBuilder.toString());
-    }
-
-    profile.clearModuleNames();
-    for (Object moduleElement : element.getChildren(MODULE)) {
-      final String name = ((Element)moduleElement).getAttributeValue(NAME);
-      if (!StringUtil.isEmptyOrSpaces(name)) {
-        profile.addModuleName(name);
-      }
-    }
-  }
-
-  private static void writeProfile(final Element element, ProcessorConfigProfile profile) {
-    element.setAttribute(NAME, profile.getName());
-    element.setAttribute(ENABLED, Boolean.toString(profile.isEnabled()));
-
-    final String srcDirName = profile.getGeneratedSourcesDirectoryName();
-    if (srcDirName != null) {
-      addChild(element, "sourceOutputDir").setAttribute(NAME, srcDirName);
-    }
-
-    final Map<String, String> options = profile.getProcessorOptions();
-    if (!options.isEmpty()) {
-      final List<String> keys = new ArrayList<String>(options.keySet());
-      Collections.sort(keys, ALPHA_COMPARATOR);
-      for (String key : keys) {
-        addChild(element, OPTION).setAttribute(NAME, key).setAttribute(VALUE, options.get(key));
-      }
-    }
-
-    final Set<String> processors = profile.getProcessors();
-    if (!processors.isEmpty()) {
-      final List<String> processorList = new ArrayList<String>(processors);
-      Collections.sort(processorList, ALPHA_COMPARATOR);
-      for (String proc : processorList) {
-        addChild(element, "processor").setAttribute(NAME, proc);
-      }
-    }
-
-    final Element pathElement = addChild(element, "processorPath").setAttribute("useClasspath", Boolean.toString(profile.isObtainProcessorsFromClasspath()));
-    final String path = profile.getProcessorPath();
-    if (!StringUtil.isEmpty(path)) {
-      final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator, false);
-      while (tokenizer.hasMoreTokens()) {
-        final String token = tokenizer.nextToken();
-        addChild(pathElement, ENTRY).setAttribute(NAME, FileUtil.toSystemIndependentName(token));
-      }
-    }
-
-    final Set<String> moduleNames = profile.getModuleNames();
-    if (!moduleNames.isEmpty()) {
-      final List<String> names = new ArrayList<String>(moduleNames);
-      Collections.sort(names, ALPHA_COMPARATOR);
-      for (String name : names) {
-        addChild(element, MODULE).setAttribute(NAME, name);
-      }
-    }
-  }
-
-  private static Element addChild(Element parent, final String childName) {
-    final Element child = new Element(childName);
-    parent.addContent(child);
-    return child;
   }
 
   @NotNull @NonNls
@@ -971,5 +956,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       this.srcRoot = srcRoot;
     }
   }
-  
+
+  private static Element addChild(Element parent, final String childName) {
+    final Element child = new Element(childName);
+    parent.addContent(child);
+    return child;
+  }
+
 }
