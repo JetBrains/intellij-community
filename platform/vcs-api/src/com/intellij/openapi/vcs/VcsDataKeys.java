@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.ChangeRequestChain;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -36,6 +35,7 @@ public interface VcsDataKeys {
   DataKey<File[]> IO_FILE_ARRAY = DataKey.create("IO_FILE_ARRAY");
   DataKey<File> IO_FILE = DataKey.create("IO_FILE");
   DataKey<VcsKey> VCS = DataKey.create("VCS");
+  DataKey<Boolean> VCS_NON_LOCAL_HISTORY_SESSION = DataKey.create("VCS_NON_LOCAL_HISTORY_SESSION");
   DataKey<VcsFileRevision> VCS_FILE_REVISION = DataKey.create("VCS_FILE_REVISION");
   DataKey<VcsFileRevision[]> VCS_FILE_REVISIONS = DataKey.create("VCS_FILE_REVISIONS");
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");

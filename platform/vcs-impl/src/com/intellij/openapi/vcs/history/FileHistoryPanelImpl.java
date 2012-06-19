@@ -1236,6 +1236,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return firstSelectedRevision;
+    } else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId) && myHistorySession != null) {
+      return ! myHistorySession.hasLocalSource();
     } else if (VcsDataKeys.VCS.is(dataId)) {
       return myVcs.getKeyInstanceMethod();
     }
