@@ -242,6 +242,7 @@ public class FindInProjectUtil {
         }
 
         if (progress != null) {
+          progress.checkCanceled();
           progress.setFraction((double)index / psiFiles.size());
           String text = FindBundle.message("find.searching.for.string.in.file.progress",
                                            findModel.getStringToFind(), virtualFile.getPresentableUrl());
@@ -298,7 +299,7 @@ public class FindInProjectUtil {
       // fine
     }
 
-    if (progress != null) {
+    if (progress != null && !progress.isCanceled()) {
       progress.setText(FindBundle.message("find.progress.search.completed"));
     }
   }
@@ -366,7 +367,9 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  private static Collection<PsiFile> getFilesToSearchIn(@NotNull final FindModel findModel, @NotNull final Project project, final PsiDirectory psiDirectory) {
+  private static Collection<PsiFile> getFilesToSearchIn(@NotNull final FindModel findModel,
+                                                        @NotNull final Project project,
+                                                        final PsiDirectory psiDirectory) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiFile>>() {
       @Override
       public Collection<PsiFile> compute() {
@@ -376,7 +379,9 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  private static Collection<PsiFile> getFilesToSearchInReadAction(@NotNull final FindModel findModel, @NotNull final Project project, @Nullable final PsiDirectory psiDirectory) {
+  private static Collection<PsiFile> getFilesToSearchInReadAction(@NotNull final FindModel findModel,
+                                                                  @NotNull final Project project,
+                                                                  @Nullable final PsiDirectory psiDirectory) {
     String moduleName = findModel.getModuleName();
     Module module = moduleName == null ? null : ModuleManager.getInstance(project).findModuleByName(moduleName);
     final FileIndex fileIndex = module == null ?
@@ -399,6 +404,7 @@ public class FindInProjectUtil {
 
         @Override
         public boolean processFile(@NotNull VirtualFile virtualFile) {
+          ProgressManager.checkCanceled();
           if (!virtualFile.isDirectory() &&
               (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) &&
               (customScope == null || customScope.contains(virtualFile))) {
@@ -415,7 +421,7 @@ public class FindInProjectUtil {
           return myFiles;
         }
       }
-      final EnumContentIterator iterator = new EnumContentIterator();
+      EnumContentIterator iterator = new EnumContentIterator();
 
       if (psiDirectory == null) {
         boolean success = fileIndex.iterateContent(iterator);
@@ -430,18 +436,12 @@ public class FindInProjectUtil {
       }
       return iterator.getFiles();
     }
-    else if (psiDirectory.isValid()) {
+    if (psiDirectory.isValid()) {
       Collection<PsiFile> fileList = new THashSet<PsiFile>();
-
-      addFilesUnderDirectory(psiDirectory,
-                             fileList,
-                             findModel.isWithSubdirectories(),
-                             createFileMaskRegExp(findModel));
+      addFilesUnderDirectory(psiDirectory, fileList, findModel.isWithSubdirectories(), createFileMaskRegExp(findModel));
       return fileList;
     }
-    else {
-      return Collections.emptyList();
-    }
+    return Collections.emptyList();
   }
 
   private static boolean iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {
