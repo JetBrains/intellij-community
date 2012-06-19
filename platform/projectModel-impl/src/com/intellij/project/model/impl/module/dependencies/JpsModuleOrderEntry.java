@@ -18,10 +18,13 @@ package com.intellij.project.model.impl.module.dependencies;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderRootsEnumerator;
 import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.model.JpsModelManager;
 import com.intellij.project.model.impl.module.JpsRootModel;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -53,15 +56,23 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
   }
 
   @NotNull
-  @Override
   public VirtualFile[] getFiles(OrderRootType type) {
-    throw new UnsupportedOperationException("'getFiles' not implemented in " + getClass().getName());
+    final OrderRootsEnumerator enumerator = getEnumerator(type);
+    return enumerator != null ? enumerator.getRoots() : VirtualFile.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  private OrderRootsEnumerator getEnumerator(OrderRootType type) {
+    final Module module = getModule();
+    if (module == null) return null;
+
+    return ModuleRootManagerImpl.getCachingEnumeratorForType(type, module, true);
   }
 
   @NotNull
-  @Override
   public String[] getUrls(OrderRootType rootType) {
-    throw new UnsupportedOperationException("'getUrls' not implemented in " + getClass().getName());
+    final OrderRootsEnumerator enumerator = getEnumerator(rootType);
+    return enumerator != null ? enumerator.getUrls() : ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override

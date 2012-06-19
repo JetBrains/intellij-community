@@ -4,35 +4,43 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.impl.JpsElementBase;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
-import org.jetbrains.jps.model.library.JpsLibraryRootType;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
 
 /**
  * @author nik
  */
 public class JpsLibraryRootImpl extends JpsElementBase<JpsLibraryRootImpl> implements JpsLibraryRoot {
   private final String myUrl;
-  private final JpsLibraryRootType myRootType;
+  private final JpsOrderRootType myRootType;
+  private final InclusionOptions myOptions;
 
-  public JpsLibraryRootImpl(@NotNull String url,
-                            @NotNull JpsLibraryRootType rootType) {
+  public JpsLibraryRootImpl(@NotNull String url, @NotNull JpsOrderRootType rootType, @NotNull InclusionOptions options) {
     myUrl = url;
     myRootType = rootType;
+    myOptions = options;
   }
 
   public JpsLibraryRootImpl(JpsLibraryRootImpl original) {
     myUrl = original.myUrl;
     myRootType = original.myRootType;
+    myOptions = original.myOptions;
   }
 
   @NotNull
   @Override
-  public JpsLibraryRootType getRootType() {
+  public JpsOrderRootType getRootType() {
     return myRootType;
   }
 
   @NotNull
   public String getUrl() {
     return myUrl;
+  }
+
+  @NotNull
+  @Override
+  public InclusionOptions getInclusionOptions() {
+    return myOptions;
   }
 
   @NotNull

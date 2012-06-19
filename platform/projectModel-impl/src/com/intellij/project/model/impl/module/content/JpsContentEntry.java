@@ -31,6 +31,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
@@ -130,47 +132,80 @@ public class JpsContentEntry implements ContentEntry, Disposable {
 
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource) {
-    throw new UnsupportedOperationException("'addSourceFolder' not implemented in " + getClass().getName());
+    return addSourceFolder(file, isTestSource, "");
   }
 
   @Override
   public SourceFolder addSourceFolder(@NotNull VirtualFile file, boolean isTestSource, @NotNull String packagePrefix) {
-    throw new UnsupportedOperationException("'addSourceFolder' not implemented in " + getClass().getName());
+    return addSourceFolder(file.getUrl(), isTestSource, packagePrefix);
+  }
+
+  private SourceFolder addSourceFolder(final String url, boolean isTestSource, String packagePrefix) {
+    final JavaSourceRootType rootType = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(rootType, url, new JavaSourceRootProperties(packagePrefix));
+    final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
+    mySourceFolders.add(sourceFolder);
+    return sourceFolder;
   }
 
   @Override
   public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
-    throw new UnsupportedOperationException("'addSourceFolder' not implemented in " + getClass().getName());
+    return addSourceFolder(url, isTestSource, "");
   }
 
   @Override
   public void removeSourceFolder(@NotNull SourceFolder sourceFolder) {
-    throw new UnsupportedOperationException();
+    final JpsSourceFolder folder = (JpsSourceFolder)sourceFolder;
+    mySourceFolders.remove(folder);
+    myModule.removeSourceRoot(folder.getSourceRoot().getRootType(), folder.getSourceRoot().getUrl());
+    Disposer.dispose(folder);
   }
 
   @Override
   public void clearSourceFolders() {
-    throw new UnsupportedOperationException();
+    List<JpsModuleSourceRoot> toRemove = new ArrayList<JpsModuleSourceRoot>();
+    for (JpsSourceFolder folder : mySourceFolders) {
+      toRemove.add(folder.getSourceRoot());
+      Disposer.dispose(folder);
+    }
+    mySourceFolders.clear();
+    for (JpsModuleSourceRoot root : toRemove) {
+      myModule.removeSourceRoot(root.getRootType(), root.getUrl());
+    }
   }
 
   @Override
   public ExcludeFolder addExcludeFolder(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException("'addExcludeFolder' not implemented in " + getClass().getName());
+    return addExcludeFolder(file.getUrl());
   }
 
   @Override
   public ExcludeFolder addExcludeFolder(@NotNull String url) {
-    throw new UnsupportedOperationException("'addExcludeFolder' not implemented in " + getClass().getName());
+    final JpsExcludeFolder folder = new JpsExcludeFolder(url, this);
+    myModule.getExcludeRootsList().addUrl(url);
+    myExcludeFolders.add(folder);
+    return folder;
   }
 
   @Override
   public void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder) {
-    throw new UnsupportedOperationException();
+    JpsExcludeFolder folder = (JpsExcludeFolder)excludeFolder;
+    myExcludeFolders.remove(folder);
+    myModule.getExcludeRootsList().removeUrl(folder.getUrl());
+    Disposer.dispose(folder);
   }
 
   @Override
   public void clearExcludeFolders() {
-    throw new UnsupportedOperationException();
+    List<String> toRemove = new ArrayList<String>();
+    for (JpsExcludeFolder folder : myExcludeFolders) {
+      toRemove.add(folder.getUrl());
+      Disposer.dispose(folder);
+    }
+    myExcludeFolders.clear();
+    for (String url : toRemove) {
+      myModule.getExcludeRootsList().removeUrl(url);
+    }
   }
 
   @Override
