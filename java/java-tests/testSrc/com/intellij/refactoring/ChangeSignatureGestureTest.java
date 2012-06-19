@@ -88,6 +88,10 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   public void testOccurrencesInSameFile() {
     doTypingTest("int param");
   }
+  
+  public void testMultiParams() {
+    doTypingTest("int x, int y");
+  }
 
   public void testAddParameter2Constructor() {
     doTypingTest("int param");
