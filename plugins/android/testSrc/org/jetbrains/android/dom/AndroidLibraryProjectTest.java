@@ -145,7 +145,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
 
   public void testJavaHighlighting() {
     createInitialStructure();
-    myFixture.copyFileToProject(BASE_PATH + "FindUsagesR1.java", "lib/src/p1/p2/lib/R.java");
+    myFixture.copyFileToProject(BASE_PATH + "LibR.java", "lib/src/p1/p2/lib/R.java");
     String to = "lib/src/p1/p2/lib" + getTestName(true) + ".java";
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".java", to);
     myFixture.configureFromExistingVirtualFile(file);
@@ -186,7 +186,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
 
   public void testJavaNavigation() throws Exception {
     createInitialStructure();
-    myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
+    myFixture.copyFileToProject("R.java", "app/src/p1/p2/R.java");
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".java", "/app/src/p1/p2/Java.java");
     myFixture.configureFromExistingVirtualFile(file);
 
@@ -242,9 +242,9 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myFixture.copyFileToProject(BASE_PATH + "FindUsagesStyles.xml", "app/res/values/styles.xml");
     myFixture.copyFileToProject(BASE_PATH + "FindUsagesStyles.xml", "lib/res/values/styles.xml");
     myFixture.copyFileToProject(BASE_PATH + "picture1.png", "lib/res/drawable/picture1.png");
-    myFixture.copyFileToProject(BASE_PATH + "FindUsagesR.java", "app/src/p1/p2/R.java");
-    myFixture.copyFileToProject(BASE_PATH + "FindUsagesR1.java", "app/src/p1/p2/lib/R.java");
-    myFixture.copyFileToProject(BASE_PATH + "FindUsagesR1.java", "lib/src/p1/p2/lib/R.java");
+    myFixture.copyFileToProject("R.java", "app/src/p1/p2/R.java");
+    myFixture.copyFileToProject(BASE_PATH + "LibR.java", "app/src/p1/p2/lib/R.java");
+    myFixture.copyFileToProject(BASE_PATH + "LibR.java", "lib/src/p1/p2/lib/R.java");
     Collection<UsageInfo> references = findCodeUsages(getTestName(false) + "." + extension, dir);
     assertEquals(6, references.size());
   }

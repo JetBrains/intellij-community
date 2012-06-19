@@ -42,7 +42,7 @@ public class AndroidFindUsagesTest extends AndroidTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.copyFileToProject(BASE_PATH + "picture3.gif", "res/drawable/picture3.gif");
-    myFixture.copyFileToProject(BASE_PATH + "R.java", "gen/p1/p2/R.java");
+    myFixture.copyFileToProject("R.java", "gen/p1/p2/R.java");
   }
 
   public List<UsageInfo> findCodeUsages(String path, String pathInProject) throws Throwable {

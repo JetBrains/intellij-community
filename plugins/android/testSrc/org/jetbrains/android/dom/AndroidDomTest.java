@@ -28,7 +28,7 @@ abstract class AndroidDomTest extends AndroidTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.copyFileToProject("dom/R.java", "gen/p1/p2/R.java");
+    myFixture.copyFileToProject("R.java", "gen/p1/p2/R.java");
     myFixture.enableInspections(AndroidDomInspection.class,
                                 AndroidUnknownAttributeInspection.class,
                                 AndroidElementNotAllowedInspection.class);
