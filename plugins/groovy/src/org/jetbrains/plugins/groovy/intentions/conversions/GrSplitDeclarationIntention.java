@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 /**
@@ -49,11 +50,11 @@ public class GrSplitDeclarationIntention extends Intention {
           element.getParent().addAfter(assignment, element);
         }
       }
-      else if (variables.length>1) {
+      else if (variables.length > 1) {
         String modifiers = ((GrVariableDeclaration)element).getModifierList().getText();
         GrStatement[] sts = new GrStatement[variables.length];
         for (int i = 0; i < variables.length; i++) {
-          sts[i] = GroovyPsiElementFactory.getInstance(project).createStatementFromText(modifiers + " " + variables[i].getText());
+          sts[i] = createVarDeclaration(project, variables[i], modifiers);
         }
 
         element = GroovyRefactoringUtil.addBlockIntoParent(element);
@@ -61,8 +62,25 @@ public class GrSplitDeclarationIntention extends Intention {
         for (int i = sts.length - 1; i >= 0; i--) {
           element.getParent().addAfter(sts[i], element);
         }
+
+        element.delete();
       }
     }
+  }
+
+  private static GrStatement createVarDeclaration(Project project, GrVariable variable, String modifiers) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(modifiers).append(' ');
+    GrTypeElement typeElement = variable.getTypeElementGroovy();
+    if (typeElement != null) {
+      builder.append(typeElement.getText()).append(' ');
+    }
+    builder.append(variable.getName());
+    GrExpression initializer = variable.getInitializerGroovy();
+    if (initializer != null) {
+      builder.append('=').append(initializer.getText());
+    }
+    return GroovyPsiElementFactory.getInstance(project).createStatementFromText(builder.toString());
   }
 
   private String myText = "";
