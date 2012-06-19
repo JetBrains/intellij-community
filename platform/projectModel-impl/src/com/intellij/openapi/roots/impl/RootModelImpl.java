@@ -249,28 +249,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   @Override
   @NotNull
-  public VirtualFile[] getOrderedRoots(OrderRootType type) {
-    final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-
-    for (OrderEntry orderEntry : getOrderEntries()) {
-      ContainerUtil.addAll(result, orderEntry.getFiles(type));
-    }
-    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
-  }
-
-  @Override
-  @NotNull
-  public String[] getOrderedRootUrls(OrderRootType type) {
-    final ArrayList<String> result = new ArrayList<String>();
-
-    for (OrderEntry orderEntry : getOrderEntries()) {
-      ContainerUtil.addAll(result, orderEntry.getUrls(type));
-    }
-    return ContainerUtil.toArray(result, new String[result.size()]);
-  }
-
-  @Override
-  @NotNull
   public OrderEntry[] getOrderEntries() {
     OrderEntry[] cachedOrderEntries = myCachedOrderEntries;
     if (cachedOrderEntries == null) {

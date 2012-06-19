@@ -298,14 +298,11 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         TextRange literalRange = stringElement.getTextRange();
 
         //the case of print '\<caret>'
-        if (fileText.charAt(caretOffset) == '\'' && caretOffset > 0 && fileText.charAt(caretOffset - 1) == '\\') {
-          convertEndToMultiline(caretOffset, document, fileText, '\'');
-        }
-        else {
+        if (!isSlashBeforeCaret(caretOffset, fileText)) {
           convertEndToMultiline(literalRange.getEndOffset(), document, fileText, '\'');
+          document.insertString(literalRange.getStartOffset(), "''");
+          editor.getCaretModel().moveToOffset(caretOffset + 2);
         }
-        document.insertString(literalRange.getStartOffset(), "''");
-        editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
       }
       else {
@@ -331,15 +328,11 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
         TextRange parentRange = parent.getTextRange();
-        //the case of print '\<caret>'
-        if (fileText.charAt(caretOffset) == '\"' && caretOffset > 0 && fileText.charAt(caretOffset - 1) == '\\') {
-          convertEndToMultiline(caretOffset, document, fileText, '"');
-        }
-        else {
+        if (rightFromDollar || !isSlashBeforeCaret(caretOffset, fileText)) {
           convertEndToMultiline(parent.getTextRange().getEndOffset(), document, fileText, '"');
+          document.insertString(parentRange.getStartOffset(), "\"\"");
+          editor.getCaretModel().moveToOffset(caretOffset + 2);
         }
-        document.insertString(parentRange.getStartOffset(), "\"\"");
-        editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
         if (rightFromDollar) {
           editor.getCaretModel().moveCaretRelatively(1, 0, false, false, true);
@@ -376,6 +369,10 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     return false;
+  }
+
+  private static boolean isSlashBeforeCaret(int caretOffset, String fileText) {
+    return caretOffset > 0 && fileText.charAt(caretOffset - 1) == '\\';
   }
 
   private static void insertLineFeedInString(Editor editor,

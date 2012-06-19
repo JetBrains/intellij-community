@@ -56,7 +56,10 @@ public interface Resources extends AndroidDomElement {
   StringArray addStringArray();
 
   List<DeclareStyleable> getDeclareStyleables();
+  DeclareStyleable addDeclareStyleable();
+
   List<Attr> getAttrs();
+  Attr addAttr();
 
   List<Item> getItems();
   Item addItem();

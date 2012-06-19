@@ -83,7 +83,6 @@ public class OrderEntriesTest extends ModuleRootManagerTestCase {
   }
 
   private void assertOrderFiles(final OrderRootType type, VirtualFile... files) {
-    assertOrderedEquals(ModuleRootManager.getInstance(myModule).getFiles(type), files);
     assertRoots(collectByOrderEnumerator(type), files);
   }
 

@@ -176,16 +176,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @Override
-  public VirtualFile[] getFilesFromAllModules(OrderRootType type) {
-    final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (Module module : getModuleManager().getSortedModules()) {
-      final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(type);
-      ContainerUtil.addAll(result, files);
-    }
-    return VfsUtilCore.toVirtualFileArray(result);
-  }
-
   @NotNull
   @Override
   public OrderEnumerator orderEntries() {

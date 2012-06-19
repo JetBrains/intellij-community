@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -44,9 +45,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -151,11 +154,40 @@ public class GroovyExpectedTypesProvider {
 
     public void visitVariable(GrVariable variable) {
       if (myExpression.equals(variable.getInitializerGroovy())) {
-        PsiType type = variable.getDeclaredType();
-        if (type != null) {
-          myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
+        PsiType type = variable.getType();
+        myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
+      }
+    }
+
+    @Override
+    public void visitNamedArgument(GrNamedArgument argument) {
+      PsiElement pparent = argument.getParent().getParent();
+      if (pparent instanceof GrCall && resolvesToDefaultConstructor(((GrCall)pparent))) {
+        GrArgumentLabel label = argument.getLabel();
+        if (label != null) {
+          PsiElement resolved = label.resolve();
+          if (resolved instanceof PsiField) {
+            PsiType type = ((PsiField)resolved).getType();
+            myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
+          }
+          else if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)resolved)) {
+            PsiType type = ((PsiMethod)resolved).getParameterList().getParameters()[0].getType();
+            myResult = new TypeConstraint[]{new SubtypeConstraint(type,type)};
+          }
         }
       }
+    }
+
+    private static boolean resolvesToDefaultConstructor(GrCall call) {
+      PsiMethod method = call.resolveMethod();
+      if (method != null && method.isConstructor() && method.getParameterList().getParametersCount() == 0) return true;
+
+      if (call instanceof GrConstructorCall) {
+        PsiElement resolved = PsiImplUtil.extractUniqueResult(((GrConstructorCall)call).multiResolveClass()).getElement();
+        if (resolved instanceof PsiClass) return true;
+      }
+
+      return false;
     }
 
     public void visitMethodCallExpression(GrMethodCallExpression methodCall) {
