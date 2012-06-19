@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.dom.resources.DeclareStyleable;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -57,10 +58,19 @@ public class ResourceNamesValidityState implements ValidityState {
       final VirtualFile file = pair.getSecond();
 
       for (final ResourceType resType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
-        addValueResources(file, resType, AndroidResourceUtil.getValueResourcesFromElement(resType.getName(), resources), myResources);
+        addValueResources(file, resType, AndroidResourceUtil.getValueResourcesFromElement(resType.getName(), resources), myResources, "");
       }
-      addValueResources(file, ResourceType.ATTR, resources.getAttrs(), myResources);
-      addValueResources(file, ResourceType.DECLARE_STYLEABLE, resources.getDeclareStyleables(), myResources);
+      addValueResources(file, ResourceType.ATTR, resources.getAttrs(), myResources, "");
+      final List<DeclareStyleable> styleables = resources.getDeclareStyleables();
+      addValueResources(file, ResourceType.DECLARE_STYLEABLE, styleables, myResources, "");
+
+      for (DeclareStyleable styleable : styleables) {
+        final String styleableName = styleable.getName().getValue();
+
+        if (styleableName != null) {
+          addValueResources(file, ResourceType.DECLARE_STYLEABLE, styleable.getAttrs(), myResources, styleableName + '_');
+        }
+      }
     }
 
     for (final VirtualFile subdir : manager.getResourceSubdirs(null)) {
@@ -93,7 +103,8 @@ public class ResourceNamesValidityState implements ValidityState {
   private static void addValueResources(VirtualFile file,
                                         ResourceType resType,
                                         Collection<? extends ResourceElement> resourceElements,
-                                        Map<String, MyResourceFileData> result) {
+                                        Map<String, MyResourceFileData> result,
+                                        String namePrefix) {
     for (ResourceElement element : resourceElements) {
       final String name = element.getName().getValue();
 
@@ -103,7 +114,7 @@ public class ResourceNamesValidityState implements ValidityState {
           data = new MyResourceFileData();
           result.put(file.getPath(), data);
         }
-        data.addValueResource(new ResourceEntry(resType.getName(), name));
+        data.addValueResource(new ResourceEntry(resType.getName(), namePrefix + name));
       }
     }
   }
