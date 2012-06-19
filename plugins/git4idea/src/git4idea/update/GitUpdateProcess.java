@@ -27,6 +27,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.ContinuationFinalTasksInserter;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
@@ -236,8 +238,15 @@ public class GitUpdateProcess {
     // try restore changes under all circumstances
     final ContinuationFinalTasksInserter finalTasksInserter = new ContinuationFinalTasksInserter(context);
     finalTasksInserter.allNextAreFinal();
+    // !!!! this task is put NEXT, i.e. if unshelve/unstash will be done synchronously or scheduled on context,
+    // it is unimportant -> files will be refreshed after
+    context.next(new TaskDescriptor("Refresh local files", Where.POOLED) {
+      @Override
+      public void run(ContinuationContext context) {
+        mySaver.refresh();
+      }
+    });
     mySaver.restoreLocalChanges(context);
-    mySaver.refresh();
     finalTasksInserter.removeFinalPropertyAdder();
   }
 

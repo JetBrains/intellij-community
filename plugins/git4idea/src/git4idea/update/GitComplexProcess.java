@@ -17,7 +17,10 @@ package git4idea.update;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.util.continuation.*;
+import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -114,7 +117,6 @@ public class GitComplexProcess {
 
   private void run() {
     Continuation continuation = Continuation.createForCurrentProgress(myProject, true, myTitle);
-    GatheringContinuationContext initContext = new GatheringContinuationContext();
     String taskTitle = "Git: " + myTitle;
     TaskDescriptor operation = new TaskDescriptor(taskTitle, Where.POOLED) {
       @Override public void run(final ContinuationContext context) {
@@ -131,8 +133,7 @@ public class GitComplexProcess {
       UNBLOCK
     };
 
-    initContext.next(tasks);
-    continuation.run(initContext.getList());
+    continuation.run(tasks);
   }
 
 }
