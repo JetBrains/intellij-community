@@ -29,6 +29,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class AndroidLibraryProjectTest extends UsefulTestCase {
   @NonNls private static final String BASE_PATH = "libModule/";
 
@@ -41,6 +42,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
 
   protected JavaCodeInsightTestFixture myFixture;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public AndroidLibraryProjectTest() {
     IdeaTestCase.initPlatformPrefix();
   }
@@ -109,7 +111,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     super.tearDown();
   }
 
-  private String getTestSdkPath() {
+  private static String getTestSdkPath() {
     return AndroidTestCase.getAbsoluteTestDataPath() + "/sdk1.5";
   }
 
@@ -182,43 +184,6 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myFixture.checkResultByFile(BASE_PATH + getTestName(true) + "_after.xml");
   }
 
-  /*public void testRJavaFileMarkers() throws Exception {
-    doTestRJavaFilesMarkers("/app/src/p1/p2/R.java");
-  }
-
-  public void testRJavaFileMarkers1() throws Exception {
-    boolean temp = myLibFacet.getConfiguration().LIBRARY_PROJECT;
-    try {
-      myLibFacet.getConfiguration().LIBRARY_PROJECT = true;
-      doTestRJavaFilesMarkers("/app/src/p1/p2/lib/R.java");
-    }
-    finally {
-      myLibFacet.getConfiguration().LIBRARY_PROJECT = temp;
-    }
-  }
-
-  private void doTestRJavaFilesMarkers(String destPath) {
-    createInitialStructure();
-    List<LineMarkerInfo> markers =
-      AndroidResourcesLineMarkerTest.collectMarkers(myFixture, BASE_PATH + getTestName(false) + ".java", destPath);
-    assertEquals(3, markers.size());
-    for (LineMarkerInfo marker : markers) {
-      PsiField field = (PsiField)marker.getElement();
-      GutterIconNavigationHandler handler = marker.getNavigationHandler();
-      assertInstanceOf(handler, AndroidResourcesLineMarkerProvider.MyNavigationHandler.class);
-      PsiElement[] targets = ((AndroidResourcesLineMarkerProvider.MyNavigationHandler)handler).getTargets();
-      checkTargets(field, targets);
-    }
-  }
-
-  public void testJavaFileMarkers() throws Exception {
-    createInitialStructure();
-    myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
-    List<LineMarkerInfo> markers =
-      AndroidResourcesLineMarkerTest.collectMarkers(myFixture, BASE_PATH + getTestName(false) + ".java", "/app/src/p1/p2/Java.java");
-    assertEquals(0, markers.size());
-  }*/
-
   public void testJavaNavigation() throws Exception {
     createInitialStructure();
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
@@ -233,47 +198,6 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     assertInstanceOf(targetElement, PsiFile.class);
     assertEquals("main.xml", ((PsiFile)targetElement).getName());
   }
-
-  /*public void testLayoutFileMarkers() throws Exception {
-    createInitialStructure();
-    myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
-    myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/lib/R.java");
-    myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "lib/src/p1/p2/lib/R.java");
-    List<LineMarkerInfo> markers =
-      AndroidResourcesLineMarkerTest.collectMarkers(myFixture, BASE_PATH + "res/layout/main.xml", "lib/res/layout/main.xml");
-    assertEquals(2, markers.size());
-
-    boolean fileMarker = false;
-
-    for (LineMarkerInfo marker : markers) {
-      GutterIconNavigationHandler handler = marker.getNavigationHandler();
-      PsiElement[] targets;
-      if (marker.getElement() instanceof XmlFile) {
-        fileMarker = true;
-        assertInstanceOf(handler, AndroidResourcesLineMarkerProvider.MyNavigationHandler.class);
-        targets = ((AndroidResourcesLineMarkerProvider.MyNavigationHandler)handler).getTargets();
-        assertNotNull(targets);
-      }
-      else {
-        assertInstanceOf(handler, AndroidResourcesLineMarkerProvider.MyLazyNavigationHandler.class);
-        Computable<PsiElement[]> targetProvider = ((AndroidResourcesLineMarkerProvider.MyLazyNavigationHandler)handler).getTargetProvider();
-        targets = targetProvider.compute();
-        assertNotNull(targets);
-      }
-      assertEquals(3, targets.length);
-      for (PsiElement target : targets) {
-        assertInstanceOf(target, PsiField.class);
-      }
-    }
-
-    assertTrue("LineMarker for file not found", fileMarker);
-  }
-
-  public static void checkTargets(PsiField field, PsiElement[] targets) {
-    assertNotNull(targets);
-    assertTrue(targets.length > 0);
-    assertEquals(field.getName(), 1, targets.length);
-  }*/
 
   public void testFileResourceFindUsages() throws Throwable {
     doFindUsagesTest("xml", "lib/res/layout/");
