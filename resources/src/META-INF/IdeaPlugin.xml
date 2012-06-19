@@ -710,10 +710,10 @@
       <category>Other</category>
     </intentionAction>
 
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.ReplaceCastAction</className>
-      <category>Other</category>
-    </intentionAction>
+    <!--<intentionAction>-->
+      <!--<className>com.intellij.codeInsight.intention.impl.ReplaceCastAction</className>-->
+      <!--<category>Other</category>-->
+    <!--</intentionAction>-->
 
 
 
