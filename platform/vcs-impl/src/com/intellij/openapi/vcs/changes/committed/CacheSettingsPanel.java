@@ -112,15 +112,8 @@ public class CacheSettingsPanel implements Configurable {
   public void disposeUIResources() {
   }
 
-  public void setEnableCaching(final boolean value) {
-    myRefreshCheckbox.setSelected(value);
-  }
-
   public void setEnabled(final boolean value) {
     myRefreshCheckbox.setEnabled(value);
   }
 
-  public boolean isCachingEnabled() {
-    return myRefreshCheckbox.isSelected();
-  }
 }

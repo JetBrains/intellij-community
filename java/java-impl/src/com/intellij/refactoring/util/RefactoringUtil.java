@@ -891,6 +891,7 @@ public class RefactoringUtil {
                                                       final Iterable<PsiTypeParameter> parametersIterable,
                                                       final PsiSubstitutor substitutor,
                                                       final PsiElementFactory factory) {
+    final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<PsiElement, PsiElement>();
     for (PsiTypeParameter parameter : parametersIterable) {
       PsiType substitutedType = substitutor.substitute(parameter);
       if (substitutedType == null) {
@@ -900,10 +901,15 @@ public class RefactoringUtil {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
-          parent.replace(factory.createTypeElement(substitutedType));
+          replacement.put(parent, factory.createTypeElement(substitutedType));
         } else if (element instanceof PsiJavaCodeReferenceElement && substitutedType instanceof PsiClassType) {
-          element.replace(factory.createReferenceElementByType((PsiClassType)substitutedType));
+          replacement.put(element, factory.createReferenceElementByType((PsiClassType)substitutedType));
         }
+      }
+    }
+    for (PsiElement element : replacement.keySet()) {
+      if (element.isValid()) {
+        element.replace(replacement.get(element));
       }
     }
   }

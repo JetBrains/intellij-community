@@ -253,8 +253,12 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
 
     final PsiMethod currentMethod = (PsiMethod)initialChangeInfo.getMethod();
     if (silently || ApplicationManager.getApplication().isUnitTestMode()) {
+      final TextRange signatureRange = JavaChangeSignatureDetector.getSignatureRange(currentMethod);
+     final String currentSignature = currentMethod.getContainingFile().getText().substring(signatureRange.getStartOffset(),
+                                                                                           signatureRange.getEndOffset());
       temporallyRevertChanges(currentMethod, oldText);
       createChangeSignatureProcessor(method).run();
+      temporallyRevertChanges(currentMethod, currentSignature, JavaChangeSignatureDetector.getSignatureRange(currentMethod));
       return true;
     }
     final JavaMethodDescriptor descriptor = new JavaMethodDescriptor(currentMethod) {
@@ -289,6 +293,12 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
   }
 
   private static void temporallyRevertChanges(final PsiElement psiElement, final String oldText) {
+    temporallyRevertChanges(psiElement, oldText, psiElement.getTextRange());
+  }
+
+  private static void temporallyRevertChanges(final PsiElement psiElement,
+                                              final String oldText,
+                                              final TextRange textRange) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -296,7 +306,6 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiElement.getProject());
         final Document document = documentManager.getDocument(file);
         if (document != null) {
-          final TextRange textRange = psiElement.getTextRange();
           document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), oldText);
           documentManager.commitDocument(document);
         }

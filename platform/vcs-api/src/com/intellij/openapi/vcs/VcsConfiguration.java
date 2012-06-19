@@ -73,7 +73,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = false;
   public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
-  public boolean ENABLE_BACKGROUND_PROCESSES = false;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
   public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
   public boolean CHECK_COMMIT_MESSAGE_SPELLING = true;
@@ -85,11 +84,9 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   // asked only for non-DVCS
   public boolean INCLUDE_TEXT_INTO_PATCH = false;
   public boolean INCLUDE_TEXT_INTO_SHELF = false;
-  public boolean CREATE_PATCH_EXPAND_DETAILS_DEFAULT = true;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
   public boolean SHOW_VCS_ERROR_NOTIFICATIONS = true;
-  public boolean CHANGE_DETAILS_ON = false;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -354,6 +351,6 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   }
 
   public boolean isChangedOnServerEnabled() {
-    return ENABLE_BACKGROUND_PROCESSES && CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND;
+    return CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND;
   }
 }

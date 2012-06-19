@@ -19,20 +19,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Utility class to sort changes by roots.
@@ -52,6 +46,19 @@ public class LocalChangesUnderRoots {
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
+  public Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<VirtualFile> rootsToSave) {
+    final Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<String, Map<VirtualFile, Collection<Change>>>();
+    myRoots = myVcsManager.getAllVcsRoots();
+
+    final List<LocalChangeList> changeLists = myChangeManager.getChangeListsCopy();
+    for (LocalChangeList list : changeLists) {
+      final HashMap<VirtualFile, Collection<Change>> subMap = new HashMap<VirtualFile, Collection<Change>>();
+      addChangesToMap(rootsToSave, subMap, list.getChanges());
+      result.put(list.getName(), subMap);
+    }
+    return result;
+  }
+
   /**
    * Sort all changes registered in the {@link ChangeListManager} by VCS roots,
    * filtering out any roots except the specified ones.
@@ -64,6 +71,13 @@ public class LocalChangesUnderRoots {
     final Collection<Change> allChanges = myChangeManager.getAllChanges();
     myRoots = myVcsManager.getAllVcsRoots();
 
+    addChangesToMap(rootsToSave, result, allChanges);
+    return result;
+  }
+
+  private void addChangesToMap(Collection<VirtualFile> rootsToSave,
+                               Map<VirtualFile, Collection<Change>> result,
+                               Collection<Change> allChanges) {
     for (Change change : allChanges) {
       if (change.getBeforeRevision() != null) {
         addChangeToMap(result, change, change.getBeforeRevision(), rootsToSave);
@@ -72,7 +86,6 @@ public class LocalChangesUnderRoots {
         addChangeToMap(result, change, change.getAfterRevision(), rootsToSave);
       }
     }
-    return result;
   }
 
   private void addChangeToMap(@NotNull Map<VirtualFile, Collection<Change>> result, @NotNull Change change, @NotNull ContentRevision revision, @NotNull Collection<VirtualFile> rootsToSave) {

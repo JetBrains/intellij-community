@@ -145,7 +145,7 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
            textRange.getEndOffset() <= method.getTextRange().getEndOffset();
   }
 
-  private static TextRange getSignatureRange(PsiMethod method) {
+  public static TextRange getSignatureRange(PsiMethod method) {
     final PsiCodeBlock body = method.getBody();
     if (body != null) {
       return new TextRange(method.getTextRange().getStartOffset(), body.getTextOffset());
