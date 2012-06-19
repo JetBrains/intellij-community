@@ -399,6 +399,9 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     else if (myValueField.isVisible()) {
       return myValueField;
     }
+    else if (myModuleCombo.isVisible()) {
+      return myModuleCombo;
+    }
     else {
       return myFileNameField;
     }
