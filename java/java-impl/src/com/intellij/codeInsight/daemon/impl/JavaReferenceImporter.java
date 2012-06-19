@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -52,6 +53,21 @@ public class JavaReferenceImporter implements ReferenceImporter {
           new ImportClassFix(ref).doFix(editor, false, allowCaretNearRef);
           return true;
         }
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean autoImportReferenceAt(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    if (!file.getViewProvider().getLanguages().contains(StdLanguages.JAVA)) return false;
+    PsiReference element = file.findReferenceAt(offset);
+
+    if (element instanceof PsiJavaCodeReferenceElement) {
+      PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
+      if (ref.multiResolve(true).length == 0) {
+        new ImportClassFix(ref).doFix(editor, false, true);
+        return true;
       }
     }
     return false;

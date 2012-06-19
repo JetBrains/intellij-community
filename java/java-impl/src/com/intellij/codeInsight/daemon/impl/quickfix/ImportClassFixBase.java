@@ -72,10 +72,9 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
   }
 
   @Nullable
-  protected abstract String getReferenceName(T reference);
-  protected abstract PsiElement getReferenceNameElement(T reference);
-
-  protected abstract boolean hasTypeParameters(T reference);
+  protected abstract String getReferenceName(@NotNull T reference);
+  protected abstract PsiElement getReferenceNameElement(@NotNull T reference);
+  protected abstract boolean hasTypeParameters(@NotNull T reference);
 
   @NotNull
   public List<PsiClass> getClassesToImport() {
@@ -145,7 +144,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     POPUP_NOT_SHOWN
   }
 
-  public Result doFix(@NotNull final Editor editor, boolean doShow, final boolean allowCaretNearRef) {
+  public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef) {
     List<PsiClass> classesToImport = getClassesToImport();
     if (classesToImport.isEmpty()) return Result.POPUP_NOT_SHOWN;
 
@@ -194,7 +193,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
       return Result.CLASS_AUTO_IMPORTED;
     }
 
-    if (doShow && canImportHere) {
+    if (allowPopup && canImportHere) {
       String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
       if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
         HintManager.getInstance().showQuestionHint(editor, hintText, myRef.getTextOffset(),
@@ -261,7 +260,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     }
   }
 
-  private boolean isCaretNearRef(Editor editor, T ref) {
+  private boolean isCaretNearRef(@NotNull Editor editor, @NotNull T ref) {
     PsiElement nameElement = getReferenceNameElement(ref);
     if (nameElement == null) return false;
     TextRange range = nameElement.getTextRange();

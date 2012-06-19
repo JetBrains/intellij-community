@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
+import com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.openapi.application.ApplicationManager;
@@ -306,6 +307,31 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
+  public void testAutoImportAfterUncomment() throws Throwable {
+    @NonNls String text = "class S { /*ArrayList l; HashMap h; <caret>*/ }";
+    configureByText(StdFileTypes.JAVA, text);
+
+    boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+    try {
+      doHighlighting();
+
+      assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+
+      CommentByBlockCommentAction action = new CommentByBlockCommentAction();
+      action.actionPerformedImpl(getProject(), getEditor());
+
+      assertEmpty(highlightErrors());
+
+      assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    }
+    finally {
+       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+    }
+  }
+
   public void testAutoImportWorks() throws Throwable {
     @NonNls final String text = "class S { JFrame x; <caret> }";
     configureByText(StdFileTypes.JAVA, text);
@@ -324,6 +350,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
     assertFalse(((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).canChangeFileSilently(getFile()));//CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
   }
+
 
   public void testAutoImportOfGenericReference() throws Throwable {
     @NonNls final String text = "class S {{ new ArrayList<caret><> }}";
