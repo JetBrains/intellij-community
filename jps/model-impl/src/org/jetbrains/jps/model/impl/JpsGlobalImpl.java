@@ -1,30 +1,42 @@
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.JpsEventDispatcher;
+import org.jetbrains.jps.model.JpsGlobal;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
-import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
+import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryKind;
 
 /**
  * @author nik
  */
 public class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements JpsGlobal {
+  private final JpsLibraryCollectionImpl myLibraryCollection;
+
   public JpsGlobalImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
-    myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
+    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
   }
 
   public JpsGlobalImpl(JpsGlobalImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(original, model, eventDispatcher);
+    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
   }
 
   @NotNull
   @Override
   public JpsLibrary addLibrary(@NotNull JpsLibraryType libraryType, @NotNull final String name) {
-    final JpsElementCollectionImpl<JpsLibrary> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
-    return collection.addChild(new JpsLibraryImpl(name, libraryType));
+    return myLibraryCollection.addLibrary(libraryType, name);
+  }
+
+  @NotNull
+  @Override
+  public JpsLibraryCollection getLibraryCollection() {
+    return myLibraryCollection;
   }
 
   @NotNull

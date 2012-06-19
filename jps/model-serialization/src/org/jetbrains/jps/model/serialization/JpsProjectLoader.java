@@ -103,7 +103,7 @@ public class JpsProjectLoader {
     final ArrayList<JpsLibrary> libraries = new ArrayList<JpsLibrary>();
     JpsLibraryTableLoader.loadLibraries(libraryTableElement, libraries);
     for (JpsLibrary library : libraries) {
-      myProject.addLibrary(library);
+      myProject.getLibraryCollection().addLibrary(library);
     }
   }
 

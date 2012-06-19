@@ -15,7 +15,7 @@ public class JpsModuleSerializationTest extends JpsModelTestCase {
     loadProject("iprProject/iprProject.ipr");
     final JpsModule module = assertOneElement(myModel.getProject().getModules());
     assertEquals("iprProject", module.getName());
-    final JpsLibrary library = assertOneElement(myModel.getProject().getLibraries());
+    final JpsLibrary library = assertOneElement(myModel.getProject().getLibraryCollection().getLibraries());
     assertEquals("junit", library.getName());
   }
 

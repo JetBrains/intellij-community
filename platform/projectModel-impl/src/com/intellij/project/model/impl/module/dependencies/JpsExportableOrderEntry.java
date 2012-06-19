@@ -56,7 +56,7 @@ public abstract class JpsExportableOrderEntry<E extends JpsDependencyElement> ex
 
   @Override
   public void setScope(@NotNull DependencyScope scope) {
-    JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(myDependencyElement)
-      .setScope(JpsJavaDependencyScope.valueOf(scope.name()));
+    final JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(myDependencyElement);
+    extension.setScope(JpsJavaDependencyScope.valueOf(scope.name()));
   }
 }

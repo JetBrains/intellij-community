@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 
 import java.util.List;
@@ -42,11 +43,13 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   @NotNull
   JpsLibrary addModuleLibrary(@NotNull JpsLibraryType<?> type, @NotNull String name);
 
-  @NotNull
-  JpsLibrary addModuleLibrary(@NotNull JpsLibrary library);
+  void addModuleLibrary(@NotNull JpsLibrary library);
 
-  void delete();
+  @NotNull
+  JpsLibraryCollection getLibraryCollection();
 
   @NotNull
   JpsSdkReferencesTable getSdkReferencesTable();
+
+  void delete();
 }

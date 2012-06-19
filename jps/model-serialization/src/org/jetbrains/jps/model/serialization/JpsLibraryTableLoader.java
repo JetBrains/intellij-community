@@ -5,10 +5,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
-import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsLibraryRootType;
-import org.jetbrains.jps.model.library.JpsLibraryType;
-import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.HashMap;
@@ -55,9 +52,15 @@ public class JpsLibraryTableLoader {
         final JpsOrderRootType rootType = getRootType(rootTypeId);
         for (Element rootElement : JDOMUtil.getChildren(rootsElement, "root")) {
           String url = rootElement.getAttributeValue("url");
-          final boolean jarDirectory = jarDirectories.get(rootType).contains(url);
-          final boolean recursive = recursiveJarDirectories.get(rootType).contains(url);
-          library.addUrl(url, new JpsLibraryRootType(rootType, jarDirectory, recursive));
+          JpsLibraryRoot.InclusionOptions options;
+          if (jarDirectories.get(rootType).contains(url)) {
+            final boolean recursive = recursiveJarDirectories.get(rootType).contains(url);
+            options = recursive ? JpsLibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY : JpsLibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT;
+          }
+          else {
+            options = JpsLibraryRoot.InclusionOptions.ROOT_ITSELF;
+          }
+          library.addRoot(url, rootType, options);
         }
       }
     }

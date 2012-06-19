@@ -71,10 +71,12 @@ public class GitChangeProvider implements ChangeProvider {
     }
 
     final Collection<VirtualFile> affected = dirtyScope.getAffectedContentRootsWithCheck();
-    if (dirtyScope.getAffectedContentRoots().size() != affected.size()) {
+    final Collection<VirtualFile> affectedContentRoots = dirtyScope.getAffectedContentRoots();
+    if (affectedContentRoots.size() != affected.size()) {
       final Set<VirtualFile> set = new HashSet<VirtualFile>(affected);
-      set.removeAll(dirtyScope.getAffectedContentRoots());
+      set.removeAll(affectedContentRoots);
       for (VirtualFile file : set) {
+        debug("adding git root for check: " + file.getPath());
         ((VcsModifiableDirtyScope) dirtyScope).addDirtyDirRecursively(new FilePathImpl(file));
       }
     }
@@ -84,13 +86,16 @@ public class GitChangeProvider implements ChangeProvider {
       final MyNonChangedHolder holder = new MyNonChangedHolder(myProject, dirtyScope.getDirtyFilesNoExpand(), addGate,
                                                                myFileDocumentManager, myVcsManager);
       for (VirtualFile root : roots) {
+        debug("checking root: " + root.getPath());
         GitChangesCollector collector = isNewGitChangeProviderAvailable()
                                         ? GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, myVcsManager,
                                                                          vcs, dirtyScope, root)
                                         : GitOldChangesCollector.collect(myProject, myChangeListManager, myVcsManager,
                                                                          vcs, dirtyScope, root);
-        holder.changed(collector.getChanges());
-        for (Change file : collector.getChanges()) {
+        final Collection<Change> changes = collector.getChanges();
+        holder.changed(changes);
+        for (Change file : changes) {
+          debug("process change: " + ChangesUtil.getFilePath(file).getPath());
           builder.processChange(file, GitVcs.getKey());
         }
         for (VirtualFile f : collector.getUnversionedFiles()) {
@@ -101,6 +106,7 @@ public class GitChangeProvider implements ChangeProvider {
       }
     }
     catch (VcsException e) {
+      PROFILE_LOG.info(e);
       // most probably the error happened because git is not configured
       vcs.getExecutableValidator().showNotificationOrThrow(e);
     }

@@ -1,10 +1,14 @@
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.JpsEventDispatcher;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
-import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
+import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryKind;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -19,16 +23,18 @@ import java.util.List;
 public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implements JpsProject {
   private static final JpsElementCollectionKind<JpsElementReference<?>> EXTERNAL_REFERENCES_COLLECTION_KIND =
     new JpsElementCollectionKind<JpsElementReference<?>>(new JpsElementKindBase<JpsElementReference<?>>("external reference"));
+  private final JpsLibraryCollection myLibraryCollection;
 
   public JpsProjectImpl(JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(model, eventDispatcher);
     myContainer.setChild(JpsModuleKind.MODULE_COLLECTION_KIND);
-    myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
     myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_KIND);
+    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
   }
 
   public JpsProjectImpl(JpsProjectImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
     super(original, model, eventDispatcher);
+    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
   }
 
   public void addExternalReference(@NotNull JpsElementReference<?> reference) {
@@ -45,30 +51,24 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   @NotNull
   @Override
   public JpsLibrary addLibrary(@NotNull JpsLibraryType<?> libraryType, @NotNull final String name) {
-    final JpsElementCollectionImpl<JpsLibrary> collection = myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND);
-    return collection.addChild(new JpsLibraryImpl(name, libraryType));
+    return myLibraryCollection.addLibrary(libraryType, name);
   }
 
   @NotNull
   @Override
-  public List<? extends JpsLibrary> getLibraries() {
-    return myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND).getElements();
-  }
-
-  @NotNull
-  @Override
-  public List<? extends JpsModule> getModules() {
+  public List<JpsModule> getModules() {
     return myContainer.getChild(JpsModuleKind.MODULE_COLLECTION_KIND).getElements();
   }
 
   @Override
-  public void addModule(JpsModule module) {
+  public void addModule(@NotNull JpsModule module) {
     myContainer.getChild(JpsModuleKind.MODULE_COLLECTION_KIND).addChild(module);
   }
 
+  @NotNull
   @Override
-  public void addLibrary(JpsLibrary library) {
-    myContainer.getChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND).addChild(library);
+  public JpsLibraryCollection getLibraryCollection() {
+    return myLibraryCollection;
   }
 
   @NotNull

@@ -32,6 +32,10 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
     mySourceRoot = sourceRoot;
   }
 
+  public JpsModuleSourceRoot getSourceRoot() {
+    return mySourceRoot;
+  }
+
   @Override
   public boolean isTestSource() {
     return mySourceRoot.getRootType() == JavaSourceRootType.TEST_SOURCE;

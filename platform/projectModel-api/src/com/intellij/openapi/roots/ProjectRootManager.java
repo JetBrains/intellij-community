@@ -52,11 +52,6 @@ public abstract class ProjectRootManager implements ModificationTracker {
   public abstract ProjectFileIndex getFileIndex();
 
   /**
-   * @deprecated use {@link #orderEntries()}
-   */
-  public abstract VirtualFile[] getFilesFromAllModules(OrderRootType type);
-
-  /**
    * Creates new enumerator instance to process dependencies of all modules in the project. Only first level dependencies of
    * modules are processed so {@link OrderEnumerator#recursively()} option is ignored and {@link OrderEnumerator#withoutDepModules()} option is forced
    * @return new enumerator instance

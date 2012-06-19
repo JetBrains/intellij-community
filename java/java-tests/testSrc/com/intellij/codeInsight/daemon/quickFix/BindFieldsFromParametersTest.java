@@ -22,7 +22,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 /**
  * @author Danila Ponomarenko
  */
-public class CreateAssignFieldsFromParametersTest extends LightIntentionActionTestCase {
+public class BindFieldsFromParametersTest extends LightIntentionActionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -41,6 +41,6 @@ public class CreateAssignFieldsFromParametersTest extends LightIntentionActionTe
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/createAssignFieldsFromParameters";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/bindFieldsFromParameters";
   }
 }

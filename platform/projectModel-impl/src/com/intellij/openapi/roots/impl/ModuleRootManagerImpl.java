@@ -168,16 +168,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.isSdkInherited();
   }
 
-  @NotNull
-  public VirtualFile[] getFiles(OrderRootType type) {
-    return getCachingEnumeratorForType(type, myModule, false).getRoots();
-  }
-
-  @NotNull
-  public String[] getUrls(OrderRootType type) {
-    return getCachingEnumeratorForType(type, myModule, false).getUrls();
-  }
-
   void commitModel(RootModelImpl rootModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(rootModel.myModuleRootManager == this);

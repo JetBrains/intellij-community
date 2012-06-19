@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.MemberChooserObject;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -48,7 +49,7 @@ import java.util.*;
 /**
  * @author Danila Ponomarenko
  */
-public class CreateAssignFieldsFromParametersAction extends BaseIntentionAction {
+public class BindFieldsFromParametersAction extends BaseIntentionAction implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(CreateFieldFromParameterAction.class);
   private static final Key<Map<SmartPsiElementPointer<PsiParameter>, Boolean>> PARAMS = Key.create("FIELDS_FROM_PARAMS");
 
@@ -75,7 +76,7 @@ public class CreateAssignFieldsFromParametersAction extends BaseIntentionAction 
         LOG.assertTrue(psiParameter != null);
       }
 
-      setText(CodeInsightBundle.message("intention.create.assign.fields.from.parameters.text", method.isConstructor() ? "Constructor" : "Method"));
+      setText(CodeInsightBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "Constructor" : "Method"));
     }
     return isAvailable(psiParameter);
   }
@@ -150,7 +151,7 @@ public class CreateAssignFieldsFromParametersAction extends BaseIntentionAction 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.create.assign.fields.from.parameters.family");
+    return CodeInsightBundle.message("intention.bind.fields.from.parameters.family");
   }
 
   @Override
@@ -163,62 +164,94 @@ public class CreateAssignFieldsFromParametersAction extends BaseIntentionAction 
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final PsiMethod method = myParameter != null ? (PsiMethod)myParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
     LOG.assertTrue(method != null);
-    final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams;
-    synchronized (LOCK) {
-      unboundedParams = getUnboundedParams(method);
-      if (unboundedParams.isEmpty()) return;
-      if (myParameter == null) {
-        myParameter = unboundedParams.iterator().next().getElement();
-      }
-    }
-    if (unboundedParams.size() > 1 && isInteractive) {
-      ClassMember[] members = new ClassMember[unboundedParams.size()];
-      ClassMember selection = null;
-      int i = 0;
-      for (SmartPsiElementPointer<PsiParameter> pointer : unboundedParams) {
-        final PsiParameter parameter = pointer.getElement();
-        final ParameterClassMember classMember = new ParameterClassMember(parameter);
-        members[i++] = classMember;
-        if (parameter == myParameter) {
-          selection = classMember;
-        }
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      Arrays.sort(members, new Comparator<ClassMember>() {
-        @Override
-        public int compare(ClassMember o1, ClassMember o2) {
-          return parameterList.getParameterIndex(((ParameterClassMember)o1).getParameter()) -
-                 parameterList.getParameterIndex(((ParameterClassMember)o2).getParameter());
-        }
-      });
 
-      final MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, false, true, project);
-      if (selection != null) {
-        chooser.selectElements(new ClassMember[]{selection});
-      }
-      chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters");
-      chooser.setCopyJavadocVisible(false);
-      chooser.show();
-      if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
-      final List<ClassMember> selectedElements = chooser.getSelectedElements();
-      if (selectedElements == null) return;
-
-      final HashSet<String> usedNames = new HashSet<String>();
-      for (ClassMember selectedElement : selectedElements) {
-        processParameter(project, ((ParameterClassMember)selectedElement).getParameter(), usedNames);
-      }
-    }
-    else {
-      processParameter(project, myParameter);
-    }
-    synchronized (LOCK) {
-      unboundedParams.clear();
+    final HashSet<String> usedNames = new HashSet<String>();
+    for (PsiParameter selected : selectParameters(project, method, copyUnboundedParamsAndClearOriginal(method), isInteractive)) {
+      processParameter(project, selected, usedNames);
     }
   }
 
-  private static void processParameter(final Project project,
-                                       final PsiParameter myParameter) {
-    processParameter(project, myParameter, new HashSet<String>());
+  @NotNull
+  private static Iterable<PsiParameter> selectParameters(@NotNull Project project,
+                                                         @NotNull PsiMethod method,
+                                                         @NotNull Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams,
+                                                         boolean isInteractive) {
+    if (unboundedParams.size() < 2 || !isInteractive) {
+      return revealPointers(unboundedParams);
+    }
+
+    final ParameterClassMember[] members = sortByParameterIndex(toClassMemberArray(unboundedParams), method);
+
+    final MemberChooser<ParameterClassMember> chooser = showChooser(project, method, members);
+
+    final List<ParameterClassMember> selectedElements = chooser.getSelectedElements();
+    if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE || selectedElements == null) {
+      return Collections.emptyList();
+    }
+
+    return revealParameterClassMembers(selectedElements);
+  }
+
+  @NotNull
+  private static MemberChooser<ParameterClassMember> showChooser(@NotNull Project project,
+                                           @NotNull PsiMethod method,
+                                           @NotNull ParameterClassMember[] members) {
+    final MemberChooser<ParameterClassMember> chooser = new MemberChooser<ParameterClassMember>(members, false, true, project);
+    chooser.selectElements(members);
+    chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters");
+    chooser.show();
+    return chooser;
+  }
+
+  @NotNull
+  private static ParameterClassMember[] sortByParameterIndex(@NotNull ParameterClassMember[] members, @NotNull PsiMethod method) {
+    final PsiParameterList parameterList = method.getParameterList();
+    Arrays.sort(members, new Comparator<ParameterClassMember>() {
+      @Override
+      public int compare(ParameterClassMember o1, ParameterClassMember o2) {
+        return parameterList.getParameterIndex(o1.getParameter()) -
+               parameterList.getParameterIndex(o2.getParameter());
+      }
+    });
+    return members;
+  }
+
+  @NotNull
+  private static <T extends PsiElement> List<T> revealPointers(@NotNull Iterable<SmartPsiElementPointer<T>> pointers) {
+    final List<T> result = new ArrayList<T>();
+    for (SmartPsiElementPointer<T> pointer : pointers) {
+      result.add(pointer.getElement());
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<PsiParameter> revealParameterClassMembers(@NotNull Iterable<ParameterClassMember> parameterClassMembers) {
+    final List<PsiParameter> result = new ArrayList<PsiParameter>();
+    for (ParameterClassMember parameterClassMember : parameterClassMembers) {
+      result.add(parameterClassMember.getParameter());
+    }
+    return result;
+  }
+
+  @NotNull
+  private static ParameterClassMember[] toClassMemberArray(@NotNull Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams) {
+    final ParameterClassMember[] result = new ParameterClassMember[unboundedParams.size()];
+    int i = 0;
+    for (SmartPsiElementPointer<PsiParameter> pointer : unboundedParams) {
+      result[i++] = new ParameterClassMember(pointer.getElement());
+    }
+    return result;
+  }
+
+  @NotNull
+  private static Collection<SmartPsiElementPointer<PsiParameter>> copyUnboundedParamsAndClearOriginal(@NotNull PsiMethod method) {
+    synchronized (LOCK) {
+      final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams = getUnboundedParams(method);
+      final Collection<SmartPsiElementPointer<PsiParameter>> result = new ArrayList<SmartPsiElementPointer<PsiParameter>>(unboundedParams);
+      unboundedParams.clear();
+      return result;
+    }
   }
 
   private static void processParameter(final Project project,
