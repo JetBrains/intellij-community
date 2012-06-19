@@ -107,7 +107,7 @@ public class BreakpointChooser {
             myPopupBuilder.setDetailView(new MyDetailView(pushed));
             myPopupBuilder.setCallback(new BreakpointMasterDetailPopupBuilder.BreakpointChosenCallback() {
               @Override
-              public void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup) {
+              public void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup, boolean withEnterOrDoubleClick) {
                 popup.cancel();
                 myBreakpointItem = breakpointItem;
                 mySelectedBreakpoint = breakpointItem.getBreakpoint();
