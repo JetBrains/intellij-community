@@ -40,7 +40,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitShelveChangesSaver.class);
   private final ShelveChangesManager myShelveManager;
   private final ShelvedChangesViewManager myShelveViewManager;
-  private ShelvedChangeList myShelvedChangeList;
+  private Map<String, ShelvedChangeList> myShelvedLists;
 
   public GitShelveChangesSaver(Project project, Git git, ProgressIndicator indicator, String stashMessage) {
     super(project, git, indicator, stashMessage);
@@ -51,35 +51,46 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   @Override
   protected void save(@NotNull Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
-    final Map<VirtualFile,Collection<Change>> map = new LocalChangesUnderRoots(myProject).getChangesUnderRoots(rootsToSave);
-    final Set<Change> changes = new HashSet<Change>();
-    for (Collection<Change> changeCollection : map.values()) {
-      changes.addAll(changeCollection);
-    }
-    if (! changes.isEmpty()) {
-      String oldProgressTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
-      List<VcsException> exceptions = new ArrayList<VcsException>(1);
-      myShelvedChangeList = GitShelveUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions, false);
-      myProgressIndicator.setText(oldProgressTitle);
-      if (! exceptions.isEmpty()) {
-        LOG.info("save " + exceptions, exceptions.get(0));
-        throw exceptions.get(0);
-      } else {
-        for (VirtualFile root : rootsToSave) {
-          GitRollbackEnvironment.resetHardLocal(myProject, root);
-        }
+    final Map<String, Map<VirtualFile, Collection<Change>>> lists = new LocalChangesUnderRoots(myProject).getChangesByLists(rootsToSave);
+
+    String oldProgressTitle = myProgressIndicator.getText();
+    myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
+    List<VcsException> exceptions = new ArrayList<VcsException>(1);
+    myShelvedLists = new HashMap<String, ShelvedChangeList>();
+
+    for (Map.Entry<String, Map<VirtualFile, Collection<Change>>> entry : lists.entrySet()) {
+      final Map<VirtualFile, Collection<Change>> map = entry.getValue();
+      final Set<Change> changes = new HashSet<Change>();
+      for (Collection<Change> changeCollection : map.values()) {
+        changes.addAll(changeCollection);
+      }
+      if (! changes.isEmpty()) {
+        final ShelvedChangeList list = GitShelveUtils.shelveChanges(myProject, myShelveManager, changes,
+                                                                    myStashMessage + " [" + entry.getKey() + "]", exceptions, false);
+        myShelvedLists.put(entry.getKey(), list);
       }
     }
+    if (! exceptions.isEmpty()) {
+      LOG.info("save " + exceptions, exceptions.get(0));
+      myShelvedLists = null;  // no restore here since during shelving changes are not rolled back...
+      throw exceptions.get(0);
+    } else {
+      for (VirtualFile root : rootsToSave) {
+        GitRollbackEnvironment.resetHardLocal(myProject, root);
+      }
+    }
+    myProgressIndicator.setText(oldProgressTitle);
   }
 
   protected void load(ContinuationContext context) {
-    if (myShelvedChangeList != null) {
+    if (myShelvedLists != null) {
       LOG.info("load ");
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
-      if (myShelvedChangeList != null) {
-        GitShelveUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, context);
+      if (myShelvedLists != null) {
+        for (ShelvedChangeList list : myShelvedLists.values()) {
+          GitShelveUtils.doSystemUnshelve(myProject, list, myShelveManager, context);
+        }
       }
       myProgressIndicator.setText(oldProgressTitle);
     }
@@ -87,7 +98,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
 
   @Override
   protected boolean wereChangesSaved() {
-    return myShelvedChangeList != null;
+    return myShelvedLists != null;
   }
 
   @Override
@@ -97,7 +108,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
 
   @Override
   protected void showSavedChanges() {
-    myShelveViewManager.activateView(myShelvedChangeList);
+    myShelveViewManager.activateView(myShelvedLists.get(myShelvedLists.keySet().iterator().next()));
   }
 
   @Override
