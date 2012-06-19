@@ -71,23 +71,24 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
           addLibraryChildren(libraryOrderEntry, children, getProject(), this);
         }
         else {
-          children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(module, orderEntry), getSettings()));
+          children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(module, libraryOrderEntry), getSettings()));
         }
       }
       else if (orderEntry instanceof JdkOrderEntry) {
-        final Sdk jdk = ((JdkOrderEntry)orderEntry).getJdk();
+        final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
+        final Sdk jdk = jdkOrderEntry.getJdk();
         if (jdk != null) {
-          children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(module, orderEntry), getSettings()));
+          children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(module, jdkOrderEntry), getSettings()));
         }
       }
     }
     return children;
   }
 
-  public static void addLibraryChildren(final OrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
+  public static void addLibraryChildren(final LibraryOrSdkOrderEntry entry, final List<AbstractTreeNode> children, Project project, ProjectViewNode node) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     VirtualFile[] files =
-      entry instanceof LibraryOrderEntry ? getLibraryRoots((LibraryOrderEntry)entry) : entry.getFiles(OrderRootType.CLASSES);
+      entry instanceof LibraryOrderEntry ? getLibraryRoots((LibraryOrderEntry)entry) : entry.getRootFiles(OrderRootType.CLASSES);
     for (final VirtualFile file : files) {
       if (!file.isValid()) continue;
       if (file.isDirectory()) {

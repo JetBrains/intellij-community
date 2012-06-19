@@ -2270,10 +2270,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
+        if (orderEntry instanceof LibraryOrSdkOrderEntry) {
           if (orderEntry.isValid()) {
-            final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
-            final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
+            final LibraryOrSdkOrderEntry entry = (LibraryOrSdkOrderEntry)orderEntry;
+            final VirtualFile[] libSources = entry.getRootFiles(OrderRootType.SOURCES);
+            final VirtualFile[] libClasses = entry.getRootFiles(OrderRootType.CLASSES);
             for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
               for (VirtualFile root : roots) {
                 if (visitedRoots.add(root)) {

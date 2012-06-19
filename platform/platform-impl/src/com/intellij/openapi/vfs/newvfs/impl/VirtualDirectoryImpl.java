@@ -19,22 +19,15 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -307,18 +300,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     insideGettingRoots = true;
     final Set<VirtualFile> roots = new THashSet<VirtualFile>();
 
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-      for (OrderEntry entry : orderEntries) {
-        ContainerUtil.addAll(roots, entry.getFiles(OrderRootType.CLASSES));
-        ContainerUtil.addAll(roots, entry.getFiles(OrderRootType.SOURCES));
-      }
-    }
+    final OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries();
+    ContainerUtil.addAll(roots, enumerator.getClassesRoots());
+    ContainerUtil.addAll(roots, enumerator.getSourceRoots());
 
     insideGettingRoots = false;
-    return VfsUtil.toVirtualFileArray(roots);
+    return VfsUtilCore.toVirtualFileArray(roots);
   }
 
   @Nullable

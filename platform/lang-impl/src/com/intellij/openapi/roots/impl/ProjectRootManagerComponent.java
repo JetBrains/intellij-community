@@ -260,7 +260,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
         }
         else if (entry instanceof JdkOrderEntry) {
           for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-            addRootsToTrack(entry.getUrls(orderRootType), recursive, flat);
+            addRootsToTrack(((JdkOrderEntry)entry).getRootUrls(orderRootType), recursive, flat);
           }
         }
       }

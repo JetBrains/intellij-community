@@ -1044,7 +1044,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
       @Override
       public boolean process(OrderEntry orderEntry) {
         if (orderEntry instanceof JdkOrderEntry) {
-          entries.removeAll(Arrays.asList(orderEntry.getFiles(OrderRootType.CLASSES)));
+          entries.removeAll(Arrays.asList(((JdkOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES)));
         }
         return true;
       }

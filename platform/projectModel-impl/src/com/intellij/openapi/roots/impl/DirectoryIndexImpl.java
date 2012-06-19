@@ -416,9 +416,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       progress.setText2(ProjectBundle.message("project.index.processing.library.sources.progress", module.getName()));
 
       for (OrderEntry orderEntry : getOrderEntries(module)) {
-        boolean isLibrary = orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry;
-        if (isLibrary) {
-          VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
+        if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+          VirtualFile[] sourceRoots = ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(OrderRootType.SOURCES);
           for (final VirtualFile sourceRoot : sourceRoots) {
             fillMapWithLibrarySources(sourceRoot, "", sourceRoot, progress);
           }
@@ -457,9 +456,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       progress.setText2(ProjectBundle.message("project.index.processing.library.classes.progress", module.getName()));
 
       for (OrderEntry orderEntry : getOrderEntries(module)) {
-        boolean isLibrary = orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry;
-        if (isLibrary) {
-          VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
+        if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+          VirtualFile[] classRoots = ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES);
           for (final VirtualFile classRoot : classRoots) {
             fillMapWithLibraryClasses(classRoot, "", classRoot, progress);
           }
@@ -519,17 +517,18 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           List<OrderEntry> oneEntryList = Arrays.asList(orderEntry);
           Module entryModule = orderEntry.getOwnerModule();
 
-          VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
+          VirtualFile[] sourceRoots = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getSourceRoots();
           for (VirtualFile sourceRoot : sourceRoots) {
             fillMapWithOrderEntries(sourceRoot, oneEntryList, entryModule, null, null, null, progress);
           }
         }
-        else if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
-          VirtualFile[] classRoots = orderEntry.getFiles(OrderRootType.CLASSES);
+        else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+          final LibraryOrSdkOrderEntry entry = (LibraryOrSdkOrderEntry)orderEntry;
+          VirtualFile[] classRoots = entry.getRootFiles(OrderRootType.CLASSES);
           for (VirtualFile classRoot : classRoots) {
             libClassRootEntries.putValue(classRoot, orderEntry);
           }
-          VirtualFile[] sourceRoots = orderEntry.getFiles(OrderRootType.SOURCES);
+          VirtualFile[] sourceRoots = entry.getRootFiles(OrderRootType.SOURCES);
           for (VirtualFile sourceRoot : sourceRoots) {
             libSourceRootEntries.putValue(sourceRoot, orderEntry);
           }

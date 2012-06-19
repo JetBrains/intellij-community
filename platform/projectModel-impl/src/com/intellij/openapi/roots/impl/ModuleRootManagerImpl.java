@@ -247,14 +247,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @NotNull
   private static OrderRootsEnumerator getEnumeratorForType(OrderRootType type, Module module) {
     OrderEnumerator base = OrderEnumerator.orderEntries(module);
-    if (type == OrderRootType.CLASSES || type == OrderRootType.SOURCES) {
-      base = base.exportedOnly();
-    }
     if (type == OrderRootType.CLASSES) {
-      return base.withoutModuleSourceEntries().recursively().exportedOnly().classes();
+      return base.exportedOnly().withoutModuleSourceEntries().recursively().classes();
     }
     if (type == OrderRootType.SOURCES) {
-      return base.recursively().exportedOnly().sources();
+      return base.exportedOnly().recursively().sources();
     }
     if (type.collectFromDependentModules()) {
       return base.recursively().roots(type);
