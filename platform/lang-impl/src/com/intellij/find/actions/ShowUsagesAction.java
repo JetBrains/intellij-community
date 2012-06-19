@@ -180,7 +180,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private void startFindUsages(@NotNull PsiElement element, RelativePoint popupPosition, Editor editor, int maxUsages) {
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
+    FindUsagesHandler handler = findUsagesManager.getNewFindUsagesHandler(element, false);
     if (handler == null) return;
     if (showSettingsDialogBefore) {
       showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
@@ -279,6 +279,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       @Override
       public void addNotify() {
         mySearchEverywhereRunnable = new Runnable() {
+          @Override
           public void run() {
             searchEverywhere(options, handler, editor, popupPosition, maxUsages);
           }
