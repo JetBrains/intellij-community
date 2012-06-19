@@ -17,7 +17,6 @@ package com.intellij.designer.propertyTable;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
@@ -164,7 +163,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
   @Override
   public Object getData(@NonNls String dataId) {
     if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
-      return DesignerToolWindowManager.getInstance(myDesigner.getProject()).getActiveDesignerEditor();
+      return myDesigner.getEditor();
     }
     return null;
   }

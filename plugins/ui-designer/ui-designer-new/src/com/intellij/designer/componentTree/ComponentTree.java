@@ -17,7 +17,6 @@ package com.intellij.designer.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.actions.StartInplaceEditing;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -31,6 +30,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -46,8 +46,9 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
@@ -60,6 +61,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private TreeComponentDecorator myDecorator;
   private DesignerActionPanel myActionPanel;
   private Project myProject;
+  private FileEditor myFileEditor;
   private EditableArea myArea;
   private RadComponent myMarkComponent;
   private int myMarkFeedback;
@@ -99,11 +101,13 @@ public final class ComponentTree extends Tree implements DataProvider {
       myDecorator = null;
       myActionPanel = null;
       myProject = null;
+      myFileEditor = null;
     }
     else {
       myDecorator = designer.getTreeDecorator();
       myActionPanel = designer.getActionPanel();
       myProject = designer.getProject();
+      myFileEditor = designer.getEditor();
     }
     myMarkComponent = null;
     myArea = null;
@@ -127,8 +131,8 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (EditableArea.DATA_KEY.is(dataId)) {
       return myArea;
     }
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myProject != null) {
-      return DesignerToolWindowManager.getInstance(myProject).getActiveDesignerEditor();
+    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      return myFileEditor;
     }
     if (myActionPanel != null) {
       return myActionPanel.getData(dataId);

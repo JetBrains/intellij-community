@@ -16,10 +16,9 @@
 package com.intellij.designer.palette;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.ScrollPaneFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,7 +36,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class PalettePanel extends JPanel {
+public class PalettePanel extends JPanel implements DataProvider {
   private final JPanel myPaletteContainer = new PaletteContainer();
   private List<PaletteGroupComponent> myGroupComponents = Collections.emptyList();
   private List<PaletteItemsComponent> myItemsComponents = Collections.emptyList();
@@ -174,5 +173,13 @@ public class PalettePanel extends JPanel {
     if (myDesigner != null) {
       myDesigner.activatePaletteItem(getActiveItem());
     }
+  }
+
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
+      return myDesigner.getEditor();
+    }
+    return null;
   }
 }
