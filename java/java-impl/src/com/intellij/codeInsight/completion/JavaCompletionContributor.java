@@ -130,7 +130,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaCompletionData.DECLARATION_START.accepts(position) ||
-        JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(position)) {
+        JavaCompletionData.isInsideParameterList(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
     }
 
