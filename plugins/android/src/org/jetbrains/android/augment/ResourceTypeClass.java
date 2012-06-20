@@ -1,16 +1,21 @@
 package org.jetbrains.android.augment;
 
 import com.android.resources.ResourceType;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.util.AndroidResourceUtil;
+import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
 * @author Eugene.Kudelevsky
@@ -43,16 +48,36 @@ class ResourceTypeClass extends AndroidLightClass {
   static PsiField[] buildResourceFields(@NotNull AndroidFacet facet,
                                         @NotNull String resClassName,
                                         @NotNull final PsiClass context) {
+    final LocalResourceManager manager = facet.getLocalResourceManager();
+    final Map<String, PsiType> fieldNames = new HashMap<String, PsiType>();
+    final boolean styleable = ResourceType.STYLEABLE.getName().equals(resClassName);
+    final PsiType basicType = styleable ? PsiType.INT.createArrayType() : PsiType.INT;
+
+    for (String resName : manager.getResourceNames(resClassName)) {
+      fieldNames.put(resName, basicType);
+    }
+
+    if (styleable) {
+      for (ResourceEntry entry : manager.getValueResourceEntries(ResourceType.ATTR.getName())) {
+        final String resName = entry.getName();
+        final String resContext = entry.getContext();
+
+        if (resContext.length() > 0) {
+          fieldNames.put(resContext + '_' + resName, PsiType.INT);
+        }
+      }
+    }
+    final PsiField[] result = new PsiField[fieldNames.size()];
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(facet.getModule().getProject());
-    final Collection<String> resNames = facet.getLocalResourceManager().getResourceNames(resClassName);
-    final PsiField[] result = new PsiField[resNames.size()];
+    final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
+    final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
     int i = 0;
-    for (String resName : resNames) {
-      final PsiType type = ResourceType.STYLEABLE.getName().equals(resClassName)
-                           ? PsiType.INT.createArrayType()
-                           : PsiType.INT;
-      final AndroidLightField field = new AndroidLightField(AndroidResourceUtil.getFieldNameByResourceName(resName), context, type);
-      field.setModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
+
+    for (Map.Entry<String, PsiType> entry : fieldNames.entrySet()) {
+      final String fieldName = AndroidResourceUtil.getFieldNameByResourceName(entry.getKey());
+      final PsiType type = entry.getValue();
+      final AndroidLightField field =
+        new AndroidLightField(fieldName, context, type, !generateNonFinalFields, generateNonFinalFields ? null : 0);
       field.setInitializer(factory.createExpressionFromText("0", field));
       result[i++] = field;
     }

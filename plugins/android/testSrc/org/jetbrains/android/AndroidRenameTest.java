@@ -62,10 +62,10 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.configureFromExistingVirtualFile(file);
     myFixture.copyFileToProject(BASE_PATH + "pic.png", "res/drawable/pic.png");
     myFixture.copyFileToProject(BASE_PATH + "styles.xml", "res/values/styles.xml");
-    myFixture.copyFileToProject(BASE_PATH + "R1.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     renameElementWithTextOccurences("pic1.png");
     myFixture.checkResultByFile(BASE_PATH + "layout_file_after.xml");
-    myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_file_after.java", true);
+    myFixture.checkResultByFile(R_JAVA_PATH, "R.java", true);
     myFixture.checkResultByFile("res/values/styles.xml", BASE_PATH + "styles_after.xml", true);
     assertNotNull(myFixture.findFileInTempDir("res/drawable/pic1.png"));
   }
@@ -76,10 +76,10 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.configureFromExistingVirtualFile(file);
     myFixture.copyFileToProject(BASE_PATH + "pic.png", "res/drawable/pic.9.png");
     myFixture.copyFileToProject(BASE_PATH + "styles.xml", "res/values/styles.xml");
-    myFixture.copyFileToProject(BASE_PATH + "R1.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     renameElementWithTextOccurences("pic1.9.png");
     myFixture.checkResultByFile(BASE_PATH + "layout_file_after.xml");
-    myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_file_after.java", true);
+    myFixture.checkResultByFile(R_JAVA_PATH, "R.java", true);
     myFixture.checkResultByFile("res/values/styles.xml", BASE_PATH + "styles_after.xml", true);
     assertNotNull(myFixture.findFileInTempDir("res/drawable/pic1.9.png"));
   }
@@ -129,10 +129,10 @@ public class AndroidRenameTest extends AndroidTestCase {
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "layout2.xml", "res/layout/layout2.xml");
     myFixture.configureFromExistingVirtualFile(file);
     myFixture.copyFileToProject(BASE_PATH + "strings.xml", "res/values/strings.xml");
-    myFixture.copyFileToProject(BASE_PATH + "R2.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     myFixture.renameElementAtCaret("str1");
     myFixture.checkResultByFile(BASE_PATH + "layout_value_after.xml");
-    myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_value_after.java", true);
+    myFixture.checkResultByFile(R_JAVA_PATH, "R.java", true);
     myFixture.checkResultByFile("res/values/strings.xml", BASE_PATH + "strings_after.xml", true);
   }
 
@@ -158,12 +158,12 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.configureFromExistingVirtualFile(file);
 
     myFixture.copyFileToProject(BASE_PATH + "layoutStrUsage.xml", "res/layout/layoutStrUsage.xml");
-    myFixture.copyFileToProject(BASE_PATH + "R2.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
 
     findHandlerAndDoRename();
 
     myFixture.checkResultByFile(BASE_PATH + "strings_after.xml");
-    myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_value_after.java", true);
+    myFixture.checkResultByFile(R_JAVA_PATH, "R.java", true);
     myFixture.checkResultByFile("res/layout/layoutStrUsage.xml", BASE_PATH + "layoutStrUsage_after.xml", true);
   }
 
@@ -187,7 +187,7 @@ public class AndroidRenameTest extends AndroidTestCase {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "RefR3.java", "src/p1/p2/RefR3.java");
     myFixture.configureFromExistingVirtualFile(file);
-    myFixture.copyFileToProject(BASE_PATH + "R.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     myFixture.copyFileToProject(BASE_PATH + "layout3.xml", "res/layout/layout3.xml");
     myFixture.copyFileToProject(BASE_PATH + "pic.png", "res/drawable/pic.png");
     myFixture.renameElementAtCaret("pic1");
@@ -200,7 +200,7 @@ public class AndroidRenameTest extends AndroidTestCase {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "RefR4.java", "src/p1/p2/RefR4.java");
     myFixture.configureFromExistingVirtualFile(file);
-    myFixture.copyFileToProject(BASE_PATH + "R.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     myFixture.copyFileToProject(BASE_PATH + "layout4.xml", "res/layout/layout4.xml");
     myFixture.copyFileToProject(BASE_PATH + "strings.xml", "res/values/strings.xml");
     myFixture.renameElementAtCaret("str1");
@@ -213,26 +213,26 @@ public class AndroidRenameTest extends AndroidTestCase {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "layout5.xml", "res/layout/layout5.xml");
     myFixture.configureFromExistingVirtualFile(file);
-    myFixture.copyFileToProject(BASE_PATH + "R5.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     myFixture.renameElementAtCaret("@+id/anchor1");
     myFixture.checkResultByFile(BASE_PATH + "layout_id_after.xml");
-    myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_id_after.java", true);
+    myFixture.checkResultByFile(R_JAVA_PATH, "R.java", true);
   }
 
   public void testIdDeclaration() throws Throwable {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "layout6.xml", "res/layout/layout6.xml");
     myFixture.configureFromExistingVirtualFile(file);
-    myFixture.copyFileToProject(BASE_PATH + "R6.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     myFixture.renameElementAtCaret("@+id/anchor1");
     myFixture.checkResultByFile(BASE_PATH + "layout_id_after.xml");
-    myFixture.checkResultByFile(R_JAVA_PATH, BASE_PATH + "R_id_after.java", true);
+    myFixture.checkResultByFile(R_JAVA_PATH, "R.java", true);
   }
 
   public void testJavaReferenceToId() throws Throwable {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "RefR7.java", "src/p1/p2/RefR7.java");
-    myFixture.copyFileToProject(BASE_PATH + "R.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     myFixture.configureFromExistingVirtualFile(file);
     myFixture.copyFileToProject(BASE_PATH + "layout7.xml", "res/layout/layout7.xml");
     myFixture.renameElementAtCaret("anchor1");
@@ -243,7 +243,7 @@ public class AndroidRenameTest extends AndroidTestCase {
   public void testStyleable() throws Throwable {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "RefR8.java", "src/p1/p2/RefR8.java");
-    myFixture.copyFileToProject(BASE_PATH + "R.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     myFixture.configureFromExistingVirtualFile(file);
     myFixture.copyFileToProject(BASE_PATH + "attrs8.xml", "res/values/attrs8.xml");
     myFixture.renameElementAtCaret("LabelView1");
@@ -254,7 +254,7 @@ public class AndroidRenameTest extends AndroidTestCase {
   public void testAttr() throws Throwable {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "RefR9.java", "src/p1/p2/RefR9.java");
-    myFixture.copyFileToProject(BASE_PATH + "R.java", R_JAVA_PATH);
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
     myFixture.configureFromExistingVirtualFile(file);
     myFixture.copyFileToProject(BASE_PATH + "attrs9.xml", "res/values/attrs9.xml");
     myFixture.renameElementAtCaret("attr1");

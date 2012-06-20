@@ -69,7 +69,7 @@ public class ResourceNamesValidityState implements ValidityState {
         final String styleableName = styleable.getName().getValue();
 
         if (styleableName != null) {
-          addValueResources(file, ResourceType.DECLARE_STYLEABLE, styleable.getAttrs(), myResources, styleableName + '_');
+          addValueResources(file, ResourceType.DECLARE_STYLEABLE, styleable.getAttrs(), myResources, styleableName);
         }
       }
     }
@@ -105,7 +105,7 @@ public class ResourceNamesValidityState implements ValidityState {
                                         ResourceType resType,
                                         Collection<? extends ResourceElement> resourceElements,
                                         Map<String, ResourceFileData> result,
-                                        String namePrefix) {
+                                        String context) {
     for (ResourceElement element : resourceElements) {
       final String name = element.getName().getValue();
 
@@ -115,7 +115,7 @@ public class ResourceNamesValidityState implements ValidityState {
           data = new ResourceFileData();
           result.put(file.getPath(), data);
         }
-        data.addValueResource(new ResourceEntry(resType.getName(), namePrefix + name));
+        data.addValueResource(new ResourceEntry(resType.getName(), name, context));
       }
     }
   }
@@ -135,7 +135,8 @@ public class ResourceNamesValidityState implements ValidityState {
       for (int j = 0; j < valueResourcesCount; j++) {
         final String resType = in.readUTF();
         final String resName = in.readUTF();
-        valueResources.add(new ResourceEntry(resType, resName));
+        final String resContext = in.readUTF();
+        valueResources.add(new ResourceEntry(resType, resName, resContext));
       }
       final long fileTimestamp = in.readLong();
       myResources.put(filePath, new ResourceFileData(valueResources, fileTimestamp));
@@ -172,6 +173,7 @@ public class ResourceNamesValidityState implements ValidityState {
       for (ResourceEntry resource : valueResources) {
         out.writeUTF(resource.getType());
         out.writeUTF(resource.getName());
+        out.writeUTF(resource.getContext());
       }
       out.writeLong(data.getTimestamp());
     }

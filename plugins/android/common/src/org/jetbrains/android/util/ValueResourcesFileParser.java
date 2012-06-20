@@ -16,6 +16,7 @@
 package org.jetbrains.android.util;
 
 import com.android.resources.ResourceType;
+import com.intellij.util.containers.Stack;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ public abstract class ValueResourcesFileParser implements IXMLBuilder {
   private boolean mySeenResources;
   private String myLastTypeAttr;
   private String myLastNameAttr;
+  private final Stack<String> myContextNames = new Stack<String>();
 
   public ValueResourcesFileParser() {
     mySeenResources = false;
@@ -75,17 +77,28 @@ public abstract class ValueResourcesFileParser implements IXMLBuilder {
   @Override
   public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
     if (myLastNameAttr != null && name != null) {
-      final String resType = "item".equals(name)
+      final String resTypeStr = "item".equals(name)
                              ? myLastTypeAttr
                              : AndroidCommonUtils.getResourceTypeByTagName(name);
-      if (resType != null && ResourceType.getEnum(resType) != null) {
-        process(new ResourceEntry(resType, myLastNameAttr));
+      final ResourceType resType = resTypeStr != null ? ResourceType.getEnum(resTypeStr) : null;
+      if (resType != null) {
+        if (resType == ResourceType.ATTR) {
+          if (!myLastNameAttr.startsWith("android:")) {
+            final String contextName = myContextNames.peek();
+            process(new ResourceEntry(resTypeStr, myLastNameAttr, contextName));
+          }
+        }
+        else {
+          process(new ResourceEntry(resTypeStr, myLastNameAttr, ""));
+        }
       }
     }
+    myContextNames.push(myLastNameAttr != null ? myLastNameAttr : "");
   }
 
   @Override
   public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
+    myContextNames.pop();
   }
 
   @Override

@@ -106,7 +106,7 @@ public class CreateFileResourceQuickFix implements LocalQuickFix, IntentionActio
     }
 
     try {
-      AndroidResourceUtil.createFileResource(myResourceName, resSubdir, CreateTypedResourceFileAction.getDefaultRootTabByResourceType(
+      AndroidResourceUtil.createFileResource(myResourceName, resSubdir, CreateTypedResourceFileAction.getDefaultRootTagByResourceType(
         ResourceFolderType.getFolderType(resDirName)), resDirName, false);
       UndoUtil.markPsiFileForUndo(myFile);
     }

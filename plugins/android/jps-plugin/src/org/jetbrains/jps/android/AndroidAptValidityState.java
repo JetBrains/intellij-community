@@ -46,7 +46,8 @@ public class AndroidAptValidityState implements ValidityState {
       for (int j = 0; j < entriesCount; j++) {
         final String resType = in.readUTF();
         final String resName = in.readUTF();
-        entries.add(new ResourceEntry(resType, resName));
+        final String resContext = in.readUTF();
+        entries.add(new ResourceEntry(resType, resName, resContext));
       }
       final long timestamp = in.readLong();
       myResources.put(filePath, new ResourceFileData(entries, timestamp));
@@ -58,7 +59,8 @@ public class AndroidAptValidityState implements ValidityState {
     for (int i = 0; i < manifestElementCount; i++) {
       final String elementType = in.readUTF();
       final String elementName = in.readUTF();
-      myManifestElements.add(new ResourceEntry(elementType, elementName));
+      final String elementContext = in.readUTF();
+      myManifestElements.add(new ResourceEntry(elementType, elementName, elementContext));
     }
 
     final int libPackageCount = in.readInt();
@@ -97,6 +99,7 @@ public class AndroidAptValidityState implements ValidityState {
       for (ResourceEntry resource : resources) {
         out.writeUTF(resource.getType());
         out.writeUTF(resource.getName());
+        out.writeUTF(resource.getContext());
       }
       out.writeLong(fileData.getTimestamp());
     }
@@ -105,6 +108,7 @@ public class AndroidAptValidityState implements ValidityState {
     for (ResourceEntry manifestElement : myManifestElements) {
       out.writeUTF(manifestElement.getType());
       out.writeUTF(manifestElement.getName());
+      out.writeUTF(manifestElement.getContext());
     }
     out.writeInt(myLibPackages.size());
 

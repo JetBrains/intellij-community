@@ -187,21 +187,6 @@ public class AndroidAutogenerator {
           return null;
         }
 
-        final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-        if (platform == null) {
-          context.addMessage(CompilerMessageCategory.ERROR,
-                             AndroidBundle.message("android.compilation.error.specify.platform", module.getName()), null, -1, -1);
-          return null;
-        }
-
-        final IAndroidTarget target = platform.getTarget();
-        final int platformToolsRevision = platform.getSdkData().getPlatformToolsRevision();
-        final String[] resPaths = AndroidCompileUtil.collectResourceDirs(facet, false, context);
-
-        if (resPaths.length == 0) {
-          return null;
-        }
-
         final VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
         if (manifestFile == null) {
           context.addMessage(CompilerMessageCategory.ERROR,
@@ -239,18 +224,7 @@ public class AndroidAutogenerator {
         final String packageDir = packageName.replace('.', '/') + '/';
         genFilePath2Package.put(packageDir + AndroidCommonUtils.MANIFEST_JAVA_FILE_NAME, packageName);
         genFilePath2Package.put(packageDir + AndroidCommonUtils.R_JAVA_FILENAME, packageName);
-
-        final String manifestFileOsPath = FileUtil.toSystemDependentName(manifestFile.getPath());
-
-        final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
-        if (circularDepLibWithSamePackage != null && !facet.getConfiguration().LIBRARY_PROJECT) {
-          context.addMessage(CompilerMessageCategory.WARNING, AndroidBundle.message("android.compilation.warning.circular.app.dependency",
-                                                                                    packageName, module.getName(),
-                                                                                    circularDepLibWithSamePackage.getName()), null, -1, -1);
-        }
-        final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
-        return new AptAutogenerationItem(target, platformToolsRevision, manifestFileOsPath, packageName, sourceRootPath, resPaths,
-                                         generateNonFinalFields, genFilePath2Package);
+        return new AptAutogenerationItem(packageName, sourceRootPath, genFilePath2Package);
       }
     });
 
@@ -678,30 +652,15 @@ public class AndroidAutogenerator {
   }
 
   private static class AptAutogenerationItem {
-    final IAndroidTarget myTarget;
-    final int myPlatformToolsRevision;
-    final String myManifestFileOsPath;
     final String myPackage;
     final String myOutputDirOsPath;
-    final String[] myResDirOsPaths;
-    final boolean myNonConstantFields;
     final Map<String, String> myGenFileRelPath2package;
 
-    private AptAutogenerationItem(@NotNull IAndroidTarget target,
-                                  int platformToolsRevision,
-                                  @NotNull String manifestFileOsPath,
-                                  @NotNull String aPackage,
+    private AptAutogenerationItem(@NotNull String aPackage,
                                   @NotNull String outputDirOsPath,
-                                  @NotNull String[] resDirOsPaths,
-                                  boolean nonConstantFields,
                                   @NotNull Map<String, String> genFileRelPath2package) {
-      myTarget = target;
-      myPlatformToolsRevision = platformToolsRevision;
-      myManifestFileOsPath = manifestFileOsPath;
       myPackage = aPackage;
       myOutputDirOsPath = outputDirOsPath;
-      myResDirOsPaths = resDirOsPaths;
-      myNonConstantFields = nonConstantFields;
       myGenFileRelPath2package = genFileRelPath2package;
     }
   }

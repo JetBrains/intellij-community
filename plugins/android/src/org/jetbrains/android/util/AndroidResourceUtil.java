@@ -770,7 +770,7 @@ public class AndroidResourceUtil {
                                            @NotNull String resourceType,
                                            boolean valuesResourceFile) throws Exception {
     FileTemplateManager manager = FileTemplateManager.getInstance();
-    String templateName = getTemplateName(resourceType, valuesResourceFile);
+    String templateName = getTemplateName(resourceType, valuesResourceFile, rootTagName);
     FileTemplate template = manager.getJ2eeTemplate(templateName);
     Properties properties = new Properties();
     if (!valuesResourceFile) {
@@ -781,18 +781,20 @@ public class AndroidResourceUtil {
     return (XmlFile)createdElement;
   }
 
-  private static String getTemplateName(String resourceType, boolean valuesResourceFile) {
+  private static String getTemplateName(String resourceType, boolean valuesResourceFile, String rootTagName) {
     if (valuesResourceFile) {
       return AndroidFileTemplateProvider.VALUE_RESOURCE_FILE_TEMPLATE;
     }
     if ("layout".equals(resourceType)) {
-      return AndroidFileTemplateProvider.LAYOUT_RESOURCE_FILE_TEMPLATE;
+      return AndroidUtils.TAG_LINEAR_LAYOUT.equals(rootTagName)
+             ? AndroidFileTemplateProvider.LAYOUT_RESOURCE_VERTICAL_FILE_TEMPLATE
+             : AndroidFileTemplateProvider.LAYOUT_RESOURCE_FILE_TEMPLATE;
     }
     return AndroidFileTemplateProvider.RESOURCE_FILE_TEMPLATE;
   }
 
   @NotNull
   public static String getFieldNameByResourceName(@NotNull String fieldName) {
-    return fieldName.replace('.', '_').replace('-', '_');
+    return fieldName.replace('.', '_').replace('-', '_').replace(':', '_');
   }
 }
