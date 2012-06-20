@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -38,7 +37,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
@@ -48,11 +47,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.GraphGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,8 +224,8 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public void apply() throws ConfigurationException {
     // validate content and source roots 
-    final Map<VirtualFile, String> contentRootToModuleNameMap = new com.intellij.util.containers.HashMap<VirtualFile, String>();
-    final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new com.intellij.util.containers.HashMap<VirtualFile, VirtualFile>();
+    final Map<VirtualFile, String> contentRootToModuleNameMap = new HashMap<VirtualFile, String>();
+    final Map<VirtualFile, VirtualFile> srcRootsToContentRootMap = new HashMap<VirtualFile, VirtualFile>();
     for (final ModuleEditor moduleEditor : myModuleEditors) {
       final ModifiableRootModel rootModel = moduleEditor.getModifiableRootModel();
       final ContentEntry[] contents = rootModel.getContentEntries();
@@ -246,7 +246,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
           if (anotherContentRoot != null) {
             final String problematicModule;
             final String correctModule;
-            if (VfsUtil.isAncestor(anotherContentRoot, contentRoot, true)) {
+            if (VfsUtilCore.isAncestor(anotherContentRoot, contentRoot, true)) {
               problematicModule = contentRootToModuleNameMap.get(anotherContentRoot);
               correctModule = contentRootToModuleNameMap.get(contentRoot);
             }
@@ -277,7 +277,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
 
-    final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
     final List<ModifiableRootModel> models = new ArrayList<ModifiableRootModel>(myModuleEditors.size());
     for (ModuleEditor moduleEditor : myModuleEditors) {
       moduleEditor.canApply();
