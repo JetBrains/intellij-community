@@ -18,7 +18,7 @@ package git4idea.test;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.AbstractVcsTestCase;
+import com.intellij.testFramework.vcs.AbstractVcsTestCase;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;

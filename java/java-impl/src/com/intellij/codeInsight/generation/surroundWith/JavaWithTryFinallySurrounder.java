@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -17,9 +16,12 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -40,7 +42,7 @@ class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
       return null;
     }
 
-    @NonNls String text = "try{\n}finally{\n}";
+    @NonNls String text = "try{\n}finally{\n\n}";
     PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
     tryStatement = (PsiTryStatement)codeStyleManager.reformat(tryStatement);
 
@@ -58,7 +60,14 @@ class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     if (finallyBlock == null) {
       return null;
     }
-    int offset = finallyBlock.getTextRange().getStartOffset() + 1;
-    return new TextRange(offset, offset);
+    int offset = finallyBlock.getTextRange().getStartOffset() + 2;
+    editor.getCaretModel().moveToOffset(offset);
+    final Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+    editor.getSelectionModel().removeSelection();
+    final PsiStatement firstTryStmt = tryBlock.getStatements()[0];
+    final int indent = firstTryStmt.getTextOffset() - document.getLineStartOffset(document.getLineNumber(firstTryStmt.getTextOffset()));
+    EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeat(" ", indent), false, true);
+    return new TextRange(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset());
   }
 }

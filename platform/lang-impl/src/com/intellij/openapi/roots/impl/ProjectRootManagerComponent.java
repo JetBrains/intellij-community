@@ -28,7 +28,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleEx;
-import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -260,14 +259,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
         }
         else if (entry instanceof JdkOrderEntry) {
           for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-            addRootsToTrack(entry.getUrls(orderRootType), recursive, flat);
+            addRootsToTrack(((JdkOrderEntry)entry).getRootUrls(orderRootType), recursive, flat);
           }
         }
-      }
-
-      final String explodedDirectory = moduleRootManager.getExplodedDirectoryUrl();
-      if (explodedDirectory != null) {
-        recursive.add(extractLocalPath(explodedDirectory));
       }
     }
 

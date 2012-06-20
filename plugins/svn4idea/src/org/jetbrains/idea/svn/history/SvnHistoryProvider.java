@@ -102,6 +102,15 @@ public class SvnHistoryProvider
         @Override
         protected void updateButtons() {
         }
+
+        @Override
+        protected void installDnDSupport() {
+        }
+
+        @Override
+        protected boolean isModelEditable() {
+          return false;
+        }
       }.initPosition()
         .addExtraAction(AnActionButton.fromAction(sourceAction))
         .createPanel();

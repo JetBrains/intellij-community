@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -401,7 +402,8 @@ import java.util.Map;
       Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
       LOG.assertTrue(document != null, psiFile);
       editor = EditorFactory.getInstance().createEditor(document, myProject);
-      ((EditorEx) editor).setHighlighter(HighlighterFactory.createHighlighter(myProject, file));
+      final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, file);
+      ((EditorEx) editor).setHighlighter(highlighter);
       ((EditorEx) editor).setFile(file);
 
       myVirtualFile2Editor.put(file, editor);

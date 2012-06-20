@@ -64,6 +64,11 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
     }
   }
 
+  @Override
+  public boolean canExchangeRows(int oldIndex, int newIndex) {
+    return true;
+  }
+
   public int getRowCount() {
     return myTypeCodeFragments.size();
   }

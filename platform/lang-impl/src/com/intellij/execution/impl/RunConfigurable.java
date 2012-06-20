@@ -45,6 +45,7 @@ import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -77,9 +78,9 @@ class RunConfigurable extends BaseConfigurable {
   private final Project myProject;
   private RunDialogBase myRunDialog;
   @NonNls private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode("Root");
-  private final Tree myTree = new Tree(myRoot);
+  private final MyTreeModel myTreeModel = new MyTreeModel(myRoot);
+  private final Tree myTree = new Tree(myTreeModel);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
-  private JComponent myToolbarComponent;
   private final Splitter mySplitter = new Splitter(false);
   private JPanel myWholePanel;
   private final StorageAccessors myProperties = StorageAccessors.createGlobal("RunConfigurable");
@@ -89,6 +90,7 @@ class RunConfigurable extends BaseConfigurable {
   private final JCheckBox myConfirmation = new JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true);
   private final List<Pair<UnnamedConfigurable, JComponent>> myAdditionalSettings = new ArrayList<Pair<UnnamedConfigurable, JComponent>>();
   private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<ConfigurationFactory, Configurable>();
+  private ToolbarDecorator myToolbarDecorator;
 
   public RunConfigurable(final Project project) {
     this(project, null);
@@ -130,7 +132,6 @@ class RunConfigurable extends BaseConfigurable {
         return o.toString();
       }
     });
-    PopupHandler.installFollowingSelectionTreePopup(myTree, createActionsGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
                                         boolean hasFocus) {
@@ -415,17 +416,11 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   private JPanel createLeftPanel() {
-    final JPanel leftPanel = new JPanel(new BorderLayout());
-    myToolbarComponent = ActionManager.getInstance().
-        createActionToolbar(ActionPlaces.UNKNOWN,
-                            createActionsGroup(),
-                            true).getComponent();
-    leftPanel.add(myToolbarComponent, BorderLayout.NORTH);
     initTree();
-    final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
-    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    leftPanel.add(pane, BorderLayout.CENTER);
-    return leftPanel;
+    DefaultActionGroup actionsGroup = createActionsGroup();
+    PopupHandler.installFollowingSelectionTreePopup(myTree, actionsGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    myToolbarDecorator = ToolbarDecorator.createDecorator(myTree).setActionGroup(actionsGroup).setForcedDnD();
+    return myToolbarDecorator.createPanel();
   }
 
   private JPanel createSettingsPanel() {
@@ -990,7 +985,7 @@ class RunConfigurable extends BaseConfigurable {
 
           });
       //new TreeSpeedSearch(myTree);
-      popup.showUnderneathOf(myToolbarComponent);
+      popup.showUnderneathOf(myToolbarDecorator.getPanel());
     }
   }
 
@@ -1106,7 +1101,7 @@ class RunConfigurable extends BaseConfigurable {
         configurable.getNameTextField().setSelectionEnd(copyName.length());
       }
       catch (ConfigurationException e1) {
-        Messages.showErrorDialog(myToolbarComponent, e1.getMessage(), e1.getTitle());
+        Messages.showErrorDialog(myToolbarDecorator.getPanel(), e1.getMessage(), e1.getTitle());
       }
     }
 
@@ -1263,5 +1258,58 @@ class RunConfigurable extends BaseConfigurable {
     void setTitle(String title);
 
     void clickDefaultButton();
+  }
+
+  private class MyTreeModel extends DefaultTreeModel implements EditableModel {
+    private MyTreeModel(MutableTreeNode root) {
+      super(root);
+    }
+
+    @Override
+    public void addRow() {
+    }
+
+    @Override
+    public void removeRow(int index) {
+    }
+
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      DefaultMutableTreeNode oldNode = (DefaultMutableTreeNode)myTree.getPathForRow(oldIndex).getLastPathComponent();
+      DefaultMutableTreeNode newNode = (DefaultMutableTreeNode)myTree.getPathForRow(newIndex).getLastPathComponent();
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldNode.getParent();
+      oldIndex = parent.getIndex(oldNode);
+      newIndex = parent.getIndex(newNode);
+      parent.insert(oldNode, newIndex);
+      parent.insert(newNode, oldIndex);
+      reload(parent);
+    }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      DefaultMutableTreeNode oldNode = (DefaultMutableTreeNode)myTree.getPathForRow(oldIndex).getLastPathComponent();
+      DefaultMutableTreeNode newNode = (DefaultMutableTreeNode)myTree.getPathForRow(newIndex).getLastPathComponent();
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)oldNode.getParent();
+      if (parent == newNode.getParent()) {
+        RunnerAndConfigurationSettings oldSettings = getSettings(oldNode);
+        RunnerAndConfigurationSettings newSettings = getSettings(newNode);
+        if (oldSettings != null && newSettings != null && oldSettings.isTemporary() == newSettings.isTemporary()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Nullable
+    private RunnerAndConfigurationSettings getSettings(@NotNull DefaultMutableTreeNode treeNode) {
+      Object userObject = treeNode.getUserObject();
+      if (userObject instanceof SingleConfigurationConfigurable) {
+        SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
+        return (RunnerAndConfigurationSettings)configurable.getSettings();
+      } else if (userObject instanceof RunnerAndConfigurationSettings) {
+        return (RunnerAndConfigurationSettings)userObject;
+      }
+      return null;
+    }
   }
 }

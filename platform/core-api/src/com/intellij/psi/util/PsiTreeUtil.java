@@ -223,7 +223,7 @@ public class PsiTreeUtil {
    * @return first found element, or null if nothing found.
    */
   @Nullable
-  public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<T>... classes) {
+  public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element, @NotNull final Class<? extends T>... classes) {
     return findChildOfAnyType(element, true, classes);
   }
 
@@ -239,7 +239,7 @@ public class PsiTreeUtil {
   @Nullable
   public static <T extends PsiElement> T findChildOfAnyType(@Nullable final PsiElement element,
                                                             final boolean strict,
-                                                            @NotNull final Class<T>... classes) {
+                                                            @NotNull final Class<? extends T>... classes) {
     PsiElementProcessor.FindElement<PsiElement> processor = new PsiElementProcessor.FindElement<PsiElement>() {
       @Override
       public boolean execute(@NotNull PsiElement each) {

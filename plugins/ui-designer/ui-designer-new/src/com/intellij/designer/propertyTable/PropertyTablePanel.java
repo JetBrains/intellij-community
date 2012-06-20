@@ -53,7 +53,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     actionGroup.addSeparator();
 
     RestoreDefault restoreDefault = new RestoreDefault(myPropertyTable);
-    restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), myPropertyTable);
+    restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), null);
     actionGroup.add(restoreDefault);
 
     actionGroup.add(new ShowExpert(myPropertyTable));

@@ -40,6 +40,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.inspections.lint.*;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -81,11 +82,14 @@ public final class ErrorAnalyzer {
               ErrorInfo errorInfo = new ErrorInfo(message, componentInfo.second, pair.getSecond());
               ErrorInfo.add(componentInfo.first, errorInfo);
 
+              Icon icon =
+                errorInfo.getLevel() == HighlightDisplayLevel.ERROR ? AbstractQuickFixManager.ICON_ERROR : AbstractQuickFixManager.ICON;
+
               List<QuickFix> designerFixes = errorInfo.getQuickFixes();
 
               for (final AndroidLintQuickFix fix : inspection.getQuickFixes(message)) {
                 if (fix.isApplicable(startElement, endElement, AndroidQuickfixContexts.DesignerContext.TYPE)) {
-                  designerFixes.add(new QuickFix(fix.getName(), AbstractQuickFixManager.ICON) {
+                  designerFixes.add(new QuickFix(fix.getName(), icon) {
                     @Override
                     public void run() {
                       fix.apply(startElement, endElement, AndroidQuickfixContexts.DesignerContext.getInstance());
@@ -95,7 +99,7 @@ public final class ErrorAnalyzer {
               }
 
               for (final IntentionAction intention : inspection.getIntentions(startElement, endElement)) {
-                designerFixes.add(new QuickFix(intention.getText(), AbstractQuickFixManager.ICON) {
+                designerFixes.add(new QuickFix(intention.getText(), icon) {
                   @Override
                   public void run() {
                     intention.invoke(project, null, xmlFile);

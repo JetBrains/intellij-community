@@ -102,13 +102,56 @@ public class ResourceRenderer implements PropertyRenderer {
       }
       if (myFormats.contains(AttributeFormat.Color) && value.startsWith("#")) {
         try {
-          myColorIcon.setColor(new Color(Integer.parseInt(value.substring(1), 16)));
+          int type = value.length() - 1;
+          if (type == 3) { // #RGB
+            myColorIcon.setColor(parseColor(value, 1, false));
+          }
+          else if (type == 4) { // #ARGB
+            myColorIcon.setColor(parseColor(value, 1, true));
+          }
+          else if (type == 6) { // #RRGGBB
+            myColorIcon.setColor(parseColor(value, 2, false));
+          }
+          else if (type == 8) { // #AARRGGBB
+            myColorIcon.setColor(parseColor(value, 2, true));
+          }
+          else {
+            return;
+          }
           myColoredComponent.setIcon(myColorIcon);
         }
         catch (Throwable e) {
         }
       }
     }
+  }
+
+  private static Color parseColor(String value, int size, boolean isAlpha) {
+    int alpha = 255;
+    int offset = 1;
+
+    if (isAlpha) {
+      alpha = parseInt(value, offset, size);
+      offset += size;
+    }
+
+    int red = parseInt(value, offset, size);
+    offset += size;
+
+    int green = parseInt(value, offset, size);
+    offset += size;
+
+    int blue = parseInt(value, offset, size);
+
+    return new Color(red, green, blue, alpha);
+  }
+
+  private static int parseInt(String value, int offset, int size) {
+    String number = value.substring(offset, offset + size);
+    if (size == 1) {
+      number += number;
+    }
+    return Integer.parseInt(number, 16);
   }
 
   @Override

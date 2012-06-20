@@ -16,13 +16,12 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
-public interface LibraryOrderEntry extends ExportableOrderEntry {
+public interface LibraryOrderEntry extends LibraryOrSdkOrderEntry, ExportableOrderEntry {
   @Nullable
   Library getLibrary();
   
@@ -32,7 +31,4 @@ public interface LibraryOrderEntry extends ExportableOrderEntry {
 
   @Nullable
   String getLibraryName();
-
-  VirtualFile[] getRootFiles(OrderRootType type);
-  String[] getRootUrls(OrderRootType type);
 }

@@ -19,6 +19,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -34,7 +35,7 @@ import java.util.List;
 /**
  *  @author dsl
  */
-abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
+abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements LibraryOrSdkOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
   protected final ProjectRootManagerImpl myProjectRootManagerImpl;
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
@@ -52,18 +53,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   @Override
   @NotNull
   public VirtualFile[] getFiles(@NotNull OrderRootType type) {
-    if (type == OrderRootType.COMPILATION_CLASSES) {
-      return getRootFiles(OrderRootType.CLASSES);
-    }
-    if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-      if (!myScope.isForProductionCompile()) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-      return getRootFiles(OrderRootType.CLASSES);
-    }
-    else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return myScope == DependencyScope.PROVIDED ? VirtualFile.EMPTY_ARRAY : getRootFiles(OrderRootType.CLASSES);
-    }
     return getRootFiles(type);
   }
 
@@ -71,21 +60,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   @NotNull
   public String[] getUrls(@NotNull OrderRootType type) {
     LOG.assertTrue(!getRootModel().getModule().isDisposed());
-    RootProvider rootProvider = getRootProvider();
-    if (rootProvider == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    if (type == OrderRootType.COMPILATION_CLASSES) {
-      return rootProvider.getUrls(OrderRootType.CLASSES);
-    }
-    if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
-      if (!myScope.isForProductionCompile()) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
-      }
-      return rootProvider.getUrls(OrderRootType.CLASSES);
-    }
-    else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
-      return myScope == DependencyScope.PROVIDED ? ArrayUtil.EMPTY_STRING_ARRAY : rootProvider.getUrls(OrderRootType.CLASSES);
-    }
-    return rootProvider.getUrls(type);
+    return getRootUrls(type);
   }
 
   public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
@@ -107,7 +82,6 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   protected abstract RootProvider getRootProvider();
 
   @NotNull
-  @SuppressWarnings({"UnusedDeclaration"})
   public String[] getRootUrls(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();
     return rootProvider == null ? ArrayUtil.EMPTY_STRING_ARRAY : rootProvider.getUrls(type);

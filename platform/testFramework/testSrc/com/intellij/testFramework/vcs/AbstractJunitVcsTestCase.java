@@ -13,16 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package com.intellij.testFramework.vcs;
 
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.junit.runner.Description;
 
 public abstract class AbstractJunitVcsTestCase extends AbstractVcsTestCase {
+  private boolean succeeded = true;
   @Rule
-  public TestName name= new TestName();
+  public TestName name= new TestName(){
+    @Override
+    protected void failed(Throwable e, Description description) {
+      succeeded = false;
+    }
+  };
 
   protected String getTestName() {
     return name.getMethodName();
+  }
+
+  public boolean isSucceeded() {
+    return succeeded;
   }
 }

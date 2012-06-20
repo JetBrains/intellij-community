@@ -17,8 +17,8 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.AbstractVcsTestCase;
-import com.intellij.testFramework.TestClientRunner;
+import com.intellij.testFramework.vcs.AbstractVcsTestCase;
+import com.intellij.testFramework.vcs.TestClientRunner;
 
 import java.io.File;
 import java.io.IOException;

@@ -25,10 +25,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -79,16 +76,16 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     return orderEntryContainsFile(getValue().getOrderEntry(), file);
   }
 
-  private static boolean orderEntryContainsFile(OrderEntry orderEntry, VirtualFile file) {
+  private static boolean orderEntryContainsFile(LibraryOrSdkOrderEntry orderEntry, VirtualFile file) {
     for(OrderRootType rootType: OrderRootType.getAllTypes()) {
       if (containsFileInOrderType(orderEntry, rootType, file)) return true;
     }
     return false;
   }
 
-  private static boolean containsFileInOrderType(final OrderEntry orderEntry, final OrderRootType orderType, final VirtualFile file) {
+  private static boolean containsFileInOrderType(final LibraryOrSdkOrderEntry orderEntry, final OrderRootType orderType, final VirtualFile file) {
     if (!orderEntry.isValid()) return false;
-    VirtualFile[] files = orderEntry.getFiles(orderType);
+    VirtualFile[] files = orderEntry.getRootFiles(orderType);
     for (VirtualFile virtualFile : files) {
       boolean ancestor = VfsUtilCore.isAncestor(virtualFile, file, false);
       if (ancestor) return true;

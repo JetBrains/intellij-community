@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.inspection;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.icons.AllIcons;
@@ -157,9 +158,18 @@ public abstract class AbstractQuickFixManager {
     hideHint();
 
     // 2. Found error (if any)
-    if (!ErrorInfo.haveFixes(getErrorInfos())) {
+    List<ErrorInfo> infos = getErrorInfos();
+    if (!ErrorInfo.haveFixes(infos)) {
       hideHint();
       return;
+    }
+
+    boolean error = false;
+    for (ErrorInfo errorInfo : infos) {
+      if (errorInfo.getLevel() == HighlightDisplayLevel.ERROR) {
+        error = true;
+        break;
+      }
     }
 
     // 3. Determine position where this hint should be shown
@@ -169,7 +179,7 @@ public abstract class AbstractQuickFixManager {
     }
 
     // 4. Show light bulb to fix this error
-    myHint = new LightweightHint(new InspectionHint());
+    myHint = new LightweightHint(new InspectionHint(error ? ICON_ERROR : ICON));
     myLastHintBounds = bounds;
     myHint.show(myComponent, bounds.x - ICON.getIconWidth() - 4, bounds.y, myComponent, new HintHint(myComponent, bounds.getLocation()));
   }
@@ -324,21 +334,22 @@ public abstract class AbstractQuickFixManager {
   private static final Icon ARROW_ICON = AllIcons.General.ArrowDown;
   private static final Icon INACTIVE_ARROW_ICON = new EmptyIcon(ARROW_ICON.getIconWidth(), ARROW_ICON.getIconHeight());
   public static final Icon ICON = AllIcons.Actions.IntentionBulb;
+  public static final Icon ICON_ERROR = AllIcons.Actions.QuickfixBulb;
 
   private class InspectionHint extends JLabel {
     private final RowIcon myInactiveIcon;
     private final RowIcon myActiveIcon;
 
-    private InspectionHint() {
+    private InspectionHint(Icon icon) {
       setOpaque(false);
       setBorder(INACTIVE_BORDER);
 
       myActiveIcon = new RowIcon(2);
-      myActiveIcon.setIcon(ICON, 0);
+      myActiveIcon.setIcon(icon, 0);
       myActiveIcon.setIcon(ARROW_ICON, 1);
 
       myInactiveIcon = new RowIcon(2);
-      myInactiveIcon.setIcon(ICON, 0);
+      myInactiveIcon.setIcon(icon, 0);
       myInactiveIcon.setIcon(INACTIVE_ARROW_ICON, 1);
 
       setIcon(myInactiveIcon);

@@ -99,7 +99,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
       public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
                                                                     final LinkedHashSet<VirtualFile> value) {
-        ContainerUtil.addAll(value, moduleSourceOrderEntry.getFiles(OrderRootType.SOURCES));
+        ContainerUtil.addAll(value, moduleSourceOrderEntry.getRootModel().getSourceRoots());
         return value;
       }
 

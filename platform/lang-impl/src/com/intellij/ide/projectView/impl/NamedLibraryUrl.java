@@ -20,10 +20,7 @@ import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -42,7 +39,7 @@ public class NamedLibraryUrl extends AbstractUrl {
     if (module == null) return null;
     for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry && orderEntry.getPresentableName().equals(url)) {
-        return new Object[]{new NamedLibraryElement(module, orderEntry)};
+        return new Object[]{new NamedLibraryElement(module, (LibraryOrSdkOrderEntry)orderEntry)};
       }
     }
     return null;

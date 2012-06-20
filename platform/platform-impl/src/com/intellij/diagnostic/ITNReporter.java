@@ -26,7 +26,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -70,6 +72,15 @@ public class ITNReporter extends ErrorReportSubmitter {
                           Component parentComponent,
                           Consumer<SubmittedReportInfo> consumer) {
     return sendError(events[0], additionalInfo, parentComponent, consumer);
+  }
+
+  /**
+   * Could be used to enable error reporting even in release versions from non-internal mode.
+   * @return false by default.
+   */
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  public boolean showErrorInRelease(IdeaLoggingEvent event) {
+    return false;
   }
 
   /**

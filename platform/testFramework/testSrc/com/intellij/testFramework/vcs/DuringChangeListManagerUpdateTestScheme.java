@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.pending;
+package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.committed.MockDelayingChangeProvider;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -76,12 +73,12 @@ public class DuringChangeListManagerUpdateTestScheme {
     myChangeProvider.setTest(test);
     waiter.setControlled(test);
 
-    System.out.println("Starting delayed update..");
+    ChangeListManagerImpl.log("Starting delayed update..");
     myDirtyScopeManager.markEverythingDirty();
     myClManager.ensureUpToDate(false);
-    System.out.println("Starting timeout..");
+    ChangeListManagerImpl.log("Starting timeout..");
     waiter.startTimeout();
-    System.out.println("Timeout waiter completed.");
+    ChangeListManagerImpl.log("Timeout waiter completed.");
 
     if (test.getException() != null) {
       test.getException().printStackTrace();
@@ -101,7 +98,7 @@ public class DuringChangeListManagerUpdateTestScheme {
     }
 
     public void run() {
-      System.out.println("DuringUpdateTest: before test execution");
+      ChangeListManagerImpl.log("DuringUpdateTest: before test execution");
       try {
         myRunnable.run();
       }
@@ -109,7 +106,7 @@ public class DuringChangeListManagerUpdateTestScheme {
         myException = e;
       }
 
-      System.out.println("DuringUpdateTest: setting done");
+      ChangeListManagerImpl.log("DuringUpdateTest: setting done");
       myDone = myException == null;
 
       myChangeProvider.setTest(null);
@@ -133,7 +130,7 @@ public class DuringChangeListManagerUpdateTestScheme {
   }
 
   public static void checkFilesAreInList(final String listName, final ChangeListManager manager, final VirtualFile... files) {
-    System.out.println("Checking files for list: " + listName);
+    ChangeListManagerImpl.log("Checking files for list: " + listName);
     assert manager.findChangeList(listName) != null;
     final LocalChangeList list = manager.findChangeList(listName);
     final Collection<Change> changes = list.getChanges();
@@ -153,7 +150,7 @@ public class DuringChangeListManagerUpdateTestScheme {
   }
 
   public static void checkDeletedFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
-    System.out.println("Checking files for list: " + listName);
+    ChangeListManagerImpl.log("Checking files for list: " + listName);
     assert manager.findChangeList(listName) != null;
     final LocalChangeList list = manager.findChangeList(listName);
     final Collection<Change> changes = list.getChanges();

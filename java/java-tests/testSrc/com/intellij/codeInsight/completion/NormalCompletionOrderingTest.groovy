@@ -84,6 +84,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "booleanMethod", "voidMethod", "AN_OBJECT", "BOOLEAN", "class");
   }
 
+  public void testJComponentInstanceMembers() throws Throwable {
+    checkPreferredItems(0, "getAccessibleContext", "getUI");
+  }
+
   public void testClassStaticMembersInBooleanContext() throws Throwable {
     final String path = getTestName(false) + ".java";
     myFixture.configureByFile(path);

@@ -35,11 +35,13 @@ public abstract class ModuleExtension<T extends ModuleExtension> implements JDOM
 
   public abstract boolean isChanged();
 
+  @Deprecated
   @Nullable
   public VirtualFile[] getRootPaths(OrderRootType type) {
     return null;
   }
 
+  @Deprecated
   @Nullable
   public String[] getRootUrls(OrderRootType type) {
     return null;

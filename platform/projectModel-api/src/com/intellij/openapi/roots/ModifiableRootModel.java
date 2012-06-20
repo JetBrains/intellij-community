@@ -151,14 +151,30 @@ public interface ModifiableRootModel extends ModuleRootModel {
    */
   void inheritSdk();
 
+  /**
+   * @deprecated moved to J2ME plugin
+   */
+  @Deprecated
   void setExplodedDirectory(VirtualFile file);
 
+  /**
+   * @deprecated moved to J2ME plugin
+   */
+  @Deprecated
   void setExplodedDirectory(String url);
 
   boolean isChanged();
 
+  /**
+   * @deprecated moved to J2ME plugin
+   */
+  @Deprecated
   boolean isExcludeExplodedDirectory();
 
+  /**
+   * @deprecated moved to J2ME plugin
+   */
+  @Deprecated
   void setExcludeExplodedDirectory(boolean excludeExplodedDir);
 
   boolean isWritable();

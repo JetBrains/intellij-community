@@ -3,7 +3,8 @@ class Test {
         try {
             // This is comment"
             int i = 1;
-        } finally {<caret>
+        } finally {
+            <caret>
         }
     }
 }

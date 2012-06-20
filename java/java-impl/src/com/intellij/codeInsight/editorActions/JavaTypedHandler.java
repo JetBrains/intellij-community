@@ -31,8 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
@@ -76,7 +74,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
           final PsiElement element = file.findElementAt(offset);
           return element == null ||
                  !"#".equals(lastElement.getText()) ||
-                 new SuperParentFilter(new ClassFilter(PsiDocComment.class)).isAcceptable(element, element.getParent());
+                 PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null;
         }
       }
     });

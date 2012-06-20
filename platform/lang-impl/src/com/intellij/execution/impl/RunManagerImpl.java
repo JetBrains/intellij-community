@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, ProjectComponent {
@@ -505,9 +506,9 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     ((RunnerAndConfigurationSettingsImpl)settings).writeExternal(configurationElement);
 
     if (!(settings.getConfiguration() instanceof UnknownRunConfiguration)) {
-      final List<BeforeRunTask> tasks = getBeforeRunTasks(settings.getConfiguration());
+      final List<BeforeRunTask> tasks = new CopyOnWriteArrayList<BeforeRunTask>(getBeforeRunTasks(settings.getConfiguration()));
       final Element methodsElement = new Element(METHOD);
-      Map<Key<BeforeRunTask>,BeforeRunTask> templateTasks = null;
+      Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = null;
       if (!settings.isTemplate()) {
         List<BeforeRunTask> beforeRunTasks = getBeforeRunTasks(getConfigurationTemplate(settings.getFactory()).getConfiguration());
         templateTasks = new HashMap<Key<BeforeRunTask>, BeforeRunTask>();
@@ -529,11 +530,21 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
           }
         }
       }
-      for (BeforeRunTask task : tasks) {
+      for (int i = 0, size = tasks.size(); i < size; i++) {
+        BeforeRunTask task = tasks.get(i);
         if (templateTasks != null) {
-          BeforeRunTask templateTask = templateTasks.get(task.getProviderId());
-          if (task.equals(templateTask))
-            continue; // not neccesary saving if the task is the same as template
+          int j = 0;
+          BeforeRunTask templateTask = null;
+          for (Map.Entry<Key<BeforeRunTask>, BeforeRunTask> entry : templateTasks.entrySet()) {
+            if (entry.getKey() == task.getProviderId()) {
+              templateTask = entry.getValue();
+              break;
+            }
+            j++;
+          }
+          if (task.equals(templateTask) && i == j) {
+            continue; // not neccesary saving if the task is the same as template and on the same place
+          }
         }
         final Element child = new Element(OPTION);
         child.setAttribute(NAME_ATTR, task.getProviderId().toString());

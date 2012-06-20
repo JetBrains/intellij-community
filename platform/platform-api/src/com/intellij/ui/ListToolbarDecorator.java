@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.EditableModel;
+
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -110,5 +112,15 @@ class ListToolbarDecorator extends ToolbarDecorator {
   public ToolbarDecorator setVisibleRowCount(int rowCount) {
     myList.setVisibleRowCount(rowCount);
     return this;
+  }
+
+  @Override
+  protected boolean isModelEditable() {
+    return myList.getModel() instanceof EditableModel;
+  }
+
+  @Override
+  protected void installDnDSupport() {
+    RowsDnDSupport.install(myList, (EditableModel)myList.getModel());
   }
 }

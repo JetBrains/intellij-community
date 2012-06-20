@@ -570,7 +570,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
       if (element instanceof NamedLibraryElement){
         NamedLibraryElement namedLibraryElement = (NamedLibraryElement)element;
-        final VirtualFile[] files = namedLibraryElement.getOrderEntry().getFiles(OrderRootType.CLASSES);
+        final VirtualFile[] files = namedLibraryElement.getOrderEntry().getRootFiles(OrderRootType.CLASSES);
         if (files != null && ArrayUtil.find(files, vFile) > -1){
           return true;
         }

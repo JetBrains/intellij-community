@@ -147,6 +147,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
 
+    if (instruction.getCastTo() instanceof PsiPrimitiveType) {
+      memState.push(runner.getFactory().getBoxedFactory().createUnboxed(memState.pop()));
+    }
+
     return nextInstruction(instruction, runner, memState);
   }
 

@@ -23,6 +23,7 @@ import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.inspection.ErrorAnalyzer;
 import com.intellij.android.designer.model.*;
 import com.intellij.android.designer.profile.ProfileManager;
+import com.intellij.designer.DesignerEditor;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.ComponentDecorator;
@@ -76,8 +77,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private boolean myParseTime;
   private int myProfileLastVersion;
 
-  public AndroidDesignerEditorPanel(@NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
-    super(project, module, file);
+  public AndroidDesignerEditorPanel(@NotNull DesignerEditor editor, @NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
+    super(editor, project, module, file);
 
     myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override

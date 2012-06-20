@@ -158,6 +158,8 @@ public class ResourceEditor extends PropertyEditor {
     return new Dimension(Math.max(size1.width, 25) + 5 + size2.width, size1.height);
   }
 
+  private static ResourceType[] COLOR_TYPES = {ResourceType.COLOR, ResourceType.DRAWABLE};
+
   private static ResourceType[] convertTypes(Set<AttributeFormat> formats) {
     Set<ResourceType> types = EnumSet.noneOf(ResourceType.class);
     for (AttributeFormat format : formats) {
@@ -166,9 +168,7 @@ public class ResourceEditor extends PropertyEditor {
           types.add(ResourceType.BOOL);
           break;
         case Color:
-          types.add(ResourceType.COLOR);
-          types.add(ResourceType.DRAWABLE);
-          break;
+          return COLOR_TYPES;
         case Dimension:
           types.add(ResourceType.DIMEN);
           break;

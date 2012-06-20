@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.DesignerEditor;
 import com.intellij.designer.DesignerEditorState;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.ModuleProvider;
@@ -85,6 +86,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private final static String ERROR_STACK_CARD = "stack";
   private final static String ERROR_NO_STACK_CARD = "no_stack";
 
+  private final DesignerEditor myEditor;
   private final Project myProject;
   private Module myModule;
   protected final VirtualFile myFile;
@@ -117,7 +119,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private int[][] myExpandedState;
   private int[][] mySelectionState;
   private final Map<String, int[][]> mySourceSelectionState = new FixedHashMap<String, int[][]>(16);
-  private ComponentSelectionListener mySourceSelectionListener;
 
   private JPanel myErrorPanel;
   private JPanel myErrorMessages;
@@ -129,7 +130,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private AsyncProcessIcon myProgressIcon;
   private JLabel myProgressMessage;
 
-  public DesignerEditorPanel(@NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
+  public DesignerEditorPanel(@NotNull DesignerEditor editor, @NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
+    myEditor = editor;
     myProject = project;
     myModule = module;
     myFile = file;
@@ -309,13 +311,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myDesignerCard.add(content);
     add(myDesignerCard, DESIGNER_CARD);
 
-    mySourceSelectionListener = new ComponentSelectionListener() {
+    mySurfaceArea.addSelectionListener(new ComponentSelectionListener() {
       @Override
       public void selectionChanged(EditableArea area) {
         storeSourceSelectionState();
       }
-    };
-    mySurfaceArea.addSelectionListener(mySourceSelectionListener);
+    });
   }
 
   @Nullable
@@ -524,6 +525,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return myModule;
   }
 
+  public final DesignerEditor getEditor() {
+    return myEditor;
+  }
+
   @Override
   public final Project getProject() {
     return myProject;
@@ -584,11 +589,13 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       mySelectionState = getSelectionState();
 
       myExpandedComponents = null;
-      myToolProvider.loadDefaultTool();
 
-      mySurfaceArea.removeSelectionListener(mySourceSelectionListener);
-      mySurfaceArea.deselectAll();
-      mySurfaceArea.addSelectionListener(mySourceSelectionListener);
+      InputTool tool = myToolProvider.getActiveTool();
+      if (!(tool instanceof MarqueeTracker) &&
+          !(tool instanceof CreationTool) &&
+          !(tool instanceof PasteTool)) {
+        myToolProvider.loadDefaultTool();
+      }
     }
   }
 

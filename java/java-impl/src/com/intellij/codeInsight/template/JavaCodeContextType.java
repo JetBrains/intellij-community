@@ -128,7 +128,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      if (JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(element)) {
+      if (JavaCompletionData.isInsideParameterList(element)) {
         return false;
       }
 
@@ -159,7 +159,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      return JavaCompletionData.CLASS_START.isAcceptable(element, element) || JavaCompletionData.INSIDE_PARAMETER_LIST.accepts(element);
+      return JavaCompletionData.CLASS_START.isAcceptable(element, element) || JavaCompletionData.isInsideParameterList(element);
     }
   }
 

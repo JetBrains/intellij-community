@@ -160,6 +160,11 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements ItemRe
     }
   }
 
+  @Override
+  public boolean canExchangeRows(int oldIndex, int newIndex) {
+    return true;
+  }
+
   public void addRow(Item item) {
     myItems.add(item);
     fireTableRowsInserted(myItems.size() - 1, myItems.size() - 1);

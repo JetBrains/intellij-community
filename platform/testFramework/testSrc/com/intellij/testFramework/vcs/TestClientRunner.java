@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework;
+package com.intellij.testFramework.vcs;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,9 +58,9 @@ public class TestClientRunner {
     }
     Collections.addAll(arguments, commandLine);
     if (myTraceClient) {
-      System.out.println("*** running:\n" + arguments);
+      ChangeListManagerImpl.log("*** running:\n" + arguments);
       if (StringUtil.isNotEmpty(stdin)) {
-        System.out.println("*** stdin:\n" + stdin);
+        ChangeListManagerImpl.log("*** stdin:\n" + stdin);
       }
     }
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
@@ -82,14 +83,14 @@ public class TestClientRunner {
     CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
     ProcessOutput result = handler.runProcess(60*1000);
     if (myTraceClient || result.isTimeout()) {
-      System.out.println("*** result: " + result.getExitCode());
+      ChangeListManagerImpl.log("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
       if (out.length() > 0) {
-        System.out.println("*** output:\n" + out);
+        ChangeListManagerImpl.log("*** output:\n" + out);
       }
       final String err = result.getStderr().trim();
       if (err.length() > 0) {
-        System.out.println("*** error:\n" + err);
+        ChangeListManagerImpl.log("*** error:\n" + err);
       }
     }
     if (result.isTimeout()) {

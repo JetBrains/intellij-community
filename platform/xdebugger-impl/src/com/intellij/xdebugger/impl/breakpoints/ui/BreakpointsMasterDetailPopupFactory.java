@@ -68,8 +68,8 @@ public class BreakpointsMasterDetailPopupFactory {
     builder.setBreakpointsPanelProviders(collectPanelProviders());
     builder.setCallback(new BreakpointMasterDetailPopupBuilder.BreakpointChosenCallback() {
       @Override
-      public void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup) {
-        if (breakpointItem.navigate()) {
+      public void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup, boolean withEnterOrDoubleClick) {
+        if (withEnterOrDoubleClick && breakpointItem.navigate()) {
           popup.cancel();
         }
       }

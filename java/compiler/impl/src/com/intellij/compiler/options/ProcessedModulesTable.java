@@ -319,6 +319,11 @@ public class ProcessedModulesTable extends JPanel {
     public void exchangeRows(int oldIndex, int newIndex) {
     }
 
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return false;
+    }
+
     public void removeElement(Module element) {
       final boolean reallyRemoved = myElements.remove(element);
       if (reallyRemoved) {

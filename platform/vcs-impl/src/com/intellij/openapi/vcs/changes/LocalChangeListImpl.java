@@ -113,7 +113,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   void addChange(Change change) {
     if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("LocalChangeListImpl.addChange: this = " + this + ", change = " + change);
+      ChangeListManagerImpl.log("LocalChangeListImpl.addChange: this = " + this + ", change = " + change);
     }
     myReadChangesCache = null;
     myChanges.add(change);
@@ -121,8 +121,8 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   Change removeChange(Change change) {
     if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("LocalChangeListImpl.removeChange: this = " + this + ", change = " + change);
-      System.out.println("myChanges.size() = " + myChanges.size());
+      ChangeListManagerImpl.log("LocalChangeListImpl.removeChange: this = " + this + ", change = " + change);
+      ChangeListManagerImpl.log("myChanges.size() = " + myChanges.size());
     }
     for (Change localChange : myChanges) {
       if (localChange.equals(change)) {
@@ -146,7 +146,7 @@ public class LocalChangeListImpl extends LocalChangeList {
         || isIgnoredChange(oldBoy, fileIndex)) {
         result.add(oldBoy);
         if (ChangeListManagerImpl.DEBUG) {
-          System.out.println("LocalChangeListImpl.startProcessingChanges, remove old change: this = " + this + ", change = " + oldBoy);
+          ChangeListManagerImpl.log("LocalChangeListImpl.startProcessingChanges, remove old change: this = " + this + ", change = " + oldBoy);
         }
         myChanges.remove(oldBoy);
         myReadChangesCache = null;

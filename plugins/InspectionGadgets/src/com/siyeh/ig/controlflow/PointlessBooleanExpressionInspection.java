@@ -38,8 +38,7 @@ import java.util.Set;
 
 public class PointlessBooleanExpressionInspection extends BaseInspection {
 
-  private static final Set<IElementType> booleanTokens =
-    new HashSet<IElementType>(7);
+  private static final Set<IElementType> booleanTokens = new HashSet<IElementType>(7);
 
   static {
     booleanTokens.add(JavaTokenType.ANDAND);
@@ -60,16 +59,16 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "pointless.boolean.expression.ignore.option"),
-      this, "m_ignoreExpressionsContainingConstants");
+      InspectionGadgetsBundle.message("pointless.boolean.expression.ignore.option"),
+      this,
+      "m_ignoreExpressionsContainingConstants"
+    );
   }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "pointless.boolean.expression.display.name");
+    return InspectionGadgetsBundle.message("pointless.boolean.expression.display.name");
   }
 
   @Override
@@ -82,18 +81,20 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     if (infos[0] instanceof PsiPolyadicExpression) {
       if (infos[0] instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression expression =
-          (PsiBinaryExpression)infos[0];
-        return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
-          calculateSimplifiedBinaryExpression(expression));
+        final PsiBinaryExpression expression = (PsiBinaryExpression)infos[0];
+        return InspectionGadgetsBundle.message(
+          "boolean.expression.can.be.simplified.problem.descriptor",
+          calculateSimplifiedBinaryExpression(expression)
+        );
       }
       return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.polyadic.problem.descriptor");
     }
     else {
-      final PsiPrefixExpression expression =
-        (PsiPrefixExpression)infos[0];
-      return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor",
-        calculateSimplifiedPrefixExpression(expression));
+      final PsiPrefixExpression expression = (PsiPrefixExpression)infos[0];
+      return InspectionGadgetsBundle.message(
+        "boolean.expression.can.be.simplified.problem.descriptor",
+        calculateSimplifiedPrefixExpression(expression)
+      );
     }
   }
 
@@ -116,10 +117,10 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     final String lhsText = lhs.getText();
     if (tokenType.equals(JavaTokenType.ANDAND) ||
         tokenType.equals(JavaTokenType.AND)) {
-      if (isTrue(lhs)) {
+      if (isAlwaysTrue(lhs)) {
         return rhsText;
       }
-      else if (isFalse(lhs) || isFalse(rhs)) {
+      else if (isAlwaysFalse(lhs) || isAlwaysFalse(rhs)) {
         return "false";
       }
       else {
@@ -128,7 +129,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
     else if (tokenType.equals(JavaTokenType.OROR) ||
              tokenType.equals(JavaTokenType.OR)) {
-      if (isFalse(lhs)) {
+      if (isAlwaysFalse(lhs)) {
         return rhsText;
       }
       else {
@@ -137,13 +138,13 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
     else if (tokenType.equals(JavaTokenType.XOR) ||
              tokenType.equals(JavaTokenType.NE)) {
-      if (isFalse(lhs)) {
+      if (isAlwaysFalse(lhs)) {
         return rhsText;
       }
-      else if (isFalse(rhs)) {
+      else if (isAlwaysFalse(rhs)) {
         return lhsText;
       }
-      else if (isTrue(lhs)) {
+      else if (isAlwaysTrue(lhs)) {
         return createStringForNegatedExpression(rhs);
       }
       else {
@@ -151,13 +152,13 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       }
     }
     else if (tokenType.equals(JavaTokenType.EQEQ)) {
-      if (isTrue(lhs)) {
+      if (isAlwaysTrue(lhs)) {
         return rhsText;
       }
-      else if (isTrue(rhs)) {
+      else if (isAlwaysTrue(rhs)) {
         return lhsText;
       }
-      else if (isFalse(lhs)) {
+      else if (isAlwaysFalse(lhs)) {
         return createStringForNegatedExpression(rhs);
       }
       else {
@@ -191,15 +192,41 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
   }
 
-  private String calculateSimplifiedPrefixExpression(
-    PsiPrefixExpression expression) {
-    final PsiExpression operand = expression.getOperand();
-    if (isTrue(operand)) {
-      return PsiKeyword.FALSE;
-    }
-    else {
+  @NotNull
+  private String calculateSimplifiedPrefixExpression(PsiPrefixExpression e) {
+    final PsiExpression expression = removeRedundantNots(e);
+
+    final Boolean value = evaluate(expression);
+
+    if (value == Boolean.TRUE) {
       return PsiKeyword.TRUE;
     }
+
+    if (value == Boolean.FALSE) {
+      return PsiKeyword.FALSE;
+    }
+
+    return expression != null ? expression.getText() : "";
+  }
+
+  @Nullable
+  private static PsiExpression removeRedundantNots(@NotNull PsiPrefixExpression expression) {
+    if (!JavaTokenType.EXCL.equals(expression.getOperationTokenType())) {
+      return expression;
+    }
+
+    final PsiExpression operand = expression.getOperand();
+    if (operand == null || !(operand instanceof PsiPrefixExpression)) {
+      return expression;
+    }
+
+    final PsiPrefixExpression prefixOperand = (PsiPrefixExpression)operand;
+    if (!JavaTokenType.EXCL.equals(prefixOperand.getOperationTokenType())) {
+      return expression;
+    }
+
+    final PsiExpression op = prefixOperand.getOperand();
+    return op != null && op instanceof PsiPrefixExpression ? removeRedundantNots((PsiPrefixExpression)op) : op;
   }
 
   @Override
@@ -207,12 +234,10 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     return new BooleanLiteralComparisonFix();
   }
 
-  private class BooleanLiteralComparisonFix
-    extends InspectionGadgetsFix {
+  private class BooleanLiteralComparisonFix extends InspectionGadgetsFix {
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "constant.conditional.expression.simplify.quickfix");
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     @Override
@@ -224,26 +249,42 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
     private boolean processSubExpressions(Project project, PsiExpression element) {
       if (element instanceof PsiPrefixExpression) {
-        SimplifyBooleanExpressionFix.simplifyExpression(project, element, isTrue(element));
-      }  else {
-        if (element instanceof PsiPolyadicExpression) {
-          for (PsiExpression operand :((PsiPolyadicExpression)element).getOperands()) {
-            Boolean bool = isTrue(operand) ? Boolean.TRUE : isFalse(operand) ? Boolean.FALSE : null;
-            if (bool != null) {
-              SimplifyBooleanExpressionFix.simplifyExpression(project, operand, bool);
-              return true;
-            } else {
-              if (processSubExpressions(project, operand)) return true;
-            }
+        return processPrefixExpression(project, (PsiPrefixExpression)element);
+      }
+
+      if (element instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
+        for (PsiExpression operand : polyadicExpression.getOperands()) {
+          final Boolean bool = evaluate(operand);
+          if (bool != null) {
+            SimplifyBooleanExpressionFix.simplifyExpression(project, operand, bool);
+            return true;
+          }
+          if (processSubExpressions(project, operand)) {
+            return true;
           }
         }
       }
       return false;
     }
+
+    private boolean processPrefixExpression(Project project, PsiPrefixExpression expression) {
+      final Boolean value = evaluate(expression);
+
+      if (value == null && JavaTokenType.EXCL.equals(expression.getOperationTokenType())) {
+        final PsiExpression fixed = removeRedundantNots(expression);
+        if (fixed != null && fixed != expression) {
+          expression.replace(fixed);
+        }
+      }
+      else {
+        SimplifyBooleanExpressionFix.simplifyExpression(project, expression, value);
+      }
+      return false;
+    }
   }
 
-  private class PointlessBooleanExpressionVisitor
-    extends BaseInspectionVisitor {
+  private class PointlessBooleanExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -298,20 +339,18 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       final PsiExpression operand = expression.getOperand();
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!(!tokenType.equals(JavaTokenType.EXCL) ||
-            !notExpressionIsPointless(operand))) {
+      if (JavaTokenType.EXCL.equals(tokenType) && notExpressionIsPointless(operand)) {
         registerError(expression, expression);
       }
     }
 
     private boolean equalityExpressionIsPointless(PsiExpression... lhs) {
       for (PsiExpression expression : lhs) {
-        if (isTrue(expression) || isFalse(expression)) return true;
+        if (evaluate(expression) != null) return true;
       }
       return false;
     }
@@ -322,7 +361,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
     private boolean orExpressionIsPointless(PsiExpression... lhs) {
       for (PsiExpression expression : lhs) {
-        if (isFalse(expression)) return true;
+        if (isAlwaysFalse(expression)) return true;
       }
       return false;
     }
@@ -332,36 +371,34 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
 
     private boolean notExpressionIsPointless(PsiExpression arg) {
+      if (arg instanceof PsiPrefixExpression) {
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)arg;
+        if (JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType())) {
+          return true;
+        }
+      }
       return equalityExpressionIsPointless(arg);
     }
   }
 
-  private boolean isTrue(PsiExpression expression) {
-    if (m_ignoreExpressionsContainingConstants &&
-        !(expression instanceof PsiLiteralExpression)) {
+  @Nullable
+  private Boolean evaluate(@Nullable PsiExpression expression) {
+    if (m_ignoreExpressionsContainingConstants && !(expression instanceof PsiLiteralExpression)) {
       return false;
     }
 
     if (expression == null) {
-      return false;
+      return null;
     }
-    final Boolean value =
-      (Boolean)ConstantExpressionUtil.computeCastTo(expression,
-                                                    PsiType.BOOLEAN);
-    return value != null && value.booleanValue();
+    final Boolean value = (Boolean)ConstantExpressionUtil.computeCastTo(expression, PsiType.BOOLEAN);
+    return value != null ? value.booleanValue() : null;
   }
 
-  private boolean isFalse(PsiExpression expression) {
-    if (m_ignoreExpressionsContainingConstants &&
-        !(expression instanceof PsiLiteralExpression)) {
-      return false;
-    }
-    if (expression == null) {
-      return false;
-    }
-    final Boolean value =
-      (Boolean)ConstantExpressionUtil.computeCastTo(expression,
-                                                    PsiType.BOOLEAN);
-    return value != null && !value.booleanValue();
+  private boolean isAlwaysTrue(@Nullable PsiExpression expression) {
+    return evaluate(expression) == Boolean.TRUE;
+  }
+
+  private boolean isAlwaysFalse(@Nullable PsiExpression expression) {
+    return evaluate(expression) == Boolean.FALSE;
   }
 }

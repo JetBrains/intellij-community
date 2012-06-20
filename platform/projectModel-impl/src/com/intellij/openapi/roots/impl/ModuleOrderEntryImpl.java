@@ -90,7 +90,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
     final Module module = myModulePointer.getModule();
     if (module == null) return null;
 
-    return ModuleRootManagerImpl.getCachingEnumeratorForType(type, module, true);
+    return ModuleRootManagerImpl.getCachingEnumeratorForType(type, module);
   }
 
   @NotNull
