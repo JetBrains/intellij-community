@@ -58,12 +58,16 @@ public abstract class ModuleLevelBuilder extends Builder {
    * @param context
    * @param delta
    * @param chunk
-   * @param filesToCompile files compiled in this round
+   * @param filesToCompile       files compiled in this round
    * @param successfullyCompiled
    * @return true if additional compilation pass is required, false otherwise
    * @throws Exception
    */
-  public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws IOException {
+  public final boolean updateMappings(CompileContext context,
+                                      final Mappings delta,
+                                      ModuleChunk chunk,
+                                      Collection<File> filesToCompile,
+                                      Collection<File> successfullyCompiled) throws IOException {
     if (context.errorsDetected()) {
       return false;
     }
@@ -74,86 +78,96 @@ public abstract class ModuleLevelBuilder extends Builder {
 
       final Mappings globalMappings = context.getDataManager().getMappings();
 
-      if (!context.isProjectRebuild() && context.shouldDifferentiate(chunk, context.isCompilingTests())) {
-        context.processMessage(new ProgressMessage("Checking dependencies"));
-        final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
-        final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
+      if (!context.isProjectRebuild()) {
+        if (context.shouldDifferentiate(chunk, context.isCompilingTests())) {
+          context.processMessage(new ProgressMessage("Checking dependencies"));
+          final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
+          final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
-        // mark as affected all files that were dirty before compilation
-        allAffectedFiles.addAll(filesToCompile);
-        // accumulate all successfully compiled in this round
-        allCompiledFiles.addAll(successfullyCompiled);
-        // unmark as affected all successfully compiled
-        allAffectedFiles.removeAll(successfullyCompiled);
+          // mark as affected all files that were dirty before compilation
+          allAffectedFiles.addAll(filesToCompile);
+          // accumulate all successfully compiled in this round
+          allCompiledFiles.addAll(successfullyCompiled);
+          // unmark as affected all successfully compiled
+          allAffectedFiles.removeAll(successfullyCompiled);
 
-        final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
+          final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
 
-        final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
-        final boolean incremental = globalMappings.differentiate(
-          delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter, CONSTANT_SEARCH_SERVICE.get(context)
-        );
+          final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
+          final boolean incremental = globalMappings.differentiateOnIncrementalMake(
+            delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter, CONSTANT_SEARCH_SERVICE.get(context)
+          );
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Differentiate Results:");
-          LOG.debug("   Compiled Files:");
-          for (final File c : allCompiledFiles) {
-            LOG.debug("      " + c.getAbsolutePath());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Differentiate Results:");
+            LOG.debug("   Compiled Files:");
+            for (final File c : allCompiledFiles) {
+              LOG.debug("      " + c.getAbsolutePath());
+            }
+            LOG.debug("   Affected Files:");
+            for (final File c : allAffectedFiles) {
+              LOG.debug("      " + c.getAbsolutePath());
+            }
+            LOG.debug("End Of Differentiate Results.");
           }
-          LOG.debug("   Affected Files:");
-          for (final File c : allAffectedFiles) {
-            LOG.debug("      " + c.getAbsolutePath());
-          }
-          LOG.debug("End Of Differentiate Results.");
-        }
 
-        if (incremental) {
-          final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
-          newlyAffectedFiles.removeAll(affectedBeforeDif);
-          newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
+          if (incremental) {
+            final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
+            newlyAffectedFiles.removeAll(affectedBeforeDif);
+            newlyAffectedFiles
+              .removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
-          final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
-          LOG.info(infoMessage);
-          context.processMessage(new ProgressMessage(infoMessage));
+            final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
+            LOG.info(infoMessage);
+            context.processMessage(new ProgressMessage(infoMessage));
 
-          if (!newlyAffectedFiles.isEmpty()) {
+            if (!newlyAffectedFiles.isEmpty()) {
 
-            if (LOG.isDebugEnabled()) {
-              final List<Pair<File, String>> wrongFiles = checkAffectedFilesInCorrectModules(context, newlyAffectedFiles, moduleBasedFilter);
-              if (!wrongFiles.isEmpty()) {
-                LOG.debug("Wrong affected files for module chunk " + chunk.getName() + ": ");
-                for (Pair<File, String> pair : wrongFiles) {
-                  final String name = pair.second != null? pair.second : "null";
-                  LOG.debug("\t[" + name + "] " + pair.first.getPath());
+              if (LOG.isDebugEnabled()) {
+                final List<Pair<File, String>> wrongFiles =
+                  checkAffectedFilesInCorrectModules(context, newlyAffectedFiles, moduleBasedFilter);
+                if (!wrongFiles.isEmpty()) {
+                  LOG.debug("Wrong affected files for module chunk " + chunk.getName() + ": ");
+                  for (Pair<File, String> pair : wrongFiles) {
+                    final String name = pair.second != null ? pair.second : "null";
+                    LOG.debug("\t[" + name + "] " + pair.first.getPath());
+                  }
                 }
               }
-            }
 
-            for (File file : newlyAffectedFiles) {
-              context.markDirtyIfNotDeleted(file);
+              for (File file : newlyAffectedFiles) {
+                context.markDirtyIfNotDeleted(file);
+              }
+              additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
-            additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+          }
+          else {
+            final String messageText = "Marking " + chunk.getName() + " and direct dependants for recompilation";
+            LOG.info("Non-incremental mode: " + messageText);
+            context.processMessage(new ProgressMessage(messageText));
+
+            additionalPassRequired = context.isMake();
+            context.markDirtyRecursively(chunk);
           }
         }
         else {
-          final String messageText = "Marking " + chunk.getName() + " and direct dependants for recompilation";
-          LOG.info("Non-incremental mode: " + messageText);
-          context.processMessage(new ProgressMessage(messageText));
-
-          additionalPassRequired = context.isMake();
-          context.markDirtyRecursively(chunk);
+          globalMappings.differentiateOnNonIncrementalMake(delta, removedPaths, filesToCompile);
         }
+      }
+      else {
+        globalMappings.differentiateOnRebuild(delta);
       }
 
       context.processMessage(new ProgressMessage("Updating dependency information"));
 
-      globalMappings.integrate(delta, removedPaths);
+      globalMappings.integrate(delta);
 
       // save to remove everything that has been integrated
       dropRemovedPaths(context, chunk);
 
       return additionalPassRequired;
     }
-    catch(RuntimeException e) {
+    catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException) {
         throw ((IOException)cause);
@@ -165,7 +179,9 @@ public abstract class ModuleLevelBuilder extends Builder {
     }
   }
 
-  private static List<Pair<File, String>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
+  private static List<Pair<File, String>> checkAffectedFilesInCorrectModules(CompileContext context,
+                                                                             Collection<File> affected,
+                                                                             ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
@@ -173,13 +189,14 @@ public abstract class ModuleLevelBuilder extends Builder {
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
         final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
-        result.add(Pair.create(file, moduleAndRoot != null? moduleAndRoot.module : null));
+        result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.module : null));
       }
     }
     return result;
   }
 
-  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws IOException {
+  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected)
+    throws IOException {
     final Set<String> chunkModules = new HashSet<String>();
     for (Module module : chunk.getModules()) {
       chunkModules.add(module.getName());
@@ -243,7 +260,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     }
   }
 
-  private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter{
+  private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
     private final Set<Module> myChunkModules;
     private final Map<Module, Set<Module>> myCache = new HashMap<Module, Set<Module>>();
@@ -270,6 +287,5 @@ public abstract class ModuleLevelBuilder extends Builder {
       }
       return Utils.intersects(moduleOfFileWithDependencies, myChunkModules);
     }
-
   }
 }

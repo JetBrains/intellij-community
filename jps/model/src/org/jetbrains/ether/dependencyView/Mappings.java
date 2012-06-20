@@ -59,6 +59,7 @@ public class Mappings {
   private final boolean myIsDelta;
   private final boolean myDeltaIsTransient;
   private boolean myIsDifferentiated = false;
+  private boolean myIsRebuild = false;
 
   private final TIntHashSet myChangedClasses;
   private final TIntHashSet myChangedFiles;
@@ -79,12 +80,7 @@ public class Mappings {
   private IntIntMaplet myClassToSourceFile;
 
   private IntIntTransientMultiMaplet myRemovedSuperClasses;
-
-  private void registerRemovedSuperClass (final int aClass, final int superClass) {
-    assert (myRemovedSuperClasses != null);
-    myIsDifferentiated = true;
-    myRemovedSuperClasses.put(superClass, aClass);
-  }
+  private Collection<String> myRemovedFiles;
 
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
@@ -166,10 +162,12 @@ public class Mappings {
   }
 
   private void compensateRemovedContent(final Collection<File> compiled) {
-    for (File file : compiled) {
-      final int fileName = myContext.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
-      if (!mySourceFileToClasses.containsKey(fileName)) {
-        mySourceFileToClasses.put(fileName, new HashSet<ClassRepr>());
+    if (compiled != null) {
+      for (File file : compiled) {
+        final int fileName = myContext.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+        if (!mySourceFileToClasses.containsKey(fileName)) {
+          mySourceFileToClasses.put(fileName, new HashSet<ClassRepr>());
+        }
       }
     }
   }
@@ -859,7 +857,6 @@ public class Mappings {
     final int DESPERATE_MASK = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
     final Mappings myDelta;
-    final Collection<String> myRemoved;
     final Collection<File> myFilesToCompile;
     final Collection<File> myCompiledFiles;
     final Collection<File> myAffectedFiles;
@@ -870,6 +867,8 @@ public class Mappings {
     final Util myUpdated;
     final Util mySelf;
     final Util myOriginal;
+
+    final boolean myEasyMode;
 
     private class DelayedWorks {
       class Triple {
@@ -964,6 +963,44 @@ public class Mappings {
       }
     }
 
+    private Differential(final Mappings delta) {
+      this.myDelta = delta;
+      this.myFilesToCompile = null;
+      this.myCompiledFiles = null;
+      this.myAffectedFiles = null;
+      this.myFilter = null;
+      this.myConstantSearch = null;
+
+      myDelayedWorks = null;
+
+      myUpdated = null;
+      mySelf = null;
+      myOriginal = null;
+
+      myEasyMode = true;
+
+      delta.myIsRebuild = true;
+    }
+
+    private Differential(final Mappings delta, final Collection<String> removed, final Collection<File> filesToCompile) {
+      delta.myRemovedFiles = removed;
+
+      this.myDelta = delta;
+      this.myFilesToCompile = filesToCompile;
+      this.myCompiledFiles = null;
+      this.myAffectedFiles = null;
+      this.myFilter = null;
+      this.myConstantSearch = null;
+
+      myDelayedWorks = null;
+
+      myUpdated = new Util(myDelta);
+      mySelf = new Util(Mappings.this);
+      myOriginal = new Util();
+
+      myEasyMode = true;
+    }
+
     private Differential(final Mappings delta,
                          final Collection<String> removed,
                          final Collection<File> filesToCompile,
@@ -971,8 +1008,9 @@ public class Mappings {
                          final Collection<File> affectedFiles,
                          final DependentFilesFilter filter,
                          @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
+      delta.myRemovedFiles = removed;
+
       this.myDelta = delta;
-      this.myRemoved = removed;
       this.myFilesToCompile = filesToCompile;
       this.myCompiledFiles = compiledFiles;
       this.myAffectedFiles = affectedFiles;
@@ -984,14 +1022,18 @@ public class Mappings {
       myUpdated = new Util(myDelta);
       mySelf = new Util(Mappings.this);
       myOriginal = new Util();
+
+      myEasyMode = false;
     }
 
     private void processDisappearedClasses() {
       myDelta.runPostPasses();
       myDelta.compensateRemovedContent(myFilesToCompile);
 
-      if (myRemoved != null) {
-        for (String file : myRemoved) {
+      final Collection<String> removed = myDelta.getRemovedFiles();
+
+      if (removed != null) {
+        for (String file : removed) {
           final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.get(file));
 
           if (classes != null) {
@@ -1531,8 +1573,6 @@ public class Mappings {
         final ClassRepr it = changed.first;
         final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
 
-        mySelf.appendDependents(it, state.dependants);
-
         myDelta.addChangedClass(it.name);
 
         debug("Changed: ", it.name);
@@ -1548,10 +1588,16 @@ public class Mappings {
         }
 
         if (interfacesChanged) {
-          for (final TypeRepr.AbstractType typ: diff.interfaces().removed()) {
+          for (final TypeRepr.AbstractType typ : diff.interfaces().removed()) {
             myDelta.registerRemovedSuperClass(it.name, ((TypeRepr.ClassType)typ).className);
           }
         }
+
+        if (myEasyMode) {
+          return false;
+        }
+
+        mySelf.appendDependents(it, state.dependants);
 
         if (superClassChanged || interfacesChanged || signatureChanged) {
           debug("Superclass changed: ", superClassChanged);
@@ -1668,9 +1714,12 @@ public class Mappings {
       debug("Processing removed classes:");
       for (final ClassRepr c : state.classDiff.removed()) {
         myDelta.addDeletedClass(c);
-        mySelf.appendDependents(c, state.dependants);
-        debug("Adding usages of class ", c.name);
-        state.affectedUsages.add(c.createUsage());
+
+        if (!myEasyMode) {
+          mySelf.appendDependents(c, state.dependants);
+          debug("Adding usages of class ", c.name);
+          state.affectedUsages.add(c.createUsage());
+        }
       }
       debug("End of removed classes processing.");
     }
@@ -1681,28 +1730,31 @@ public class Mappings {
         debug("Class name: ", c.name);
         myDelta.addChangedClass(c.name);
 
-        final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
+        if (!myEasyMode) {
+          final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
 
-        if (depClasses != null) {
-          depClasses.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int depClass) {
-              final int fName = myClassToSourceFile.get(depClass);
+          if (depClasses != null) {
+            depClasses.forEach(new TIntProcedure() {
+              @Override
+              public boolean execute(int depClass) {
+                final int fName = myClassToSourceFile.get(depClass);
 
-              if (fName > 0) {
-                final String f = myContext.getValue(fName);
-                final File theFile = new File(f);
+                if (fName > 0) {
+                  final String f = myContext.getValue(fName);
+                  final File theFile = new File(f);
 
-                if (myFilter.accept(theFile)) {
-                  debug("Adding dependent file ", f);
-                  myAffectedFiles.add(theFile);
+                  if (myFilter.accept(theFile)) {
+                    debug("Adding dependent file ", f);
+                    myAffectedFiles.add(theFile);
+                  }
                 }
+                return true;
               }
-              return true;
-            }
-          });
+            });
+          }
         }
       }
+
       debug("End of added classes processing.");
     }
 
@@ -1783,8 +1835,14 @@ public class Mappings {
 
     boolean differentiate() {
       synchronized (myLock) {
+        myDelta.myIsDifferentiated = true;
+
+        if (myDelta.myIsRebuild) {
+          return true;
+        }
 
         debug("Begin of Differentiate:");
+        debug("Easy mode: ", myEasyMode);
 
         processDisappearedClasses();
 
@@ -1810,22 +1868,42 @@ public class Mappings {
           processRemovedClases(state);
           processAddedClasses(state);
 
-          calaulateAffectedFiles(state);
-        }
-
-        if (myRemoved != null) {
-          for (final String r : myRemoved) {
-            myAffectedFiles.remove(new File(r));
+          if (!myEasyMode) {
+            calaulateAffectedFiles(state);
           }
         }
 
         debug("End of Differentiate.");
-        return myDelayedWorks.doWork(myAffectedFiles);
+
+        if (!myEasyMode) {
+          final Collection<String> removed = myDelta.getRemovedFiles();
+
+          if (removed != null) {
+            for (final String r : removed) {
+              myAffectedFiles.remove(new File(r));
+            }
+          }
+
+          return myDelayedWorks.doWork(myAffectedFiles);
+        }
+        else {
+          return false;
+        }
       }
     }
   }
 
-  public boolean differentiate
+  public void differentiateOnRebuild(final Mappings delta) {
+    new Differential(delta).differentiate();
+  }
+
+  public void differentiateOnNonIncrementalMake(final Mappings delta,
+                                                final Collection<String> removed,
+                                                final Collection<File> filesToCompile) {
+    new Differential(delta, removed, filesToCompile).differentiate();
+  }
+
+  public boolean differentiateOnIncrementalMake
     (final Mappings delta,
      final Collection<String> removed,
      final Collection<File> filesToCompile,
@@ -1873,9 +1951,13 @@ public class Mappings {
     myClassToSourceFile.remove(className);
   }
 
-  public void integrate(final Mappings delta, final Collection<String> removed) {
+  public void integrate(final Mappings delta) {
     synchronized (myLock) {
       try {
+        assert (delta.isDifferentiated());
+
+        final Collection<String> removed = delta.getRemovedFiles();
+
         delta.runPostPasses();
 
         final IntIntMultiMaplet dependenciesTrashBin = new IntIntTransientMultiMaplet();
@@ -1899,7 +1981,7 @@ public class Mappings {
           }
         }
 
-        if (delta.myIsDifferentiated) {
+        if (!delta.isRebuild()) {
           final TIntHashSet compiledClasses = new TIntHashSet();
 
           delta.myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
@@ -1996,7 +2078,7 @@ public class Mappings {
             }
           });
 
-          delta.getRemovedSuperClasses ().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+          delta.getRemovedSuperClasses().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
             @Override
             public boolean execute(final int a, final TIntHashSet b) {
               if (!compiledClasses.contains(a)) {
@@ -2013,14 +2095,14 @@ public class Mappings {
           });
         }
         else {
-          subclassesTrashBin.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-            @Override
-            public boolean execute(int aClass, TIntHashSet deps) {
-              myClassToSubclasses.removeAll(aClass, deps);
-              return true;
-            }
-          });
-          subclassesTrashBin.close();
+          //subclassesTrashBin.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+          //  @Override
+          //  public boolean execute(int aClass, TIntHashSet deps) {
+          //    myClassToSubclasses.removeAll(aClass, deps);
+          //    return true;
+          //  }
+          //});
+          //subclassesTrashBin.close();
 
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
           myClassToSourceFile.putAll(delta.myClassToSourceFile);
@@ -2033,6 +2115,7 @@ public class Mappings {
         // updating classToClass dependencies
 
         final TIntHashSet affectedClasses = new TIntHashSet();
+
         addAllKeys(affectedClasses, dependenciesTrashBin);
         addAllKeys(affectedClasses, delta.myClassToClassDependency);
 
@@ -2241,6 +2324,19 @@ public class Mappings {
     });
   }
 
+  private void registerRemovedSuperClass(final int aClass, final int superClass) {
+    assert (myRemovedSuperClasses != null);
+    myRemovedSuperClasses.put(superClass, aClass);
+  }
+
+  private boolean isDifferentiated() {
+    return myIsDifferentiated;
+  }
+
+  private boolean isRebuild() {
+    return myIsRebuild;
+  }
+
   private void addDeletedClass(final ClassRepr cr) {
     assert (myDeletedClasses != null);
 
@@ -2258,8 +2354,6 @@ public class Mappings {
     if (file != null) {
       myChangedFiles.add(file);
     }
-
-    myIsDifferentiated = true;
   }
 
   @NotNull
@@ -2273,6 +2367,10 @@ public class Mappings {
 
   private TIntHashSet getChangedFiles() {
     return myChangedFiles;
+  }
+
+  private Collection<String> getRemovedFiles() {
+    return myRemovedFiles;
   }
 
   private static void debug(final String s) {
