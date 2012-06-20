@@ -32,6 +32,7 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 /**
@@ -65,8 +66,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
 
     // Check that given repository is properly configured git repository
-    final GitRemote gitHubRemoteBranch = GithubUtil.findGitHubRemoteBranch(gitRepository);
-    if (gitHubRemoteBranch == null) {
+    if (!isRepositoryOnGitHub(gitRepository)) {
       setVisibleEnabled(e, false, false);
       return;
     }
@@ -84,6 +84,21 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
 
     setVisibleEnabled(e, true, true);
+  }
+
+  private static boolean isRepositoryOnGitHub(GitRepository repository) {
+    for (GitRemote remote : repository.getRemotes()) {
+      for (String url : remote.getUrls()) {
+        if (isGithubUrl(url)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isGithubUrl(@NotNull String url) {
+    return url.contains("github.com");
   }
 
   private static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
