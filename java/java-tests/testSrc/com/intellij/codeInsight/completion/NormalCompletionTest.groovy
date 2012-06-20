@@ -773,6 +773,7 @@ public class ListUtils {
 
   public void testSecondMethodParameter() throws Throwable { doTest(); }
   public void testReturnInCase() throws Throwable { doTest(); }
+  public void testUnboxedConstantsInCase() throws Throwable { doTest(); }
 
   public void testAnnotationWithoutValueMethod() throws Throwable {
     configureByFile(getTestName(false) + ".java");
