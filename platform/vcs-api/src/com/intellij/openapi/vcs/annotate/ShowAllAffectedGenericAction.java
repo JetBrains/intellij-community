@@ -66,7 +66,7 @@ public class ShowAllAffectedGenericAction extends AnAction {
     showSubmittedFiles(project, revision, virtualFile, vcsKey, null, false);
   }
 
-  private static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile,
+  public static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile,
                                          final VcsKey vcsKey, final RepositoryLocation location, final boolean isNonLocal) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
