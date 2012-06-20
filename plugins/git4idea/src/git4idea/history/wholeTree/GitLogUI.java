@@ -882,13 +882,15 @@ public class GitLogUI implements Disposable {
     group.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.ShowSource) {
         @Override
         public boolean isSelected(AnActionEvent e) {
-          return GitLogSettings.getInstance(myProject).isShowDetails();
+          return !myProject.isDisposed() && GitLogSettings.getInstance(myProject).isShowDetails();
         }
 
         @Override
         public void setSelected(AnActionEvent e, boolean state) {
           setupDetailsSplitter(state);
-          GitLogSettings.getInstance(myProject).setShowDetails(state);
+          if (!myProject.isDisposed()) {
+            GitLogSettings.getInstance(myProject).setShowDetails(state);
+          }
         }
       });
 
