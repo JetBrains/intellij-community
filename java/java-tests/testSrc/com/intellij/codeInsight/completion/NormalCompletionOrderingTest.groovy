@@ -366,4 +366,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems 0, 'get', 'getClass'
   }
 
+  public void testPreferClassToItsConstants() {
+    checkPreferredItems 0, 'Calendar', 'Calendar.FIELD_COUNT'
+  }
+
 }

@@ -94,12 +94,18 @@ public class JavaCompletionSorting {
               }
               Object object = shorterElement.getObject();
               if (object instanceof PsiClass) {
-                PsiFile file = ((PsiClass)object).getContainingFile();
+                PsiClass psiClass = (PsiClass)object;
+                PsiFile file = psiClass.getContainingFile();
                 if (file != null) {
                   VirtualFile vFile = file.getOriginalFile().getVirtualFile();
                   if (vFile != null && fileIndex.isInSource(vFile)) {
                     return true;
                   }
+                }
+                Object longerObject = longerElement.getObject();
+                if (longerObject instanceof PsiMember &&
+                    psiClass.getManager().areElementsEquivalent(psiClass, ((PsiMember)longerObject).getContainingClass())) {
+                  return true;
                 }
               }
               return false;

@@ -98,14 +98,17 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         for (String prefix : prefixes) {
           List<LookupElement> shorter = new SmartList<LookupElement>();
           for (LookupElement shorterElement : myElements.get(prefix)) {
-            if (srcSet.contains(shorterElement) && myCondition.shouldLift(shorterElement, element, context) && processed.add(shorterElement)) {
+            if (srcSet.contains(shorterElement) &&
+                myCondition.shouldLift(shorterElement, element, context) &&
+                processed.add(shorterElement)) {
               shorter.add(shorterElement);
             }
           }
 
-          lifted.addAll(shorter);
-
-          ContainerUtil.addAll(result, myNext.classify(shorter, context));
+          if (!shorter.isEmpty()) {
+            lifted.addAll(shorter);
+            ContainerUtil.addAll(result, myNext.classify(shorter, context));
+          }
         }
         result.add(element);
       }
