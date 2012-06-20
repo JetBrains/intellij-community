@@ -481,7 +481,7 @@ public abstract class InplaceRefactoring {
     final PsiReference reference = (myEditorFile != null ?
                                     myEditorFile : myElementToRename.getContainingFile())
       .findReferenceAt(myEditor.getCaretModel().getOffset());
-    if (reference != null && !refs.contains(reference)) {
+    if (reference != null && reference.isReferenceTo(myElementToRename) && !refs.contains(reference)) {
       refs.add(reference);
     }
   }
