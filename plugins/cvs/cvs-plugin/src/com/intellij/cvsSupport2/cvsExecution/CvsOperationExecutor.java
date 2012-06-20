@@ -107,7 +107,12 @@ public class CvsOperationExecutor {
           }
           finally {
             if (myProject != null && handler != CvsHandler.NULL) {
-              StatusBar.Info.set(getStatusMessage(handler), myProject);
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  StatusBar.Info.set(getStatusMessage(handler), myProject);
+                }
+              });
             }
           }
         }
