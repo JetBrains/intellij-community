@@ -59,7 +59,8 @@ public class GenericInlineHandler {
 
     if (settings.isOnlyOneReferenceToInline()) {
       allReferences = Collections.singleton(invocationReference);
-    } else {
+    }
+    else {
       final Ref<Collection<? extends PsiReference>> usagesRef = new Ref<Collection<? extends PsiReference>>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
@@ -99,10 +100,11 @@ public class GenericInlineHandler {
     if (!conflicts.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
-      } else {
+      }
+      else {
         final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
         conflictsDialog.show();
-        if (!conflictsDialog.isOK()){
+        if (!conflictsDialog.isOK()) {
           return true;
         }
       }
@@ -189,5 +191,4 @@ public class GenericInlineHandler {
     });
     return usages;
   }
-
 }
