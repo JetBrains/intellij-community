@@ -253,9 +253,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     if (type == OrderRootType.SOURCES) {
       return base.exportedOnly().recursively().sources();
     }
-    if (type.collectFromDependentModules()) {
-      return base.recursively().roots(type);
-    }
     return base.roots(type);
   }
 

@@ -97,7 +97,9 @@ public class OrderRootType {
 
   /**
    * Whether {@link ModuleOrderEntry#getFiles(OrderRootType)} collects the list of roots from dependent modules.
+   * @deprecated looks like this method was introduced by mistake. It won't be called by IDEA anymore
    */
+  @Deprecated
   public boolean collectFromDependentModules() {
     return false;
   }
