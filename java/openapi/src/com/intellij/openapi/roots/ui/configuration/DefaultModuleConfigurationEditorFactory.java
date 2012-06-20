@@ -24,11 +24,7 @@ public abstract class DefaultModuleConfigurationEditorFactory {
 
   public abstract ModuleConfigurationEditor createClasspathEditor(ModuleConfigurationState state);
 
-  @Deprecated public abstract ModuleConfigurationEditor createJavadocEditor(ModuleConfigurationState state);
-
   public abstract ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state);
-
-  @Deprecated public abstract ModuleConfigurationEditor createCompilerOutputEditor(ModuleConfigurationState state);  
 
   public static DefaultModuleConfigurationEditorFactory getInstance() {
     return ServiceManager.getService(DefaultModuleConfigurationEditorFactory.class);

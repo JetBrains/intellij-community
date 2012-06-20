@@ -35,16 +35,7 @@ public class DefaultModuleConfigurationEditorFactoryImpl extends DefaultModuleCo
     return new ClasspathEditor(state);
   }
 
-  public ModuleConfigurationEditor createJavadocEditor(ModuleConfigurationState state) {
-    return new JavadocEditor(state);
-  }
-
   public ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state) {
     return new OutputEditor(state);
-  }
-
-  @Deprecated
-  public ModuleConfigurationEditor createCompilerOutputEditor(ModuleConfigurationState state) {
-    return new BuildElementsEditor(state);
   }
 }
