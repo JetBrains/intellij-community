@@ -63,9 +63,9 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
 
         if ((leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
           if (leftExpression.getText().equals(targetText)) {
-            if (rightExpression instanceof PyNumericLiteralExpression || rightExpression instanceof PyStringLiteralExpression
-              || rightExpression instanceof PyReferenceExpression || isPercentage(rightExpression) || isCompound(rightExpression)
-              || isMathOperation(rightExpression, expression.getOperator())) {
+            if (rightExpression instanceof PyNumericLiteralExpression || rightExpression instanceof PyStringLiteralExpression ||
+                rightExpression instanceof PyCallExpression || rightExpression instanceof PyReferenceExpression
+                || isPercentage(rightExpression) || isCompound(rightExpression) || isMathOperation(rightExpression, expression.getOperator())) {
 
               final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
               final StringBuilder stringBuilder = new StringBuilder();
