@@ -855,7 +855,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
           if (myLastName != null && PERMISSION_TAG.equals(name) || PERMISSION_GROUP_TAG.equals(name)) {
             assert myLastName != null;
-            result.add(new ResourceEntry(name, myLastName));
+            result.add(new ResourceEntry(name, myLastName, ""));
           }
         }
       });

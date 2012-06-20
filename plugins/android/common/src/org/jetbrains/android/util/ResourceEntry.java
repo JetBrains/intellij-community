@@ -23,15 +23,17 @@ import org.jetbrains.annotations.NotNull;
 public class ResourceEntry {
   private final String myType;
   private final String myName;
+  private final String myContext;
 
-  public ResourceEntry(@NotNull String type, @NotNull String name) {
+  public ResourceEntry(@NotNull String type, @NotNull String name, @NotNull String context) {
     myType = type;
     myName = name;
+    myContext = context;
   }
 
   @NotNull
-  public String getType() {
-    return myType;
+  public String getContext() {
+    return myContext;
   }
 
   @NotNull
@@ -39,28 +41,30 @@ public class ResourceEntry {
     return myName;
   }
 
+  @NotNull
+  public String getType() {
+    return myType;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    ResourceEntry entry = (ResourceEntry)o;
+    ResourceEntry that = (ResourceEntry)o;
 
-    if (!myName.equals(entry.myName)) return false;
-    if (!myType.equals(entry.myType)) return false;
+    if (!myContext.equals(that.myContext)) return false;
+    if (!myName.equals(that.myName)) return false;
+    if (!myType.equals(that.myType)) return false;
 
     return true;
-  }
-
-  @Override
-  public String toString() {
-    return "[" + myType + ":" + myName + "]";
   }
 
   @Override
   public int hashCode() {
     int result = myType.hashCode();
     result = 31 * result + myName.hashCode();
+    result = 31 * result + myContext.hashCode();
     return result;
   }
 }

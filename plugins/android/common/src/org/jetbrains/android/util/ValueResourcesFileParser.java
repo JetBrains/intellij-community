@@ -16,6 +16,7 @@
 package org.jetbrains.android.util;
 
 import com.android.resources.ResourceType;
+import com.intellij.util.containers.Stack;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ public abstract class ValueResourcesFileParser implements IXMLBuilder {
   private boolean mySeenResources;
   private String myLastTypeAttr;
   private String myLastNameAttr;
+  private final Stack<String> myContextNames = new Stack<String>();
 
   public ValueResourcesFileParser() {
     mySeenResources = false;
@@ -79,15 +81,24 @@ public abstract class ValueResourcesFileParser implements IXMLBuilder {
                              ? myLastTypeAttr
                              : AndroidCommonUtils.getResourceTypeByTagName(name);
       final ResourceType resType = resTypeStr != null ? ResourceType.getEnum(resTypeStr) : null;
-      if (resType != null &&
-          !(resType == ResourceType.ATTR && myLastNameAttr.startsWith("android:"))) {
-        process(new ResourceEntry(resTypeStr, myLastNameAttr));
+      if (resType != null) {
+        if (resType == ResourceType.ATTR) {
+          if (!myLastNameAttr.startsWith("android:")) {
+            final String contextName = myContextNames.peek();
+            process(new ResourceEntry(resTypeStr, myLastNameAttr, contextName));
+          }
+        }
+        else {
+          process(new ResourceEntry(resTypeStr, myLastNameAttr, ""));
+        }
       }
     }
+    myContextNames.push(myLastNameAttr != null ? myLastNameAttr : "");
   }
 
   @Override
   public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
+    myContextNames.pop();
   }
 
   @Override

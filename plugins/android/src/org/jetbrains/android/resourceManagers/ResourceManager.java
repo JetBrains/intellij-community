@@ -221,6 +221,16 @@ public abstract class ResourceManager {
 
   @NotNull
   public Collection<String> getValueResourceNames(@NotNull final String resourceType) {
+    final Set<String> result = new HashSet<String>();
+
+    for (ResourceEntry entry : getValueResourceEntries(resourceType)) {
+      result.add(entry.getName());
+    }
+    return result;
+  }
+
+  @NotNull
+  public Collection<ResourceEntry> getValueResourceEntries(@NotNull final String resourceType) {
     final ResourceType type = ResourceType.getEnum(resourceType);
 
     if (type == null) {
@@ -232,7 +242,6 @@ public abstract class ResourceManager {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
 
     final Map<VirtualFile, Set<ResourceEntry>> file2resourceSet = new HashMap<VirtualFile, Set<ResourceEntry>>();
-
     for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
       for (ResourceEntry entry : entrySet) {
         final Collection<VirtualFile> files = index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, entry, scope);
@@ -248,14 +257,14 @@ public abstract class ResourceManager {
         }
       }
     }
-    final Set<String> result = new HashSet<String>();
+    final List<ResourceEntry> result = new ArrayList<ResourceEntry>();
 
     for (VirtualFile file : getAllValueResourceFiles()) {
       final Set<ResourceEntry> entries = file2resourceSet.get(file);
 
       if (entries != null) {
         for (ResourceEntry entry : entries) {
-          result.add(entry.getName());
+          result.add(entry);
         }
       }
     }
@@ -371,7 +380,8 @@ public abstract class ResourceManager {
     }
 
     final Collection<VirtualFile> files = FileBasedIndex.getInstance()
-      .getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, new ResourceEntry(resourceType, resourceName),
+      .getContainingFiles(AndroidValueResourcesIndex.INDEX_ID,
+                          AndroidValueResourcesIndex.createTypeNameMarkerEntry(resourceType, resourceName),
                           GlobalSearchScope.allScope(myModule.getProject()));
 
     if (files.size() == 0) {
