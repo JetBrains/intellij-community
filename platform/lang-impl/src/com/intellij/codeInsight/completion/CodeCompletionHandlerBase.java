@@ -766,7 +766,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     });
-    update.addSparedChars(indicator, item, context);
+    update.addSparedChars(indicator, item, context, completionChar);
     return context;
   }
 

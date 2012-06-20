@@ -387,15 +387,22 @@ public class CompletionLookupArranger extends LookupArranger {
     public void dispose() {
     }
 
-    public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context) {
+    public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context, char completionChar) {
       String textInserted;
       if (context.getStartOffset() >= 0 && context.getTailOffset() >= context.getStartOffset()) {
         textInserted = context.getDocument().getText().substring(context.getStartOffset(), context.getTailOffset());
       } else {
         textInserted = item.getLookupString();
       }
-      textInserted = StringUtil.replace(textInserted, new String[]{" ", "\t", "\n"}, new String[]{"", "", ""});
-      int spared = textInserted.length() - indicator.getLookup().itemPattern(item).length();
+      String withoutSpaces = StringUtil.replace(textInserted, new String[]{" ", "\t", "\n"}, new String[]{"", "", ""});
+      int spared = withoutSpaces.length() - indicator.getLookup().itemPattern(item).length();
+      if (completionChar != Lookup.NORMAL_SELECT_CHAR &&
+          completionChar != Lookup.REPLACE_SELECT_CHAR &&
+          completionChar != Lookup.AUTO_INSERT_SELECT_CHAR &&
+          completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR &&
+          withoutSpaces.contains(String.valueOf(completionChar))) {
+        spared--;
+      }
       if (spared > 0) {
         mySpared += spared;
       }
