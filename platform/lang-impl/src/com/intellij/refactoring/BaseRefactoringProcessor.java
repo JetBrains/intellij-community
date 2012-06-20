@@ -265,8 +265,12 @@ public abstract class BaseRefactoringProcessor {
               }
             });
 
-            for (Usage usage : usages) {
-              processor.process(usage);
+            for (final Usage usage : usages) {
+              ApplicationManager.getApplication().runReadAction(new Runnable() {
+                public void run() {
+                  processor.process(usage);
+                }
+              });
             }
           }
         };
