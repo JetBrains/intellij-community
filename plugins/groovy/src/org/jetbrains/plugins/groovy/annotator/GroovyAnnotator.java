@@ -366,9 +366,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
       Annotation annotation;
 
-      boolean compileStatic = isCompileStatic(referenceExpression);
+      boolean compileStatic = isCompileStatic(referenceExpression) || isInStaticMethod(referenceExpression);
       if (compileStatic) {
-        annotation = myHolder.createInfoAnnotation(elt, GroovyBundle.message("cannot.resolve", referenceExpression.getReferenceName()));
+        annotation = myHolder.createErrorAnnotation(elt, GroovyBundle.message("cannot.resolve", referenceExpression.getReferenceName()));
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
       else {
@@ -394,6 +394,11 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
+  private static boolean isInStaticMethod(GrReferenceExpression referenceExpression) {
+    PsiMember context = PsiTreeUtil.getParentOfType(referenceExpression, PsiMember.class, true, GrClosableBlock.class);
+    return context instanceof PsiMethod && context.hasModifierProperty(PsiModifier.STATIC);
+  }
+
   private static boolean isCompileStatic(PsiElement e) {
     PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class);
     return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
@@ -407,11 +412,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     Annotation annotation = myHolder.createInfoAnnotation(toHighlight, null);
     boolean reassigned = isReassigned(variable);
     if (variable instanceof GrParameter) {
-      annotation
-        .setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER);
-    } else {
-      annotation
-        .setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE);
+      annotation.setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER);
+    }
+    else {
+      annotation.setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE);
     }
   }
 
@@ -671,7 +675,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     GrOpenBlock block = method.getBlock();
     if (block != null && TypeInferenceHelper.isTooComplexTooAnalyze(block)) {
       myHolder.createWeakWarningAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("method.0.is.too.complex.too.analyze",
-                                                                                              method.getName()));
+                                                                                                  method.getName()));
     }
   }
 
@@ -901,7 +905,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitWildcardTypeArgument(GrWildcardTypeArgument wildcardTypeArgument) {
     super.visitWildcardTypeArgument(wildcardTypeArgument);
-    
+
     checkTypeArgForPrimitive(wildcardTypeArgument.getBoundTypeElement(), GroovyBundle.message("primitive.bound.types.are.not.allowed"));
   }
 

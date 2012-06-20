@@ -594,7 +594,7 @@ class A {
     def foo() {
         new Runnable() {
             <error descr="Inner classes cannot have static declarations">static</error> void run() {
-                print this.@abc
+                print abc
             }
         }.run()
     }
@@ -1021,19 +1021,19 @@ public @interface CompileStatic {
     myFixture.configureByText('_.groovy', '''\
 <info descr="null">import</info> <info descr="null">groovy.transform.CompileStatic</info>
 
-<info descr="null">class</info> <info descr="null">A</info> {
+<info descr="null">class</info> A {
 
 <info descr="null">def</info> <info descr="null">foo</info>() {
 <info descr="null">print</info> <info descr="null">abc</info>
 }
 
 <info descr="null">@CompileStatic</info>
-<info descr="null">def</info> <info descr="null">bar</info>() {
-<info descr="null">print</info> <info descr="Cannot resolve symbol 'abc'">abc</info>
+<info descr="null">def</info> bar() {
+<info descr="null">print</info> <error descr="Cannot resolve symbol 'abc'">abc</error>
 }
 }
 ''')
-    myFixture.testHighlighting(true, true, true)
+    myFixture.testHighlighting(true, true, false)
   }
 
 
@@ -1090,5 +1090,17 @@ def a(xxx) {
   }
 }
 ''', UnusedDefInspection)
+  }
+
+  void testUnresolvedVarInStaticMethod() {
+    testHighlighting('''\
+static def foo() {
+  print <error descr="Cannot resolve symbol 'abc'">abc</error>
+
+  def cl = {
+     print cde
+  }
+}
+''')
   }
 }
