@@ -25,6 +25,8 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.*;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -292,6 +294,21 @@ public class BuildManager implements ApplicationComponent{
         if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
           continue;
         }
+        if (!config.ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION) {
+          final RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
+          boolean hasRunningProcesses = false;
+          for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
+            final ProcessHandler handler = descriptor.getProcessHandler();
+            if (handler != null && !handler.isProcessTerminated()) { // active process
+              hasRunningProcesses = true;
+              break;
+            }
+          }
+          if (hasRunningProcesses) {
+            continue;
+          }
+        }
+
         final List<String> emptyList = Collections.emptyList();
         final RequestFuture future = scheduleBuild(
           project, false, true, emptyList, emptyList, emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)

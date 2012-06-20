@@ -45,12 +45,14 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox myCbAutoShowFirstError;
   private JCheckBox myCbUseCompileServer;
   private JCheckBox myCbMakeProjectOnSave;
+  private JCheckBox myCbAllowAutomakeWhileRunningApplication;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
     final boolean isServerOptionEnabled = Registry.is("compiler.out-of-process.build.enabled") || ApplicationManager.getApplication().isInternal();
     myCbUseCompileServer.setVisible(isServerOptionEnabled);
     myCbMakeProjectOnSave.setVisible(isServerOptionEnabled);
+    myCbAllowAutomakeWhileRunningApplication.setVisible(isServerOptionEnabled);
 
     myPatternLegendLabel.setText("<html>" +
                                  "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
@@ -61,7 +63,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbUseCompileServer.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        myCbMakeProjectOnSave.setEnabled(myCbUseCompileServer.isSelected());
+        final boolean enabled = myCbUseCompileServer.isSelected();
+        myCbMakeProjectOnSave.setEnabled(enabled);
+        myCbAllowAutomakeWhileRunningApplication.setEnabled(enabled);
       }
     });
   }
@@ -75,7 +79,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
     myCbUseCompileServer.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
     myCbMakeProjectOnSave.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    myCbMakeProjectOnSave.setEnabled(workspaceConfiguration.USE_COMPILE_SERVER);
+    myCbAllowAutomakeWhileRunningApplication.setEnabled(workspaceConfiguration.USE_COMPILE_SERVER);
 
     configuration.convertPatterns();
 
@@ -102,6 +106,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     boolean wasUsing = workspaceConfiguration.USE_COMPILE_SERVER;
     workspaceConfiguration.USE_COMPILE_SERVER = myCbUseCompileServer.isSelected();
     workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbMakeProjectOnSave.isSelected();
+    workspaceConfiguration.ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION = myCbAllowAutomakeWhileRunningApplication.isSelected();
 
     configuration.setAddNotNullAssertions(myCbAssertNotNull.isSelected());
     configuration.removeResourceFilePatterns();
@@ -165,6 +170,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     isModified |= ComparingUtils.isModified(myCbUseCompileServer, workspaceConfiguration.USE_COMPILE_SERVER);
     isModified |= ComparingUtils.isModified(myCbMakeProjectOnSave, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
+    isModified |= ComparingUtils.isModified(myCbAllowAutomakeWhileRunningApplication, workspaceConfiguration.ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION);
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, compilerConfiguration.isAddNotNullAssertions());
