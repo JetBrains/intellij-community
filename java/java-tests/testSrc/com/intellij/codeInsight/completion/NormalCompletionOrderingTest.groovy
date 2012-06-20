@@ -362,6 +362,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testDoNotPreferGetClass() {
     checkPreferredItems 0, 'get', 'getClass'
+    incUseCount(lookup, 1)
+    assertPreferredItems 0, 'get', 'getClass'
   }
 
 }
