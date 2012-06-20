@@ -217,7 +217,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       newList.startProcessingChanges(myProject, null);      // this is executed only when use through GATE
     }
     if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("ChangeListWorker.addChangeList: " + newList);
+      ChangeListManagerImpl.log("ChangeListWorker.addChangeList: " + newList);
     }
     return newList.copy();
   }
@@ -268,7 +268,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     final LocalChangeList removed = myMap.remove(listName);
     if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("ChangeListWorker.removeChangeList: name = [" + name + "], removed = " + removed);
+      ChangeListManagerImpl.log("ChangeListWorker.removeChangeList: name = [" + name + "], removed = " + removed);
     }
     return true;
   }

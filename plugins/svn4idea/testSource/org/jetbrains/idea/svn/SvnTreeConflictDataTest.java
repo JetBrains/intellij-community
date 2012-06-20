@@ -15,16 +15,14 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.TestClientRunner;
+import com.intellij.testFramework.vcs.TestClientRunner;
 import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;

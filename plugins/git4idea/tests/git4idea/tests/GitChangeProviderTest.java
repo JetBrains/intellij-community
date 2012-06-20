@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
-import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
+import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.MockDirtyScope;

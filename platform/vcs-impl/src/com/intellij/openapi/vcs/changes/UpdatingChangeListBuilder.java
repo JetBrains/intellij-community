@@ -71,7 +71,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   public void processChangeInList(final Change change, @Nullable final ChangeList changeList, final VcsKey vcsKey) {
     if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("UpdatingChangeListBuilder.processChangeInList: change = [" + change + "], changeList = [" + changeList + "], vcsKey = [" + vcsKey + "]");
+      ChangeListManagerImpl.log("UpdatingChangeListBuilder.processChangeInList: change = [" + change + "], changeList = [" + changeList + "], vcsKey = [" + vcsKey + "]");
     }
 
     checkIfDisposed();
@@ -130,8 +130,8 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   public void processUnversionedFile(final VirtualFile file) {
     if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("UpdatingChangeListBuilder.processUnversionedFile");
-      System.out.println("file = " + file);
+      ChangeListManagerImpl.log("UpdatingChangeListBuilder.processUnversionedFile");
+      ChangeListManagerImpl.log("file = " + file);
     }
     if (file == null) return;
     checkIfDisposed();
@@ -170,8 +170,8 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
       if (ChangeListManagerImpl.DEBUG) {
-        System.out.println("UpdatingChangeListBuilder.processModifiedWithoutCheckout");
-        System.out.println("file = " + file);
+        ChangeListManagerImpl.log("UpdatingChangeListBuilder.processModifiedWithoutCheckout");
+        ChangeListManagerImpl.log("file = " + file);
       }
       myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).addFile(file);
     }

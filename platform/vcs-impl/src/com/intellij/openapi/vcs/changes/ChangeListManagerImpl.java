@@ -70,7 +70,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
-  public static boolean DEBUG = false;
 
   private final Project myProject;
   private final ChangesViewI myChangesViewManager;
@@ -521,7 +520,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     for (final VcsDirtyScope scope : scopes) {
       if (DEBUG) {
-        System.out.println("ChangeListManagerImpl.iterateScopes: scope = " + scope);
+        ChangeListManagerImpl.log("ChangeListManagerImpl.iterateScopes: scope = " + scope);
       }
       myUpdateChangesProgressIndicator.checkCanceled();
 
@@ -1432,5 +1431,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     }
     return freezeReason != null;
+  }
+
+  public static boolean DEBUG = false;
+  private static final StringBuffer log = new StringBuffer();
+  @TestOnly
+  public static void clearLog() {
+    log.setLength(0);
+  }
+  @TestOnly
+  public static void printLog() {
+    System.out.println(log);
+  }
+  @TestOnly
+  public static void log(Object o) {
+    log.append(o+"\n");
   }
 }

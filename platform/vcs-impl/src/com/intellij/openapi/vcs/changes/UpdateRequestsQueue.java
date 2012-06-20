@@ -103,7 +103,7 @@ public class UpdateRequestsQueue {
       if (! myStopped) {
         if (! myRequestSubmitted) {
           if (ChangeListManagerImpl.DEBUG) {
-            System.out.println("UpdateRequestsQueue.schedule");
+            ChangeListManagerImpl.log("UpdateRequestsQueue.schedule");
           }
           final MyRunnable runnable = new MyRunnable();
           myRequestSubmitted = true;
@@ -145,7 +145,7 @@ public class UpdateRequestsQueue {
 
   public void waitUntilRefreshed() {
     if (ChangeListManagerImpl.DEBUG) {
-      System.out.println("UpdateRequestsQueue.waitUntilRefreshed");
+      ChangeListManagerImpl.log("UpdateRequestsQueue.waitUntilRefreshed");
     }
 
     try {
@@ -167,7 +167,7 @@ public class UpdateRequestsQueue {
     }
     finally {
       if (ChangeListManagerImpl.DEBUG) {
-        System.out.println(" - end - UpdateRequestsQueue.waitUntilRefreshed");
+        ChangeListManagerImpl.log(" - end - UpdateRequestsQueue.waitUntilRefreshed");
       }
     }
   }
@@ -262,12 +262,12 @@ public class UpdateRequestsQueue {
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
         if (ChangeListManagerImpl.DEBUG) {
-          System.out.println("UpdateRequestsQueue$MyRunnable.run");
+          ChangeListManagerImpl.log("UpdateRequestsQueue$MyRunnable.run");
         }
 
         myDelegate.run();
         if (ChangeListManagerImpl.DEBUG) {
-          System.out.println(" - end - UpdateRequestsQueue$MyRunnable.run");
+          ChangeListManagerImpl.log(" - end - UpdateRequestsQueue$MyRunnable.run");
         }
         LOG.debug("MyRunnable: invokeD, project: " + myProject.getName() + ", runnable: " + hashCode());
       } finally {
