@@ -1,6 +1,8 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.controlflow.ControlFlow;
+import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
@@ -11,9 +13,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * User: catherine
@@ -34,8 +41,13 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
-      if (lambdaExpression.getBody() != null)
+      if (lambdaExpression.getBody() != null) {
+        final ControlFlow flow = ControlFlowCache.getControlFlow(lambdaExpression);
+        final List<Instruction> graph = Arrays.asList(flow.getInstructions());
+        final List<PsiElement> elements = PyCodeFragmentUtil.getInputElements(graph, graph);
+        if (elements.size() > 0) return false;
         return true;
+      }
     }
     return false;
   }
