@@ -599,6 +599,8 @@ public class FileStructurePopup implements Disposable {
 
 
     final JCheckBox chkFilter = new JCheckBox();
+    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, chkFilter);
+
     final boolean selected = getDefaultValue(action);
     chkFilter.setSelected(selected);
     myTreeActionsOwner.setActionIncluded(action, action instanceof FileStructureFilter ? !selected : selected);
