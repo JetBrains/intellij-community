@@ -70,6 +70,10 @@
       </group>
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
+
+    <group id="Git.LogContextMenu">
+      <separator/>
+    </group>
   </actions>
 
   <project-components>

@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import git4idea.history.browser.*;
@@ -173,7 +174,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
 
     private GitCommit createNotLoadedCommit(AbstractHash shortHash) {
       final String notKnown = "Can not load";
-      return new GitCommit(shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0), notKnown,
+      return new GitCommit(NullVirtualFile.INSTANCE, shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0), notKnown,
                               "Can not load details", Collections.<String>emptySet(), Collections.<FilePath>emptyList(), notKnown,
                               notKnown, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
                               Collections.<Change>emptyList(), 0);

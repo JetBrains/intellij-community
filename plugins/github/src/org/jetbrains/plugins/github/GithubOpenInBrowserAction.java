@@ -32,8 +32,9 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
+
+import static org.jetbrains.plugins.github.GithubUtil.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,7 +47,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(GithubOpenInBrowserAction.class.getName());
 
   protected GithubOpenInBrowserAction() {
-    super("Open in browser", "Open corresponding GitHub link in browser", GithubUtil.GITHUB_ICON);
+    super("Open in browser", "Open corresponding GitHub link in browser", GITHUB_ICON);
   }
 
   @Override
@@ -86,31 +87,11 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     setVisibleEnabled(e, true, true);
   }
 
-  private static boolean isRepositoryOnGitHub(GitRepository repository) {
-    for (GitRemote remote : repository.getRemotes()) {
-      for (String url : remote.getUrls()) {
-        if (isGithubUrl(url)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private static boolean isGithubUrl(@NotNull String url) {
-    return url.contains("github.com");
-  }
-
-  private static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
-    e.getPresentation().setVisible(visible);
-    e.getPresentation().setEnabled(enabled);
-  }
-
   @SuppressWarnings("ConstantConditions")
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    while (!GithubUtil.checkCredentials(project)) {
+    while (!checkCredentials(project)) {
       final GithubLoginDialog dialog = new GithubLoginDialog(project);
       dialog.show();
       if (!dialog.isOK()) {
@@ -125,8 +106,8 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
     final GitRepository gitRepository = manager.getRepositoryForFile(root);
     // Check that given repository is properly configured git repository
-    final GitRemote gitRemote = GithubUtil.findGitHubRemoteBranch(gitRepository);
-    final String pushUrl = GithubUtil.getGithubUrl(gitRemote);
+    final GitRemote gitRemote = findGitHubRemoteBranch(gitRepository);
+    final String pushUrl = getGithubUrl(gitRemote);
 
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final String rootPath = root.getPath();
@@ -136,30 +117,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return;
     }
 
-    int index = -1;
-    if (pushUrl.startsWith(GithubUtil.getHttpsUrl())) {
-      index = pushUrl.lastIndexOf('/');
-      if (index == -1) {
-        Messages.showErrorDialog(project, "Cannot extract info about repository name: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
-        return;
-      }
-      index = pushUrl.substring(0, index).lastIndexOf('/');
-      if (index == -1) {
-        Messages.showErrorDialog(project, "Cannot extract info about repository owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
-        return;
-      }
-    }
-    else {
-      index = pushUrl.lastIndexOf(':');
-      if (index == -1) {
-        Messages.showErrorDialog(project, "Cannot extract info about repository name and owner: " + pushUrl, CANNOT_OPEN_IN_BROWSER);
-        return;
-      }
-    }
-    String repoInfo = pushUrl.substring(index + 1);
-    if (repoInfo.endsWith(".git")) {
-      repoInfo = repoInfo.substring(0, repoInfo.length() - 4);
-    }
+    String userAndRepository = getUserAndRepositoryOrShowError(project, pushUrl);
 
     // Get current tracked branch
     final GitBranch tracked;
@@ -185,7 +143,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
 
     final StringBuilder builder = new StringBuilder();
-    builder.append("https://github.com/").append(repoInfo).append("/blob/").append(branch).append(path.substring(rootPath.length()));
+    builder.append("https://github.com/").append(userAndRepository).append("/blob/").append(branch).append(path.substring(rootPath.length()));
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null) {
       final int line = editor.getCaretModel().getLogicalPosition().line;

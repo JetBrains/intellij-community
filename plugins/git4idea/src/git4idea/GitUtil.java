@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.changes.GitChangeUtils;
@@ -816,4 +817,15 @@ public class GitUtil {
   public static GitRepositoryManager getRepositoryManager(@NotNull Project project) {
     return ServiceManager.getService(project, GitRepositoryManager.class);
   }
+
+  @NotNull
+  public static String getPrintableRemotes(@NotNull Collection<GitRemote> remotes) {
+    return StringUtil.join(remotes, new Function<GitRemote, String>() {
+      @Override
+      public String fun(GitRemote remote) {
+        return remote.getName() + ": [" + StringUtil.join(remote.getUrls(), ", ") + "]";
+      }
+    }, "\n");
+  }
+
 }
