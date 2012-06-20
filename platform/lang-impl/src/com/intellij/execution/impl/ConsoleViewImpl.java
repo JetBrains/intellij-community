@@ -238,8 +238,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
   private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
-  private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<MyFlushRunnable>(); 
-  
+  private final Object myActiveFlushLock = new Object();
+  private MyFlushRunnable myActiveFlushRunnable = null;
+
   protected final CompositeFilter myPredefinedMessageFilter;
   protected final CompositeFilter myCustomFilter;
 
@@ -385,8 +386,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void addFlushRequest(MyFlushRunnable flushRunnable, final int millis) {
-    synchronized (myCurrentRequests) {
-      if (myCurrentRequests.add(flushRunnable)) {
+    synchronized (myActiveFlushLock) {
+      if (myActiveFlushRunnable == null) {
+        myActiveFlushRunnable = flushRunnable;
         myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
       }
     }
@@ -502,13 +504,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void cancelAllFlushRequests() {
-    synchronized (myCurrentRequests) {
-      for (MyFlushRunnable request : myCurrentRequests) {
-        request.invalidate();
+    synchronized (myActiveFlushLock) {
+      if (myActiveFlushRunnable != null) {
+        myActiveFlushRunnable.invalidate();
       }
-      myCurrentRequests.clear();
-      myFlushAlarm.cancelAllRequests();
+      myActiveFlushRunnable = null;
     }
+    myFlushAlarm.cancelAllRequests();
   }
 
   protected void disposeEditor() {
@@ -1766,11 +1768,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     private volatile boolean myValid = true;
     @Override
     public final void run() {
+      synchronized (myActiveFlushLock) {
+        myActiveFlushRunnable = null;
+      }
       if (myValid) {
         doRun();
-      }
-      synchronized (myCurrentRequests) {
-        myCurrentRequests.remove(this);
       }
     }
 
@@ -1784,23 +1786,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     public boolean isValid() {
       return myValid;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MyFlushRunnable runnable = (MyFlushRunnable)o;
-
-      if (myValid != runnable.myValid) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return (myValid ? 1 : 0);
     }
   }
   
