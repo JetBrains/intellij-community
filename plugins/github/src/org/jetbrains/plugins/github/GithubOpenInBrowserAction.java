@@ -24,6 +24,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
@@ -48,38 +50,45 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    final boolean applicable = isApplicable(e);
-    e.getPresentation().setVisible(applicable);
-    e.getPresentation().setEnabled(applicable);
-  }
-
-  private boolean isApplicable(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault() || virtualFile == null) {
-      return false;
+      setVisibleEnabled(e, false, false);
+      return;
     }
-
-    final VirtualFile dir = project.getBaseDir();
-    if (dir == null) {
-      return false;
-    }
-
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      return false;
-    }
-    final GitRepository gitRepository = manager.getRepositoryForFile(dir);
+
+    final GitRepository gitRepository = manager.getRepositoryForFile(virtualFile);
     if (gitRepository == null) {
-      return false;
+      setVisibleEnabled(e, false, false);
+      return;
     }
 
     // Check that given repository is properly configured git repository
     final GitRemote gitHubRemoteBranch = GithubUtil.findGitHubRemoteBranch(gitRepository);
     if (gitHubRemoteBranch == null) {
-      return false;
+      setVisibleEnabled(e, false, false);
+      return;
     }
-    return true;
+
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (changeListManager.isUnversioned(virtualFile)) {
+      setVisibleEnabled(e, true, false);
+      return;
+    }
+
+    Change change = changeListManager.getChange(virtualFile);
+    if (change != null && change.getType() == Change.Type.NEW) {
+      setVisibleEnabled(e, true, false);
+      return;
+    }
+
+    setVisibleEnabled(e, true, true);
+  }
+
+  private static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(enabled);
   }
 
   @SuppressWarnings("ConstantConditions")
