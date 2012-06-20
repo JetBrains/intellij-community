@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.exceptions;
+package com.intellij.codeInsight.intention;
 
-import com.intellij.psi.PsiType;
+import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-import java.util.Comparator;
+/**
+ * @author Danila Ponomarenko
+ */
+public class ReplaceCastWithVariableTest extends LightIntentionActionTestCase {
 
-class HeirarchicalTypeComparator implements Comparator<PsiType> {
+  public void test() throws Exception { doAllTests(); }
 
-  public int compare(PsiType type1, PsiType type2) {
-    if (type1.isAssignableFrom(type2)) {
-      return 1;
-    }
-    if (type2.isAssignableFrom(type1)) {
-      return -1;
-    }
-    final String canonicalText1 = type1.getCanonicalText();
-    return canonicalText1.compareTo(type2.getCanonicalText());
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceCastWithVariable";
   }
 }

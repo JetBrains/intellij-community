@@ -22,7 +22,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -30,7 +29,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -48,7 +47,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 
 public class BuildElementsEditor extends ModuleElementsEditor {
-  private static final Icon ICON = AllIcons.Modules.Output;
   private JRadioButton myInheritCompilerOutput;
   @SuppressWarnings({"FieldCanBeLocal"})
   private JRadioButton myPerModuleCompilerOutput;
@@ -153,7 +151,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       else {
         final String compilerOutputUrl = getCompilerExtension().getCompilerOutputUrl();
         if (compilerOutputUrl != null) {
-          myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutputUrl)));
+          myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(compilerOutputUrl)));
         }
       }
       final VirtualFile testsOutputPath = getCompilerExtension().getCompilerOutputPathForTests();
@@ -163,7 +161,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       else {
         final String testsOutputUrl = getCompilerExtension().getCompilerOutputUrlForTests();
         if (testsOutputUrl != null) {
-          myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(testsOutputUrl)));
+          myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(testsOutputUrl)));
         }
       }
     }
@@ -203,7 +201,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
           catch (IOException e) {
             canonicalPath = path;
           }
-          commitPathRunnable.saveUrl(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
+          commitPathRunnable.saveUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
         }
       }
     };
@@ -247,9 +245,9 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {
     if (getCompilerExtension().isCompilerOutputPathInherited()) {
       if (baseUrl != null) {
-        myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(baseUrl + "/" + CompilerModuleExtension
+        myOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(baseUrl + "/" + CompilerModuleExtension
           .PRODUCTION + "/" + moduleName)));
-        myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(baseUrl + "/" + CompilerModuleExtension
+        myTestsOutputPathPanel.setText(FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(baseUrl + "/" + CompilerModuleExtension
           .TEST + "/" + moduleName)));
       }
       else {
@@ -263,7 +261,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     return getModel().getModuleExtension(CompilerModuleExtension.class);
   }
 
-  private static interface CommitPathRunnable {
+  private interface CommitPathRunnable {
     void saveUrl(String url);
   }
 

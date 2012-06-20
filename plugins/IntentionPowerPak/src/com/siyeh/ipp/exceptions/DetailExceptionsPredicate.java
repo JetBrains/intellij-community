@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.Set;
 
 class DetailExceptionsPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiJavaToken)) {
       return false;
@@ -43,16 +44,19 @@ class DetailExceptionsPredicate implements PsiElementPredicate {
     }
     final Set<PsiType> exceptionsThrown = new HashSet<PsiType>(10);
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-    ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock,
-                                                         exceptionsThrown);
-    final Set<PsiType> exceptionsCaught =
-      ExceptionUtils.getExceptionTypesHandled(tryStatement);
+    final PsiResourceList resourceList = tryStatement.getResourceList();
+    if (resourceList != null) {
+      ExceptionUtils.calculateExceptionsThrownForResourceList(resourceList, exceptionsThrown);
+    }
+    ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock, exceptionsThrown);
+    final Set<PsiType> exceptionsCaught = ExceptionUtils.getExceptionTypesHandled(tryStatement);
     for (PsiType typeThrown : exceptionsThrown) {
-      if (!exceptionsCaught.contains(typeThrown)) {
-        for (PsiType typeCaught : exceptionsCaught) {
-          if (typeCaught.isAssignableFrom(typeThrown)) {
-            return true;
-          }
+      if (exceptionsCaught.contains(typeThrown)) {
+        continue;
+      }
+      for (PsiType typeCaught : exceptionsCaught) {
+        if (typeCaught.isAssignableFrom(typeThrown)) {
+          return true;
         }
       }
     }

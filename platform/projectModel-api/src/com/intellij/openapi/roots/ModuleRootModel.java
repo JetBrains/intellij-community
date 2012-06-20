@@ -146,19 +146,16 @@ public interface ModuleRootModel {
   @NotNull String[] getSourceRootUrls(boolean includingTests);
 
   /**
-   * Returns an exploded directory path of the module, if it is valid.
-   *
-   * @return exploded directory path of the module, or null if not applicable or not set.
+   * @deprecated moved to J2ME plugin
    */
+  @Deprecated
   @Nullable
   VirtualFile getExplodedDirectory();
 
   /**
-   * Returns an exploded directory path url.
-   *
-   * @return exploded directory path url, or null if it has never been set
-   *         or if not applicable for this module.
+   * @deprecated moved to J2ME plugin
    */
+  @Deprecated
   @Nullable
   String getExplodedDirectoryUrl();
 

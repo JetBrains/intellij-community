@@ -391,14 +391,10 @@ import java.util.Map;
     myActiveFile = file;
   }
 
-  public boolean debug = false;
   @Override
   public Editor openTextEditor(OpenFileDescriptor descriptor, boolean focusEditor) {
     final VirtualFile file = descriptor.getFile();
     Editor editor = myVirtualFile2Editor.get(file);
-    if (debug) {
-      System.err.println("Got " + editor + " as editor from cache for " + file);
-    }
 
     if (editor == null) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
@@ -407,9 +403,6 @@ import java.util.Map;
       LOG.assertTrue(document != null, psiFile);
       editor = EditorFactory.getInstance().createEditor(document, myProject);
       final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, file);
-      if (debug) {
-        System.err.println("highlighter " + highlighter);
-      }
       ((EditorEx) editor).setHighlighter(highlighter);
       ((EditorEx) editor).setFile(file);
 

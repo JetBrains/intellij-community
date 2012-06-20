@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -75,7 +76,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   public static String applyMiddleMatching(String prefix) {
-    if (Registry.is("ide.completion.middle.matching") && !prefix.isEmpty()) {
+    if (Registry.is("ide.completion.middle.matching") && !prefix.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       return " " + StringUtil.replace(prefix, ".", ". ").trim();
     }
     return prefix;

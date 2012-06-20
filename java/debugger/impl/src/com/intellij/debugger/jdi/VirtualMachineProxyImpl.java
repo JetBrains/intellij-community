@@ -94,8 +94,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
         final Set<ReferenceType> candidates = new HashSet<ReferenceType>();
         final ClassLoaderReference outerLoader = refType.classLoader();
         for (ReferenceType nested : list) {
-          if (outerLoader == null? nested.classLoader() == null : outerLoader.equals(nested.classLoader())) {
-            candidates.add(nested);
+          try {
+            if (outerLoader == null? nested.classLoader() == null : outerLoader.equals(nested.classLoader())) {
+              candidates.add(nested);
+            }
+          }
+          catch (ObjectCollectedException ignored) {
           }
         }
 

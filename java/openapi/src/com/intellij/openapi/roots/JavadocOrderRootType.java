@@ -15,6 +15,12 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.util.ArrayUtil;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -23,15 +29,33 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
     super("JAVADOC", "javadocPath", "javadoc-paths", "javadocPathEntry");
   }
 
-  /**
-   * JavaDoc paths.
-   */
   public static OrderRootType getInstance() {
     return getOrderRootType(JavadocOrderRootType.class);
   }
 
-  @Override
-  public boolean collectFromDependentModules() {
-    return true;
+  public static String[] getUrls(OrderEntry entry) {
+    List<String> result = new ArrayList<String>();
+    RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
+      @Override
+      public List<String> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<String> value) {
+        Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
+        return value;
+      }
+
+      @Override
+      public List<String> visitJdkOrderEntry(final JdkOrderEntry orderEntry, final List<String> value) {
+        Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
+        return value;
+      }
+
+      @Override
+      public List<String> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
+                                                           final List<String> value) {
+        Collections.addAll(value, orderEntry.getRootModel().getRootUrls(getInstance()));
+        return value;
+      }
+    };
+    entry.accept(policy, result);
+    return ArrayUtil.toStringArray(result);
   }
 }

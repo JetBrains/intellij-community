@@ -39,13 +39,15 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
   private final SvnVcs myVcs;
   private final FilePath myCommittedPath;
   private final boolean mySupports15;
+  private final boolean myHasLocalSource;
 
   public SvnHistorySession(SvnVcs vcs, final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean supports15,
-                    @Nullable final VcsRevisionNumber currentRevision, boolean skipRefreshOnStart) {
+                           @Nullable final VcsRevisionNumber currentRevision, boolean skipRefreshOnStart, boolean source) {
     super(revisions, currentRevision);
     myVcs = vcs;
     myCommittedPath = committedPath;
     mySupports15 = supports15;
+    myHasLocalSource = source;
     if (!skipRefreshOnStart) {
       shouldBeRefreshed();
     }
@@ -99,6 +101,11 @@ public class SvnHistorySession extends VcsAbstractHistorySession {
 
   @Override
   public VcsHistorySession copy() {
-    return new SvnHistorySession(myVcs, getRevisionList(), myCommittedPath, mySupports15, getCurrentRevisionNumber(), true);
+    return new SvnHistorySession(myVcs, getRevisionList(), myCommittedPath, mySupports15, getCurrentRevisionNumber(), true, myHasLocalSource);
+  }
+
+  @Override
+  public boolean hasLocalSource() {
+    return myHasLocalSource;
   }
 }

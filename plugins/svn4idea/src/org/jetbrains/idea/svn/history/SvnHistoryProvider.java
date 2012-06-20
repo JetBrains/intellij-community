@@ -143,7 +143,7 @@ public class SvnHistoryProvider
                                                @NotNull List<VcsFileRevision> revisions,
                                                @NotNull FilePath filePath,
                                                VcsRevisionNumber currentRevision) {
-    return new SvnHistorySession(myVcs, revisions, filePath, aBoolean, currentRevision, false);
+    return new SvnHistorySession(myVcs, revisions, filePath, aBoolean, currentRevision, false, ! filePath.isNonLocal());
   }
 
   @Nullable
@@ -197,7 +197,8 @@ public class SvnHistoryProvider
     logLoader.initSupports15();
 
     final SvnHistorySession historySession =
-      new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null, false);
+      new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null, false,
+                            ! path.isNonLocal());
 
     final Ref<Boolean> sessionReported = new Ref<Boolean>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();

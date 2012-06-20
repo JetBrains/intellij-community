@@ -55,20 +55,22 @@ public class ShowAllAffectedGenericAction extends AnAction {
     if (vcsKey == null) return;
     final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
     VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
+    final Boolean isNonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
     if ((revision != null) && (revisionVirtualFile != null)) {
-      showSubmittedFiles(project, revision.getRevisionNumber(), revisionVirtualFile, vcsKey, revision.getChangedRepositoryPath());
+      showSubmittedFiles(project, revision.getRevisionNumber(), revisionVirtualFile, vcsKey, revision.getChangedRepositoryPath(),
+                         Boolean.TRUE.equals(isNonLocal));
     }
   }
 
   public static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile, final VcsKey vcsKey) {
-    showSubmittedFiles(project, revision, virtualFile, vcsKey, null);
+    showSubmittedFiles(project, revision, virtualFile, vcsKey, null, false);
   }
 
-  private static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile,
-                                         final VcsKey vcsKey, final RepositoryLocation location) {
+  public static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile,
+                                         final VcsKey vcsKey, final RepositoryLocation location, final boolean isNonLocal) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
-    if (! isInLocalFSHack(virtualFile) && ! canPresentNonLocal(project, vcsKey, virtualFile)) return;
+    if (isNonLocal && ! canPresentNonLocal(project, vcsKey, virtualFile)) return;
 
     final String title = VcsBundle.message("paths.affected.in.revision",
                                            revision instanceof ShortVcsRevisionNumber
@@ -81,7 +83,7 @@ public class ShowAllAffectedGenericAction extends AnAction {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-          if (isInLocalFSHack(virtualFile)) {
+          if (! isNonLocal) {
             final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
             if (pair != null) {
               list[0] = pair.getFirst();
@@ -132,12 +134,6 @@ public class ShowAllAffectedGenericAction extends AnAction {
     });
   }
 
-  private static boolean isInLocalFSHack(final VirtualFile vf) {
-    if (vf.isInLocalFileSystem()) return true;
-    final String url = vf.getPresentableUrl();
-    return ! url.contains("://") && ! url.contains(":\\\\");
-  }
-
   private static String failedText(VirtualFile virtualFile, VcsRevisionNumber revision) {
     return "Show all affected files for " + virtualFile.getPath() + " at " + revision.asString() + " failed";
   }
@@ -150,9 +146,10 @@ public class ShowAllAffectedGenericAction extends AnAction {
       e.getPresentation().setEnabled(false);
       return;
     }
+    final Boolean isNonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
     boolean enabled = (e.getData(VcsDataKeys.VCS_FILE_REVISION) != null) && (revisionVirtualFile != null);
-    enabled = enabled && (isInLocalFSHack(revisionVirtualFile) || canPresentNonLocal(project, vcsKey, revisionVirtualFile));
+    enabled = enabled && (! Boolean.TRUE.equals(isNonLocal) || canPresentNonLocal(project, vcsKey, revisionVirtualFile));
     e.getPresentation().setEnabled(enabled);
   }
 

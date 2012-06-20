@@ -1,0 +1,2 @@
+FooBar foobar = (FooBar) foo;
+return foobar.baz;

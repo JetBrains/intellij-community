@@ -126,9 +126,6 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
         addExcludeForOutputPath(file, result);
       }
     }
-    if (getRootModel().isExcludeExplodedDirectory()) {
-      addExcludeForOutputPath(getRootModel().myExplodedDirectoryPointer, result);
-    }
     return result.toArray(new ExcludeFolder[result.size()]);
   }
 

@@ -1,0 +1,2 @@
+FooBar foobar = (FooBar) foo;
+return <spot>((FooBar) foo)</spot>.baz;

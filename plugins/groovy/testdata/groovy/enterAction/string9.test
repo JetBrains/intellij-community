@@ -3,6 +3,6 @@ def cl = {
 }
 -----
 def cl = {
-    print ('''foo\
-<caret>n''')
+    print ('foo\
+<caret>n')
 }
