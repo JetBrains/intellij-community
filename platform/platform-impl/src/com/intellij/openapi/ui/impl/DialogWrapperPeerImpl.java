@@ -519,6 +519,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       initDialog(focused, typeAheadDone, typeAheadCallback);
     }
 
+
+
     public MyDialog(Frame owner, DialogWrapper dialogWrapper, Project project, ActionCallback focused, ActionCallback typeAheadDone, ActionCallback typeAheadCallback) {
       super(owner);
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);

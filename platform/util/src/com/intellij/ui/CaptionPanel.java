@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,22 +45,23 @@ public class CaptionPanel extends JPanel {
 
   @Override
   protected void paintComponent(Graphics g) {
+    final boolean dark = UIUtil.isUnderDarcula();
     super.paintComponent(g);
     final Graphics2D g2d = (Graphics2D) g;
 
     if (myActive) {
-      g.setColor(Color.white);
+      g.setColor(dark ? new Color(100,100,100) : Color.white);
       g.drawLine(0, 0, getWidth(), 0);
-      g.setColor(Color.gray);
+      g.setColor(dark ? Color.gray.darker().darker() : Color.gray);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
-      g2d.setPaint(new GradientPaint(0, 0, BND_ACTIVE_COLOR, 0, getHeight(), CNT_ACTIVE_COLOR));
+      g2d.setPaint(new GradientPaint(0, 0, dark ? BND_ACTIVE_COLOR.darker().darker() : BND_ACTIVE_COLOR, 0, getHeight(), dark ? CNT_ACTIVE_COLOR.darker().darker() : CNT_ACTIVE_COLOR));
     }
     else {
-      g.setColor(Color.white);
+      g.setColor(dark ? new Color(100,100,100) : Color.white);
       g.drawLine(0, 0, getWidth(), 0);
-      g.setColor(Color.lightGray);
+      g.setColor(dark? Color.lightGray.darker().darker() : Color.lightGray);
       g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
-      g2d.setPaint(new GradientPaint(0, 0, BND_COLOR, 0, getHeight(), CNT_COLOR));
+      g2d.setPaint(new GradientPaint(0, 0, dark ? BND_COLOR.darker().darker() : BND_COLOR, 0, getHeight(), dark ? CNT_COLOR.darker().darker() : CNT_COLOR));
     }
 
     g2d.fillRect(0, 1, getWidth(), getHeight() - 2);

@@ -156,10 +156,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
-    g.setColor(TRACK_BACKGROUND);
+    final boolean dark = UIUtil.isUnderDarcula();
+    g.setColor(dark ? TRACK_BACKGROUND.darker().darker(): TRACK_BACKGROUND);
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-    g.setColor(TRACK_BORDER);
+    g.setColor(dark ? TRACK_BORDER.darker().darker() : TRACK_BORDER);
     if (isVertical()) {
       g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
     }
@@ -206,6 +207,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   private void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
+    final boolean dark = UIUtil.isUnderDarcula();
     final boolean vertical = isVertical();
     int hGap = vertical ? 2 : 1;
     int vGap = vertical ? 1 : 2;
@@ -222,8 +224,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     final GradientPaint paint;
-    final Color start = adjustColor(GRADIENT_LIGHT);
-    final Color end = adjustColor(GRADIENT_DARK);
+    final Color start = adjustColor(dark ? GRADIENT_LIGHT.darker().darker() : GRADIENT_LIGHT);
+    final Color end = adjustColor(dark ? GRADIENT_DARK.darker().darker() : GRADIENT_DARK);
 
     if (vertical) {
       paint = new GradientPaint(1, 0, start, w + 1, 0, end);
@@ -237,7 +239,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     final Stroke stroke = g.getStroke();
     g.setStroke(BORDER_STROKE);
-    g.setColor(GRADIENT_THUMB_BORDER);
+    g.setColor(dark ? GRADIENT_THUMB_BORDER.darker().darker() : GRADIENT_THUMB_BORDER);
     g.drawRoundRect(hGap, vGap, w, h, 3, 3);
     g.setStroke(stroke);
   }

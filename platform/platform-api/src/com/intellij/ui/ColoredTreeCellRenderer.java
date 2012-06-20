@@ -64,7 +64,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (UIUtil.isFullRowSelectionLAF()) {
         setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
-    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
+    else if (UIUtil.isUnderAquaBasedLookAndFeel() && tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
       setPaintFocusBorder(false);
       //setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
@@ -100,7 +100,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
-    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
+    else if (UIUtil.isUnderAquaBasedLookAndFeel() && tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
@@ -143,7 +143,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (mySelected && (myFocused || UIUtil.isUnderNimbusLookAndFeel())) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
     }
-    else if (mySelected && UIUtil.isUnderAquaLookAndFeel()) {
+    else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeForeground()), isMainText);
     }
     else {

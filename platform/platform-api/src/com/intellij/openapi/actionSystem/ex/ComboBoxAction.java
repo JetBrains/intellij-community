@@ -334,7 +334,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         if (!StringUtil.isEmpty(getText())) {
           final Font font = getFont();
           g2.setFont(font);
-          g2.setColor(UIManager.getColor("Button.foreground"));
+          g2.setColor(UIManager.getColor("Panel.foreground"));
           g2.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
         }
       }
@@ -355,7 +355,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           x = size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
         }
       }
+      if (UIUtil.isUnderDarcula()) {
+        g.setXORMode(new Color(208, 188, 159));
+      }
       icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
+      g.setPaintMode();
     }
 
     private boolean isGlowSupported() {
