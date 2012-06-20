@@ -447,12 +447,18 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   public void finishTarget() {
-    myParentPath = myParentPath.getParentPath();
+    final TreePath parentPath = myParentPath.getParentPath();
+    if (parentPath != null) {
+      myParentPath = parentPath;
+    }
   }
 
   public void finishTask() {
     myCurrentTaskName = null;
-    myParentPath = myParentPath.getParentPath();
+    final TreePath parentPath = myParentPath.getParentPath();
+    if (parentPath != null) {
+      myParentPath = parentPath;
+    }
   }
 
   @Nullable
