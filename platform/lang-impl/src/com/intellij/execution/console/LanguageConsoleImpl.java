@@ -15,6 +15,8 @@
  */
 package com.intellij.execution.console;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -27,6 +29,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -51,6 +54,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -79,12 +83,14 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
+  private static final Logger LOG = Logger.getInstance("#" + LanguageConsoleImpl.class.getName());
   private static final int SEPARATOR_THICKNESS = 1;
   private final Project myProject;
 
@@ -381,6 +387,44 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     printToHistory(text, attributes);
   }
 
+  public void printToHistory(@NotNull final List<Pair<String, TextAttributes>> attributedText) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("printToHistory(): " + attributedText.size());
+    }
+    final boolean scrollToEnd = shouldScrollHistoryToEnd();
+    final Document history = myHistoryViewer.getDocument();
+    final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
+    final int[] offsets = new int[attributedText.size() + 1];
+    int i = 0;
+    offsets[i] = history.getTextLength();
+    final StringBuilder sb = new StringBuilder();
+    for (final Pair<String, TextAttributes> pair : attributedText) {
+      final String str = StringUtil.convertLineSeparators(pair.getFirst());
+      int lastOffset = offsets[i];
+      offsets[++i] = lastOffset + str.length();
+      sb.append(str);
+    }
+    LOG.debug("printToHistory(): text processed");
+    appendToHistoryDocument(history, sb.toString());
+    assert offsets[i] == history.getTextLength();
+    LOG.debug("printToHistory(): text added");
+    i = 0;
+    for (final Pair<String, TextAttributes> pair : attributedText) {
+      markupModel.addRangeHighlighter(offsets[i],
+                                      offsets[i+1],
+                                      HighlighterLayer.SYNTAX,
+                                      pair.getSecond(),
+                                      HighlighterTargetArea.EXACT_RANGE);
+      ++i;
+    }
+    LOG.debug("printToHistory(): markup added");
+    if (scrollToEnd) {
+      scrollHistoryToEnd();
+    }
+    queueUiUpdate(scrollToEnd);
+    LOG.debug("printToHistory(): completed");
+  }
+
   public void printToHistory(String text, final TextAttributes attributes) {
     text = StringUtil.convertLineSeparators(text);
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
@@ -629,6 +673,43 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         myConsoleEditor.getDocument().setText(query);
       }
     });
+  }
+
+  public static void printToConsole(
+    @NotNull final LanguageConsoleImpl console,
+    @NotNull final ConsoleViewContentType mainType,
+    @NotNull final List<Pair<String, ConsoleViewContentType>> textToPrint)
+  {
+    final List<Pair<String, TextAttributes>> attributedText = Lists.transform(
+      textToPrint,
+      new Function<Pair<String, ConsoleViewContentType>, Pair<String, TextAttributes>>() {
+        @Override
+        public Pair<String, TextAttributes> apply(final Pair<String, ConsoleViewContentType> input) {
+          final TextAttributes mainAttributes = mainType.getAttributes();
+          final TextAttributes attributes;
+          if (input.getSecond() == null) {
+            attributes = mainAttributes;
+          }
+          else {
+            attributes = input.getSecond().getAttributes().clone();
+            attributes.setBackgroundColor(mainAttributes.getBackgroundColor());
+          }
+          return Pair.create(input.getFirst(), attributes);
+        }
+      }
+    );
+
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      console.printToHistory(attributedText);
+    }
+    else {
+      application.invokeLater(new Runnable() {
+        public void run() {
+          console.printToHistory(attributedText);
+        }
+      }, ModalityState.stateForComponent(console.getComponent()));
+    }
   }
 
   public static void printToConsole(@NotNull final LanguageConsoleImpl console,
