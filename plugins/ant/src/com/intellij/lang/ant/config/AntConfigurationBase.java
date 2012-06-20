@@ -81,7 +81,7 @@ public abstract class AntConfigurationBase extends AntConfiguration {
   public abstract XmlFile getEffectiveContextFile(@Nullable XmlFile file);
 
   @Nullable
-  public abstract AntBuildFile getAntBuildFile(@NotNull PsiFile file);
+  public abstract AntBuildFileBase getAntBuildFile(@NotNull PsiFile file);
   
   public abstract AntBuildFileBase[] getBuildFiles();
 }
