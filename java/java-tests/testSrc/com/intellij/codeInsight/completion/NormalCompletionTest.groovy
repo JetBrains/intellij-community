@@ -1306,7 +1306,8 @@ public class ListUtils {
 
   public void testSameSignature() {
     configure()
-    lookup.setCurrentItem(myItems[1])
+    myFixture.assertPreferredCompletionItems(0, 's', 's, file', 's, file, a')
+    lookup.setCurrentItem(lookup.items[2])
     myFixture.type('\n')
     checkResult()
   }
