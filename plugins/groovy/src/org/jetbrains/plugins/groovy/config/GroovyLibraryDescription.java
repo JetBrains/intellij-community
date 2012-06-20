@@ -33,7 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
 * @author nik
@@ -122,7 +125,9 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
     final String path = dir.getPath();
     final String sdkVersion = provider.getSDKVersion(path);
     if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
-      Messages.showErrorDialog(parentComponent, "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determinate version.", "Failed to create library");
+      Messages.showErrorDialog(parentComponent,
+                               "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determinate version.",
+                               "Failed to Create Library");
       return null;
     }
 
