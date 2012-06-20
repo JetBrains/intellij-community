@@ -107,11 +107,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
 
 
   public VirtualFile getExplodedDirectory() {
-    return myRootModel.getExplodedDirectory();
+    return null;
   }
 
   public String getExplodedDirectoryUrl() {
-    return myRootModel.getExplodedDirectoryUrl();
+    return null;
   }
 
   @NotNull

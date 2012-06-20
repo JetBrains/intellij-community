@@ -45,14 +45,8 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
   @Override
   protected ExcludeFolder doAddExcludeFolder(@NotNull final VirtualFile file) {
     final boolean isCompilerOutput = isCompilerOutput(file);
-    final boolean isExplodedDirectory = isExplodedDirectory(file);
-    if (isCompilerOutput || isExplodedDirectory) {
-      if (isCompilerOutput) {
-        myCompilerExtension.setExcludeOutput(true);
-      }
-      if (isExplodedDirectory) {
-        getModel().setExcludeExplodedDirectory(true);
-      }
+    if (isCompilerOutput) {
+      myCompilerExtension.setExcludeOutput(true);
       return null;
     }
     return super.doAddExcludeFolder(file);
@@ -64,9 +58,6 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
     if (file != null) {
       if (isCompilerOutput(file)) {
         myCompilerExtension.setExcludeOutput(false);
-      }
-      if (isExplodedDirectory(file)) {
-        getModel().setExcludeExplodedDirectory(false);
       }
     }
     super.doRemoveExcludeFolder(excludeFolder);
@@ -93,9 +84,5 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
     }
 
     return false;
-  }
-
-  private boolean isExplodedDirectory(@NotNull final VirtualFile file) {
-    return file.equals(getModel().getExplodedDirectory());
   }
 }
