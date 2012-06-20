@@ -9,11 +9,11 @@ import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.IdeaTestCase;
@@ -61,7 +61,8 @@ public class SuppressExternalTest extends UsefulTestCase {
       public void run() {
         final Module module = myFixture.getModule();
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        model.setRootUrls(AnnotationOrderRootType.getInstance(), new String[]{VfsUtil.pathToUrl(myFixture.getTempDirPath() + "/content/anno")});
+        final String url = VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno");
+        model.getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(new String[]{url});
         model.commit();
       }
     });

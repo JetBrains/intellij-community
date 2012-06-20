@@ -30,12 +30,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,12 +58,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private boolean myDisposed = false;
   private final Set<ModuleExtension> myExtensions = new TreeSet<ModuleExtension>();
 
-  private final Map<PersistentOrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers =
-    new HashMap<PersistentOrderRootType, VirtualFilePointerContainer>();
-
   private final RootConfigurationAccessor myConfigurationAccessor;
 
-  @NonNls private static final String ROOT_ELEMENT = "root";
   private final ProjectRootManagerImpl myProjectRootManager;
   // have to register all child disposables using this fake object since all clients just call ModifiableModel.dispose()
   private final Disposable myDisposable = Disposer.newDisposable();
@@ -130,18 +124,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
     myWritable = true;
 
-    for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
-      String paths = orderRootType.getModulePathsName();
-      if (paths != null) {
-        final Element pathsElement = element.getChild(paths);
-        if (pathsElement != null) {
-          VirtualFilePointerContainer container = myFilePointerManager.createContainer(myDisposable, null);
-          myOrderRootPointerContainers.put(orderRootType, container);
-          container.readExternal(pathsElement, ROOT_ELEMENT);
-        }
-      }
-    }
-
     RootModelImpl originalRootModel = moduleRootManager.getRootModel();
     for (ModuleExtension extension : originalRootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(false);
@@ -186,22 +168,11 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     }
 
     setOrderEntriesFrom(rootModel);
-    copyContainersFrom(rootModel);
 
     for (ModuleExtension extension : rootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(writable);
       registerOnDispose(model);
       myExtensions.add(model);
-    }
-  }
-
-  private void copyContainersFrom(@NotNull RootModelImpl rootModel) {
-    myOrderRootPointerContainers.clear();
-    for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
-      final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
-      if (otherContainer != null) {
-        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(myDisposable, null));
-      }
     }
   }
 
@@ -212,11 +183,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
         myOrderEntries.add(((ClonableOrderEntry)orderEntry).cloneEntry(this, myProjectRootManager, myFilePointerManager));
       }
     }
-  }
-
-  @Nullable
-  private VirtualFilePointerContainer getOrderRootContainer(PersistentOrderRootType orderRootType) {
-    return myOrderRootPointerContainers.get(orderRootType);
   }
 
   @Override
@@ -371,10 +337,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       }
     }
 
-    if (areOrderRootPointerContainersChanged()) {
-      getSourceModel().copyContainersFrom(this);
-    }
-
     for (ModuleExtension extension : myExtensions) {
       if (extension.isChanged()) {
         extension.commit();
@@ -437,15 +399,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof WritableOrderEntry) {
         ((WritableOrderEntry)orderEntry).writeExternal(element);
-      }
-    }
-
-    for (PersistentOrderRootType orderRootType : myOrderRootPointerContainers.keySet()) {
-      VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
-      if (container != null && container.size() > 0) {
-        final Element javaDocPaths = new Element(orderRootType.getModulePathsName());
-        container.writeExternal(javaDocPaths, ROOT_ELEMENT);
-        element.addContent(javaDocPaths);
       }
     }
   }
@@ -574,27 +527,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
       if (moduleExtension.isChanged()) return true;
     }
 
-    return areOrderEntriesChanged() || areContentEntriesChanged() || areOrderRootPointerContainersChanged();
-  }
-
-  private boolean areOrderRootPointerContainersChanged() {
-    if (myOrderRootPointerContainers.size() != getSourceModel().myOrderRootPointerContainers.size()) return true;
-    for (final OrderRootType type : myOrderRootPointerContainers.keySet()) {
-      final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(type);
-      final VirtualFilePointerContainer otherContainer = getSourceModel().myOrderRootPointerContainers.get(type);
-      if (container == null || otherContainer == null) {
-        if (container != otherContainer) return true;
-      }
-      else {
-        final String[] urls = container.getUrls();
-        final String[] otherUrls = otherContainer.getUrls();
-        if (urls.length != otherUrls.length) return true;
-        for (int i = 0; i < urls.length; i++) {
-          if (!Comparing.strEqual(urls[i], otherUrls[i])) return true;
-        }
-      }
-    }
-    return false;
+    return areOrderEntriesChanged() || areContentEntriesChanged();
   }
 
   private boolean areContentEntriesChanged() {
@@ -793,8 +726,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   @NotNull
   public VirtualFile[] getRootPaths(final OrderRootType rootType) {
-    final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(rootType);
-    if (container != null) return container.getFiles();
     for (ModuleExtension extension : myExtensions) {
       final VirtualFile[] files = extension.getRootPaths(rootType);
       if (files != null) return files;
@@ -805,8 +736,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   @NotNull
   public String[] getRootUrls(final OrderRootType rootType) {
-    final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(rootType);
-    if (container != null) return container.getUrls();
     for (ModuleExtension extension : myExtensions) {
       final String[] urls = extension.getRootUrls(rootType);
       if (urls != null) return urls;
@@ -821,16 +750,6 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   @Override
   public void setRootUrls(final OrderRootType orderRootType, @NotNull final String[] urls) {
-    assertWritable();
-    VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
-    if (container == null) {
-      container = myFilePointerManager.createContainer(myDisposable, null);
-      myOrderRootPointerContainers.put((PersistentOrderRootType)orderRootType, container);
-    }
-    container.clear();
-    for (final String url : urls) {
-      container.add(url);
-    }
   }
 
   @Nullable

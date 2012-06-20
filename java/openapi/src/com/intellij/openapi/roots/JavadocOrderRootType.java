@@ -51,7 +51,7 @@ public class JavadocOrderRootType extends PersistentOrderRootType {
       @Override
       public List<String> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
                                                            final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootModel().getRootUrls(getInstance()));
+        Collections.addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getJavadocUrls());
         return value;
       }
     };

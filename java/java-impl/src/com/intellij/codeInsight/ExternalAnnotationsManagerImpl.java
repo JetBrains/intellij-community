@@ -494,8 +494,8 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
     else if (entry instanceof ModuleSourceOrderEntry) {
       final ModifiableRootModel model = ModuleRootManager.getInstance(entry.getOwnerModule()).getModifiableModel();
-      model.setRootUrls(AnnotationOrderRootType.getInstance(), ArrayUtil.mergeArrays(
-        model.getRootUrls(AnnotationOrderRootType.getInstance()), vFile.getUrl()));
+      final JavaModuleExternalPaths extension = model.getModuleExtension(JavaModuleExternalPaths.class);
+      extension.setExternalAnnotationUrls(ArrayUtil.mergeArrays(extension.getExternalAnnotationsUrls(), vFile.getUrl()));
       model.commit();
     }
     else if (entry instanceof JdkOrderEntry) {
