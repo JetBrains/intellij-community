@@ -1,4 +1,4 @@
 "preved<caret>medved"
 -----
-"""preved
-<caret>medved"""
+"preved" +
+    "<caret>medved"
