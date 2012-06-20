@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,6 +31,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -360,6 +362,7 @@ public class CompletionLookupArranger extends LookupArranger {
     private final List<StatisticsInfo> myIgnored;
     private final StatisticsInfo mySelected;
     private final StatisticsInfo myMain;
+    private int mySpared;
 
     public StatisticsUpdate(List<StatisticsInfo> ignored, StatisticsInfo selected, StatisticsInfo main) {
       myIgnored = ignored;
@@ -377,10 +380,25 @@ public class CompletionLookupArranger extends LookupArranger {
       if (myMain != null) {
         StatisticsManager.getInstance().incUseCount(myMain);
       }
+      FeatureUsageTracker.getInstance().registerCharactersSparedByCompletion(mySpared);
     }
 
     @Override
     public void dispose() {
+    }
+
+    public void addSparedChars(CompletionProgressIndicator indicator, LookupElement item, InsertionContext context) {
+      String textInserted;
+      if (context.getStartOffset() >= 0 && context.getTailOffset() >= context.getStartOffset()) {
+        textInserted = context.getDocument().getText().substring(context.getStartOffset(), context.getTailOffset());
+      } else {
+        textInserted = item.getLookupString();
+      }
+      textInserted = StringUtil.replace(textInserted, new String[]{" ", "\t", "\n"}, new String[]{"", "", ""});
+      int spared = textInserted.length() - indicator.getLookup().itemPattern(item).length();
+      if (spared > 0) {
+        mySpared += spared;
+      }
     }
   }
 }

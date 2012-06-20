@@ -18,6 +18,9 @@ package com.intellij.featureStatistics;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Date;
 
 /**
  * User: anna
@@ -38,4 +41,12 @@ public abstract class FeatureUsageTracker {
   public abstract boolean isToBeShown(@NonNls String featureId, Project project);
 
   public abstract boolean isToBeAdvertisedInLookup(@NonNls String featureId, Project project);
+
+  public abstract void registerCharactersSparedByCompletion(int spared);
+
+  public abstract int getCharactersSparedByCompletion();
+
+  @Nullable
+  public abstract Date getCompletionStatisticsStartDate();
+
 }

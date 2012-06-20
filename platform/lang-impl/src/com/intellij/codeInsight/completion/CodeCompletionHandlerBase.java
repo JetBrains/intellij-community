@@ -666,6 +666,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     } else {
       context = insertItem(indicator, item, completionChar, items, update, editor, caretOffset, idDelta);
     }
+    CompletionLookupArranger.trackStatistics(context, update);
 
     final Runnable runnable = context.getLaterRunnable();
     if (runnable != null) {
@@ -743,7 +744,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           int tailOffset = context.getTailOffset();
           if (tailOffset < 0) {
             LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
-            tailOffset = editor.getCaretModel().getOffset();
           }
           else {
             editor.getCaretModel().moveToOffset(tailOffset);
@@ -764,9 +764,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         }
         context.stopWatching();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        CompletionLookupArranger.trackStatistics(context, update);
       }
     });
+    update.addSparedChars(indicator, item, context);
     return context;
   }
 
