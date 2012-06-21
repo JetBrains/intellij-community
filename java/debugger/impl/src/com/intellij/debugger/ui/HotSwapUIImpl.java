@@ -153,7 +153,6 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        // todo: rewrite scan from VFS into java.io.File
         final Map<DebuggerSession, Map<String, HotSwapFile>> newlyModifiedClasses = shouldPerformScan?
           scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isOutOfProcessMode) :
           HotSwapManager.findModifiedClasses(sessions, generatedPaths);
