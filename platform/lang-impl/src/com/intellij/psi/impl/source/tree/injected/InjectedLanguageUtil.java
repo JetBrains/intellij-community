@@ -30,13 +30,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.InjectedLanguageFacade;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +44,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class InjectedLanguageFacadeImpl extends InjectedLanguageFacade {
+public class InjectedLanguageUtil {
   static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
   public static void forceInjectionOnElement(@NotNull PsiElement host) {
@@ -58,7 +56,7 @@ public class InjectedLanguageFacadeImpl extends InjectedLanguageFacade {
   }
 
   @NotNull
-  private static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
+  static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
     if (containingFile instanceof DummyHolder) {
       PsiElement context = containingFile.getContext();
       if (context != null) {
@@ -74,27 +72,6 @@ public class InjectedLanguageFacadeImpl extends InjectedLanguageFacade {
       }
     }
     return host;
-  }
-
-  @Override
-  @Nullable
-  public List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
-    if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
-      return null;
-    }
-    final PsiElement inTree = loadTree(host, host.getContainingFile());
-    final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
-    enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        for (PsiLanguageInjectionHost.Shred place : places) {
-          if (place.getHost() == inTree) {
-            result.add(new Pair<PsiElement, TextRange>(injectedPsi, place.getRangeInsideHost()));
-          }
-        }
-      }
-    });
-    return result.isEmpty() ? null : result;
   }
 
   public static List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> getHighlightTokens(@NotNull PsiFile file) {

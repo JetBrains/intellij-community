@@ -18,13 +18,16 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.openapi.editor.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,7 +61,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     final PsiLanguageInjectionHost host =
       PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
     if (host == null) return null;
-    final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(host);
+    final List<Pair<PsiElement, TextRange>> injections = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
     if (injections == null || injections.isEmpty()) return null;
     final int offsetInElement = offset - host.getTextRange().getStartOffset();
     final Pair<PsiElement, TextRange> rangePair = ContainerUtil.find(injections, new Condition<Pair<PsiElement, TextRange>>() {

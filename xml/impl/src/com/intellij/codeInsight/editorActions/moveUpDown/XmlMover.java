@@ -15,12 +15,15 @@
  */
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -56,8 +59,8 @@ class XmlMover extends LineMover {
     final XmlText text2 = PsiTreeUtil.getParentOfType(movedEndElement, XmlText.class);
 
     // Let's do not care about injections for this mover
-    if ( ( text != null && InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(text) != null) ||
-         ( text2 != null && InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(text2) != null)) {
+    if ( ( text != null && InjectedLanguageManager.getInstance(file.getProject()).getInjectedPsiFiles(text) != null) ||
+         ( text2 != null && InjectedLanguageManager.getInstance(file.getProject()).getInjectedPsiFiles(text2) != null)) {
       return false;
     }
 

@@ -50,7 +50,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilBase;
@@ -270,10 +270,10 @@ public class TypedHandler extends TypedActionHandlerBase {
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
     // and thus we can use its lexer to insert closing braces etc
-    for (DocumentWindow documentWindow : InjectedLanguageFacadeImpl.getCachedInjectedDocuments(oldFile)) {
+    for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(oldFile)) {
       if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
-        final Editor injectedEditor = InjectedLanguageFacadeImpl.getInjectedEditorForInjectedFile(editor, injectedFile);
+        final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
         // IDEA-52375 fix: last quote sign should be handled by outer language quote handler
         final CharSequence charsSequence = editor.getDocument().getCharsSequence();
         if (injectedEditor.getCaretModel().getOffset() == injectedEditor.getDocument().getTextLength() &&

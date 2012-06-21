@@ -40,16 +40,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -131,7 +129,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     if (hostPsiFile == null) return;
 
     final CopyOnWriteArrayList<DocumentWindow> injected =
-      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageFacadeImpl.getCachedInjectedDocuments(hostPsiFile);
+      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
     if (injected.isEmpty()) return;
 
     if (myProgress.isCanceled()) {
@@ -157,7 +155,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         }
         final DocumentWindow[] stillInjectedDocument = {null};
         // it is here where the reparse happens and old file contents replaced
-        InjectedLanguageFacadeImpl.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        InjectedLanguageUtil.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
           @Override
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
@@ -333,7 +331,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @SuppressWarnings({"ConstantConditions", "unchecked"})
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
-    Place shreds = InjectedLanguageFacadeImpl.getShreds(injectedPsi);
+    Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);
     if (shreds == null) return Collections.emptyList();
     Object result = null; // optimization: TextRange or ArrayList
     int count = 0;
@@ -381,12 +379,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @Override
   public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
-    return InjectedLanguageFacadeImpl.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
+    return InjectedLanguageUtil.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
   }
 
   @Override
   public void dropFileCaches(@NotNull PsiFile file) {
-    InjectedLanguageFacadeImpl.clearCachedInjectedFragmentsForFile(file);
+    InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
   }
 
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
@@ -434,6 +432,27 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         if (!processor.process(element, injector)) return;
       }
     }
+  }
+
+  @Override
+  @Nullable
+  public List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
+    if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
+      return null;
+    }
+    final PsiElement inTree = InjectedLanguageUtil.loadTree(host, host.getContainingFile());
+    final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
+    InjectedLanguageUtil.enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
+      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+        for (PsiLanguageInjectionHost.Shred place : places) {
+          if (place.getHost() == inTree) {
+            result.add(new Pair<PsiElement, TextRange>(injectedPsi, place.getRangeInsideHost()));
+          }
+        }
+      }
+    });
+    return result.isEmpty() ? null : result;
   }
 
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {

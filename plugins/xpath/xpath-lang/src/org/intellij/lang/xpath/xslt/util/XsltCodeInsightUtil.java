@@ -17,13 +17,13 @@
 package org.intellij.lang.xpath.xslt.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -125,7 +125,7 @@ public class XsltCodeInsightUtil {
     public static TextRange getRangeInsideHostingFile(XPathElement expr) {
         final PsiLanguageInjectionHost host = PsiTreeUtil.getContextOfType(expr, PsiLanguageInjectionHost.class, true);
         assert host != null;
-        final List<Pair<PsiElement,TextRange>> psi = InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(host);
+        final List<Pair<PsiElement,TextRange>> psi = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
         assert psi != null;
         for (Pair<PsiElement, TextRange> pair : psi) {
             if (PsiTreeUtil.isAncestor(pair.first, expr, false)) {
@@ -140,7 +140,7 @@ public class XsltCodeInsightUtil {
     public static TextRange getRangeInsideHost(XPathElement expr) {
         final PsiLanguageInjectionHost host = PsiTreeUtil.getContextOfType(expr, PsiLanguageInjectionHost.class, true);
         assert host != null;
-        final List<Pair<PsiElement,TextRange>> psi = InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(host);
+        final List<Pair<PsiElement,TextRange>> psi = InjectedLanguageManager.getInstance(host.getProject()).getInjectedPsiFiles(host);
         assert psi != null;
         for (Pair<PsiElement, TextRange> pair : psi) {
             if (PsiTreeUtil.isAncestor(pair.first, expr, false)) {

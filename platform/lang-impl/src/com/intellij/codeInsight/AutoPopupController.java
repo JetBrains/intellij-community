@@ -40,7 +40,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -157,7 +157,7 @@ public class AutoPopupController implements Disposable {
       if (file == null) return;
 
       if (!documentManager.isUncommited(editor.getDocument())) {
-        file = documentManager.getPsiFile(InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
+        file = documentManager.getPsiFile(InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file).getDocument());
         if (file == null) return;
       }
 

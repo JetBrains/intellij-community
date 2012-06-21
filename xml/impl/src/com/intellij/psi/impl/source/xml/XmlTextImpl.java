@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -37,7 +38,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlTextLiteralEscaper;
 import com.intellij.psi.impl.source.xml.behavior.DefaultXmlPsiPolicy;
 import com.intellij.psi.tree.IElementType;
@@ -365,7 +366,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(this);
+    return InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(this);
   }
 
   public TextRange getCDATAInterior() {
@@ -520,6 +521,6 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
     return new XmlTextLiteralEscaper(this);
   }
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {
-    InjectedLanguageFacadeImpl.enumerate(this, visitor);
+    InjectedLanguageUtil.enumerate(this, visitor);
   }
 }
