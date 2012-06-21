@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -752,7 +753,19 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
       if (GroovyTokenTypes.mSEMI.equals(node.getElementType())) {
         anchor = anchor.getNextSibling();
       }
-      psiElement = body.addBefore(psiElement, anchor);
+      if (psiElement instanceof GrField) {
+        //add field with modifiers which are in its parent
+        int i = ArrayUtil.find(((GrVariableDeclaration)psiElement.getParent()).getVariables(), psiElement);
+        psiElement = body.addBefore(psiElement.getParent(), anchor);
+        GrVariable[] vars = ((GrVariableDeclaration)psiElement).getVariables();
+        for (int j = 0; j < vars.length; j++) {
+          if (i != j) vars[i].delete();
+        }
+        psiElement = vars[i];
+      }
+      else {
+        psiElement = body.addBefore(psiElement, anchor);
+      }
     }
     else {
       body.add(psiElement);

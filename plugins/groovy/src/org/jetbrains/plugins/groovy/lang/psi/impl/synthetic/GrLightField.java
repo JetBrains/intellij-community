@@ -130,6 +130,11 @@ public class GrLightField extends GrLightVariable implements GrField {
   }
 
   @Override
+  public void setInitializerGroovy(GrExpression initializer) {
+    throw new IncorrectOperationException("cannot set initializer to light field!");
+  }
+
+  @Override
   public GrExpression getInitializerGroovy() {
     return null;
   }

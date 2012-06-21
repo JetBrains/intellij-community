@@ -73,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrMultiplicativeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrRangeExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -92,6 +93,7 @@ public class PsiImplUtil {
   private static final String MAIN_METHOD = "main";
   public static final Key<SoftReference<PsiCodeBlock>> PSI_CODE_BLOCK = Key.create("Psi_code_block");
   public static final Key<SoftReference<PsiTypeElement>> PSI_TYPE_ELEMENT = Key.create("psi.type.element");
+  public static final Key<SoftReference<PsiExpression>> PSI_EXPRESSION = Key.create("psi.expression");
 
   private PsiImplUtil() {
   }
@@ -538,7 +540,7 @@ public class PsiImplUtil {
   }
 
   public static PsiTypeElement getOrCreateTypeElement(@Nullable GrTypeElement typeElement) {
-    if (typeElement==null) return null;
+    if (typeElement == null) return null;
 
     final SoftReference<PsiTypeElement> ref = typeElement.getUserData(PSI_TYPE_ELEMENT);
     final PsiTypeElement element = ref == null ? null : ref.get();
@@ -547,6 +549,18 @@ public class PsiImplUtil {
     typeElement.putUserData(PSI_TYPE_ELEMENT, new SoftReference<PsiTypeElement>(newTypeElement));
     return newTypeElement;
   }
+
+  public static PsiExpression getOrCreatePisExpression(@Nullable GrExpression expr) {
+    if (expr == null) return null;
+
+    final SoftReference<PsiExpression> ref = expr.getUserData(PSI_EXPRESSION);
+    final PsiExpression element = ref == null ? null : ref.get();
+    if (element != null) return element;
+    final GrSyntheticExpression newExpr = new GrSyntheticExpression(expr);
+    expr.putUserData(PSI_EXPRESSION, new SoftReference<PsiExpression>(newExpr));
+    return newExpr;
+  }
+
 
   public static <T extends GrCondition> T replaceBody(T newBody, GrStatement body, ASTNode node, Project project) {
     if (body == null || newBody == null) {

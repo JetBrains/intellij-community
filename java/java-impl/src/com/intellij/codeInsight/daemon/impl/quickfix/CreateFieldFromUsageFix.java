@@ -15,17 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -60,7 +57,8 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   @Override
   protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myReferenceExpression.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
+    if (factory == null) factory = JavaPsiFacade.getElementFactory(project);
 
     PsiMember enclosingContext = null;
     PsiClass parentClass;
@@ -76,21 +74,23 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
 
     String fieldName = myReferenceExpression.getReferenceName();
-    PsiField field;
-    if (!createConstantField()) {
-      field = factory.createField(fieldName, PsiType.INT);
+    assert fieldName != null;
+
+    PsiField field = factory.createField(fieldName, PsiType.INT);
+    if (createConstantField()) {
+      PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
     }
-    else {
-      PsiClass aClass = factory.createClassFromText("int i = 0;", null);
-      field = aClass.getFields()[0];
-      field.setName(fieldName);
-    }
-    if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
-        && enclosingContext instanceof PsiField) {
+
+    if (enclosingContext != null &&
+        enclosingContext.getParent() == parentClass &&
+        targetClass == parentClass &&
+        enclosingContext instanceof PsiField) {
       field = (PsiField)targetClass.addBefore(field, enclosingContext);
     }
-    else if (enclosingContext != null && enclosingContext.getParent() == parentClass && targetClass == parentClass
-             && enclosingContext instanceof PsiClassInitializer) {
+    else if (enclosingContext != null &&
+             enclosingContext.getParent() == parentClass &&
+             targetClass == parentClass &&
+             enclosingContext instanceof PsiClassInitializer) {
       field = (PsiField)targetClass.addBefore(field, enclosingContext);
       targetClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), enclosingContext);
     }
@@ -113,24 +113,9 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
     }
 
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
-    PsiElement context = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiClass.class, PsiMethod.class);
-    new GuessTypeParameters(factory)
-      .setupTypeElement(field.getTypeElement(), expectedTypes, getTargetSubstitutor(myReferenceExpression),
-                        builder, context, targetClass);
-
-    if (createConstantField()) {
-      builder.replaceElement(field.getInitializer(), new EmptyExpression());
-    }
-
-    builder.setEndVariableAfter(field.getNameIdentifier());
-    field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
-    Template template = builder.buildTemplate();
-
     final Editor newEditor = positionCursor(project, targetFile, field);
-    TextRange range = field.getTextRange();
-    newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    if (expectedTypes.length > 1) template.setToShortenLongNames(false);
+    Template template =
+      CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, myReferenceExpression, createConstantField());
 
     startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
       @Override
@@ -155,11 +140,11 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       return false;
     }
     final PsiElement element = PsiTreeUtil.getParentOfType(ref, PsiClassInitializer.class, PsiMethod.class);
-    if (element instanceof PsiClassInitializer){
+    if (element instanceof PsiClassInitializer) {
       return true;
     }
 
-    if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()){
+    if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
       return true;
     }
 
