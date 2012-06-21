@@ -49,7 +49,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
   //noinspection GroovyAssignabilityCheck
   List<String> openapiModules = [platformApiModules,
-          "java-psi-api", "openapi", "testFramework-java", "debugger-openapi", "compiler-openapi", "dom-openapi", "execution-openapi",
+          "java-psi-api", "java-indexing-api", "openapi", "testFramework-java", "debugger-openapi", "compiler-openapi", "dom-openapi", "execution-openapi",
           "jsp-openapi", "jsp-base-openapi"].flatten()
 
   //noinspection GroovyAssignabilityCheck
@@ -531,6 +531,7 @@ def layout_core_upsource(String home, String target) {
       module("java-psi-impl")
       module("projectModel-api")
       module("projectModel-impl")
+      module("java-indexing-api")
       module("java-indexing-impl")
       module("platform-resources")
       module("platform-resources-en")
