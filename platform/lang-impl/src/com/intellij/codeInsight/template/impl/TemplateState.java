@@ -341,8 +341,11 @@ public class TemplateState implements Disposable {
           mySegments.addSegment(segmentOffset, segmentOffset);
         }
 
+        LOG.assertTrue(myTemplateRange.isValid());
         calcResults(false);
+        LOG.assertTrue(myTemplateRange.isValid());
         calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
+        LOG.assertTrue(myTemplateRange.isValid());
         doReformat(null);
 
         int nextVariableNumber = getNextVariableNumber(-1);
@@ -377,6 +380,7 @@ public class TemplateState implements Disposable {
       public void run() {
         IntArrayList indices = initEmptyVariables();
         mySegments.setSegmentsGreedy(false);
+        LOG.assertTrue(myTemplateRange.isValid());
         reformat(finalRangeMarker);
         mySegments.setSegmentsGreedy(true);
         restoreEmptyVariables(indices);
@@ -984,6 +988,7 @@ public class TemplateState implements Disposable {
       // and reformat wouldn't be able to fix them
       if (myTemplate.isToIndent()) {
         if (!myTemplateIndented) {
+          LOG.assertTrue(myTemplateRange.isValid());
           smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           myTemplateIndented = true;
         }

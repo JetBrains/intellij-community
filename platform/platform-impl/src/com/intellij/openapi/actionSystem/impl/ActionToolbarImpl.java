@@ -713,7 +713,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     protected void paintComponent(final Graphics g) {
       final Insets insets = getInsets();
-      if (UIUtil.isUnderAquaLookAndFeel()) {
+      if (UIUtil.isUnderAquaBasedLookAndFeel()) {
         if (getParent() != null) {
           if (myOrientation == SwingConstants.HORIZONTAL) {
             UIUtil.drawDoubleSpaceDottedLine((Graphics2D)g, insets.top + 2, getParent().getSize().height - 2 - insets.top - insets.bottom, 3, Color.GRAY, false);

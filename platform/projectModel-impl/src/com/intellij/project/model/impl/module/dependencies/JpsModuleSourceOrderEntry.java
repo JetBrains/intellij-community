@@ -49,7 +49,7 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
     if (OrderRootType.SOURCES.equals(type)) {
       return getRootModel().getSourceRoots();
     }
-    return getRootModel().getRootPaths(type);
+    return VirtualFile.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -66,7 +66,7 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
       }
       return ArrayUtil.toStringArray(result);
     }
-    return getRootModel().getRootUrls(type);
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override

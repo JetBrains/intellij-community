@@ -80,20 +80,12 @@ public class JBScrollPane extends JScrollPane {
 
   @Override
   public JScrollBar createVerticalScrollBar() {
-    return new MyScrollBar(JScrollBar.VERTICAL);
+    return new MyScrollBar(Adjustable.VERTICAL);
   }
 
   @Override
   public JScrollBar createHorizontalScrollBar() {
-    return new MyScrollBar(JScrollBar.HORIZONTAL);
-  }
-
-  public boolean isHaveBorder() {
-    return getBorder() != null;
-  }
-
-  public void setHaveBorder(boolean haveBorder) {
-    setBorder(haveBorder ? IdeBorderFactory.createBorder() : null);
+    return new MyScrollBar(Adjustable.HORIZONTAL);
   }
 
   @Override
@@ -114,11 +106,6 @@ public class JBScrollPane extends JScrollPane {
     @Override
     public boolean canBePreprocessed(MouseEvent e) {
       return JBScrollPane.canBePreprocessed(e, this);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return super.getPreferredSize();    //To change body of overridden methods use File | Settings | File Templates.
     }
   }
 
@@ -152,10 +139,10 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
+      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
 
-      g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
+      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
 
       int x2 = getWidth() - 1;
       int y2 = getHeight() - 1;

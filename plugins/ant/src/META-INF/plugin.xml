@@ -103,5 +103,10 @@
       <add-to-group group-id="ScopeViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
       <add-to-group group-id="CommanderPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
     </action>
+    <action id="RunTargetAction" class="com.intellij.lang.ant.config.actions.RunTargetAction">
+      <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
+      <keyboard-shortcut first-keystroke="control shift F10" keymap="$default"/>
+    </action>
   </actions>
 </idea-plugin>
+

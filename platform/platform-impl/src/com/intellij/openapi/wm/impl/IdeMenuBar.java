@@ -130,6 +130,15 @@ public class IdeMenuBar extends JMenuBar {
     fixMenuBackground();
   }
 
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    if (UIUtil.isUnderDarcula()) {
+      g.setColor(UIManager.getColor("MenuItem.background"));
+      g.fillRect(0,0,getWidth(), getHeight());
+    }
+  }
+
   /**
    * Hacks a problem under Alloy LaF which draws menu bar in different background menu items are drawn in.
    */

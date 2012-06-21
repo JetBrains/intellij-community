@@ -54,6 +54,7 @@ import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ScrollBarUI;
@@ -182,6 +183,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return false;
   }
 
+  @Nullable
   private RangeHighlighter getNearestRangeHighlighter(final MouseEvent e, final int width) {
     List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     getNearestHighlighters(this, e, width, highlighters);
@@ -250,6 +252,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       myEditor.getVerticalScrollBar().setPersistentUI(ButtonlessScrollBarUI.createNormal());
     }
   }
+  @Nullable
   private MyErrorPanel getErrorPanel() {
     ScrollBarUI ui = myEditor.getVerticalScrollBar().getUI();
     return ui instanceof MyErrorPanel ? (MyErrorPanel)ui : null;
@@ -336,10 +339,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
       final Rectangle bounds = getBounds();
 
-      g.setColor(ButtonlessScrollBarUI.TRACK_BACKGROUND);
+      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
       g.fillRect(0, 0, bounds.width, bounds.height);
 
-      g.setColor(ButtonlessScrollBarUI.TRACK_BORDER);
+      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
       g.drawLine(0, 0, 0, bounds.height);
 
       try {
@@ -424,8 +427,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
         try {
-          ProperTextRange intersection = myDirtyYPositions.intersection(docRange);
-          myDirtyYPositions = intersection;
+          myDirtyYPositions = myDirtyYPositions.intersection(docRange);
           if (myDirtyYPositions == null) myDirtyYPositions = docRange;
           repaint(imageGraphics, componentBounds.width, ERROR_ICON_WIDTH - 1, myDirtyYPositions);
           myDirtyYPositions = null;
@@ -439,10 +441,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
-      g.setColor(TRACK_BACKGROUND);
+      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height + 1);
 
-      g.setColor(TRACK_BORDER);
+      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
       int border = isMirrored() ? bounds.x + bounds.width - 1 : bounds.x;
       g.drawLine(border, bounds.y, border, bounds.y + bounds.height + 1);
     }

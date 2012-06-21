@@ -1,30 +1,48 @@
 package org.jetbrains.android.augment;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.impl.light.LightFieldBuilder;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 /**
 * @author Eugene.Kudelevsky
 */
-class AndroidLightField extends LightFieldBuilder {
+class AndroidLightField extends LightFieldBuilder implements PsiVariableEx {
   private final PsiClass myContext;
   private final PsiType myType;
+  private final Object myConstantValue;
+  private final boolean myFinal;
 
   public AndroidLightField(@NotNull String name,
                            @NotNull PsiClass context,
-                           @NotNull PsiType type) {
+                           @NotNull PsiType type,
+                           boolean isFinal,
+                           @Nullable Object constantValue) {
     super(name, type, context);
     myContext = context;
     myType = type;
+    myConstantValue = constantValue;
+    myFinal = isFinal;
     setContainingClass(context);
+
+    final List<String> modifiers = new ArrayList<String>();
+    modifiers.add(PsiModifier.PUBLIC);
+    modifiers.add(PsiModifier.STATIC);
+
+    if (isFinal) {
+      modifiers.add(PsiModifier.FINAL);
+    }
+    setModifiers(ArrayUtil.toStringArray(modifiers));
   }
 
   @Override
@@ -40,6 +58,18 @@ class AndroidLightField extends LightFieldBuilder {
 
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    return new AndroidLightField(name, myContext, myType);
+    final AndroidLightField field = new AndroidLightField(name, myContext, myType, myFinal, myConstantValue);
+    field.setInitializer(getInitializer());
+    return field;
+  }
+
+  @Override
+  public Object computeConstantValue(Set<PsiVariable> visitedVars) {
+    return computeConstantValue();
+  }
+
+  @Override
+  public Object computeConstantValue() {
+    return myConstantValue;
   }
 }

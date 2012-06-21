@@ -618,9 +618,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
       if (MouseEvent.MOUSE_DRAGGED == e.getID() && myWasPressedOnMe) {
         myDragging = true;
-        setCursor(
-          getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
-        myGlassPane.setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR), myListener);
+        setCursor(getResizeCursor());
+        myGlassPane.setCursor(getResizeCursor(), myListener);
 
         myPoint = SwingUtilities.convertPoint(this, e.getPoint(), ThreeComponentsSplitter.this);
         if (getOrientation()) {
@@ -647,7 +646,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       } else if (MouseEvent.MOUSE_MOVED == e.getID()) {
         if (myGlassPane != null) {
           if (isInside(e.getPoint())) {
-            myGlassPane.setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR), myListener);
+            myGlassPane.setCursor(getResizeCursor(), myListener);
             e.consume();
           } else {
             myGlassPane.setCursor(null, myListener);
@@ -678,7 +677,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
       super.processMouseEvent(e);
       switch (e.getID()) {
         case MouseEvent.MOUSE_ENTERED:
-          setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+          setCursor(getResizeCursor());
           break;
         case MouseEvent.MOUSE_EXITED:
           if (!myDragging) {
@@ -688,7 +687,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         case MouseEvent.MOUSE_PRESSED:
           if (isInside(e.getPoint())) {
             myWasPressedOnMe = true;
-            setCursor(getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
+            myGlassPane.setCursor(getResizeCursor(), myListener);
             e.consume();
           } else {
             myWasPressedOnMe = false;
@@ -697,6 +696,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
         case MouseEvent.MOUSE_RELEASED:
           if (myWasPressedOnMe) {
             e.consume();
+          }
+          if (isInside(e.getPoint())) {
+            myGlassPane.setCursor(getResizeCursor(), myListener);
           }
           myWasPressedOnMe = false;
           myDragging = false;
@@ -711,4 +713,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
   }
 
+  private Cursor getResizeCursor() {
+    return getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+  }
 }

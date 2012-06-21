@@ -26,13 +26,19 @@ import java.awt.event.*;
 
 /**
  * @author max
+ * @author Konstantin Bulenkov
  */
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
-  public static final Color GRADIENT_LIGHT = Gray._251;
-  public static final Color GRADIENT_DARK = Gray._215;
-  public static final Color GRADIENT_THUMB_BORDER = Gray._201;
-  public static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
-  public static final Color TRACK_BORDER = Gray._230;
+  private static final Color GRADIENT_LIGHT = Gray._251;
+  private static final Color GRADIENT_DARK = Gray._215;
+  private static final Color GRADIENT_THUMB_BORDER = Gray._201;
+  private static final Color TRACK_BACKGROUND = LightColors.SLIGHTLY_GRAY;
+  private static final Color TRACK_BORDER = Gray._230;
+  private static final Color GRADIENT_LIGHT_DARK_VARIANT = GRADIENT_LIGHT.darker().darker();
+  private static final Color GRADIENT_DARK_DARK_VARIANT = GRADIENT_DARK.darker().darker();
+  private static final Color GRADIENT_THUMB_BORDER_DARK_VARIANT = GRADIENT_THUMB_BORDER.darker().darker();
+  private static final Color TRACK_BACKGROUND_DARK_VARIANT = TRACK_BACKGROUND.darker().darker();
+  private static final Color TRACK_BORDER_DARK_VARIANT = TRACK_BORDER.darker().darker();
 
   private static final BasicStroke BORDER_STROKE = new BasicStroke();
 
@@ -89,6 +95,26 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         }
       }
     };
+  }
+
+  public static Color getGradientLightColor() {
+    return UIUtil.isUnderDarcula() ? GRADIENT_LIGHT_DARK_VARIANT : GRADIENT_LIGHT;
+  }
+
+  public static Color getGradientDarkColor() {
+    return UIUtil.isUnderDarcula() ? GRADIENT_DARK_DARK_VARIANT : GRADIENT_DARK;
+  }
+
+  public static Color getGradientThumbBorderColor() {
+    return UIUtil.isUnderDarcula() ? GRADIENT_THUMB_BORDER_DARK_VARIANT : GRADIENT_THUMB_BORDER;
+  }
+
+  public static Color getTrackBackground() {
+    return UIUtil.isUnderDarcula() ? TRACK_BACKGROUND_DARK_VARIANT : TRACK_BACKGROUND;
+  }
+
+  public static Color getTrackBorderColor() {
+    return UIUtil.isUnderDarcula() ? TRACK_BORDER_DARK_VARIANT : TRACK_BORDER;
   }
 
   public int getDecrButtonHeight() {
@@ -156,10 +182,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
-    g.setColor(TRACK_BACKGROUND);
+    g.setColor(getTrackBackground());
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-    g.setColor(TRACK_BORDER);
+    g.setColor(getTrackBorderColor());
     if (isVertical()) {
       g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
     }
@@ -222,8 +248,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
 
     final GradientPaint paint;
-    final Color start = adjustColor(GRADIENT_LIGHT);
-    final Color end = adjustColor(GRADIENT_DARK);
+    final Color start = adjustColor(getGradientLightColor());
+    final Color end = adjustColor(getGradientDarkColor());
 
     if (vertical) {
       paint = new GradientPaint(1, 0, start, w + 1, 0, end);
@@ -237,7 +263,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     final Stroke stroke = g.getStroke();
     g.setStroke(BORDER_STROKE);
-    g.setColor(GRADIENT_THUMB_BORDER);
+    g.setColor(getGradientThumbBorderColor());
     g.drawRoundRect(hGap, vGap, w, h, 3, 3);
     g.setStroke(stroke);
   }

@@ -15,11 +15,9 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
@@ -36,7 +34,6 @@ import java.util.Map;
 */
 class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
   private static final Map<String, Icon> iconCache = new HashMap<String, Icon>();
-  private static final SimpleTextAttributes ID_STYLE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.black);
   private final SpeedSearchBase mySpeedSearch;
   private final Map<ToolWindow, String> ids;
   private final Map<ToolWindow, String> shortcuts;
@@ -62,12 +59,11 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
       if (myPinned) {
         name = ids.get(tw);
       } else {
-        append(shortcuts.get(tw), ID_STYLE);
+        append(shortcuts.get(tw), new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, null));
         name = ": " + ids.get(tw);
       }
 
-      final TextAttributes attributes = new TextAttributes(Color.BLACK, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
-      append(name, SimpleTextAttributes.fromTextAttributes(attributes));
+      append(name);
       if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
         hide = mySpeedSearch.matchingFragments(ids.get(tw)) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
       }

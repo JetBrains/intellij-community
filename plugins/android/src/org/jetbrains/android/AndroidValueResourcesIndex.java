@@ -57,15 +57,8 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
           @Override
           protected void process(@NotNull ResourceEntry entry) {
             result.put(entry, Collections.<ResourceEntry>emptySet());
-
-            final ResourceEntry typeMarkerEntry = createTypeMarkerEntry(entry.getType());
-            Set<ResourceEntry> set = result.get(typeMarkerEntry);
-
-            if (set == null) {
-              set = new HashSet<ResourceEntry>();
-              result.put(typeMarkerEntry, set);
-            }
-            set.add(entry);
+            addEntryToMap(entry, createTypeMarkerEntry(entry.getType()), result);
+            addEntryToMap(entry, createTypeNameMarkerEntry(entry.getType(), entry.getName()), result);
           }
         });
 
@@ -73,8 +66,22 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
       }
     };
 
+  private static void addEntryToMap(ResourceEntry entry, ResourceEntry marker, Map<ResourceEntry, Set<ResourceEntry>> result) {
+    Set<ResourceEntry> set = result.get(marker);
+
+    if (set == null) {
+      set = new HashSet<ResourceEntry>();
+      result.put(marker, set);
+    }
+    set.add(entry);
+  }
+
   public static ResourceEntry createTypeMarkerEntry(String type) {
-    return new ResourceEntry(type, "TYPE_MARKER_RESOURCE");
+    return new ResourceEntry(type, "TYPE_MARKER_RESOURCE", "TYPE_MARKER_CONTEXT");
+  }
+
+  public static ResourceEntry createTypeNameMarkerEntry(String type, String name) {
+    return new ResourceEntry(type, name, "TYPE_MARKER_CONTEXT");
   }
 
   private final KeyDescriptor<ResourceEntry> myKeyDescriptor = new KeyDescriptor<ResourceEntry>() {
@@ -82,13 +89,15 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
     public void save(DataOutput out, ResourceEntry value) throws IOException {
       out.writeUTF(value.getType());
       out.writeUTF(value.getName());
+      out.writeUTF(value.getContext());
     }
 
     @Override
     public ResourceEntry read(DataInput in) throws IOException {
       final String resType = in.readUTF();
       final String resName = in.readUTF();
-      return new ResourceEntry(resType, resName);
+      final String resContext = in.readUTF();
+      return new ResourceEntry(resType, resName, resContext);
     }
 
     @Override
@@ -108,7 +117,9 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
       out.writeInt(value.size());
 
       for (ResourceEntry entry : value) {
-        myKeyDescriptor.save(out, entry);
+        out.writeUTF(entry.getType());
+        out.writeUTF(entry.getName());
+        out.writeUTF(entry.getContext());
       }
     }
 
@@ -123,7 +134,10 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
       final Set<ResourceEntry> result = new HashSet<ResourceEntry>(size);
 
       for (int i = 0; i < size; i++) {
-        result.add(myKeyDescriptor.read(in));
+        final String type = in.readUTF();
+        final String name = in.readUTF();
+        final String context = in.readUTF();
+        result.add(new ResourceEntry(type, name, context));
       }
       return result;
     }
@@ -163,6 +177,6 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
 
   @Override
   public int getVersion() {
-    return 0;
+    return 2;
   }
 }

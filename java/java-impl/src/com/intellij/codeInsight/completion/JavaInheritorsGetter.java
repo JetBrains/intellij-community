@@ -114,7 +114,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return null;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    if (psiClass == null) return null;
+    if (psiClass == null || psiClass.getName() == null) return null;
 
     if ((parameters.getInvocationCount() < 2 || psiClass instanceof PsiCompiledElement) &&
         HighlightClassUtil.checkCreateInnerClassFromStaticContext(parameters.getPosition(), null, psiClass) != null) {

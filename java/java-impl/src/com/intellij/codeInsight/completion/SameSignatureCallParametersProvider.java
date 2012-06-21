@@ -64,7 +64,6 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
           PsiMethod from = getMethodToTakeParametersFrom(container, candidate.first, candidate.second);
           if (from != null) {
             result.addElement(createParametersLookupElement(from, methodCall, candidate.first));
-            return;
           }
         }
       }
@@ -75,7 +74,8 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
   }
 
   private static LookupElement createParametersLookupElement(PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
-    final String lookupString = StringUtil.join(takeParametersFrom.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+    PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
+    final String lookupString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
       public String fun(PsiParameter psiParameter) {
         return psiParameter.getName();
       }

@@ -1,5 +1,9 @@
 <resources>
   <string name="my_string">abacaba</string>
   <style name="Theme.MyCustomStyle" parent="android:style/Theme.Dialog"></style>
-  <declare-styleable name="MyStyleable"></declare-styleable>
+  <declare-styleable name="MyStyleable">
+    <attr name="myAttr1" format="string"/>
+    <attr name="android:text"/>
+  </declare-styleable>
+  <attr name="myAttr2" format="string"/>
 </resources>

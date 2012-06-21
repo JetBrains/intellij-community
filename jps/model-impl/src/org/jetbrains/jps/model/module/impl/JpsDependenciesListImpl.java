@@ -15,8 +15,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependenciesListImpl> implements JpsDependenciesList {
-  public static final JpsElementCollectionKind<JpsDependencyElementBase<?>> DEPENDENCY_COLLECTION_KIND =
-    new JpsElementCollectionKind<JpsDependencyElementBase<?>>(new JpsElementKindBase<JpsDependencyElementBase<?>>("dependency"));
+  public static final JpsElementCollectionKind<JpsDependencyElement> DEPENDENCY_COLLECTION_KIND =
+    new JpsElementCollectionKind<JpsDependencyElement>(new JpsElementKindBase<JpsDependencyElement>("dependency"));
 
   public JpsDependenciesListImpl() {
     super();
@@ -29,7 +29,7 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
 
   @Override
   @NotNull
-  public List<? extends JpsDependencyElement> getDependencies() {
+  public List<JpsDependencyElement> getDependencies() {
     return myContainer.getChild(DEPENDENCY_COLLECTION_KIND).getElements();
   }
 

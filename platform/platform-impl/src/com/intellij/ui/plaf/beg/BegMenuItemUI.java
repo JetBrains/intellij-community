@@ -68,7 +68,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
   public BegMenuItemUI() {
     myMaxGutterIconWidth = 18;
 
-    if (UIUtil.isUnderAquaLookAndFeel() && myAquaSelectedBackgroundPainter == null) {
+    if (UIUtil.isUnderAquaBasedLookAndFeel() && myAquaSelectedBackgroundPainter == null) {
       myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
     }
   }
@@ -188,10 +188,10 @@ public class BegMenuItemUI extends BasicMenuItemUI {
         }
       }
     }
-    if (keyStrokeText != null && !keyStrokeText.equals("")){
+    if (keyStrokeText != null && !keyStrokeText.isEmpty()){
       g.setFont(acceleratorFont);
       if (buttonmodel.isEnabled()){
-        if (UIUtil.isUnderAquaLookAndFeel() && (buttonmodel.isArmed() || (comp instanceof JMenu) && buttonmodel.isSelected())) {
+        if (UIUtil.isUnderAquaBasedLookAndFeel() && (buttonmodel.isArmed() || (comp instanceof JMenu) && buttonmodel.isSelected())) {
           g.setColor(selectionForeground);
         }
         else {

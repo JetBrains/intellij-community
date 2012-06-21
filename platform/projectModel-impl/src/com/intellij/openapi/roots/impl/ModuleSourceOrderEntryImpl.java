@@ -78,7 +78,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
     if (OrderRootType.SOURCES.equals(type)) {
       return getRootModel().getSourceRoots();
     }
-    return getRootModel().getRootPaths(type);
+    return VirtualFile.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -95,7 +95,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
       }
       return ArrayUtil.toStringArray(result);
     }
-    return getRootModel().getRootUrls(type);
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   public OrderEntry cloneEntry(RootModelImpl rootModel,

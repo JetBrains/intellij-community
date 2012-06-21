@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,12 +63,12 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
       @Override
       public List<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
                                                            final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootModel().getRootPaths(getInstance()));
+        Collections.addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsRoots());
         return value;
       }
     };
     entry.accept(policy, result);
-    return VfsUtil.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @NotNull
@@ -90,7 +90,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
       @Override
       public List<String> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
                                                            final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootModel().getRootUrls(getInstance()));
+        Collections.addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsUrls());
         return value;
       }
     };

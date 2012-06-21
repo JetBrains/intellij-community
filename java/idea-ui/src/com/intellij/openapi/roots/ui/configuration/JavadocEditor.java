@@ -21,7 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
-import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -67,7 +67,7 @@ public class JavadocEditor extends ModuleElementsEditor {
       final TableItem item = ((MyTableModel)myTable.getModel()).getTableItemAt(row);
       urls[row] = item.getUrl();
     }
-    getModel().setRootUrls(JavadocOrderRootType.getInstance(), urls);
+    getModel().getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls);
   }
 
   public JComponent createComponentImpl() {
@@ -139,7 +139,7 @@ public class JavadocEditor extends ModuleElementsEditor {
 
   protected DefaultTableModel createModel() {
     final MyTableModel tableModel = new MyTableModel();
-    final String[] javadocUrls = getModel().getRootUrls(JavadocOrderRootType.getInstance());
+    final String[] javadocUrls = getModel().getModuleExtension(JavaModuleExternalPaths.class).getJavadocUrls();
     for (String javadocUrl : javadocUrls) {
       tableModel.addTableItem(new TableItem(javadocUrl));
     }

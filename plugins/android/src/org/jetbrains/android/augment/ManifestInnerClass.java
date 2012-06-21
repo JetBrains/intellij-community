@@ -44,8 +44,8 @@ abstract class ManifestInnerClass extends AndroidLightClass {
           final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
           int i = 0;
           for (Pair<String, String> pair : pairs) {
-            final AndroidLightField field = new AndroidLightField(pair.getFirst(), ManifestInnerClass.this, stringType);
-            field.setModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
+            final AndroidLightField field =
+              new AndroidLightField(pair.getFirst(), ManifestInnerClass.this, stringType, true, pair.getSecond());
             field.setInitializer(factory.createExpressionFromText("\"" + pair.getSecond() + "\"", field));
             result[i++] = field;
           }

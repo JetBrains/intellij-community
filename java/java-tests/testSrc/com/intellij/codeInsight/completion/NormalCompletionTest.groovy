@@ -773,6 +773,7 @@ public class ListUtils {
 
   public void testSecondMethodParameter() throws Throwable { doTest(); }
   public void testReturnInCase() throws Throwable { doTest(); }
+  public void testUnboxedConstantsInCase() throws Throwable { doTest(); }
 
   public void testAnnotationWithoutValueMethod() throws Throwable {
     configureByFile(getTestName(false) + ".java");
@@ -1305,7 +1306,8 @@ public class ListUtils {
 
   public void testSameSignature() {
     configure()
-    lookup.setCurrentItem(myItems[1])
+    myFixture.assertPreferredCompletionItems(0, 's', 's, file', 's, file, a')
+    lookup.setCurrentItem(lookup.items[2])
     myFixture.type('\n')
     checkResult()
   }

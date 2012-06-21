@@ -896,7 +896,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   @Nullable
-  public AntBuildFile getAntBuildFile(@NotNull PsiFile file) {
+  public AntBuildFileBase getAntBuildFile(@NotNull PsiFile file) {
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile != null) {
       for (AntBuildFileBase bFile : getBuildFiles()) {

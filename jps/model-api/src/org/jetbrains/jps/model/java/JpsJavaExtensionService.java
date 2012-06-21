@@ -21,10 +21,10 @@ public abstract class JpsJavaExtensionService {
   public abstract JpsJavaDependencyExtension getOrCreateDependencyExtension(@NotNull JpsDependencyElement dependency);
 
   @NotNull
-  public abstract JpsElementKind<? extends JpsJavaModuleExtension> getModuleExtensionKind();
+  public abstract JpsElementKind<JpsJavaModuleExtension> getModuleExtensionKind();
 
   @NotNull
-  public abstract JpsElementKind<? extends JpsJavaDependencyExtension> getDependencyExtensionKind();
+  public abstract JpsElementKind<JpsJavaDependencyExtension> getDependencyExtensionKind();
 
   @NotNull
   public abstract ExplodedDirectoryModuleExtension getOrCreateExplodedDirectoryExtension(@NotNull JpsModule module);

@@ -62,6 +62,11 @@ public final class IconLoader {
     return new MyImageIcon(image);
   }
 
+  //TODO[kb] support iconsets
+  //public static Icon getIcon(@NotNull final String path, @NotNull final String darkVariantPath) {
+  //  return new InvariantIcon(getIcon(path), getIcon(darkVariantPath));
+  //}
+
   @NotNull
   public static Icon getIcon(@NonNls final String path) {
     int stackFrameCount = 2;

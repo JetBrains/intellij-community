@@ -20,6 +20,9 @@ import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitution;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -27,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 /**
  * @author ilyas
@@ -48,15 +52,18 @@ public class GroovyInlineHandler implements InlineHandler {
     }
 
     if (element instanceof PsiMember) {
-      //dummy, todo implement
-      return new Settings() {
-        public boolean isOnlyOneReferenceToInline() {
-          return true;
-        }
-      };
+      String message = GroovyRefactoringBundle.message("cannot.inline.0.", getFullName(element));
+      CommonRefactoringUtil.showErrorHint(element.getProject(), editor, message, "", HelpID.INLINE_FIELD);
+      return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
     }
     return null;
   }
+
+  private static String getFullName(PsiElement psi) {
+    final String name = UsageViewUtil.getDescriptiveName(psi);
+    return (UsageViewUtil.getType(psi) + " " + name).trim();
+  }
+
 
   public void removeDefinition(PsiElement element, Settings settings) {
     final PsiElement owner = element.getParent().getParent();

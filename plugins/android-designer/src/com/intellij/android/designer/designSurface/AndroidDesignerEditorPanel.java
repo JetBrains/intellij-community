@@ -77,7 +77,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private boolean myParseTime;
   private int myProfileLastVersion;
 
-  public AndroidDesignerEditorPanel(@NotNull DesignerEditor editor, @NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
+  public AndroidDesignerEditorPanel(@NotNull DesignerEditor editor,
+                                    @NotNull Project project,
+                                    @NotNull Module module,
+                                    @NotNull VirtualFile file) {
     super(editor, project, module, file);
 
     myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
@@ -178,6 +181,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) {
     disposeRenderer();
+
+    ApplicationManager.getApplication().saveAll();
 
     mySessionAlarm.addRequest(new Runnable() {
       @Override
@@ -409,6 +414,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public void activate() {
     myProfileAction.externalUpdate();
     myPSIChangeListener.activate();
+
+    if (myPSIChangeListener.isUpdateRenderer()) {
+      updateRenderer(true);
+    }
   }
 
   @Override
@@ -418,7 +427,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   public void dispose() {
-    myPSIChangeListener.stop();
+    myPSIChangeListener.dispose();
     super.dispose();
     disposeRenderer();
   }

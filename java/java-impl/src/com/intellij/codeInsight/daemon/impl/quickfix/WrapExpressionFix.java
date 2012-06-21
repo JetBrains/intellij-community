@@ -48,7 +48,7 @@ public class WrapExpressionFix implements IntentionAction {
     if (type instanceof PsiClassType) {
       return (PsiClassType)type;
     }
-    else if (type instanceof PsiPrimitiveType){
+    else if (type instanceof PsiPrimitiveType) {
       return ((PsiPrimitiveType)type).getBoxedType(place.getManager(), GlobalSearchScope.allScope(place.getProject()));
     }
     return null;
@@ -73,10 +73,11 @@ public class WrapExpressionFix implements IntentionAction {
       if (expectedReturnType == null) return null;
       PsiMethod[] methods = aClass.getMethods();
       for (PsiMethod method : methods) {
-        if (method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() == 1 &&
-            method.getParameterList().getParameters()[0].getType().equals(type) &&
-            method.getReturnType() != null &&
-            expectedReturnType.equals(method.getReturnType())) {
+        if (method.hasModifierProperty(PsiModifier.STATIC)
+            && method.getParameterList().getParametersCount() == 1
+            && method.getParameterList().getParameters()[0].getType().isAssignableFrom(type)
+            && method.getReturnType() != null
+            && expectedReturnType.equals(method.getReturnType())) {
           return method;
         }
       }
@@ -108,10 +109,10 @@ public class WrapExpressionFix implements IntentionAction {
     assert wrapper != null;
     PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";
-    PsiMethodCallExpression call = (PsiMethodCallExpression) factory.createExpressionFromText(methodCallText,
-                                                                                              null);
+    PsiMethodCallExpression call = (PsiMethodCallExpression)factory.createExpressionFromText(methodCallText,
+                                                                                             null);
     call.getArgumentList().add(myExpression);
-    ((PsiReferenceExpression) call.getMethodExpression().getQualifierExpression()).bindToElement(
+    ((PsiReferenceExpression)call.getMethodExpression().getQualifierExpression()).bindToElement(
       wrapper.getContainingClass());
     myExpression.replace(call);
   }
@@ -121,7 +122,7 @@ public class WrapExpressionFix implements IntentionAction {
     return true;
   }
 
-  public static void registerWrapAction (JavaResolveResult[] candidates, PsiExpression[] expressions, HighlightInfo highlightInfo) {
+  public static void registerWrapAction(JavaResolveResult[] candidates, PsiExpression[] expressions, HighlightInfo highlightInfo) {
     PsiType expectedType = null;
     PsiExpression expr = null;
 
@@ -138,7 +139,7 @@ public class WrapExpressionFix implements IntentionAction {
         PsiExpression expression = expressions[j];
         final PsiType exprType = expression.getType();
         if (exprType != null) {
-          PsiType paramType = parameters[Math.min(j, parameters.length -1)].getType();
+          PsiType paramType = parameters[Math.min(j, parameters.length - 1)].getType();
           if (paramType instanceof PsiEllipsisType) {
             paramType = ((PsiEllipsisType)paramType).getComponentType();
           }
@@ -148,7 +149,8 @@ public class WrapExpressionFix implements IntentionAction {
           if (expectedType == null && classType != null && findWrapper(exprType, classType, paramType instanceof PsiPrimitiveType) != null) {
             expectedType = paramType;
             expr = expression;
-          } else {
+          }
+          else {
             expectedType = null;
             expr = null;
             continue nextMethod;
@@ -161,5 +163,4 @@ public class WrapExpressionFix implements IntentionAction {
       QuickFixAction.registerQuickFixAction(highlightInfo, expr.getTextRange(), new WrapExpressionFix(expectedType, expr));
     }
   }
-
 }

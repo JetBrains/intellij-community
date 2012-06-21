@@ -16,10 +16,7 @@
 package com.intellij.featureStatistics.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.featureStatistics.FeatureDescriptor;
-import com.intellij.featureStatistics.FeatureStatisticsBundle;
-import com.intellij.featureStatistics.GroupDescriptor;
-import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
+import com.intellij.featureStatistics.*;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -165,7 +162,16 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
                                                               ApplicationNamesInfo.getInstance().getProductName(),
                                                               DateFormatUtil.formatDuration(idletime));
 
-    controlsPanel.add(new JLabel(uptimeS + ", " + idleTimeS), BorderLayout.NORTH);
+    String labelText = uptimeS + ", " + idleTimeS;
+    Date completionDate = FeatureUsageTracker.getInstance().getCompletionStatisticsStartDate();
+    if (completionDate != null) {
+      int spared = FeatureUsageTracker.getInstance().getCharactersSparedByCompletion();
+      long dayCount = Math.min(1, DateFormatUtil.getDifferenceInDays(completionDate, new Date()));
+      labelText += "<br>Code completion has saved you from typing at least " +
+                   spared + " characters since " + DateFormatUtil.formatDate(completionDate) +
+                   "; that's approximately " + (spared / dayCount) + " per day";
+    }
+    controlsPanel.add(new JLabel("<html><body>" + labelText + "</body></html>"), BorderLayout.NORTH);
 
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(controlsPanel, BorderLayout.NORTH);

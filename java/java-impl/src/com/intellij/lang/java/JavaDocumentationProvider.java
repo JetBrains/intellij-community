@@ -666,7 +666,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
     }
     if (module != null) {
-      String[] javadocPaths = ModuleRootManager.getInstance(module).getRootUrls(JavadocOrderRootType.getInstance());
+      String[] javadocPaths = JavaModuleExternalPaths.getInstance(module).getJavadocUrls();
       final List<String> httpRoots = PlatformDocumentationUtil.getHttpRoots(javadocPaths, relPath);
       // if found nothing and the file is from library classes, fall back to order entries
       if (httpRoots != null || !fileIndex.isInLibraryClasses(virtualFile)) { 

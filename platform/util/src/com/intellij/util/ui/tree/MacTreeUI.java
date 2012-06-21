@@ -342,10 +342,11 @@ public class MacTreeUI extends BasicTreeUI {
                                     boolean hasBeenExpanded,
                                     boolean isLeaf) {
     boolean isPathSelected = tree.getSelectionModel().isPathSelected(path);
+    boolean dark = UIUtil.isUnderDarcula();
 
-    Icon expandIcon = isPathSelected && tree.hasFocus() ? TREE_SELECTED_EXPANDED_ICON
+    Icon expandIcon = (isPathSelected && tree.hasFocus()) || dark ? TREE_SELECTED_EXPANDED_ICON
                                                         : TREE_EXPANDED_ICON;
-    Icon collapseIcon = isPathSelected && tree.hasFocus() ? TREE_SELECTED_COLLAPSED_ICON
+    Icon collapseIcon = (isPathSelected && tree.hasFocus()) || dark? TREE_SELECTED_COLLAPSED_ICON
                                                           : TREE_COLLAPSED_ICON;
 
 

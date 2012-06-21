@@ -20,7 +20,7 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
 
 
   @NotNull
-  List<? extends JpsModuleSourceRoot> getSourceRoots();
+  List<JpsModuleSourceRoot> getSourceRoots();
 
   @NotNull
   <P extends JpsElementProperties>

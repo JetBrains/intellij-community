@@ -181,8 +181,8 @@ public class ExecUtil {
                                                    "#!/bin/sh\n" +
                                                    "echo \"" + prompt + "\"\n" +
                                                    "echo\n" +
-                                                   "sudo \"" + scriptPath + "\"\n" +
-                                                   "STATUS=$?" +
+                                                   "sudo " + scriptPath + "\n" +
+                                                   "STATUS=$?\n" +
                                                    "echo\n" +
                                                    "read -p \"Press Enter to close this window...\" TEMP\n" +
                                                    "exit $STATUS\n");

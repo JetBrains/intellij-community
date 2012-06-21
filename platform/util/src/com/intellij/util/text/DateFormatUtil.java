@@ -51,6 +51,11 @@ public class DateFormatUtil {
   public static final long MONTH = DAY * 30;
   public static final long YEAR = DAY * 365;
   private static final long[] DELIMS = new long[]{YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
+  public static final long DAY_FACTOR = 24L * 60 * 60 * 1000;
+
+  public static long getDifferenceInDays(final Date startDate, final Date endDate) {
+    return (endDate.getTime() - startDate.getTime() + DAY_FACTOR - 1000) / DAY_FACTOR;
+  }
 
   private enum Period {
     YEAR, MONTH, WEEK, DAY, HOUR, MINUTE

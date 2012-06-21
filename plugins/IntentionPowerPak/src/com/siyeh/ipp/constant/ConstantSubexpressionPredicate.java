@@ -22,6 +22,7 @@ import com.siyeh.ipp.psiutils.ExpressionUtils;
 
 class ConstantSubexpressionPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
@@ -76,7 +77,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
         return (PsiPolyadicExpression)factory.createExpressionFromText(binaryExpressionText, expression);
       }
     }
-    throw new AssertionError();
+    throw null;
   }
 
   private static boolean isPartOfLargerExpression(PsiPolyadicExpression expression) {

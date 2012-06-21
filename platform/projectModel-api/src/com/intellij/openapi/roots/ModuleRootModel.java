@@ -186,7 +186,16 @@ public interface ModuleRootModel {
    */
   @NotNull String[] getDependencyModuleNames();
 
+  /**
+   * @deprecated use {@code JavaModuleExternalPaths} instead
+   */
+  @Deprecated
   @NotNull VirtualFile[] getRootPaths(OrderRootType rootType);
+
+  /**
+   * @deprecated use {@code JavaModuleExternalPaths} instead
+   */
+  @Deprecated
   @NotNull String[] getRootUrls(OrderRootType rootType);
 
   <T> T getModuleExtension(Class<T> klass);

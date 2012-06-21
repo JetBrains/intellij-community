@@ -21,7 +21,6 @@ package com.intellij.compiler;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -40,6 +39,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean USE_COMPILE_SERVER = false;
   public boolean MAKE_PROJECT_ON_SAVE = false;
+  public boolean ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION = false;
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, CompilerWorkspaceConfiguration.class);

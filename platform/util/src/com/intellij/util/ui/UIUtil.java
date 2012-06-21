@@ -612,7 +612,7 @@ public class UIUtil {
   }
 
   public static Color getListUnfocusedSelectionBackground() {
-    return UNFOCUSED_SELECTION_COLOR;
+    return isUnderDarcula() ? Gray._52 : UNFOCUSED_SELECTION_COLOR;
   }
 
   public static Color getTextFieldForeground() {
@@ -818,8 +818,18 @@ public class UIUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderAquaBasedLookAndFeel() {
+    return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderMotif() {
     return UIManager.getLookAndFeel().getName().contains("Motif");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderDarcula() {
+    return UIManager.getLookAndFeel().getName().contains("Darcula");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

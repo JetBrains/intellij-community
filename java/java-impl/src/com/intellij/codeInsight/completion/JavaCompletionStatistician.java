@@ -59,7 +59,14 @@ public class JavaCompletionStatistician extends CompletionStatistician{
         PsiType expectedType = infos != null && infos.length > 0 ? infos[0].getDefaultType() : null;
         return new StatisticsInfo(JavaStatisticsManager.getAfterNewKey(expectedType), key2);
       }
-      return new StatisticsInfo(JavaStatisticsManager.getMemberUseKey2(((PsiMember)o).getContainingClass()), key2);
+      PsiClass containingClass = ((PsiMember)o).getContainingClass();
+      if (containingClass != null) {
+        if (CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+          return StatisticsInfo.EMPTY;
+        }
+
+        return new StatisticsInfo(JavaStatisticsManager.getMemberUseKey2(containingClass), key2);
+      }
     }
 
     if (qualifierType != null) return StatisticsInfo.EMPTY;

@@ -7,6 +7,6 @@ static <S> S apply (AtomicReference<S> self, mutation) {
     if (self.compareAndSet(s, newState))
       return newState
 
-    print foo
+    print 'foo'
   }
 }

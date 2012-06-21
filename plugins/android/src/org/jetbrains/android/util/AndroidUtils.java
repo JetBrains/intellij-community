@@ -43,7 +43,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -125,6 +128,7 @@ public class AndroidUtils {
   @NonNls public static final String ANDROID_LIBRARY_PROPERTY = "android.library";
   @NonNls public static final String ANDROID_TARGET_PROPERTY = "target";
   @NonNls public static final String ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX = "android.library.reference.";
+  @NonNls public static final String TAG_LINEAR_LAYOUT = "LinearLayout";
 
   private AndroidUtils() {
   }

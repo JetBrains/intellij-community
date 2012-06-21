@@ -16,12 +16,15 @@
 package com.intellij.android.designer.designSurface;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ComparatorUtil;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,6 +39,8 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   private volatile boolean myRunState;
   private volatile boolean myInitialize;
   private String myContent;
+  private VirtualFile[] myResourceDepends;
+  private boolean myUpdateRenderer;
 
   public ExternalPSIChangeListener(AndroidDesignerEditorPanel designer, PsiFile file, int delayMillis, Runnable runnable) {
     myDesigner = designer;
@@ -43,6 +48,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     myDelayMillis = delayMillis;
     myRunnable = runnable;
     myContent = myDesigner.getEditorText();
+    PsiManager.getInstance(myDesigner.getProject()).addPsiTreeChangeListener(this);
   }
 
   public void setInitialize() {
@@ -52,14 +58,17 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   public void start() {
     if (!myRunState) {
       myRunState = true;
-      PsiManager.getInstance(myDesigner.getProject()).addPsiTreeChangeListener(this);
     }
+  }
+
+  public void dispose() {
+    PsiManager.getInstance(myDesigner.getProject()).removePsiTreeChangeListener(this);
+    stop();
   }
 
   public void stop() {
     if (myRunState) {
       myRunState = false;
-      PsiManager.getInstance(myDesigner.getProject()).removePsiTreeChangeListener(this);
       clear();
     }
   }
@@ -68,6 +77,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     if (!myRunState) {
       start();
       if (!ComparatorUtil.equalsNullable(myContent, myDesigner.getEditorText()) || myDesigner.getRootComponent() == null) {
+        myUpdateRenderer = false;
         addRequest();
       }
       myContent = null;
@@ -79,16 +89,17 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
       stop();
       myContent = myDesigner.getEditorText();
     }
-  }
 
-  private void updatePsi(PsiTreeChangeEvent event) {
-    if (myRunState && myFile == event.getFile()) {
-      addRequest();
-    }
+    myUpdateRenderer = false;
+    myResourceDepends = AndroidFacet.getInstance(myDesigner.getModule()).getLocalResourceManager().getAllResourceDirs();
   }
 
   public void addRequest() {
     addRequest(myRunnable);
+  }
+
+  public boolean isUpdateRenderer() {
+    return myUpdateRenderer;
   }
 
   public void addRequest(final Runnable runnable) {
@@ -106,6 +117,31 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   public void clear() {
     myAlarm.cancelAllRequests();
   }
+
+  private void updatePsi(PsiTreeChangeEvent event) {
+    if (myRunState) {
+      if (myFile == event.getFile()) {
+        addRequest();
+      }
+    }
+    else if (myResourceDepends != null && !myUpdateRenderer) {
+      PsiFile psiFile = event.getFile();
+      if (psiFile == null) {
+        return;
+      }
+      VirtualFile file = psiFile.getVirtualFile();
+      if (file == null) {
+        return;
+      }
+      for (VirtualFile resourceDir : myResourceDepends) {
+        if (VfsUtilCore.isAncestor(resourceDir, file, false)) {
+          myUpdateRenderer = true;
+          break;
+        }
+      }
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // PSI

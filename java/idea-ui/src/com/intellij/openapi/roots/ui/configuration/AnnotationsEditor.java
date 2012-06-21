@@ -19,7 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -64,7 +64,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
       final TableItem item = ((MyTableModel)myTable.getModel()).getTableItemAt(row);
       urls[row] = item.getUrl();
     }
-    getModel().setRootUrls(AnnotationOrderRootType.getInstance(), urls);
+    getModel().getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(urls);
   }
 
   public JComponent createComponentImpl() {
@@ -120,7 +120,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
   protected DefaultTableModel createModel() {
     final MyTableModel tableModel = new MyTableModel();
-    final String[] urls = getModel().getRootUrls(AnnotationOrderRootType.getInstance());
+    final String[] urls = getModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsUrls();
     for (String javadocUrl : urls) {
       tableModel.addTableItem(new TableItem(javadocUrl));
     }

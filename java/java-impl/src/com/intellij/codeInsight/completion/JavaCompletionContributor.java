@@ -96,8 +96,8 @@ public class JavaCompletionContributor extends CompletionContributor {
         public boolean accepts(@NotNull PsiSwitchStatement psiSwitchStatement, ProcessingContext context) {
           final PsiExpression expression = psiSwitchStatement.getExpression();
           if(expression == null) return false;
-          final PsiType type = expression.getType();
-          return type instanceof PsiClassType;
+          PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+          return aClass != null && aClass.isEnum();
         }
       })));
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
