@@ -250,7 +250,7 @@ public class CommandMerger {
     return false;
   }
 
-  private boolean hasChangesOf(DocumentReference ref) {
+  public boolean hasChangesOf(DocumentReference ref) {
     for (UndoableAction action : myCurrentActions) {
       DocumentReference[] refs = action.getAffectedDocuments();
       if (refs == null || ArrayUtil.contains(ref, refs)) return true;
