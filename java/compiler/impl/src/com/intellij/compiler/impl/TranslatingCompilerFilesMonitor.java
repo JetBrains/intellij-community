@@ -831,13 +831,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
 
     private SourceFileInfo(@NotNull DataInput in) throws IOException {
-      final int projCount = in.readInt();
+      final int projCount = DataInputOutputUtil.readINT(in);
       for (int idx = 0; idx < projCount; idx++) {
-        final int projectId = in.readInt();
-        final long stamp = in.readLong();
+        final int projectId = DataInputOutputUtil.readINT(in);
+        final long stamp = DataInputOutputUtil.readTIME(in);
         updateTimestamp(projectId, stamp);
 
-        final int pathsCount = in.readInt();
+        final int pathsCount = DataInputOutputUtil.readINT(in);
         for (int i = 0; i < pathsCount; i++) {
           final int path = in.readInt();
           addOutputPath(projectId, path);
@@ -847,18 +847,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
     public void save(@NotNull final DataOutput out) throws IOException {
       final int[] projects = getProjectIds().toArray();
-      out.writeInt(projects.length);
+      DataInputOutputUtil.writeINT(out, projects.length);
       for (int projectId : projects) {
-        out.writeInt(projectId);
-        out.writeLong(getTimestamp(projectId));
+        DataInputOutputUtil.writeINT(out, projectId);
+        DataInputOutputUtil.writeTIME(out, getTimestamp(projectId));
         final Object value = myProjectToOutputPathMap != null? myProjectToOutputPathMap.get(projectId) : null;
         if (value instanceof Integer) {
-          out.writeInt(1);
+          DataInputOutputUtil.writeINT(out, 1);
           out.writeInt(((Integer)value).intValue());
         }
         else if (value instanceof TIntHashSet) {
           final TIntHashSet set = (TIntHashSet)value;
-          out.writeInt(set.size());
+          DataInputOutputUtil.writeINT(out, set.size());
           final IOException[] ex = new IOException[] {null};
           set.forEach(new TIntProcedure() {
             public boolean execute(final int value) {
@@ -877,7 +877,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           }
         }
         else {
-          out.writeInt(0);
+          DataInputOutputUtil.writeINT(out, 0);
         }
       }
     }

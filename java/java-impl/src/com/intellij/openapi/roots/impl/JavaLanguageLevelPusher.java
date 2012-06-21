@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,14 +78,14 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     return false;
   }
 
-  private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 1, true);
+  private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 2, true);
 
   @Override
   public void persistAttribute(VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
     if (iStream != null) {
       try {
-        final int oldLevelOrdinal = iStream.readInt();
+        final int oldLevelOrdinal = DataInputOutputUtil.readINT(iStream);
         if (oldLevelOrdinal == level.ordinal()) return;
       }
       finally {
@@ -93,7 +94,7 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     }
 
     final DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir);
-    oStream.writeInt(level.ordinal());
+    DataInputOutputUtil.writeINT(oStream, level.ordinal());
     oStream.close();
 
     for (VirtualFile child : fileOrDir.getChildren()) {
