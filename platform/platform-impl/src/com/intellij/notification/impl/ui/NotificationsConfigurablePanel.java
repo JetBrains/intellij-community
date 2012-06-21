@@ -21,6 +21,7 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     setLayout(new BorderLayout());
     myTable = new NotificationsTable();
 
-    JScrollPane scrollPane = StripeTable.createScrollPane(myTable);
+    JScrollPane scrollPane = new JBScrollPane(myTable);
     scrollPane.setBorder(new LineBorder(UIUtil.getBorderColor()));
     add(scrollPane, BorderLayout.CENTER);
     myDisplayBalloons = new JCheckBox("Display balloon notifications");
