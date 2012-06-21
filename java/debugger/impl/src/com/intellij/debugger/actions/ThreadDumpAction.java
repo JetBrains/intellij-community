@@ -287,7 +287,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     try {
       sourceName = location.sourceName();
     }
-    catch (AbsentInformationException e) {
+    catch (Throwable e) {
       sourceName = "Unknown Source";
     }
     return DebuggerBundle.message(
