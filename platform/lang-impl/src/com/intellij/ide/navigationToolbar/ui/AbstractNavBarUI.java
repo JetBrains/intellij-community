@@ -69,7 +69,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Nullable
   @Override
   public Color getForeground(boolean selected, boolean focused, boolean inactive) {
-    return selected && focused ? UIUtil.getListSelectionForeground()
+    return (selected && focused) || UIUtil.isUnderDarcula() ? UIUtil.getListSelectionForeground()
                                : inactive ? UIUtil.getInactiveTextColor() : null;
   }
 
@@ -135,7 +135,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
     BufferedImage result = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 
-    final Paint bg = floating ? Color.WHITE : new GradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
+    Color defaultBg = UIUtil.isUnderDarcula() ? Gray._100 : Color.WHITE;
+    final Paint bg = floating ? defaultBg : new GradientPaint(0, 0, new Color(255, 255, 255, 30), 0, h, new Color(255, 255, 255, 10));
     final Color selection = UIUtil.getListSelectionBackground();
     
     Graphics2D g2 = result.createGraphics();
