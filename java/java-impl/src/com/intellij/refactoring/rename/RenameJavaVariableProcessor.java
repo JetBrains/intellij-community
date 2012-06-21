@@ -120,7 +120,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     if (!(replacedOccurence instanceof PsiReferenceExpression)) return;
     PsiElement elem = ((PsiReferenceExpression)replacedOccurence).resolve();
 
-    if (elem == null || elem == field) {
+    if (elem == null || elem == field || elem.isEquivalentTo(field)) {
       // If reference is unresolved, then field is not hidden by anyone...
       return;
     }
