@@ -17,25 +17,19 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ui.Gray;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBViewport;
-import com.intellij.util.ui.Table;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.table.JBTable;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 /**
  * @author spleaner
+ * @author Konstantin Bulenkov
  */
-public class StripeTable extends Table {
-  private static final Color EVEN_ROW_COLOR = new Color(241, 245, 250);
+public class StripeTable extends JBTable {
   private static final Color GRID_COLOR = Gray._217;
   private static final CellRendererPane RENDER_PANE = new CellRendererPane();
 
@@ -45,10 +39,11 @@ public class StripeTable extends Table {
     setAutoResizeMode(AUTO_RESIZE_OFF);
     setTableHeader(createTableHeader());
     getTableHeader().setReorderingAllowed(false);
-    setOpaque(false);
+    //setOpaque(false);
     setGridColor(GRID_COLOR);
     setIntercellSpacing(new Dimension(1, 0));
     setShowGrid(false);
+    setStriped(true);
   }
 
   private JTableHeader createTableHeader() {
@@ -73,66 +68,4 @@ public class StripeTable extends Table {
     ((JComponent)component).setOpaque(false);
     RENDER_PANE.paintComponent(g, component, null, x, 0, width, table.getTableHeader().getHeight(), true);
   }
-
-  @Override
-  public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-    Component component = super.prepareRenderer(renderer, row, column);
-    if (component instanceof JComponent) {
-      ((JComponent)component).setOpaque(getSelectionModel().isSelectedIndex(row)  || row % 2 == 0 );
-      if (!getSelectionModel().isSelectedIndex(row) && row % 2 == 0) component.setBackground(EVEN_ROW_COLOR);
-    }
-
-    return component;
-  }
-
-  public static JScrollPane createScrollPane(JTable table) {
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(table);
-    // Fix GTK background
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      scrollPane.setBackground(UIUtil.getTreeTextBackground());
-    }
-    scrollPane.setViewport(new StripedViewport(table));
-    scrollPane.getViewport().setView(table);
-    scrollPane.setBorder(UIManager.getBorder("Table.scrollPaneBorder"));
-    return scrollPane;
-  }
-
-  private static class StripedViewport extends JBViewport {
-    private final JTable myTable;
-
-    public StripedViewport(JTable table) {
-      myTable = table;
-      setOpaque(false);
-      initListeners();
-    }
-
-    private void initListeners() {
-      PropertyChangeListener listener = createTableColumnWidthListener();
-      for (int i = 0; i < myTable.getColumnModel().getColumnCount(); i++) {
-        myTable.getColumnModel().getColumn(i).addPropertyChangeListener(listener);
-      }
-    }
-
-    private PropertyChangeListener createTableColumnWidthListener() {
-      return new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent evt) {
-          repaint();
-        }
-      };
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      int x = 0;
-      for (int i = 0; i < myTable.getColumnCount(); i++) {
-        TableColumn column = myTable.getColumnModel().getColumn(i);
-        x += column.getWidth();
-        g.setColor(GRID_COLOR);
-        g.drawLine(x - 1, g.getClipBounds().y, x - 1, getHeight());
-      }
-
-      super.paintComponent(g);
-    }
-  }
-
 }

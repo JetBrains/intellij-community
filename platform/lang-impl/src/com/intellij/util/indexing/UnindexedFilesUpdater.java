@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +63,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   @Override
   public void processFile(final FileContent fileContent) {
     myIndex.indexFileContent(myProject, fileContent);
-    IndexingStamp.flushCache();
+    IndexingStamp.flushCache(fileContent.getVirtualFile());
   }
 
   @Override

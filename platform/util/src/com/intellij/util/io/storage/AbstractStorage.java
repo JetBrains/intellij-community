@@ -26,11 +26,15 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.PagePool;
+import com.intellij.util.io.RecordDataOutput;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NonNls;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class AbstractStorage implements Disposable, Forceable {
@@ -46,6 +50,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   protected AbstractRecordsTable myRecordsTable;
   protected DataTable myDataTable;
   protected PagePool myPool;
+  private final CapacityAllocationPolicy myCapacityAllocationPolicy;
 
   public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
@@ -67,6 +72,19 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   }
 
   protected AbstractStorage(String storageFilePath, PagePool pool) throws IOException {
+    this(storageFilePath, pool, CapacityAllocationPolicy.DEFAULT);
+  }
+
+  protected AbstractStorage(String storageFilePath,
+                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this(storageFilePath, PagePool.SHARED, capacityAllocationPolicy);
+  }
+
+  protected AbstractStorage(String storageFilePath,
+                            PagePool pool,
+                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
+                                                                  : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, pool, 0);
   }
 
@@ -139,7 +157,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
           if (size > 0) {
             assert addr > 0;
 
-            final int capacity = calcCapacity(size);
+            final int capacity = myCapacityAllocationPolicy.calculateCapacity(size);
             final long newaddr = newDataTable.allocateSpace(capacity);
             final byte[] bytes = new byte[size];
             myDataTable.readBytes(addr, bytes);
@@ -200,19 +218,6 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     synchronized (myLock) {
       return myDataTable.isDirty() || myRecordsTable.isDirty();
     }
-  }
-
-  private static int calcCapacity(int requiredLength) {
-    return Math.max(64, Math.min(nearestPowerOfTwo(requiredLength * 3 / 2), (requiredLength / 1024 + 1) * 1024));
-  }
-
-  private static int nearestPowerOfTwo(int n) {
-    int power = 1;
-    while (n != 0) {
-      power *= 2;
-      n /= 2;
-    }
-    return power;
   }
 
   public StorageDataOutput writeStream(final int record) {
@@ -289,7 +294,8 @@ public abstract class AbstractStorage implements Disposable, Forceable {
       else {
         myDataTable.reclaimSpace(currentCapacity);
 
-        final int newCapacity = fixedSize ? requiredLength : calcCapacity(requiredLength);
+        int newCapacity = fixedSize ? requiredLength:myCapacityAllocationPolicy.calculateCapacity(requiredLength);
+        if (newCapacity < requiredLength) newCapacity = requiredLength;
         address = myDataTable.allocateSpace(newCapacity);
         myRecordsTable.setAddress(record, address);
         myRecordsTable.setCapacity(record, newCapacity);

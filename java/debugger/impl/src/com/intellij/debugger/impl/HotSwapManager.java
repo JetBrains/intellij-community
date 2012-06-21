@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -154,10 +155,11 @@ public class HotSwapManager extends AbstractProjectComponent {
     return project.getComponent(HotSwapManager.class);
   }
 
-  private void reloadClasses(DebuggerSession session, Map<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
+  private void reloadClasses(DebuggerSession session, HotSwapProgress progress) {
     final long newSwapTime = System.currentTimeMillis();
-    new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
+    new ReloadClassesWorker(session, progress).reloadClasses();
     setTimeStamp(session, newSwapTime);
+    session.clearHotswapFiles();
   }
 
   public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<DebuggerSession> sessions, Map<String, List<String>> generatedPaths) {
@@ -223,7 +225,7 @@ public class HotSwapManager extends AbstractProjectComponent {
     return swapProgress.isCancelled() ? new HashMap<DebuggerSession, Map<String, HotSwapFile>>() : modifiedClasses;
   }
 
-  public static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgress reloadClassesProgress) {
+  public static void reloadModifiedClasses(final Collection<DebuggerSession> sessions, final HotSwapProgress reloadClassesProgress) {
     final MultiProcessCommand reloadClassesCommand = new MultiProcessCommand();
 
     reloadClassesProgress.setCancelWorker(new Runnable() {
@@ -232,13 +234,11 @@ public class HotSwapManager extends AbstractProjectComponent {
       }
     });
 
-    for (final DebuggerSession debuggerSession : modifiedClasses.keySet()) {
+    for (final DebuggerSession debuggerSession : sessions) {
       reloadClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
         protected void action() throws Exception {
           reloadClassesProgress.setDebuggerSession(debuggerSession);
-          getInstance(reloadClassesProgress.getProject()).reloadClasses(
-            debuggerSession, modifiedClasses.get(debuggerSession), reloadClassesProgress
-          );
+          getInstance(reloadClassesProgress.getProject()).reloadClasses(debuggerSession, reloadClassesProgress);
         }
       });
     }

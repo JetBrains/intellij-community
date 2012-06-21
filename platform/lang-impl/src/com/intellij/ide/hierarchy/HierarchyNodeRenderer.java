@@ -16,16 +16,28 @@
 
 package com.intellij.ide.hierarchy;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.FileColorManager;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.util.treeView.NodeRenderer;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 
-public final class HierarchyNodeRenderer extends ColoredTreeCellRenderer {
+/**
+ * @author Konstantin Bulenkov
+ */
+public final class HierarchyNodeRenderer extends NodeRenderer {
+  public HierarchyNodeRenderer() {
+    setOpaque(false);
+    setIconOpaque(false);
+    setTransparentIconBackground(true);
+  }
+
+  @Override
+  protected void doPaint(Graphics2D g) {
+    super.doPaint(g);
+    setOpaque(false);
+  }
+
   public void customizeCellRenderer(final JTree tree, final Object value, final boolean selected, final boolean expanded, final boolean leaf,
                                     final int row, final boolean hasFocus) {
     if (value instanceof DefaultMutableTreeNode) {
@@ -40,23 +52,7 @@ public final class HierarchyNodeRenderer extends ColoredTreeCellRenderer {
         else{
           setIcon(descriptor.getClosedIcon());
         }
-        if (!selected)  {
-          final Color color = getBackgroundColor(descriptor);
-          if (color != null) {
-            setBackground(color);
-          }
-        }
       }
     }
-  }
-
-  @Nullable
-  private static Color getBackgroundColor(final HierarchyNodeDescriptor descriptor) {
-    final PsiFile psiFile = descriptor.getContainingFile();
-    if (psiFile != null && psiFile.isValid()) {
-      final FileColorManager colorManager = FileColorManager.getInstance(descriptor.getProject());
-      return colorManager.getRendererBackground(psiFile);
-    }
-    return null;
   }
 }

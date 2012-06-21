@@ -88,7 +88,8 @@ class MockGit implements Git {
 
   @NotNull
   @Override
-  GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @NotNull GitLineHandlerListener... listeners) {
+  GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @Nullable List<String> additionalParams,
+                         @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 

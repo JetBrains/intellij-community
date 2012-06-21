@@ -552,13 +552,26 @@ public class GitUtil {
   }
 
   /**
-   * Unescape path returned by the Git
+   * <p>Unescape path returned by Git.</p>
+   * <p>
+   *   If there are quotes in the file name, Git not only escapes them, but also encloses the file name into quotes:
+   *   <code>"\"quote"</code>
+   * </p>
+   * <p>
+   *   If there are spaces in the file name, Git displays the name as is, without escaping spaces and without enclosing name in quotes.
+   * </p>
    *
    * @param path a path to unescape
-   * @return unescaped path
+   * @return unescaped path ready to be searched in the VFS or file system.
    * @throws com.intellij.openapi.vcs.VcsException if the path in invalid
    */
-  public static String unescapePath(String path) throws VcsException {
+  @NotNull
+  public static String unescapePath(@NotNull String path) throws VcsException {
+    final String QUOTE = "\"";
+    if (path.startsWith(QUOTE) && path.endsWith(QUOTE)) {
+      path = path.substring(1, path.length() - 1);
+    }
+
     final int l = path.length();
     StringBuilder rc = new StringBuilder(l);
     for (int i = 0; i < path.length(); i++) {
@@ -579,6 +592,9 @@ public class GitUtil {
             break;
           case 'n':
             rc.append('\n');
+            break;
+          case '"':
+            rc.append('"');
             break;
           default:
             if (VcsFileUtil.isOctal(e)) {

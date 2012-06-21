@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class EditorNotificationPanel extends JPanel {
     add(myLabel, BorderLayout.CENTER);
 
     myLinksPanel = new JPanel(new FlowLayout());
-    myLinksPanel.setBackground(LightColors.YELLOW);
+    myLinksPanel.setBackground(getBackground());
     add(myLinksPanel, BorderLayout.EAST);
   }
 
@@ -56,7 +57,7 @@ public class EditorNotificationPanel extends JPanel {
   @Override
   public Color getBackground() {
     Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.NOTIFICATION_BACKGROUND);
-    return color == null ? new Color(0xffffcc) : color;
+    return color == null ? UIUtil.getToolTipBackground() : color;
   }
 
   public HyperlinkLabel createActionLabel(final String text, @NonNls final String actionId) {

@@ -46,8 +46,21 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
   }
 
   private static String dump(final HierarchyTreeStructure treeStructure, @Nullable HierarchyNodeDescriptor descriptor, int level) {
+    StringBuilder s = new StringBuilder();
+    dump(treeStructure, descriptor, level, s);
+    return s.toString();
+  }
+
+  private static void dump(final HierarchyTreeStructure treeStructure,
+                             @Nullable HierarchyNodeDescriptor descriptor,
+                             int level,
+                             StringBuilder b) {
+    if (level > 10) {
+      for(int i = 0; i<level; i++) b.append("  ");
+      b.append("<Probably infinite part skipped>\n");
+      return;
+    }
     if(descriptor==null) descriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
-    StringBuilder b = new StringBuilder();
     for(int i = 0; i<level; i++) b.append("  ");
     descriptor.update();
     b.append("<node text=\"").append(descriptor.getHighlightedText().getText()).append("\"")
@@ -56,16 +69,15 @@ public abstract class HierarchyViewTestBase extends CodeInsightTestCase {
     final Object[] children = treeStructure.getChildElements(descriptor);
     if(children.length>0) {
       b.append(">\n");
-      for(Object o : children) {
+      for (Object o : children) {
         HierarchyNodeDescriptor d = (HierarchyNodeDescriptor)o;
-        b.append(dump(treeStructure, d, level + 1));
+        dump(treeStructure, d, level + 1, b);
       }
       for(int i = 0; i<level; i++) b.append("  ");
       b.append("</node>\n");
     } else {
       b.append("/>\n");
     }
-    return b.toString();
   }
 
   private static void checkHierarchyTreeStructure(final HierarchyTreeStructure treeStructure, final Document document) {

@@ -64,10 +64,7 @@ import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class DebuggerSession implements AbstractDebuggerSession {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerSession");
@@ -193,6 +190,21 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public DebugProcessImpl getProcess() {
     return myDebugProcess;
+  }
+
+  private final Map<String, HotSwapFile> myDelayedHotswapFiles = new HashMap<String, HotSwapFile>();
+
+  public void addHotswapFiles(Map<String, HotSwapFile> files) {
+    myDelayedHotswapFiles.putAll(files);
+  }
+
+  @NotNull
+  public Map<String, HotSwapFile> getHotswapFiles() {
+    return Collections.unmodifiableMap(myDelayedHotswapFiles);
+  }
+
+  public void clearHotswapFiles() {
+    myDelayedHotswapFiles.clear();
   }
 
   private static class DebuggerSessionState {

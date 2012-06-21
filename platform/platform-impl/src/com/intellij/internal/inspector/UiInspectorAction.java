@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
@@ -437,7 +438,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
-      add(StripeTable.createScrollPane(table), BorderLayout.CENTER);
+      add(new JBScrollPane(table), BorderLayout.CENTER);
       myDimensionComponent = new DimensionsComponent(component);
       add(myDimensionComponent, BorderLayout.SOUTH);
     }

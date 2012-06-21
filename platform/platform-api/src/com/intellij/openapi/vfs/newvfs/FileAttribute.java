@@ -21,6 +21,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ public class FileAttribute {
     DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
     if (stream != null) {
       try {
-        int actualVersion = stream.readInt();
+        int actualVersion = DataInputOutputUtil.readINT(stream);
         if (actualVersion != myVersion) {
           stream.close();
           return null;
@@ -74,7 +75,7 @@ public class FileAttribute {
   public DataOutputStream writeAttribute(VirtualFile file) {
     final DataOutputStream stream = ManagingFS.getInstance().writeAttribute(file, this);
     try {
-      stream.writeInt(myVersion);
+      DataInputOutputUtil.writeINT(stream, myVersion);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

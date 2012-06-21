@@ -655,7 +655,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
       return;
     }
-    IndexingStamp.flushCache();
+    IndexingStamp.flushCache(null);
     for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
       if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount) {
         return; // do not interfere with 'main' jobs
@@ -1823,7 +1823,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           return true;
         }
       });
-      IndexingStamp.flushCache();
+      IndexingStamp.flushCache(null);
     }
 
     public void scheduleForUpdate(VirtualFile file) {
@@ -1845,7 +1845,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       else {
         cleanProcessedFlag(file);
-        IndexingStamp.flushCache();
+        IndexingStamp.flushCache(file);
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
 
         for (final ID<?, ?> indexId : myIndices.keySet()) {
@@ -1905,7 +1905,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
         }
         
-        IndexingStamp.flushCache();
+        IndexingStamp.flushCache(file);
       }
     }
 
@@ -1928,7 +1928,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
         }
       }
-      IndexingStamp.flushCache();
+      IndexingStamp.flushCache(file);
       if (unexpectedError != null) {
         LOG.error(unexpectedError);
       }
@@ -2041,7 +2041,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         else {
           indexFileContent(project, fileContent);
         }
-        IndexingStamp.flushCache();
+        IndexingStamp.flushCache(file);
       }
     }
   }
@@ -2112,7 +2112,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 }
               }
             }
-            IndexingStamp.flushCache();
+            IndexingStamp.flushCache(file);
 
             if (oldStuff && file instanceof NewVirtualFile) {
               ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, true);

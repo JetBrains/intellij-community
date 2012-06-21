@@ -24,12 +24,15 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
+import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +63,7 @@ public class GitRebaseUpdater extends GitUpdater {
 
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
-    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String remoteBranch = gitBranchPair.getDest().getName();
+    String remoteBranch = getRemoteBranchToMerge();
 
     final GitLineHandler rebaseHandler = new GitLineHandler(myProject, myRoot, GitCommand.REBASE);
     rebaseHandler.addParameters(remoteBranch);
@@ -97,6 +99,15 @@ public class GitRebaseUpdater extends GitUpdater {
       updateResult.set(handleRebaseFailure(rebaseHandler, rebaseConflictDetector, untrackedWouldBeOverwrittenDetector));
     }
     return updateResult.get();
+  }
+
+  @NotNull
+  private String getRemoteBranchToMerge() {
+    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
+    GitBranch dest = gitBranchPair.getDest();
+    LOG.assertTrue(dest != null, String.format("Destination branch is null for source branch %s in %s",
+                                               gitBranchPair.getBranch().getName(), myRoot));
+    return dest.getName();
   }
 
   private GitUpdateResult handleRebaseFailure(GitLineHandler pullHandler,
@@ -157,6 +168,17 @@ public class GitRebaseUpdater extends GitUpdater {
   @Override
   public String toString() {
     return "Rebase updater";
+  }
+
+  public boolean fastForwardMerge() {
+    LOG.info("Trying fast-forward merge for " + myRoot);
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
+    if (repository == null) {
+      LOG.error("Repository is null for " + myRoot);
+      return false;
+    }
+    GitCommandResult result = myGit.merge(repository, getRemoteBranchToMerge(), Collections.singletonList("--ff-only"));
+    return result.success();
   }
 
   private static class MyConflictResolver extends GitConflictResolver {

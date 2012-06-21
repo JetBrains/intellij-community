@@ -27,7 +27,7 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import gnu.trove.TObjectLongHashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ import java.util.Locale;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class IndexInfrastructure {
   private static final int VERSION = 9;
-  private static final TObjectLongHashMap<ID<?, ?>> ourIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
+  private static final ConcurrentHashMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = new ConcurrentHashMap<ID<?, ?>, Long>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   private IndexInfrastructure() {
@@ -78,23 +78,20 @@ public class IndexInfrastructure {
       os.writeInt(VERSION);
     }
     finally {
-      synchronized (ourIndexIdToCreationStamp) {
-        ourIndexIdToCreationStamp.clear();
-      }
+      ourIndexIdToCreationStamp.clear();
       os.close();
       file.setLastModified(Math.max(System.currentTimeMillis(), prevLastModifiedValue + 1000));
     }
   }
 
   public static long getIndexCreationStamp(ID<?, ?> indexName) {
-    synchronized (ourIndexIdToCreationStamp) {
-      long stamp = ourIndexIdToCreationStamp.get(indexName);
-      if (stamp <= 0) {
-        stamp = getVersionFile(indexName).lastModified();
-        ourIndexIdToCreationStamp.put(indexName, stamp);
-      }
-      return stamp;
-    }
+    Long version = ourIndexIdToCreationStamp.get(indexName);
+    if (version != null) return version.longValue();
+
+    long stamp = getVersionFile(indexName).lastModified();
+    ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
+
+    return stamp;
   }
 
   public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {

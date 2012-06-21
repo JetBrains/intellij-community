@@ -29,8 +29,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.tabs.FileColorManagerImpl;
+import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import java.awt.*;
@@ -80,12 +83,16 @@ public abstract class ProjectViewTree extends DnDAwareTree {
 
   @Override
   public boolean isFileColorsEnabled() {
+    return isFileColorsEnabledFor(this);
+  }
+
+  public static boolean isFileColorsEnabledFor(JTree tree) {
     final boolean enabled = FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
-    final boolean opaque = isOpaque();
+    final boolean opaque = tree.isOpaque();
     if (enabled && opaque) {
-      setOpaque(false);
+      tree.setOpaque(false);
     } else if (!enabled && !opaque) {
-      setOpaque(true);
+      tree.setOpaque(true);
     }
     return enabled;
   }
@@ -93,29 +100,42 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
+    return getColorForObject(object, getProject(), new NullableFunction<Object, PsiElement>() {
+      @Override
+      public PsiElement fun(Object object) {
+        if (object instanceof AbstractTreeNode) {
+          final Object element = ((AbstractTreeNode)object).getValue();
+          if (element instanceof PsiElement) {
+            return (PsiElement)element;
+          }
+        }
+        return null;
+      }
+    });
+  }
+
+  @Nullable
+  public static Color getColorForObject(Object object, Project project, @NotNull NullableFunction<Object, PsiElement> converter) {
     Color color = null;
-    if (object instanceof AbstractTreeNode) {
-      final Object element = ((AbstractTreeNode)object).getValue();
-      if (element instanceof PsiElement) {
-        final PsiElement psi = (PsiElement)element;
-        if (!psi.isValid()) return null;
+    final PsiElement psi = converter.fun(object);
+    if (psi != null) {
+      if (!psi.isValid()) return null;
 
-        final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
+      final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
 
-        if (file != null) {
-          color = FileColorManager.getInstance(getProject()).getFileColor(file);
-        } else if (psi instanceof PsiDirectory) {
-          color = FileColorManager.getInstance(getProject()).getFileColor(((PsiDirectory)psi).getVirtualFile());
-        } else if (psi instanceof PsiDirectoryContainer) {
-          final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
-          for (PsiDirectory dir : dirs) {
-            Color c = FileColorManager.getInstance(getProject()).getFileColor(dir.getVirtualFile());
-            if (c != null && color == null) {
-              color = c;
-            } else if (c != null) {
-              color = null;
-              break;
-            }
+      if (file != null) {
+        color = FileColorManager.getInstance(project).getFileColor(file);
+      } else if (psi instanceof PsiDirectory) {
+        color = FileColorManager.getInstance(project).getFileColor(((PsiDirectory)psi).getVirtualFile());
+      } else if (psi instanceof PsiDirectoryContainer) {
+        final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
+        for (PsiDirectory dir : dirs) {
+          Color c = FileColorManager.getInstance(project).getFileColor(dir.getVirtualFile());
+          if (c != null && color == null) {
+            color = c;
+          } else if (c != null) {
+            color = null;
+            break;
           }
         }
       }
