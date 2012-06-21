@@ -64,6 +64,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     checkResultByFile(path + "/after1.java");
 
     configureByFile(path + "/before2.java");
+    selectItem(myItems[0]);
     checkResultByFile(path + "/after2.java");
   }
 

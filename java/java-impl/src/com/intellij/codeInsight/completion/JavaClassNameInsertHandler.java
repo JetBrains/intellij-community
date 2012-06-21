@@ -32,9 +32,6 @@ import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.hash.HashSet;
-
-import java.util.Set;
 
 /**
 * @author peter
@@ -91,8 +88,9 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
 
     PsiTypeLookupItem.addImportForItem(context, psiClass);
+    context.setTailOffset(context.getOffset(refEnd));
 
-    if (shouldInsertParentheses(psiClass, file.findElementAt(context.getTailOffset() - 1))) {
+    if (shouldInsertParentheses(file.findElementAt(context.getTailOffset() - 1))) {
       if (ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
         fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
       }
@@ -122,7 +120,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
   }
 
-  private static boolean shouldInsertParentheses(PsiClass psiClass, PsiElement position) {
+  private static boolean shouldInsertParentheses(PsiElement position) {
     final PsiJavaCodeReferenceElement ref = PsiTreeUtil.getParentOfType(position, PsiJavaCodeReferenceElement.class);
     if (ref == null) {
       return false;
@@ -135,13 +133,13 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
     if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-
-      Set<PsiType> expectedTypes = new HashSet<PsiType>();
       for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes((PsiExpression)prevElement.getParent(), true)) {
-        expectedTypes.add(info.getType());
+        if (info.getType() instanceof PsiArrayType) {
+          return false;
+        }
       }
 
-      return JavaCompletionUtil.isDefinitelyExpected(psiClass, expectedTypes, position);
+      return true;
     }
 
     return false;

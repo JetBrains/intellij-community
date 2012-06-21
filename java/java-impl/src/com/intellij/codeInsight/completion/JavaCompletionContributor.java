@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -282,12 +283,14 @@ public class JavaCompletionContributor extends CompletionContributor {
     final Set<String> usedWords = new HashSet<String>();
     final PsiElement position = parameters.getPosition();
     final boolean checkAccess = parameters.getInvocationCount() <= 1;
+    final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
+    final boolean isAfterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
+    final boolean pkgContext = JavaCompletionUtil.inSomePackage(position);
     LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
       public void consume(final PsiReference reference, final CompletionResultSet result) {
         if (reference instanceof PsiJavaReference) {
           final ElementFilter filter = getReferenceFilter(position);
           if (filter != null) {
-            final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
             final PsiFile originalFile = parameters.getOriginalFile();
             for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
                                                                                   (PsiJavaReference)reference,
@@ -332,11 +335,17 @@ public class JavaCompletionContributor extends CompletionContributor {
             result.addElement((LookupElement)completion);
           }
           else if (completion instanceof PsiClass) {
-            if (!inheritors.alreadyProcessed((PsiClass)completion)) {
-              JavaPsiClassReferenceElement item = JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true);
+            for (JavaPsiClassReferenceElement item : JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion, isAfterNew,
+                                                                                                               JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER, new Condition<PsiClass>() {
+              @Override
+              public boolean value(PsiClass psiClass) {
+                return !inheritors.alreadyProcessed(psiClass) && JavaCompletionUtil.isSourceLevelAccessible(position, psiClass, pkgContext);
+              }
+            })) {
               usedWords.add(item.getLookupString());
               result.addElement(item);
             }
+
           }
           else {
             LookupElement element = LookupItemUtil.objectToLookupItem(completion);

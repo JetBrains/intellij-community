@@ -69,10 +69,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -450,8 +447,7 @@ public class JavaCompletionUtil {
 
     final Set<PsiMember> mentioned = new THashSet<PsiMember>();
     for (CompletionElement completionElement : processor.getResults()) {
-      LookupElement item = createLookupElement(completionElement, javaReference);
-      if (item != null) {
+      for (LookupElement item : createLookupElements(completionElement, javaReference)) {
         item.putUserData(QUALIFIER_TYPE_ATTR, qualifierType);
         final Object o = item.getObject();
         if (o instanceof PsiClass && !isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
@@ -604,25 +600,33 @@ public class JavaCompletionUtil {
       }), 1);
   }
 
-  private static LookupElement createLookupElement(CompletionElement completionElement, PsiJavaReference reference) {
+  private static List<? extends LookupElement> createLookupElements(CompletionElement completionElement, PsiJavaReference reference) {
     Object completion = completionElement.getElement();
     assert !(completion instanceof LookupElement);
 
-    if (completion instanceof PsiMethod &&
-        reference instanceof PsiJavaCodeReferenceElement &&
-        ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiImportStaticStatement) {
-      return JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY);
+    if (reference instanceof PsiJavaCodeReferenceElement) {
+      if (completion instanceof PsiMethod &&
+          ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiImportStaticStatement) {
+        return Arrays.asList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, PsiSubstitutor.EMPTY));
+      }
+
+      if (completion instanceof PsiClass) {
+        return JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
+                                                                         JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
+                                                                         JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
+                                                                         Condition.TRUE);
+      }
     }
 
     LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);
-    if (_ret == null || !(_ret instanceof LookupItem)) return null;
+    if (_ret == null || !(_ret instanceof LookupItem)) return Collections.emptyList();
 
     final PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor != null) {
       ((LookupItem<?>)_ret).setAttribute(LookupItem.SUBSTITUTOR, substitutor);
     }
 
-    return _ret;
+    return Arrays.asList(_ret);
   }
 
   public static boolean hasAccessibleConstructor(PsiType type) {
@@ -878,19 +882,6 @@ public class JavaCompletionUtil {
     }
   }
 
-  public static boolean hasAccessibleInnerClass(@NotNull PsiClass psiClass, @NotNull PsiElement position) {
-    final PsiClass[] inners = psiClass.getInnerClasses();
-    if (inners.length > 0) {
-      PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(position.getProject()).getResolveHelper();
-      for (PsiClass inner : inners) {
-        if (inner.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(inner, position, null)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   public static boolean inSomePackage(PsiElement context) {
     PsiFile contextFile = context.getContainingFile();
     return contextFile instanceof PsiClassOwner && StringUtil.isNotEmpty(((PsiClassOwner)contextFile).getPackageName());
@@ -912,19 +903,6 @@ public class JavaCompletionUtil {
     }
 
     return true;
-  }
-
-  public static boolean isDefinitelyExpected(PsiClass psiClass, Set<PsiType> expectedTypes, PsiElement position) {
-    final PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
-    for (PsiType expectedType : expectedTypes) {
-      if (expectedType instanceof PsiArrayType) return false;
-    }
-    for (PsiType type : expectedTypes) {
-      if (type instanceof PsiClassType && ((PsiClassType)type).rawType().isAssignableFrom(classType)) {
-        return true;
-      }
-    }
-    return !hasAccessibleInnerClass(psiClass, position);
   }
 
   public static boolean promptTypeArgs(InsertionContext context, int offset) {

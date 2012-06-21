@@ -216,7 +216,12 @@ public class GroovyCompletionUtil {
   public static List<Object> getCompletionVariants(GroovyResolveResult[] candidates) {
     List<Object> result = CollectionFactory.arrayList();
     for (GroovyResolveResult candidate : candidates) {
-      result.add(createCompletionVariant(candidate));
+      if (candidate.getElement() instanceof PsiClass) {
+        result.add(candidate);
+      } else {
+        result.add(createCompletionVariant(candidate));
+      }
+
       ProgressManager.checkCanceled();
     }
 
@@ -248,9 +253,6 @@ public class GroovyCompletionUtil {
     }
     else if (element instanceof PsiMethod) {
       return setupLookupBuilder(element, candidate.getSubstitutor(), LookupElementBuilder.create(candidate, ((PsiMethod)element).getName()));
-    }
-    if (element instanceof PsiClass) {
-      return createClassLookupItem((PsiClass)element);
     }
 
     if (element instanceof PsiNamedElement) {
