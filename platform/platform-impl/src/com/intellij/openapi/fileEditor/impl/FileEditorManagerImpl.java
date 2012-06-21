@@ -1414,7 +1414,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public boolean isChanged(@NotNull final EditorComposite editor) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
-      if (!fileStatusManager.getStatus(editor.getFile()).equals(FileStatus.NOT_CHANGED)) {
+      VirtualFile file = editor.getFile();
+      FileStatus status = fileStatusManager.getStatus(file);
+      if (status == FileStatus.UNKNOWN && !file.isWritable()) {
+        return false;
+      }
+      if (!status.equals(FileStatus.NOT_CHANGED)) {
         return true;
       }
     }
