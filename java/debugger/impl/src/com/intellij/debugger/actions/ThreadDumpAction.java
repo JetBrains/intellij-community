@@ -237,7 +237,14 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
   }
 
   public static String renderObject(ObjectReference monitor) {
-    return DebuggerBundle.message("threads.export.attribute.label.object-id", Long.toHexString(monitor.uniqueID()), monitor.referenceType().name());
+    String monitorTypeName;
+    try {
+      monitorTypeName = monitor.referenceType().name();
+    }
+    catch (Throwable e) {
+      monitorTypeName = "Error getting monitor type: '" + e.getMessage() + "'";
+    }
+    return DebuggerBundle.message("threads.export.attribute.label.object-id", Long.toHexString(monitor.uniqueID()), monitorTypeName);
   }
 
   private static String threadStatusToJavaThreadState(int status) {
