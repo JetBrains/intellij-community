@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,57 +15,40 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
- * User: anna
- * Date: 9/5/11
+ * @author Danila Ponomarenko
  */
-public class RunRefactoringAction implements RefactoringAction {
-  private final RefactoringActionHandler myHandler;
-  private final String myCommandName;
-
-  public RunRefactoringAction(RefactoringActionHandler handler, String commandName) {
-    myHandler = handler;
-    myCommandName = commandName;
-  }
-
-  @NotNull
+public abstract class BaseRefactoringAction extends PsiElementBaseIntentionAction implements RefactoringAction{
   @Override
-  public String getText() {
-    return myCommandName;
-  }
-
-  @NotNull
-  @Override
-  public final String getFamilyName() {
-    return getText();
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    return super.isAvailable(project, editor, file);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+  public final boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    return !(element instanceof SyntheticElement) && isAvailableOverride(project, editor, element);
   }
 
-  @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myHandler.invoke(project, editor, file, null);
-  }
+  protected abstract boolean isAvailableOverride(@NotNull Project project, Editor editor, @NotNull PsiElement element);
 
   @Override
-  public boolean startInWriteAction() {
+  public final boolean startInWriteAction() {
     return false;
   }
 
   @Override
-  public Icon getIcon(@IconFlags int flags) {
+  public final Icon getIcon(int flags) {
     return REFACTORING_BULB;
   }
 }

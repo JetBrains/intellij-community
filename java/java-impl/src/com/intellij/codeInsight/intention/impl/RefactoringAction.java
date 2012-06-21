@@ -15,29 +15,16 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.refactoring.RefactoringActionHandler;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author Danila Ponomarenko
  */
-public abstract class BaseRunRefactoringAction implements IntentionAction, Iconable, LowPriorityAction {
+public interface RefactoringAction extends IntentionAction, Iconable, LowPriorityAction {
   public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
-
-  @Override
-  public final boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public final Icon getIcon(int flags) {
-    return REFACTORING_BULB;
-  }
 }

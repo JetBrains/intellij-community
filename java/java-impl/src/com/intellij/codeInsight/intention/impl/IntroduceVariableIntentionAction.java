@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,8 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class IntroduceVariableIntentionAction extends BaseRunRefactoringAction {
-
+public class IntroduceVariableIntentionAction extends BaseRefactoringAction {
   @NotNull
   @Override
   public String getText() {
@@ -44,12 +42,7 @@ public class IntroduceVariableIntentionAction extends BaseRunRefactoringAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiElement element = getElement(editor, file);
-    if (element == null) {
-      return false;
-    }
-
+  protected boolean isAvailableOverride(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiExpression expression = getExpression(element);
     if (expression == null || !(expression.getParent() instanceof PsiExpressionStatement)) {
       return false;
@@ -65,14 +58,6 @@ public class IntroduceVariableIntentionAction extends BaseRunRefactoringAction {
       expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class, true);
     }
     return expression;
-  }
-
-  @Nullable
-  protected static PsiElement getElement(Editor editor, @NotNull PsiFile file) {
-    if (!file.getManager().isInProject(file)) return null;
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
-    return file.findElementAt(position);
   }
 
   @Override

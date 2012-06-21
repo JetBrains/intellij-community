@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class EncapsulateFieldAction extends BaseRunRefactoringAction {
+public class EncapsulateFieldAction extends BaseRefactoringAction {
 
   @NotNull
   @Override
@@ -43,21 +42,21 @@ public class EncapsulateFieldAction extends BaseRunRefactoringAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiField field = getField(getElement(editor, file));
+  protected boolean isAvailableOverride(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    final PsiField field = getField(element);
     return field != null && !field.hasModifierProperty(PsiModifier.FINAL) && !field.hasModifierProperty(PsiModifier.PRIVATE);
   }
 
-
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiField field = getField(getElement(editor, file));
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiField field = getField(element);
     if (field == null) {
       return;
     }
 
     new EncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, null);
   }
+
 
   @Nullable
   protected static PsiField getField(@Nullable PsiElement element) {
@@ -80,13 +79,5 @@ public class EncapsulateFieldAction extends BaseRunRefactoringAction {
       return null;
     }
     return (PsiField)resolved;
-  }
-
-  @Nullable
-  protected static PsiElement getElement(Editor editor, @NotNull PsiFile file) {
-    if (!file.getManager().isInProject(file)) return null;
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
-    return file.findElementAt(position);
   }
 }
