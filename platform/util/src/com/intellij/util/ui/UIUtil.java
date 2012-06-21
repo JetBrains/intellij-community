@@ -2334,9 +2334,9 @@ public class UIUtil {
   }
 
   private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
-  private static final Color DECORATED_ROW_BG_COLOR_DARK = new Color(242-100, 245-100, 249-100);
+  private static final Color DECORATED_ROW_BG_COLOR_DARK = Gray._75;
   public static Color getDecoratedRowColor() {
-    return UIUtil.isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
+    return isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
   }
 }
 
