@@ -26,10 +26,7 @@ import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerEditor;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.EditOperation;
-import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
@@ -37,6 +34,9 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
 import com.intellij.designer.palette.PaletteItem;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
@@ -50,6 +50,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
@@ -120,6 +121,24 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }
       }
     });
+
+    myActionPanel.getPopupGroup().addSeparator();
+    AnAction gotoDeclaration = new AnAction("Go To Declaration") {
+      @Override
+      public void update(AnActionEvent e) {
+        EditableArea area = e.getData(EditableArea.DATA_KEY);
+        e.getPresentation().setEnabled(area != null && area.getSelection().size() == 1);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        EditableArea area = e.getData(EditableArea.DATA_KEY);
+        RadViewComponent component = (RadViewComponent)area.getSelection().get(0);
+        PsiNavigateUtil.navigate(component.getTag());
+      }
+    };
+    myActionPanel.registerAction(gotoDeclaration, IdeActions.ACTION_GOTO_DECLARATION);
+    myActionPanel.getPopupGroup().add(gotoDeclaration);
   }
 
   private void reparseFile() {

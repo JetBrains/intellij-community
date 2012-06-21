@@ -39,6 +39,7 @@ public class DesignerActionPanel implements DataProvider {
   private final DefaultActionGroup myDynamicGroup = new DefaultActionGroup();
   private final DefaultActionGroup myPopupGroup = new DefaultActionGroup();
   private final DefaultActionGroup myDynamicPopupGroup = new DefaultActionGroup();
+
   private JComponent myToolbar;
   private final DesignerEditorPanel myDesigner;
   private final CommonEditActionsProvider myCommonEditActionsProvider;
@@ -102,7 +103,7 @@ public class DesignerActionPanel implements DataProvider {
     return action;
   }
 
-  private void registerAction(AnAction action, @NonNls String actionId) {
+  public void registerAction(AnAction action, @NonNls String actionId) {
     action.registerCustomShortcutSet(
       ActionManager.getInstance().getAction(actionId).getShortcutSet(),
       myShortcuts
@@ -115,6 +116,10 @@ public class DesignerActionPanel implements DataProvider {
 
   public DefaultActionGroup getActionGroup() {
     return myStaticGroup;
+  }
+
+  public DefaultActionGroup getPopupGroup() {
+    return myPopupGroup;
   }
 
   public void update() {
@@ -171,7 +176,9 @@ public class DesignerActionPanel implements DataProvider {
     if (myDynamicPopupGroup.getChildrenCount() > 0) {
       myDynamicPopupGroup.removeAll();
     }
+
     MorphingAction.fill(myDesigner, myDynamicPopupGroup, area);
+
     return myPopupGroup;
   }
 
