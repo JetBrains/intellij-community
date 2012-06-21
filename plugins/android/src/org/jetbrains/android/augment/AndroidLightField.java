@@ -17,7 +17,7 @@ import java.util.Set;
 /**
 * @author Eugene.Kudelevsky
 */
-class AndroidLightField extends LightFieldBuilder implements PsiVariableEx {
+class AndroidLightField extends LightFieldBuilder implements PsiVariableEx, SyntheticElement {
   private final PsiClass myContext;
   private final PsiType myType;
   private final Object myConstantValue;
