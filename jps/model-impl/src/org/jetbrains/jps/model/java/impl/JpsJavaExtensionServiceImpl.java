@@ -26,7 +26,7 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @NotNull
   @Override
   public JpsJavaDependencyExtension getOrCreateDependencyExtension(@NotNull JpsDependencyElement dependency) {
-    JpsJavaDependencyExtensionImpl extension = dependency.getContainer().getChild(JpsJavaDependencyExtensionKind.INSTANCE);
+    JpsJavaDependencyExtension extension = dependency.getContainer().getChild(JpsJavaDependencyExtensionKind.INSTANCE);
     if (extension == null) {
       extension = dependency.getContainer().setChild(JpsJavaDependencyExtensionKind.INSTANCE);
     }
@@ -35,13 +35,13 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
 
   @NotNull
   @Override
-  public JpsElementKind<? extends JpsJavaModuleExtension> getModuleExtensionKind() {
+  public JpsElementKind<JpsJavaModuleExtension> getModuleExtensionKind() {
     return JavaModuleExtensionKind.INSTANCE;
   }
 
   @NotNull
   @Override
-  public JpsElementKind<? extends JpsJavaDependencyExtension> getDependencyExtensionKind() {
+  public JpsElementKind<JpsJavaDependencyExtension> getDependencyExtensionKind() {
     return JpsJavaDependencyExtensionKind.INSTANCE;
   }
 

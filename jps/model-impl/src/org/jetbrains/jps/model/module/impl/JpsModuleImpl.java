@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElementCollection;
 import org.jetbrains.jps.model.JpsElementKind;
 import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.JpsUrlList;
@@ -60,7 +61,7 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
 
   @NotNull
   @Override
-  public List<? extends JpsModuleSourceRootImpl> getSourceRoots() {
+  public List<JpsModuleSourceRoot> getSourceRoots() {
     return myContainer.getChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND).getElements();
   }
 
@@ -84,8 +85,8 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
 
   @Override
   public void removeSourceRoot(@NotNull JpsModuleSourceRootType rootType, @NotNull String url) {
-    final JpsElementCollectionImpl<JpsModuleSourceRootImpl> roots = myContainer.getChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
-    for (JpsModuleSourceRootImpl root : roots.getElements()) {
+    final JpsElementCollectionImpl<JpsModuleSourceRoot> roots = myContainer.getChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
+    for (JpsModuleSourceRoot root : roots.getElements()) {
       if (root.getRootType().equals(rootType) && root.getUrl().equals(url)) {
         roots.removeChild(root);
         break;
@@ -108,7 +109,7 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
   @Override
   public void delete() {
     //noinspection unchecked
-    ((JpsElementCollectionImpl<JpsModuleImpl>)myParent).removeChild(this);
+    ((JpsElementCollection<JpsModule>)myParent).removeChild(this);
   }
 
   @NotNull

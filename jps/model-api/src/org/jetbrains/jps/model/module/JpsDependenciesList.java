@@ -29,5 +29,5 @@ public interface JpsDependenciesList extends JpsElement {
   void addSdkDependency(@NotNull JpsSdkType<?> sdkType);
 
   @NotNull
-  List<? extends JpsDependencyElement> getDependencies();
+  List<JpsDependencyElement> getDependencies();
 }
