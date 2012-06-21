@@ -134,7 +134,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod, ContinuationContext context) {
-    final Map<VirtualFile, GitUpdater> updaters;
+    Map<VirtualFile, GitUpdater> updaters;
     try {
       updaters = defineUpdaters(updateMethod);
     }
@@ -143,6 +143,8 @@ public class GitUpdateProcess {
       notifyError(myProject, "Git update failed", e.getMessage(), true, e);
       return GitUpdateResult.ERROR;
     }
+
+    updaters = tryFastForwardMergeForRebaseUpdaters(updaters);
 
     if (updaters.isEmpty()) {
       return GitUpdateResult.NOTHING_TO_UPDATE;
@@ -202,6 +204,22 @@ public class GitUpdateProcess {
       }
     }
     return compoundResult;
+  }
+
+  @NotNull
+  private static Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
+    Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<VirtualFile, GitUpdater>();
+    for (Map.Entry<VirtualFile, GitUpdater> updaterEntry : updaters.entrySet()) {
+      GitUpdater updater = updaterEntry.getValue();
+      if (updater instanceof GitRebaseUpdater) {
+        GitRebaseUpdater rebaseUpdater = (GitRebaseUpdater) updater;
+        if (rebaseUpdater.fastForwardMerge()) {
+          continue;
+        }
+      }
+      modifiedUpdaters.put(updaterEntry.getKey(), updaterEntry.getValue());
+    }
+    return modifiedUpdaters;
   }
 
   @NotNull
