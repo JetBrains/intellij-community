@@ -138,7 +138,7 @@ public class ReferenceExpressionCompletionContributor {
       final boolean secondTime = parameters.getParameters().getInvocationCount() >= 2;
 
       final Set<LookupElement> base =
-        JavaSmartCompletionContributor.completeReference(element, reference, filter, false, true, parameters.getParameters(), null);
+        JavaSmartCompletionContributor.completeReference(element, reference, filter, false, true, parameters.getParameters(), PrefixMatcher.ALWAYS_TRUE);
       for (final LookupElement item : new LinkedHashSet<LookupElement>(base)) {
         ExpressionLookupItem access = getSingleArrayElementAccess(element, item);
         if (access != null) {
@@ -200,7 +200,7 @@ public class ReferenceExpressionCompletionContributor {
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
-      }), false, true, parameters.getParameters(), null);
+      }), false, true, parameters.getParameters(), PrefixMatcher.ALWAYS_TRUE);
     for (LookupElement lookupElement : elements) {
       if (lookupElement.getObject() instanceof PsiMethod) {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);

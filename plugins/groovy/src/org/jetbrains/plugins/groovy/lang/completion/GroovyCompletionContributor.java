@@ -498,7 +498,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     });
 
     if (qualifier == null) {
-      completeStaticMembers(parameters).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
+      completeStaticMembers(parameters).processMembersOfRegisteredClasses(PrefixMatcher.ALWAYS_TRUE, new PairConsumer<PsiMember, PsiClass>() {
         @Override
         public void consume(PsiMember member, PsiClass psiClass) {
           if (member instanceof GrAccessorMethod) {
