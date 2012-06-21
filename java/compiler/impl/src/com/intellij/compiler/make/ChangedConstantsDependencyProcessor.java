@@ -133,7 +133,7 @@ public class ChangedConstantsDependencyProcessor {
     final Ref<CacheCorruptedException> exRef = new Ref<CacheCorruptedException>(null);
     processIdentifiers(psiSearchHelper, new PsiElementProcessor<PsiIdentifier>() {
       @Override
-      public boolean execute(@NotNull PsiIdentifier identifier) {
+      public synchronized boolean execute(@NotNull PsiIdentifier identifier) {
         try {
           final PsiElement parent = identifier.getParent();
           if (parent instanceof PsiReferenceExpression) {
