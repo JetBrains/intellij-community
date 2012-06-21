@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -95,7 +96,7 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   }
 
   @Override
-  public void processVariants(PrefixMatcher matcher, CompletionParameters parameters, Consumer<Object> consumer) {
+  public void processVariants(PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
   }
 
   @Override

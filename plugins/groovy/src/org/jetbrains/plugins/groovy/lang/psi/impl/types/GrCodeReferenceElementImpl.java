@@ -17,9 +17,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -251,7 +254,14 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return parent instanceof GrNewExpression;
   }
 
-  private void processVariantsImpl(ReferenceKind kind, Consumer<Object> consumer) {
+  private static void feedLookupElements(PsiNamedElement psi, boolean afterNew, Consumer<LookupElement> consumer, PrefixMatcher matcher) {
+    for (LookupElement element : GroovyCompletionUtil.createLookupElements(new GroovyResolveResultImpl(psi, true), afterNew, matcher)) {
+      consumer.consume(element);
+    }
+  }
+
+  private void processVariantsImpl(ReferenceKind kind, Consumer<LookupElement> consumer, PrefixMatcher matcher) {
+    boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(this);
     switch (kind) {
       case STATIC_MEMBER_FQ: {
         final GrCodeReferenceElement qualifier = getQualifier();
@@ -262,26 +272,26 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
             for (PsiField field : clazz.getFields()) {
               if (field.hasModifierProperty(PsiModifier.STATIC)) {
-                consumer.consume(field);
+                feedLookupElements(field, afterNew, consumer, matcher);
               }
             }
 
             for (PsiMethod method : clazz.getMethods()) {
               if (method.hasModifierProperty(PsiModifier.STATIC)) {
-                consumer.consume(method);
+                feedLookupElements(method, afterNew, consumer, matcher);
               }
             }
 
             for (PsiClass inner : clazz.getInnerClasses()) {
               if (inner.hasModifierProperty(PsiModifier.STATIC)) {
-                consumer.consume(inner);
+                feedLookupElements(inner, afterNew, consumer, matcher);
               }
             }
             return;
           }
         }
       }
-      //fallthrough
+      // fall through
 
       case PACKAGE_FQ:
       case CLASS_FQ:
@@ -290,33 +300,31 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         LOG.assertTrue(refText != null, this.getText());
 
         final int lastDot = refText.lastIndexOf(".");
-        String parentPackageFQName = lastDot > 0 ? refText.substring(0, lastDot) : "";
+        String parentPackageFQName = StringUtil.getPackageName(refText);
         final PsiPackage parentPackage = JavaPsiFacade.getInstance(getProject()).findPackage(parentPackageFQName);
         if (parentPackage != null) {
           final GlobalSearchScope scope = getResolveScope();
           if (kind == PACKAGE_FQ) {
             for (PsiPackage aPackage : parentPackage.getSubPackages(scope)) {
-              consumer.consume(aPackage);
+              feedLookupElements(aPackage, afterNew, consumer, matcher);
             }
             return;
-          } else {
-            if (kind == CLASS_FQ) {
-              for (PsiClass aClass : parentPackage.getClasses(scope)) {
-                consumer.consume(aClass);
-              }
-              return;
-            } else {
-              final PsiPackage[] subpackages = parentPackage.getSubPackages(scope);
-              final PsiClass[] classes = parentPackage.getClasses(scope);
-              for (PsiPackage aPackage : subpackages) {
-                consumer.consume(aPackage);
-              }
-              for (PsiClass aClass : classes) {
-                consumer.consume(aClass);
-              }
-              return;
-            }
           }
+
+          if (kind == CLASS_FQ) {
+            for (PsiClass aClass : parentPackage.getClasses(scope)) {
+              feedLookupElements(aClass, afterNew, consumer, matcher);
+            }
+            return;
+          }
+
+          for (PsiPackage aPackage : parentPackage.getSubPackages(scope)) {
+            feedLookupElements(aPackage, afterNew, consumer, matcher);
+          }
+          for (PsiClass aClass : parentPackage.getClasses(scope)) {
+            feedLookupElements(aClass, afterNew, consumer, matcher);
+          }
+          return;
         }
       }
 
@@ -328,27 +336,25 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           PsiElement qualifierResolved = qualifier.resolve();
           if (qualifierResolved instanceof PsiPackage) {
             PsiPackage aPackage = (PsiPackage) qualifierResolved;
-            PsiClass[] classes = aPackage.getClasses(getResolveScope());
-
-            for (PsiClass aClass : classes) {
-              consumer.consume(aClass);
+            for (PsiClass aClass : aPackage.getClasses(getResolveScope())) {
+              feedLookupElements(aClass, afterNew, consumer, matcher);
             }
             if (kind == CLASS) return;
 
-            PsiPackage[] subpackages = aPackage.getSubPackages(getResolveScope());
-            for (PsiPackage subpackage : subpackages) {
-              consumer.consume(subpackage);
+            for (PsiPackage subpackage : aPackage.getSubPackages(getResolveScope())) {
+              feedLookupElements(subpackage, afterNew, consumer, matcher);
             }
           } else if (qualifierResolved instanceof PsiClass) {
             for (PsiClass aClass : ((PsiClass)qualifierResolved).getInnerClasses()) {
-              consumer.consume(aClass);
+              feedLookupElements(aClass, afterNew, consumer, matcher);
             }
           }
         } else {
           ResolverProcessor classProcessor = CompletionProcessor.createClassCompletionProcessor(this);
           ResolveUtil.treeWalkUp(this, classProcessor, false);
 
-          for (Object o : GroovyCompletionUtil.getCompletionVariants(classProcessor.getCandidates())) {
+          for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(classProcessor.getCandidates(),
+                                                                            afterNew, matcher)) {
             consumer.consume(o);
           }
         }
@@ -554,8 +560,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  public void processVariants(PrefixMatcher matcher, CompletionParameters parameters, Consumer<Object> consumer) {
-    processVariantsImpl(getKind(true), consumer);
+  public void processVariants(PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
+    processVariantsImpl(getKind(true), consumer, matcher);
   }
 
   @NotNull
@@ -574,10 +580,10 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     PsiElement parent = getParent();
     if (!(parent instanceof GrNewExpression)) return PsiType.EMPTY_ARRAY;
 
-    PsiType ltype = PsiImplUtil.inferExpectedTypeForDiamond((GrNewExpression)parent);
+    PsiType lType = PsiImplUtil.inferExpectedTypeForDiamond((GrNewExpression)parent);
 
-    if (ltype instanceof PsiClassType) {
-      return ((PsiClassType)ltype).getParameters();
+    if (lType instanceof PsiClassType) {
+      return ((PsiClassType)lType).getParameters();
     }
 
     return PsiType.EMPTY_ARRAY;

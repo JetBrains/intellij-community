@@ -17,8 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -67,25 +70,25 @@ public class CompleteReferenceExpression {
   private CompleteReferenceExpression() {
   }
 
-  public static void processVariants(PrefixMatcher matcher, Consumer<Object> consumer, GrReferenceExpressionImpl refExpr, CompletionParameters parameters) {
-    processRefInAnnotation(consumer, refExpr);
+  public static void processVariants(PrefixMatcher matcher, Consumer<LookupElement> consumer, GrReferenceExpressionImpl refExpr, CompletionParameters parameters) {
+    processRefInAnnotation(consumer, refExpr, matcher);
 
     final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher, parameters);
     getVariantsImpl(refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
-    for (Object o : GroovyCompletionUtil.getCompletionVariants(candidates)) {
+    for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(candidates, JavaClassNameCompletionContributor.AFTER_NEW.accepts(refExpr), matcher)) {
       consumer.consume(o);
     }
   }
 
-  private static void processRefInAnnotation(Consumer<Object> consumer, GrReferenceExpressionImpl refExpr) {
+  private static void processRefInAnnotation(Consumer<LookupElement> consumer, GrReferenceExpressionImpl refExpr, PrefixMatcher matcher) {
     if (refExpr.getParent() instanceof GrAnnotationNameValuePair) {
       PsiElement parent = refExpr.getParent().getParent();
       if (!(parent instanceof GrAnnotation)) {
         parent = parent.getParent();
       }
       if (parent instanceof GrAnnotation) {
-        for (Object result : GroovyCompletionUtil.getAnnotationCompletionResults((GrAnnotation)parent)) {
+        for (LookupElement result : GroovyCompletionUtil.getAnnotationCompletionResults((GrAnnotation)parent, matcher)) {
           consumer.consume(result);
         }
       }
@@ -357,7 +360,9 @@ public class CompleteReferenceExpression {
   }
 
   private static class CompleteReferenceProcessor extends ResolverProcessor implements Consumer<Object> {
-    private final Consumer<Object> myConsumer;
+    private static final Logger LOG = Logger.getInstance(
+      "#org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.CompleteReferenceExpression.CompleteReferenceProcessor");
+    private final Consumer<LookupElement> myConsumer;
     private final PrefixMatcher myMatcher;
     private final CompletionParameters myParameters;
     private Collection<String> myPreferredFieldNames;
@@ -371,7 +376,7 @@ public class CompleteReferenceExpression {
     private final boolean myIsMap;
     private Set<String> myNonDeclaredVars = new com.intellij.util.containers.HashSet<String>();
 
-    protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<Object> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
+    protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<LookupElement> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
       super(null, EnumSet.allOf(ResolveKind.class), place, PsiType.EMPTY_ARRAY);
       myConsumer = consumer;
       myMatcher = matcher;
@@ -416,7 +421,7 @@ public class CompleteReferenceExpression {
 
     public void consume(Object o) {
       if (!(o instanceof GroovyResolveResult)) {
-        myConsumer.consume(o);
+        LOG.error(o);
         return;
       }
 
@@ -469,7 +474,10 @@ public class CompleteReferenceExpression {
     private void processPropertyFromField(GrField field, GroovyResolveResult resolveResult) {
       if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName()) || myIsMap) return;
 
-      myConsumer.consume(((LookupElementBuilder)GroovyCompletionUtil.createCompletionVariant(resolveResult)).withIcon(GroovyIcons.PROPERTY));
+      for (LookupElement element : GroovyCompletionUtil.createLookupElements(resolveResult, false, myMatcher)) {
+        myConsumer.consume(((LookupElementBuilder)element).withIcon(GroovyIcons.PROPERTY));
+      }
+
     }
 
     private void processProperty(PsiMethod method, GroovyResolveResult resolveResult) {

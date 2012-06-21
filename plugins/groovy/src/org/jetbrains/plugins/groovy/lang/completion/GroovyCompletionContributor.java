@@ -442,7 +442,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (reference instanceof GrReferenceExpression && (qualifier instanceof GrExpression || qualifier == null)) {
       unresolvedProps = CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier, (GrReferenceExpression)reference);
       for (String string : unresolvedProps) {
-        result.add(GroovyCompletionUtil.getLookupElement(string));
+        result.add(LookupElementBuilder.create(string).withItemTextUnderlined(true));
       }
       if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
           !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
@@ -458,62 +458,42 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     final ElementFilter classFilter = getClassFilter(position);
 
-    final boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
     final List<LookupElement> items = arrayList();
-    reference.processVariants(matcher, parameters, new Consumer<Object>() {
-      public void consume(Object element) {
-        List<? extends LookupElement> lookupElements;
-        if (element instanceof PsiClass) {
-          if (!matcher.prefixMatches(((PsiClass)element).getName())) {
+    reference.processVariants(matcher, parameters, new Consumer<LookupElement>() {
+      public void consume(LookupElement lookupElement) {
+        Object object = lookupElement.getObject();
+        if (object instanceof GroovyResolveResult) {
+          object = ((GroovyResolveResult)object).getElement();
+        }
+
+        if (!(lookupElement instanceof LookupElementBuilder) && inheritorsHolder.alreadyProcessed(lookupElement)) {
+          return;
+        }
+
+        if (object instanceof GrReferenceExpression && unresolvedProps.contains(((GrReferenceExpression)object).getName())) {
+          return;
+        }
+
+        if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object, true)) {
+          return;
+        }
+
+        int priority = assignPriority(lookupElement, qualifierType);
+        lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType,
+                                                             PrioritizedLookupElement.withPriority(lookupElement, priority), object);
+
+        if ((object instanceof PsiMethod || object instanceof PsiField) &&
+            ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
+          if (lookupElement.getLookupString().equals(((PsiMember)object).getName())) {
+            staticMembers.put((PsiModifierListOwner)object, lookupElement);
             return;
           }
-
-          lookupElements = JavaClassNameCompletionContributor
-            .createClassLookupItems((PsiClass)element, afterNew, new GroovyClassNameInsertHandler(), Condition.TRUE);
-        } else {
-          lookupElements = Arrays.asList(GroovyCompletionUtil.getLookupElement(element));
+        }
+        if (object instanceof PsiClass && !classFilter.isAcceptable(object, position)) {
+          return;
         }
 
-        for (LookupElement lookupElement : lookupElements) {
-          if (!matcher.prefixMatches(lookupElement)) {
-            continue;
-          }
-
-          Object object = lookupElement.getObject();
-          if (object instanceof GroovyResolveResult) {
-            object = ((GroovyResolveResult)object).getElement();
-          }
-
-          if (object instanceof PsiClass && inheritorsHolder.alreadyProcessed((PsiClass)object) ||
-              object instanceof LookupElement && inheritorsHolder.alreadyProcessed((LookupElement)object)) {
-            continue;
-          }
-
-          if (object instanceof GrReferenceExpression && unresolvedProps.contains(((GrReferenceExpression)object).getName())) {
-            continue;
-          }
-
-          if (object instanceof PsiMember && JavaCompletionUtil.isInExcludedPackage((PsiMember)object, true)) {
-            continue;
-          }
-
-          int priority = assignPriority(lookupElement, qualifierType);
-          lookupElement = JavaCompletionUtil.highlightIfNeeded(qualifierType,
-                                                               PrioritizedLookupElement.withPriority(lookupElement, priority), object);
-
-          if ((object instanceof PsiMethod || object instanceof PsiField) &&
-              ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
-            if (lookupElement.getLookupString().equals(((PsiMember)object).getName())) {
-              staticMembers.put((PsiModifierListOwner)object, lookupElement);
-              continue;
-            }
-          }
-          if (object instanceof PsiClass && !classFilter.isAcceptable(object, position)) {
-            continue;
-          }
-
-          items.add(lookupElement);
-        }
+        items.add(lookupElement);
       }
     });
 

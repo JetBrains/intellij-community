@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -150,7 +151,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public Object[] getVariants() {
-    return GroovyCompletionUtil.getAnnotationCompletionResults(getAnnotation());
+    return GroovyCompletionUtil.getAnnotationCompletionResults(getAnnotation(), PrefixMatcher.ALWAYS_TRUE).toArray();
   }
 
   public boolean isSoft() {

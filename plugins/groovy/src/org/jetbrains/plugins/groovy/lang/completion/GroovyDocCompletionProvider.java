@@ -19,10 +19,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -76,7 +73,7 @@ public class GroovyDocCompletionProvider extends CompletionProvider<CompletionPa
       PsiElement[] elements = ArrayUtil.mergeArrays(propertyCandidates, methodCandidates);
 
       for (PsiElement psiElement : elements) {
-        LookupElement element = GroovyCompletionUtil.getLookupElement(psiElement);
+        LookupElement element = GroovyCompletionUtil.createLookupElement((PsiNamedElement)psiElement);
         if (psiElement instanceof PsiMethod) {
           element = ((LookupElementBuilder)element).withInsertHandler(new GroovyMethodSignatureInsertHandler());
         }

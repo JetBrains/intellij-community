@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.AllClassesGetter;
+import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -30,6 +32,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,7 +43,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
@@ -74,8 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
@@ -213,33 +214,36 @@ public class GroovyCompletionUtil {
   }
 
 
-  public static List<Object> getCompletionVariants(GroovyResolveResult[] candidates) {
-    List<Object> result = CollectionFactory.arrayList();
+  public static List<LookupElement> getCompletionVariants(GroovyResolveResult[] candidates, boolean afterNew, PrefixMatcher matcher) {
+    List<LookupElement> result = CollectionFactory.arrayList();
     for (GroovyResolveResult candidate : candidates) {
-      if (candidate.getElement() instanceof PsiClass) {
-        result.add(candidate);
-      } else {
-        result.add(createCompletionVariant(candidate));
-      }
-
+      result.addAll(createLookupElements(candidate, afterNew, matcher));
       ProgressManager.checkCanceled();
     }
 
     return result;
   }
 
-  public static Object createCompletionVariant(GroovyResolveResult candidate) {
+  public static List<? extends LookupElement> createLookupElements(GroovyResolveResult candidate, boolean afterNew, PrefixMatcher matcher) {
     final PsiElement element = candidate.getElement();
     final PsiElement context = candidate.getCurrentFileResolveContext();
     if (context instanceof GrImportStatement && element != null) {
+      if (element instanceof PsiPackage) {
+        return Collections.emptyList();
+      }
+
       final String importedName = ((GrImportStatement)context).getImportedName();
       if (importedName != null) {
+        if (!matcher.prefixMatches(importedName)) {
+          return Collections.emptyList();
+        }
+
         final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
         if (importReference != null) {
           boolean alias = ((GrImportStatement)context).isAliasedImport();
           for (GroovyResolveResult r : importReference.multiResolve(false)) {
             final PsiElement resolved = r.getElement();
-            if (context.getManager().areElementsEquivalent(resolved, element)) {
+            if (context.getManager().areElementsEquivalent(resolved, element) && (alias || !(element instanceof PsiClass))) {
               return generateLookupForImportedElement(candidate, importedName, alias);
             }
             else {
@@ -251,15 +255,19 @@ public class GroovyCompletionUtil {
         }
       }
     }
-    else if (element instanceof PsiMethod) {
-      return setupLookupBuilder(element, candidate.getSubstitutor(), LookupElementBuilder.create(candidate, ((PsiMethod)element).getName()));
+
+    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : element.getText();
+    if (name == null || !matcher.prefixMatches(name)) {
+      return Collections.emptyList();
     }
 
-    if (element instanceof PsiNamedElement) {
-      return setupLookupBuilder(element, candidate.getSubstitutor(),
-                                LookupElementBuilder.create(candidate, ((PsiNamedElement)element).getName()));
+    if (element instanceof PsiClass) {
+      return JavaClassNameCompletionContributor
+        .createClassLookupItems((PsiClass)element, afterNew, new GroovyClassNameInsertHandler(), Condition.TRUE);
     }
-    return candidate;
+
+    LookupElementBuilder builder = LookupElementBuilder.create(element instanceof PsiPackage ? element : candidate, name);
+    return Arrays.asList(setupLookupBuilder(element, candidate.getSubstitutor(), builder));
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
@@ -267,26 +275,16 @@ public class GroovyCompletionUtil {
     return AllClassesGetter.createLookupItem(psiClass, new GroovyClassNameInsertHandler());
   }
 
-  private static LookupElement generateLookupForImportedElement(GroovyResolveResult resolveResult, String importedName, boolean alias) {
+  private static List<? extends LookupElement> generateLookupForImportedElement(GroovyResolveResult resolveResult, String importedName, boolean alias) {
     final PsiElement element = resolveResult.getElement();
     assert element != null;
-    if (!alias && element instanceof PsiClass) {
-      return createClassLookupItem((PsiClass)element);
-    }
-
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).withPresentableText(importedName);
-    return setupLookupBuilder(element, substitutor, builder);
+    return Arrays.asList(setupLookupBuilder(element, substitutor, builder));
   }
 
-  public static LookupElement getLookupElement(Object o) {
-    if (o instanceof LookupElement) return (LookupElement)o;
-    if (o instanceof PsiNamedElement) return generateLookupElement((PsiNamedElement)o);
-    if (o instanceof PsiElement) return setupLookupBuilder((PsiElement)o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, ((PsiElement)o).getText()));
-    return LookupElementBuilder.create(o, o.toString()).withItemTextUnderlined(true);
-  }
-  private static LookupElementBuilder generateLookupElement(PsiNamedElement element) {
-    return setupLookupBuilder(element, PsiSubstitutor.EMPTY, LookupElementBuilder.create(element));
+  public static LookupElement createLookupElement(PsiNamedElement o) {
+    return setupLookupBuilder(o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, o.getName()));
   }
 
   private static LookupElementBuilder setupLookupBuilder(PsiElement element, PsiSubstitutor substitutor, LookupElementBuilder builder) {
@@ -500,20 +498,19 @@ public class GroovyCompletionUtil {
     return t == mLT || t == mCOMMA;
   }
 
-  public static Object[] getAnnotationCompletionResults(GrAnnotation anno) {
+  public static List<LookupElement> getAnnotationCompletionResults(GrAnnotation anno, PrefixMatcher matcher) {
     if (anno != null) {
       GrCodeReferenceElement ref = anno.getClassReference();
       PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-        PsiMethod[] methods = ((PsiClass)resolved).getMethods();
-        Object[] result = new Object[methods.length];
-        for (int i = 0; i < methods.length; i++) {
-          result[i] = createCompletionVariant(new GroovyResolveResultImpl(methods[i], true));
+        List<LookupElement> result = new ArrayList<LookupElement>();
+        for (PsiMethod method : ((PsiClass)resolved).getMethods()) {
+          result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher));
         }
         return result;
       }
     }
 
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return Collections.emptyList();
   }
 }
