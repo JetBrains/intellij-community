@@ -242,7 +242,7 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
       monitorTypeName = monitor.referenceType().name();
     }
     catch (Throwable e) {
-      monitorTypeName = "Error getting monitor type: '" + e.getMessage() + "'";
+      monitorTypeName = "Error getting object type: '" + e.getMessage() + "'";
     }
     return DebuggerBundle.message("threads.export.attribute.label.object-id", Long.toHexString(monitor.uniqueID()), monitorTypeName);
   }
