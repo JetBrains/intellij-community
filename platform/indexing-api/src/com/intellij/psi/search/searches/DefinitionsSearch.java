@@ -16,8 +16,10 @@
 
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Query;
+import com.intellij.util.QueryExecutor;
 
 /**
  * The search is used in two IDE navigation functions namely Go To Implementation (Ctrl+Alt+B) and
@@ -27,6 +29,7 @@ import com.intellij.util.Query;
  * @author max
  */
 public class DefinitionsSearch extends ExtensibleQueryFactory<PsiElement, PsiElement> {
+  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsSearch");
   public static DefinitionsSearch INSTANCE = new DefinitionsSearch();
 
   public static Query<PsiElement> search(PsiElement definitionsOf) {
