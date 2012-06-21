@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.ide.TypePresentationService;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -30,6 +31,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -115,7 +117,12 @@ class RegisterInspectionFix implements IntentionAction {
         @NotNull
         @Override
         public String getTextFor(DomFileElement<IdeaPlugin> value) {
-          return value.getFile().getName();
+          final String name = value.getFile().getName();
+          if (!Comparing.equal(PluginManager.PLUGIN_XML, name)) {
+            return name;
+          }
+          final Module module = value.getModule();
+          return module != null ? name + " (" + module.getName() + ")" : name;
         }
 
         @Override
