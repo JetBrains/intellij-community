@@ -94,6 +94,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     int[] headers = new int[columns.length];
     int[] widths = new int[columns.length];
     int allColumnWidth = 0;
+    int allColumnCurrent = 0;
     int varCount = 0;
 
     // calculate
@@ -132,7 +133,9 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         varCount ++;
       }
       allColumnWidth += widths[i];
+      allColumnCurrent += column.getPreferredWidth();
     }
+    allColumnWidth = Math.max(allColumnWidth, allColumnCurrent);
 
     // apply: distribute available space between resizable columns
     //        and make sure that header will fit as well
@@ -152,12 +155,14 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         column.setMinWidth(width);
       }
       else if (sizeMode[i] == 2) {
-        width = Math.max(width + addendum, headers[i]);
+        // do not shrink columns
+        width = Math.max(column.getPreferredWidth(), Math.max(width + addendum, headers[i]));
         column.setPreferredWidth(width);
         column.setMaxWidth(width);
       }
       else if (sizeMode[i] == 3) {
-        width = Math.max(width + addendum, headers[i]);
+        // do not shrink columns
+        width = Math.max(column.getPreferredWidth(), Math.max(width + addendum, headers[i]));
         column.setPreferredWidth(width);
       }
     }
