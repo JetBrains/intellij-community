@@ -206,4 +206,15 @@ public class CustomFileTypeEditorTest extends LightCodeInsightTestCase {
     iterator = highlighter.createIterator(27);
     assertEquals(CustomHighlighterTokenType.STRING, iterator.getTokenType());
   }
+
+  public void testHaskel() throws Exception {
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(getProject(), "A.hs");
+    //                   0123456789012345678 9 0123 45 6 7
+    highlighter.setText("{-# #-} module");
+    HighlighterIterator iterator = highlighter.createIterator(2);
+    assertEquals(CustomHighlighterTokenType.MULTI_LINE_COMMENT, iterator.getTokenType());
+
+    iterator = highlighter.createIterator(12);
+    assertEquals(CustomHighlighterTokenType.KEYWORD_1, iterator.getTokenType());
+  }
 }
