@@ -73,7 +73,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   public ResourceDialog(Module module, ResourceType[] types, String value) {
     super(module.getProject());
 
-    setTitle("Resource Dialog");
+    setTitle("Resources");
 
     AndroidFacet facet = AndroidFacet.getInstance(module);
     myProjectPanel = new ResourcePanel(facet, types, false);

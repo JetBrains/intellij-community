@@ -68,7 +68,7 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
   public static String chooseView(RadComponent rootComponent) {
     ModuleProvider moduleProvider = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
     ChooseClassDialog dialog =
-      new ChooseClassDialog(moduleProvider.getModule(), "View Dialog", false, "android.view.View");
+      new ChooseClassDialog(moduleProvider.getModule(), "Views", false, "android.view.View");
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
