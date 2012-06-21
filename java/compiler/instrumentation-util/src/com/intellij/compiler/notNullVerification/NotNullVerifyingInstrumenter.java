@@ -50,26 +50,16 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     myClassName = name;
   }
 
-  public MethodVisitor visitMethod(
-    final int access,
-    final String name,
-    final String desc,
-    final String signature,
-    final String[] exceptions) {
+  public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
     final Type[] args = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
-    MethodVisitor v = cv.visitMethod(access,
-                                     name,
-                                     desc,
-                                     signature,
-                                     exceptions);
+    MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
     return new MethodVisitor(Opcodes.ASM4, v) {
 
       private final ArrayList myNotNullParams = new ArrayList();
       private int mySyntheticCount = 0;
       private boolean myIsNotNull = false;
       //private boolean myIsUnmodifiable = false;
-      public Label myThrowLabel;
       //public Label myWrapLabel;
       private Label myStartGeneratedCodeLabel;
 
@@ -78,9 +68,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         final String anno,
         final boolean visible) {
         AnnotationVisitor av;
-        av = mv.visitParameterAnnotation(parameter,
-                                         anno,
-                                         visible);
+        av = mv.visitParameterAnnotation(parameter, anno, visible);
         if (isReferenceType(args[parameter]) && anno.equals(NOT_NULL_ANNO)) {
           myNotNullParams.add(new Integer(parameter));
         }
@@ -92,8 +80,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         return av;
       }
 
-      public AnnotationVisitor visitAnnotation(String anno,
-                                               boolean isRuntime) {
+      public AnnotationVisitor visitAnnotation(String anno, boolean isRuntime) {
         final AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
         if (isReferenceType(returnType) &&
             anno.equals(NOT_NULL_ANNO)) {
@@ -119,8 +106,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           Label end = new Label();
           mv.visitJumpInsn(IFNONNULL, end);
 
-          generateThrow(IAE_CLASS_NAME,
-                        "Argument " + (param - mySyntheticCount) + " for @NotNull parameter of " + myClassName + "." + name + " must not be null", end);
+          generateThrow(IAE_CLASS_NAME, "Argument " + (param - mySyntheticCount) + " for @NotNull parameter of " + myClassName + "." + name + " must not be null", end);
         }
       }
 
@@ -137,17 +123,9 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
             mv.visitInsn(DUP);
             /*generateConditionalThrow("@NotNull method " + myClassName + "." + name + " must not return null",
               "java/lang/IllegalStateException");*/
-            if (myThrowLabel == null) {
-              Label skipLabel = new Label();
-              mv.visitJumpInsn(IFNONNULL, skipLabel);
-              myThrowLabel = new Label();
-              mv.visitLabel(myThrowLabel);
-              generateThrow(ISE_CLASS_NAME, "@NotNull method " + myClassName + "." + name + " must not return null",
-                            skipLabel);
-            }
-            else {
-              mv.visitJumpInsn(IFNULL, myThrowLabel);
-            }
+            final Label skipLabel = new Label();
+            mv.visitJumpInsn(IFNONNULL, skipLabel);
+            generateThrow(ISE_CLASS_NAME, "@NotNull method " + myClassName + "." + name + " must not return null", skipLabel);
           }
         }
 
@@ -159,10 +137,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         mv.visitTypeInsn(NEW, exceptionClass);
         mv.visitInsn(DUP);
         mv.visitLdcInsn(descr);
-        mv.visitMethodInsn(INVOKESPECIAL,
-                           exceptionClass,
-                           CONSTRUCTOR_NAME,
-                           exceptionParamClass);
+        mv.visitMethodInsn(INVOKESPECIAL, exceptionClass, CONSTRUCTOR_NAME, exceptionParamClass);
         mv.visitInsn(ATHROW);
         mv.visitLabel(end);
 
