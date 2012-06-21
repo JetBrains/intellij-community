@@ -38,6 +38,7 @@ import static git4idea.test.MockGit.commitMessageForCherryPick
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
 import git4idea.test.TestNotificator
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile
 
 /**
  * Common parent for all tests on cherry-pick
@@ -92,8 +93,8 @@ hint: and commit the result with 'git commit'
     AbstractHash hash = AbstractHash.create(Integer.toHexString(new SHA().hashCode()))
     List<Change> changes = new ArrayList<Change>();
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
-    new GitCommit(hash, SHAHash.emulate(hash), "John Smith", null, null, commitMessage, commitMessage, null, null, null, null, null, null,
-                  null, changes, 0)
+    new GitCommit(NullVirtualFile.INSTANCE, hash, SHAHash.emulate(hash), "John Smith", null, null, commitMessage, commitMessage,
+                  null, null, null, null, null, null, null, changes, 0)
   }
 
   void assertOnlyDefaultChangelist() {

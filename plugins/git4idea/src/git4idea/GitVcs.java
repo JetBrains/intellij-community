@@ -19,6 +19,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,6 +64,7 @@ import git4idea.diff.GitDiffProvider;
 import git4idea.diff.GitTreeDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.NewGitUsersComponent;
+import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.GitProjectLogManager;
 import git4idea.history.wholeTree.GitCommitsSequentialIndex;
 import git4idea.history.wholeTree.GitCommitsSequentially;
@@ -102,7 +104,13 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     NotificationsConfigurationImpl.remove("Git");
   }
 
-  public static final String NAME = "Git"; // Vcs name
+  public static final String NAME = "Git";
+
+  /**
+   * Provide selected Git commit in some commit list. Use this, when {@link com.intellij.openapi.vcs.changes.Change} is not enough.
+   * @see VcsDataKeys.CHANGES
+   */
+  public static final DataKey<GitCommit> GIT_COMMIT = DataKey.create("Git.Commit");
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);

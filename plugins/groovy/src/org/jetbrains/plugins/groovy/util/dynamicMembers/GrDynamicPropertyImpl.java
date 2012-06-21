@@ -211,6 +211,11 @@ public class GrDynamicPropertyImpl extends LightElement implements GrField {
   }
 
   @Override
+  public void setInitializerGroovy(GrExpression initializer) {
+    throw new IncorrectOperationException("cannot set initializer to dynamic property!");
+  }
+
+  @Override
   public boolean isEquivalentTo(PsiElement another) {
     return another instanceof GrDynamicPropertyImpl &&
            myManager.areElementsEquivalent(myField, ((GrDynamicPropertyImpl)another).myField) &&

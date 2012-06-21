@@ -32,12 +32,14 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -100,7 +102,33 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return "Field";
   }
 
+  @Override
+  public PsiExpression getInitializer() {
+    return org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getOrCreatePisExpression(getInitializerGroovy());
+  }
+
   public void setInitializer(@Nullable PsiExpression psiExpression) throws IncorrectOperationException {
+    GrExpression oldInitializer = getInitializerGroovy();
+    if (psiExpression == null) {
+      if (oldInitializer != null) {
+        oldInitializer.delete();
+        PsiElement assign = findChildByType(GroovyTokenTypes.mASSIGN);
+        if (assign != null) {
+          assign.delete();
+        }
+      }
+      return;
+    }
+
+
+    GrExpression newInitializer = GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(psiExpression.getText());
+    if (oldInitializer != null) {
+      oldInitializer.replaceWithExpression(newInitializer, true);
+    }
+    else {
+      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", getNode().getLastChildNode());
+      addAfter(newInitializer, getLastChild());
+    }
   }
 
   public boolean isDeprecated() {
@@ -162,6 +190,30 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     mySetterInitialized = false;
     mySetter = null;
     myGetters = null;
+  }
+
+  @Override
+  public void setInitializerGroovy(GrExpression initializer) {
+    GrExpression oldInitializer = getInitializerGroovy();
+    if (initializer == null) {
+      if (oldInitializer != null) {
+        oldInitializer.delete();
+        PsiElement assign = findChildByType(GroovyTokenTypes.mASSIGN);
+        if (assign != null) {
+          assign.delete();
+        }
+      }
+      return;
+    }
+
+
+    if (oldInitializer != null) {
+      oldInitializer.replaceWithExpression(initializer, true);
+    }
+    else {
+      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", getNode().getLastChildNode());
+      addAfter(initializer, getLastChild());
+    }
   }
 
   @NotNull

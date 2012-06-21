@@ -37,10 +37,10 @@ import java.util.Map;
  * @author ven
   */
 public class GuessTypeParameters {
-  private final PsiElementFactory myFactory;
+  private final JVMElementFactory myFactory;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters"); 
 
-  public GuessTypeParameters(PsiElementFactory factory) {
+  public GuessTypeParameters(JVMElementFactory factory) {
     myFactory = factory;
   }
 
@@ -145,6 +145,7 @@ public class GuessTypeParameters {
     return substitutor;
   }
 
+  @Nullable
   private static PsiClassType getComponentType (PsiType type) {
     type = type.getDeepComponentType();
     if (type instanceof PsiClassType) return (PsiClassType)type;

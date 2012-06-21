@@ -830,6 +830,9 @@ public class GitLogUI implements Disposable {
       group.add(myStructureFilterAction.asTextAction());
       group.add(new Separator());
       group.add(myRefreshAction);
+
+      group.addAll(getCustomActions());
+
       final CustomShortcutSet refreshShortcut =
         new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK));
       myRefreshAction.registerCustomShortcutSet(refreshShortcut, myJBTable);
@@ -837,6 +840,12 @@ public class GitLogUI implements Disposable {
 
       myContextMenu = ActionManager.getInstance().createActionPopupMenu(GIT_LOG_TABLE_PLACE, group);
     }
+  }
+
+  // TODO move all actions in this group, so that they are independent from this class, and would be accessible from anywhere
+  @NotNull
+  private static ActionGroup getCustomActions() {
+    return (ActionGroup)ActionManager.getInstance().getAction("Git.LogContextMenu");
   }
 
   private ActionToolbar createToolbar() {
@@ -873,13 +882,15 @@ public class GitLogUI implements Disposable {
     group.add(new ToggleAction("Show Details", "Display details panel", AllIcons.Actions.ShowSource) {
         @Override
         public boolean isSelected(AnActionEvent e) {
-          return GitLogSettings.getInstance(myProject).isShowDetails();
+          return !myProject.isDisposed() && GitLogSettings.getInstance(myProject).isShowDetails();
         }
 
         @Override
         public void setSelected(AnActionEvent e, boolean state) {
           setupDetailsSplitter(state);
-          GitLogSettings.getInstance(myProject).setShowDetails(state);
+          if (!myProject.isDisposed()) {
+            GitLogSettings.getInstance(myProject).setShowDetails(state);
+          }
         }
       });
 
@@ -940,16 +951,20 @@ public class GitLogUI implements Disposable {
 
     @Override
     public void calcData(DataKey key, DataSink sink) {
-      if (VcsDataKeys.CHANGES.equals(key)) {
+      if (VcsDataKeys.CHANGES.equals(key) || GitVcs.GIT_COMMIT.equals(key)) {
         final int[] rows = myJBTable.getSelectedRows();
         if (rows.length != 1) return;
-        final List<Change> changes = new ArrayList<Change>();
-        for (int row : rows) {
-          final GitCommit gitCommit = getCommitAtRow(row);
-          if (gitCommit == null) return;
-          changes.addAll(gitCommit.getChanges());
+        int row = rows[0];
+        final GitCommit gitCommit = getCommitAtRow(row);
+        if (gitCommit == null) return;
+
+        if (VcsDataKeys.CHANGES.equals(key)) {
+          final List<Change> changes = new ArrayList<Change>(gitCommit.getChanges());
+          sink.put(key, changes.toArray(new Change[changes.size()]));
         }
-        sink.put(key, changes.toArray(new Change[changes.size()]));
+        else if (GitVcs.GIT_COMMIT.equals(key)) {
+          sink.put(key, gitCommit);
+        }
       } else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.equals(key)) {
         final int[] rows = myJBTable.getSelectedRows();
         if (rows.length != 1) return;

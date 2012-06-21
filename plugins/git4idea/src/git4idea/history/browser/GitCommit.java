@@ -18,6 +18,7 @@ package git4idea.history.browser;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
@@ -25,10 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class GitCommit {
-  @NotNull
-  private final AbstractHash myShortHash;
-  @NotNull
-  private final SHAHash myHash;
+  @NotNull private final VirtualFile myRoot;
+  @NotNull private final AbstractHash myShortHash;
+  @NotNull private final SHAHash myHash;
   private final String myAuthor;
   private final String myCommitter;
   private final String mySubject;
@@ -56,7 +56,7 @@ public class GitCommit {
   // very expensive to calculate it massively, seems it wouldnt be shown
   private boolean myOnTracked;
 
-  public GitCommit(@NotNull final AbstractHash shortHash,
+  public GitCommit(@NotNull VirtualFile root, @NotNull final AbstractHash shortHash,
                    @NotNull final SHAHash hash,
                    final String author,
                    final String committer,
@@ -72,6 +72,7 @@ public class GitCommit {
                    final List<String> remoteBranches,
                    List<Change> changes,
                    long authorTime) {
+    myRoot = root;
     myShortHash = shortHash;
     myAuthor = author;
     myCommitter = committer;
@@ -229,5 +230,9 @@ public class GitCommit {
 
   public String getSubject() {
     return mySubject;
+  }
+
+  public VirtualFile getRoot() {
+    return myRoot;
   }
 }

@@ -15,13 +15,15 @@
  */
 package com.intellij.ide.ui.laf;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
 import java.awt.*;
@@ -38,8 +40,12 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
   BasicLookAndFeel base;
   public IdeaDarkLaf() {
     try {
-      final String name = UIManager.getSystemLookAndFeelClassName();
-      base = (BasicLookAndFeel)Class.forName(name).newInstance();
+      if (SystemInfo.isWindows) {
+        base = new IdeaLaf();
+      } else {
+        final String name = UIManager.getSystemLookAndFeelClassName();
+        base = (BasicLookAndFeel)Class.forName(name).newInstance();
+      }
     }
     catch (Exception ignore) {
       log(ignore);
@@ -48,7 +54,7 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
 
   private void callInit(String method, UIDefaults defaults) {
     try {
-      final Method superMethod = base.getClass().getDeclaredMethod(method, UIDefaults.class);
+      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod(method, UIDefaults.class);
       superMethod.setAccessible(true);
       superMethod.invoke(base, defaults);
     }
@@ -65,17 +71,11 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
   @Override
   public UIDefaults getDefaults() {
     try {
-      final Method superMethod = base.getClass().getDeclaredMethod("getDefaults");
+      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
       LafManagerImpl.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
-      if (SystemInfo.isMac) {
-        defaults.put("Menu.arrowIcon", AllIcons.Mac.Tree_white_right_arrow);
-        defaults.put("MenuItem.acceleratorForeground", new ColorUIResource(255, 255, 255));
-        defaults.put("Separator.foreground", new ColorUIResource(ColorUtil.fromHex("888888")));
-        defaults.put("PopupMenu.background", new ColorUIResource(ColorUtil.fromHex("444444")));
-      }
       return defaults;
     }
     catch (Exception ignore) {
@@ -86,7 +86,7 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
 
   private void call(String method) {
     try {
-      final Method superMethod = base.getClass().getDeclaredMethod(method);
+      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod(method);
       superMethod.setAccessible(true);
       superMethod.invoke(base);
     }
@@ -101,81 +101,9 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   static void initIdeaDefaults(UIDefaults defaults) {
-    try {
-      final Properties properties = new Properties();
-      final InputStream stream = IdeaDarkLaf.class.getResourceAsStream("darcula_mac.properties");
-      properties.load(stream);
-      for (String key : properties.stringPropertyNames()) {
-        final String value = properties.getProperty(key);
-        if (key.endsWith("Insets")) {
-          final List<String> numbers = StringUtil.split(value, ",");
-          defaults.put(key, new InsetsUIResource(Integer.parseInt(numbers.get(0)),
-                                                 Integer.parseInt(numbers.get(1)),
-                                                 Integer.parseInt(numbers.get(2)),
-                                                 Integer.parseInt(numbers.get(3))));
-        } else {
-        final Color color = ColorUtil.fromHex(value, null);
-        final Integer invVal = getInteger(value);
+    loadDefaults(defaults, null); //load defaults
+    loadDefaults(defaults, SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux"); // load OS customization
 
-        if (color != null) {
-          defaults.put(key, new ColorUIResource(color));
-        } else if (invVal != null) {
-          defaults.put(key, invVal);
-        } else {
-          defaults.put(key, value);
-        }
-        }
-      }
-    }
-    catch (IOException e) {
-      log(e);
-    }
-    //defaults.put("TitledBorder.titleColor", IdeaBlueMetalTheme.primary1);
-    //ColorUIResource col = new ColorUIResource(0, 0, 0);
-    //defaults.put("ScrollBar.background", col);
-    //defaults.put("ScrollBar.track", col);
-    //
-    ////Border scrollPaneBorder = new BorderUIResource(new BegBorders.ScrollPaneBorder());
-    ////defaults.put("ScrollPane.border", scrollPaneBorder);
-    //ColorUIResource defaultBackground = new ColorUIResource(68, 68, 68);
-    //ColorUIResource defaultForeground = new ColorUIResource(255, 255, 255);
-    //final ColorUIResource selectionBackground = new ColorUIResource(44, 44, 44);
-    //defaults.put("Tree.background", defaultBackground);
-    //defaults.put("List.background", defaultBackground);
-    //defaults.put("Table.background", defaultBackground);
-    //defaults.put("Tree.foreground", defaultForeground);
-    //defaults.put("Tree.textForeground", defaultForeground);
-    //defaults.put("Tree.selectionBackground", selectionBackground);
-    //defaults.put("Tree.selectionForeground", defaultForeground);
-    //
-    //defaults.put("List.foreground", defaultForeground);
-    //defaults.put("Table.foreground", defaultForeground);
-    //
-    //defaults.put("control", new ColorUIResource(44, 44, 44));
-    //
-    //defaults.put("Panel.background", new ColorUIResource(44, 44, 44));
-    //defaults.put("Panel.foreground", new ColorUIResource(255, 255, 255));
-    //defaults.put("Menu.selectionBackground", new ColorUIResource(190, 190, 190));
-    //defaults.put("Menu.background", new ColorUIResource(68, 68, 68));
-    //defaults.put("MenuItem.background", new ColorUIResource(68, 68, 68));
-    //defaults.put("Menu.foreground", new ColorUIResource(255, 255, 255));
-    //defaults.put("MenuItem.foreground", new ColorUIResource(255, 255, 255));
-    ////defaults.put("ScrollPaneUI", BegScrollPaneUI.class.getName());
-    //
-    //defaults.put("TabbedPane.tabInsets", new Insets(0, 4, 0, 4));
-    //defaults.put("ToolTip.background", new ColorUIResource(0, 14, 0));
-    //defaults.put("ToolTip.border", new ColoredSideBorder(Color.gray, Color.gray, Color.black, Color.black, 1));
-    //defaults.put("Tree.ancestorInputMap", null);
-    //defaults.put("FileView.directoryIcon", AllIcons.Nodes.Folder);
-    //defaults.put("FileChooser.upFolderIcon", AllIcons.Nodes.UpFolder);
-    //defaults.put("FileChooser.newFolderIcon", AllIcons.Nodes.NewFolder);
-    //defaults.put("FileChooser.homeFolderIcon", AllIcons.Nodes.HomeFolder);
-    //defaults.put("OptionPane.errorIcon", AllIcons.General.ErrorDialog);
-    //defaults.put("OptionPane.informationIcon", AllIcons.General.InformationDialog);
-    //defaults.put("OptionPane.warningIcon", AllIcons.General.WarningDialog);
-    //defaults.put("OptionPane.questionIcon", AllIcons.General.QuestionDialog);
-    //defaults.put("Tree.expandedIcon", WindowsTreeUI.ExpandedIcon.createExpandedIcon());
-    //defaults.put("Tree.collapsedIcon", WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
       "ctrl C", "copy",
       "ctrl V", "paste",
@@ -226,6 +154,42 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
       //"ESCAPE", "cancel",
       "F2", "startEditing"
     }));
+  }
+
+  private static void loadDefaults(UIDefaults defaults, @Nullable String postfix) {
+    try {
+      final Properties properties = new Properties();
+      final String secondPart = postfix == null ? "" : "_" + postfix;
+      final String name = "darcula" + secondPart + ".properties";
+      final InputStream stream = IdeaDarkLaf.class.getResourceAsStream(name);
+      properties.load(stream);
+      for (String key : properties.stringPropertyNames()) {
+        final String value = properties.getProperty(key);
+        if (key.endsWith("Insets")) {
+          final List<String> numbers = StringUtil.split(value, ",");
+          defaults.put(key, new InsetsUIResource(Integer.parseInt(numbers.get(0)),
+                                                 Integer.parseInt(numbers.get(1)),
+                                                 Integer.parseInt(numbers.get(2)),
+                                                 Integer.parseInt(numbers.get(3))));
+        } else {
+          final Color color = ColorUtil.fromHex(value, null);
+          final Integer invVal = getInteger(value);
+          Icon icon = value != null && value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
+          if (color != null) {
+            defaults.put(key, new ColorUIResource(color));
+          } else if (invVal != null) {
+            defaults.put(key, invVal);
+          } else if (icon != null) {
+            defaults.put(key, new IconUIResource(icon));
+          } else {
+            defaults.put(key, value);
+          }
+        }
+      }
+    }
+    catch (IOException e) {
+      log(e);
+    }
   }
 
   private static Integer getInteger(String value) {
@@ -286,7 +250,7 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
   @Override
   protected void loadSystemColors(UIDefaults defaults, String[] systemColors, boolean useNative) {
     try {
-      final Method superMethod = base.getClass().getDeclaredMethod("loadSystemColors",
+      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("loadSystemColors",
                                                                    UIDefaults.class,
                                                                    String[].class,
                                                                    boolean.class);
