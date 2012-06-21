@@ -752,10 +752,18 @@ public class AndroidCompileUtil {
             }
 
             for (final DeclareStyleable styleable : resources.getDeclareStyleables()) {
-              final String name = styleable.getName().getValue();
+              final String styleableName = styleable.getName().getValue();
 
-              if (name != null) {
-                resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), name));
+              if (styleableName != null) {
+                resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), styleableName));
+              }
+
+              for (Attr attr : styleable.getAttrs()) {
+                final String attrName = attr.getName().getValue();
+
+                if (attrName != null) {
+                  resourceSet.add(new ResourceEntry(ResourceType.DECLARE_STYLEABLE.getName(), styleableName + '_' + attrName));
+                }
               }
             }
           }
