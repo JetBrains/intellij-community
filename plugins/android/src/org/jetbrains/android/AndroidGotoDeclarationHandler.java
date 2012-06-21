@@ -54,7 +54,19 @@ public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
       return null;
     }
 
-    final Pair<String, String> pair = AndroidResourceUtil.getReferredResourceField(facet, refExp);
+    Pair<String, String> pair = AndroidResourceUtil.getReferredResourceField(facet, refExp);
+    if (pair == null) {
+      PsiElement parent = refExp.getParent();
+      if (parent instanceof PsiReferenceExpression) {
+        pair = AndroidResourceUtil.getReferredResourceField(facet, (PsiReferenceExpression)parent);
+      }
+      if (pair == null) {
+        parent = parent.getParent();
+        if (parent instanceof PsiReferenceExpression) {
+          pair = AndroidResourceUtil.getReferredResourceField(facet, (PsiReferenceExpression)parent);
+        }
+      }
+    }
     if (pair == null) {
       return null;
     }
