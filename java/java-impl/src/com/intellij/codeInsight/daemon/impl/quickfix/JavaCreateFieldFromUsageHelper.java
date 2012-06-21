@@ -38,7 +38,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
                                     PsiSubstitutor substitutor) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
 
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(field.getParent());
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
     }
