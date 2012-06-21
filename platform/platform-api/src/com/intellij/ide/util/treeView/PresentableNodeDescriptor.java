@@ -19,6 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.Gray;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,7 +167,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   public Color getHighlightColor() {
-    return Gray._245;
+    return UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground().brighter() : Gray._245;
   }
 
   public static class ColoredFragment {
