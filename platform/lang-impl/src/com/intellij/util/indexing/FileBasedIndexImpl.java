@@ -1661,22 +1661,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private void updateSingleIndex(final ID<?, ?> indexId, @NotNull final VirtualFile file, @Nullable final FileContent currentFC)
-    throws StorageException {
+  private void updateSingleIndex(final ID<?, ?> indexId, @NotNull final VirtualFile file, @Nullable final FileContent currentFC) throws StorageException {
     if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
       return; // the index is scheduled for rebuild, no need to update
     }
     myLocalModCount++;
 
+    final int inputId = Math.abs(getFileId(file));
+    final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+    assert index != null;
+    final Ref<StorageException> exRef = new Ref<StorageException>(null);
+
     final StorageGuard.Holder lock = setDataBufferingEnabled(false);
-
     try {
-      final int inputId = Math.abs(getFileId(file));
-
-      final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-      assert index != null;
-
-      final Ref<StorageException> exRef = new Ref<StorageException>(null);
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
         @Override
         public void run() {
@@ -1688,28 +1685,30 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
         }
       });
-      final StorageException storageException = exRef.get();
-      if (storageException != null) {
-        throw storageException;
-      }
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (file.isValid()) {
-            if (currentFC != null) {
-              IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
-            }
-            else {
-              // mark the file as unindexed
-              IndexingStamp.update(file, indexId, -1L);
-            }
-          }
-        }
-      });
     }
     finally {
       lock.leave();
     }
+
+    final StorageException storageException = exRef.get();
+    if (storageException != null) {
+      throw storageException;
+    }
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (file.isValid()) {
+          if (currentFC != null) {
+            IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+          }
+          else {
+            // mark the file as unindexed
+            IndexingStamp.update(file, indexId, -1L);
+          }
+        }
+      }
+    });
   }
 
   private boolean needsFileContentLoading(ID<?, ?> indexId) {
