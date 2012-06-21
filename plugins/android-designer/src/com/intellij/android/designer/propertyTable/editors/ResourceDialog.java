@@ -18,6 +18,7 @@ package com.intellij.android.designer.propertyTable.editors;
 import com.android.resources.ResourceType;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.componentTree.TreeNodeDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -374,7 +375,11 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     @NotNull
     @Override
     public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-      return new TreeNodeDescriptor(parentDescriptor, element, element == null ? null : element.toString());
+      TreeNodeDescriptor descriptor = new TreeNodeDescriptor(parentDescriptor, element, element == null ? null : element.toString());
+      if (element instanceof ResourceGroup) {
+        descriptor.setIcon(AllIcons.Nodes.TreeOpen, AllIcons.Nodes.TreeClosed);
+      }
+      return descriptor;
     }
 
     @Override

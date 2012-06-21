@@ -143,6 +143,10 @@ public class PropertyParser {
       properties = new ArrayList<Property>();
       myCachedProperties.put(component, properties);
 
+      if ("View".equals(component)) {
+        properties.add(new StyleProperty());
+      }
+
       StyleableDefinition definitions = myDefinitions.getStyleableByName(component);
       if (definitions != null) {
         boolean padding = false;
@@ -225,6 +229,8 @@ public class PropertyParser {
             PropertyTable.moveProperty(properties, topName, properties, 0);
           }
         }
+
+        PropertyTable.moveProperty(properties, "style", properties, 0);
       }
     }
 
