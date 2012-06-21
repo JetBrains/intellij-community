@@ -962,7 +962,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
         result.add(task.clone());
       }
     }
-    return result.isEmpty() ? Collections.<BeforeRunTask>emptyList() : result;
+    return result;
   }
 
   public void shareConfiguration(final RunConfiguration runConfiguration, final boolean shareConfiguration) {
