@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui.laf;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 
@@ -68,6 +70,12 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
       LafManagerImpl.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
+      if (SystemInfo.isMac) {
+        defaults.put("Menu.arrowIcon", AllIcons.Mac.Tree_white_right_arrow);
+        defaults.put("MenuItem.acceleratorForeground", new ColorUIResource(255, 255, 255));
+        defaults.put("Separator.foreground", new ColorUIResource(ColorUtil.fromHex("888888")));
+        defaults.put("PopupMenu.background", new ColorUIResource(ColorUtil.fromHex("444444")));
+      }
       return defaults;
     }
     catch (Exception ignore) {
