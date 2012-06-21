@@ -16,6 +16,7 @@
 package com.intellij.android.designer.propertyTable.editors;
 
 import com.android.resources.ResourceType;
+import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.componentTree.TreeNodeDescriptor;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -24,10 +25,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -38,6 +36,7 @@ import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -57,9 +56,12 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ResourceDialog extends DialogWrapper implements TreeSelectionListener {
+  private static final String ANDROID = "@android:";
+
   private final JBTabbedPane myContentPanel;
   private final ResourcePanel myProjectPanel;
   private final ResourcePanel mySystemPanel;
+  private ColorPicker myColorPicker;
   private final Action myNewResourceAction = new AbstractAction("New Resource...") {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -68,11 +70,10 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   };
   private String myResultResourceName;
 
-  public ResourceDialog(Module module, ResourceType[] types) {
+  public ResourceDialog(Module module, ResourceType[] types, String value) {
     super(module.getProject());
 
     setTitle("Resource Dialog");
-    getOKAction().setEnabled(false);
 
     AndroidFacet facet = AndroidFacet.getInstance(module);
     myProjectPanel = new ResourcePanel(facet, types, false);
@@ -86,6 +87,34 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     myProjectPanel.myTreeBuilder.expandAll(null);
     mySystemPanel.myTreeBuilder.expandAll(null);
 
+    boolean doSelection = value != null;
+
+    if (types == ResourceEditor.COLOR_TYPES) {
+      Color color = ResourceRenderer.parseColor(value);
+      myColorPicker = new ColorPicker(myDisposable, color, true);
+      myContentPanel.addTab("Color", myColorPicker);
+      if (color != null) {
+        myContentPanel.setSelectedIndex(2);
+        doSelection = false;
+      }
+    }
+    if (doSelection && value.startsWith("@")) {
+      ResourcePanel panel;
+      String type;
+      int index = value.indexOf('/');
+      String name = value.substring(index + 1);
+      if (value.startsWith(ANDROID)) {
+        panel = mySystemPanel;
+        type = value.substring(ANDROID.length(), index);
+      }
+      else {
+        panel = myProjectPanel;
+        type = value.substring(1, index);
+      }
+      myContentPanel.setSelectedComponent(panel.myComponent);
+      panel.select(type, name);
+    }
+
     myContentPanel.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -95,6 +124,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     });
 
     init();
+    valueChanged(null);
   }
 
   @Override
@@ -124,24 +154,45 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   }
 
   @Override
-  public void valueChanged(TreeSelectionEvent e) {
-    ResourcePanel panel = myContentPanel.getSelectedComponent() == myProjectPanel.myComponent ? myProjectPanel : mySystemPanel;
-    Set<ResourceItem> elements = panel.myTreeBuilder.getSelectedElements(ResourceItem.class);
-    getOKAction().setEnabled(!elements.isEmpty());
+  protected void doOKAction() {
+    valueChanged(null);
+    super.doOKAction();
+  }
 
-    if (elements.isEmpty()) {
-      myResultResourceName = null;
+  @Override
+  public void valueChanged(@Nullable TreeSelectionEvent e) {
+    Component selectedComponent = myContentPanel.getSelectedComponent();
+
+    if (selectedComponent == myColorPicker) {
+      Color color = myColorPicker.getColor();
+      getOKAction().setEnabled(color != null);
+      myResultResourceName = color == null ? null : "#" + toHex(color.getRed()) + toHex(color.getGreen()) + toHex(color.getBlue());
     }
     else {
-      String prefix = panel == myProjectPanel ? "@" : "@android:";
-      myResultResourceName = prefix + elements.iterator().next().getName();
+      ResourcePanel panel = selectedComponent == myProjectPanel.myComponent ? myProjectPanel : mySystemPanel;
+      Set<ResourceItem> elements = panel.myTreeBuilder.getSelectedElements(ResourceItem.class);
+      getOKAction().setEnabled(!elements.isEmpty());
+
+      if (elements.isEmpty()) {
+        myResultResourceName = null;
+      }
+      else {
+        String prefix = panel == myProjectPanel ? "@" : ANDROID;
+        myResultResourceName = prefix + elements.iterator().next().getName();
+      }
     }
+  }
+
+  private static String toHex(int value) {
+    String hex = Integer.toString(value, 16);
+    return hex.length() == 1 ? "0" + hex : hex;
   }
 
   private class ResourcePanel {
     public final Tree myTree;
     public final AbstractTreeBuilder myTreeBuilder;
     public final JScrollPane myComponent;
+    private final ResourceGroup[] myGroups;
 
     public ResourcePanel(AndroidFacet facet, ResourceType[] types, boolean system) {
       myTree = new Tree();
@@ -164,14 +215,14 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       TreeUtil.installActions(myTree);
 
       ResourceManager manager = facet.getResourceManager(system ? AndroidUtils.SYSTEM_RESOURCE_PACKAGE : null);
-      ResourceGroup[] groups = new ResourceGroup[types.length];
+      myGroups = new ResourceGroup[types.length];
 
       for (int i = 0; i < types.length; i++) {
-        groups[i] = new ResourceGroup(types[i], manager);
+        myGroups[i] = new ResourceGroup(types[i], manager);
       }
 
       myTreeBuilder =
-        new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), new TreeContentProvider(groups), null);
+        new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), new TreeContentProvider(myGroups), null);
       myTreeBuilder.initRootNode();
 
       TreeSelectionModel selectionModel = myTree.getSelectionModel();
@@ -200,6 +251,20 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
 
       myComponent = ScrollPaneFactory.createScrollPane(myTree);
+    }
+
+    private void select(String type, String name) {
+      for (ResourceGroup group : myGroups) {
+        if (type.equalsIgnoreCase(group.getName())) {
+          for (ResourceItem item : group.getItems()) {
+            if (name.equals(item.toString())) {
+              myTreeBuilder.select(item);
+              return;
+            }
+          }
+          return;
+        }
+      }
     }
   }
 

@@ -78,7 +78,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final JLabel myB_after = new JLabel("");
   private final JComboBox myFormat = new JComboBox(new String[]{"RGB", "HSB"});
 
-  private ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
+  public ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
     this(parent, color, true, enableOpacity);
   }
 
