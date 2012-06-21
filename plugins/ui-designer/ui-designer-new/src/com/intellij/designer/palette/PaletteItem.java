@@ -26,4 +26,6 @@ public interface PaletteItem {
   Icon getIcon();
 
   String getTooltip();
+
+  String getVersion();
 }

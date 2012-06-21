@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.palette;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -57,9 +58,30 @@ public class PaletteItemsComponent extends JBList {
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
         clear();
         PaletteItem item = (PaletteItem)value;
+
         setIcon(item.getIcon());
-        append(item.getTitle(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setToolTipText(item.getTooltip());
+
+        String title = item.getTitle();
+        append(title, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+        String tooltip = item.getTooltip();
+        String version = item.getVersion();
+        if (version == null) {
+          version = "";
+        }
+        else {
+          version = "<sup><i>" + version + "</i></sup>";
+        }
+        if (tooltip != null) {
+          tooltip = "<html><body><center><b>" +
+                    StringUtil.escapeXml(title) +
+                    "</b>" +
+                    version +
+                    "</center><p style='width: 300px'>" +
+                    tooltip +
+                    "</p></body></html>";
+        }
+        setToolTipText(tooltip);
       }
     };
     renderer.getIpad().left = UIUtil.getTreeLeftChildIndent();
