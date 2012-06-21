@@ -54,6 +54,10 @@ public class RefCountingStorage extends AbstractStorage {
     super(path);
   }
 
+  public RefCountingStorage(String path, CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    super(path, capacityAllocationPolicy);
+  }
+
   public DataInputStream readStream(int record) throws IOException {
     if (myDoNotZipCaches) return super.readStream(record);
     BufferExposingByteArrayOutputStream stream = internalReadStream(record);

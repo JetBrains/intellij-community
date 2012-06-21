@@ -33,6 +33,10 @@ public class Storage extends AbstractStorage {
     super(path, pool);
   }
 
+  public Storage(String path, CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    super(path, capacityAllocationPolicy);
+  }
+
   @Override
   protected AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException {
     return new RecordsTable(recordsFile, pool);
