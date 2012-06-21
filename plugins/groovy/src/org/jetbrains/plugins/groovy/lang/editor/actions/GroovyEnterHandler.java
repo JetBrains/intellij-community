@@ -304,6 +304,13 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         if (isSlashBeforeCaret(caretOffset, fileText)) {
           EditorModificationUtil.insertStringAtCaret(editor, "\n");
         }
+        else if(stringElement.getParent() instanceof GrReferenceExpression) {
+          TextRange range = stringElement.getTextRange();
+          convertEndToMultiline(range.getEndOffset(), document, fileText, '\'');
+          document.insertString(range.getStartOffset(), "''");
+          caretModel.moveToOffset(caretOffset + 2);
+          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+        }
         else {
           EditorModificationUtil.insertStringAtCaret(editor, "'+");
           originalHandler.execute(editor, dataContext);
@@ -335,12 +342,14 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
         TextRange parentRange = parent.getTextRange();
-        if (rightFromDollar) {
+        if (rightFromDollar || parent.getParent() instanceof GrReferenceExpression) {
           convertEndToMultiline(parent.getTextRange().getEndOffset(), document, fileText, '"');
           document.insertString(parentRange.getStartOffset(), "\"\"");
           caretModel.moveToOffset(caretOffset + 2);
           EditorModificationUtil.insertStringAtCaret(editor, "\n");
-          caretModel.moveCaretRelatively(1, 0, false, false, true);
+          if (rightFromDollar) {
+            caretModel.moveCaretRelatively(1, 0, false, false, true);
+          }
         }
         else if (isSlashBeforeCaret(caretOffset, fileText)) {
           EditorModificationUtil.insertStringAtCaret(editor, "\n");
