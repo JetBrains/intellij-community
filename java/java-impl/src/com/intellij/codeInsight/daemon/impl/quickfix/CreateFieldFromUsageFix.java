@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -81,22 +80,8 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
     }
 
-    if (enclosingContext != null &&
-        enclosingContext.getParent() == parentClass &&
-        targetClass == parentClass &&
-        enclosingContext instanceof PsiField) {
-      field = (PsiField)targetClass.addBefore(field, enclosingContext);
-    }
-    else if (enclosingContext != null &&
-             enclosingContext.getParent() == parentClass &&
-             targetClass == parentClass &&
-             enclosingContext instanceof PsiClassInitializer) {
-      field = (PsiField)targetClass.addBefore(field, enclosingContext);
-      targetClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), enclosingContext);
-    }
-    else {
-      field = (PsiField)targetClass.add(field);
-    }
+
+    field = CreateFieldFromUsageHelper.insertField(targetClass, field, myReferenceExpression);
 
     setupVisibility(parentClass, targetClass, field.getModifierList());
 

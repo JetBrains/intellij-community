@@ -22,6 +22,8 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * @author Max Medvedev
@@ -60,4 +62,34 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     if (((ExpectedTypeInfo[])expectedTypes).length > 1) template.setToShortenLongNames(false);
     return template;
   }
+
+  public PsiField insertFieldImpl(PsiClass targetClass, PsiField field, PsiElement place) {
+    PsiMember enclosingContext = null;
+    PsiClass parentClass;
+    do {
+      enclosingContext = PsiTreeUtil.getParentOfType(enclosingContext == null ? place : enclosingContext, PsiMethod.class, PsiField.class, PsiClassInitializer.class);
+      parentClass = enclosingContext == null ? null : enclosingContext.getContainingClass();
+    }
+    while (parentClass instanceof PsiAnonymousClass);
+
+    if (enclosingContext != null &&
+        enclosingContext.getParent() == parentClass &&
+        targetClass == parentClass &&
+        enclosingContext instanceof PsiField) {
+      field = (PsiField)targetClass.addBefore(field, enclosingContext);
+    }
+    else if (enclosingContext != null &&
+             enclosingContext.getParent() == parentClass &&
+             targetClass == parentClass &&
+             enclosingContext instanceof PsiClassInitializer) {
+      field = (PsiField)targetClass.addBefore(field, enclosingContext);
+      targetClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), enclosingContext);
+    }
+    else {
+      field = (PsiField)targetClass.add(field);
+    }
+
+    return field;
+  }
+
 }

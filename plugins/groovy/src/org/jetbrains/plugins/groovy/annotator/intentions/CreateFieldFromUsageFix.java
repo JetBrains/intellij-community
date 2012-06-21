@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.ArrayUtil;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -38,7 +38,7 @@ public class CreateFieldFromUsageFix implements IntentionAction {
   private final CreateFieldFix myFix;
   private final GrReferenceExpression myRefExpression;
 
-  public CreateFieldFromUsageFix(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
+  public CreateFieldFromUsageFix(GrReferenceExpression refExpression, PsiClass targetClass) {
     myFix = new CreateFieldFix(targetClass);
     myRefExpression = refExpression;
   }
@@ -75,7 +75,7 @@ public class CreateFieldFromUsageFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myFix.doFix(project, generateModifiers(), getFieldName(), calculateTypeConstrains());
+    myFix.doFix(project, generateModifiers(), getFieldName(), calculateTypeConstrains(), myRefExpression);
   }
 
   @Override

@@ -80,4 +80,9 @@ public class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper
     }
     return template;
   }
+
+  @Override
+  public PsiField insertFieldImpl(PsiClass targetClass, PsiField field, PsiElement place) {
+    return (PsiField)targetClass.add(field);
+  }
 }

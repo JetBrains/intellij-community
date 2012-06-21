@@ -41,6 +41,14 @@ public abstract class CreateFieldFromUsageHelper {
                                     CreateFromUsageBaseFix.getTargetSubstitutor(context));
   }
 
+  public static PsiField insertField(PsiClass targetClass, PsiField field, PsiElement place) {
+    CreateFieldFromUsageHelper helper = EP_NAME.forLanguage(field.getLanguage());
+    if (helper == null) return null;
+    return helper.insertFieldImpl(targetClass, field, place);
+  }
+
+  public abstract PsiField insertFieldImpl(PsiClass targetClass, PsiField field, PsiElement place);
+
   public abstract Template setupTemplateImpl(PsiField field,
                                              Object expectedTypes,
                                              PsiClass targetClass,
