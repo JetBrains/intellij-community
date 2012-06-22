@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import org.jetbrains.android.inspections.CreateFileResourceQuickFix;
 import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
 import java.io.IOException;
@@ -116,7 +117,8 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testResourceCompletion() throws Throwable {
     doTestCompletionVariants("av3.xml", "@color/", "@android:", "@drawable/");
-    doTestCompletionVariants("av8.xml", "@android:", "@anim/", "@color/", "@dimen/", "@drawable/", "@id/", "@layout/", "@string/", "@style/");
+    doTestCompletionVariants("av8.xml", "@android:", "@anim/", "@color/", "@dimen/", "@drawable/", "@id/", "@layout/", "@string/",
+                             "@style/");
   }
 
   public void testLocalResourceCompletion1() throws Throwable {
@@ -129,12 +131,12 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testLocalResourceCompletion3() throws Throwable {
     doTestCompletionVariants("av7.xml", "@android:", "@string/hello", "@string/hello1", "@string/welcome", "@string/welcome1",
-                           "@string/itStr");
+                             "@string/itStr");
   }
 
   public void testLocalResourceCompletion4() throws Throwable {
     doTestCompletionVariants("av7.xml", "@android:", "@string/hello", "@string/hello1", "@string/welcome", "@string/welcome1",
-                           "@string/itStr");
+                             "@string/itStr");
   }
 
   public void testLocalResourceCompletion5() throws Throwable {
@@ -346,7 +348,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
     for (HighlightInfo info : infos) {
       final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = info.quickFixActionRanges;
-      
+
       if (ranges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
           final IntentionAction action = pair.getFirst().getAction();
@@ -429,6 +431,46 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   public void testJavaHighlighting5() throws Throwable {
     copyFileToProject("main.xml", "res/layout/main.xml");
     doTestJavaHighlighting("p1");
+  }
+
+  public void testJavaCreateResourceFromUsage() throws Throwable {
+    final VirtualFile virtualFile = copyFileToProject(getTestName(false) + ".java", "src/p1/p2/" + getTestName(true) + ".java");
+    doCreateFileResourceFromUsage(virtualFile);
+    myFixture.checkResultByFile("res/layout/unknown.xml", testFolder + '/' + getTestName(true) + "_layout_after.xml", true);
+  }
+
+  public void testCreateResourceFromUsage1() throws Throwable {
+    final VirtualFile virtualFile = copyFileToProject(getTestName(true) + ".xml");
+    doCreateFileResourceFromUsage(virtualFile);
+    myFixture.type("selector");
+    myFixture.checkResultByFile("res/drawable/unknown.xml", testFolder + '/' + getTestName(true) + "_drawable_after.xml", true);
+  }
+
+  private void doCreateFileResourceFromUsage(VirtualFile virtualFile) {
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    final List<HighlightInfo> infos = myFixture.doHighlighting();
+    final List<IntentionAction> actions = new ArrayList<IntentionAction>();
+
+    for (HighlightInfo info : infos) {
+      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = info.quickFixActionRanges;
+
+      if (ranges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
+          final IntentionAction action = pair.getFirst().getAction();
+          if (action instanceof CreateFileResourceQuickFix) {
+            actions.add(action);
+          }
+        }
+      }
+    }
+    assertEquals(1, actions.size());
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        actions.get(0).invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+      }
+    }.execute();
   }
 }
 
