@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
-  protected ConstructorReferencesSearcher() {
+  public ConstructorReferencesSearcher() {
     super(true);
   }
 
