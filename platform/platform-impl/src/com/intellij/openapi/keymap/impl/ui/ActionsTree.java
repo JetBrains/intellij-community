@@ -78,6 +78,9 @@ public class ActionsTree {
         Rectangle clip = g.getClipBounds();
         for (int row = 0; row < getRowCount(); row++) {
           Rectangle rowBounds = getRowBounds(row);
+          rowBounds.x = 0;
+          rowBounds.width = Integer.MAX_VALUE;
+
           if (rowBounds.intersects(clip)) {
             Object node = getPathForRow(row).getLastPathComponent();
 
