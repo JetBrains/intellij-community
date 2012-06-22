@@ -256,7 +256,7 @@ public class MacTreeUI extends BasicTreeUI {
       Color background = tree.getBackground();
 
       if ((row % 2) == 0 && Boolean.TRUE.equals(tree.getClientProperty(STRIPED_CLIENT_PROPERTY))) {
-        background = DECORATED_ROW_BG_COLOR;
+        background = UIUtil.getDecoratedRowColor();
       }
 
       if (sourceList != null && (Boolean)sourceList) {

@@ -60,7 +60,7 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
 
   public void checkSingleItemCompletion(String before, String after) {
     myFixture.configureByText("a.groovy", before);
-    myFixture.completeBasic();
+    assert !myFixture.completeBasic();
     myFixture.checkResult(after);
   }
 

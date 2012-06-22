@@ -92,17 +92,11 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final PsiElement reference = position.getParent();
         if (reference == null) return;
         if (reference instanceof GrReferenceElement) {
-          ((GrReferenceElement)reference).processVariants(result.getPrefixMatcher(), params, new Consumer<Object>() {
-            public void consume(Object variant) {
+          ((GrReferenceElement)reference).processVariants(result.getPrefixMatcher(), params, new Consumer<LookupElement>() {
+            public void consume(LookupElement variant) {
               PsiType type = null;
 
-              Object o;
-              if (variant instanceof LookupElement) {
-                o = ((LookupElement)variant).getObject();
-              }
-              else {
-                o = variant;
-              }
+              Object o = variant.getObject();
               if (o instanceof GroovyResolveResult) {
                 if (!((GroovyResolveResult)o).isAccessible()) return;
                 o = ((GroovyResolveResult)o).getElement();
@@ -122,9 +116,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
               if (type == null) return;
               for (TypeConstraint info : infos) {
                 if (info.satisfied(type, position.getManager(), GlobalSearchScope.allScope(position.getProject()))) {
-                  final LookupElement lookupElement =
-                    variant instanceof LookupElement ? (LookupElement)variant : GroovyCompletionUtil.getLookupElement(o);
-                  result.addElement(lookupElement);
+                  result.addElement(variant);
                   break;
                 }
               }

@@ -388,7 +388,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                                               final ElementFilter filter,
                                               final boolean acceptClasses,
                                               final boolean acceptMembers,
-                                              CompletionParameters parameters, @Nullable final PrefixMatcher matcher) {
+                                              CompletionParameters parameters, final PrefixMatcher matcher) {
     if (reference instanceof PsiMultiReference) {
       reference = ContainerUtil.findInstance(((PsiMultiReference) reference).getReferences(), PsiJavaReference.class);
     }

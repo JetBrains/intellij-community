@@ -11,6 +11,7 @@ class A  {
   <caret>
 }
 -----
+META-INF
 abstract
 boolean
 byte
@@ -23,8 +24,11 @@ final
 float
 int
 interface
+java
+javax
 long
 native
+org
 private
 protected
 public

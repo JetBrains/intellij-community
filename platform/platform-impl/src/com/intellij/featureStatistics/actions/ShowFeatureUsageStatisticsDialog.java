@@ -166,10 +166,17 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     Date completionDate = FeatureUsageTracker.getInstance().getCompletionStatisticsStartDate();
     if (completionDate != null) {
       int spared = FeatureUsageTracker.getInstance().getCharactersSparedByCompletion();
-      long dayCount = Math.min(1, DateFormatUtil.getDifferenceInDays(completionDate, new Date()));
-      labelText += "<br>Code completion has saved you from typing at least " +
-                   spared + " characters since " + DateFormatUtil.formatDate(completionDate) +
-                   "; that's approximately " + (spared / dayCount) + " per day";
+      String total = spared > 1024 * 1024 ? (spared / 1024 / 1024) + "MB code" :
+                     spared > 1024 ? (spared / 1024) + "KB code" :
+                     spared + " characters";
+
+      long perDayCount = spared / Math.max(1, DateFormatUtil.getDifferenceInDays(completionDate, new Date()) + 1);
+      String perDay = perDayCount > 1024 * 1024 ? (perDayCount / 1024 / 1024) + "MB" :
+                      perDayCount > 1024 ? (perDayCount / 1024) + "KB" :
+                      perDayCount + " characters";
+
+      labelText += "<br>Code completion has saved you from typing at least " + total + "  since " + DateFormatUtil.formatDate(completionDate) +
+                   " (\u2245 " + perDay + " per day)";
     }
     controlsPanel.add(new JLabel("<html><body>" + labelText + "</body></html>"), BorderLayout.NORTH);
 

@@ -177,7 +177,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myList.setFixedCellWidth(50);
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+    myList.setBackground(UIUtil.isUnderDarcula() ? LookupCellRenderer.BACKGROUND_COLOR_DARK_VARIANT : LookupCellRenderer.BACKGROUND_COLOR);
 
     myList.getExpandableItemsHandler();
 

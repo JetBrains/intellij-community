@@ -122,18 +122,18 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  public List<PsiMember> processMembersOfRegisteredClasses(@Nullable final PrefixMatcher matcher, PairConsumer<PsiMember, PsiClass> consumer) {
+  public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<PsiMember, PsiClass> consumer) {
     final ArrayList<PsiMember> result = CollectionFactory.arrayList();
     for (final PsiClass psiClass : myStaticImportedClasses) {
       for (final PsiMethod method : psiClass.getAllMethods()) {
-        if (matcher == null || matcher.prefixMatches(method.getName())) {
+        if (matcher.prefixMatches(method.getName())) {
           if (isStaticallyImportable(method)) {
             consumer.consume(method, psiClass);
           }
         }
       }
       for (final PsiField field : psiClass.getAllFields()) {
-        if (matcher == null || matcher.prefixMatches(field. getName())) {
+        if (matcher.prefixMatches(field. getName())) {
           if (isStaticallyImportable(field)) {
             consumer.consume(field, psiClass);
           }

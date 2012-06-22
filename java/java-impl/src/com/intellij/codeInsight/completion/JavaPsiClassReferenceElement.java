@@ -31,6 +31,9 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * @author peter
  */
@@ -38,6 +41,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final Object myClass;
   private final String myQualifiedName;
+  private String myForcedPresentableName;
 
   public JavaPsiClassReferenceElement(PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
@@ -46,6 +50,32 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     JavaCompletionUtil.setShowFQN(this);
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
     setTailType(TailType.NONE);
+  }
+
+  public String getForcedPresentableName() {
+    return myForcedPresentableName;
+  }
+
+  @NotNull
+  @Override
+  public String getLookupString() {
+    if (myForcedPresentableName != null) {
+      return myForcedPresentableName;
+    }
+    return super.getLookupString();
+  }
+
+  @Override
+  public Set<String> getAllLookupStrings() {
+    if (myForcedPresentableName != null) {
+      return Collections.singleton(myForcedPresentableName);
+    }
+
+    return super.getAllLookupStrings();
+  }
+
+  public void setForcedPresentableName(String forcedPresentableName) {
+    myForcedPresentableName = forcedPresentableName;
   }
 
   @NotNull
@@ -126,6 +156,13 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   }
 
   private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond) {
+    if (item instanceof JavaPsiClassReferenceElement) {
+      String forced = ((JavaPsiClassReferenceElement)item).getForcedPresentableName();
+      if (forced != null) {
+        return forced;
+      }
+    }
+
     String name = PsiUtilCore.getName(psiClass);
 
     if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null) {

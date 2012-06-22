@@ -103,7 +103,6 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
   static void initIdeaDefaults(UIDefaults defaults) {
     loadDefaults(defaults, null); //load defaults
     loadDefaults(defaults, SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux"); // load OS customization
-
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
       "ctrl C", "copy",
       "ctrl V", "paste",

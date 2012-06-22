@@ -61,8 +61,12 @@ public class TextPanel extends JComponent {
   @Override
   protected void paintComponent(final Graphics g) {
     String s = getText();
-    if (s == null) return;
     final Rectangle bounds = getBounds();
+    if (UIUtil.isUnderDarcula()) {
+      g.setColor(UIUtil.getPanelBackground());
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    }
+    if (s == null) return;
     final Insets insets = getInsets();
 
     final Graphics2D g2 = (Graphics2D)g;
@@ -92,7 +96,7 @@ public class TextPanel extends JComponent {
     }
 
     final int y = UIUtil.getStringY(s, bounds, g2);
-    if (SystemInfo.isMac && myDecorate) {
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula() && myDecorate) {
       g2.setColor(Gray._215);
       g2.drawString(s, x, y + 1);
     }

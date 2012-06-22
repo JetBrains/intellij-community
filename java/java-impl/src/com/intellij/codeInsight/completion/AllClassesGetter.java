@@ -158,9 +158,11 @@ public class AllClassesGetter {
     }).forEach(new Processor<PsiClass>() {
       public boolean process(PsiClass psiClass) {
         assert psiClass != null;
-        if (isSuitable(context, packagePrefix, qnames, psiClass, filterByScope, pkgContext)) {
-          qnames.add(psiClass.getQualifiedName());
-          consumer.consume(psiClass);
+        if (isAcceptableInContext(context, psiClass, filterByScope, pkgContext)) {
+          String qName = psiClass.getQualifiedName();
+          if (qName != null && qName.startsWith(packagePrefix) && qnames.add(qName)) {
+            consumer.consume(psiClass);
+          }
         }
         return true;
       }
@@ -181,9 +183,9 @@ public class AllClassesGetter {
     return j > 0 ? prefix.substring(0, j) : "";
   }
 
-  private static boolean isSuitable(@NotNull final PsiElement context, final String packagePrefix, final Set<String> qnames,
-                                    @NotNull final PsiClass psiClass,
-                                    final boolean filterByScope, final boolean pkgContext) {
+  public static boolean isAcceptableInContext(@NotNull final PsiElement context,
+                                              @NotNull final PsiClass psiClass,
+                                              final boolean filterByScope, final boolean pkgContext) {
     ProgressManager.checkCanceled();
 
     if (!context.isValid() || !psiClass.isValid()) return false;
@@ -191,9 +193,7 @@ public class AllClassesGetter {
     if (JavaCompletionUtil.isInExcludedPackage(psiClass, false)) return false;
 
     final String qualifiedName = psiClass.getQualifiedName();
-    if (qualifiedName == null || !qualifiedName.startsWith(packagePrefix)) return false;
-
-    if (qnames.contains(qualifiedName)) return false;
+    if (qualifiedName == null) return false;
 
     if (!filterByScope && !(psiClass instanceof PsiCompiledElement)) return true;
 
