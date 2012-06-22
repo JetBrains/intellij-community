@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="duplicates" />
     <orderEntry type="module" module-name="CSS" />
+    <orderEntry type="module" module-name="java-indexing-api" />
   </component>
   <component name="copyright">
     <Base>
