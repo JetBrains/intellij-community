@@ -51,6 +51,9 @@
     <key>CFBundleHelpBookFolder</key>
     <string>@@help_id@@.help</string>
 
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
     <key>LSArchitecturePriority</key>
     <array>
       <string>x86_64</string>
