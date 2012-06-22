@@ -1174,12 +1174,18 @@
       <categoryKey>intention.category.groovy</categoryKey>
       <className>org.jetbrains.plugins.groovy.grape.GrabDependencies</className>
     </intentionAction>
+
+    <!--declaration-->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.control.GrCreateSubclassAction</className>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrCreateSubclassAction</className>
     </intentionAction>
-
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.declaration.GrCreateFieldForParameterIntention</className>
+    </intentionAction>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"
                     serviceImplementation="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"/>

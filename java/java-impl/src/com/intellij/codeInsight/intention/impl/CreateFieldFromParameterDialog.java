@@ -35,7 +35,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 
-class CreateFieldFromParameterDialog extends DialogWrapper {
+public class CreateFieldFromParameterDialog extends DialogWrapper {
   private final Project myProject;
   private final String[] myNames;
   private final PsiType[] myTypes;
@@ -67,7 +67,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (myCbFinal.isEnabled()) {
-      PropertiesComponent.getInstance().setValue(PROPERTY_NAME, "" + myCbFinal.isSelected());
+      PropertiesComponent.getInstance().setValue(PROPERTY_NAME, String.valueOf(myCbFinal.isSelected()));
     }
 
     final PsiField[] fields = myTargetClass.getFields();
