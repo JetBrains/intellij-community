@@ -97,18 +97,27 @@ public class CreateResourceFileAction extends CreateElementActionBase {
                                                 @NotNull String resName,
                                                 boolean chooseResName) {
     final CreateResourceFileAction action = getInstance();
-    final MyDialog dialog =
-      new MyDialog(facet, action.mySubactions.values(), resType, resName, chooseResName, action, facet.getModule(), true);
-    dialog.show();
-    if (!dialog.isOK()) {
-      return PsiElement.EMPTY_ARRAY;
-    }
 
-    if (chooseResName) {
-      resName = dialog.getFileName();
+    final String subdirName;
+    final Module selectedModule;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      subdirName = resType.getName();
+      selectedModule = facet.getModule();
     }
-    final String subdirName = dialog.getSubdirName();
-    final AndroidFacet selectedFacet = AndroidFacet.getInstance(dialog.getSelectedModule());
+    else {
+      final MyDialog dialog =
+        new MyDialog(facet, action.mySubactions.values(), resType, resName, chooseResName, action, facet.getModule(), true);
+      dialog.show();
+      if (!dialog.isOK()) {
+        return PsiElement.EMPTY_ARRAY;
+      }
+      if (chooseResName) {
+        resName = dialog.getFileName();
+      }
+      subdirName = dialog.getSubdirName();
+      selectedModule = dialog.getSelectedModule();
+    }
+    final AndroidFacet selectedFacet = AndroidFacet.getInstance(selectedModule);
     LOG.assertTrue(selectedFacet != null);
 
     final VirtualFile resourceDir = selectedFacet.getLocalResourceManager().getResourceDir();

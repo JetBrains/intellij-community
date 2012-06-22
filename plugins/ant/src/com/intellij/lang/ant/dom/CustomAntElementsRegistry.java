@@ -438,7 +438,7 @@ public class CustomAntElementsRegistry {
                     try {
                       final XmlFile xmlFile = (XmlFile)loadContentAsFile(xmlElement.getProject(), stream, StdFileTypes.XML);
                       if (xmlFile != null) {
-                        loadDefinitionsFromAntlib(xmlFile, uri, loader, null);
+                        loadDefinitionsFromAntlib(xmlFile, uri, loader, null, myAntProject);
                       }
                     }
                     catch (IOException e) {
@@ -556,65 +556,74 @@ public class CustomAntElementsRegistry {
         registerElement(typedef, customTagName, uri, classname, getClassLoader(typedef, antProject));
       }
       else {
-        XmlFile xmlFile = null;
-        PropertiesFile propFile = null;
-        ClassLoader loader = null;
-
-        final XmlElement xmlElement = antProject.getXmlElement();
-        final Project project = xmlElement != null? xmlElement.getProject() : null;
-        if (project != null) {
-          final String resource = typedef.getResource().getStringValue();
-          if (resource != null) {
-            loader = getClassLoader(typedef, antProject);
-            if (loader != null) {
-              final InputStream stream = loader.getResourceAsStream(resource);
-              if (stream != null) {
-                try {
-                  if (isXmlFormat(typedef, resource)) {
-                    xmlFile = (XmlFile)loadContentAsFile(project, stream, StdFileTypes.XML);
-                  }
-                  else {
-                    propFile = (PropertiesFile)loadContentAsFile(project, stream, StdFileTypes.PROPERTIES);
-                  }
-                }
-                catch (IOException e) {
-                  LOG.info(e);
-                }
-              }
-              else {
-                myTypeDefErrors.put(typedef, "Resource \"" + resource + "\" not found in the classpath");
-              }
-            }
-          }
-          else {
-            final PsiFileSystemItem file = typedef.getFile().getValue();
-            if (file instanceof PsiFile) {
-              if (isXmlFormat(typedef, file.getName())) {
-                xmlFile = file instanceof XmlFile ? (XmlFile)file : (XmlFile)loadContentAsFile((PsiFile)file, StdFileTypes.XML);
-              }
-              else { // assume properties format
-                propFile = file instanceof PropertiesFile ? (PropertiesFile)file : (PropertiesFile)loadContentAsFile((PsiFile)file, StdFileTypes.PROPERTIES);
-              }
-            }
-          }
-
-          if (propFile != null) {
-            if (loader == null) { // if not initialized yet
-              loader = getClassLoader(typedef, antProject);
-            }
-            for (final IProperty property : propFile.getProperties()) {
-              registerElement(typedef, property.getUnescapedKey(), uri, property.getValue(), loader);
-            }
-          }
-
-          if (xmlFile != null) {
-            loadDefinitionsFromAntlib(xmlFile, uri, loader != null? loader : getClassLoader(typedef, antProject), typedef);
-          }
-        }
+        defineCustomElementsFromResources(typedef, uri, antProject, null);
       }
     }
 
-    private void loadDefinitionsFromAntlib(XmlFile xmlFile, String uri, ClassLoader loader, @Nullable AntDomTypeDef typedef) {
+    private void defineCustomElementsFromResources(AntDomTypeDef typedef, final String uri, AntDomProject antProject, ClassLoader loader) {
+      final XmlElement xmlElement = antProject.getXmlElement();
+      final Project project = xmlElement != null? xmlElement.getProject() : null;
+      if (project == null) {
+        return;
+      }
+      XmlFile xmlFile = null;
+      PropertiesFile propFile = null;
+
+      final String resource = typedef.getResource().getStringValue();
+      if (resource != null) {
+        if (loader == null) {
+          loader = getClassLoader(typedef, antProject);
+        }
+        if (loader != null) {
+          final InputStream stream = loader.getResourceAsStream(resource);
+          if (stream != null) {
+            try {
+              if (isXmlFormat(typedef, resource)) {
+                xmlFile = (XmlFile)loadContentAsFile(project, stream, StdFileTypes.XML);
+              }
+              else {
+                propFile = (PropertiesFile)loadContentAsFile(project, stream, StdFileTypes.PROPERTIES);
+              }
+            }
+            catch (IOException e) {
+              LOG.info(e);
+            }
+          }
+          else {
+            myTypeDefErrors.put(typedef, "Resource \"" + resource + "\" not found in the classpath");
+          }
+        }
+      }
+      else {
+        final PsiFileSystemItem file = typedef.getFile().getValue();
+        if (file instanceof PsiFile) {
+          if (isXmlFormat(typedef, file.getName())) {
+            xmlFile = file instanceof XmlFile ? (XmlFile)file : (XmlFile)loadContentAsFile((PsiFile)file, StdFileTypes.XML);
+          }
+          else { // assume properties format
+            propFile = file instanceof PropertiesFile ? (PropertiesFile)file : (PropertiesFile)loadContentAsFile((PsiFile)file, StdFileTypes.PROPERTIES);
+          }
+        }
+      }
+
+      if (propFile != null) {
+        if (loader == null) { // if not initialized yet
+          loader = getClassLoader(typedef, antProject);
+        }
+        for (final IProperty property : propFile.getProperties()) {
+          registerElement(typedef, property.getUnescapedKey(), uri, property.getValue(), loader);
+        }
+      }
+
+      if (xmlFile != null) {
+        if (loader == null) { // if not initialized yet
+          loader = getClassLoader(typedef, antProject);
+        }
+        loadDefinitionsFromAntlib(xmlFile, uri, loader, typedef, antProject);
+      }
+    }
+
+    private void loadDefinitionsFromAntlib(XmlFile xmlFile, String uri, ClassLoader loader, @Nullable AntDomTypeDef typedef, AntDomProject antProject) {
       final AntDomAntlib antLib = AntSupport.getAntLib(xmlFile);
       if (antLib != null) {
         final List<AntDomTypeDef> defs = new ArrayList<AntDomTypeDef>();
@@ -623,14 +632,13 @@ public class CustomAntElementsRegistry {
         if (!defs.isEmpty()) {
           for (AntDomTypeDef def : defs) {
             final String tagName = def.getName().getStringValue();
-            if (tagName == null) {
-              continue;
-            }
             final String className = def.getClassName().getStringValue();
-            if (className == null) {
-              continue;
+            if (tagName != null && className != null) {
+              registerElement(typedef != null? typedef : def, tagName, uri, className, loader);
             }
-            registerElement(typedef != null? typedef : def, tagName, uri, className, loader);
+            else {
+              defineCustomElementsFromResources(def, uri, antProject, loader);
+            }
           }
         }
       }
