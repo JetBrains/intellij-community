@@ -41,6 +41,7 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
   protected final AttributeDefinition myDefinition;
   private final PropertyRenderer myRenderer;
   private final PropertyEditor myEditor;
+  private String myTooltip;
   private String myJavadocText;
 
   public AttributeProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
@@ -76,6 +77,15 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
   @Override
   public Property<RadViewComponent> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
     return new AttributeProperty(parent, name, myDefinition);
+  }
+
+  @Override
+  public String getTooltip() {
+    if (myTooltip == null) {
+      myTooltip = myDefinition.getFormats().toString();
+      myTooltip = myTooltip.substring(1, myTooltip.length() - 1);
+    }
+    return myTooltip;
   }
 
   @Override

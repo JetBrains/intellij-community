@@ -262,6 +262,12 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
         return errorInfo.getName();
       }
     }
+    if (columnAtPoint(event.getPoint()) == 0) {
+      String tooltip = myProperties.get(row).getTooltip();
+      if (tooltip != null) {
+        return tooltip;
+      }
+    }
     return super.getToolTipText(event);
   }
 
