@@ -140,7 +140,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
   @Override
   protected Action[] createLeftSideActions() {
-    return new Action[]{myNewResourceAction};
+    return super.createLeftSideActions();//new Action[]{myNewResourceAction};
   }
 
   @Override
