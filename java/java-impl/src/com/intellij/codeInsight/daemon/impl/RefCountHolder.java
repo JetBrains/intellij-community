@@ -28,7 +28,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.Iterator;
@@ -65,17 +67,17 @@ public class RefCountHolder {
     
     private void makeHardReachable(boolean isHard) {
       RefCountHolder holder = get();
-      assert holder  != null;
+      assert !isHard || holder != null : "hard: "+isHard +"; holder="+holder;
       myHardRef = isHard ? holder : null;
     }
   }
   
   private static final Key<HolderReference> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
   @NotNull
-  private static Pair<RefCountHolder, HolderReference> getInstance(@NotNull PsiFile file) {
+  private static Pair<RefCountHolder, HolderReference> getInstance(@NotNull PsiFile file, boolean create) {
     HolderReference ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
     RefCountHolder holder = ref == null ? null : ref.get();
-    if (holder == null) {
+    if (holder == null && create) {
       holder = new RefCountHolder(file);
       HolderReference newRef = new HolderReference(holder);
       while (true) {
@@ -97,21 +99,26 @@ public class RefCountHolder {
 
   @NotNull
   public static RefCountHolder startUsing(@NotNull PsiFile file) {
-    Pair<RefCountHolder, HolderReference> pair = getInstance(file);
+    Pair<RefCountHolder, HolderReference> pair = getInstance(file, true);
     HolderReference reference = pair.second;
     reference.makeHardReachable(true); // make sure RefCountHolder won't be gced during highlighting
+    log("startUsing: " + pair.first.myState+" for "+file);
     return pair.first;
   }
-  @NotNull
+
+  @Nullable("might be gced")
   public static RefCountHolder endUsing(@NotNull PsiFile file) {
-    Pair<RefCountHolder, HolderReference> pair = getInstance(file);
+    Pair<RefCountHolder, HolderReference> pair = getInstance(file, false);
     HolderReference reference = pair.second;
     reference.makeHardReachable(false); // no longer needed, can be cleared
-    return pair.first;
+    RefCountHolder holder = pair.first;
+    log("endUsing: " + (holder == null ? null : holder.myState)+" for "+file);
+    return holder;
   }
   
   private RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
+    log("c: created: " + myState.get()+" for "+file);
   }
 
   private void clear() {
@@ -267,10 +274,13 @@ public class RefCountHolder {
   }
 
   public boolean analyze(@NotNull PsiFile file, TextRange dirtyScope, @NotNull Runnable analyze) {
+    State old = myState.get();
     myState.compareAndSet(State.READY, State.VIRGIN);
     if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
+      log("a: failed to change " + old + "->" + State.BEING_WRITTEN_BY_GHP);
       return false;
     }
+    log("a: changed " + old + "->" + State.BEING_WRITTEN_BY_GHP);
     boolean finished = false;
     try {
       if (dirtyScope != null) {
@@ -288,20 +298,29 @@ public class RefCountHolder {
     finally {
       boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, finished ? State.READY : State.VIRGIN);
       assert set : myState.get();
+      log("a: changed back " + State.BEING_WRITTEN_BY_GHP + "->" + (finished ? State.READY : State.VIRGIN));
     }
     return true;
   }
 
+  private static void log(@NonNls String s) {
+    //System.err.println("RFC: "+s);
+  }
+
   public boolean retrieveUnusedReferencesInfo(@NotNull Runnable analyze) {
+    State old = myState.get();
     if (!myState.compareAndSet(State.READY, State.BEING_USED_BY_PHP)) {
+      log("r: failed to change " + old + "->" + State.BEING_USED_BY_PHP);
       return false;
     }
+    log("r: changed " + old + "->" + State.BEING_USED_BY_PHP);
     try {
       analyze.run();
     }
     finally {
       boolean set = myState.compareAndSet(State.BEING_USED_BY_PHP, State.READY);
       assert set : myState.get();
+      log("r: changed back " + State.BEING_USED_BY_PHP + "->" + State.READY);
     }
     return  true;
   }

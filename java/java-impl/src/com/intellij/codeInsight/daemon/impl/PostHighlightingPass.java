@@ -143,7 +143,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myInLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
 
     myRefCountHolder = RefCountHolder.endUsing(myFile);
-    if (!myRefCountHolder.retrieveUnusedReferencesInfo(new Runnable() {
+    if (myRefCountHolder == null || !myRefCountHolder.retrieveUnusedReferencesInfo(new Runnable() {
       @Override
       public void run() {
         boolean errorFound = collectHighlights(elementSet, highlights, progress);
@@ -650,8 +650,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass == null || !(containingClass instanceof PsiClassImpl)) return true;
     final PsiMethod valuesMethod = ((PsiClassImpl)containingClass).getValuesMethod();
-    if (valuesMethod == null) return true;
-    return isMethodReferenced(valuesMethod, progress, helper);
+    return valuesMethod == null || isMethodReferenced(valuesMethod, progress, helper);
   }
 
   private static boolean canBeReferencedViaWeirdNames(PsiMember member) {
