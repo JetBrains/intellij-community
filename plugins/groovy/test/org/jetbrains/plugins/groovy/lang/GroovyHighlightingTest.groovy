@@ -1034,7 +1034,7 @@ public @interface CompileStatic {
 }
 }
 ''')
-    myFixture.testHighlighting(true, true, false)
+    myFixture.testHighlighting(true, false, false)
   }
 
 
