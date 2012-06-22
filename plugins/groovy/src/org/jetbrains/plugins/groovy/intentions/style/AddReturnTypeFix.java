@@ -54,7 +54,8 @@ public class AddReturnTypeFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return findMethod(editor, file) != null;
+    GrMethod method = findMethod(editor, file);
+    return method != null && !method.isConstructor();
   }
 
   @Nullable
