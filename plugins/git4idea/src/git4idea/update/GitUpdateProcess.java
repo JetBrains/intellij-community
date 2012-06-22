@@ -144,10 +144,15 @@ public class GitUpdateProcess {
       return GitUpdateResult.ERROR;
     }
 
+    if (updaters.isEmpty()) {
+      return GitUpdateResult.NOTHING_TO_UPDATE;
+    }
+
     updaters = tryFastForwardMergeForRebaseUpdaters(updaters);
 
     if (updaters.isEmpty()) {
-      return GitUpdateResult.NOTHING_TO_UPDATE;
+      // everything was updated via the fast-forward merge
+      return GitUpdateResult.SUCCESS;
     }
 
     // save local changes if needed (update via merge may perform without saving).
