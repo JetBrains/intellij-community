@@ -179,11 +179,10 @@
 
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
-    <allClassesSearch implementation="com.intellij.psi.impl.search.AllClassesSearchExecutor"/>
-
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>
-
     <referencesSearch implementation="com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher"/>
+
+    <allClassesSearch implementation="com.intellij.psi.impl.search.AllClassesSearchExecutor"/>
 
     <superMethodsSearch implementation="com.intellij.psi.impl.search.MethodSuperSearcher"/>
     <annotatedElementsSearch implementation="com.intellij.psi.impl.search.AnnotatedElementsSearcher"/>

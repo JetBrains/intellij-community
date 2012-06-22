@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="java-psi-impl" exported="" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="java-indexing-impl" exported="" />
+    <orderEntry type="module" module-name="java-indexing-api" />
   </component>
   <component name="copyright">
     <Base>

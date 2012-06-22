@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="indexing-impl" exported="" />
     <orderEntry type="module" module-name="projectModel-api" />
     <orderEntry type="module" module-name="projectModel-impl" />
+    <orderEntry type="module" module-name="java-indexing-api" />
   </component>
 </module>
 
