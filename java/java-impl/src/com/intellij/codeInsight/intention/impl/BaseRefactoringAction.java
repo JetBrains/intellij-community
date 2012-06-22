@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntheticElement;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,6 +33,11 @@ public abstract class BaseRefactoringAction extends PsiElementBaseIntentionActio
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return super.isAvailable(project, editor, file);
+  }
+
+  @Override
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    super.invoke(project, editor, file);
   }
 
   @Override

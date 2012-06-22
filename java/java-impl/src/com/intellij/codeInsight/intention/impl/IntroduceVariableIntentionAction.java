@@ -43,25 +43,23 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableOverride(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    final PsiExpression expression = getExpression(element);
-    if (expression == null || !(expression.getParent() instanceof PsiExpressionStatement)) {
+    final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element,PsiExpressionStatement.class);
+    if (statement == null){
       return false;
     }
+
+    final PsiExpression expression = statement.getExpression();
 
     return expression.getType() != PsiType.VOID && !(expression instanceof PsiAssignmentExpression);
   }
 
-  @Nullable
-  private static PsiExpression getExpression(@NotNull PsiElement element) {
-    PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
-    while (expression != null && expression instanceof PsiReferenceExpression) {
-      expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class, true);
-    }
-    return expression;
-  }
-
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    new IntroduceVariableHandler().invoke(project, editor, file, null);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element,PsiExpressionStatement.class);
+    if (statement == null){
+      return;
+    }
+
+    new IntroduceVariableHandler().invoke(project, editor, statement.getExpression());
   }
 }
