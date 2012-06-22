@@ -85,13 +85,15 @@ public class StatusBarUI extends ComponentUI {
       g2d.setColor(background);
       g2d.fillRect(0, 0, width, height);
 
-      g2d.setColor(BORDER_TOP_COLOR);
+      g2d.setColor(UIUtil.isUnderDarcula() ? BORDER_TOP_COLOR.darker().darker() : BORDER_TOP_COLOR);
       g2d.drawLine(0, 0, width, 0);
 
-      g2d.setColor(BORDER2_TOP_COLOR);
-      g2d.drawLine(0, 1, width, 1);
+      if (!UIUtil.isUnderDarcula()) {
+        g2d.setColor(BORDER2_TOP_COLOR);
+        g2d.drawLine(0, 1, width, 1);
+      }
 
-      g2d.setColor(BORDER_BOTTOM_COLOR);
+      g2d.setColor(UIUtil.isUnderDarcula() ? BORDER_BOTTOM_COLOR.darker().darker() : BORDER_BOTTOM_COLOR);
       g2d.drawLine(0, height, width, height);
 
       g2d.dispose();

@@ -45,8 +45,10 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class LookupCellRenderer implements ListCellRenderer {
+  //TODO[kb]: move all these awesome constants to Editor's Fonts & Colors settings
   private static final int AFTER_TAIL = 10;
   private static final int AFTER_TYPE = 6;
+  public static final Color BACKGROUND_COLOR_DARK_VARIANT = new Color(47, 67, 96);
   private Icon myEmptyIcon = EmptyIcon.create(5);
   private final Font myNormalFont;
   private final Font myBoldFont;
@@ -120,8 +122,9 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     final LookupElement item = (LookupElement)value;
-    final Color foreground = isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
-    final Color background = isSelected ? SELECTED_BACKGROUND_COLOR : BACKGROUND_COLOR;
+    final boolean dark = UIUtil.isUnderDarcula();
+    final Color foreground = getForegroundColor(isSelected);
+    final Color background = isSelected ? SELECTED_BACKGROUND_COLOR : dark ? BACKGROUND_COLOR_DARK_VARIANT : BACKGROUND_COLOR;
 
     int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
     final LookupElementPresentation presentation = new RealLookupElementPresentation(isSelected ? getMaxWidth() : allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
@@ -173,6 +176,10 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     return myPanel;
+  }
+
+  private static Color getForegroundColor(boolean isSelected) {
+    return UIUtil.isUnderDarcula() ? Gray._230 : isSelected ? SELECTED_FOREGROUND_COLOR : FOREGROUND_COLOR;
   }
 
   private int getMaxWidth() {
@@ -246,7 +253,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   public static Color getGrayedForeground(boolean isSelected) {
-    return isSelected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR;
+    return UIUtil.isUnderDarcula() ? Gray._230 : isSelected ? SELECTED_GRAYED_FOREGROUND_COLOR : GRAYED_FOREGROUND_COLOR;
   }
 
   private int setItemTextLabel(LookupElement item, final Color foreground, final boolean selected, LookupElementPresentation presentation, int allowedWidth) {
@@ -323,7 +330,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     myTypeLabel.setBackground(sampleBackground);
-    myTypeLabel.setForeground(presentation.isTypeGrayed() ? getGrayedForeground(selected) : item instanceof EmptyLookupItem ? EMPTY_ITEM_FOREGROUND_COLOR : foreground);
+    myTypeLabel.setForeground(presentation.isTypeGrayed() ? getGrayedForeground(selected) : item instanceof EmptyLookupItem ? UIUtil.isUnderDarcula() ? Gray._230 : EMPTY_ITEM_FOREGROUND_COLOR : foreground);
     return used;
   }
 
