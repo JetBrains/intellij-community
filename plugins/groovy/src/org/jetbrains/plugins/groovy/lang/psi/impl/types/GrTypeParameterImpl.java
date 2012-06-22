@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -394,5 +395,9 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   public PsiAnnotation[] getApplicableAnnotations() {
     return getAnnotations();
   }
-  
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitTypeParameter(this);
+  }
 }

@@ -1067,10 +1067,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         collectVars(block.getControlFlow());
       }
 
-      @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
-        typeDefinition.acceptChildren(this);
-      }
     });
 
     PsiField[] fields = typeDefinition.getAllFields();

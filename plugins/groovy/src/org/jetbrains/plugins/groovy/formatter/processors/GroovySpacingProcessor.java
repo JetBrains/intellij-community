@@ -21,7 +21,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -285,8 +284,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
     if (myType2 == CLASS_BODY) {
-      PsiIdentifier nameIdentifier = typeDefinition.getNameIdentifier();
-      int dependenceStart = nameIdentifier == null ? myParent.getTextRange().getStartOffset() : nameIdentifier.getTextRange().getStartOffset();
+      PsiElement nameIdentifier = typeDefinition.getNameIdentifierGroovy();
+      int dependenceStart = nameIdentifier.getTextRange().getStartOffset();
       createSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE, new TextRange(dependenceStart, myChild1.getTextRange().getEndOffset()), false);
     }
   }
