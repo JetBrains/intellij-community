@@ -170,7 +170,7 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
                      spared > 1024 ? (spared / 1024) + "KB code" :
                      spared + " characters";
 
-      long perDayCount = spared / Math.min(1, DateFormatUtil.getDifferenceInDays(completionDate, new Date()));
+      long perDayCount = spared / Math.max(1, DateFormatUtil.getDifferenceInDays(completionDate, new Date()) + 1);
       String perDay = perDayCount > 1024 * 1024 ? (perDayCount / 1024 / 1024) + "MB" :
                       perDayCount > 1024 ? (perDayCount / 1024) + "KB" :
                       perDayCount + " characters";
