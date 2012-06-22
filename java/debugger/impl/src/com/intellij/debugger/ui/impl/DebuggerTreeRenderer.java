@@ -226,7 +226,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private static void appendValueTextWithEscapesRendering(SimpleColoredText descriptorText, String valueText, final SimpleTextAttributes attribs) {
-    final SimpleTextAttributes boldAttribs = attribs.derive(SimpleTextAttributes.STYLE_BOLD, null, null, null);
+    final SimpleTextAttributes boldAttribs = attribs.derive(SimpleTextAttributes.STYLE_BOLD, null, Color.lightGray, null);
     final StringBuilder buf = new StringBuilder();
     boolean slashFound = false;
     for (int idx= 0; idx < valueText.length(); idx++) {
