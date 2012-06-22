@@ -17,6 +17,7 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Computable;
@@ -43,6 +44,7 @@ import java.util.Set;
  * @author max
  */
 public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
+  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.searches.ClassInheritorsSearch");
 
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
