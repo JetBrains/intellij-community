@@ -22,6 +22,9 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -111,6 +114,12 @@ public class ResourceEditor extends PropertyEditor {
     }
     else {
       myEditor = new TextFieldWithBrowseButton() {
+        @Override
+        protected void installPathCompletion(@Nullable Project project,
+                                             FileChooserDescriptor fileChooserDescriptor,
+                                             @Nullable Disposable parent) {
+        }
+
         @Override
         public Dimension getPreferredSize() {
           return getComponentPreferredSize();
