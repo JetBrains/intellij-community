@@ -77,17 +77,15 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     return AllowedApiFilterExtension.isClassAllowed(AtomicReference.class.getName(), element);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-
-
-    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
     LOG.assertTrue(psiVariable != null);
 
     final Query<PsiReference> refs = ReferencesSearch.search(psiVariable);
 
     final Set<PsiElement> elements = new HashSet<PsiElement>();
-    elements.add(file);
+    elements.add(element);
     for (PsiReference reference : refs) {
       elements.add(reference.getElement());
     }
@@ -113,7 +111,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       final PsiTypeParameter[] typeParameters = atomicReferenceArrayClass.getTypeParameters();
       if (typeParameters.length == 1) {
         final PsiType componentType = ((PsiArrayType)fromType).getComponentType();
-        substitutor.put(typeParameters[0], componentType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)componentType).getBoxedType(file): componentType);
+        substitutor.put(typeParameters[0], componentType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)componentType).getBoxedType(element): componentType);
       }
       toType = elementFactory.createType(atomicReferenceArrayClass, elementFactory.createSubstitutor(substitutor));
     } else {
@@ -124,7 +122,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       final HashMap<PsiTypeParameter, PsiType> substitutor = new HashMap<PsiTypeParameter, PsiType>();
       final PsiTypeParameter[] typeParameters = atomicReferenceClass.getTypeParameters();
       if (typeParameters.length == 1) {
-        substitutor.put(typeParameters[0], fromType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)fromType).getBoxedType(file): fromType);
+        substitutor.put(typeParameters[0], fromType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)fromType).getBoxedType(element): fromType);
       }
       toType = elementFactory.createType(atomicReferenceClass, elementFactory.createSubstitutor(substitutor));
     }

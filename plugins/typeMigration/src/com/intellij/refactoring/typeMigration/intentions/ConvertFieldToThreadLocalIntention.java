@@ -57,14 +57,14 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
            && AllowedApiFilterExtension.isClassAllowed(ThreadLocal.class.getName(), element);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     LOG.assertTrue(psiField != null);
     final Query<PsiReference> refs = ReferencesSearch.search(psiField);
 
     final Set<PsiElement> elements = new HashSet<PsiElement>();
-    elements.add(file);
+    elements.add(element);
     for (PsiReference reference : refs) {
       elements.add(reference.getElement());
     }
@@ -82,7 +82,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     final HashMap<PsiTypeParameter, PsiType> substitutor = new HashMap<PsiTypeParameter, PsiType>();
     final PsiTypeParameter[] typeParameters = threadLocalClass.getTypeParameters();
     if (typeParameters.length == 1) {
-      substitutor.put(typeParameters[0], fromType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)fromType).getBoxedType(file) : fromType);
+      substitutor.put(typeParameters[0], fromType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)fromType).getBoxedType(element) : fromType);
     }
     final PsiClassType toType = elementFactory.createType(threadLocalClass, elementFactory.createSubstitutor(substitutor));
 
@@ -92,7 +92,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
 
       final TypeMigrationRules rules = new TypeMigrationRules(fromType);
       rules.setMigrationRootType(toType);
-      rules.setBoundScope(GlobalSearchScope.fileScope(file));
+      rules.setBoundScope(GlobalSearchScope.fileScope(element.getContainingFile()));
       final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules);
       labeler.getMigratedUsages(false, psiField);
       for (PsiReference reference : refs) {
