@@ -37,7 +37,7 @@ public final class ObjectTree<T> {
   private final CopyOnWriteArraySet<ObjectTreeListener> myListeners = new CopyOnWriteArraySet<ObjectTreeListener>();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
-  private final THashSet<T> myRootObjects = new MyTHashSet<T>();
+  private final THashSet<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
   private final THashMap<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY);
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
@@ -112,26 +112,18 @@ public final class ObjectTree<T> {
   }
 
   public final boolean executeAll(@NotNull T object, boolean disposeTree, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
-    try {
-      ObjectNode<T> node = getNode(object);
-      if (node == null) {
-        if (processUnregistered) {
-          executeUnregistered(object, action);
-          return true;
-        }
-        else {
-          return false;
-        }
+    ObjectNode<T> node = getNode(object);
+    if (node == null) {
+      if (processUnregistered) {
+        executeUnregistered(object, action);
+        return true;
       }
       else {
-        return node.execute(disposeTree, action);
+        return false;
       }
     }
-    finally {
-      synchronized (treeLock) {
-        myObject2NodeMap.compact();
-        myRootObjects.compact();
-      }
+    else {
+      return node.execute(disposeTree, action);
     }
   }
 
@@ -223,7 +215,7 @@ public final class ObjectTree<T> {
       System.err.println("***********************************************************************************************");
     }
   }
-  
+
   @TestOnly
   public boolean isEmpty() {
     return myRootObjects.isEmpty();
@@ -277,18 +269,6 @@ public final class ObjectTree<T> {
         }
       }
       return null;
-    }
-  }
-
-  private static class MyTHashSet<T> extends THashSet<T> {
-    private MyTHashSet() {
-      super(IDENTITY);
-    }
-
-    public void compact() {
-      if (((int)(capacity() * _loadFactor)/ Math.max(1, size())) >= 3) {
-        super.compact();
-      }
     }
   }
 
