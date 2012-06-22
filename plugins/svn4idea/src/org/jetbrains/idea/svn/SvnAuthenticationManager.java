@@ -89,8 +89,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         myProject = null;
         if (myPersistentAuthenticationProviderProxy != null) {
           myPersistentAuthenticationProviderProxy.myProject = null;
+          ((MyKeyringMasterKeyProvider) myPersistentAuthenticationProviderProxy.myISVNGnomeKeyringPasswordProvider).myProject = null;
           myPersistentAuthenticationProviderProxy = null;
         }
+        ((MySvnAuthenticationInteraction) myInteraction).myProject = null;
         if (myConfig != null) {
           myConfig.clear();
           myConfig = null;
@@ -563,7 +565,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   private static class MySvnAuthenticationInteraction implements SvnAuthenticationInteraction {
-    private final Project myProject;
+    private Project myProject;
 
     private MySvnAuthenticationInteraction(Project project) {
       myProject = project;
@@ -837,7 +839,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   }
 
   private static class MyKeyringMasterKeyProvider implements ISVNGnomeKeyringPasswordProvider {
-    private final Project myProject;
+    private Project myProject;
 
     public MyKeyringMasterKeyProvider(Project project) {
       myProject = project;
