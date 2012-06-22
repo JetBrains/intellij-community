@@ -662,9 +662,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected ValidationInfo doValidate() {
-    for (final ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
-      if (item.parameter.oldParameterIndex < 0) {
-        if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText())) return new ValidationInfo("Default value is missed. In the method call place new parameter value would be leaved blank");
+    if (!getTableComponent().isEditing()) {
+      for (final ParameterTableModelItemBase<ParameterInfoImpl> item : myParametersTableModel.getItems()) {
+        if (item.parameter.oldParameterIndex < 0) {
+          if (StringUtil.isEmpty(item.defaultValueCodeFragment.getText()))
+            return new ValidationInfo("Default value is missing. In the method call place new parameter value would be leaved blank");
+        }
       }
     }
     return super.doValidate();
