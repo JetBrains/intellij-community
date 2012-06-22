@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -59,5 +60,16 @@ public abstract class ModuleOutputElementTypeBase<E extends ModuleOutputPackagin
 
   protected abstract ModuleOutputPackagingElementBase createElement(@NotNull Project project, @NotNull ModulePointer pointer);
 
-  protected abstract List<Module> getSuitableModules(ArtifactEditorContext context);
+  private List<Module> getSuitableModules(ArtifactEditorContext context) {
+    ModulesProvider modulesProvider = context.getModulesProvider();
+    ArrayList<Module> modules = new ArrayList<Module>();
+    for (Module module : modulesProvider.getModules()) {
+      if (isSuitableModule(modulesProvider, module)) {
+        modules.add(module);
+      }
+    }
+    return modules;
+  }
+
+  public abstract boolean isSuitableModule(ModulesProvider modulesProvider, Module module);
 }

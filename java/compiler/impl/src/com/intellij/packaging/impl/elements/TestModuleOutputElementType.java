@@ -20,16 +20,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author nik
@@ -56,19 +52,8 @@ public class TestModuleOutputElementType extends ModuleOutputElementTypeBase<Tes
     return PlatformIcons.TEST_SOURCE_FOLDER;
   }
 
-  protected List<Module> getSuitableModules(ArtifactEditorContext context) {
-    ModulesProvider modulesProvider = context.getModulesProvider();
-    ArrayList<Module> modules = new ArrayList<Module>();
-    for (Module module : modulesProvider.getModules()) {
-      if (hasTestSourceRoots(modulesProvider.getRootModel(module))) {
-        modules.add(module);
-      }
-    }
-    return modules;
-  }
-
-  private static boolean hasTestSourceRoots(final ModuleRootModel rootModel) {
-    for (ContentEntry entry : rootModel.getContentEntries()) {
+  public boolean isSuitableModule(ModulesProvider modulesProvider, Module module) {
+    for (ContentEntry entry : modulesProvider.getRootModel(module).getContentEntries()) {
       for (SourceFolder folder : entry.getSourceFolders()) {
         if (folder.isTestSource()) return true;
       }

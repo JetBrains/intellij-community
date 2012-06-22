@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
+import git4idea.Notificator;
 import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
@@ -170,6 +171,10 @@ public class GitRebaseUpdater extends GitUpdater {
     return "Rebase updater";
   }
 
+  /**
+   * Tries to execute {@code git merge --ff-only}.
+   * @return true, if everything is successful; false for any error (to let a usual "fair" update deal with it).
+   */
   public boolean fastForwardMerge() {
     LOG.info("Trying fast-forward merge for " + myRoot);
     GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
@@ -177,7 +182,28 @@ public class GitRebaseUpdater extends GitUpdater {
       LOG.error("Repository is null for " + myRoot);
       return false;
     }
+    try {
+      markStart(myRoot);
+    }
+    catch (VcsException e) {
+      LOG.info("Couldn't mark start for repository " + myRoot, e);
+      return false;
+    }
+
     GitCommandResult result = myGit.merge(repository, getRemoteBranchToMerge(), Collections.singletonList("--ff-only"));
+
+    try {
+      markEnd(myRoot);
+    }
+    catch (VcsException e) {
+      // this is not critical, and update has already happened,
+      // so we just notify the user about problems with collecting the updated changes.
+      LOG.info("Couldn't mark end for repository " + myRoot, e);
+      Notificator.getInstance(myProject).
+        notifyWeakWarning("Couldn't collect the updated files info",
+                          String.format("Update of %s was successful, but we couldn't collect the updated changes because of an error",
+                                        myRoot), null);
+    }
     return result.success();
   }
 
