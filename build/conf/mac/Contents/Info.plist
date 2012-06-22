@@ -47,6 +47,9 @@
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
 
+    <key>NSHighResolutionCapable</key>
+    <true/>
+
     <key>LSArchitecturePriority</key>
     <array>
       <string>x86_64</string>
