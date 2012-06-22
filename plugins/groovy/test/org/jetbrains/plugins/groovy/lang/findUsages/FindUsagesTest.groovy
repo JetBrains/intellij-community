@@ -23,6 +23,7 @@ import com.intellij.find.findUsages.FindUsagesManager
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.impl.FindManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.search.searches.SuperMethodsSearch
