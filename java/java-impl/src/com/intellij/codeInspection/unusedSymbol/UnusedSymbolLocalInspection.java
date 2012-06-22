@@ -27,6 +27,7 @@ import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifierListOwner;
 import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +139,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return new OptionsPanel().getPanel();
   }
 
-  public static IntentionAction createQuickFix(final String qualifiedName, String element, Project project) {
+  public static IntentionAction createQuickFix(@NonNls String qualifiedName, @Nls String element, Project project) {
     final EntryPointsManagerImpl entryPointsManager = EntryPointsManagerImpl.getInstance(project);
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
       QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),

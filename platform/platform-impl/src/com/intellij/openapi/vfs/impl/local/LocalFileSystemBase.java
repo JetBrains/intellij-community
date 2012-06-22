@@ -236,7 +236,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     final String[] names = convertToIOFile(file).list();
-    return names != null ? names : ArrayUtil.EMPTY_STRING_ARRAY;
+    return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
   }
 
   protected static boolean isInvalidSymLink(@NotNull final VirtualFile file) {
