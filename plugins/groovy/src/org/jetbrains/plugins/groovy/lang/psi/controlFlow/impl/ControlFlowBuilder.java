@@ -145,7 +145,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     if (!(last instanceof GrExpression && PsiTreeUtil.isAncestor(myLastInScope, last, false))) return;
 
-    addNode(new MaybeReturnInstruction((GrExpression)last));
+    addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)last));
 
     for (ListIterator<Pair<InstructionImpl, GroovyPsiElement>> iterator = myPending.listIterator(myPending.size());iterator.hasPrevious(); ) {
       Pair<InstructionImpl, GroovyPsiElement> pair = iterator.previous();
