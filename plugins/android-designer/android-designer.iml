@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="android" />
+    <orderEntry type="module" module-name="android-common" />
     <orderEntry type="module" module-name="ui-designer-new" />
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="dom-openapi" />

@@ -26,6 +26,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -34,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +60,8 @@ import java.util.List;
  */
 public class ResourceDialog extends DialogWrapper implements TreeSelectionListener {
   private static final String ANDROID = "@android:";
+
+  private static final Icon RESOURCE_ITEM_ICON = AllIcons.Css.Property;
 
   private final JBTabbedPane myContentPanel;
   private final ResourcePanel myProjectPanel;
@@ -276,19 +280,30 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     public ResourceGroup(ResourceType type, ResourceManager manager) {
       myType = type;
 
-      Collection<String> resourceNames = manager.getValueResourceNames(type.getName());
+      String resourceType = type.getName();
+
+      Collection<String> resourceNames = manager.getValueResourceNames(resourceType);
       for (String resourceName : resourceNames) {
-        myItems.add(new ResourceItem(this, resourceName));
+        myItems.add(new ResourceItem(this, resourceName, RESOURCE_ITEM_ICON));
       }
 
-      for (String file : manager.getFileResourcesNames(type.getName())) {
-        myItems.add(new ResourceItem(this, file));
+      Set<String> fileNames = new HashSet<String>();
+      List<VirtualFile> dirs = manager.getResourceSubdirs(resourceType);
+      for (VirtualFile dir : dirs) {
+        for (VirtualFile resourceFile : dir.getChildren()) {
+          if (!resourceFile.isDirectory()) {
+            String fileName = AndroidCommonUtils.getResourceName(resourceType, resourceFile.getName());
+            if (fileNames.add(fileName)) {
+              myItems.add(new ResourceItem(this, fileName, resourceFile.getFileType().getIcon()));
+            }
+          }
+        }
       }
 
       if (type == ResourceType.ID) {
         for (String id : manager.getIds()) {
           if (!resourceNames.contains(id)) {
-            myItems.add(new ResourceItem(this, id));
+            myItems.add(new ResourceItem(this, id, RESOURCE_ITEM_ICON));
           }
         }
       }
@@ -318,10 +333,12 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   private static class ResourceItem {
     private final ResourceGroup myGroup;
     private final String myName;
+    private final Icon myIcon;
 
-    public ResourceItem(@NotNull ResourceGroup group, @NotNull String name) {
+    public ResourceItem(@NotNull ResourceGroup group, @NotNull String name, Icon icon) {
       myGroup = group;
       myName = name;
+      myIcon = icon;
     }
 
     public ResourceGroup getGroup() {
@@ -330,6 +347,10 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
     public String getName() {
       return myGroup.getName() + "/" + myName;
+    }
+
+    public Icon getIcon() {
+      return myIcon;
     }
 
     @Override
@@ -378,6 +399,9 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       TreeNodeDescriptor descriptor = new TreeNodeDescriptor(parentDescriptor, element, element == null ? null : element.toString());
       if (element instanceof ResourceGroup) {
         descriptor.setIcon(AllIcons.Nodes.TreeOpen, AllIcons.Nodes.TreeClosed);
+      }
+      else if (element instanceof ResourceItem) {
+        descriptor.setIcon(((ResourceItem)element).getIcon());
       }
       return descriptor;
     }
