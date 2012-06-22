@@ -222,9 +222,14 @@ public abstract class ResourceManager {
   @NotNull
   public Collection<String> getValueResourceNames(@NotNull final String resourceType) {
     final Set<String> result = new HashSet<String>();
+    final boolean attr = ResourceType.ATTR.getName().equals(resourceType);
 
     for (ResourceEntry entry : getValueResourceEntries(resourceType)) {
-      result.add(entry.getName());
+      final String name = entry.getName();
+
+      if (!attr || !name.startsWith("android:")) {
+        result.add(name);
+      }
     }
     return result;
   }

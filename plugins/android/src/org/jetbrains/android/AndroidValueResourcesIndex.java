@@ -177,6 +177,6 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 }

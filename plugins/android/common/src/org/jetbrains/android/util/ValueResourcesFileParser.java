@@ -83,10 +83,8 @@ public abstract class ValueResourcesFileParser implements IXMLBuilder {
       final ResourceType resType = resTypeStr != null ? ResourceType.getEnum(resTypeStr) : null;
       if (resType != null) {
         if (resType == ResourceType.ATTR) {
-          if (!myLastNameAttr.startsWith("android:")) {
-            final String contextName = myContextNames.peek();
-            process(new ResourceEntry(resTypeStr, myLastNameAttr, contextName));
-          }
+          final String contextName = myContextNames.peek();
+          process(new ResourceEntry(resTypeStr, myLastNameAttr, contextName));
         }
         else {
           process(new ResourceEntry(resTypeStr, myLastNameAttr, ""));
