@@ -277,7 +277,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(file)};
     if (myCurrentMerger.hasChangesOf(refs[0])) return;
 
-    System.out.println("adding action for " + file);
     myCurrentMerger.addAction(new BasicUndoableAction() {
       @Override
       public void undo() throws UnexpectedUndoException {
