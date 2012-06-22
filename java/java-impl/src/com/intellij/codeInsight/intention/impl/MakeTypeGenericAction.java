@@ -93,10 +93,7 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
-    final PsiElement element = file.findElementAt(position);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     Pair<PsiVariable, PsiType> pair = findVariable(element);
     if (pair == null) return;
     PsiVariable variable = pair.getFirst();

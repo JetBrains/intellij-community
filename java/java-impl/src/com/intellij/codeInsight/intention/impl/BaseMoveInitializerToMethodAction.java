@@ -67,16 +67,17 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
   @NotNull
   protected abstract Collection<String> getUnsuitableModifiers();
 
-  @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
-    final PsiField field = getFieldAtCaret(editor, file);
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+
+    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     assert field != null;
     final PsiClass aClass = field.getContainingClass();
     if (aClass == null) return;
 
-    final Collection<PsiMethod> methodsToAddInitialization = getOrCreateMethods(project, editor, file, aClass);
+    final Collection<PsiMethod> methodsToAddInitialization = getOrCreateMethods(project, editor, element.getContainingFile(), aClass);
 
 
     final List<PsiExpressionStatement> assignments = addFieldAssignments(field, methodsToAddInitialization);
@@ -117,11 +118,6 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
   @NotNull
   protected abstract Collection<PsiMethod> getOrCreateMethods(@NotNull Project project, @NotNull Editor editor, PsiFile file, @NotNull PsiClass aClass);
 
-  @Nullable
-  private static PsiField getFieldAtCaret(@NotNull Editor editor, @NotNull PsiFile file) {
-    final int offset = editor.getCaretModel().getOffset();
-    return PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiField.class);
-  }
 
   @NotNull
   private static PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {

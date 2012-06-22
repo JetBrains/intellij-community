@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * Date: Sep 6, 2010
  */
 public class ChangeSignatureDetectorAction extends RefactoringBaseIntention {
-  private static final Logger LOG = Logger.getInstance("#" + ChangeSignatureDetectorAction.class.getName());
   public static final String CHANGE_SIGNATURE = "Apply signature change";
   public static final String NEW_NAME = "Apply new name";
 
@@ -65,8 +64,8 @@ public class ChangeSignatureDetectorAction extends RefactoringBaseIntention {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ChangeSignatureGestureDetector.getInstance(project).changeSignature(file, true);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    ChangeSignatureGestureDetector.getInstance(project).changeSignature(element.getContainingFile(), true);
   }
 
   @Override

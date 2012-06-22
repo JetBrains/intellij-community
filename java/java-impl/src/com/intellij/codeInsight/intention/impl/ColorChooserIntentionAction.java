@@ -110,9 +110,9 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+
     final JComponent editorComponent = editor.getComponent();
     if (isInsideDecodeOrGetColorMethod(element)) {
       invokeForMethodParam(editorComponent, element);

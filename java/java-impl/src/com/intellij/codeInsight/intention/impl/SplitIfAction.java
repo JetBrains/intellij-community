@@ -72,14 +72,11 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     try {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) { return; }
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
 
-      int offset = editor.getCaretModel().getOffset();
-
-      PsiJavaToken token = (PsiJavaToken)file.findElementAt(offset);
+      PsiJavaToken token = (PsiJavaToken)element;
       LOG.assertTrue(token.getTokenType() == JavaTokenType.ANDAND || token.getTokenType() == JavaTokenType.OROR);
 
       PsiPolyadicExpression expression = (PsiPolyadicExpression)token.getParent();

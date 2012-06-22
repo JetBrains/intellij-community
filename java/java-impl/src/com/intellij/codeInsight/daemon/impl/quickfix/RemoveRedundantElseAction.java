@@ -90,10 +90,9 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiIfStatement ifStatement = (PsiIfStatement)elementAt.getParent();
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
     LOG.assertTrue(ifStatement != null && ifStatement.getElseBranch() != null);
     PsiStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch instanceof PsiBlockStatement) {

@@ -31,16 +31,6 @@ import javax.swing.*;
  */
 public abstract class BaseRefactoringAction extends PsiElementBaseIntentionAction implements RefactoringAction{
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return super.isAvailable(project, editor, file);
-  }
-
-  @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    super.invoke(project, editor, file);
-  }
-
-  @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     return !(element instanceof SyntheticElement) && isAvailableOverride(project, editor, element);
   }

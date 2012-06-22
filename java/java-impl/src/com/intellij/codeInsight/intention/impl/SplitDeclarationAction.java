@@ -64,7 +64,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     PsiElement nextField = field.getNextSibling();
     while (nextField != null && !(nextField instanceof PsiField)) nextField = nextField.getNextSibling();
 
-    if (nextField != null && ((PsiField) nextField).getTypeElement() == typeElement) return true;
+    if (nextField != null && ((PsiField)nextField).getTypeElement() == typeElement) return true;
 
     return false;
   }
@@ -74,11 +74,12 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     if (declaredElements.length == 0) return false;
     if (!(declaredElements[0] instanceof PsiLocalVariable)) return false;
     if (declaredElements.length == 1) {
-      PsiLocalVariable var = (PsiLocalVariable) declaredElements[0];
+      PsiLocalVariable var = (PsiLocalVariable)declaredElements[0];
       if (var.getInitializer() == null) return false;
       setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
       return true;
-    } else if (declaredElements.length > 1) {
+    }
+    else if (declaredElements.length > 1) {
       if (decl.getParent() instanceof PsiForStatement) return false;
 
       setText(CodeInsightBundle.message("intention.split.declaration.text"));
@@ -89,23 +90,17 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
 
-    PsiManager psiManager = PsiManager.getInstance(project);
-    int offset = editor.getCaretModel().getOffset();
+    final PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class);
 
-    PsiElement token = file.findElementAt(offset);
-    PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(
-        token,
-        PsiDeclarationStatement.class
-    );
-
+    final PsiManager psiManager = PsiManager.getInstance(project);
     if (decl != null) {
       invokeOnDeclarationStatement(decl, psiManager, project);
     }
     else {
-      PsiField field = PsiTreeUtil.getParentOfType(token, PsiField.class);
+      PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
       if (field != null) {
         field.normalizeDeclaration();
       }
@@ -113,19 +108,19 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
   }
 
   private static void invokeOnDeclarationStatement(PsiDeclarationStatement decl, PsiManager psiManager,
-                                                            Project project) throws IncorrectOperationException {
+                                                   Project project) throws IncorrectOperationException {
     if (decl.getDeclaredElements().length == 1) {
-      PsiLocalVariable var = (PsiLocalVariable) decl.getDeclaredElements()[0];
+      PsiLocalVariable var = (PsiLocalVariable)decl.getDeclaredElements()[0];
       var.normalizeDeclaration();
-      PsiExpressionStatement statement = (PsiExpressionStatement) JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory()
-          .createStatementFromText(var.getName() + "=xxx;", null);
-      statement = (PsiExpressionStatement) CodeStyleManager.getInstance(project).reformat(statement);
-      PsiAssignmentExpression assignment = (PsiAssignmentExpression) statement.getExpression();
+      PsiExpressionStatement statement = (PsiExpressionStatement)JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory()
+        .createStatementFromText(var.getName() + "=xxx;", null);
+      statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
       PsiExpression initializer = var.getInitializer();
       PsiExpression rExpression;
       if (initializer instanceof PsiArrayInitializerExpression) {
         rExpression = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createExpressionFromText(
-            "new " + var.getTypeElement().getText() + " " + initializer.getText(), null
+          "new " + var.getTypeElement().getText() + " " + initializer.getText(), null
         );
       }
       else {
@@ -157,14 +152,17 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
           codeBlock.add(varDeclStatement);
           codeBlock.add(block);
           block.replace(blockStatement);
-        } else {
+        }
+        else {
           parent.addBefore(varDeclStatement, block);
         }
-      } else {
+      }
+      else {
         block.addAfter(statement, decl);
       }
-    } else {
-      ((PsiLocalVariable) decl.getDeclaredElements()[0]).normalizeDeclaration();
+    }
+    else {
+      ((PsiLocalVariable)decl.getDeclaredElements()[0]).normalizeDeclaration();
     }
   }
 }
