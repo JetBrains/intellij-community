@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="java-psi-api" />
   </component>
 </module>
