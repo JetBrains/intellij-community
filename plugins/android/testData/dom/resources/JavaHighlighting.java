@@ -20,6 +20,12 @@ public class JavaCompletion1 {
       case R.string.my_string:
         System.out.println("abacaba");
         break;
+      case R.string.my_string1:
+        System.out.println("abacaba1");
+        break;
+      case R.attr.myAttr1:
+        System.out.println("abacaba1");
+        break;
       default:
         break;
     }

@@ -27,6 +27,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.refactoring.actions.InlineAction;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
 import java.util.ArrayList;
@@ -216,6 +218,19 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   public void testJavaHighlighting() throws Throwable {
     copyFileToProject("value_resources.xml", "res/values/value_resources.xml");
     doTestJavaHighlighting("p1.p2");
+  }
+
+  public void testInlineResourceField() throws Exception {
+    copyFileToProject("value_resources.xml", "res/values/value_resources.xml");
+    final VirtualFile virtualFile = copyFileToProject(getTestName(false) + ".java", "src/p1/p2/" + getTestName(false) + ".java");
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    try {
+      myFixture.testAction(new InlineAction());
+      fail();
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+    }
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(false) + ".java", true);
   }
 
   public void testJavaCreateFromUsage() throws Throwable {
