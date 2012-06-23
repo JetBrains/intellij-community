@@ -314,16 +314,15 @@ public class FileUtil extends FileUtilRt {
     final Runnable deleteFilesTask = new Runnable() {
       public void run() {
         final Thread currentThread = Thread.currentThread();
+        final int priority = currentThread.getPriority();
         currentThread.setPriority(Thread.MIN_PRIORITY);
-        //ShutDownTracker.getInstance().registerStopperThread(currentThread);
         try {
           for (File tempFile : tempFiles) {
             delete(tempFile);
           }
         }
         finally {
-          //ShutDownTracker.getInstance().unregisterStopperThread(currentThread);
-          currentThread.setPriority(Thread.NORM_PRIORITY);
+          currentThread.setPriority(priority);
         }
       }
     };
