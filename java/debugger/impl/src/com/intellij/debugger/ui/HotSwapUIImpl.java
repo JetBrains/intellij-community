@@ -149,47 +149,68 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     final boolean isOutOfProcessMode = CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild();
     final boolean shouldPerformScan = !isOutOfProcessMode || generatedPaths == null;
 
-    final HotSwapProgressImpl findClassesProgress = shouldPerformScan ? new HotSwapProgressImpl(myProject) : null;
-    
+    final HotSwapProgressImpl findClassesProgress;
+    if (shouldPerformScan) {
+      findClassesProgress = new HotSwapProgressImpl(myProject);
+    }
+    else {
+      boolean createProgress = false;
+      for (DebuggerSession session : sessions) {
+        if (session.isModifiedClassesScanRequired()) {
+          createProgress = true;
+          break;
+        }
+      }
+      findClassesProgress = createProgress? new HotSwapProgressImpl(myProject) : null;
+    }
+
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        final Map<DebuggerSession, Map<String, HotSwapFile>> newlyModifiedClasses = shouldPerformScan?
-          scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isOutOfProcessMode) :
-          HotSwapManager.findModifiedClasses(sessions, generatedPaths);
-
-        for (Map.Entry<DebuggerSession, Map<String, HotSwapFile>> entry : newlyModifiedClasses.entrySet()) {
-          final DebuggerSession session = entry.getKey();
-          if (shouldPerformScan) {
-            session.clearHotswapFiles();
+        final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses;
+        if (shouldPerformScan) {
+          modifiedClasses = scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isOutOfProcessMode);
+        }
+        else {
+          final List<DebuggerSession> toScan = new ArrayList<DebuggerSession>();
+          final List<DebuggerSession> toUseGenerated = new ArrayList<DebuggerSession>();
+          for (DebuggerSession session : sessions) {
+            (session.isModifiedClassesScanRequired()? toScan : toUseGenerated).add(session);
+            session.setModifiedClassesScanRequired(false);
           }
-          session.addHotswapFiles(entry.getValue());
+          modifiedClasses = new HashMap<DebuggerSession, Map<String, HotSwapFile>>();
+          if (!toUseGenerated.isEmpty()) {
+            modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
+          }
+          if (!toScan.isEmpty()) {
+            modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress, !isOutOfProcessMode));
+          }
         }
 
-        boolean hasFilesToReload = false;
-        for (DebuggerSession session : sessions) {
-          if (!session.getHotswapFiles().isEmpty()) {
-            hasFilesToReload = true;
-            break;
-          }
-        }
-        if (!hasFilesToReload) {
+        final Application application = ApplicationManager.getApplication();
+        if (modifiedClasses.isEmpty()) {
           final String message = DebuggerBundle.message("status.hotswap.uptodate");
           HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
           return;
         }
 
-        final Set<DebuggerSession> sessionsToReload = new HashSet<DebuggerSession>(sessions);
-
-        final Application application = ApplicationManager.getApplication();
         application.invokeLater(new Runnable() {
           public void run() {
             if (shouldAskBeforeHotswap && !DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
               final RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
               dialog.show();
               if (!dialog.isOK()) {
+                for (DebuggerSession session : modifiedClasses.keySet()) {
+                  session.setModifiedClassesScanRequired(true);
+                }
                 return;
               }
-              sessionsToReload.retainAll(dialog.getSessionsToReload());
+              final Set<DebuggerSession> toReload = new HashSet<DebuggerSession>(dialog.getSessionsToReload());
+              for (DebuggerSession session : modifiedClasses.keySet()) {
+                if (!toReload.contains(session)) {
+                  session.setModifiedClassesScanRequired(true);
+                }
+              }
+              modifiedClasses.keySet().retainAll(toReload);
             }
             else {
               if (shouldDisplayHangWarning) {
@@ -208,16 +229,19 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
                   }
                 );
                 if (answer == DialogWrapper.CANCEL_EXIT_CODE) {
+                  for (DebuggerSession session : modifiedClasses.keySet()) {
+                    session.setModifiedClassesScanRequired(true);
+                  }
                   return;
                 }
               }
             }
 
-            if (!sessionsToReload.isEmpty()) {
+            if (!modifiedClasses.isEmpty()) {
               final HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
               application.executeOnPooledThread(new Runnable() {
                 public void run() {
-                  reloadModifiedClasses(sessionsToReload, progress);
+                  reloadModifiedClasses(modifiedClasses, progress);
                 }
               });
             }
@@ -242,10 +266,10 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     return result.get();
   }
 
-  private static void reloadModifiedClasses(final Collection<DebuggerSession> sessions, final HotSwapProgressImpl progress) {
+  private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgressImpl progress) {
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
-        HotSwapManager.reloadModifiedClasses(sessions, progress);
+        HotSwapManager.reloadModifiedClasses(modifiedClasses, progress);
         progress.finished();
       }
     }, progress.getProgressIndicator());

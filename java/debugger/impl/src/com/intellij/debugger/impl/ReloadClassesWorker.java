@@ -90,12 +90,10 @@ class ReloadClassesWorker {
     }
   }
 
-  public void reloadClasses() {
+  public void reloadClasses(final Map<String, HotSwapFile> modifiedClasses) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    final Map<String, HotSwapFile> modifiedClasses = myDebuggerSession.getHotswapFiles();
-
-    if(modifiedClasses.isEmpty()) {
+    if(modifiedClasses == null || modifiedClasses.size() == 0) {
       myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, DebuggerBundle.message("status.hotswap.loaded.classes.up.to.date"));
       return;
     }
