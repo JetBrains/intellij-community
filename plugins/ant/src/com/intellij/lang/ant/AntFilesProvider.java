@@ -15,12 +15,18 @@
  */
 package com.intellij.lang.ant;
 
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.util.List;
+import java.util.Set;
 
 /**
- * @author dyoma
+ * @author Eugene Zhuravlev
+ *         Date: May 4, 2007
  */
-public interface PsiAntElement extends PsiElement {
-  AntElementRole getRole();
-  boolean canRename();
+public interface AntFilesProvider {
+  
+  @NotNull
+  List<File> getFiles(final Set<AntFilesProvider> processed);
 }

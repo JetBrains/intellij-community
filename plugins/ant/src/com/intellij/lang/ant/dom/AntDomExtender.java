@@ -15,8 +15,8 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.psi.impl.AntIntrospector;
-import com.intellij.lang.ant.psi.impl.ReflectedProject;
+import com.intellij.lang.ant.AntIntrospector;
+import com.intellij.lang.ant.ReflectedProject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;

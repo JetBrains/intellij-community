@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.psi.impl;
+package com.intellij.lang.ant;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 *         Date: Apr 9, 2010
 */
 public final class ReflectedProject {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.ReflectedProject");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.ReflectedProject");
   
   @NonNls private static final String INIT_METHOD_NAME = "init";
   @NonNls private static final String GET_TASK_DEFINITIONS_METHOD_NAME = "getTaskDefinitions";

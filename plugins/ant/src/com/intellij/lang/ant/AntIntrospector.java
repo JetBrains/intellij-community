@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.psi.impl;
+package com.intellij.lang.ant;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
@@ -32,7 +32,7 @@ import java.util.*;
  *         Date: Mar 22, 2007
  */
 public final class AntIntrospector {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.psi.impl.AntIntrospector");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.AntIntrospector");
   private final Object myHelper;
   //private static final ObjectCache<String, SoftReference<Object>> ourCache = new ObjectCache<String, SoftReference<Object>>(300);
   private static final HashMap<Class, Object> ourCache = new HashMap<Class, Object>();

@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.psi.AntFilesProvider;
+import com.intellij.lang.ant.AntFilesProvider;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;

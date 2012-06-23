@@ -15,9 +15,9 @@
  */
 package com.intellij.lang.ant.validation;
 
+import com.intellij.lang.ant.AntImportsIndex;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
-import com.intellij.lang.ant.psi.impl.AntImportsIndex;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;

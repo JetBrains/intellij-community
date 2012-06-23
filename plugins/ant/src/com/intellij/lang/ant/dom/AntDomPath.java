@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.psi.AntFilesProvider;
+import com.intellij.lang.ant.AntFilesProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

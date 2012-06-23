@@ -24,20 +24,14 @@
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPostprocessingPropertiesProvider"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>    
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
-    <extendWordSelectionHandler implementation="com.intellij.lang.ant.AntPropertyRefSelectioner"/>
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>
-    <vetoRenameCondition implementation="com.intellij.lang.ant.refactoring.AntVetoRenameCondition"/>
     <renamePsiElementProcessor implementation="com.intellij.lang.ant.dom.AntRenameProcessor"/>
     <daemon.externalAnnotatorsFilter implementation="com.intellij.lang.ant.validation.AntAnnotatorsFilter"/>
-    <!--<xml.fileNSInfoProvider implementation="com.intellij.lang.ant.AntDefaultNSProvider"/>-->
     <lang.documentationProvider language="XML" implementationClass="com.intellij.lang.ant.doc.AntDomDocumentationProvider"/>
 
-    <breadcrumbsInfoProvider implementation="com.intellij.lang.ant.config.impl.AntBreadcrumbsInfoProvider"/>
-    <fileBasedIndex implementation="com.intellij.lang.ant.psi.impl.AntImportsIndex"/>
+    <fileBasedIndex implementation="com.intellij.lang.ant.AntImportsIndex"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.lang.ant.quickfix.AntUnresolvedRefsFixProvider"/>
     <hectorComponentProvider implementation="com.intellij.lang.ant.validation.AntHectorPanelProvider"/>
-    <declarationRangeHandler key="com.intellij.lang.ant.psi.AntStructuredElement"
-                             implementationClass="com.intellij.lang.ant.AntDeclarationRangeHandler"/>
-    <refactoring.elementListenerProvider implementation="com.intellij.lang.ant.refactoring.AntTargetRenameListenerProvider"/>
 
     <localInspection language="XML" shortName="AntDuplicateTargetsInspection" bundle="messages.AntBundle" key="ant.duplicate.targets.inspection"
                      groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
@@ -45,7 +39,7 @@
     <localInspection language="XML" shortName="AntMissingPropertiesFileInspection" bundle="messages.AntBundle" key="ant.missing.properties.file.inspection"
                      groupKey="ant.inspections.display.name" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.lang.ant.validation.AntMissingPropertiesFileInspection"/>
-    <localInspection language="XML" shortName="AntResolveInspection" displayName="Reference resolve problems" bundle="messages.AntBundle"
+    <localInspection language="XML" shortName="AntResolveInspection" displayName="Ant references resolve problems" bundle="messages.AntBundle"
                      groupKey="ant.inspections.display.name"
                      enabledByDefault="true" level="ERROR" implementationClass="com.intellij.lang.ant.dom.AntResolveInspection"/>
 

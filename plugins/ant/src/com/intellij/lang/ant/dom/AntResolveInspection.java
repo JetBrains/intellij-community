@@ -17,6 +17,7 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.quickfix.AntChangeContextLocalFix;
 import com.intellij.lang.ant.validation.AntInspection;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -40,7 +41,7 @@ public class AntResolveInspection extends AntInspection {
 
   @NotNull
   public String getDisplayName() {
-    return "Reference resolve problems";
+    return "Ant references resolve problems";
   }
 
   @NotNull
@@ -100,18 +101,15 @@ public class AntResolveInspection extends AntInspection {
         continue;
       }
       if (!isResolvable(ref)) {
-        holder.createProblem(domElement, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, antDomRef.getUnresolvedMessagePattern(), ref.getRangeInElement() /*todo add quickfixes*/);
+
+        holder.createProblem(domElement, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, antDomRef.getUnresolvedMessagePattern(), ref.getRangeInElement(), new AntChangeContextLocalFix());
+
         if (ref instanceof AntDomFileReference) {
           if (processed == null) {
             processed = new HashSet<PsiReference>();
           }
           ContainerUtil.addAll(processed, ((AntDomFileReference)ref).getFileReferenceSet().getAllReferences());
         }
-
-        //final IntentionAction[] intentionActions = antRef.getFixes();
-        //for (final IntentionAction action : intentionActions) {
-        //  annotation.registerFix(action);
-        //}
       }
     }
   }

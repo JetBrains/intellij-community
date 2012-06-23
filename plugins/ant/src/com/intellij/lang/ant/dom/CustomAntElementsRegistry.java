@@ -15,10 +15,10 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.AntFilesProvider;
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.ReflectedProject;
 import com.intellij.lang.ant.config.impl.AntResourcesClassLoader;
-import com.intellij.lang.ant.psi.AntFilesProvider;
-import com.intellij.lang.ant.psi.impl.ReflectedProject;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
