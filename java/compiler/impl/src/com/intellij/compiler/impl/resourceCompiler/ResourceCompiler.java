@@ -29,8 +29,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -51,7 +49,6 @@ public class ResourceCompiler implements TranslatingCompiler {
   private final Project myProject;
   private final CompilerConfiguration myConfiguration;
   private final ResourceCompilerExtension[] myResourceCompilerExtensions = ResourceCompilerExtension.EP_NAME.getExtensions();
-  private static final FileTypeManager FILE_TYPE_MANAGER = FileTypeManager.getInstance();
 
   public ResourceCompiler(Project project, CompilerConfiguration compilerConfiguration) {
     myProject = project;
@@ -73,8 +70,7 @@ public class ResourceCompiler implements TranslatingCompiler {
     if (module != null && skipStandardResourceCompiler(module)) {
       return false;
     }
-
-    return !StdFileTypes.JAVA.equals(file.getFileType()) && myConfiguration.isResourceFile(file);
+    return myConfiguration.isResourceFile(file);
   }
 
   public void compile(final CompileContext context, Chunk<Module> moduleChunk, final VirtualFile[] files, OutputSink sink) {
