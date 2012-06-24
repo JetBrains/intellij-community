@@ -59,33 +59,43 @@ abstract class IntIntMultiMaplet implements Streamable {
   abstract void flush(boolean memoryCachesOnly);
 
   public void toStream(final DependencyContext context, final PrintStream stream) {
+    final OrderProvider op = new OrderProvider(context);
+
     forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
       @Override
       public boolean execute(final int a, final TIntHashSet b) {
-        stream.print("  Key: ");
-        stream.println(context.getValue(a));
-        stream.println("  Values:");
-
-        final List<String> list = new LinkedList<String>();
-
-        b.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(final int value) {
-            list.add(context.getValue(value));
-            return true;
-          }
-        });
-
-        Collections.sort(list);
-
-        for (final String l : list) {
-          stream.print("    ");
-          stream.println(l);
-        }
-
-        stream.println("  End Of Values");
+        op.register(a);
         return true;
       }
     });
+
+    final int[] keys = op.get();
+
+    for (final int a : keys) {
+      final TIntHashSet b = get(a);
+
+      stream.print("  Key: ");
+      stream.println(context.getValue(a));
+      stream.println("  Values:");
+
+      final List<String> list = new LinkedList<String>();
+
+      b.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(final int value) {
+          list.add(context.getValue(value));
+          return true;
+        }
+      });
+
+      Collections.sort(list);
+
+      for (final String l : list) {
+        stream.print("    ");
+        stream.println(l);
+      }
+
+      stream.println("  End Of Values");
+    }
   }
 }

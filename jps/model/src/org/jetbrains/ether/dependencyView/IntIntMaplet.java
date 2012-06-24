@@ -28,24 +28,41 @@ import java.io.PrintStream;
  */
 abstract class IntIntMaplet implements Streamable {
   abstract boolean containsKey(final int key);
+
   abstract int get(final int key);
+
   abstract void put(final int key, final int value);
+
   abstract void putAll(IntIntMaplet m);
+
   abstract void remove(final int key);
+
   abstract void close();
+
   abstract void forEachEntry(TIntIntProcedure proc);
+
   abstract void flush(boolean memoryCachesOnly);
 
   public void toStream(final DependencyContext context, final PrintStream stream) {
+    final OrderProvider op = new OrderProvider(context);
+
     forEachEntry(new TIntIntProcedure() {
       @Override
       public boolean execute(final int a, final int b) {
-        stream.print("  ");
-        stream.print(context.getValue(a));
-        stream.print(" -> ");
-        stream.println(context.getValue(b));
+        op.register(a);
         return true;
       }
     });
+
+    final int[] keys = op.get();
+
+    for (final int a : keys) {
+      final int b = get(a);
+
+      stream.print("  ");
+      stream.print(context.getValue(a));
+      stream.print(" -> ");
+      stream.println(context.getValue(b));
+    }
   }
 }

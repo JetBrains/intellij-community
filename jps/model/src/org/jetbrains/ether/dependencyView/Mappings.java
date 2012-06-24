@@ -1934,14 +1934,18 @@ public class Mappings {
     }
   }
 
-  private void cleanupRemovedClass(@NotNull ClassRepr cr,
-                                   Collection<UsageRepr.Cluster> clusters,
-                                   IntIntMultiMaplet subclassesTrashBin,
-                                   IntIntMultiMaplet dependenciesTrashBin) {
+  private void cleanupRemovedClass(final Mappings delta,
+                                   @NotNull final ClassRepr cr,
+                                   final Collection<UsageRepr.Cluster> clusters,
+                                   final IntIntMultiMaplet dependenciesTrashBin) {
     final int className = cr.name;
 
+    //for (final int superSomething : cr.getSupers()) {
+    //  subclassesTrashBin.put(superSomething, className);
+    //}
+
     for (final int superSomething : cr.getSupers()) {
-      subclassesTrashBin.put(superSomething, className);
+      delta.registerRemovedSuperClass(className, superSomething);
     }
 
     cleanupBackDependency(className, clusters, dependenciesTrashBin);
@@ -1961,7 +1965,7 @@ public class Mappings {
         delta.runPostPasses();
 
         final IntIntMultiMaplet dependenciesTrashBin = new IntIntTransientMultiMaplet();
-        final IntIntMultiMaplet subclassesTrashBin = new IntIntTransientMultiMaplet();
+        //final IntIntMultiMaplet subclassesTrashBin = new IntIntTransientMultiMaplet();
 
         if (removed != null) {
           for (final String file : removed) {
@@ -1971,7 +1975,7 @@ public class Mappings {
 
             if (fileClasses != null) {
               for (final ClassRepr aClass : fileClasses) {
-                cleanupRemovedClass(aClass, fileUsages, subclassesTrashBin, dependenciesTrashBin);
+                cleanupRemovedClass(delta, aClass, fileUsages, dependenciesTrashBin);
               }
             }
 
@@ -1993,17 +1997,17 @@ public class Mappings {
           });
 
           for (ClassRepr repr : delta.getDeletedClasses()) {
-            cleanupRemovedClass(repr, null, subclassesTrashBin, dependenciesTrashBin);
+            cleanupRemovedClass(delta, repr, null, dependenciesTrashBin);
           }
 
-          subclassesTrashBin.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-            @Override
-            public boolean execute(int aClass, TIntHashSet deps) {
-              myClassToSubclasses.removeAll(aClass, deps);
-              return true;
-            }
-          });
-          subclassesTrashBin.close();
+          //subclassesTrashBin.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+          //  @Override
+          //  public boolean execute(int aClass, TIntHashSet deps) {
+          //    myClassToSubclasses.removeAll(aClass, deps);
+          //    return true;
+          //  }
+          //});
+          //subclassesTrashBin.close();
 
           delta.getChangedClasses().forEach(new TIntProcedure() {
             @Override

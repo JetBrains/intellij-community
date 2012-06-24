@@ -59,33 +59,42 @@ abstract class IntObjectMultiMaplet<V extends Streamable> implements Streamable 
   abstract void flush(boolean memoryCachesOnly);
 
   public void toStream(final DependencyContext context, final PrintStream stream) {
+    final OrderProvider op = new OrderProvider(context);
+
     forEachEntry(new TIntObjectProcedure<Collection<V>>() {
       @Override
       public boolean execute(final int a, final Collection<V> b) {
-        stream.print("  Key: ");
-        stream.println(context.getValue(a));
-        stream.println("  Values:");
-
-        final List<String> list = new LinkedList<String> ();
-
-        for (final V value : b) {
-          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          final PrintStream s = new PrintStream(baos);
-
-          value.toStream(context, s);
-
-          list.add(baos.toString());
-        }
-
-        Collections.sort(list);
-
-        for (final String l : list) {
-          stream.print(l);
-        }
-
-        stream.println("  End Of Values");
+        op.register(a);
         return true;
       }
     });
+
+    final int[] keys = op.get();
+
+    for (final int a : keys) {
+      final Collection<V> b = get(a);
+      stream.print("  Key: ");
+      stream.println(context.getValue(a));
+      stream.println("  Values:");
+
+      final List<String> list = new LinkedList<String>();
+
+      for (final V value : b) {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        final PrintStream s = new PrintStream(baos);
+
+        value.toStream(context, s);
+
+        list.add(baos.toString());
+      }
+
+      Collections.sort(list);
+
+      for (final String l : list) {
+        stream.print(l);
+      }
+
+      stream.println("  End Of Values");
+    }
   }
 }

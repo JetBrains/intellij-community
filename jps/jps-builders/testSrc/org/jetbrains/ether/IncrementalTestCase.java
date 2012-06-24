@@ -221,13 +221,32 @@ public abstract class IncrementalTestCase extends TestCase {
 
       new IncProjectBuilder(
         projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(), Collections.<String, String>emptyMap(), CanceledStatus.NULL,
-        null).build(
-        new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false, false
-      );
+        null).build(new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false, false);
+
+      final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
+
+      projectDescriptor.dataManager.getMappings().toStream(new PrintStream(makeDump));
+
+      makeDump.close();
 
       final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getBaseDir() + ".log")));
       final String actual = javaBuilderLogger.myLog.toString();
+
       assertEquals(expected, actual);
+
+      new IncProjectBuilder(
+        projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(), Collections.<String, String>emptyMap(), CanceledStatus.NULL,
+        null).build(
+        new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true, false
+      );
+
+      final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
+
+      projectDescriptor.dataManager.getMappings().toStream(new PrintStream(rebuildDump));
+
+      rebuildDump.close();
+
+      //assertEquals(rebuildDump.toString(), makeDump.toString());
     }
     finally {
       projectDescriptor.release();
