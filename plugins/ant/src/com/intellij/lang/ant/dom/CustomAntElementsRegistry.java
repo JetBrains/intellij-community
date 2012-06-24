@@ -248,7 +248,7 @@ public class CustomAntElementsRegistry {
   }
 
   @Nullable
-  private static PsiFile loadContentAsFile(PsiFile originalFile, LanguageFileType fileType) {
+  public static PsiFile loadContentAsFile(PsiFile originalFile, LanguageFileType fileType) {
     final VirtualFile vFile = originalFile.getVirtualFile();
     if (vFile == null) {
       return null;
@@ -262,7 +262,7 @@ public class CustomAntElementsRegistry {
     return null;
   }
 
-  private static PsiFile loadContentAsFile(Project project, InputStream stream, LanguageFileType fileType) throws IOException {
+  public static PsiFile loadContentAsFile(Project project, InputStream stream, LanguageFileType fileType) throws IOException {
     final StringBuilder builder = new StringBuilder();
     try {
       int nextByte;

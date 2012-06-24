@@ -17,7 +17,7 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -40,8 +42,10 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: Apr 21, 2010
  */
-public abstract class AntDomProperty extends AntDomNamedElement implements PropertiesProvider{
-  private volatile Map<String, String> myCachedPreperties;
+public abstract class AntDomProperty extends AntDomClasspathComponent implements PropertiesProvider{
+  private volatile Map<String, String> myCachedProperties;
+  private volatile ClassLoader myCachedLoader;
+
 
   @Attribute("value")
   @Convert(value = AntDomPropertyValueConverter.class)
@@ -63,12 +67,6 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
 
   @Attribute("environment")
   public abstract GenericAttributeValue<String> getEnvironment();
-
-  @Attribute("classpath")
-  public abstract GenericAttributeValue<String> getClasspath();
-
-  @Attribute("classpathref")
-  public abstract GenericAttributeValue<String> getClasspathRef();
 
   @Attribute("prefix")
   public abstract GenericAttributeValue<String> getPrefix();
@@ -107,6 +105,12 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
       final GenericAttributeValue<String> environment = getEnvironment();
       if (environment.getRawText() != null) {
         domTarget = DomTarget.getTarget(this, environment);
+      }
+      if (domTarget == null) {
+        final GenericAttributeValue<String> resource = getResource();
+        if (resource.getRawText() != null) {
+          domTarget = DomTarget.getTarget(this, resource);
+        }
       }
     }
     
@@ -148,7 +152,7 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
   }
 
   private Map<String, String> buildProperties() {
-    Map<String, String> result = myCachedPreperties;
+    Map<String, String> result = myCachedProperties;
     if (result != null) {
       return result;
     }
@@ -183,12 +187,12 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
       if (psiFile != null) {
         if (psiFile instanceof PropertiesFile) {
           result = new HashMap<String, String>();
-          for (IProperty property : ((PropertiesFile)psiFile).getProperties()) {
-            result.put(property.getKey(), property.getValue());
+          for (final IProperty property : ((PropertiesFile)psiFile).getProperties()) {
+            result.put(property.getUnescapedKey(), property.getValue());
           }
         }
       }
-      else if (getEnvironment().getRawText() != null){
+      else if (getEnvironment().getRawText() != null) {
         String prefix = getEnvironment().getRawText();
         if (!prefix.endsWith(".")) {
           prefix += ".";
@@ -199,13 +203,29 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
         }
       }
       else {
-        final GenericAttributeValue<String> resourceValue = getResource();
-        final String prefixValue = getPropertyPrefixValue();
-        // todo: try to load the resource from classpath
         // todo: consider Url attribute?
+
+        final String resource = getResource().getStringValue();
+        if (resource != null) {
+          final ClassLoader loader = getClassLoader();
+          if (loader != null) {
+            final InputStream stream = loader.getResourceAsStream(resource);
+            if (stream != null) {
+              try {
+                final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream, StdFileTypes.PROPERTIES);
+                result = new HashMap<String, String>();
+                for (final IProperty property : propFile.getProperties()) {
+                  result.put(property.getUnescapedKey(), property.getValue());
+                }
+              }
+              catch (IOException ignored) {
+              }
+            }
+          }
+        }
       }
     }
-    return (myCachedPreperties = result);
+    return (myCachedProperties = result);
   }
 
   @Nullable
@@ -225,4 +245,14 @@ public abstract class AntDomProperty extends AntDomNamedElement implements Prope
     }
     return prefix;
   }
+
+  @Nullable
+  private ClassLoader getClassLoader() {
+    ClassLoader loader = myCachedLoader;
+    if (loader == null) {
+      myCachedLoader = loader = CustomAntElementsRegistry.createClassLoader(CustomAntElementsRegistry.collectUrls(this), getContextAntProject());
+    }
+    return loader;
+  }
+
 }

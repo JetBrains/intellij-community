@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,23 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+
+import java.io.File;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 5, 2010
+ *         Date: 6/24/12
  */
-public abstract class AntDomCustomClasspathComponent extends AntDomClasspathComponent {
-  @Attribute("uri")
-  public abstract GenericAttributeValue<String> getUri();
+public abstract class AntDomClasspathComponent extends AntDomNamedElement implements AntDomClasspathElement {
 
-  @Attribute("loaderref")
-  public abstract GenericAttributeValue<String> getLoaderRef();
+  @Attribute("classpath")
+  @Convert(value = AntMultiPathStringConverter.class)
+  public abstract GenericAttributeValue<List<File>> getClasspath();
+
+  @Attribute("classpathref")
+  @Convert(value = AntDomRefIdConverter.class)
+  public abstract GenericAttributeValue<AntDomElement> getClasspathRef();
 }
