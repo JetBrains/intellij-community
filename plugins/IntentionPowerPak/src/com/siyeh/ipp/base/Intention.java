@@ -15,7 +15,7 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class Intention extends PsiElementBaseIntentionAction {
+public abstract class Intention extends BaseElementAtCaretIntentionAction {
 
   private final PsiElementPredicate predicate;
 

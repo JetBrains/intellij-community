@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * To solve "caret after last symbol" problem consider using {@link com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction}
+ *
  * @author Anna Kozlova
  * @author Konstantin Bulenkov
  */
