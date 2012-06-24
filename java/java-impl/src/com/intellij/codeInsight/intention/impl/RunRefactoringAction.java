@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import javax.swing.*;
  * User: anna
  * Date: 9/5/11
  */
-public class RunRefactoringAction implements RefactoringAction {
+public class RunRefactoringAction extends BaseRefactoringIntentionAction {
   private final RefactoringActionHandler myHandler;
   private final String myCommandName;
 
@@ -50,13 +51,13 @@ public class RunRefactoringAction implements RefactoringAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     return true;
   }
 
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myHandler.invoke(project, editor, file, null);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    myHandler.invoke(project, editor, element.getContainingFile(), null);
   }
 
   @Override

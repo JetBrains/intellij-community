@@ -11,7 +11,7 @@ import javax.swing.*;
  * User: anna
  * Date: 11/11/11
  */
-public abstract class RefactoringBaseIntention extends PsiElementBaseIntentionAction implements Iconable, HighPriorityAction {
+public abstract class BaseRefactoringIntentionAction extends PsiElementBaseIntentionAction implements Iconable, HighPriorityAction {
   public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
 
   @Override

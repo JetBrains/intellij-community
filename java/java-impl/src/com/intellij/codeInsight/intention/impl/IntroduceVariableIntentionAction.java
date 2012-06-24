@@ -20,15 +20,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
  */
-public class IntroduceVariableIntentionAction extends BaseRefactoringAction {
+public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
   @NotNull
   @Override
   public String getText() {
@@ -42,7 +42,11 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOverride(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (element instanceof SyntheticElement){
+      return false;
+    }
+
     final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element,PsiExpressionStatement.class);
     if (statement == null){
       return false;

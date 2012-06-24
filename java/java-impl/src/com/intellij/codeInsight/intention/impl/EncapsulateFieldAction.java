@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Danila Ponomarenko
  */
-public class EncapsulateFieldAction extends BaseRefactoringAction {
+public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
 
   @NotNull
   @Override
@@ -42,7 +43,11 @@ public class EncapsulateFieldAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isAvailableOverride(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (element instanceof SyntheticElement){
+      return false;
+    }
+
     final PsiField field = getField(element);
     return field != null && !field.hasModifierProperty(PsiModifier.FINAL) && !field.hasModifierProperty(PsiModifier.PRIVATE);
   }
