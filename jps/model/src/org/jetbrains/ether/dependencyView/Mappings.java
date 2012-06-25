@@ -1715,6 +1715,12 @@ public class Mappings {
       for (final ClassRepr c : state.classDiff.removed()) {
         myDelta.addDeletedClass(c);
 
+        final int fileName = myClassToSourceFile.get(c.name);
+
+        if (fileName != 0) {
+          myDelta.myChangedFiles.add(fileName);
+        }
+
         if (!myEasyMode) {
           mySelf.appendDependents(c, state.dependants);
           debug("Adding usages of class ", c.name);
@@ -2347,7 +2353,7 @@ public class Mappings {
 
   @NotNull
   private Set<ClassRepr> getDeletedClasses() {
-    return myDeletedClasses != null ? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
+    return myDeletedClasses == null ? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
   }
 
   private TIntHashSet getChangedClasses() {
