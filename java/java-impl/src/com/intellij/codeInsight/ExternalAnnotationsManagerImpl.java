@@ -644,12 +644,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     if (virtualFile == null) {
       return null;
     }
+
+    List<XmlFile> possibleAnnotationsXmls = new ArrayList<XmlFile>();
     final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
     for (OrderEntry entry : entries) {
       if (entry instanceof ModuleOrderEntry) {
         continue;
       }
-      List<XmlFile> possibleAnnotationsXmls = null;
       final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
       for (String url : externalUrls) {
         VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -658,15 +659,12 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         if (ext == null) continue;
         final PsiFile psiFile = myPsiManager.findFile(ext);
         if (!(psiFile instanceof XmlFile)) continue;
-        if (possibleAnnotationsXmls == null) {
-          possibleAnnotationsXmls = new ArrayList<XmlFile>();
-        }
         possibleAnnotationsXmls.add((XmlFile)psiFile);
       }
-      if (possibleAnnotationsXmls != null) {
-        myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
-        return possibleAnnotationsXmls;
-      }
+    }
+    if (!possibleAnnotationsXmls.isEmpty()) {
+      myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
+      return possibleAnnotationsXmls;
     }
     myExternalAnnotations.put(fqn, NULL);
     return null;
