@@ -44,6 +44,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -173,9 +174,9 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                        new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
               }
             }
-            if (containingClass == null) {
-              return;
-            }
+          }
+
+          if (containingClass != null) {
             final PsiMethod[] constructors = containingClass.getConstructors();
             final Query<PsiReference> search = ReferencesSearch.search(field, new LocalSearchScope(constructors), false);
             search.forEach(new Processor<PsiReference>() {
@@ -246,6 +247,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         LOG.assertTrue(parameter.isPhysical(), setter.getText());
       }
 
+      @Nullable
       public PsiAssignmentExpression getAssignmentExpressionIfOnAssignmentLefthand(PsiExpression expression) {
         PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
         if (!(parent instanceof PsiAssignmentExpression)) {
