@@ -19,10 +19,8 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(
@@ -54,10 +52,10 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   }
 
   public boolean useOutOfProcessBuild() {
-    return USE_COMPILE_SERVER && (Registry.is("compiler.out-of-process.build.enabled") || ApplicationManager.getApplication().isInternal());
+    return USE_COMPILE_SERVER;
   }
 
   public static boolean useServerlessOutOfProcessBuild() {
-    return !Registry.is("compiler.out-of-process.as-server");
+    return true/*!Registry.is("compiler.out-of-process.as-server")*/;
   }
 }
