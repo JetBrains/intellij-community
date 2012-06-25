@@ -51,7 +51,7 @@ import java.util.concurrent.ScheduledFuture;
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 15;
+  private static final int VERSION = 16;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -118,6 +118,9 @@ public class FSRecords implements Forceable {
     private static boolean myDirty = false;
     private static ScheduledFuture<?> myFlushingFuture;
     private static boolean myCorrupted = false;
+
+    private static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
+
 
     public static void connect() {
       try {
@@ -207,7 +210,7 @@ public class FSRecords implements Forceable {
 
         PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLock(false).myDefaultStorageLockContext;
         myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
-        myAttributes = new Storage(attributesFile.getCanonicalPath());
+        myAttributes = new Storage(attributesFile.getCanonicalPath(), REASONABLY_SMALL);
         myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH); // sources usually zipped with 4x ratio
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         assert aligned; // for performance
@@ -482,6 +485,15 @@ public class FSRecords implements Forceable {
 
     public static void addFreeRecord(final int id) {
       myFreeRecords.add(id);
+    }
+
+    private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
+      boolean myAttrPageRequested;
+
+      @Override
+      public int calculateCapacity(int requiredLength) {   // 20% for growth
+        return Math.max(myAttrPageRequested ? 8:32, Math.min((int)(requiredLength * 1.2), (requiredLength / 1024 + 1) * 1024));
+      }
     }
   }
 
@@ -1138,7 +1150,12 @@ public class FSRecords implements Forceable {
       DataInputOutputUtil.writeINT(appender, encodedAttrId);
       int attrAddress = storage.createNewRecord();
       DataInputOutputUtil.writeINT(appender, attrAddress);
-      appender.close();
+      DbConnection.REASONABLY_SMALL.myAttrPageRequested = true;
+      try {
+        appender.close();
+      } finally {
+        DbConnection.REASONABLY_SMALL.myAttrPageRequested = false;
+      }
       return attrAddress;
     }
 

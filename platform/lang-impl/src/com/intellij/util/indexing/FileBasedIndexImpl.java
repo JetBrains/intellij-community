@@ -1704,7 +1704,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
           else {
             // mark the file as unindexed
-            IndexingStamp.update(file, indexId, -1L);
+            IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP);
           }
         }
       }
@@ -1874,7 +1874,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               @Override
               public void run() {
                 for (ID<?, ?> indexId : affectedIndices) {
-                  IndexingStamp.update(file, indexId, -2L);
+                  IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
                 }
               }
             });
