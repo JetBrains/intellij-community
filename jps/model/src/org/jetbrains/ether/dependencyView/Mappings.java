@@ -1940,10 +1940,6 @@ public class Mappings {
                                    final IntIntMultiMaplet dependenciesTrashBin) {
     final int className = cr.name;
 
-    //for (final int superSomething : cr.getSupers()) {
-    //  subclassesTrashBin.put(superSomething, className);
-    //}
-
     for (final int superSomething : cr.getSupers()) {
       delta.registerRemovedSuperClass(className, superSomething);
     }
@@ -1965,7 +1961,6 @@ public class Mappings {
         delta.runPostPasses();
 
         final IntIntMultiMaplet dependenciesTrashBin = new IntIntTransientMultiMaplet();
-        //final IntIntMultiMaplet subclassesTrashBin = new IntIntTransientMultiMaplet();
 
         if (removed != null) {
           for (final String file : removed) {
@@ -2000,20 +1995,9 @@ public class Mappings {
             cleanupRemovedClass(delta, repr, null, dependenciesTrashBin);
           }
 
-          //subclassesTrashBin.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-          //  @Override
-          //  public boolean execute(int aClass, TIntHashSet deps) {
-          //    myClassToSubclasses.removeAll(aClass, deps);
-          //    return true;
-          //  }
-          //});
-          //subclassesTrashBin.close();
-
-          delta.getChangedClasses().forEach(new TIntProcedure() {
+          delta.myClassToSubclasses.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
             @Override
-            public boolean execute(final int className) {
-              TIntHashSet s = delta.myClassToSubclasses.get(className);
-
+            public boolean execute(final int className, final TIntHashSet s) {
               final TIntHashSet newSubClasses = s == null ? new TIntHashSet() : s;
               final TIntHashSet oldSubClasses = myClassToSubclasses.get(className);
 
@@ -2037,6 +2021,15 @@ public class Mappings {
               else {
                 myClassToSubclasses.replace(className, newSubClasses);
               }
+
+              return true;
+            }
+          });
+
+          delta.getChangedClasses().forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(final int className) {
+              final TIntHashSet s = delta.myClassToSubclasses.get(className);
 
               final int sourceFile = delta.myClassToSourceFile.get(className);
               if (sourceFile > 0) {
@@ -2099,15 +2092,6 @@ public class Mappings {
           });
         }
         else {
-          //subclassesTrashBin.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-          //  @Override
-          //  public boolean execute(int aClass, TIntHashSet deps) {
-          //    myClassToSubclasses.removeAll(aClass, deps);
-          //    return true;
-          //  }
-          //});
-          //subclassesTrashBin.close();
-
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
           myClassToSourceFile.putAll(delta.myClassToSourceFile);
 
