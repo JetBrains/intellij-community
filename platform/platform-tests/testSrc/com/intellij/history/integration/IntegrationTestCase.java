@@ -160,12 +160,12 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     addContentRoot(myModule, path);
   }
 
-  protected void addContentRoot(final Module module, final String path) {
+  protected static void addContentRoot(final Module module, final String path) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ModuleRootManager rm = ModuleRootManager.getInstance(module);
         ModifiableRootModel m = rm.getModifiableModel();
-        m.addContentEntry(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path)));
+        m.addContentEntry(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path)));
         m.commit();
       }
     });
@@ -178,14 +178,14 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
         ModifiableRootModel m = rm.getModifiableModel();
         for (ContentEntry e : m.getContentEntries()) {
           if (e.getFile() != myRoot) continue;
-          e.addExcludeFolder(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(path)));
+          e.addExcludeFolder(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path)));
         }
         m.commit();
       }
     });
   }
 
-  protected void addFileListenerDuring(VirtualFileListener l, Runnable r) throws Exception {
+  protected static void addFileListenerDuring(VirtualFileListener l, Runnable r) throws Exception {
     VirtualFileManager.getInstance().addVirtualFileListener(l);
     try {
       r.run();
@@ -196,44 +196,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   }
 
 
-  protected void assertContent(String expected, Entry e) {
+  protected static void assertContent(String expected, Entry e) {
     assertEquals(expected, new String(e.getContent().getBytes()));
-  }
-
-  protected class ContentChangesListener extends VirtualFileAdapter {
-    private final VirtualFile myFile;
-    private final String[] myContents = new String[2];
-
-    public ContentChangesListener(VirtualFile f) {
-      myFile = f;
-    }
-
-    public String getContentBefore() {
-      return myContents[0];
-    }
-
-    public String getContentAfter() {
-      return myContents[1];
-    }
-
-    @Override
-    public void beforeContentsChange(VirtualFileEvent e) {
-      logContent(e, 0);
-    }
-
-    @Override
-    public void contentsChanged(VirtualFileEvent e) {
-      logContent(e, 1);
-    }
-
-    private void logContent(VirtualFileEvent e, int i) {
-      try {
-        if (!e.getFile().equals(myFile)) return;
-        myContents[i] = new String(myFile.contentsToByteArray());
-      }
-      catch (IOException ex) {
-        throw new RuntimeException(ex);
-      }
-    }
   }
 }

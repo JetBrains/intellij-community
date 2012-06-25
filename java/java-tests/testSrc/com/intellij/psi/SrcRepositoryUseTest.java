@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
@@ -683,30 +683,8 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     psiFile.getText();
     assertNotNull(aClass);
 
-    ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          @Override
-          public void run() {
-            VirtualFile newSourceRoot = psiFile.getVirtualFile().getParent();
-            final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-            final ContentEntry[] content = rootModel.getContentEntries();
-            boolean contentToChangeFound = false;
-            for (ContentEntry contentEntry : content) {
-              final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-              for (SourceFolder sourceFolder : sourceFolders) {
-                contentEntry.removeSourceFolder(sourceFolder);
-              }
-              final VirtualFile contentRoot = contentEntry.getFile();
-              if (contentRoot != null && VfsUtil.isAncestor(contentRoot, newSourceRoot, false)) {
-                contentEntry.addSourceFolder(newSourceRoot, false);
-                contentToChangeFound = true;
-              }
-            }
-            assertTrue(contentToChangeFound);
-            rootModel.commit();
-          }
-        }
-    );
+    final VirtualFile newSourceRoot = psiFile.getVirtualFile().getParent();
+    replaceSourceRoot(newSourceRoot);
 
     assertEquals("MyInterface1", aClass.getName());
   }
@@ -715,11 +693,17 @@ public class SrcRepositoryUseTest extends PsiTestCase{
     final PsiClass aClass = myJavaFacade.findClass("pack.MyInterface1", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
 
+    final VirtualFile newSourceRoot = aClass.getContainingFile().getVirtualFile().getParent();
+    replaceSourceRoot(newSourceRoot);
+
+    assertEquals("MyInterface1", aClass.getName());
+  }
+
+  private void replaceSourceRoot(final VirtualFile newSourceRoot) {
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           @Override
           public void run() {
-            VirtualFile newSourceRoot = aClass.getContainingFile().getVirtualFile().getParent();
             final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
             final ContentEntry[] content = rootModel.getContentEntries();
             boolean contentToChangeFound = false;
@@ -729,7 +713,7 @@ public class SrcRepositoryUseTest extends PsiTestCase{
                 contentEntry.removeSourceFolder(sourceFolder);
               }
               final VirtualFile contentRoot = contentEntry.getFile();
-              if (contentRoot != null && VfsUtil.isAncestor(contentRoot, newSourceRoot, false)) {
+              if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, newSourceRoot, false)) {
                 contentEntry.addSourceFolder(newSourceRoot, false);
                 contentToChangeFound = true;
               }
@@ -739,8 +723,6 @@ public class SrcRepositoryUseTest extends PsiTestCase{
           }
         }
     );
-
-    assertEquals("MyInterface1", aClass.getName());
   }
 
   public void testParentIdAssert() throws Exception {

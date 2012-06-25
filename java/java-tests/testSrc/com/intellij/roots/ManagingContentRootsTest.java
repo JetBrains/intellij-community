@@ -54,15 +54,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     final String url = root.getUrl();
     root.delete(null);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ModifiableRootModel m = getRootManager().getModifiableModel();
-        m.addContentEntry(url);
-        m.commit();
-      }
-    });
-
+    addContentRoot(url);
 
     assertNotNull(findContentEntry(url));
 
@@ -70,10 +62,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     assertSame(root, findContentEntry(url).getFile());
   }
 
-  public void testCreationOfContentRootWithUrlWhenFileExists() throws IOException {
-    VirtualFile root = dir.createChildDirectory(null, "root");
-    final String url = root.getUrl();
-
+  private void addContentRoot(final String url) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -82,6 +71,13 @@ public class ManagingContentRootsTest extends IdeaTestCase {
         m.commit();
       }
     });
+  }
+
+  public void testCreationOfContentRootWithUrlWhenFileExists() throws IOException {
+    VirtualFile root = dir.createChildDirectory(null, "root");
+    final String url = root.getUrl();
+
+    addContentRoot(url);
 
 
     assertSame(root, findContentEntry(url).getFile());
