@@ -27,14 +27,15 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.psi.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 public class DfaVariableState implements Cloneable {
@@ -48,8 +49,36 @@ public class DfaVariableState implements Cloneable {
     myVar = var;
     myInstanceofValues = new HashSet<DfaTypeValue>();
     myNotInstanceofValues = new HashSet<DfaTypeValue>();
-    myNullable = var != null && NullableNotNullManager.isNullable(var);
-    myVariableIsDeclaredNotNull = var != null && NullableNotNullManager.isNotNull(var);
+    myNullable = var != null && (NullableNotNullManager.isNullable(var) || isNullableInitialized(var, true));
+    myVariableIsDeclaredNotNull = var != null && (NullableNotNullManager.isNotNull(var) || isNullableInitialized(var, false));
+  }
+
+  private static boolean isNullableInitialized(PsiVariable var, boolean nullable) {
+    if (!var.hasModifierProperty(PsiModifier.FINAL) || !(var instanceof PsiField)) {
+      return false;
+    }
+
+    List<PsiExpression> initializers = NullableStuffInspection.findAllConstructorInitializers((PsiField)var);
+    if (!nullable && initializers.isEmpty()) {
+      return false;
+    }
+
+    for (PsiExpression expression : initializers) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      if (!(target instanceof PsiParameter)) {
+        return false;
+      }
+      if (nullable && NullableNotNullManager.isNullable((PsiParameter)target)) {
+        return true;
+      }
+      if (!nullable && !NullableNotNullManager.isNotNull((PsiParameter)target)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {

@@ -65,5 +65,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testStringTernaryAlwaysTrue() throws Throwable { doTest(); }
 
   public void testBoxing128() throws Throwable { doTest(); }
+  public void testFinalFieldsInitializedByAnnotatedParameters() throws Throwable { doTest(); }
 
 }
