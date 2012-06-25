@@ -185,11 +185,10 @@ class InitialInfoBuilder {
   }
 
   private CompositeBlockWrapper buildCompositeBlock(final Block rootBlock,
-                                   final CompositeBlockWrapper parent,
-                                   final int index,
-                                   final WrapImpl currentWrapParent,
-                                   boolean rootBlockIsRightBlock)
-  {
+                                                    final CompositeBlockWrapper parent,
+                                                    final int index,
+                                                    final WrapImpl currentWrapParent,
+                                                    boolean rootBlockIsRightBlock) {
     final CompositeBlockWrapper wrappedRootBlock = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent);
     if (index == 0) {
       wrappedRootBlock.arrangeParentTextRange();
@@ -206,7 +205,7 @@ class InitialInfoBuilder {
       blocksMayBeOfInterest = true;
     }
     final boolean blocksAreReadOnly = rootBlock instanceof ReadOnlyBlockContainer || blocksMayBeOfInterest;
-    
+
     State state = new State(rootBlock, wrappedRootBlock, currentWrapParent, blocksAreReadOnly, rootBlockIsRightBlock);
     myStates.push(state);
     return wrappedRootBlock;
@@ -237,14 +236,14 @@ class InitialInfoBuilder {
     if (!state.readOnly && !(subBlocks instanceof Unmodifiable) && !(subBlocks instanceof ImmutableCollection)) {
       subBlocks.set(childBlockIndex, null); // to prevent extra strong refs during model building
     }
-    
+
     if (state.childBlockProcessed(block, wrapper)) {
       while (!myStates.isEmpty() && myStates.peek().isProcessed()) {
         myStates.pop();
       }
     }
   }
-  
+
   private void setDefaultIndents(final List<AbstractBlockWrapper> list) {
     if (!list.isEmpty()) {
       for (AbstractBlockWrapper wrapper : list) {
@@ -259,8 +258,7 @@ class InitialInfoBuilder {
                                                   final CompositeBlockWrapper parent,
                                                   final boolean readOnly,
                                                   final int index,
-                                                  Block parentBlock) 
-  {
+                                                  Block parentBlock) {
     LeafBlockWrapper result = doProcessSimpleBlock(rootBlock, parent, readOnly, index, parentBlock);
     myProgressCallback.afterWrappingBlock(result);
     return result;
@@ -270,8 +268,7 @@ class InitialInfoBuilder {
                                                 final CompositeBlockWrapper parent,
                                                 final boolean readOnly,
                                                 final int index,
-                                                Block parentBlock)
-  {
+                                                Block parentBlock) {
     if (!INLINE_TABS_ENABLED && !myCurrentWhiteSpace.containsLineFeeds()) {
       myCurrentWhiteSpace.setForceSkipTabulationsUsage(true);
     }
@@ -363,7 +360,7 @@ class InitialInfoBuilder {
     buffer.append("Affected text fragment:[").append(minOffset).append(",").append(maxOffset).append("] - '")
       .append(model.getText(new TextRange(minOffset, maxOffset))).append("'\n");
 
-    final StringBuilder messageBuffer =  new StringBuilder();
+    final StringBuilder messageBuffer = new StringBuilder();
     messageBuffer.append("Invalid ranges during formatting");
     if (model instanceof FormattingDocumentModelImpl) {
       messageBuffer.append(" in ").append(((FormattingDocumentModelImpl)model).getFile().getLanguage());

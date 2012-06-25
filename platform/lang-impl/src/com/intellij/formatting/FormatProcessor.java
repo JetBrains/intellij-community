@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;
@@ -42,7 +43,7 @@ class FormatProcessor {
     ALIGNMENT_PROCESSORS.put(Alignment.Anchor.LEFT, new LeftEdgeAlignmentProcessor());
     ALIGNMENT_PROCESSORS.put(Alignment.Anchor.RIGHT, new RightEdgeAlignmentProcessor());
   }
-  
+
   /**
    * There is a possible case that formatting introduced big number of changes to the underlying document. That number may be
    * big enough for that their subsequent appliance is much slower than direct replacing of the whole document text.
@@ -50,7 +51,7 @@ class FormatProcessor {
    * Current constant holds minimum number of changes that should trigger such <code>'replace whole text'</code> optimization.
    */
   private static final int BULK_REPLACE_OPTIMIZATION_CRITERIA = 3000;
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
 
   private LeafBlockWrapper myCurrentBlock;
@@ -59,9 +60,9 @@ class FormatProcessor {
   private CompositeBlockWrapper               myRootBlockWrapper;
   private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
-  private final CommonCodeStyleSettings.IndentOptions myIndentOption;
-  private final CodeStyleSettings               mySettings;
-  private final Document                        myDocument;
+  private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
+  private final CodeStyleSettings                     mySettings;
+  private final Document                              myDocument;
 
   /**
    * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detect
@@ -82,7 +83,7 @@ class FormatProcessor {
   private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks
     = new HashMap<LeafBlockWrapper, Set<LeafBlockWrapper>>();
 
-  private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings 
+  private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings
     = new HashMap<AbstractBlockWrapper, Set<AbstractBlockWrapper>>();
 
   /**
@@ -167,7 +168,7 @@ class FormatProcessor {
                          @NotNull FormattingProgressCallback progressCallback) 
   {
     myProgressCallback = progressCallback;
-    myIndentOption = indentOptions;
+    myDefaultIndentOption = indentOptions;
     mySettings = settings;
     myDocument = docModel.getDocument();
     myCurrentState = new WrapBlocksState(rootBlock, docModel, affectedRanges, interestingOffset);
@@ -320,8 +321,8 @@ class FormatProcessor {
    *                              <code>false</code> otherwise
    */
   @SuppressWarnings({"deprecation"})
-  private static boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
-                                                CommonCodeStyleSettings.IndentOptions indentOption)
+  private boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
+                                         @NotNull CommonCodeStyleSettings.IndentOptions indentOption)
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
@@ -335,7 +336,8 @@ class FormatProcessor {
     for (LeafBlockWrapper block : blocksToModify) {
       WhiteSpace whiteSpace = block.getWhiteSpace();
       CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
-        whiteSpace.generateWhiteSpace(indentOption), whiteSpace.getStartOffset(), whiteSpace.getEndOffset(), false
+        whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, indentOption)), whiteSpace.getStartOffset(),
+        whiteSpace.getEndOffset(), false
       );
       if (changes.size() > 10000) {
         CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
@@ -408,7 +410,7 @@ class FormatProcessor {
     for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
       if (!whiteSpace.isReadOnly()) {
-        final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
+        final String newWhiteSpace = whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, myDefaultIndentOption));
         if (!whiteSpace.equalsToString(newWhiteSpace)) {
           blocksToModify.add(block);
         }
@@ -417,6 +419,22 @@ class FormatProcessor {
     return blocksToModify;
   }
 
+  @NotNull
+  private CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull AbstractBlockWrapper block,
+                                                                      @NotNull CommonCodeStyleSettings.IndentOptions fallbackIndentOptions)
+  {
+    final Language language = block.getLanguage();
+    if (language == null) {
+      return fallbackIndentOptions;
+    }
+    final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(language);
+    if (commonSettings == null) {
+      return fallbackIndentOptions;
+    }
+    final CommonCodeStyleSettings.IndentOptions result = commonSettings.getIndentOptions();
+    return result == null ? fallbackIndentOptions : result;
+  }
+  
   private static TextRange shiftRange(final TextRange textRange, final int shift) {
     return new TextRange(textRange.getStartOffset() + shift, textRange.getEndOffset() + shift);
   }
@@ -629,7 +647,8 @@ class FormatProcessor {
     }
     
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
-      myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks, myIndentOption
+      myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
+      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption)
     );
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
@@ -704,7 +723,7 @@ class FormatProcessor {
   }
 
   private void adjustSpacingByIndentOffset() {
-    IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
+    IndentData offset = myCurrentBlock.calculateOffset(getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption));
     myCurrentBlock.getWhiteSpace().setSpaces(offset.getSpaces(), offset.getIndentSpaces());
   }
 
@@ -972,7 +991,7 @@ class FormatProcessor {
   private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {
     int alignOffset = getAlignOffsetBefore(childAttributes.getAlignment(), null);
     if (alignOffset == -1) {
-      return parent.calculateChildOffset(myIndentOption, childAttributes, index).createIndentInfo();
+      return parent.calculateChildOffset(getIndentOptionsToUse(parent, myDefaultIndentOption), childAttributes, index).createIndentInfo();
     }
     else {
       AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
@@ -1247,7 +1266,7 @@ class FormatProcessor {
       super(FormattingStateId.WRAPPING_BLOCKS);
       myModel = model;
       myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
-        root, model, affectedRanges, myIndentOption, interestingOffset, myProgressCallback
+        root, model, affectedRanges, myDefaultIndentOption, interestingOffset, myProgressCallback
       );
     }
 
@@ -1273,7 +1292,7 @@ class FormatProcessor {
       myCurrentBlock = myFirstTokenBlock;
       myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
       myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
-      myLastWhiteSpace.append(myModel.getTextLength(), myModel, myIndentOption);
+      myLastWhiteSpace.append(myModel.getTextLength(), myModel, myDefaultIndentOption);
     }
   }
   
@@ -1358,7 +1377,9 @@ class FormatProcessor {
         updatedDocument.setInBulkUpdate(true);
         myResetBulkUpdateState = true;
       }
-      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA && applyChangesAtBulkMode(myBlocksToModify, myModel, myIndentOption)) {
+      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA
+          && applyChangesAtBulkMode(myBlocksToModify, myModel, myDefaultIndentOption))
+      {
         setDone(true);
       }
     }
@@ -1367,7 +1388,11 @@ class FormatProcessor {
     protected void doIteration() {
       LeafBlockWrapper blockWrapper = myBlocksToModify.get(myIndex);
       myShift = replaceWhiteSpace(
-        myModel, blockWrapper, myShift, blockWrapper.getWhiteSpace().generateWhiteSpace(myIndentOption), myJavaIndentOptions
+        myModel,
+        blockWrapper,
+        myShift,
+        blockWrapper.getWhiteSpace().generateWhiteSpace(getIndentOptionsToUse(blockWrapper, myDefaultIndentOption)),
+        myJavaIndentOptions
       );
       myProgressCallback.afterApplyingChange(blockWrapper);
       // block could be gc'd

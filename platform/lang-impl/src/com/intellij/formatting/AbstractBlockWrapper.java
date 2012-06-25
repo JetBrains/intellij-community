@@ -16,8 +16,12 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -36,31 +40,53 @@ public abstract class AbstractBlockWrapper {
     Indent.Type.NORMAL, Indent.Type.CONTINUATION, Indent.Type.CONTINUATION_WITHOUT_FIRST
   ));
 
-  protected WhiteSpace myWhiteSpace;
+  protected WhiteSpace            myWhiteSpace;
   protected CompositeBlockWrapper myParent;
-  protected int myStart;
-  protected int myEnd;
-  protected int myFlags;
+  protected int                   myStart;
+  protected int                   myEnd;
+  protected int                   myFlags;
 
   static int CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT = 1;
-  static int INCOMPLETE = 2;
+  static int INCOMPLETE                                 = 2;
+
+  private final Language myLanguage;
 
   protected IndentInfo myIndentFromParent = null;
-  private IndentImpl myIndent = null;
+  private   IndentImpl myIndent           = null;
   private AlignmentImpl myAlignment;
-  private WrapImpl myWrap;
+  private WrapImpl      myWrap;
 
-  public AbstractBlockWrapper(final Block block, final WhiteSpace whiteSpace, final CompositeBlockWrapper parent, final TextRange textRange) {
+  public AbstractBlockWrapper(final Block block,
+                              final WhiteSpace whiteSpace,
+                              final CompositeBlockWrapper parent,
+                              final TextRange textRange) {
     myWhiteSpace = whiteSpace;
     myParent = parent;
     myStart = textRange.getStartOffset();
     myEnd = textRange.getEndOffset();
 
-    myFlags = CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT | (block.isIncomplete() ? INCOMPLETE:0);
+    myFlags = CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT | (block.isIncomplete() ? INCOMPLETE : 0);
     myAlignment = (AlignmentImpl)block.getAlignment();
     myWrap = (WrapImpl)block.getWrap();
+    myLanguage = deriveLanguage(block);
   }
 
+  @Nullable
+  private static Language deriveLanguage(@NotNull Block block) {
+    if (block instanceof ASTBlock) {
+      final ASTNode node = ((ASTBlock)block).getNode();
+      if (node == null) {
+        return null;
+      }
+      final PsiElement psi = node.getPsi();
+      if (psi == null) {
+        return null;
+      }
+      return psi.getLanguage();
+    }
+    return null;
+  }
+  
   public WhiteSpace getWhiteSpace() {
     return myWhiteSpace;
   }
@@ -87,6 +113,20 @@ public abstract class AbstractBlockWrapper {
 
   public int getLength() {
     return myEnd - myStart;
+  }
+
+  /**
+   * There is a possible case that particular block's language differs from the language implied by the file type. We need to
+   * distinguish such a situation because, for example in case of indent calculation (code style settings for different languages
+   * may have different indent values).
+   * <p/>
+   * This method allows to retrieve the language associated with the current block (if provided).
+   * 
+   * @return current block's language (if provided)
+   */
+  @Nullable
+  public Language getLanguage() {
+    return myLanguage;
   }
 
   /**
