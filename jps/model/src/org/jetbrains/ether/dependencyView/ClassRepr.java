@@ -357,7 +357,7 @@ public class ClassRepr extends Proto {
           return o1.type.getDescr(context).compareTo(o2.type.getDescr(context));
         }
 
-        return o1.name - o2.name;
+        return context.getValue(o1.name).compareTo(context.getValue(o2.name));
       }
     });
     for (final FieldRepr f : fs) {
@@ -401,7 +401,7 @@ public class ClassRepr extends Proto {
           return c;
         }
 
-        return o1.name - o2.name;
+        return context.getValue(o1.name).compareTo(context.getValue(o2.name));
       }
     });
     for (final MethodRepr m : ms) {

@@ -1861,7 +1861,7 @@ public class Mappings {
           final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
           final DiffState state = new DiffState(Difference.make(pastClasses, classes));
 
-          if (!processChangedClasses(state)) {
+          if (!processChangedClasses(state) && !myEasyMode) {
             return false;
           }
 
@@ -2062,8 +2062,9 @@ public class Mappings {
 
           delta.getChangedFiles().forEach(new TIntProcedure() {
             @Override
-            public boolean execute(int fileName) {
+            public boolean execute(final int fileName) {
               final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(fileName);
+
               if (classes != null) {
                 mySourceFileToClasses.replace(fileName, classes);
               }
@@ -2072,6 +2073,7 @@ public class Mappings {
               }
 
               final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(fileName);
+
               if (clusters != null) {
                 mySourceFileToUsages.replace(fileName, clusters);
               }
