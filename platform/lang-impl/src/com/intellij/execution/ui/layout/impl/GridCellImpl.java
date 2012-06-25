@@ -229,7 +229,11 @@ public class GridCellImpl implements GridCell {
   @Nullable
   private static TabInfo updatePresentation(TabInfo info, Content content) {
     if (info == null) return info;
-    return info.setIcon(content.getIcon()).setText(content.getDisplayName()).setActions(content.getActions(), content.getPlace());
+    return info.
+      setIcon(content.getIcon()).
+      setText(content.getDisplayName()).
+      setActionsContextComponent(content.getActionsContextComponent()).
+      setActions(content.getActions(), content.getPlace());
   }
 
   public ActionCallback select(final Content content, final boolean requestFocus) {
