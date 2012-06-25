@@ -15,14 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
+import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,119 +61,50 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       return false;
     }
 
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    Map<PsiTypeParameter, Boolean> typeParameterBooleanMap = createTypeParameters(
-      factory,
-      classTypeParameterList.getTypeParameters(),
-      myParameterList.getTypeParameterElements()
-    );
-
-    if (isAddOneTypeParameter(typeParameterBooleanMap)) {
-      setText(QuickFixBundle.message("add.type.parameter.text", myClass.getName()));
-    }
-    else {
-      setText(QuickFixBundle.message("change.class.signature.text", myClass.getName(), parametersToSignatureText(typeParameterBooleanMap)));
-    }
+    setText(QuickFixBundle.message("change.class.signature.text", myClass.getName(), myParameterList.getText()));
 
     return true;
-  }
-
-  private static boolean isAddOneTypeParameter(@NotNull Map<PsiTypeParameter, Boolean> map) {
-    boolean oneParameter = false;
-    for (Boolean b : map.values()) {
-      if (b == Boolean.TRUE) {
-        if (oneParameter) {
-          return false;
-        }
-        oneParameter = true;
-      }
-    }
-    return true;
-  }
-
-  @NotNull
-  private static String parametersToSignatureText(@NotNull Map<PsiTypeParameter, Boolean> map) {
-    final StringBuilder result = new StringBuilder("&lt;");
-    for (Map.Entry<PsiTypeParameter, Boolean> e : map.entrySet()) {
-      final String text = e.getKey().getText();
-      if (e.getValue() == Boolean.TRUE) {
-        result.append("<b>").append(text).append("</b>");
-      }
-      else {
-        result.append(text);
-      }
-      result.append(", ");
-    }
-
-    final int lng = result.length();
-    result.delete(lng - 2, lng);
-
-    return result.append("&gt;").toString();
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-
     final PsiTypeParameterList classTypeParameterList = myClass.getTypeParameterList();
     if (classTypeParameterList == null) {
       return;
     }
 
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-
-    final PsiElement newTypeParameterList = classTypeParameterList.replace(
-      createTypeParameterList(
-        factory,
-        classTypeParameterList.getTypeParameters(),
-        myParameterList.getTypeParameterElements()
-      )
+    ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(
+      myClass,
+      createTypeParameters(
+        JavaCodeFragmentFactory.getInstance(project),
+        Arrays.asList(classTypeParameterList.getTypeParameters()),
+        Arrays.asList(myParameterList.getTypeParameterElements())
+      ),
+      false
     );
-
-    navigateTo(newTypeParameterList);
-  }
-
-  private static void navigateTo(@NotNull PsiElement element) {
-    element.getContainingFile().navigate(false);
-    final Editor editor = PsiUtilBase.findEditor(element);
-    if (editor == null) {
-      return;
-    }
-
-    editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
-    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+    dialog.show();
   }
 
   @NotNull
-  private static PsiTypeParameterList createTypeParameterList(@NotNull PsiElementFactory factory,
-                                                              @NotNull PsiTypeParameter[] classTypeParameters,
-                                                              @NotNull PsiTypeElement[] typeElements) {
-    final PsiTypeParameterList result = factory.createTypeParameterList();
-    for (PsiTypeParameter p : createTypeParameters(factory, classTypeParameters, typeElements).keySet()) {
-      result.add(p);
-    }
-    return result;
-  }
-
-  @NotNull
-  private static Map<PsiTypeParameter, Boolean> createTypeParameters(@NotNull PsiElementFactory factory,
-                                                                     @NotNull PsiTypeParameter[] classTypeParameters,
-                                                                     @NotNull PsiTypeElement[] typeElements) {
-    final LinkedHashMap<PsiTypeParameter, Boolean> result = new LinkedHashMap<PsiTypeParameter, Boolean>();
+  private static Map<TypeParameterInfo, PsiTypeCodeFragment> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
+                                                                                  @NotNull List<PsiTypeParameter> classTypeParameters,
+                                                                                  @NotNull List<PsiTypeElement> typeElements) {
+    final LinkedHashMap<TypeParameterInfo, PsiTypeCodeFragment> result = new LinkedHashMap<TypeParameterInfo, PsiTypeCodeFragment>();
     final TypeParameterNameSuggester suggester = new TypeParameterNameSuggester(classTypeParameters);
 
-    final Queue<PsiTypeParameter> classTypeParametersQueue = new LinkedList<PsiTypeParameter>(Arrays.asList(classTypeParameters));
+    int listIndex = 0;
     for (PsiTypeElement typeElement : typeElements) {
-      if (!classTypeParametersQueue.isEmpty()) {
-        final PsiTypeParameter typeParameter = classTypeParametersQueue.peek();
+      if (listIndex < classTypeParameters.size()) {
+        final PsiTypeParameter typeParameter = classTypeParameters.get(listIndex);
 
         if (isAssignable(typeParameter, typeElement.getType())) {
-          result.put(typeParameter, false);
-          classTypeParametersQueue.poll();
+          result.put(new TypeParameterInfo(listIndex++), null);
           continue;
         }
       }
-      result.put(toTypeParameter(factory, suggester, typeElement), true);
+
+      final PsiClassType type = (PsiClassType)typeElement.getType();
+      result.put(new TypeParameterInfo(suggester.suggest(type), type), factory.createTypeCodeFragment(type.getClassName(), typeElement, true));
     }
     return result;
   }
@@ -189,25 +119,20 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
     return true;
   }
 
-  @NotNull
-  private static PsiTypeParameter toTypeParameter(@NotNull PsiElementFactory factory,
-                                                  @NotNull TypeParameterNameSuggester suggester,
-                                                  @NotNull PsiTypeElement typeElement) {
-    final PsiType type = typeElement.getType();
-
-    return factory.createTypeParameter(suggester.suggest((PsiClassType)type), PsiClassType.EMPTY_ARRAY);
-  }
-
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
 
   private static class TypeParameterNameSuggester {
     private final Set<String> usedNames = new HashSet<String>();
 
-    public TypeParameterNameSuggester(@NotNull PsiTypeParameter[] typeParameters) {
+    public TypeParameterNameSuggester(@NotNull PsiTypeParameter... typeParameters) {
+      this(Arrays.asList(typeParameters));
+    }
+
+    public TypeParameterNameSuggester(@NotNull Collection<PsiTypeParameter> typeParameters) {
       for (PsiTypeParameter p : typeParameters) {
         usedNames.add(p.getName());
       }

@@ -25,12 +25,12 @@ import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,17 +39,15 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author dsl
  * @author Konstantin Bulenkov
  */
 public class ChangeClassSignatureDialog extends RefactoringDialog {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog");
+  private static final Logger LOG = Logger.getInstance(ChangeClassSignatureDialog.class);
   private static final int NAME_COLUMN = 0;
   private static final int VALUE_COLUMN = 1;
 
@@ -61,19 +59,53 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   private final MyTableModel myTableModel;
   private JBTable myTable;
   static final String REFACTORING_NAME = RefactoringBundle.message("changeClassSignature.refactoring.name");
+  private boolean myHideDefaultValueColumn;
 
-  public ChangeClassSignatureDialog(PsiClass aClass) {
+  public ChangeClassSignatureDialog(@NotNull PsiClass aClass, boolean hideDefaultValueColumn) {
+    this(
+      aClass,
+      initTypeParameterInfos(aClass.getTypeParameters().length),
+      initTypeCodeFragment(aClass.getTypeParameters().length),
+      hideDefaultValueColumn
+    );
+  }
+
+  @NotNull
+  private static List<TypeParameterInfo> initTypeParameterInfos(int length) {
+    final List<TypeParameterInfo> result = new ArrayList<TypeParameterInfo>();
+    for (int i = 0; i < length; i++) {
+      result.add(new TypeParameterInfo(i));
+    }
+    return result;
+  }
+
+  @NotNull
+  private static List<PsiTypeCodeFragment> initTypeCodeFragment(int length) {
+    final List<PsiTypeCodeFragment> result = new ArrayList<PsiTypeCodeFragment>();
+    for (int i = 0; i < length; i++) {
+      result.add(null);
+    }
+    return result;
+  }
+
+  public ChangeClassSignatureDialog(@NotNull PsiClass aClass,
+                                    @NotNull Map<TypeParameterInfo, PsiTypeCodeFragment> parameters,
+                                    boolean hideDefaultValueColumn) {
+    this(aClass, parameters.keySet(), parameters.values(), hideDefaultValueColumn);
+  }
+
+  public ChangeClassSignatureDialog(@NotNull PsiClass aClass,
+                                    @NotNull Collection<TypeParameterInfo> typeParameterInfos,
+                                    @NotNull Collection<PsiTypeCodeFragment> typeCodeFragments,
+                                    boolean hideDefaultValueColumn) {
     super(aClass.getProject(), true);
+    myHideDefaultValueColumn = hideDefaultValueColumn;
     setTitle(REFACTORING_NAME);
     myClass = aClass;
     myProject = myClass.getProject();
-    myTypeParameterInfos = new ArrayList<TypeParameterInfo>();
-    myTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>();
     myOriginalParameters = myClass.getTypeParameters();
-    for (int i = 0; i < myOriginalParameters.length; i++) {
-      myTypeParameterInfos.add(new TypeParameterInfo(i));
-      myTypeCodeFragments.add(null);
-    }
+    myTypeParameterInfos = new ArrayList<TypeParameterInfo>(typeParameterInfos);
+    myTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(typeCodeFragments);
     myTableModel = new MyTableModel();
     init();
   }
@@ -115,26 +147,28 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     myTable.setCellSelectionEnabled(true);
     myTable.setFocusCycleRoot(true);
 
-    final TableColumn defaultValue = myTable.getColumnModel().getColumn(1);
-    myTable.removeColumn(defaultValue);
-    myTable.getModel().addTableModelListener(new TableModelListener() {
-      @Override
-      public void tableChanged(TableModelEvent e) {
-        if (e.getType() == TableModelEvent.INSERT) {
-          myTable.getModel().removeTableModelListener(this);
-          final TableColumnAnimator animator = new TableColumnAnimator(myTable);
-          animator.setStep(20);
-          animator.addColumn(defaultValue, myTable.getWidth() / 2);
-          animator.startAndDoWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              myTable.editCellAt(myTable.getRowCount() - 1, 0);
-            }
-          });
-          animator.start();
+    if (myHideDefaultValueColumn) {
+      final TableColumn defaultValue = myTable.getColumnModel().getColumn(VALUE_COLUMN);
+      myTable.removeColumn(defaultValue);
+      myTable.getModel().addTableModelListener(new TableModelListener() {
+        @Override
+        public void tableChanged(TableModelEvent e) {
+          if (e.getType() == TableModelEvent.INSERT) {
+            myTable.getModel().removeTableModelListener(this);
+            final TableColumnAnimator animator = new TableColumnAnimator(myTable);
+            animator.setStep(20);
+            animator.addColumn(defaultValue, myTable.getWidth() / 2);
+            animator.startAndDoWhenDone(new Runnable() {
+              @Override
+              public void run() {
+                myTable.editCellAt(myTable.getRowCount() - 1, 0);
+              }
+            });
+            animator.start();
+          }
         }
-      }
-    });
+      });
+    }
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(SeparatorFactory.createSeparator(RefactoringBundle.message("changeClassSignature.parameters.panel.border.title"), myTable), BorderLayout.NORTH);
@@ -208,12 +242,13 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-      switch(columnIndex) {
+      switch (columnIndex) {
         case NAME_COLUMN:
           TypeParameterInfo info = myTypeParameterInfos.get(rowIndex);
           if (info.isForExistingParameter()) {
             return myOriginalParameters[info.getOldParameterIndex()].getName();
-          } else {
+          }
+          else {
             return info.getNewName();
           }
         case VALUE_COLUMN:
@@ -228,18 +263,21 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
 
     public String getColumnName(int column) {
-      switch(column) {
-        case NAME_COLUMN: return RefactoringBundle.message("column.name.name");
-        case VALUE_COLUMN: return RefactoringBundle.message("changeSignature.default.value.column");
-        default: LOG.assertTrue(false);
+      switch (column) {
+        case NAME_COLUMN:
+          return RefactoringBundle.message("column.name.name");
+        case VALUE_COLUMN:
+          return RefactoringBundle.message("changeSignature.default.value.column");
+        default:
+          LOG.assertTrue(false);
       }
       return null;
     }
 
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-      switch(columnIndex) {
+      switch (columnIndex) {
         case NAME_COLUMN:
-          myTypeParameterInfos.get(rowIndex).setNewName((String) aValue);
+          myTypeParameterInfos.get(rowIndex).setNewName((String)aValue);
           break;
         case VALUE_COLUMN:
           break;

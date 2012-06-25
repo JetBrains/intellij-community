@@ -25,17 +25,17 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author dsl
  */
-class TypeParameterInfo {
+public class TypeParameterInfo {
   private final int myOldParameterIndex;
   private String myNewName;
   private CanonicalTypes.Type myDefaultValue;
 
-  TypeParameterInfo(int oldIndex) {
+  public TypeParameterInfo(int oldIndex) {
     myOldParameterIndex = oldIndex;
     myDefaultValue = null;
   }
 
-  TypeParameterInfo(String name, PsiType aType) {
+  public TypeParameterInfo(String name, PsiType aType) {
     myOldParameterIndex = -1;
     myNewName = name;
     if (aType != null) {
