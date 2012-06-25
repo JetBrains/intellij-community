@@ -12,6 +12,8 @@ import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.JarArtifactType;
 import com.intellij.packaging.impl.artifacts.JarFromModulesTemplate;
+import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -26,10 +28,14 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   }
 
   public void testSimpleModule() throws Exception {
-    final Module a = addModule("a", null);
+    final Module a = addModuleWithSourceRoot("a");
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
                  " module:a");
+  }
+
+  private Module addModuleWithSourceRoot(final String name) {
+    return addModule(name, createDir("src-" + name));
   }
 
   public void testSimpleModuleWithMainClass() throws Exception {
@@ -57,7 +63,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   }
 
   public void testModuleWithLibraryJar() throws Exception {
-    final Module module = addModule("a", null);
+    final Module module = addModuleWithSourceRoot("a");
     addProjectLibrary(module, "jdom", getJDomJar());
     createFromTemplate(module, null, null, true);
     assertLayout("a.jar\n" +
@@ -78,7 +84,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   }
 
   public void testSkipTestLibrary() throws Exception {
-    final Module a = addModule("a", null);
+    final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "jdom", DependencyScope.TEST, getJDomJar());
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
@@ -86,7 +92,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   }
 
   public void testSkipProvidedLibrary() throws Exception {
-    final Module a = addModule("a", null);
+    final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "jdom", DependencyScope.PROVIDED, getJDomJar());
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
@@ -94,7 +100,8 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   }
 
   public void testIncludeTests() {
-    final Module a = addModule("a", null);
+    final Module a = addModuleWithSourceRoot("a");
+    PsiTestUtil.addSourceRoot(a, createDir("testSrc-a"), true);
     addProjectLibrary(a, "jdom", DependencyScope.TEST, getJDomJar());
     createFromTemplate(a, null, null, true, true);
     assertLayout("a.jar\n" +
@@ -103,17 +110,26 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
   }
 
+  public void testDoNotIncludeTestsForModuleWithoutTestSources() {
+    final Module a = addModuleWithSourceRoot("a");
+    addProjectLibrary(a, "jdom", DependencyScope.TEST, getJDomJar());
+    createFromTemplate(a, null, null, true, true);
+    assertLayout("a.jar\n" +
+                 " module:a\n" +
+                 " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
+  }
+
   public void testTwoIndependentModules() throws Exception {
-    final Module a = addModule("a", null);
-    addModule("b", null);
+    final Module a = addModuleWithSourceRoot("a");
+    addModuleWithSourceRoot("b");
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
                  " module:a");
   }
 
   public void testJarForProject() throws Exception {
-    addModule("a", null);
-    addModule("b", null);
+    addModuleWithSourceRoot("a");
+    addModuleWithSourceRoot("b");
     createFromTemplate(null, null, null, true);
     assertLayout(getProject().getName() + ".jar\n" +
                  " module:a\n" +
@@ -121,8 +137,8 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   }
 
   public void testDependentModule() {
-    final Module a = addModule("a", null);
-    final Module b = addModule("b", null);
+    final Module a = addModuleWithSourceRoot("a");
+    final Module b = addModuleWithSourceRoot("b");
     addModuleDependency(a, b);
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
@@ -131,8 +147,8 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   }
 
   public void testDependentModuleWithLibrary() throws Exception {
-    final Module a = addModule("a", null);
-    final Module b = addModule("b", null);
+    final Module a = addModuleWithSourceRoot("a");
+    final Module b = addModuleWithSourceRoot("b");
     addModuleDependency(a, b);
     addProjectLibrary(b, "jdom", getJDomJar());
     createFromTemplate(a, null, null, true);
@@ -144,7 +160,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
 
   public void testExtractedLibraryWithDirectories() throws Exception {
     final VirtualFile dir = createDir("lib");
-    final Module a = addModule("a", null);
+    final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir);
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
@@ -154,7 +170,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
 
   public void testCopiedLibraryWithDirectories() throws Exception {
     final VirtualFile dir = createDir("lib");
-    final Module a = addModule("a", null);
+    final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir);
     final String basePath = getBaseDir().getPath();
     createFromTemplate(a, null, basePath, false);
@@ -168,7 +184,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
 
   public void testExtractedLibraryWithJarsAndDirs() throws Exception {
     final VirtualFile dir = createDir("lib");
-    final Module a = addModule("a", null);
+    final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir, getJDomJar());
     createFromTemplate(a, null, null, true);
     assertLayout("a.jar\n" +
@@ -179,7 +195,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
 
   public void testCopiedLibraryWithJarsAndDirs() throws Exception {
     final VirtualFile dir = createDir("lib");
-    final Module a = addModule("a", null);
+    final Module a = addModuleWithSourceRoot("a");
     addProjectLibrary(a, "dir", dir, getJDomJar());
     final String basePath = getBaseDir().getPath();
     createFromTemplate(a, null, basePath, false);
@@ -193,7 +209,7 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     assertManifest(null, "jdom.jar");
   }
 
-  private void assertManifest(final String mainClass, final String classpath) {
+  private void assertManifest(final @Nullable String mainClass, final @Nullable String classpath) {
     if (myArtifact.getArtifactType() instanceof JarArtifactType) {
       ArtifactsTestUtil.assertManifest(myArtifact, getContext(), mainClass, classpath);
     }
@@ -207,12 +223,12 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     assertLayout(myArtifact, expected);
   }
 
-  private void createFromTemplate(final Module module, final String mainClassName, final String directoryForManifest,
+  private void createFromTemplate(final @Nullable Module module, final @Nullable String mainClassName, final @Nullable String directoryForManifest,
                                   final boolean extractLibrariesToJar) {
     createFromTemplate(module, mainClassName, directoryForManifest, extractLibrariesToJar, false);
   }
 
-  private void createFromTemplate(final Module module, final String mainClassName, final String directoryForManifest,
+  private void createFromTemplate(final Module module, final @Nullable String mainClassName, final @Nullable String directoryForManifest,
                                   final boolean extractLibrariesToJar, final boolean includeTests) {
     final JarFromModulesTemplate template = new JarFromModulesTemplate(getContext());
     final Module[] modules = module != null ? new Module[]{module} : ModuleManager.getInstance(getProject()).getModules();
