@@ -102,7 +102,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     });
   }
 
-  private ThreeState hasAnyAnnotationsRoots() {
+  private boolean hasAnyAnnotationsRoots() {
     if (myHasAnyAnnotationsRoots == ThreeState.UNSURE) {
       final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
       for (Module module : modules) {
@@ -110,13 +110,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
           final String[] urls = AnnotationOrderRootType.getUrls(entry);
           if (urls.length > 0) {
             myHasAnyAnnotationsRoots = ThreeState.YES;
-            return ThreeState.YES;
+            return true;
           }
         }
       }
       myHasAnyAnnotationsRoots = ThreeState.NO;
     }
-    return myHasAnyAnnotationsRoots;
+    return myHasAnyAnnotationsRoots == ThreeState.YES;
   }
 
   @Override
@@ -135,7 +135,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
   private final Map<PsiModifierListOwner, Map<String, PsiAnnotation>> cache = new ConcurrentWeakHashMap<PsiModifierListOwner, Map<String, PsiAnnotation>>();
   @NotNull
   private Map<String, PsiAnnotation> collectExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
-    if (hasAnyAnnotationsRoots() == ThreeState.NO) return Collections.emptyMap();
+    if (!hasAnyAnnotationsRoots()) return Collections.emptyMap();
 
     Map<String, PsiAnnotation> map = cache.get(listOwner);
     if (map == null) {
