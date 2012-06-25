@@ -24,12 +24,16 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitBranch;
+import git4idea.GitUtil;
+import git4idea.Notificator;
 import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
+import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +64,7 @@ public class GitRebaseUpdater extends GitUpdater {
 
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
-    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String remoteBranch = gitBranchPair.getDest().getName();
+    String remoteBranch = getRemoteBranchToMerge();
 
     final GitLineHandler rebaseHandler = new GitLineHandler(myProject, myRoot, GitCommand.REBASE);
     rebaseHandler.addParameters(remoteBranch);
@@ -97,6 +100,15 @@ public class GitRebaseUpdater extends GitUpdater {
       updateResult.set(handleRebaseFailure(rebaseHandler, rebaseConflictDetector, untrackedWouldBeOverwrittenDetector));
     }
     return updateResult.get();
+  }
+
+  @NotNull
+  private String getRemoteBranchToMerge() {
+    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
+    GitBranch dest = gitBranchPair.getDest();
+    LOG.assertTrue(dest != null, String.format("Destination branch is null for source branch %s in %s",
+                                               gitBranchPair.getBranch().getName(), myRoot));
+    return dest.getName();
   }
 
   private GitUpdateResult handleRebaseFailure(GitLineHandler pullHandler,
@@ -157,6 +169,42 @@ public class GitRebaseUpdater extends GitUpdater {
   @Override
   public String toString() {
     return "Rebase updater";
+  }
+
+  /**
+   * Tries to execute {@code git merge --ff-only}.
+   * @return true, if everything is successful; false for any error (to let a usual "fair" update deal with it).
+   */
+  public boolean fastForwardMerge() {
+    LOG.info("Trying fast-forward merge for " + myRoot);
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
+    if (repository == null) {
+      LOG.error("Repository is null for " + myRoot);
+      return false;
+    }
+    try {
+      markStart(myRoot);
+    }
+    catch (VcsException e) {
+      LOG.info("Couldn't mark start for repository " + myRoot, e);
+      return false;
+    }
+
+    GitCommandResult result = myGit.merge(repository, getRemoteBranchToMerge(), Collections.singletonList("--ff-only"));
+
+    try {
+      markEnd(myRoot);
+    }
+    catch (VcsException e) {
+      // this is not critical, and update has already happened,
+      // so we just notify the user about problems with collecting the updated changes.
+      LOG.info("Couldn't mark end for repository " + myRoot, e);
+      Notificator.getInstance(myProject).
+        notifyWeakWarning("Couldn't collect the updated files info",
+                          String.format("Update of %s was successful, but we couldn't collect the updated changes because of an error",
+                                        myRoot), null);
+    }
+    return result.success();
   }
 
   private static class MyConflictResolver extends GitConflictResolver {

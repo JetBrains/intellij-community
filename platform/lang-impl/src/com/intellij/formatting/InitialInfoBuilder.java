@@ -350,8 +350,6 @@ class InitialInfoBuilder {
 
   public static void assertInvalidRanges(final int startOffset, final int newEndOffset, FormattingDocumentModel model, String message) {
     @NonNls final StringBuilder buffer = new StringBuilder();
-    final StringBuilder messageBuffer =  new StringBuilder();
-    messageBuffer.append("Invalid ranges during formatting");
     buffer.append("Invalid formatting blocks:").append(message).append("\n");
     buffer.append("Start offset:");
     buffer.append(startOffset);
@@ -365,6 +363,8 @@ class InitialInfoBuilder {
     buffer.append("Affected text fragment:[").append(minOffset).append(",").append(maxOffset).append("] - '")
       .append(model.getText(new TextRange(minOffset, maxOffset))).append("'\n");
 
+    final StringBuilder messageBuffer =  new StringBuilder();
+    messageBuffer.append("Invalid ranges during formatting");
     if (model instanceof FormattingDocumentModelImpl) {
       messageBuffer.append(" in ").append(((FormattingDocumentModelImpl)model).getFile().getLanguage());
     }

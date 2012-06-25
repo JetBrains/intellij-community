@@ -225,7 +225,7 @@ public class Switcher extends AnAction implements DumbAware {
         @Override
         protected void paintComponent(Graphics g) {
           super.paintComponent(g);
-          g.setColor(BORDER_COLOR);
+          g.setColor(UIUtil.isUnderDarcula() ? Gray._68 : BORDER_COLOR);
           g.drawLine(0, 0, getWidth(), 0);
         }
       };
@@ -284,7 +284,7 @@ public class Switcher extends AnAction implements DumbAware {
           if (selected) {
             return renderer;
           }
-          final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ? ON_MOUSE_OVER_BG_COLOR : Color.WHITE;
+          final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ? ON_MOUSE_OVER_BG_COLOR : list.getBackground();
           UIUtil.changeBackGround(renderer, bgColor);
           return renderer;
         }
@@ -309,7 +309,7 @@ public class Switcher extends AnAction implements DumbAware {
           g.drawLine(0, 0, 0, getHeight());
         }
       };
-      separator.setBackground(Color.WHITE);
+      separator.setBackground(UIUtil.getControlColor());
 
       int selectionIndex = -1;
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
@@ -961,7 +961,7 @@ public class Switcher extends AnAction implements DumbAware {
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
 
         if (!selected &&  myPinned && FileEditorManager.getInstance(myProject).isFileOpen(virtualFile)) {
-          setBackground(LightColors.SLIGHTLY_GREEN);
+          setBackground(UIUtil.isUnderDarcula() ? list.getBackground().brighter() : LightColors.SLIGHTLY_GREEN);
         }
       }
     }

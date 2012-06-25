@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -137,13 +138,24 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private void handlePossibleReturn(GrStatement last) {
+  private void handlePossibleReturn(@NotNull GrStatement last) {
     //last statement inside finally clause cannot be possible return statement
     final GrFinallyClause finallyClause = PsiTreeUtil.getParentOfType(last, GrFinallyClause.class, false, GrClosableBlock.class, GrMember.class);
     if (finallyClause != null) return;
 
-    if (last instanceof GrExpression && PsiTreeUtil.isAncestor(myLastInScope, last, false)) {
-      addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)last));
+    if (!(last instanceof GrExpression && PsiTreeUtil.isAncestor(myLastInScope, last, false))) return;
+
+    addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)last));
+
+    for (ListIterator<Pair<InstructionImpl, GroovyPsiElement>> iterator = myPending.listIterator(myPending.size());iterator.hasPrevious(); ) {
+      Pair<InstructionImpl, GroovyPsiElement> pair = iterator.previous();
+      final GroovyPsiElement scopeWhenToAdd = pair.getSecond();
+      if (scopeWhenToAdd == null) continue;
+      if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, last, false)) break;
+
+      MaybeReturnInstruction may = addNode(new MaybeReturnInstruction((GrExpression)last));
+      addEdge(pair.first, may);
+      iterator.set(new Pair<InstructionImpl, GroovyPsiElement>(may, scopeWhenToAdd));
     }
   }
 
@@ -1055,10 +1067,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         collectVars(block.getControlFlow());
       }
 
-      @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
-        typeDefinition.acceptChildren(this);
-      }
     });
 
     PsiField[] fields = typeDefinition.getAllFields();

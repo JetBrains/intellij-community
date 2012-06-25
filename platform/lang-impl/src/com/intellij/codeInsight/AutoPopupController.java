@@ -145,7 +145,7 @@ public class AutoPopupController implements Disposable {
     myAlarm.cancelAllRequests();
   }
 
-  public void autoPopupParameterInfo(final Editor editor, final PsiElement highlightedMethod){
+  public void autoPopupParameterInfo(final Editor editor, @Nullable final PsiElement highlightedMethod){
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (DumbService.isDumb(myProject)) return;
 
@@ -168,7 +168,7 @@ public class AutoPopupController implements Disposable {
           documentManager.commitAllDocuments();
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
-            new ShowParameterInfoHandler().invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
+            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod);
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm
           }

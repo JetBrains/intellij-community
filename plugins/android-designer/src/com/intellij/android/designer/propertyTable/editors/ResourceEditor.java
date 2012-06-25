@@ -22,6 +22,9 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -112,6 +115,12 @@ public class ResourceEditor extends PropertyEditor {
     else {
       myEditor = new TextFieldWithBrowseButton() {
         @Override
+        protected void installPathCompletion(@Nullable Project project,
+                                             FileChooserDescriptor fileChooserDescriptor,
+                                             @Nullable Disposable parent) {
+        }
+
+        @Override
         public Dimension getPreferredSize() {
           return getComponentPreferredSize();
         }
@@ -158,7 +167,7 @@ public class ResourceEditor extends PropertyEditor {
     return new Dimension(Math.max(size1.width, 25) + 5 + size2.width, size1.height);
   }
 
-  private static ResourceType[] COLOR_TYPES = {ResourceType.COLOR, ResourceType.DRAWABLE};
+  public static ResourceType[] COLOR_TYPES = {ResourceType.COLOR, ResourceType.DRAWABLE};
 
   private static ResourceType[] convertTypes(Set<AttributeFormat> formats) {
     Set<ResourceType> types = EnumSet.noneOf(ResourceType.class);
@@ -245,7 +254,7 @@ public class ResourceEditor extends PropertyEditor {
   }
 
   @Override
-  public Object getValue() throws Exception {
+  public Object getValue() {
     JTextField text = getComboText();
     if (text == null) {
       return myBooleanResourceValue == null ? Boolean.toString(myCheckBox.isSelected()) : myBooleanResourceValue;
@@ -261,7 +270,7 @@ public class ResourceEditor extends PropertyEditor {
 
   protected void showDialog() {
     ModuleProvider moduleProvider = myRootComponent.getClientProperty(ModelParser.MODULE_KEY);
-    ResourceDialog dialog = new ResourceDialog(moduleProvider.getModule(), myTypes);
+    ResourceDialog dialog = new ResourceDialog(moduleProvider.getModule(), myTypes, (String)getValue());
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

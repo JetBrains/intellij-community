@@ -77,6 +77,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor("Static method call", DefaultHighlighter.STATIC_METHOD_ACCESS),
       new AttributesDescriptor("Method declaration", DefaultHighlighter.METHOD_DECLARATION),
       new AttributesDescriptor("Class reference", DefaultHighlighter.CLASS_REFERENCE),
+      new AttributesDescriptor("Type parameter reference", DefaultHighlighter.TYPE_PARAMETER),
       new AttributesDescriptor("Map key accessed as a property", DefaultHighlighter.MAP_KEY),
       new AttributesDescriptor("Instance property reference", DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE),
       new AttributesDescriptor("Static property reference", DefaultHighlighter.STATIC_PROPERTY_REFERENCE),
@@ -115,6 +116,9 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "    return [<param>i</param>, <instfield>property</instfield>]\n" +
            "  }\n" +
            "  static def <statfield>panel</statfield> = new <classref>JPanel</classref>()\n" +
+           "  def <<typeparam>T</typeparam>> foo() {" +
+           "    <typeparam>T</typeparam> list = null" +
+           "  }\n" +
            "}\n" +
            "\n" +
            "<classref>Demo</classref>.<statfield>panel</statfield>.size = " +
@@ -141,6 +145,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
     map.put("unresolved", DefaultHighlighter.UNRESOLVED_ACCESS);
     map.put("classref", DefaultHighlighter.CLASS_REFERENCE);
+    map.put("typeparam", DefaultHighlighter.TYPE_PARAMETER);
     map.put("literal", DefaultHighlighter.LITERAL_CONVERSION);
     map.put("mapkey", DefaultHighlighter.MAP_KEY);
     map.put("prop", DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);

@@ -655,7 +655,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
       return;
     }
-    IndexingStamp.flushCache();
+    IndexingStamp.flushCache(null);
     for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
       if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount) {
         return; // do not interfere with 'main' jobs
@@ -1661,22 +1661,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private void updateSingleIndex(final ID<?, ?> indexId, @NotNull final VirtualFile file, @Nullable final FileContent currentFC)
-    throws StorageException {
+  private void updateSingleIndex(final ID<?, ?> indexId, @NotNull final VirtualFile file, @Nullable final FileContent currentFC) throws StorageException {
     if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
       return; // the index is scheduled for rebuild, no need to update
     }
     myLocalModCount++;
 
+    final int inputId = Math.abs(getFileId(file));
+    final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+    assert index != null;
+    final Ref<StorageException> exRef = new Ref<StorageException>(null);
+
     final StorageGuard.Holder lock = setDataBufferingEnabled(false);
-
     try {
-      final int inputId = Math.abs(getFileId(file));
-
-      final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-      assert index != null;
-
-      final Ref<StorageException> exRef = new Ref<StorageException>(null);
       ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
         @Override
         public void run() {
@@ -1688,28 +1685,30 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
         }
       });
-      final StorageException storageException = exRef.get();
-      if (storageException != null) {
-        throw storageException;
-      }
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          if (file.isValid()) {
-            if (currentFC != null) {
-              IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
-            }
-            else {
-              // mark the file as unindexed
-              IndexingStamp.update(file, indexId, -1L);
-            }
-          }
-        }
-      });
     }
     finally {
       lock.leave();
     }
+
+    final StorageException storageException = exRef.get();
+    if (storageException != null) {
+      throw storageException;
+    }
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (file.isValid()) {
+          if (currentFC != null) {
+            IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+          }
+          else {
+            // mark the file as unindexed
+            IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP);
+          }
+        }
+      }
+    });
   }
 
   private boolean needsFileContentLoading(ID<?, ?> indexId) {
@@ -1824,7 +1823,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           return true;
         }
       });
-      IndexingStamp.flushCache();
+      IndexingStamp.flushCache(null);
     }
 
     public void scheduleForUpdate(VirtualFile file) {
@@ -1846,7 +1845,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       else {
         cleanProcessedFlag(file);
-        IndexingStamp.flushCache();
+        IndexingStamp.flushCache(file);
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndices.size());
 
         for (final ID<?, ?> indexId : myIndices.keySet()) {
@@ -1875,7 +1874,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               @Override
               public void run() {
                 for (ID<?, ?> indexId : affectedIndices) {
-                  IndexingStamp.update(file, indexId, -2L);
+                  IndexingStamp.update(file, indexId, IndexInfrastructure.INVALID_STAMP2);
                 }
               }
             });
@@ -1906,7 +1905,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
         }
         
-        IndexingStamp.flushCache();
+        IndexingStamp.flushCache(file);
       }
     }
 
@@ -1929,7 +1928,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
         }
       }
-      IndexingStamp.flushCache();
+      IndexingStamp.flushCache(file);
       if (unexpectedError != null) {
         LOG.error(unexpectedError);
       }
@@ -2042,7 +2041,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         else {
           indexFileContent(project, fileContent);
         }
-        IndexingStamp.flushCache();
+        IndexingStamp.flushCache(file);
       }
     }
   }
@@ -2113,7 +2112,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                 }
               }
             }
-            IndexingStamp.flushCache();
+            IndexingStamp.flushCache(file);
 
             if (oldStuff && file instanceof NewVirtualFile) {
               ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, true);

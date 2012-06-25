@@ -102,27 +102,34 @@ public class ResourceRenderer implements PropertyRenderer {
       }
       if (myFormats.contains(AttributeFormat.Color) && value.startsWith("#")) {
         try {
-          int type = value.length() - 1;
-          if (type == 3) { // #RGB
-            myColorIcon.setColor(parseColor(value, 1, false));
+          Color color = parseColor(value);
+          if (color != null) {
+            myColorIcon.setColor(color);
+            myColoredComponent.setIcon(myColorIcon);
           }
-          else if (type == 4) { // #ARGB
-            myColorIcon.setColor(parseColor(value, 1, true));
-          }
-          else if (type == 6) { // #RRGGBB
-            myColorIcon.setColor(parseColor(value, 2, false));
-          }
-          else if (type == 8) { // #AARRGGBB
-            myColorIcon.setColor(parseColor(value, 2, true));
-          }
-          else {
-            return;
-          }
-          myColoredComponent.setIcon(myColorIcon);
         }
         catch (Throwable e) {
         }
       }
+    }
+  }
+
+  @Nullable
+  public static Color parseColor(String value) {
+    if (value == null || !value.startsWith("#")) {
+      return null;
+    }
+    switch (value.length() - 1) {
+      case 3:  // #RGB
+        return parseColor(value, 1, false);
+      case 4:  // #ARGB
+        return parseColor(value, 1, true);
+      case 6:  // #RRGGBB
+        return parseColor(value, 2, false);
+      case 8:  // #AARRGGBB
+        return parseColor(value, 2, true);
+      default:
+        return null;
     }
   }
 

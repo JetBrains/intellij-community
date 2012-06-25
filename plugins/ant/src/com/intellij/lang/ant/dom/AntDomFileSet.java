@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.psi.AntFilesProvider;
+import com.intellij.lang.ant.AntFilesProvider;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xml.Attribute;

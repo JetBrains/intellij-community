@@ -2,7 +2,7 @@ public class TestClass {
 
     public TestClass create() {
         final int value = 1;
-        return new Xxx<caret>(value);
+        return new Xxx(<caret>value);
     }
 }
 

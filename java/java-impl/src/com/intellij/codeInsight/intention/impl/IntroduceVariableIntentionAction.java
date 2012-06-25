@@ -16,21 +16,19 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Danila Ponomarenko
  */
-public class IntroduceVariableIntentionAction extends BaseRunRefactoringAction {
-
+public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
   @NotNull
   @Override
   public String getText() {
@@ -44,39 +42,28 @@ public class IntroduceVariableIntentionAction extends BaseRunRefactoringAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiElement element = getElement(editor, file);
-    if (element == null) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (element instanceof SyntheticElement){
       return false;
     }
 
-    final PsiExpression expression = getExpression(element);
-    if (expression == null || !(expression.getParent() instanceof PsiExpressionStatement)) {
+    final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element,PsiExpressionStatement.class);
+    if (statement == null){
       return false;
     }
+
+    final PsiExpression expression = statement.getExpression();
 
     return expression.getType() != PsiType.VOID && !(expression instanceof PsiAssignmentExpression);
   }
 
-  @Nullable
-  private static PsiExpression getExpression(@NotNull PsiElement element) {
-    PsiExpression expression = PsiTreeUtil.getParentOfType(element, PsiExpression.class, false);
-    while (expression != null && expression instanceof PsiReferenceExpression) {
-      expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class, true);
-    }
-    return expression;
-  }
-
-  @Nullable
-  protected static PsiElement getElement(Editor editor, @NotNull PsiFile file) {
-    if (!file.getManager().isInProject(file)) return null;
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
-    return file.findElementAt(position);
-  }
-
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    new IntroduceVariableHandler().invoke(project, editor, file, null);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiExpressionStatement statement = PsiTreeUtil.getParentOfType(element,PsiExpressionStatement.class);
+    if (statement == null){
+      return;
+    }
+
+    new IntroduceVariableHandler().invoke(project, editor, statement.getExpression());
   }
 }

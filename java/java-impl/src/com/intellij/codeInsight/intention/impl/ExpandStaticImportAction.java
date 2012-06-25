@@ -65,15 +65,11 @@ public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
   }
 
   public void invoke(final Project project, final PsiFile file, final Editor editor, PsiElement element) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
 
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
-
     final PsiImportStaticStatement staticImport = (PsiImportStaticStatement)refExpr.advancedResolve(true).getCurrentFileResolveScope();
-
-
     final List<PsiJavaCodeReferenceElement> expressionToExpand = collectReferencesThrough(file, refExpr, staticImport);
-
 
     if (expressionToExpand.isEmpty()) {
       expand(refExpr, staticImport);
@@ -109,8 +105,7 @@ public class ExpandStaticImportAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    invoke(project, file, editor, element);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    invoke(project, element.getContainingFile(), editor, element);
   }
 }

@@ -37,14 +37,37 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   private final MergingUpdateQueue myWindowQueue = new MergingUpdateQueue(getComponentName(), 200, true, null);
   protected final Project myProject;
   protected final FileEditorManager myFileEditorManager;
-  protected ToolWindow myToolWindow;
-  private boolean myToolWindowReady;
-  private boolean myToolWindowDisposed;
+  protected volatile ToolWindow myToolWindow;
+  private volatile boolean myToolWindowReady;
+  private volatile boolean myToolWindowDisposed;
 
   public AbstractToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
-    project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+  }
+
+  @Override
+  public void projectOpened() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      public void run() {
+        myToolWindowReady = true;
+        initListeners();
+        bindToDesigner(getActiveDesigner());
+      }
+    });
+  }
+
+  @Override
+  public void projectClosed() {
+    if (!myToolWindowDisposed) {
+      disposeComponent();
+      myToolWindowDisposed = true;
+      myToolWindow = null;
+    }
+  }
+
+  private void initListeners() {
+    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(FileEditorManager source, VirtualFile file) {
         bindToDesigner(getActiveDesigner());
@@ -65,24 +88,6 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
         bindToDesigner(getDesigner(event.getNewEditor()));
       }
     });
-  }
-
-  @Override
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-      public void run() {
-        myToolWindowReady = true;
-      }
-    });
-  }
-
-  @Override
-  public void projectClosed() {
-    if (!myToolWindowDisposed) {
-      disposeComponent();
-      myToolWindowDisposed = true;
-      myToolWindow = null;
-    }
   }
 
   @Nullable

@@ -202,10 +202,9 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     });
 
   }
-  
+
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    invoke(file, element);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    invoke(element.getContainingFile(), element);
   }
 }

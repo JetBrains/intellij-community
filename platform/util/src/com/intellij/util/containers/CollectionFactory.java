@@ -31,31 +31,42 @@ public class CollectionFactory {
   }
 
   @NotNull
-  public static <T> Set<T> hashSet() {
+  public static <T> HashSet<T> hashSet() {
     return new HashSet<T>();
   }
 
   @NotNull
-  public static <T> Set<T> hashSet(@NotNull Collection<T> elements) {
+  public static <T> HashSet<T> hashSet(@NotNull Collection<T> elements) {
     return new HashSet<T>(elements);
   }
 
   @NotNull
-  public static <T> Set<T> hashSet(@NotNull T... elements) {
+  public static <T> HashSet<T> hashSet(@NotNull T... elements) {
     return hashSet(Arrays.asList(elements));
   }
 
+  @NotNull
   public static <T> LinkedHashSet<T> linkedHashSet() {
     return new LinkedHashSet<T>();
   }
 
   @NotNull
-  public static <T> Set<T> troveSet(@NotNull T... elements) {
+  public static <T> LinkedHashSet<T> linkedHashSet(@NotNull Collection<T> elements) {
+    return new LinkedHashSet<T>(elements);
+  }
+
+  @NotNull
+  public static <T> LinkedHashSet<T> linkedHashSet(@NotNull T... elements) {
+    return linkedHashSet(Arrays.asList(elements));
+  }
+
+  @NotNull
+  public static <T> THashSet<T> troveSet(@NotNull T... elements) {
     return troveSet(Arrays.asList(elements));
   }
 
   @NotNull
-  public static <T> Set<T> troveSet(@NotNull Collection<T> elements) {
+  public static <T> THashSet<T> troveSet(@NotNull Collection<T> elements) {
     return new THashSet<T>(elements);
   }
 
@@ -90,31 +101,47 @@ public class CollectionFactory {
   }
 
   @NotNull
-  public static <T, V> HashMap<T, V> hashMap() {
-    return new HashMap<T, V>();
+  public static <K, V> HashMap<K, V> hashMap() {
+    return new HashMap<K, V>();
   }
 
   @NotNull
-  public static <T, V> TreeMap<T, V> treeMap() {
-    return new TreeMap<T, V>();
+  public static <K, V> HashMap<K, V> hashMap(@NotNull Map<K, V> map) {
+    return new HashMap<K, V>(map);
   }
 
   @NotNull
-  public static <T, V> THashMap<T, V> troveMap() {
-    return new THashMap<T, V>();
-  }
-
-  public static <T, V> LinkedHashMap<T, V> linkedHashMap() {
-    return new LinkedHashMap<T, V>();
+  public static <K, V> TreeMap<K, V> treeMap() {
+    return new TreeMap<K, V>();
   }
 
   @NotNull
-  public static <T, V> Map<T, V> hashMap(@NotNull final List<T> keys, @NotNull final List<V> values) {
+  public static <K, V> THashMap<K, V> troveMap() {
+    return new THashMap<K, V>();
+  }
+
+  @NotNull
+  public static <K, V> LinkedHashMap<K, V> linkedHashMap() {
+    return new LinkedHashMap<K, V>();
+  }
+
+  @NotNull
+  public static <K extends Enum<K>, V> EnumMap<K, V> enumMap(@NotNull Class<K> klass) {
+    return new EnumMap<K, V>(klass);
+  }
+
+  @NotNull
+  public static <K extends Enum<K>, V> EnumMap<K, V> enumMap(@NotNull Map<K, V> map) {
+    return new EnumMap<K, V>(map);
+  }
+
+  @NotNull
+  public static <K, V> Map<K, V> hashMap(@NotNull final List<K> keys, @NotNull final List<V> values) {
     if (keys.size() != values.size()) {
       throw new IllegalArgumentException(keys + " should have same length as " + values);
     }
 
-    final HashMap<T, V> map = new HashMap<T, V>();
+    final HashMap<K, V> map = new HashMap<K, V>();
     for (int i = 0; i < keys.size(); ++i) {
       map.put(keys.get(i), values.get(i));
     }
@@ -132,13 +159,22 @@ public class CollectionFactory {
   }
 
   @NotNull
-  public static <T> ArrayList<T> arrayList(Collection<T> elements) {
+  public static <T> ArrayList<T> arrayList(@NotNull Collection<T> elements) {
     return new ArrayList<T>(elements);
   }
 
   @NotNull
   public static <T> ArrayList<T> arrayList(T... elements) {
     return arrayList(Arrays.asList(elements));
+  }
+
+  @NotNull
+  public static <T> ArrayList<T> arrayList(@NotNull Iterable<T> elements) {
+    if (elements instanceof Collection) {
+      return arrayList((Collection<T>)elements);
+    }
+
+    return copy(elements, CollectionFactory.<T>arrayList());
   }
 
   @NotNull
@@ -159,6 +195,38 @@ public class CollectionFactory {
         return size;
       }
     };
+  }
+
+  @NotNull
+  public static <T> LinkedList<T> linkedList() {
+    return new LinkedList<T>();
+  }
+
+  @NotNull
+  public static <T> LinkedList<T> linkedList(@NotNull Collection<T> elements) {
+    return new LinkedList<T>(elements);
+  }
+
+  @NotNull
+  public static <T> LinkedList<T> linkedList(T... elements) {
+    return linkedList(Arrays.asList(elements));
+  }
+
+  @NotNull
+  public static <T> LinkedList<T> linkedList(@NotNull Iterable<T> elements) {
+    if (elements instanceof Collection) {
+      return linkedList((Collection<T>)elements);
+    }
+
+    return copy(elements, CollectionFactory.<T>linkedList());
+  }
+
+  @NotNull
+  private static <P, C extends Collection<P>> C copy(@NotNull Iterable<P> source, @NotNull C target) {
+    for (P e : source) {
+      target.add(e);
+    }
+    return target;
   }
 
   @NotNull

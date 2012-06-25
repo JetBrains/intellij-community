@@ -66,7 +66,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private final NewVirtualFileSystem myFS;
 
   // guarded by this
-  private Object myChildren; // Either HashMap<String, VFile> or VFile[]
+  private Object myChildren; // Either Map<String, VFile> or VFile[]
 
   public VirtualDirectoryImpl(@NotNull String name, final VirtualDirectoryImpl parent, @NotNull NewVirtualFileSystem fs, final int id) {
     super(name, parent, id);
@@ -479,10 +479,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   // MUST BE CALLED UNDER this LOCK
   @Nullable
   private Map<String, VirtualFileSystemEntry> asMap() {
-    if (myChildren instanceof Map) {
-      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-      final Map<String, VirtualFileSystemEntry> map = (Map<String, VirtualFileSystemEntry>)myChildren;
-      return map;
+    Object children = myChildren;
+    if (children instanceof Map) {
+      //noinspection unchecked
+      return (Map<String, VirtualFileSystemEntry>)children;
     }
     return null;
   }
@@ -495,9 +495,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myChildren = map;
     }
     else {
-      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-      final Map<String, VirtualFileSystemEntry> _map = (Map<String, VirtualFileSystemEntry>)myChildren;
-      map = _map;
+      //noinspection unchecked
+      map = (Map<String, VirtualFileSystemEntry>)myChildren;
     }
 
     return map;

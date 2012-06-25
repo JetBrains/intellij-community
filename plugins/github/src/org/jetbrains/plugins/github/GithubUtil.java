@@ -19,6 +19,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -62,7 +63,8 @@ public class GithubUtil {
 
   public static final Icon GITHUB_ICON = IconLoader.getIcon("/org/jetbrains/plugins/github/github_icon.png");
 
-  private static final Logger LOG = Logger.getInstance(GithubUtil.class.getName());
+  public static final Logger LOG = Logger.getInstance("github");
+
   static final String GITHUB_NOTIFICATION_GROUP = "github";
 
   /**
@@ -477,4 +479,57 @@ public class GithubUtil {
     return true;
   }
 
+  static boolean isRepositoryOnGitHub(@NotNull GitRepository repository) {
+    return findGithubRemoteUrl(repository) != null;
+  }
+
+  @Nullable
+  static String findGithubRemoteUrl(@NotNull GitRepository repository) {
+    for (GitRemote remote : repository.getRemotes()) {
+      for (String url : remote.getUrls()) {
+        if (isGithubUrl(url)) {
+          return url;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isGithubUrl(@NotNull String url) {
+    return url.contains("github.com");
+  }
+
+  static void setVisibleEnabled(AnActionEvent e, boolean visible, boolean enabled) {
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(enabled);
+  }
+
+  @Nullable
+  public static String getUserAndRepositoryOrShowError(@NotNull Project project, @NotNull String url) {
+    int index = -1;
+    if (url.startsWith(getHttpsUrl())) {
+      index = url.lastIndexOf('/');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository name: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
+        return null;
+      }
+      index = url.substring(0, index).lastIndexOf('/');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository owner: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
+        return null;
+      }
+    }
+    else {
+      index = url.lastIndexOf(':');
+      if (index == -1) {
+        Messages.showErrorDialog(project, "Cannot extract info about repository name and owner: " + url, GithubOpenInBrowserAction.CANNOT_OPEN_IN_BROWSER);
+        return null;
+      }
+    }
+    String repoInfo = url.substring(index + 1);
+    if (repoInfo.endsWith(".git")) {
+      repoInfo = repoInfo.substring(0, repoInfo.length() - 4);
+    }
+    return repoInfo;
+  }
 }

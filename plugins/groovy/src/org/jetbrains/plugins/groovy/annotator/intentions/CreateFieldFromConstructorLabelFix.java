@@ -72,6 +72,6 @@ public class CreateFieldFromConstructorLabelFix extends GroovyFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-    myFix.doFix(project, ArrayUtil.EMPTY_STRING_ARRAY, getFieldName(), calculateTypeConstrains());
+    myFix.doFix(project, ArrayUtil.EMPTY_STRING_ARRAY, getFieldName(), calculateTypeConstrains(), myNamedArgument);
   }
 }

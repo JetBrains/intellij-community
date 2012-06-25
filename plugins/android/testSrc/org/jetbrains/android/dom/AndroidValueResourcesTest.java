@@ -27,6 +27,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.refactoring.actions.InlineAction;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
 import java.util.ArrayList;
@@ -189,30 +191,7 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
 
   public void testCreateResourceFromUsage() throws Throwable {
     final VirtualFile virtualFile = copyFileToProject(getTestName(true) + ".xml", "res/values/drawables.xml");
-    myFixture.configureFromExistingVirtualFile(virtualFile);
-    final List<HighlightInfo> infos = myFixture.doHighlighting();
-    final List<IntentionAction> actions = new ArrayList<IntentionAction>();
-
-    for (HighlightInfo info : infos) {
-      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = info.quickFixActionRanges;
-
-      if (ranges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
-          final IntentionAction action = pair.getFirst().getAction();
-          if (action instanceof CreateValueResourceQuickFix) {
-            actions.add(action);
-          }
-        }
-      }
-    }
-    assertEquals(1, actions.size());
-
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        actions.get(0).invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-      }
-    }.execute();
+    doCreateValueResourceFromUsage(virtualFile);
     myFixture.checkResultByFile(testFolder + '/' + getTestName(true) + "_after.xml", true);
   }
 
@@ -239,5 +218,57 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   public void testJavaHighlighting() throws Throwable {
     copyFileToProject("value_resources.xml", "res/values/value_resources.xml");
     doTestJavaHighlighting("p1.p2");
+  }
+
+  public void testInlineResourceField() throws Exception {
+    copyFileToProject("value_resources.xml", "res/values/value_resources.xml");
+    final VirtualFile virtualFile = copyFileToProject(getTestName(false) + ".java", "src/p1/p2/" + getTestName(false) + ".java");
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    try {
+      myFixture.testAction(new InlineAction());
+      fail();
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+    }
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(false) + ".java", true);
+  }
+
+  public void testJavaCreateFromUsage() throws Throwable {
+    final VirtualFile virtualFile = copyFileToProject(getTestName(false) + ".java", "src/p1/p2/" + getTestName(false) + ".java");
+    doCreateValueResourceFromUsage(virtualFile);
+    myFixture.checkResultByFile("res/values/drawables.xml", testFolder + '/' + getTestName(true) + "_drawables_after.xml", true);
+  }
+
+  public void testJavaCreateFromUsage1() throws Throwable {
+    final VirtualFile virtualFile = copyFileToProject(getTestName(false) + ".java", "src/p1/p2/" + getTestName(false) + ".java");
+    doCreateValueResourceFromUsage(virtualFile);
+    myFixture.checkResultByFile("res/values/bools.xml", testFolder + '/' + getTestName(true) + "_bools_after.xml", true);
+  }
+
+  private void doCreateValueResourceFromUsage(VirtualFile virtualFile) {
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    final List<HighlightInfo> infos = myFixture.doHighlighting();
+    final List<IntentionAction> actions = new ArrayList<IntentionAction>();
+
+    for (HighlightInfo info : infos) {
+      final List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = info.quickFixActionRanges;
+
+      if (ranges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : ranges) {
+          final IntentionAction action = pair.getFirst().getAction();
+          if (action instanceof CreateValueResourceQuickFix) {
+            actions.add(action);
+          }
+        }
+      }
+    }
+    assertEquals(1, actions.size());
+
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        actions.get(0).invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+      }
+    }.execute();
   }
 }

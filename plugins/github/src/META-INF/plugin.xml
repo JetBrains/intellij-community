@@ -15,6 +15,7 @@
                         serviceImplementation="org.jetbrains.plugins.github.GithubSettings"/>
     <applicationConfigurable instance="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable"/>
   </extensions>
+
   <actions>
     <action id="Github.Share" class="org.jetbrains.plugins.github.GithubShareAction">
       <add-to-group group-id="Vcs.Import"/>
@@ -26,6 +27,9 @@
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
+    </action>
+    <action id="Github.Open.Commit.In.Browser" class="org.jetbrains.plugins.github.GithubShowCommitInBrowserAction">
+      <add-to-group group-id="Git.LogContextMenu" />
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>

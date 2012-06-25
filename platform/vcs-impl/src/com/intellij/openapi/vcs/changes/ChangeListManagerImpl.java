@@ -1442,9 +1442,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @TestOnly
   public static void printLog() {
     System.out.println(log);
+    System.out.flush();
   }
   @TestOnly
   public static void log(Object o) {
-    log.append(o+"\n");
+    log.append(o).append("\n");
   }
 }

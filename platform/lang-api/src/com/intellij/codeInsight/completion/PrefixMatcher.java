@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class PrefixMatcher {
+  public static final PrefixMatcher ALWAYS_TRUE = new PlainPrefixMatcher("");
   protected final String myPrefix;
 
   protected PrefixMatcher(String prefix) {

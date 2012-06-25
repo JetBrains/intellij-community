@@ -15,36 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 
 /**
  * @author Maxim.Medvedev
  */
 public class CreateFieldFix  {
-  private final GrMemberOwner myTargetClass;
+  private final PsiClass myTargetClass;
 
-  protected GrMemberOwner getTargetClass() {
+  protected PsiClass getTargetClass() {
     return myTargetClass;
   }
 
-  protected CreateFieldFix(GrMemberOwner targetClass) {
+  protected CreateFieldFix(PsiClass targetClass) {
     myTargetClass = targetClass;
   }
 
@@ -52,28 +43,17 @@ public class CreateFieldFix  {
     return myTargetClass.isValid();
   }
 
-  protected void doFix(Project project, String[] modifiers, String fieldName, TypeConstraint[] typeConstraints) throws IncorrectOperationException {
-    PsiClassType type = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
-    GrVariableDeclaration fieldDecl =
-      GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(modifiers, fieldName, null, type);
-    fieldDecl = (GrVariableDeclaration)myTargetClass.add(fieldDecl);
-    GrTypeElement typeElement = fieldDecl.getTypeElementGroovy();
-    assert typeElement != null;
-
-    ChooseTypeExpression expr = new ChooseTypeExpression(typeConstraints, PsiManager.getInstance(project));
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
-    builder.replaceElement(typeElement, expr);
-    fieldDecl = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(fieldDecl);
-    if (fieldDecl == null) {
-      return;
+  protected void doFix(Project project, String[] modifiers, String fieldName, TypeConstraint[] typeConstraints, PsiElement context) throws IncorrectOperationException {
+    PsiField field = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project).createField(fieldName, PsiType.INT);
+    for (String modifier : modifiers) {
+      PsiUtil.setModifierProperty(field, modifier, true);
     }
 
-    Template template = builder.buildTemplate();
+    field = CreateFieldFromUsageHelper.insertField(myTargetClass, field, context);
 
-    Editor newEditor = QuickfixUtil.positionCursor(project, myTargetClass.getContainingFile(), fieldDecl);
-    TextRange range = fieldDecl.getTextRange();
-    newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    Editor newEditor = QuickfixUtil.positionCursor(project, myTargetClass.getContainingFile(), field);
 
+    Template template = CreateFieldFromUsageHelper.setupTemplate(field, typeConstraints, myTargetClass, newEditor, context, false);
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, template);
   }

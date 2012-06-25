@@ -80,11 +80,10 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
 
-    PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(file.findElementAt(
-            editor.getCaretModel().getOffset()), PsiIfStatement.class);
+    PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
 
     LOG.assertTrue(ifStatement != null);
     PsiElement block = findCodeBlock(ifStatement);

@@ -24,17 +24,19 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public final class DefaultPaletteItem implements PaletteItem {
-  private String myTitle;
-  private String myIconPath;
+  private final String myTitle;
+  private final String myIconPath;
   private Icon myIcon;
-  private String myTooltip;
+  private final String myTooltip;
+  private final String myVersion;
 
   private MetaModel myMetaModel;
 
-  public DefaultPaletteItem(String title, String iconPath, String tooltip) {
+  public DefaultPaletteItem(String title, String iconPath, String tooltip, String version) {
     myTitle = title;
     myIconPath = iconPath;
     myTooltip = tooltip;
+    myVersion = version;
   }
 
   @Override
@@ -53,6 +55,11 @@ public final class DefaultPaletteItem implements PaletteItem {
   @Override
   public String getTooltip() {
     return myTooltip;
+  }
+
+  @Override
+  public String getVersion() {
+    return myVersion;
   }
 
   public MetaModel getMetaModel() {

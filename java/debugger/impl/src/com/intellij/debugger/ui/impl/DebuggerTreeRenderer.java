@@ -199,11 +199,11 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             final String errorMessage = exception.getMessage();
 
             if(valueLabel.endsWith(errorMessage)) {
-              descriptorText.append(valueLabel.substring(0, valueLabel.length() - errorMessage.length()), DEFAULT_ATTRIBUTES);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), DEFAULT_ATTRIBUTES);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
             else {
-              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
           }
@@ -212,7 +212,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
               descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {
-              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
             }
           }
         }
@@ -223,6 +223,42 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
 
     return descriptorText;
+  }
+
+  private static void appendValueTextWithEscapesRendering(SimpleColoredText descriptorText, String valueText, final SimpleTextAttributes attribs) {
+    final SimpleTextAttributes boldAttribs = attribs.derive(SimpleTextAttributes.STYLE_BOLD, null, Color.lightGray, null);
+    final StringBuilder buf = new StringBuilder();
+    boolean slashFound = false;
+    for (int idx= 0; idx < valueText.length(); idx++) {
+      final char ch = valueText.charAt(idx);
+      if (slashFound) {
+        slashFound = false;
+        if (ch == '\\' || ch == '\"' || ch == 'b'|| ch == 't'|| ch == 'n'|| ch == 'f'|| ch == 'r' ) {
+          if (buf.length() > 0) {
+            descriptorText.append(buf.toString(), attribs);
+            buf.setLength(0);
+          }
+          if (ch != '\\' && ch != '\"') {
+            descriptorText.append("\\", boldAttribs);
+          }
+          descriptorText.append(String.valueOf(ch), boldAttribs);
+        }
+        else {
+          buf.append('\\').append(ch);
+        }
+      }
+      else {
+        if (ch == '\\') {
+          slashFound = true;
+        }
+        else {
+          buf.append(ch);
+        }
+      }
+    }
+    if (buf.length() > 0) {
+      descriptorText.append(buf.toString(), attribs);
+    }
   }
 
   private static String[] breakString(String source, String substr) {

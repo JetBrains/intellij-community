@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -191,15 +192,21 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                    final InheritorsHolder inheritors, final PrefixMatcher matcher) {
     final PsiElement position = parameters.getPosition();
     final ElementFilter filter = getClassFilter(position);
-    AllClassesGetter.processJavaClasses(parameters, matcher, parameters.getInvocationCount() <= 1,
-                                        new Consumer<PsiClass>() {
-                                          @Override
-                                          public void consume(PsiClass psiClass) {
-                                            if (!inheritors.alreadyProcessed(psiClass) && filter.isAcceptable(psiClass, position)) {
-                                              consumer.consume(GroovyCompletionUtil.createClassLookupItem(psiClass));
-                                            }
-                                          }
-                                        });
+    final boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
+    AllClassesGetter.processJavaClasses(parameters, matcher, parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
+      @Override
+      public void consume(PsiClass psiClass) {
+        for (JavaPsiClassReferenceElement element : JavaClassNameCompletionContributor
+          .createClassLookupItems(psiClass, afterNew, new GroovyClassNameInsertHandler(), new Condition<PsiClass>() {
+            @Override
+            public boolean value(PsiClass psiClass) {
+              return !inheritors.alreadyProcessed(psiClass) && filter.isAcceptable(psiClass, position);
+            }
+          })) {
+          consumer.consume(element);
+        }
+      }
+    });
   }
 
   private static ElementFilter getClassFilter(PsiElement position) {
@@ -435,7 +442,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     if (reference instanceof GrReferenceExpression && (qualifier instanceof GrExpression || qualifier == null)) {
       unresolvedProps = CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier, (GrReferenceExpression)reference);
       for (String string : unresolvedProps) {
-        result.add(GroovyCompletionUtil.getLookupElement(string));
+        result.add(LookupElementBuilder.create(string).withItemTextUnderlined(true));
       }
       if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
           !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
@@ -452,25 +459,15 @@ public class GroovyCompletionContributor extends CompletionContributor {
     final ElementFilter classFilter = getClassFilter(position);
 
     final List<LookupElement> items = arrayList();
-    reference.processVariants(matcher, parameters, new Consumer<Object>() {
-      public void consume(Object element) {
-        if (element instanceof PsiClass && inheritorsHolder.alreadyProcessed((PsiClass)element)) {
-          return;
-        }
-        if (element instanceof LookupElement && inheritorsHolder.alreadyProcessed((LookupElement)element)) {
-          return;
-        }
-
-        if (element instanceof LookupElement && ((LookupElement)element).getObject() instanceof PsiClass) {
-          element = ((LookupElement)element).getObject();
-        }
-
-        LookupElement lookupElement = element instanceof PsiClass
-                                      ? GroovyCompletionUtil.createClassLookupItem(CompletionUtil.getOriginalOrSelf((PsiClass)element))
-                                      : GroovyCompletionUtil.getLookupElement(element);
+    reference.processVariants(matcher, parameters, new Consumer<LookupElement>() {
+      public void consume(LookupElement lookupElement) {
         Object object = lookupElement.getObject();
         if (object instanceof GroovyResolveResult) {
           object = ((GroovyResolveResult)object).getElement();
+        }
+
+        if (!(lookupElement instanceof LookupElementBuilder) && inheritorsHolder.alreadyProcessed(lookupElement)) {
+          return;
         }
 
         if (object instanceof GrReferenceExpression && unresolvedProps.contains(((GrReferenceExpression)object).getName())) {
@@ -501,7 +498,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     });
 
     if (qualifier == null) {
-      completeStaticMembers(parameters).processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
+      completeStaticMembers(parameters).processMembersOfRegisteredClasses(PrefixMatcher.ALWAYS_TRUE, new PairConsumer<PsiMember, PsiClass>() {
         @Override
         public void consume(PsiMember member, PsiClass psiClass) {
           if (member instanceof GrAccessorMethod) {

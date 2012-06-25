@@ -19,11 +19,8 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.ant.dom.AntDomAntlib;
 import com.intellij.lang.ant.dom.AntDomElement;
 import com.intellij.lang.ant.dom.AntDomProject;
-import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -40,26 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
 
 public class AntSupport implements ApplicationComponent {
-  private static LanguageFileType ourFileType = null;
-  private static AntLanguage ourLanguage = null;
 
-  public AntSupport(FileTypeManager fileTypeManager) {
-    //fileTypeManager.getRegisteredFileTypes();
-    //((CompositeLanguage)StdLanguages.XML).registerLanguageExtension(new AntLanguageExtension());
-  }
-
-  public static synchronized AntLanguage getLanguage() {
-    if (ourLanguage == null) {
-      if (ourFileType == null) {
-        ourFileType = new AntFileType();
-      }
-      ourLanguage = (AntLanguage)ourFileType.getLanguage();
-    }
-    return ourLanguage;
+  public AntSupport() {
   }
 
   @NotNull
@@ -100,24 +81,6 @@ public class AntSupport implements ApplicationComponent {
   //
   // Managing ant files dependencies via the <import> task.
   //
-
-  public static synchronized List<AntFile> getImportingFiles(final AntFile imported) {
-    // todo: to be removed soon
-    return Collections.emptyList();
-  }
-
-  public static synchronized void registerDependency(final AntFile importing, final AntFile imported) {
-    // todo: to be removed soon
-  }
-
-  public static AntFile getAntFile ( PsiFile psiFile ) {
-    if (psiFile instanceof AntFile) {
-      return (AntFile)psiFile;
-    }
-    else {
-      return (AntFile)psiFile.getViewProvider().getPsi(getLanguage());
-    }
-  }
 
   @Nullable
   public static AntDomProject getAntDomProject(PsiFile psiFile) {

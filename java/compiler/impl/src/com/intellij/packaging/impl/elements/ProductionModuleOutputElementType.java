@@ -21,12 +21,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
 * @author nik
@@ -52,14 +49,8 @@ public class ProductionModuleOutputElementType extends ModuleOutputElementTypeBa
     return AllIcons.Nodes.ModuleOpen;
   }
 
-  protected List<Module> getSuitableModules(ArtifactEditorContext context) {
-    ArrayList<Module> modules = new ArrayList<Module>();
-    ModulesProvider modulesProvider = context.getModulesProvider();
-    for (Module module : modulesProvider.getModules()) {
-      if (modulesProvider.getRootModel(module).getSourceRootUrls(false).length > 0) {
-        modules.add(module);
-      }
-    }
-    return modules;
+  @Override
+  public boolean isSuitableModule(ModulesProvider modulesProvider, Module module) {
+    return modulesProvider.getRootModel(module).getSourceRootUrls(false).length > 0;
   }
 }

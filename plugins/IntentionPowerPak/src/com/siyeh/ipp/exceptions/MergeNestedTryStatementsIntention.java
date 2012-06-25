@@ -39,18 +39,18 @@ public class MergeNestedTryStatementsIntention extends Intention {
     final PsiTryStatement tryStatement1 = (PsiTryStatement)element.getParent();
     final StringBuilder newTryStatement = new StringBuilder("try (");
     final PsiResourceList list1 = tryStatement1.getResourceList();
-    if (list1 == null) {
-      return;
-    }
-    final List<PsiResourceVariable> variables1 = list1.getResourceVariables();
     boolean semicolon = false;
-    for (PsiResourceVariable variable : variables1) {
-      if (semicolon) {
-        newTryStatement.append(';');
-      } else {
-        semicolon = true;
+    if (list1 != null) {
+      final List<PsiResourceVariable> variables1 = list1.getResourceVariables();
+      for (PsiResourceVariable variable : variables1) {
+        if (semicolon) {
+          newTryStatement.append(';');
+        }
+        else {
+          semicolon = true;
+        }
+        newTryStatement.append(variable.getText());
       }
-      newTryStatement.append(variable.getText());
     }
     final PsiCodeBlock tryBlock1 = tryStatement1.getTryBlock();
     if (tryBlock1 == null) {
@@ -64,7 +64,12 @@ public class MergeNestedTryStatementsIntention extends Intention {
     }
     final List<PsiResourceVariable> variables2 = list2.getResourceVariables();
     for (PsiResourceVariable variable : variables2) {
-      newTryStatement.append(';');
+      if (semicolon) {
+        newTryStatement.append(';');
+      }
+      else {
+        semicolon = true;
+      }
       newTryStatement.append(variable.getText());
     }
     newTryStatement.append(")");
@@ -73,6 +78,10 @@ public class MergeNestedTryStatementsIntention extends Intention {
       return;
     }
     newTryStatement.append(tryBlock2.getText());
+    final PsiCatchSection[] catchSections = tryStatement1.getCatchSections();
+    for (PsiCatchSection section : catchSections) {
+      newTryStatement.append(section.getText());
+    }
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
     final PsiStatement newStatement = factory.createStatementFromText(newTryStatement.toString(), element);
     tryStatement1.replace(newStatement);

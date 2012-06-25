@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +31,8 @@ import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
+import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
+import com.intellij.packaging.impl.elements.TestModuleOutputElementType;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
@@ -101,13 +104,16 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     if (!includeTests) {
       orderEnumerator = orderEnumerator.productionOnly();
     }
-    final OrderEnumerator enumerator = orderEnumerator.using(myContext.getModulesProvider()).withoutSdk().runtimeOnly().recursively();
+    final ModulesProvider modulesProvider = myContext.getModulesProvider();
+    final OrderEnumerator enumerator = orderEnumerator.using(modulesProvider).withoutSdk().runtimeOnly().recursively();
     enumerator.forEachLibrary(new CommonProcessors.CollectProcessor<Library>(libraries));
     enumerator.forEachModule(new Processor<Module>() {
       @Override
       public boolean process(Module module) {
-        archive.addOrFindChild(factory.createModuleOutput(module));
-        if (includeTests) {
+        if (ProductionModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
+          archive.addOrFindChild(factory.createModuleOutput(module));
+        }
+        if (includeTests && TestModuleOutputElementType.ELEMENT_TYPE.isSuitableModule(modulesProvider, module)) {
           archive.addOrFindChild(factory.createTestModuleOutput(module));
         }
         return true;

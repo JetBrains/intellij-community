@@ -41,7 +41,6 @@ import java.util.Comparator;
 import java.util.EventObject;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
-  public static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
   private StatusText myEmptyText;
   private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 
@@ -455,6 +454,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private static boolean isTableDecorationSupported() {
     return UIUtil.isUnderAlloyLookAndFeel()
       || UIUtil.isUnderNativeMacLookAndFeel()
+      || UIUtil.isUnderDarcula()
       || UIUtil.isUnderQuaquaLookAndFeel()
       || UIUtil.isUnderMetalLookAndFeel()
       || UIUtil.isUnderNimbusLookAndFeel()
@@ -476,7 +476,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     if (isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
-      final Color bg =  row % 2 == 1 ? getBackground() : DECORATED_ROW_BG_COLOR;
+      final Color bg =  row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
       final JComponent c = (JComponent)result;
       final boolean cellSelected = isCellSelected(row, column);
       if (!cellSelected || (!hasFocus() && !getSelectionBackground().equals(c.getBackground()))) {

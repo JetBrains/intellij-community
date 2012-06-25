@@ -139,10 +139,13 @@ public class GitImpl implements Git {
   @Override
   @NotNull
   public GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge,
-                                       @NotNull GitLineHandlerListener... listeners) {
+                                @Nullable List<String> additionalParams, @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler mergeHandler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.MERGE);
     mergeHandler.setSilent(false);
     mergeHandler.addParameters(branchToMerge);
+    if (additionalParams != null) {
+      mergeHandler.addParameters(additionalParams);
+    }
     for (GitLineHandlerListener listener : listeners) {
       mergeHandler.addLineListener(listener);
     }

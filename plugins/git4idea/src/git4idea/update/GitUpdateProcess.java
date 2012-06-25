@@ -71,7 +71,6 @@ public class GitUpdateProcess {
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<VirtualFile, GitBranchPair>();
   private GitUpdateResult myResult;
-  private final Map<VirtualFile, GitUpdater> myUpdaters;
   private final Collection<VirtualFile> myRootsToSave;
 
   public enum UpdateMethod {
@@ -90,7 +89,6 @@ public class GitUpdateProcess {
     myMerger = new GitMerger(myProject);
     mySaver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator,
       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
-    myUpdaters = new HashMap<VirtualFile, GitUpdater>();
     myRootsToSave = new HashSet<VirtualFile>(1);
   }
 
@@ -135,37 +133,31 @@ public class GitUpdateProcess {
   }
 
   @NotNull
-  private GitUpdateResult updateImpl(UpdateMethod updateMethod, ContinuationContext context) {
-    // define updaters for roots
-    LOG.info("updateImpl: defining updaters...");
+  private GitUpdateResult updateImpl(@NotNull UpdateMethod updateMethod, ContinuationContext context) {
+    Map<VirtualFile, GitUpdater> updaters;
     try {
-      for (GitRepository repository : myRepositories) {
-        VirtualFile root = repository.getRoot();
-        final GitUpdater updater;
-        if (updateMethod == UpdateMethod.MERGE) {
-          updater = new GitMergeUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
-        } else if (updateMethod == UpdateMethod.REBASE) {
-          updater = new GitRebaseUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
-        } else {
-          updater = GitUpdater.getUpdater(myProject, myGit, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
-        }
-
-        if (updater.isUpdateNeeded()) {
-          myUpdaters.put(root, updater);
-        }
-        LOG.info("update| root=" + root + " ,updater=" + updater);
-      }
-    } catch (VcsException e) {
+      updaters = defineUpdaters(updateMethod);
+    }
+    catch (VcsException e) {
       LOG.info(e);
       notifyError(myProject, "Git update failed", e.getMessage(), true, e);
       return GitUpdateResult.ERROR;
     }
 
-    if (myUpdaters.isEmpty()) return GitUpdateResult.NOTHING_TO_UPDATE;
+    if (updaters.isEmpty()) {
+      return GitUpdateResult.NOTHING_TO_UPDATE;
+    }
+
+    updaters = tryFastForwardMergeForRebaseUpdaters(updaters);
+
+    if (updaters.isEmpty()) {
+      // everything was updated via the fast-forward merge
+      return GitUpdateResult.SUCCESS;
+    }
 
     // save local changes if needed (update via merge may perform without saving).
     LOG.info("updateImpl: identifying if save is needed...");
-    for (Map.Entry<VirtualFile, GitUpdater> entry : myUpdaters.entrySet()) {
+    for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
       VirtualFile root = entry.getKey();
       GitUpdater updater = entry.getValue();
       if (updater.isSaveNeeded()) {
@@ -191,7 +183,7 @@ public class GitUpdateProcess {
     GitUpdateResult compoundResult = null;
     VirtualFile currentlyUpdatedRoot = null;
     try {
-      for (Map.Entry<VirtualFile, GitUpdater> entry : myUpdaters.entrySet()) {
+      for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
         currentlyUpdatedRoot = entry.getKey();
         GitUpdater updater = entry.getValue();
         GitUpdateResult res = updater.update();
@@ -207,6 +199,7 @@ public class GitUpdateProcess {
       notifyImportantError(myProject, "Error updating " + rootName,
                            "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
     } finally {
+      LOG.assertTrue(compoundResult != null, "Updaters were checked for non-emptiness");
       if (incomplete || !compoundResult.isSuccess()) {
         mySaver.notifyLocalChangesAreNotRestored();
       }
@@ -216,6 +209,45 @@ public class GitUpdateProcess {
       }
     }
     return compoundResult;
+  }
+
+  @NotNull
+  private static Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
+    Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<VirtualFile, GitUpdater>();
+    for (Map.Entry<VirtualFile, GitUpdater> updaterEntry : updaters.entrySet()) {
+      GitUpdater updater = updaterEntry.getValue();
+      if (updater instanceof GitRebaseUpdater) {
+        GitRebaseUpdater rebaseUpdater = (GitRebaseUpdater) updater;
+        if (rebaseUpdater.fastForwardMerge()) {
+          continue;
+        }
+      }
+      modifiedUpdaters.put(updaterEntry.getKey(), updaterEntry.getValue());
+    }
+    return modifiedUpdaters;
+  }
+
+  @NotNull
+  private Map<VirtualFile, GitUpdater> defineUpdaters(@NotNull UpdateMethod updateMethod) throws VcsException {
+    final Map<VirtualFile, GitUpdater> updaters = new HashMap<VirtualFile, GitUpdater>();
+    LOG.info("updateImpl: defining updaters...");
+    for (GitRepository repository : myRepositories) {
+      VirtualFile root = repository.getRoot();
+      final GitUpdater updater;
+      if (updateMethod == UpdateMethod.MERGE) {
+        updater = new GitMergeUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
+      } else if (updateMethod == UpdateMethod.REBASE) {
+        updater = new GitRebaseUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
+      } else {
+        updater = GitUpdater.getUpdater(myProject, myGit, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
+      }
+
+      if (updater.isUpdateNeeded()) {
+        updaters.put(root, updater);
+      }
+      LOG.info("update| root=" + root + " ,updater=" + updater);
+    }
+    return updaters;
   }
 
   @NotNull

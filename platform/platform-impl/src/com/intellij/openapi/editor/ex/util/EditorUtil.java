@@ -720,9 +720,9 @@ public class EditorUtil {
         second = new LogicalPosition(line + 1, 0);
         break;
       }
-      final int foldEndLine = document.getLineNumber(foldRegion.getStartOffset());
+      final int foldEndLine = document.getLineNumber(foldRegion.getEndOffset());
       if (foldEndLine <= line) {
-        first = new LogicalPosition(line + 1, 0);
+        second = new LogicalPosition(line + 1, 0);
         break;
       }
       line = foldEndLine;

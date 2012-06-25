@@ -20,12 +20,11 @@ import org.junit.rules.TestName;
 import org.junit.runner.Description;
 
 public abstract class AbstractJunitVcsTestCase extends AbstractVcsTestCase {
-  private boolean succeeded = true;
   @Rule
   public TestName name= new TestName(){
     @Override
     protected void failed(Throwable e, Description description) {
-      succeeded = false;
+      AbstractJunitVcsTestCase.this.failed(e, description);
     }
   };
 
@@ -33,7 +32,6 @@ public abstract class AbstractJunitVcsTestCase extends AbstractVcsTestCase {
     return name.getMethodName();
   }
 
-  public boolean isSucceeded() {
-    return succeeded;
+  protected void failed(Throwable e, Description description) {
   }
 }

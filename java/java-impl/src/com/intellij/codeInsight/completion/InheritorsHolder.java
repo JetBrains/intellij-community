@@ -44,9 +44,7 @@ public class InheritorsHolder implements Consumer<LookupElement> {
   public void consume(LookupElement lookupElement) {
     final Object object = lookupElement.getObject();
     if (object instanceof PsiClass) {
-      final PsiClass psiClass = (PsiClass)object;
-      if (JavaCompletionUtil.hasAccessibleInnerClass(psiClass, myPosition)) return;
-      registerClass(psiClass);
+      registerClass((PsiClass)object);
     }
     myResult.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(lookupElement));
   }

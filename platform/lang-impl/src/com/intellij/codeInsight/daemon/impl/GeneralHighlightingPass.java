@@ -84,6 +84,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
+  private static final JobLauncher JobUtil = JobLauncher.getInstance();
 
   private final int myStartOffset;
   private final int myEndOffset;
@@ -101,9 +102,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       return o1.order() - o2.order();
     }
   };
-  private Runnable myApplyCommand;
+  private volatile Runnable myApplyCommand;
   private final EditorColorsScheme myGlobalScheme;
-  private boolean myFailFastOnAcquireReadAction = true;
 
   public GeneralHighlightingPass(@NotNull Project project,
                                  @NotNull PsiFile file,
@@ -320,15 +320,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       }
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiElement>(hosts), progress, false,
-                                                                   new Processor<PsiElement>() {
-                                                                     @Override
-                                                                     public boolean process(PsiElement element) {
-                                                                       progress.checkCanceled();
-                                                                       InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
-                                                                       return true;
-                                                                     }
-                                                                   })) throw new ProcessCanceledException();
+    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiElement>(hosts), progress, false,
+            new Processor<PsiElement>() {
+              @Override
+              public boolean process(PsiElement element) {
+                progress.checkCanceled();
+                InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
+                return true;
+              }
+            })) {
+      throw new ProcessCanceledException();
+    }
   }
 
   // returns false if canceled
@@ -339,86 +341,65 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     final TextAttributes injectedAttributes = myGlobalScheme.getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
 
-    return JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injectedFiles), progress,
-                                                                     myFailFastOnAcquireReadAction,
-                                                                     new Processor<PsiFile>() {
-                                                                       @Override
-                                                                       public boolean process(final PsiFile injectedPsi) {
-                                                                         DocumentWindow documentWindow =
-                                                                           (DocumentWindow)PsiDocumentManager.getInstance(myProject)
-                                                                             .getCachedDocument(injectedPsi);
-                                                                         if (documentWindow == null) return true;
-                                                                         Place places = InjectedLanguageUtil.getShreds(injectedPsi);
-                                                                         for (PsiLanguageInjectionHost.Shred place : places) {
-                                                                           TextRange textRange = place.getRangeInsideHost()
-                                                                             .shiftRight(place.getHost().getTextRange().getStartOffset());
-                                                                           if (textRange.isEmpty()) continue;
-                                                                           String desc =
-                                                                             injectedPsi.getLanguage().getDisplayName() +
-                                                                             ": " +
-                                                                             injectedPsi.getText();
-                                                                           HighlightInfo info = HighlightInfo
-                                                                             .createHighlightInfo(
-                                                                               HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND,
-                                                                               textRange, null, desc, injectedAttributes);
-                                                                           info.fromInjection = true;
-                                                                           outInfos.add(info);
-                                                                         }
+    return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injectedFiles), progress, isFailFastOnAcquireReadAction(),
+        new Processor<PsiFile>() {
+          @Override
+          public boolean process(final PsiFile injectedPsi) {
+            DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
+            if (documentWindow == null) return true;
+            Place places = InjectedLanguageUtil.getShreds(injectedPsi);
+            for (PsiLanguageInjectionHost.Shred place : places) {
+              TextRange textRange = place.getRangeInsideHost().shiftRight(place.getHost().getTextRange().getStartOffset());
+              if (textRange.isEmpty()) continue;
+              String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
+              HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND,
+                                                                     textRange, null, desc, injectedAttributes);
+              info.fromInjection = true;
+              outInfos.add(info);
+            }
 
-                                                                         HighlightInfoHolder holder = createInfoHolder(injectedPsi);
-                                                                         runHighlightVisitorsForInjected(injectedPsi, holder, progress);
-                                                                         for (int i = 0; i < holder.size(); i++) {
-                                                                           HighlightInfo info = holder.get(i);
-                                                                           final int startOffset =
-                                                                             documentWindow.injectedToHost(info.startOffset);
-                                                                           final TextRange fixedTextRange =
-                                                                             getFixedTextRange(documentWindow, startOffset);
-                                                                           addPatchedInfos(info, injectedPsi, documentWindow,
-                                                                                           injectedLanguageManager,
-                                                                                           fixedTextRange, outInfos);
-                                                                         }
-                                                                         holder.clear();
-                                                                         highlightInjectedSyntax(injectedPsi, holder);
-                                                                         for (int i = 0; i < holder.size(); i++) {
-                                                                           HighlightInfo info = holder.get(i);
-                                                                           final int startOffset = info.startOffset;
-                                                                           final TextRange fixedTextRange =
-                                                                             getFixedTextRange(documentWindow, startOffset);
-                                                                           if (fixedTextRange == null) {
-                                                                             info.fromInjection = true;
-                                                                             outInfos.add(info);
-                                                                           }
-                                                                           else {
-                                                                             HighlightInfo patched =
-                                                                               new HighlightInfo(info.forcedTextAttributes,
-                                                                                                 info.forcedTextAttributesKey,
-                                                                                                 info.type,
-                                                                                                 fixedTextRange.getStartOffset(),
-                                                                                                 fixedTextRange.getEndOffset(),
-                                                                                                 info.description, info.toolTip,
-                                                                                                 info.type.getSeverity(null),
-                                                                                                 info.isAfterEndOfLine, null,
-                                                                                                 false);
-                                                                             patched.fromInjection = true;
-                                                                             outInfos.add(patched);
-                                                                           }
-                                                                         }
+            HighlightInfoHolder holder = createInfoHolder(injectedPsi);
+            runHighlightVisitorsForInjected(injectedPsi, holder, progress);
+            for (int i = 0; i < holder.size(); i++) {
+              HighlightInfo info = holder.get(i);
+              final int startOffset = documentWindow.injectedToHost(info.startOffset);
+              final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
+              addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, fixedTextRange, outInfos);
+            }
+            holder.clear();
+            highlightInjectedSyntax(injectedPsi, holder);
+            for (int i = 0; i < holder.size(); i++) {
+              HighlightInfo info = holder.get(i);
+              final int startOffset = info.startOffset;
+              final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
+              if (fixedTextRange == null) {
+                info.fromInjection = true;
+                outInfos.add(info);
+              }
+              else {
+                HighlightInfo patched = new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey,
+                                                          info.type, fixedTextRange.getStartOffset(), fixedTextRange.getEndOffset(),
+                                                          info.description, info.toolTip, info.type.getSeverity(null),
+                                                          info.isAfterEndOfLine, null, false);
+                patched.fromInjection = true;
+                outInfos.add(patched);
+              }
+            }
 
-                                                                         if (!isDumbMode()) {
-                                                                           List<HighlightInfo> todos = new ArrayList<HighlightInfo>();
-                                                                           highlightTodos(injectedPsi, injectedPsi.getText(), 0,
-                                                                                          injectedPsi.getTextLength(), progress,
-                                                                                          myPriorityRange, todos,
-                                                                                          todos);
-                                                                           for (HighlightInfo info : todos) {
-                                                                             addPatchedInfos(info, injectedPsi, documentWindow,
-                                                                                             injectedLanguageManager,
-                                                                                             null, outInfos);
-                                                                           }
-                                                                         }
-                                                                         return true;
-                                                                       }
-                                                                     });
+            if (!isDumbMode()) {
+              List<HighlightInfo> todos = new ArrayList<HighlightInfo>();
+              highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength(), progress, myPriorityRange, todos, todos);
+              for (HighlightInfo info : todos) {
+                addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, null, outInfos);
+              }
+            }
+            return true;
+          }
+        });
+  }
+
+  protected boolean isFailFastOnAcquireReadAction() {
+    return true;
   }
 
   private static TextRange getFixedTextRange(@NotNull DocumentWindow documentWindow, int startOffset) {
@@ -789,7 +770,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return visitorArray;
   }
 
-  static void cancelAndRestartDaemonLater(ProgressIndicator progress, final Project project, TextEditorHighlightingPass pass) {
+  static void cancelAndRestartDaemonLater(ProgressIndicator progress, final Project project, TextEditorHighlightingPass pass) throws ProcessCanceledException {
     PassExecutorService.log(progress, pass, "Cancel and restart");
     progress.cancel();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -892,9 +873,5 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @Override
   public String toString() {
     return super.toString() + " updateAll="+myUpdateAll+" range=("+myStartOffset+","+myEndOffset+")";
-  }
-
-  public void setFailFastOnAcquireReadAction(boolean failFastOnAcquireReadAction) {
-    myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
   }
 }

@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
@@ -85,26 +86,43 @@ public class RunTargetAction extends AnAction {
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    if (project == null || editor == null) return null;
+    if (project == null || editor == null) {
+      return null;
+    }
     final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (file == null) return null;
+    if (file == null) {
+      return null;
+    }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (!(psiFile instanceof XmlFile)) return null;
-
-    final AntBuildFileBase antFile = AntConfigurationBase.getInstance(project).getAntBuildFile(psiFile);
-    if (antFile == null) return null;
-
+    if (!(psiFile instanceof XmlFile)) {
+      return null;
+    }
     final XmlFile xmlFile = (XmlFile)psiFile;
-    PsiElement at = xmlFile.findElementAt(editor.getCaretModel().getOffset());
-    while (at != null && !(at instanceof XmlTag)) at = at.getParent();
-    if (at == null) return null;
 
-    DomElement dom = AntSupport.getAntDomElement((XmlTag)at);
-    while (dom != null && !(dom instanceof AntDomTarget)) dom = dom.getParent();
+    final AntBuildFileBase antFile = AntConfigurationBase.getInstance(project).getAntBuildFile(xmlFile);
+    if (antFile == null) {
+      return null;
+    }
 
-    final AntDomTarget tar = (AntDomTarget)dom;
-    if (tar == null) return null;
-    return Pair.create(antFile, tar);
+    final PsiElement element = xmlFile.findElementAt(editor.getCaretModel().getOffset());
+    if (element == null) {
+      return null;
+    }
+    final XmlTag xmlTag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    if (xmlTag == null) {
+      return null;
+    }
+
+    DomElement dom = AntSupport.getAntDomElement(xmlTag);
+    while (dom != null && !(dom instanceof AntDomTarget)) {
+      dom = dom.getParent();
+    }
+
+    final AntDomTarget domTarget = (AntDomTarget)dom;
+    if (domTarget == null) {
+      return null;
+    }
+    return Pair.create(antFile, domTarget);
   }
 }

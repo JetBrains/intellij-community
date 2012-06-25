@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.propertyTable;
 
+import com.android.resources.ResourceType;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
@@ -27,6 +28,7 @@ import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +43,7 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
   protected final AttributeDefinition myDefinition;
   private final PropertyRenderer myRenderer;
   private final PropertyEditor myEditor;
+  private String myTooltip;
   private String myJavadocText;
 
   public AttributeProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
@@ -64,18 +67,35 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
       }
       else {
         myRenderer = new ResourceRenderer(formats);
-        myEditor = new ResourceEditor(formats, definition.getValues());
+        myEditor = createResourceEditor(definition, formats);
       }
     }
     else {
       myRenderer = new ResourceRenderer(formats);
-      myEditor = new ResourceEditor(formats, definition.getValues());
+      myEditor = createResourceEditor(definition, formats);
     }
+  }
+
+  private static ResourceEditor createResourceEditor(AttributeDefinition definition, Set<AttributeFormat> formats) {
+    String type = AndroidDomUtil.SPECIAL_RESOURCE_TYPES.get(definition.getName());
+    if (type == null) {
+      return new ResourceEditor(formats, definition.getValues());
+    }
+    return new ResourceEditor(new ResourceType[]{ResourceType.getEnum(type)}, formats, definition.getValues());
   }
 
   @Override
   public Property<RadViewComponent> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
     return new AttributeProperty(parent, name, myDefinition);
+  }
+
+  @Override
+  public String getTooltip() {
+    if (myTooltip == null) {
+      myTooltip = myDefinition.getFormats().toString();
+      myTooltip = myTooltip.substring(1, myTooltip.length() - 1);
+    }
+    return myTooltip;
   }
 
   @Override

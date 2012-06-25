@@ -16,6 +16,7 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -87,15 +88,15 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return rm.getFileIndex().isInTestSourceContent(f);
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-
-    final Module srcModule = ModuleUtil.findModuleForPsiElement(file);
+  @Override
+  public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    final Module srcModule = ModuleUtil.findModuleForPsiElement(element);
     final PsiClass srcClass = getContainingClass(element);
 
     if (srcClass == null) return;
 
-    PsiDirectory srcDir = file.getContainingDirectory();
+    PsiDirectory srcDir = element.getContainingFile().getContainingDirectory();
     PsiPackage srcPackage = JavaDirectoryService.getInstance().getPackage(srcDir);
 
     final CreateTestDialog d = new CreateTestDialog(project,

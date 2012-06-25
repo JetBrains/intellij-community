@@ -29,6 +29,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.server.ClasspathBootstrap;
@@ -71,7 +72,7 @@ public abstract class IncrementalTestCase extends TestCase {
     }
 
     FileUtil.copyDir(new File(getBaseDir()), new File(getWorkDir()));
-    
+
     Utils.setSystemRoot(new File(workDir));
   }
 
@@ -202,13 +203,16 @@ public abstract class IncrementalTestCase extends TestCase {
     IdeaProjectLoader.loadFromPath(project, projectPath, "");
 
     final File dataStorageRoot = Utils.getDataStorageRoot(project);
-    final TestJavaBuilderLogger javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
+    final TestJavaBuilderLogger javaBuilderLogger =
+      new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
     final ProjectDescriptor projectDescriptor =
       new ProjectDescriptor(project, new BuildFSState(true), new ProjectTimestamps(dataStorageRoot),
-                            new BuildDataManager(dataStorageRoot, true), new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
+                            new BuildDataManager(dataStorageRoot, true),
+                            new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
       new IncProjectBuilder(
-        projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(), Collections.<String, String>emptyMap(), CanceledStatus.NULL,
+        projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(), Collections.<String, String>emptyMap(),
+        CanceledStatus.NULL,
         null).build(
         new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true, false
       );
@@ -219,15 +223,56 @@ public abstract class IncrementalTestCase extends TestCase {
         Thread.sleep(1000L);
       }
 
-      new IncProjectBuilder(
-        projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(), Collections.<String, String>emptyMap(), CanceledStatus.NULL,
-        null).build(
-        new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false, false
-      );
+      final IncProjectBuilder makeBuilder = new IncProjectBuilder(
+        projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(), Collections.<String, String>emptyMap(),
+        CanceledStatus.NULL,
+        null);
+
+      class MH implements MessageHandler {
+        boolean myErrors = false;
+
+        @Override
+        public void processMessage(final BuildMessage msg) {
+          if (msg.getKind() == BuildMessage.Kind.ERROR)
+            myErrors = true;
+        }
+      }
+
+      final MH handler = new MH();
+
+      makeBuilder.addMessageHandler(handler);
+
+      makeBuilder.build(new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false, false);
+
+      final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
+
+      if (!handler.myErrors) {
+        projectDescriptor.dataManager.getMappings().toStream(new PrintStream(makeDump));
+      }
+
+      makeDump.close();
 
       final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getBaseDir() + ".log")));
       final String actual = javaBuilderLogger.myLog.toString();
+
       assertEquals(expected, actual);
+
+      if (!handler.myErrors) {
+        new IncProjectBuilder(
+          projectDescriptor, BuilderRegistry.getInstance(), projectDescriptor.timestamps.getStorage(),
+          Collections.<String, String>emptyMap(), CanceledStatus.NULL,
+          null).build(
+          new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true, false
+        );
+
+        final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
+
+        projectDescriptor.dataManager.getMappings().toStream(new PrintStream(rebuildDump));
+
+        rebuildDump.close();
+
+        //assertEquals(rebuildDump.toString(), makeDump.toString());
+      }
     }
     finally {
       projectDescriptor.release();

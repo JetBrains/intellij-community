@@ -47,7 +47,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.RefactoringBaseIntention;
+import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RowIcon;
@@ -304,7 +304,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     boolean showRefactoringsBulb = false;
     for (HighlightInfo.IntentionActionDescriptor descriptor : intentions.inspectionFixesToShow) {
-      if (descriptor.getAction() instanceof RefactoringBaseIntention) {
+      if (descriptor.getAction() instanceof BaseRefactoringIntentionAction) {
         showRefactoringsBulb = true;
         break;
       }

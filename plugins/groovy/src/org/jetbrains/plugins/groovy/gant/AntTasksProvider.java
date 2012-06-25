@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.gant;
 
-import com.intellij.lang.ant.psi.impl.ReflectedProject;
+import com.intellij.lang.ant.ReflectedProject;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -67,7 +67,7 @@ public class AntTasksProvider {
   static {
     boolean ant = false;
     try {
-      Class.forName("com.intellij.lang.ant.psi.impl.ReflectedProject");
+      Class.forName("com.intellij.lang.ant.ReflectedProject");
       ant = true;
     }
     catch (ClassNotFoundException ignored) {

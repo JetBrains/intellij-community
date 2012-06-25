@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -41,8 +42,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance("#" + ReplaceImplementsWithStaticImportAction.class.getName());
+public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction {
+  private static final Logger LOG = Logger.getInstance(ReplaceImplementsWithStaticImportAction.class);
   @NonNls private static final String FIND_CONSTANT_FIELD_USAGES = "Find constant field usages...";
 
   @NotNull
@@ -55,8 +56,11 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
     return getText();
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!(element.getContainingFile() instanceof PsiJavaFile)) return false;
+  @Override
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return false;
+
+    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiClass) {
@@ -99,6 +103,7 @@ public class ReplaceImplementsWithStaticImportAction extends PsiElementBaseInten
     return targetClass.getAllFields().length > 0;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
 

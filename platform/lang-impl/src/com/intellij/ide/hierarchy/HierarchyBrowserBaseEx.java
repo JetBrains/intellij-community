@@ -26,6 +26,7 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.projectView.impl.TransferableWrapper;
 import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -48,6 +49,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -203,12 +205,32 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   protected final JTree createTree(boolean dndAware) {
     final Tree tree;
+    final NullableFunction<Object, PsiElement> toPsiConverter = new NullableFunction<Object, PsiElement>() {
+      @Override
+      public PsiElement fun(Object o) {
+        if (o instanceof HierarchyNodeDescriptor) {
+          return ((HierarchyNodeDescriptor)o).getContainingFile();
+        }
+        return null;
+      }
+    };
+
     if (dndAware) {
       tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
         @Override
         public void removeNotify() {
           super.removeNotify();
           myRefreshAction.unregisterCustomShortcutSet(this);
+        }
+
+        @Override
+        public boolean isFileColorsEnabled() {
+          return ProjectViewTree.isFileColorsEnabledFor(this);
+        }
+
+        @Override
+        public Color getFileColorFor(Object object) {
+          return ProjectViewTree.getColorForObject(object, myProject, toPsiConverter);
         }
       };
 
@@ -253,6 +275,16 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         public void removeNotify() {
           super.removeNotify();
           myRefreshAction.unregisterCustomShortcutSet(this);
+        }
+
+        @Override
+        public boolean isFileColorsEnabled() {
+          return ProjectViewTree.isFileColorsEnabledFor(this);
+        }
+
+        @Override
+        public Color getFileColorFor(Object object) {
+          return ProjectViewTree.getColorForObject(object, myProject, toPsiConverter);
         }
       };
     }

@@ -68,6 +68,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.plaf.PanelUI;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
@@ -114,7 +115,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_NAVBAR_POPUP, ActionPlaces.NAVIGATION_BAR);
     setOpaque(false);
-
+    if (!docked && UIUtil.isUnderDarcula()) {
+      setBorder(new LineBorder(Gray._120, 1));
+    }
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
       @NotNull
       protected PsiElement[] getSelectedElements() {

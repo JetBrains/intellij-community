@@ -2,7 +2,7 @@ class Foo {
   void foo(E e) {
     switch (e){
 
-    }<caret>
+    } <caret>
   }
 }
 

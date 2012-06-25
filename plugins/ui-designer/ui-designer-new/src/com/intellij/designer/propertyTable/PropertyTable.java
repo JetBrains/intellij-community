@@ -256,10 +256,16 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
   @Override
   public String getToolTipText(MouseEvent event) {
     int row = rowAtPoint(event.getPoint());
-    if (row != -1) {
+    if (row != -1 && !myProperties.isEmpty()) {
       ErrorInfo errorInfo = getErrorInfoForRow(row);
       if (errorInfo != null) {
         return errorInfo.getName();
+      }
+      if (columnAtPoint(event.getPoint()) == 0) {
+        String tooltip = myProperties.get(row).getTooltip();
+        if (tooltip != null) {
+          return tooltip;
+        }
       }
     }
     return super.getToolTipText(event);

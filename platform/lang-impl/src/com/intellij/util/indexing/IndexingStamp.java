@@ -20,16 +20,16 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * @author Eugene Zhuravlev
@@ -47,19 +47,17 @@ public class IndexingStamp {
     private TObjectLongHashMap<ID<?, ?>> myIndexStamps;
     private boolean myIsDirty = false;
 
-    public Timestamps(@Nullable DataInputStream stream) throws IOException {
+    private Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
         try {
-          int count = DataInputOutputUtil.readINT(stream);
-          if (count > 0) {
-            myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(20);
-            for (int i = 0; i < count; i++) {
-                ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
-                long timestamp = DataInputOutputUtil.readTIME(stream);
-                if (id != null) {
-                  myIndexStamps.put(id, timestamp);
-                }
-              }
+          long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
+          while(stream.available() > 0) {
+            ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
+            if (id != null) {
+              long stamp = IndexInfrastructure.getIndexCreationStamp(id);
+              if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+              if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
+            }
           }
         }
         finally {
@@ -68,18 +66,24 @@ public class IndexingStamp {
       }
     }
 
-    public void writeToStream(final DataOutputStream stream) throws IOException {
+    private void writeToStream(final DataOutputStream stream) throws IOException {
       if (myIndexStamps != null) {
-        final int size = myIndexStamps.size();
-        final int[] count = new int[]{0};
-        DataInputOutputUtil.writeINT(stream, size);
+        final long[] dominatingIndexStamp = new long[1];
+        myIndexStamps.forEachEntry(
+          new TObjectLongProcedure<ID<?, ?>>() {
+            @Override
+            public boolean execute(ID<?, ?> a, long b) {
+              dominatingIndexStamp[0] = Math.max(dominatingIndexStamp[0], b);
+              return true;
+            }
+          }
+        );
+        DataInputOutputUtil.writeTIME(stream, dominatingIndexStamp[0]);
         myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
           @Override
           public boolean execute(final ID<?, ?> id, final long timestamp) {
             try {
               DataInputOutputUtil.writeINT(stream, id.getUniqueId());
-              DataInputOutputUtil.writeTIME(stream, timestamp);
-              count[0]++;
               return true;
             }
             catch (IOException e) {
@@ -87,7 +91,6 @@ public class IndexingStamp {
             }
           }
         });
-        assert count[0] == size;
       }
     }
 
@@ -97,9 +100,13 @@ public class IndexingStamp {
 
     public void set(ID<?, ?> id, long tmst) {
       try {
-        if (myIndexStamps == null) {
-          myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(20);
+        if (tmst < 0) {
+          if (myIndexStamps == null) return;
+          myIndexStamps.remove(id);
+          return;
         }
+        if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+
         myIndexStamps.put(id, tmst);
       }
       finally {
@@ -112,35 +119,9 @@ public class IndexingStamp {
     }
   }
 
-  private static final SLRUCache<VirtualFile, Timestamps> myTimestampsCache = new SLRUCache<VirtualFile, Timestamps>(5, 5) {
-    @Override
-    @NotNull
-    public Timestamps createValue(final VirtualFile key) {
-      try {
-        final DataInputStream stream = Timestamps.PERSISTENCE.readAttribute(key);
-        return new Timestamps(stream);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    @Override
-    protected void onDropFromCache(final VirtualFile key, final Timestamps value) {
-      try {
-        if (value.isDirty()) {
-          final DataOutputStream sink = Timestamps.PERSISTENCE.writeAttribute(key);
-          value.writeToStream(sink);
-          sink.close();
-        }
-      }
-      catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  };
+  private static final ConcurrentHashMap<VirtualFile, Timestamps> myTimestampsCache = new ConcurrentHashMap<VirtualFile, Timestamps>();
+  private static final int CAPACITY = 100;
+  private static final ArrayBlockingQueue<VirtualFile> myFinishedFiles = new ArrayBlockingQueue<VirtualFile>(CAPACITY);
 
   public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     try {
@@ -157,30 +138,79 @@ public class IndexingStamp {
   }
 
   public static long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
-    if (file instanceof NewVirtualFile && file.isValid()) {
-      synchronized (myTimestampsCache) {
-        return myTimestampsCache.get(file).get(indexName);
-      }
+    synchronized (file) {
+      Timestamps stamp = createOrGetTimeStamp(file);
+      if (stamp != null) return stamp.get(indexName);
+      return 0;
     }
-    return 0L;
+  }
+
+  private static Timestamps createOrGetTimeStamp(VirtualFile file) {
+    if (file instanceof NewVirtualFile && file.isValid()) {
+      Timestamps timestamps = myTimestampsCache.get(file);
+      if (timestamps == null) {
+        synchronized (myTimestampsCache) { // avoid synchroneous reads TODO:
+          timestamps = myTimestampsCache.get(file);
+          if (timestamps == null) {
+            final DataInputStream stream = Timestamps.PERSISTENCE.readAttribute(file);
+            try {
+              timestamps = new Timestamps(stream);
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+            myTimestampsCache.put(file, timestamps);
+          }
+        }
+      }
+      return timestamps;
+    }
+    return null;
   }
 
   public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
-    try {
-      if (file instanceof NewVirtualFile && file.isValid()) {
-        synchronized (myTimestampsCache) {
-          myTimestampsCache.get(file).set(indexName, indexCreationStamp);
-        }
+    synchronized (file) {
+      try {
+        Timestamps stamp = createOrGetTimeStamp(file);
+        if (stamp != null) stamp.set(indexName, indexCreationStamp);
+      }
+      catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
       }
     }
-    catch (InvalidVirtualFileAccessException ignored /*ok to ignore it here*/) {
-    }
   }
 
-  public static void flushCache() {
-    synchronized (myTimestampsCache) {
-      myTimestampsCache.clear();
+  public static void flushCache(@Nullable VirtualFile finishedFile) {
+    if (finishedFile == null || !myFinishedFiles.offer(finishedFile)) {
+      VirtualFile[] files = null;
+      synchronized (myFinishedFiles) {
+        int size = myFinishedFiles.size();
+        if ((finishedFile == null && size > 0) || size == CAPACITY) {
+          files = myFinishedFiles.toArray(new VirtualFile[size]);
+          myFinishedFiles.clear();
+        }
+      }
+
+      if (files != null) {
+        for(VirtualFile file:files) {
+          synchronized (file) {
+            Timestamps timestamp = myTimestampsCache.remove(file);
+            if (timestamp == null) continue;
+            synchronized (myTimestampsCache) {
+              try {
+                if (timestamp.isDirty() && file.isValid()) {
+                  final DataOutputStream sink = Timestamps.PERSISTENCE.writeAttribute(file);
+                  timestamp.writeToStream(sink);
+                  sink.close();
+                }
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            }
+          }
+        }
+      }
+      if (finishedFile != null) myFinishedFiles.offer(finishedFile);
     }
   }
-
 }

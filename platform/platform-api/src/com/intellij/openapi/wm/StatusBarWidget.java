@@ -98,6 +98,7 @@ public interface StatusBarWidget extends Disposable {
     private static final Color SEPARATOR_COLOR = UIUtil.getPanelBackground().darker();
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
+      if (UIUtil.isUnderDarcula()) return;
       final Graphics2D g2 = (Graphics2D)g.create();
       if (SystemInfo.isMac) {
         final Window window = SwingUtilities.getWindowAncestor(c);

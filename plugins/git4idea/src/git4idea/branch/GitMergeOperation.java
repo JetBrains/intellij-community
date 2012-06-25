@@ -93,7 +93,7 @@ class GitMergeOperation extends GitBranchOperation {
       GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
       GitSimpleEventDetector alreadyUpToDateDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.ALREADY_UP_TO_DATE);
 
-      GitCommandResult result = myGit.merge(repository, myBranchToMerge,
+      GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.<String>emptyList(),
                                           localChangesOverwrittenByMerge, unmergedFiles, untrackedOverwrittenByMerge, mergeConflict,
                                           alreadyUpToDateDetector);
       if (result.success()) {
@@ -238,7 +238,7 @@ class GitMergeOperation extends GitBranchOperation {
   private boolean doMerge(@NotNull Collection<GitRepository> repositories) {
     for (GitRepository repository : repositories) {
       GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
-      GitCommandResult result = myGit.merge(repository, myBranchToMerge, mergeConflict);
+      GitCommandResult result = myGit.merge(repository, myBranchToMerge, Collections.<String>emptyList(), mergeConflict);
       if (!result.success()) {
         if (mergeConflict.hasHappened()) {
           myConflictedRepositories.put(repository, Boolean.TRUE);

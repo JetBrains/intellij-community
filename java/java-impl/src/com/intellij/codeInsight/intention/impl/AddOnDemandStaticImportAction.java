@@ -160,11 +160,10 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       });
     }
   }
-  
+
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    invoke(project, file, editor, element);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    invoke(project, element.getContainingFile(), editor, element);
   }
 
   private static boolean isParameterizedReference(final PsiJavaCodeReferenceElement expression) {

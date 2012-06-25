@@ -18,6 +18,7 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.StaticMemberProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -61,7 +62,7 @@ public abstract class MembersGetter {
     }
 
     final Set<PsiMember> importedStatically = new HashSet<PsiMember>();
-    processor.processMembersOfRegisteredClasses(null, new PairConsumer<PsiMember, PsiClass>() {
+    processor.processMembersOfRegisteredClasses(PrefixMatcher.ALWAYS_TRUE, new PairConsumer<PsiMember, PsiClass>() {
       @Override
       public void consume(PsiMember member, PsiClass psiClass) {
         importedStatically.add(member);

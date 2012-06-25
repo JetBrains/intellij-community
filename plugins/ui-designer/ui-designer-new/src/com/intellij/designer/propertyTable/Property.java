@@ -108,6 +108,11 @@ public abstract class Property<T extends RadComponent> {
     return myName;
   }
 
+  @Nullable
+  public String getTooltip() {
+    return null;
+  }
+
   public boolean isImportant() {
     return myImportant;
   }

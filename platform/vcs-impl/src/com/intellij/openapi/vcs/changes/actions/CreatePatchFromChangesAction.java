@@ -70,6 +70,10 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     }
     List<Change> changeCollection = new ArrayList<Change>();
     Collections.addAll(changeCollection, changes);
+    createPatch(project, commitMessage, changeCollection);
+  }
+
+  public static void createPatch(Project project, String commitMessage, List<Change> changeCollection) {
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
     CommitSession commitSession = executor.createCommitSession();
@@ -85,12 +89,12 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     if (!sessionDialog.isOK()) {
       return;
     }
-    preloadContent(project, changes);
+    preloadContent(project, changeCollection);
 
     commitSession.execute(changeCollection, commitMessage);
   }
 
-  private static void preloadContent(final Project project, final Change[] changes) {
+  private static void preloadContent(final Project project, final List<Change> changes) {
     // to avoid multiple progress dialogs, preload content under one progress
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
@@ -101,6 +105,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
       }
 
       private void checkLoadContent(final ContentRevision revision) {
+        ProgressManager.checkCanceled();
         if (revision != null && !(revision instanceof BinaryContentRevision)) {
           try {
             revision.getContent();
@@ -110,7 +115,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
           }
         }
       }
-    }, VcsBundle.message("create.patch.loading.content.progress"), false, project);
+    }, VcsBundle.message("create.patch.loading.content.progress"), true, project);
   }
 
   public void update(final AnActionEvent e) {

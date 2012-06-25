@@ -83,7 +83,7 @@ public class RadFragment extends RadViewComponent implements IConfigurableCompon
   private static String chooseFragment(RadComponent rootComponent) {
     ModuleProvider moduleProvider = rootComponent.getClientProperty(ModelParser.MODULE_KEY);
     ChooseClassDialog dialog =
-      new ChooseClassDialog(moduleProvider.getModule(), "Fragment Dialog", true, "android.app.Fragment", "android.support.v4.app.Fragment");
+      new ChooseClassDialog(moduleProvider.getModule(), "Fragments", true, "android.app.Fragment", "android.support.v4.app.Fragment");
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

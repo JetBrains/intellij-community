@@ -24,7 +24,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -695,21 +694,15 @@ public class ListUtils {
   public void _testClassBeforeCast() throws Throwable { doTest '\n' }
 
   public void testNoAllClassesOnQualifiedReference() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    assertEmpty(myItems);
-    checkResultByFile(getTestName(false) + ".java");
+    doAntiTest()
   }
 
   public void testFinishClassNameWithDot() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    type('.');
-    checkResult()
+    doTest('.')
   }
 
   public void testFinishClassNameWithLParen() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    type('(');
-    checkResult()
+    doTest('(')
   }
 
   public void testSelectNoParameterSignature() throws Throwable {
@@ -722,12 +715,7 @@ public class ListUtils {
 
   public void testCompletionInsideClassLiteral() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
-      @Override
-      protected void run() throws Throwable {
-        getLookup().finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
-    }.execute().throwException();
+    type('\n')
     checkResult()
   }
 
@@ -797,18 +785,19 @@ public class ListUtils {
   }
 
   public void testClassNameGenerics() throws Throwable {
-    configure()
-    type  '\n'
-    checkResult();
+    doTest('\n')
   }
 
   public void testClassNameAnonymous() throws Throwable {
-    configure()
-    type  '\n'
-    checkResult();
+    doTest('\n')
   }
 
-  public void testClassNameWithInner() throws Throwable { doTest() }
+  public void testClassNameWithInner() throws Throwable {
+    configure()
+    assertStringItems 'Zzoo', 'Zzoo.Impl'
+    type '\n'
+    checkResult()
+  }
   public void testClassNameWithInner2() throws Throwable { doTest() }
 
   public void testClassNameWithInstanceInner() throws Throwable { doTest('\n') }
@@ -987,7 +976,7 @@ public class ListUtils {
 
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
 
-  public void testNewExpectedClassParens() throws Throwable { doTest(); }
+  public void testNewExpectedClassParens() throws Throwable { doTest('\n'); }
 
   public void testQualifyInnerMembers() throws Throwable { doTest('\n') }
 

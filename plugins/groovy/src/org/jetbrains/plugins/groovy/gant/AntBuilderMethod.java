@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.groovy.gant;
 
+import com.intellij.lang.ant.AntIntrospector;
 import com.intellij.lang.ant.dom.AntDomExtender;
-import com.intellij.lang.ant.psi.impl.AntIntrospector;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;

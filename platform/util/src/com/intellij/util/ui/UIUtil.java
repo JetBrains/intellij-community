@@ -889,11 +889,11 @@ public class UIUtil {
   }
 
   public static boolean isFullRowSelectionLAF() {
-    return isUnderNimbusLookAndFeel() || isUnderQuaquaLookAndFeel();
+    return isUnderNimbusLookAndFeel() || isUnderQuaquaLookAndFeel() || isUnderDarcula();
   }
 
   public static boolean isUnderNativeMacLookAndFeel() {
-    return isUnderAquaLookAndFeel() || isUnderQuaquaLookAndFeel();
+    return isUnderAquaLookAndFeel() || isUnderQuaquaLookAndFeel() || isUnderDarcula();
   }
 
   public static int getListCellHPadding() {
@@ -2331,6 +2331,12 @@ public class UIUtil {
     else {
       component.setBorder(border);
     }
+  }
+
+  private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
+  private static final Color DECORATED_ROW_BG_COLOR_DARK = Gray._75;
+  public static Color getDecoratedRowColor() {
+    return isUnderDarcula() ? DECORATED_ROW_BG_COLOR_DARK : DECORATED_ROW_BG_COLOR;
   }
 }
 

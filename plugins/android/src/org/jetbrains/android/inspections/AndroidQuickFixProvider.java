@@ -6,6 +6,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.android.dom.manifest.Manifest;
@@ -44,7 +45,13 @@ public class AndroidQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       return;
     }
 
-    final Pair<String, String> pair = AndroidResourceUtil.getReferredResourceField(facet, exp);
+    Pair<String, String> pair = AndroidResourceUtil.getReferredResourceField(facet, exp);
+    if (pair == null) {
+      final PsiElement parent = exp.getParent();
+      if (parent instanceof PsiReferenceExpression) {
+        pair = AndroidResourceUtil.getReferredResourceField(facet, (PsiReferenceExpression)parent);
+      }
+    }
     if (pair == null) {
       return;
     }

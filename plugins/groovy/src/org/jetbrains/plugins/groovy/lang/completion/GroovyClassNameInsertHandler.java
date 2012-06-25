@@ -18,11 +18,9 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -62,7 +60,7 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
     }
     PsiElement position = file.findElementAt(endOffset - 1);
 
-    boolean parens = shouldInsertParentheses(position, item.getObject());
+    boolean parens = shouldInsertParentheses(position);
 
     final PsiClass psiClass = item.getObject();
     if (isInVariable(position) || GroovyCompletionContributor.isInPossibleClosureParameter(position)) {
@@ -96,10 +94,10 @@ public class GroovyClassNameInsertHandler implements InsertHandler<JavaPsiClassR
 
   }
 
-  private static boolean shouldInsertParentheses(PsiElement position, PsiClass psiClass) {
+  private static boolean shouldInsertParentheses(PsiElement position) {
     final GrNewExpression newExpression = findNewExpression(position);
-    return newExpression != null && JavaCompletionUtil
-      .isDefinitelyExpected(psiClass, GroovyExpectedTypesProvider.getDefaultExpectedTypes(newExpression), position);
+    return newExpression != null && ContainerUtil.findInstance(GroovyExpectedTypesProvider.getDefaultExpectedTypes(newExpression),
+                                                               PsiArrayType.class) == null;
   }
 
   private static boolean isInVariable(PsiElement position) {

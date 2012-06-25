@@ -19,12 +19,12 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -35,7 +35,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -43,7 +46,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author peter
  */
 public class JavaClassNameCompletionContributor extends CompletionContributor {
-  private static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
+  public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
       psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
@@ -92,7 +95,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     }
 
     final boolean inJavaContext = parameters.getPosition() instanceof PsiIdentifier;
-    if (AFTER_NEW.accepts(insertedElement)) {
+    final boolean afterNew = AFTER_NEW.accepts(insertedElement);
+    if (afterNew) {
       final PsiExpression expr = PsiTreeUtil.getContextOfType(insertedElement, PsiExpression.class, true);
       for (final ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(expr, true)) {
         final PsiType type = info.getType();
@@ -104,20 +108,34 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
         if (!defaultType.equals(type)) {
           final PsiClass defClass = PsiUtil.resolveClassInType(defaultType);
           if (defClass != null) {
-            consumer.consume(createClassLookupItem(defClass, inJavaContext));
+            consumer.consume(createClassLookupItem(defClass, true));
           }
         }
       }
     }
 
-    final boolean lookingForAnnotations = PsiJavaPatterns.psiElement().afterLeaf("@").accepts(insertedElement);
+    final boolean lookingForAnnotations = psiElement().afterLeaf("@").accepts(insertedElement);
+    final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
     AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
         @Override
         public void consume(PsiClass psiClass) {
           if (lookingForAnnotations && !psiClass.isAnnotationType()) return;
 
           if (filter.isAcceptable(psiClass, insertedElement)) {
-            consumer.consume(createClassLookupItem(psiClass, inJavaContext));
+            if (!inJavaContext) {
+              consumer.consume(AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING));
+            } else {
+              for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew,
+                                                                                 JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER, new Condition<PsiClass>() {
+                @Override
+                public boolean value(PsiClass psiClass) {
+                  return filter.isAcceptable(psiClass, insertedElement) &&
+                         AllClassesGetter.isAcceptableInContext(insertedElement, psiClass, filterByScope, pkgContext);
+                }
+              })) {
+                consumer.consume(element);
+              }
+            }
           }
         }
       });
@@ -127,6 +145,31 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     return AllClassesGetter.createLookupItem(psiClass, inJavaContext ? JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER
                                                                      : AllClassesGetter.TRY_SHORTENING);
   }
+
+  public static List<JavaPsiClassReferenceElement> createClassLookupItems(final PsiClass psiClass,
+                                                                          boolean withInners,
+                                                                          InsertHandler<JavaPsiClassReferenceElement> insertHandler,
+                                                                          Condition<PsiClass> condition) {
+    List<JavaPsiClassReferenceElement> result = new SmartList<JavaPsiClassReferenceElement>();
+    if (condition.value(psiClass)) {
+      result.add(AllClassesGetter.createLookupItem(psiClass, insertHandler));
+    }
+    String name = psiClass.getName();
+    if (withInners && name != null) {
+      for (PsiClass inner : psiClass.getInnerClasses()) {
+        if (inner.hasModifierProperty(PsiModifier.STATIC)) {
+          for (JavaPsiClassReferenceElement lookupInner : createClassLookupItems(inner, withInners, insertHandler, condition)) {
+            String forced = lookupInner.getForcedPresentableName();
+            lookupInner.setForcedPresentableName(name + "." + (forced != null ? forced : inner.getName()));
+            result.add(lookupInner);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+
 
   @Override
   public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
@@ -145,6 +188,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   private static boolean shouldShowSecondSmartCompletionHint(final CompletionParameters parameters) {
     return parameters.getCompletionType() == CompletionType.CLASS_NAME &&
            parameters.getInvocationCount() == 1 &&
-           parameters.getOriginalFile().getLanguage() == StdLanguages.JAVA;
+           parameters.getOriginalFile().getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 }

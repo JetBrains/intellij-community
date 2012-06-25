@@ -121,7 +121,10 @@ public abstract class MetaManager {
     Element palette = element.getChild("palette");
     if (palette != null) {
       meta.setPaletteItem(
-        new DefaultPaletteItem(palette.getAttributeValue("title"), palette.getAttributeValue("icon"), palette.getAttributeValue("tooltip")));
+        new DefaultPaletteItem(palette.getAttributeValue("title"),
+                               palette.getAttributeValue("icon"),
+                               palette.getAttributeValue("tooltip"),
+                               palette.getAttributeValue("version")));
     }
 
     Element creation = element.getChild("creation");

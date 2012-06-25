@@ -34,14 +34,9 @@ import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.PersistentStringEnumerator;
-import com.intellij.util.io.ResizeableMappedFile;
+import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.storage.AbstractStorage;
-import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.io.storage.RefCountingStorage;
-import com.intellij.util.io.storage.Storage;
+import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +51,7 @@ import java.util.concurrent.ScheduledFuture;
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 14;
+  private static final int VERSION = 16;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -123,6 +118,9 @@ public class FSRecords implements Forceable {
     private static boolean myDirty = false;
     private static ScheduledFuture<?> myFlushingFuture;
     private static boolean myCorrupted = false;
+
+    private static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
+
 
     public static void connect() {
       try {
@@ -212,8 +210,8 @@ public class FSRecords implements Forceable {
 
         PagedFileStorage.StorageLockContext storageLockContext = new PagedFileStorage.StorageLock(false).myDefaultStorageLockContext;
         myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
-        myAttributes = new Storage(attributesFile.getCanonicalPath());
-        myContents = new RefCountingStorage(contentsFile.getCanonicalPath());
+        myAttributes = new Storage(attributesFile.getCanonicalPath(), REASONABLY_SMALL);
+        myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH); // sources usually zipped with 4x ratio
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         assert aligned; // for performance
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
@@ -488,6 +486,15 @@ public class FSRecords implements Forceable {
     public static void addFreeRecord(final int id) {
       myFreeRecords.add(id);
     }
+
+    private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
+      boolean myAttrPageRequested;
+
+      @Override
+      public int calculateCapacity(int requiredLength) {   // 20% for growth
+        return Math.max(myAttrPageRequested ? 8:32, Math.min((int)(requiredLength * 1.2), (requiredLength / 1024 + 1) * 1024));
+      }
+    }
   }
 
   public FSRecords() {
@@ -599,8 +606,8 @@ public class FSRecords implements Forceable {
     if (att_page != 0) {
       final DataInputStream attStream = getAttributesStorage().readStream(att_page);
       while (attStream.available() > 0) {
-        attStream.readInt(); // Attribute ID;
-        int attAddress = attStream.readInt();
+        DataInputOutputUtil.readINT(attStream); // Attribute ID;
+        int attAddress = DataInputOutputUtil.readINT(attStream);
         getAttributesStorage().deleteRecord(attAddress);
       }
       attStream.close();
@@ -621,11 +628,11 @@ public class FSRecords implements Forceable {
 
       int[] result;
       try {
-        final int count = input.readInt();
+        final int count = DataInputOutputUtil.readINT(input);
         result = ArrayUtil.newIntArray(count);
         for (int i = 0; i < count; i++) {
-          input.readInt(); // Name
-          result[i] = input.readInt(); // Id
+          DataInputOutputUtil.readINT(input); // Name
+          result[i] = DataInputOutputUtil.readINT(input); // Id
         }
         return result;
       }
@@ -660,12 +667,12 @@ public class FSRecords implements Forceable {
 
       if (input != null) {
         try {
-          final int count = input.readInt();
+          final int count = DataInputOutputUtil.readINT(input);
           names = ArrayUtil.newIntArray(count);
           ids = ArrayUtil.newIntArray(count);
           for (int i = 0; i < count; i++) {
-            final int name = input.readInt();
-            final int id = input.readInt();
+            final int name = DataInputOutputUtil.readINT(input);
+            final int id = DataInputOutputUtil.readINT(input);
             if (name == root) {
               return id;
             }
@@ -683,13 +690,13 @@ public class FSRecords implements Forceable {
       int id;
       try {
         id = createRecord();
-        output.writeInt(names.length + 1);
+        DataInputOutputUtil.writeINT(output, names.length + 1);
         for (int i = 0; i < names.length; i++) {
-          output.writeInt(names[i]);
-          output.writeInt(ids[i]);
+          DataInputOutputUtil.writeINT(output, names[i]);
+          DataInputOutputUtil.writeINT(output, ids[i]);
         }
-        output.writeInt(root);
-        output.writeInt(id);
+        DataInputOutputUtil.writeINT(output, root);
+        DataInputOutputUtil.writeINT(output, id);
       }
       finally {
         output.close();
@@ -712,13 +719,13 @@ public class FSRecords implements Forceable {
       int[] names;
       int[] ids;
       try {
-        count = input.readInt();
+        count = DataInputOutputUtil.readINT(input);
 
         names = ArrayUtil.newIntArray(count);
         ids = ArrayUtil.newIntArray(count);
         for (int i = 0; i < count; i++) {
-          names[i] = input.readInt();
-          ids[i] = input.readInt();
+          names[i] = DataInputOutputUtil.readINT(input);
+          ids[i] = DataInputOutputUtil.readINT(input);
         }
       }
       finally {
@@ -733,10 +740,10 @@ public class FSRecords implements Forceable {
 
       final DataOutputStream output = writeAttribute(1, CHILDREN_ATT, false);
       try {
-        output.writeInt(count - 1);
+        DataInputOutputUtil.writeINT(output, count - 1);
         for (int i = 0; i < names.length; i++) {
-          output.writeInt(names[i]);
-          output.writeInt(ids[i]);
+          DataInputOutputUtil.writeINT(output, names[i]);
+          DataInputOutputUtil.writeINT(output, ids[i]);
         }
       }
       finally {
@@ -754,10 +761,12 @@ public class FSRecords implements Forceable {
       final DataInputStream input = readAttribute(id, CHILDREN_ATT);
       if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
-      final int count = input.readInt();
+      final int count = DataInputOutputUtil.readINT(input);
       final int[] result = ArrayUtil.newIntArray(count);
       for (int i = 0; i < count; i++) {
-        result[i] = input.readInt();
+        int childId = DataInputOutputUtil.readINT(input);
+        childId = childId >= 0 ? childId + id : -childId;
+        result[i] = childId;
       }
       input.close();
       return result;
@@ -776,11 +785,12 @@ public class FSRecords implements Forceable {
       final DataInputStream input = readAttribute(parentId, CHILDREN_ATT);
       if (input == null) return Pair.create(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_INT_ARRAY);
 
-      final int count = input.readInt();
+      final int count = DataInputOutputUtil.readINT(input);
       final int[] ids = ArrayUtil.newIntArray(count);
       final String[] names = ArrayUtil.newStringArray(count);
       for (int i = 0; i < count; i++) {
-        int id = input.readInt();
+        int id = DataInputOutputUtil.readINT(input);
+        id = id >= 0 ? id + parentId : -id;
         ids[i] = id;
         names[i] = getName(id);
       }
@@ -813,13 +823,14 @@ public class FSRecords implements Forceable {
       w.lock();
       DbConnection.markDirty();
       final DataOutputStream record = writeAttribute(id, CHILDREN_ATT, false);
-      record.writeInt(children.length);
+      DataInputOutputUtil.writeINT(record, children.length);
       for (int child : children) {
         if (child == id) {
           LOG.error("Cyclic parent child relations");
         }
         else {
-          record.writeInt(child);
+          child = child > id ? child - id : -child;
+          DataInputOutputUtil.writeINT(record, child);
         }
       }
       record.close();
@@ -1123,8 +1134,8 @@ public class FSRecords implements Forceable {
       DataInputStream attrRefs = storage.readStream(recordId);
       try {
         while (attrRefs.available() > 0) {
-          final int attIdOnPage = attrRefs.readInt();
-          final int attrAddress = attrRefs.readInt();
+          final int attIdOnPage = DataInputOutputUtil.readINT(attrRefs);
+          final int attrAddress = DataInputOutputUtil.readINT(attrRefs);
 
           if (attIdOnPage == encodedAttrId) return attrAddress;
         }
@@ -1136,10 +1147,15 @@ public class FSRecords implements Forceable {
 
     if (toWrite) {
       Storage.AppenderStream appender = storage.appendStream(recordId);
-      appender.writeInt(encodedAttrId);
+      DataInputOutputUtil.writeINT(appender, encodedAttrId);
       int attrAddress = storage.createNewRecord();
-      appender.writeInt(attrAddress);
-      appender.close();
+      DataInputOutputUtil.writeINT(appender, attrAddress);
+      DbConnection.REASONABLY_SMALL.myAttrPageRequested = true;
+      try {
+        appender.close();
+      } finally {
+        DbConnection.REASONABLY_SMALL.myAttrPageRequested = false;
+      }
       return attrAddress;
     }
 
@@ -1403,11 +1419,9 @@ public class FSRecords implements Forceable {
 
     final DataInputStream dataInputStream = getAttributesStorage().readStream(attributeRecordId);
     try {
-      final int streamSize = dataInputStream.available();
-      assert streamSize % 8 == 0;
-      for (int i = 0; i < streamSize / 8; i++) {
-        int attId = dataInputStream.readInt();
-        int attDataRecordId = dataInputStream.readInt();
+      while(dataInputStream.available() > 0) {
+        int attId = DataInputOutputUtil.readINT(dataInputStream);
+        int attDataRecordId = DataInputOutputUtil.readINT(dataInputStream);
         assert !usedAttributeRecordIds.contains(attDataRecordId);
         usedAttributeRecordIds.add(attDataRecordId);
         if (!validAttributeIds.contains(attId)) {

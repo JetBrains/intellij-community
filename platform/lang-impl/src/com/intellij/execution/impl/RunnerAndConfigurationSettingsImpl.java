@@ -361,6 +361,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         template.myConfigurationPerRunnerSettings.get(runner).writeExternal(temp);
         data.readExternal(temp);
       }
+      setSingleton(template.isSingleton());
     }
     catch (WriteExternalException e) {
       LOG.error(e);

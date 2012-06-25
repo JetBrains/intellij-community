@@ -628,6 +628,7 @@ class A {
       }"""
     configure "Zzoo l = new Zz<caret>"
     myFixture.completeBasic()
+    myFixture.type '\n'
     myFixture.checkResult "Zzoo l = new Zzoo()<caret>"
   }
 
@@ -738,6 +739,8 @@ format(<caret>)"""
     myFixture.addClass "class Fooooo { interface Bar {} }"
     myFixture.configureByText "a.groovy", "Fooooo f = new Foo<caret>"
     myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['Fooooo', 'Fooooo.Bar']
+    myFixture.type '\n'
     myFixture.checkResult "Fooooo f = new Fooooo()<caret>"
   }
 
@@ -745,7 +748,9 @@ format(<caret>)"""
     myFixture.addClass "class Fooooo { interface Bar {} }"
     myFixture.configureByText "a.groovy", "Fooooo.Bar f = new Foo<caret>"
     myFixture.completeBasic()
-    myFixture.checkResult "Fooooo.Bar f = new Fooooo<caret>"
+    assert myFixture.lookupElementStrings == ['Fooooo', 'Fooooo.Bar']
+    myFixture.type '\n'
+    myFixture.checkResult "Fooooo.Bar f = new Fooooo()<caret>"
   }
 
   public void testOnlyExceptionsInCatch() {

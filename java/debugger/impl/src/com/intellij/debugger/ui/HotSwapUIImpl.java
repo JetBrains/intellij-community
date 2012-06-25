@@ -149,13 +149,42 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
     final boolean isOutOfProcessMode = CompilerWorkspaceConfiguration.getInstance(myProject).useOutOfProcessBuild();
     final boolean shouldPerformScan = !isOutOfProcessMode || generatedPaths == null;
 
-    final HotSwapProgressImpl findClassesProgress = shouldPerformScan ? new HotSwapProgressImpl(myProject) : null;
-    
+    final HotSwapProgressImpl findClassesProgress;
+    if (shouldPerformScan) {
+      findClassesProgress = new HotSwapProgressImpl(myProject);
+    }
+    else {
+      boolean createProgress = false;
+      for (DebuggerSession session : sessions) {
+        if (session.isModifiedClassesScanRequired()) {
+          createProgress = true;
+          break;
+        }
+      }
+      findClassesProgress = createProgress? new HotSwapProgressImpl(myProject) : null;
+    }
+
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = shouldPerformScan?
-          scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isOutOfProcessMode) :
-          HotSwapManager.findModifiedClasses(sessions, generatedPaths);
+        final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses;
+        if (shouldPerformScan) {
+          modifiedClasses = scanForModifiedClassesWithProgress(sessions, findClassesProgress, !isOutOfProcessMode);
+        }
+        else {
+          final List<DebuggerSession> toScan = new ArrayList<DebuggerSession>();
+          final List<DebuggerSession> toUseGenerated = new ArrayList<DebuggerSession>();
+          for (DebuggerSession session : sessions) {
+            (session.isModifiedClassesScanRequired()? toScan : toUseGenerated).add(session);
+            session.setModifiedClassesScanRequired(false);
+          }
+          modifiedClasses = new HashMap<DebuggerSession, Map<String, HotSwapFile>>();
+          if (!toUseGenerated.isEmpty()) {
+            modifiedClasses.putAll(HotSwapManager.findModifiedClasses(toUseGenerated, generatedPaths));
+          }
+          if (!toScan.isEmpty()) {
+            modifiedClasses.putAll(scanForModifiedClassesWithProgress(toScan, findClassesProgress, !isOutOfProcessMode));
+          }
+        }
 
         final Application application = ApplicationManager.getApplication();
         if (modifiedClasses.isEmpty()) {
@@ -170,9 +199,18 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
               final RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
               dialog.show();
               if (!dialog.isOK()) {
+                for (DebuggerSession session : modifiedClasses.keySet()) {
+                  session.setModifiedClassesScanRequired(true);
+                }
                 return;
               }
-              modifiedClasses.keySet().retainAll(dialog.getSessionsToReload());
+              final Set<DebuggerSession> toReload = new HashSet<DebuggerSession>(dialog.getSessionsToReload());
+              for (DebuggerSession session : modifiedClasses.keySet()) {
+                if (!toReload.contains(session)) {
+                  session.setModifiedClassesScanRequired(true);
+                }
+              }
+              modifiedClasses.keySet().retainAll(toReload);
             }
             else {
               if (shouldDisplayHangWarning) {
@@ -191,6 +229,9 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent{
                   }
                 );
                 if (answer == DialogWrapper.CANCEL_EXIT_CODE) {
+                  for (DebuggerSession session : modifiedClasses.keySet()) {
+                    session.setModifiedClassesScanRequired(true);
+                  }
                   return;
                 }
               }

@@ -107,6 +107,8 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private final Set<ThreadReferenceProxyImpl> mySteppingThroughThreads = new HashSet<ThreadReferenceProxyImpl>();
   protected final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
+  private boolean myModifiedClassesScanRequired = false;
+
   public boolean isSteppingThrough(ThreadReferenceProxyImpl threadProxy) {
     return mySteppingThroughThreads.contains(threadProxy);
   }
@@ -115,6 +117,14 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public GlobalSearchScope getSearchScope() {
     LOG.assertTrue(mySearchScope != null, "Accessing Session's search scope before its initialization");
     return mySearchScope;
+  }
+
+  public boolean isModifiedClassesScanRequired() {
+    return myModifiedClassesScanRequired;
+  }
+
+  public void setModifiedClassesScanRequired(boolean modifiedClassesScanRequired) {
+    myModifiedClassesScanRequired = modifiedClassesScanRequired;
   }
 
   private class MyDebuggerStateManager extends DebuggerStateManager {
