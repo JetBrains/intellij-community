@@ -1,14 +1,16 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import org.jetbrains.annotations.Nls;
@@ -54,7 +56,7 @@ public class PyRedeclarationInspection extends PyInspection {
       return PyBundle.message("GNAME.item");
     }
 
-    private void _checkAbove(PyElement node, String kind) {
+    private void _checkAbove(PyElement node) {
       String name = node.getName();
       if (name != null) {
         ResolveProcessor proc = new ResolveProcessor(node.getName());
@@ -62,10 +64,13 @@ public class PyRedeclarationInspection extends PyInspection {
         PsiElement found = proc.getResult();
         // TODO: check if the redefined name is used somehow
         if (found != null && ! (found instanceof PyTargetExpression)) {
-          registerProblem(
-            node.getNode().findChildByType(PyTokenTypes.IDENTIFIER).getPsi(),
-            PyBundle.message("INSP.shadows.same.named.$0.above", _getKind(found))
-          );
+          final ASTNode identifier = node.getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+          if (identifier != null) {
+            registerProblem(
+              identifier.getPsi(),
+              PyBundle.message("INSP.shadows.same.named.$0.above", _getKind(found))
+            );
+          }
           //registerProblem(prev.getNode().findChildByType(PyTokenTypes.IDENTIFIER).getPsi(), "Overridden by same-named " + kind + " below");
         }
       }
@@ -75,17 +80,17 @@ public class PyRedeclarationInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(final PyFunction node) {
-      _checkAbove(node, PyBundle.message("GNAME.function"));
+      _checkAbove(node);
     }
 
     @Override
     public void visitPyTargetExpression(final PyTargetExpression node) {
-      _checkAbove(node, PyBundle.message("GNAME.var"));
+      _checkAbove(node);
     }
 
     @Override
     public void visitPyClass(final PyClass node) {
-      _checkAbove(node, PyBundle.message("GNAME.class"));
+      _checkAbove(node);
     }
   }
 }
