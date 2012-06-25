@@ -59,14 +59,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentWeakHashMap;
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import org.jetbrains.annotations.NonNls;
@@ -77,21 +76,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 
-public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
+public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManager {
   @NotNull public static final Icon ICON = AllIcons.Modules.Annotation;
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
-  @NotNull private final ConcurrentMap<String, List<XmlFile>> myExternalAnnotations = new ConcurrentWeakValueHashMap<String, List<XmlFile>>();
   @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
-  @NotNull private static final List<XmlFile> NULL = new ArrayList<XmlFile>(0);
-  private final PsiManager myPsiManager;
 
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
-    myPsiManager = psiManager;
+    super(psiManager);
     final MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
@@ -102,7 +97,8 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     });
   }
 
-  private boolean hasAnyAnnotationsRoots() {
+  @Override
+  protected boolean hasAnyAnnotationsRoots() {
     if (myHasAnyAnnotationsRoots == ThreeState.UNSURE) {
       final Module[] modules = ModuleManager.getInstance(myPsiManager.getProject()).getModules();
       for (Module module : modules) {
@@ -117,83 +113,6 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       myHasAnyAnnotationsRoots = ThreeState.NO;
     }
     return myHasAnyAnnotationsRoots == ThreeState.YES;
-  }
-
-  @Override
-  @Nullable
-  public PsiAnnotation findExternalAnnotation(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN) {
-    return collectExternalAnnotations(listOwner).get(annotationFQN);
-  }
-
-  @Override
-  @Nullable
-  public PsiAnnotation[] findExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
-    final Map<String, PsiAnnotation> result = collectExternalAnnotations(listOwner);
-    return result.isEmpty() ? null : result.values().toArray(new PsiAnnotation[result.size()]);
-  }
-
-  private final Map<PsiModifierListOwner, Map<String, PsiAnnotation>> cache = new ConcurrentWeakHashMap<PsiModifierListOwner, Map<String, PsiAnnotation>>();
-  @NotNull
-  private Map<String, PsiAnnotation> collectExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
-    if (!hasAnyAnnotationsRoots()) return Collections.emptyMap();
-
-    Map<String, PsiAnnotation> map = cache.get(listOwner);
-    if (map == null) {
-      map = doCollect(listOwner);
-      cache.put(listOwner, map);
-    }
-    return map;
-  }
-
-  private Map<String, PsiAnnotation> doCollect(@NotNull PsiModifierListOwner listOwner) {
-    final List<XmlFile> files = findExternalAnnotationsFiles(listOwner);
-    if (files == null) {
-      return Collections.emptyMap();
-    }
-    final Map<String, PsiAnnotation> result = new HashMap<String, PsiAnnotation>();
-    for (XmlFile file : files) {
-      if (!file.isValid()) continue;
-      final XmlDocument document = file.getDocument();
-      if (document == null) continue;
-      final XmlTag rootTag = document.getRootTag();
-      if (rootTag == null) continue;
-      final String externalName = getExternalName(listOwner, false);
-      final String oldExternalName = getNormalizedExternalName(listOwner);
-      for (final XmlTag tag : rootTag.getSubTags()) {
-        final String className = tag.getAttributeValue("name");
-        if (!Comparing.strEqual(className, externalName) && !Comparing.strEqual(className, oldExternalName)) {
-          continue;
-        }
-        for (XmlTag annotationTag : tag.getSubTags()) {
-          final String annotationFQN = annotationTag.getAttributeValue("name");
-          final StringBuilder buf = new StringBuilder();
-          for (XmlTag annotationParameter : annotationTag.getSubTags()) {
-            buf.append(",");
-            final String nameValue = annotationParameter.getAttributeValue("name");
-            if (nameValue != null) {
-              buf.append(nameValue).append("=");
-            }
-            buf.append(StringUtil.unescapeXml(annotationParameter.getAttributeValue("val")));
-          }
-          final String annotationText =
-            "@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(), ",") + ")" : "");
-          try {
-            result.put(annotationFQN,
-                       JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory().createAnnotationFromText(
-                         annotationText, null));
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-        }
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  private static String getExternalName(PsiModifierListOwner listOwner, boolean showParamName) {
-    return PsiFormatUtil.getExternalName(listOwner, showParamName, Integer.MAX_VALUE);
   }
 
 
@@ -427,10 +346,6 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
   }
 
-  private void dropCache() {
-    cache.clear();
-  }
-
   @Override
   @NotNull
   public AnnotationPlace chooseAnnotationsPlace(@NotNull final PsiElement element) {
@@ -620,6 +535,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     return null;
   }
 
+  @Override
   @NotNull
   protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
     final List<OrderEntry> entries = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex().getOrderEntriesForFile(
@@ -638,84 +554,6 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       }
     }
     return result;
-  }
-
-  @Nullable
-  private List<XmlFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
-    final PsiFile containingFile = listOwner.getContainingFile();
-    if (!(containingFile instanceof PsiJavaFile)) {
-      return null;
-    }
-    final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
-    final String packageName = javaFile.getPackageName();
-    final VirtualFile virtualFile = containingFile.getVirtualFile();
-    String fqn = getFQN(packageName, virtualFile);
-    if (fqn == null) return null;
-    final List<XmlFile> files = myExternalAnnotations.get(fqn);
-    if (files == NULL) return null;
-    if (files != null) {
-      for (Iterator<XmlFile> it = files.iterator(); it.hasNext();) {
-        if (!it.next().isValid()) it.remove();
-      }
-      return files;
-    }
-
-    if (virtualFile == null) {
-      return null;
-    }
-
-    List<XmlFile> possibleAnnotationsXmls = new ArrayList<XmlFile>();
-    for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
-      final VirtualFile ext = root.findFileByRelativePath(packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
-      if (ext == null) continue;
-      final PsiFile psiFile = myPsiManager.findFile(ext);
-      if (!(psiFile instanceof XmlFile)) continue;
-      possibleAnnotationsXmls.add((XmlFile)psiFile);
-    }
-    if (!possibleAnnotationsXmls.isEmpty()) {
-      myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
-      return possibleAnnotationsXmls;
-    }
-    myExternalAnnotations.put(fqn, NULL);
-    return null;
-  }
-
-  @Nullable
-  private static String getFQN(String packageName, @Nullable VirtualFile virtualFile) {
-    if (virtualFile == null) return null;
-    return StringUtil.getQualifiedName(packageName, virtualFile.getNameWithoutExtension());
-  }
-
-  @Nullable
-  private static String getNormalizedExternalName(@NotNull PsiModifierListOwner owner) {
-    String externalName = getExternalName(owner, true);
-    if (externalName != null) {
-      if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(owner, PsiMethod.class);
-        if (method != null) {
-          externalName =
-            externalName.substring(0, externalName.lastIndexOf(' ') + 1) + method.getParameterList().getParameterIndex((PsiParameter)owner);
-        }
-      }
-      final int idx = externalName.indexOf('(');
-      if (idx == -1) return externalName;
-      final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-      try {
-        final int rightIdx = externalName.indexOf(')');
-        final String[] params = externalName.substring(idx + 1, rightIdx).split(",");
-        buf.append(externalName.substring(0, idx + 1));
-        for (String param : params) {
-          param = param.trim();
-          final int spaceIdx = param.indexOf(' ');
-          buf.append(spaceIdx > -1 ? param.substring(0, spaceIdx) : param).append(", ");
-        }
-        return StringUtil.trimEnd(buf.toString(), ", ") + externalName.substring(rightIdx);
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(buf);
-      }
-    }
-    return externalName;
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
