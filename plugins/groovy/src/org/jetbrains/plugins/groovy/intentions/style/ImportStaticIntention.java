@@ -42,21 +42,27 @@ public class ImportStaticIntention extends Intention {
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<PsiElement>("TEMP_REFERENT_USER_DATA");
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, final Project project, final Editor editor)
+    throws IncorrectOperationException {
+    final PsiElement resolved;
+    final String name;
+    final GroovyFile file;
+    final GrImportStatement importStatement;
+    boolean isAnythingShortened;
     if (!(element instanceof GrReferenceExpression)) return;
     final GrReferenceExpression ref = (GrReferenceExpression)element;
-    final PsiElement resolved = ref.resolve();
+    resolved = ref.resolve();
     if (!(resolved instanceof PsiMember)) return;
 
     final PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
     if (containingClass == null) return;
     final String qname = containingClass.getQualifiedName();
-    final String name = ((PsiMember)resolved).getName();
+    name = ((PsiMember)resolved).getName();
     if (name == null) return;
 
     final PsiFile containingFile = element.getContainingFile();
     if (!(containingFile instanceof GroovyFile)) return;
-    final GroovyFile file = (GroovyFile)containingFile;
+    file = (GroovyFile)containingFile;
     file.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitReferenceExpression(GrReferenceExpression expression) {
@@ -70,19 +76,22 @@ public class ImportStaticIntention extends Intention {
       }
     });
 
-    final GrImportStatement importStatement =
-      GroovyPsiElementFactory.getInstance(project).createImportStatementFromText(qname + "." + name, true, false, null);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+    final GrImportStatement tempImport = factory.createImportStatementFromText(qname + "." + name, true, false, null);
+    importStatement = file.addImport(tempImport);
 
-
-    file.addImport(importStatement);
-
+    isAnythingShortened = false;
     for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
       final PsiElement refElement = reference.getElement();
       if (refElement instanceof GrQualifiedReference<?>) {
-        GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)refElement);
+        isAnythingShortened |= GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)refElement);
       }
     }
 
+    if (!isAnythingShortened) {
+      importStatement.delete();
+      return;
+    }
 
     file.accept(new GroovyRecursiveElementVisitor() {
       @Override
