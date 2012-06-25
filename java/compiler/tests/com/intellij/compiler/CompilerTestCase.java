@@ -7,9 +7,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +15,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
@@ -353,8 +352,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
   }
 
   protected void setupMainModuleRootModel() {
-    final ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    rootModel.clear();
+    final Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    PsiTestUtil.removeAllRoots(myModule, jdk);
 
     final VirtualFile libDir = myDataDir.findChild("lib");
     if (libDir != null) {
@@ -362,37 +361,22 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         fail(libDir.getPath() + " is expected to be a directory");
       }
       final VirtualFile[] children = libDir.getChildren();
-      final List<VirtualFile> jars = new ArrayList<VirtualFile>();
+      List<String> urls = new ArrayList<String>();
       for (VirtualFile child : children) {
         if (!child.isDirectory() && (child.getName().endsWith(".jar") || child.getName().endsWith(".zip"))) {
           final String url = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, child.getPath()) + JarFileSystem.JAR_SEPARATOR;
-          final VirtualFile jarVirtualFile = VirtualFileManager.getInstance().findFileByUrl(url);
-          if (jarVirtualFile != null) {
-            jars.add(jarVirtualFile);
-          }
+          urls.add(url);
         }
       }
-      if (!jars.isEmpty()) {
-        final LibraryTable libraryTable = rootModel.getModuleLibraryTable();
-        final Library library = libraryTable.createLibrary("projectlib");
-        final Library.ModifiableModel libraryModifiableModel = library.getModifiableModel();
-        for (final VirtualFile jar : jars) {
-          libraryModifiableModel.addRoot(jar, OrderRootType.CLASSES);
-        }
-        libraryModifiableModel.commit();
+      if (!urls.isEmpty()) {
+        ModuleRootModificationUtil.addModuleLibrary(myModule, "module-lib", urls, Collections.<String>emptyList());
       }
     }
     // configure source and output path
-    final ContentEntry contentEntry = rootModel.addContentEntry(myModuleRoot);
-    contentEntry.addSourceFolder(mySourceDir, false);
-    final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
-    compilerModuleExtension.setCompilerOutputPath(myClassesDir);
-    compilerModuleExtension.inheritCompilerOutputPath(false);
-    compilerModuleExtension.setExcludeOutput(shouldExcludeOutputFromProject());
-
-    final Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    rootModel.setSdk(jdk);
-    rootModel.commit();
+    PsiTestUtil.addContentRoot(myModule, myModuleRoot);
+    PsiTestUtil.addSourceRoot(myModule, mySourceDir);
+    PsiTestUtil.setCompilerOutputPath(myModule, myClassesDir.getUrl(), false);
+    PsiTestUtil.setExcludeCompileOutput(myModule, shouldExcludeOutputFromProject());
   }
 
   protected VirtualFile getDataRootDir(final String testName) {
