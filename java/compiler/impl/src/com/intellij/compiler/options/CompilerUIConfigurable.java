@@ -18,13 +18,11 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.*;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,10 +47,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
-    final boolean isServerOptionEnabled = Registry.is("compiler.out-of-process.build.enabled") || ApplicationManager.getApplication().isInternal();
-    myCbUseCompileServer.setVisible(isServerOptionEnabled);
-    myCbMakeProjectOnSave.setVisible(isServerOptionEnabled);
-    myCbAllowAutomakeWhileRunningApplication.setVisible(isServerOptionEnabled);
 
     myPatternLegendLabel.setText("<html>" +
                                  "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
