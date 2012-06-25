@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.rmi.Remote;
@@ -59,34 +60,23 @@ public class RemoteUtil {
       }
     };
 
+  @Nullable
+  public static <T> T castToRemote(final Object object, final Class<T> clazz) {
+    if (!Proxy.isProxyClass(object.getClass())) return null;
+    final InvocationHandler handler = Proxy.getInvocationHandler(object);
+    if (handler instanceof RemoteInvocationHandler) {
+      final RemoteInvocationHandler rih = (RemoteInvocationHandler)handler;
+      if (clazz.isInstance(rih.myRemote)) {
+        return (T)rih.myRemote;
+      }
+    }
+    return null;
+  }
+
   public static <T> T castToLocal(final Object remote, final Class<T> clazz) {
     final ClassLoader loader = clazz.getClassLoader();
-    Object proxy = Proxy.newProxyInstance(loader, new Class[]{clazz}, new InvocationHandler() {
-      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getDeclaringClass() == Object.class) {
-          return method.invoke(remote, args);
-        }
-        else {
-          Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(remote.getClass(), clazz)).get(method);
-          if (m == null) throw new NoSuchMethodError(method.getName() + " in " + remote.getClass());
-          try {
-            Object result = m.invoke(remote, args);
-            if (result instanceof Remote) {
-              return castToLocal(result, tryFixReturnType(result, method.getReturnType(), loader));
-            }
-            return result;
-          }
-          catch (InvocationTargetException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof RuntimeException) throw cause;
-            if (cause instanceof Error) throw cause;
-            if (canThrow(cause, method)) throw cause;
-            throw new RuntimeException(cause);
-          }
-        }
-      }
-    });
-    return (T)proxy;
+    //noinspection unchecked
+    return (T)Proxy.newProxyInstance(loader, new Class[]{clazz}, new RemoteInvocationHandler(remote, clazz, loader));
   }
 
   private static Class<?> tryFixReturnType(Object result, Class<?> returnType, ClassLoader loader) throws Exception {
@@ -169,5 +159,41 @@ public class RemoteUtil {
       }
     }
     return e;
+  }
+
+  private static class RemoteInvocationHandler implements InvocationHandler {
+    private final Object myRemote;
+    private final Class<?> myClazz;
+    private final ClassLoader myLoader;
+
+    public RemoteInvocationHandler(Object remote, Class<?> clazz, ClassLoader loader) {
+      myRemote = remote;
+      myClazz = clazz;
+      myLoader = loader;
+    }
+
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      if (method.getDeclaringClass() == Object.class) {
+        return method.invoke(myRemote, args);
+      }
+      else {
+        Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(myRemote.getClass(), myClazz)).get(method);
+        if (m == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
+        try {
+          Object result = m.invoke(myRemote, args);
+          if (result instanceof Remote) {
+            return castToLocal(result, tryFixReturnType(result, method.getReturnType(), myLoader));
+          }
+          return result;
+        }
+        catch (InvocationTargetException e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof RuntimeException) throw cause;
+          if (cause instanceof Error) throw cause;
+          if (canThrow(cause, method)) throw cause;
+          throw new RuntimeException(cause);
+        }
+      }
+    }
   }
 }
