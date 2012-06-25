@@ -50,15 +50,15 @@ public class GrReferenceAdjuster {
     process(element, start, end, addImports, incomplete);
   }
 
-  public static void shortenReference(GrQualifiedReference ref) {
+  public static <T extends PsiElement> void shortenReference(GrQualifiedReference<T> ref) {
     shortenReferenceInner(ref, true, false);
     final TextRange range = ref.getTextRange();
     process(ref, range.getStartOffset(), range.getEndOffset(), true, false);
   }
 
   private static void process(PsiElement element, int start, int end, boolean addImports, boolean incomplete) {
-    if (element instanceof GrQualifiedReference && ((GrQualifiedReference)element).resolve() instanceof PsiClass) {
-      shortenReferenceInner((GrQualifiedReference)element, addImports, incomplete);
+    if (element instanceof GrQualifiedReference<?> && ((GrQualifiedReference)element).resolve() instanceof PsiClass) {
+      shortenReferenceInner((GrQualifiedReference<?>)element, addImports, incomplete);
     }
 
     else if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() instanceof GrThisSuperReferenceExpression) {
@@ -141,6 +141,7 @@ public class GrReferenceAdjuster {
   }
 
 
+  @SuppressWarnings("unchecked")
   private static <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(GrQualifiedReference<Qualifier> ref) {
     if (ref.getParent() instanceof GrMethodCall) {
       final GrMethodCall copy = ((GrMethodCall)ref.getParent().copy());

@@ -20,7 +20,6 @@ import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -151,7 +150,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
       PsiUtil.escalateVisibility(field, replaced);
     }
     if (replaced instanceof GrReferenceExpression) {
-      GrReferenceAdjuster.shortenReference((GrQualifiedReference)replaced);
+      GrReferenceAdjuster.shortenReference((GrReferenceExpression)replaced);
     }
   }
 

@@ -287,8 +287,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     } else {
       replaced = occurrence.replace(newExpr);
     }
-    if (replaced instanceof GrQualifiedReference) {
-      GrReferenceAdjuster.shortenReference((GrQualifiedReference)replaced);
+    if (replaced instanceof GrQualifiedReference<?>) {
+      GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)replaced);
     }
   }
 

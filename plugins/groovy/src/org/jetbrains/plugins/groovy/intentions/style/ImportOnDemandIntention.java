@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.intentions.style;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -39,8 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
  * @author Maxim.Medvedev
  */
 public class ImportOnDemandIntention extends Intention {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.intentions.style.ImportOnDemandIntention");
-
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
@@ -62,8 +59,8 @@ public class ImportOnDemandIntention extends Intention {
       final PsiElement refElement = reference.getElement();
       if (refElement == null) continue;
       final PsiElement parent = refElement.getParent();
-      if (parent instanceof GrQualifiedReference) {
-        GrReferenceAdjuster.shortenReference((GrQualifiedReference)parent);
+      if (parent instanceof GrQualifiedReference<?>) {
+        GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)parent);
       }
     }
   }
