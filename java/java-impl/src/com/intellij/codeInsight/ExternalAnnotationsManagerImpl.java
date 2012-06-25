@@ -156,6 +156,21 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     }
   }
 
+  @Nullable
+  protected List<XmlFile> findExternalAnnotationsXmlFiles(@NotNull PsiModifierListOwner listOwner) {
+    List<PsiFile> psiFiles = findExternalAnnotationsFiles(listOwner);
+    if (psiFiles == null) {
+      return null;
+    }
+    List<XmlFile> xmlFiles = new ArrayList<XmlFile>();
+    for (PsiFile psiFile : psiFiles) {
+      if (psiFile instanceof XmlFile) {
+        xmlFiles.add((XmlFile)psiFile);
+      }
+    }
+    return xmlFiles;
+  }
+
   private void setupRootAndAnnotateExternally(@NotNull final OrderEntry entry,
                                               @NotNull Project project,
                                               @NotNull final PsiModifierListOwner listOwner,
@@ -175,7 +190,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       @Override
       protected void run(final Result result) throws Throwable {
         appendChosenAnnotationsRoot(entry, file);
-        final List<XmlFile> xmlFiles = findExternalAnnotationsFiles(listOwner);
+        final List<XmlFile> xmlFiles = findExternalAnnotationsXmlFiles(listOwner);
         if (xmlFiles != null) { //file already exists under appeared content root
           if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFiles.get(0))) return;
           annotateExternally(listOwner, annotationFQName, xmlFiles.get(0), fromFile, value);
@@ -183,7 +198,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
         else {
           final XmlFile annotationsXml = createAnnotationsXml(file, packageName);
           if (annotationsXml != null) {
-            final List<XmlFile> createdFiles = new ArrayList<XmlFile>();
+            final List<PsiFile> createdFiles = new ArrayList<PsiFile>();
             createdFiles.add(annotationsXml);
             String fqn = getFQN(packageName, virtualFile);
             if (fqn != null) {
@@ -249,7 +264,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                                   @NotNull final PsiFile fromFile,
                                   final PsiNameValuePair[] value) {
     final XmlFile[] annotationsXml = new XmlFile[1];
-    List<XmlFile> xmlFiles = findExternalAnnotationsFiles(listOwner);
+    List<XmlFile> xmlFiles = findExternalAnnotationsXmlFiles(listOwner);
     if (xmlFiles != null) {
       for (XmlFile xmlFile : xmlFiles) {
         final VirtualFile vXmlFile = xmlFile.getVirtualFile();
@@ -263,7 +278,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       xmlFiles = new ArrayList<XmlFile>();
     }
 
-    final List<XmlFile> annotationFiles = new ArrayList<XmlFile>(xmlFiles);
+    final List<PsiFile> annotationFiles = new ArrayList<PsiFile>(xmlFiles);
     new WriteCommandAction(project) {
       @Override
       protected void run(final Result result) throws Throwable {
@@ -294,7 +309,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
   @Override
   public boolean deannotate(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN) {
     try {
-      final List<XmlFile> files = findExternalAnnotationsFiles(listOwner);
+      final List<XmlFile> files = findExternalAnnotationsXmlFiles(listOwner);
       if (files == null) {
         return false;
       }
