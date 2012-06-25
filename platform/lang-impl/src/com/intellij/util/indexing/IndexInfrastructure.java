@@ -39,6 +39,8 @@ public class IndexInfrastructure {
   private static final int VERSION = 9;
   private static final ConcurrentHashMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = new ConcurrentHashMap<ID<?, ?>, Long>();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+  public static final long INVALID_STAMP = -1L;
+  public static final long INVALID_STAMP2 = -2L;
 
   private IndexInfrastructure() {
   }

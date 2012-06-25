@@ -50,16 +50,14 @@ public class IndexingStamp {
     private Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
         try {
-          int count = DataInputOutputUtil.readINT(stream);
-          if (count > 0) {
-            myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(count);
-            for (int i = 0; i < count; i++) {
-                ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
-                long timestamp = DataInputOutputUtil.readTIME(stream);
-                if (id != null) {
-                  myIndexStamps.put(id, timestamp);
-                }
-              }
+          long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
+          while(stream.available() > 0) {
+            ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
+            if (id != null) {
+              long stamp = IndexInfrastructure.getIndexCreationStamp(id);
+              if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+              if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
+            }
           }
         }
         finally {
@@ -70,16 +68,22 @@ public class IndexingStamp {
 
     private void writeToStream(final DataOutputStream stream) throws IOException {
       if (myIndexStamps != null) {
-        final int size = myIndexStamps.size();
-        final int[] count = new int[]{0};
-        DataInputOutputUtil.writeINT(stream, size);
+        final long[] dominatingIndexStamp = new long[1];
+        myIndexStamps.forEachEntry(
+          new TObjectLongProcedure<ID<?, ?>>() {
+            @Override
+            public boolean execute(ID<?, ?> a, long b) {
+              dominatingIndexStamp[0] = Math.max(dominatingIndexStamp[0], b);
+              return true;
+            }
+          }
+        );
+        DataInputOutputUtil.writeTIME(stream, dominatingIndexStamp[0]);
         myIndexStamps.forEachEntry(new TObjectLongProcedure<ID<?, ?>>() {
           @Override
           public boolean execute(final ID<?, ?> id, final long timestamp) {
             try {
               DataInputOutputUtil.writeINT(stream, id.getUniqueId());
-              DataInputOutputUtil.writeTIME(stream, timestamp);
-              count[0]++;
               return true;
             }
             catch (IOException e) {
@@ -87,7 +91,6 @@ public class IndexingStamp {
             }
           }
         });
-        assert count[0] == size;
       }
     }
 
@@ -97,9 +100,13 @@ public class IndexingStamp {
 
     public void set(ID<?, ?> id, long tmst) {
       try {
-        if (myIndexStamps == null) {
-          myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5);
+        if (tmst < 0) {
+          if (myIndexStamps == null) return;
+          myIndexStamps.remove(id);
+          return;
         }
+        if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+
         myIndexStamps.put(id, tmst);
       }
       finally {

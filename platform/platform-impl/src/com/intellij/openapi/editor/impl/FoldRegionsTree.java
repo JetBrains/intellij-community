@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.util.*;
 */
 abstract class FoldRegionsTree {
 
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   public static final boolean DEBUG = Boolean.getBoolean("idea.editor.debug.folding");
   
   private FoldRegion[] myCachedVisible;
@@ -163,8 +164,9 @@ abstract class FoldRegionsTree {
   boolean addRegion(FoldRegion range) {
     // During batchProcessing elements are inserted in ascending order,
     // binary search find acceptable insertion place first time
-    int fastIndex = myCachedLastIndex != -1 && isBatchFoldingProcessing()
-                    ? myCachedLastIndex + 1 : Collections.binarySearch(myRegions, range, RangeMarker.BY_START_OFFSET);
+    final boolean canUseCachedValue =
+      myCachedLastIndex != -1 && isBatchFoldingProcessing() && myRegions.get(myCachedLastIndex).getStartOffset() <= range.getStartOffset();
+    int fastIndex = canUseCachedValue ? myCachedLastIndex + 1 : Collections.binarySearch(myRegions, range, RangeMarker.BY_START_OFFSET);
     if (fastIndex < 0) fastIndex = -fastIndex - 1;
     
     // There is a possible case that given range is the first at the current batch iteration. It's also possible that it

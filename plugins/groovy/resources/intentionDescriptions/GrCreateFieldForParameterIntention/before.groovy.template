@@ -1,0 +1,3 @@
+class X {
+  def X(int <spot>foo</spot>) {}
+}

@@ -61,6 +61,10 @@ public class GrReferenceAdjuster {
       shortenReferenceInner((GrQualifiedReference)element, addImports, incomplete);
     }
 
+    else if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() instanceof GrThisSuperReferenceExpression) {
+      shortenReferenceInner((GrReferenceExpression)element, addImports, incomplete);
+    }
+
     PsiElement child = element.getFirstChild();
     while (child != null) {
       final TextRange range = child.getTextRange();

@@ -75,6 +75,8 @@ public class DefaultHighlighter {
   @NonNls
   static final String CLASS_REFERENCE_ID = "Class";
   @NonNls
+  static final String TYPE_PARAMETER_ID = "Type parameter";
+  @NonNls
   static final String INSTANCE_PROPERTY_REFERENCE_ID = "Instance property reference ID";
   @NonNls
   static final String STATIC_PROPERTY_REFERENCE_ID = "Static property reference ID";
@@ -129,6 +131,9 @@ public class DefaultHighlighter {
 
   public static TextAttributesKey CLASS_REFERENCE =
     TextAttributesKey.createTextAttributesKey(CLASS_REFERENCE_ID, HighlighterColors.TEXT.getDefaultAttributes().clone());
+
+  public static TextAttributesKey TYPE_PARAMETER =
+    TextAttributesKey.createTextAttributesKey(TYPE_PARAMETER_ID, CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES.getDefaultAttributes().clone());
 
   public static final TextAttributes INSTANCE_PROPERTY_REFERENCE_ATTRIBUTES = INSTANCE_FIELD.getDefaultAttributes().clone();
   public static final TextAttributes STATIC_PROPERTY_REFERENCE_ATTRIBUTES = STATIC_FIELD.getDefaultAttributes().clone();

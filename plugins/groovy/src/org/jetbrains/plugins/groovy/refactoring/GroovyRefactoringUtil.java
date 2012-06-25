@@ -33,9 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
@@ -682,5 +680,113 @@ public abstract class GroovyRefactoringUtil {
   public static GrStatementOwner getDeclarationOwner(GrStatement statement) {
     PsiElement parent = statement.getParent();
     return parent instanceof GrStatementOwner ? ((GrStatementOwner) parent) : null;
+  }
+
+  @Nullable
+  public static PsiType getType(@Nullable PsiParameter myParameter) {
+    if (myParameter == null) return null;
+    PsiType type = myParameter.getType();
+    return type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
+  }
+
+    @Nullable
+  public static PsiType getSubstitutedType(@Nullable GrParameter parameter) {
+    if (parameter == null) return null;
+
+    final PsiType type = getType(parameter);
+
+    if (type instanceof PsiArrayType) {
+      return type;
+    }
+
+    final PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(type);
+    final PsiClass psiClass = result.getElement();
+    if (psiClass == null) return type;
+    final HashSet<PsiTypeParameter> usedTypeParameters = new HashSet<PsiTypeParameter>();
+    collectTypeParameters(usedTypeParameters, parameter);
+    for (Iterator<PsiTypeParameter> iterator = usedTypeParameters.iterator(); iterator.hasNext(); ) {
+      PsiTypeParameter usedTypeParameter = iterator.next();
+      if (parameter.getDeclarationScope() != usedTypeParameter.getOwner()) {
+        iterator.remove();
+      }
+    }
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parameter.getProject());
+    PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+    for (PsiTypeParameter usedTypeParameter : usedTypeParameters) {
+      subst = subst.put(usedTypeParameter, TypeConversionUtil.typeParameterErasure(usedTypeParameter));
+    }
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    final Map<PsiTypeParameter, PsiType> typeMap = result.getSubstitutor().getSubstitutionMap();
+    for (PsiTypeParameter typeParameter : typeMap.keySet()) {
+      final PsiType psiType = typeMap.get(typeParameter);
+      substitutor = substitutor.put(typeParameter, psiType != null ? subst.substitute(psiType) : null);
+    }
+    return psiClass instanceof PsiTypeParameter ? subst.substitute((PsiTypeParameter)psiClass) : elementFactory.createType(psiClass, substitutor);
+  }
+
+  public static void collectTypeParameters(final Set<PsiTypeParameter> used, final GroovyPsiElement element) {
+    element.accept(new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitCodeReferenceElement(GrCodeReferenceElement reference) {
+        super.visitCodeReferenceElement(reference);
+        if (reference.getQualifier() == null) {
+          final PsiElement resolved = reference.resolve();
+          if (resolved instanceof PsiTypeParameter) {
+            final PsiTypeParameter typeParameter = (PsiTypeParameter)resolved;
+            if (PsiTreeUtil.isAncestor(typeParameter.getOwner(), element, false)) {
+              used.add(typeParameter);
+            }
+          }
+        }
+      }
+
+      @Override
+      public void visitExpression(final GrExpression expression) {
+        super.visitExpression(expression);
+        final PsiType type = expression.getType();
+        if (type != null) {
+          final TypeParameterSearcher searcher = new TypeParameterSearcher();
+          type.accept(searcher);
+          for (PsiTypeParameter typeParam : searcher.myTypeParams) {
+            if (PsiTreeUtil.isAncestor(typeParam.getOwner(), element, false)) {
+              used.add(typeParam);
+            }
+          }
+        }
+      }
+
+      class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
+        private final Set<PsiTypeParameter> myTypeParams = new HashSet<PsiTypeParameter>();
+
+        public Boolean visitType(final PsiType type) {
+          return false;
+        }
+
+        public Boolean visitArrayType(final PsiArrayType arrayType) {
+          return arrayType.getComponentType().accept(this);
+        }
+
+        public Boolean visitClassType(final PsiClassType classType) {
+          final PsiClass aClass = classType.resolve();
+          if (aClass instanceof PsiTypeParameter) {
+            myTypeParams.add((PsiTypeParameter)aClass);
+          }
+
+          final PsiType[] types = classType.getParameters();
+          for (final PsiType psiType : types) {
+            psiType.accept(this);
+          }
+          return false;
+        }
+
+        public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
+          final PsiType bound = wildcardType.getBound();
+          if (bound != null) {
+            bound.accept(this);
+          }
+          return false;
+        }
+      }
+    });
   }
 }
