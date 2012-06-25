@@ -17,6 +17,7 @@ import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -109,13 +110,13 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return false;
   }
 
-  private static final FileAttribute PERSISTENCE = new FileAttribute("python_language_level_persistence", 1, true);
+  private static final FileAttribute PERSISTENCE = new FileAttribute("python_language_level_persistence", 2, true);
 
   public void persistAttribute(VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
     if (iStream != null) {
       try {
-        final int oldLevelOrdinal = iStream.readInt();
+        final int oldLevelOrdinal = DataInputOutputUtil.readINT(iStream);
         if (oldLevelOrdinal == level.ordinal()) return;
       }
       finally {
@@ -124,7 +125,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     }
 
     final DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir);
-    oStream.writeInt(level.ordinal());
+    DataInputOutputUtil.writeINT(oStream, level.ordinal());
     oStream.close();
 
     for (VirtualFile child : fileOrDir.getChildren()) {
