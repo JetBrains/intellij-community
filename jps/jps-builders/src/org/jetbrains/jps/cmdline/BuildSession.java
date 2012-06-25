@@ -164,7 +164,12 @@ final class BuildSession implements Runnable, CanceledStatus {
     boolean forceCleanCaches = false;
     ProjectDescriptor pd;
     final Project project = loadProject(projectPath);
+
     final File dataStorageRoot = Utils.getDataStorageRoot(project);
+    if (!dataStorageRoot.exists()) {
+      // invoked the very first time for this project. Force full rebuild
+      buildType = BuildType.PROJECT_REBUILD;
+    }
 
     final boolean inMemoryMappingsDelta = System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
     ProjectTimestamps projectTimestamps = null;
