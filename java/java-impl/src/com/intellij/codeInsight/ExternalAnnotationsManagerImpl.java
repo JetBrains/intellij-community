@@ -620,9 +620,28 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     return null;
   }
 
+  @NotNull
+  protected List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile) {
+    final List<OrderEntry> entries = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex().getOrderEntriesForFile(
+      libraryFile);
+    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (OrderEntry entry : entries) {
+      if (entry instanceof ModuleOrderEntry) {
+        continue;
+      }
+      final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
+      for (String url : externalUrls) {
+        VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (root != null) {
+          result.add(root);
+        }
+      }
+    }
+    return result;
+  }
+
   @Nullable
   private List<XmlFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
-    final Project project = myPsiManager.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
       return null;
@@ -646,21 +665,12 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
 
     List<XmlFile> possibleAnnotationsXmls = new ArrayList<XmlFile>();
-    final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-    for (OrderEntry entry : entries) {
-      if (entry instanceof ModuleOrderEntry) {
-        continue;
-      }
-      final String[] externalUrls = AnnotationOrderRootType.getUrls(entry);
-      for (String url : externalUrls) {
-        VirtualFile root = VirtualFileManager.getInstance().findFileByUrl(url);
-        if (root == null) continue;
-        final VirtualFile ext = root.findFileByRelativePath(packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
-        if (ext == null) continue;
-        final PsiFile psiFile = myPsiManager.findFile(ext);
-        if (!(psiFile instanceof XmlFile)) continue;
-        possibleAnnotationsXmls.add((XmlFile)psiFile);
-      }
+    for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
+      final VirtualFile ext = root.findFileByRelativePath(packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
+      if (ext == null) continue;
+      final PsiFile psiFile = myPsiManager.findFile(ext);
+      if (!(psiFile instanceof XmlFile)) continue;
+      possibleAnnotationsXmls.add((XmlFile)psiFile);
     }
     if (!possibleAnnotationsXmls.isEmpty()) {
       myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
