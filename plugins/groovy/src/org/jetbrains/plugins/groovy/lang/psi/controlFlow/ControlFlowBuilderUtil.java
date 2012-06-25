@@ -16,9 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -160,4 +165,15 @@ public class ControlFlowBuilderUtil {
     }
   }
 
+  public static boolean isInstanceOfBinary(GrBinaryExpression binary) {
+    if (binary.getOperationTokenType() == GroovyTokenTypes.kIN) {
+      GrExpression left = binary.getLeftOperand();
+      GrExpression right = binary.getRightOperand();
+      if (left instanceof GrReferenceExpression && ((GrReferenceExpression)left).getQualifier() == null &&
+          right instanceof GrReferenceExpression && ((GrReferenceExpression)right).resolve() instanceof PsiClass) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
