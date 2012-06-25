@@ -55,6 +55,6 @@ a = func('some '<warning descr="Unnecessary backslash in expression."> \</warnin
 
 
 #PY-6589
-a = ( <warning descr="Unnecessary backslash in expression."> \</warning>
-(1, <warning descr="Unnecessary backslash in expression."> \</warning>
+a = (<warning descr="Unnecessary backslash in expression.">  \</warning>
+(1,<warning descr="Unnecessary backslash in expression."> \</warning>
 2),2)
