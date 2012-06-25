@@ -365,6 +365,22 @@ class Test {
     assertTrue(fold('test1').expanded)
     assertFalse(fold('test2').expanded)
   }
+
+  public void testUnorderedFoldRegionsRegistration() {
+    def text = '01234567'
+    configure text
+    def foldModel = myFixture.editor.foldingModel as FoldingModelImpl
+    foldModel.runBatchFoldingOperation {
+      def innerFold = foldModel.addFoldRegion(3, 5, '...')
+      def outerFold = foldModel.addFoldRegion(2, 6, '...')
+      innerFold.expanded = false
+      outerFold.expanded = false
+    }
+    def folds = foldModel.fetchVisible()
+    assertEquals(1, folds.length)
+    assertEquals(2, folds[0].startOffset)
+    assertEquals(6, folds[0].endOffset)
+  }
   
   private def configure(String text) {
     myFixture.configureByText("a.java", text)

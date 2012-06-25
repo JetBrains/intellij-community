@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,6 +92,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private int myLastPreferredHeight = -1;
   private Convertor<Integer, Integer> myLineNumberConvertor;
 
+  @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
     myEditor = editor;
     myLineNumberConvertor = Convertor.SELF;
@@ -742,7 +743,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void doForVisibleFoldRegions(@NotNull NullableFunction<FoldRegion, Void> action, int firstVisibleOffset, int lastVisibleOffset) {
-    FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
+    FoldRegion[] visibleFoldRegions = myEditor.getFoldingModel().fetchVisible();
     final Document document = myEditor.getDocument();
     for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
       if (!visibleFoldRegion.isValid()) continue;
@@ -833,7 +834,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     final FoldingGroup group = foldRange.getGroup();
 
-    final boolean drawTop = group == null || ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group, foldRange) == foldRange;
+    final boolean drawTop = group == null || myEditor.getFoldingModel().getFirstRegion(group, foldRange) == foldRange;
     if (!foldRange.isExpanded()) {
       if (y <= clip.y + clip.height && y + height >= clip.y) {
         if (drawTop) {
@@ -861,7 +862,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private int getEndOffset(FoldRegion foldRange) {
     LOG.assertTrue(foldRange.isValid(), foldRange);
     FoldingGroup group = foldRange.getGroup();
-    return group == null ? foldRange.getEndOffset() : ((FoldingModelImpl)myEditor.getFoldingModel()).getEndOffset(group);
+    return group == null ? foldRange.getEndOffset() : myEditor.getFoldingModel().getEndOffset(group);
   }
 
   private void drawDirectedBox(Graphics2D g,
@@ -910,6 +911,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     UIUtil.drawLine(g, anchorX + width / 2, y + 2, anchorX + width / 2, y + width - 2);
   }
 
+  @SuppressWarnings("SuspiciousNameCombination")
   private void drawSquareWithMinus(Graphics2D g,
                                    int anchorX,
                                    int y,
@@ -998,7 +1000,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
-  public int getLineNumberAreaOffset() {
+  public static int getLineNumberAreaOffset() {
     return 0;
   }
 
@@ -1024,6 +1026,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor.getVerticalScrollbarOrientation() != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
   }
 
+  @Nullable
   @Override
   public FoldRegion findFoldingAnchorAt(int x, int y) {
     if (!myEditor.getSettings().isFoldingOutlineShown()) return null;
@@ -1031,11 +1034,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     int anchorX = getFoldingAreaOffset();
     int anchorWidth = getFoldingAnchorWidth();
 
-    FoldRegion[] visibleRanges = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
+    FoldRegion[] visibleRanges = myEditor.getFoldingModel().fetchVisible();
     for (FoldRegion foldRange : visibleRanges) {
       if (!foldRange.isValid()) continue;
       final FoldingGroup group = foldRange.getGroup();
-      if (group != null && ((FoldingModelImpl)myEditor.getFoldingModel()).getFirstRegion(group, foldRange) != foldRange) {
+      if (group != null && myEditor.getFoldingModel().getFirstRegion(group, foldRange) != foldRange) {
         continue;
       }
 
@@ -1080,6 +1083,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       && !myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffsetToUse).isEmpty();
   }
 
+  @SuppressWarnings("SuspiciousNameCombination")
   private Rectangle rectangleByFoldOffset(int foldStart, int anchorWidth, int anchorX) {
     int anchorY = myEditor.visibleLineToY(foldStart) + myEditor.getLineHeight() -
                   myEditor.getDescent() - anchorWidth;
@@ -1139,7 +1143,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           @Override
           public void process(int x, int y, GutterIconRenderer r) {
             xPos.put(x, r);
-            if (renderer == r) {
+            if (renderer == r && r != null) {
               currentPos[0] = x;
               Icon icon = r.getIcon();
               t.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
@@ -1254,6 +1258,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
+  @Nullable
   private ActiveGutterRenderer getActiveRendererByMouseEvent(final MouseEvent e) {
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
