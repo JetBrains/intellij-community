@@ -21,6 +21,7 @@ import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -45,17 +46,10 @@ import java.util.Comparator;
 import java.util.Date;
 
 public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog");
   private static final Comparator<FeatureDescriptor> DISPLAY_NAME_COMPARATOR = new Comparator<FeatureDescriptor>() {
     public int compare(FeatureDescriptor fd1, FeatureDescriptor fd2) {
-      final String displayName1 = fd1.getDisplayName();
-      final String displayName2 = fd2.getDisplayName();
-      if (displayName1 != null && displayName2 != null) {
-        return displayName1.compareTo(displayName2);
-      }
-      if (displayName2 != null){
-        return -1;
-      }
-      return 1;
+      return fd1.getDisplayName().compareTo(fd2.getDisplayName());
     }
   };
   private static final Comparator<FeatureDescriptor> GROUP_NAME_COMPARATOR = new Comparator<FeatureDescriptor>() {
@@ -145,14 +139,14 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     for (String id : registry.getFeatureIds()) {
       features.add(registry.getFeatureDescriptor(id));
     }
-    final TableView table = new TableView(new ListTableModel(COLUMNS, features, 0));
+    final TableView table = new TableView<FeatureDescriptor>(new ListTableModel<FeatureDescriptor>(COLUMNS, features, 0));
 
     JPanel controlsPanel = new JPanel(new VerticalFlowLayout());
 
 
     Application app = ApplicationManager.getApplication();
     long uptime = System.currentTimeMillis() - app.getStartTime();
-    long idletime = app.getIdleTime();
+    long idleTime = app.getIdleTime();
 
     final String uptimeS = FeatureStatisticsBundle.message("feature.statistics.application.uptime",
                                                            ApplicationNamesInfo.getInstance().getProductName(),
@@ -160,23 +154,15 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     final String idleTimeS = FeatureStatisticsBundle .message("feature.statistics.application.idle.time",
                                                               ApplicationNamesInfo.getInstance().getProductName(),
-                                                              DateFormatUtil.formatDuration(idletime));
+                                                              DateFormatUtil.formatDuration(idleTime));
 
     String labelText = uptimeS + ", " + idleTimeS;
-    Date completionDate = FeatureUsageTracker.getInstance().getCompletionStatisticsStartDate();
-    if (completionDate != null) {
-      int spared = FeatureUsageTracker.getInstance().getCharactersSparedByCompletion();
-      String total = spared > 1024 * 1024 ? (spared / 1024 / 1024) + "MB code" :
-                     spared > 1024 ? (spared / 1024) + "KB code" :
-                     spared + " characters";
-
-      long perDayCount = spared / Math.max(1, DateFormatUtil.getDifferenceInDays(completionDate, new Date()) + 1);
-      String perDay = perDayCount > 1024 * 1024 ? (perDayCount / 1024 / 1024) + "MB" :
-                      perDayCount > 1024 ? (perDayCount / 1024) + "KB" :
-                      perDayCount + " characters";
-
-      labelText += "<br>Code completion has saved you from typing at least " + total + "  since " + DateFormatUtil.formatDate(completionDate) +
-                   " (\u2245 " + perDay + " per day)";
+    CompletionStatistics stats = ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics();
+    if (stats.dayCount > 0 && stats.sparedCharacters > 0) {
+      String total = formatCharacterCount(stats.sparedCharacters, true);
+      String perDay = formatCharacterCount(stats.sparedCharacters / stats.dayCount, false);
+      labelText += "<br>Code completion has saved you from typing at least " + total + "  since " + DateFormatUtil.formatDate(stats.startDate) +
+                   " (\u2245" + perDay + " per working day)";
     }
     controlsPanel.add(new JLabel("<html><body>" + labelText + "</body></html>"), BorderLayout.NORTH);
 
@@ -204,11 +190,22 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
           }
         }
         catch (IOException ex) {
+          LOG.info(ex);
         }
       }
     });
 
     return splitter;
+  }
+
+  private static String formatCharacterCount(int count, boolean full) {
+    String result = count > 1024 * 1024 ? (count / 1024 / 1024) + "MB " :
+               count > 1024 ? (count / 1024) + "KB " :
+               count + " characters";
+    if (full && count > 1024) {
+      return result + " code";
+    }
+    return result;
   }
 
   private static String getGroupName(FeatureDescriptor featureDescriptor) {

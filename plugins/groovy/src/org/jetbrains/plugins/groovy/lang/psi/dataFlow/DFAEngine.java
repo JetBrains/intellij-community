@@ -91,6 +91,7 @@ public class DFAEngine<E> {
 
     final boolean forward = myDfa.isForward();
     int[] order = ControlFlowBuilderUtil.postorder(myFlow); //todo for backward?
+    int count = 0;
     for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
       Instruction instr = myFlow[order[i]];
 
@@ -101,7 +102,8 @@ public class DFAEngine<E> {
         visited[instr.num()] = true;
 
         while (!workList.isEmpty()) {
-          if (timeout && tm.getCurrentThreadUserTime() - startTime > ourTimeLimit) return null;
+          count++;
+          if (timeout && count % 50 == 0 && tm.getCurrentThreadUserTime() - startTime > ourTimeLimit) return null;
 
           ProgressManager.checkCanceled();
           final Instruction curr = workList.remove();

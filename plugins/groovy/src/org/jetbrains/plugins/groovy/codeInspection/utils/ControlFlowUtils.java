@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -56,14 +58,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+
 @SuppressWarnings({"OverlyComplexClass"})
 public class ControlFlowUtils {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtils.class);
-
-  private ControlFlowUtils() {
-    super();
-  }
-
 
   public static boolean statementMayCompleteNormally(
       @Nullable GrStatement statement) {
@@ -589,6 +588,29 @@ public class ControlFlowUtils {
 
   public interface ExitPointVisitor {
     boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue);
+  }
+
+  public static Set<GrExpression> getAllReturnValues(@NotNull final GrControlFlowOwner block) {
+    return CachedValuesManager.getManager(block.getProject()).getCachedValue(block, new CachedValueProvider<Set<GrExpression>>() {
+      @Override
+      public Result<Set<GrExpression>> compute() {
+        final Set<GrExpression> result = new HashSet<GrExpression>();
+        visitAllExitPoints(block, new ExitPointVisitor() {
+          @Override
+          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
+            addIfNotNull(result, returnValue);
+            return true;
+          }
+        });
+        return Result.create(result, block);
+      }
+    });
+  }
+
+
+  public static boolean isReturnValue(@NotNull GrExpression expression, @NotNull GrMethod method) {
+    GrOpenBlock block = method.getBlock();
+    return block != null && getAllReturnValues(block).contains(expression);
   }
 
   public static boolean visitAllExitPoints(@Nullable GrControlFlowOwner block, ExitPointVisitor visitor) {

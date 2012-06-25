@@ -20,10 +20,11 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -35,9 +36,8 @@ import java.util.Set;
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;
-  private int SPARED_BY_COMPLETION = 0;
-  private long COMPLETION_STATS_START = 0;
   private long FIRST_RUN_TIME = 0;
+  private CompletionStatistics myCompletionStats = new CompletionStatistics();
   boolean HAVE_BEEN_SHOWN = false;
 
   private final ProductivityFeaturesRegistry myRegistry;
@@ -47,8 +47,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
   @NonNls private static final String ATT_SHOW_IN_COMPILATION = "show-in-compilation";
   @NonNls private static final String ATT_ID = "id";
   @NonNls private static final String ATT_FIRST_RUN = "first-run";
-  @NonNls private static final String ATT_COMPLETION_STATS_START = "completion-stats-start";
-  @NonNls private static final String ATT_SPARED_BY_COMPLETION = "spared-by-completion";
+  @NonNls private static final String COMPLETION_STATS_TAG = "completionStatsTag";
   @NonNls private static final String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
 
   public FeatureUsageTrackerImpl(ProductivityFeaturesRegistry productivityFeaturesRegistry) {
@@ -97,22 +96,9 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     return isToBeShown(featureId, project, HOUR);
   }
 
-  @Override
-  public void registerCharactersSparedByCompletion(int spared) {
-    SPARED_BY_COMPLETION += spared;
-    if (COMPLETION_STATS_START == 0) {
-      COMPLETION_STATS_START = System.currentTimeMillis();
-    }
-  }
-
-  @Override
-  public int getCharactersSparedByCompletion() {
-    return SPARED_BY_COMPLETION;
-  }
-
-  @Override
-  public Date getCompletionStatisticsStartDate() {
-    return COMPLETION_STATS_START == 0 ? null : new Date(COMPLETION_STATS_START);
+  @NotNull
+  public CompletionStatistics getCompletionStatistics() {
+    return myCompletionStats;
   }
 
   public long getFirstRunTime() {
@@ -139,17 +125,10 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     catch (NumberFormatException e) {
       FIRST_RUN_TIME = 0;
     }
-    try {
-      COMPLETION_STATS_START = Long.parseLong(element.getAttributeValue(ATT_COMPLETION_STATS_START));
-    }
-    catch (NumberFormatException e) {
-      COMPLETION_STATS_START = 0;
-    }
-    try {
-      SPARED_BY_COMPLETION = Integer.parseInt(element.getAttributeValue(ATT_SPARED_BY_COMPLETION));
-    }
-    catch (NumberFormatException e) {
-      SPARED_BY_COMPLETION = 0;
+
+    Element stats = element.getChild(COMPLETION_STATS_TAG);
+    if (stats != null) {
+      myCompletionStats = XmlSerializer.deserialize(stats, CompletionStatistics.class);
     }
 
     HAVE_BEEN_SHOWN = Boolean.valueOf(element.getAttributeValue(ATT_HAVE_BEEN_SHOWN)).booleanValue();
@@ -169,10 +148,11 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
       element.addContent(featureElement);
     }
 
+    Element statsTag = new Element(COMPLETION_STATS_TAG);
+    XmlSerializer.serializeInto(myCompletionStats, statsTag);
+    element.addContent(statsTag);
+
     element.setAttribute(ATT_FIRST_RUN, String.valueOf(getFirstRunTime()));
-    element.setAttribute(ATT_COMPLETION_STATS_START, String.valueOf(COMPLETION_STATS_START));
-    element.setAttribute(ATT_SPARED_BY_COMPLETION, String.valueOf(SPARED_BY_COMPLETION));
-    element.setAttribute(ATT_SPARED_BY_COMPLETION, String.valueOf(SPARED_BY_COMPLETION));
     element.setAttribute(ATT_HAVE_BEEN_SHOWN, String.valueOf(HAVE_BEEN_SHOWN));
     element.setAttribute(ATT_SHOW_IN_OTHER, String.valueOf(SHOW_IN_OTHER_PROGRESS));
     element.setAttribute(ATT_SHOW_IN_COMPILATION, String.valueOf(SHOW_IN_COMPILATION_PROGRESS));

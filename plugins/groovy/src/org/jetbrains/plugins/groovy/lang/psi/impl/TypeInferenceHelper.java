@@ -221,7 +221,9 @@ public class TypeInferenceHelper {
         String varName = instruction.getVariableName();
         if (varName == null) return null;
         ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(flow);
-        LOG.assertTrue(originalInstr != null, scope.getContainingFile().getName() + ":" + scope.getText());
+        if (originalInstr == null) {
+          LOG.error(scope.getContainingFile().getName() + ":" + scope.getText());
+        }
 
         DFAType original = getInferredType(varName, originalInstr, flow, scope);
         final PsiType mixin = instruction.inferMixinType();

@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -80,14 +79,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     else {
       final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expression);
       if (controlFlowOwner instanceof GrOpenBlock && controlFlowOwner.getParent() instanceof GrMethod) {
-        boolean result = ControlFlowUtils.visitAllExitPoints(controlFlowOwner, new ControlFlowUtils.ExitPointVisitor() {
-          @Override
-          public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-            return returnValue != expression;
-          }
-        });
-
-        if (!result) {
+        if (ControlFlowUtils.isReturnValue(expression, (GrMethod)controlFlowOwner.getParent())) {
           type = ((GrMethod)controlFlowOwner.getParent()).getReturnType();
         }
       }
