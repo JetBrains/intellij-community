@@ -1995,10 +1995,25 @@ public class Mappings {
             cleanupRemovedClass(delta, repr, null, dependenciesTrashBin);
           }
 
+          delta.getRemovedSuperClasses().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+            @Override
+            public boolean execute(final int a, final TIntHashSet b) {
+              if (!compiledClasses.contains(a)) {
+                final TIntHashSet old = myClassToSubclasses.get(a);
+
+                if (old != null) {
+                  old.removeAll(b.toArray());
+                  myClassToSubclasses.replace(a, old);
+                }
+              }
+
+              return true;
+            }
+          });
+
           delta.myClassToSubclasses.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
             @Override
-            public boolean execute(final int className, final TIntHashSet s) {
-              final TIntHashSet newSubClasses = s == null ? new TIntHashSet() : s;
+            public boolean execute(final int className, final TIntHashSet newSubClasses) {
               final TIntHashSet oldSubClasses = myClassToSubclasses.get(className);
 
               if (oldSubClasses != null) {
@@ -2071,22 +2086,6 @@ public class Mappings {
               else {
                 mySourceFileToAnnotationUsages.remove(fileName);
               }
-              return true;
-            }
-          });
-
-          delta.getRemovedSuperClasses().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-            @Override
-            public boolean execute(final int a, final TIntHashSet b) {
-              if (!compiledClasses.contains(a)) {
-                final TIntHashSet old = myClassToSubclasses.get(a);
-
-                if (old != null) {
-                  old.removeAll(b.toArray());
-                  myClassToSubclasses.replace(a, old);
-                }
-              }
-
               return true;
             }
           });
