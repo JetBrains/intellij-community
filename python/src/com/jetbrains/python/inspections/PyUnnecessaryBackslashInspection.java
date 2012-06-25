@@ -52,15 +52,23 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyTupleExpression(PyTupleExpression node) {
+      if (node.getParent() instanceof PyParenthesizedExpression)
+        findProblem(node);
+    }
+
+    @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression expression) {
-      Stack<PsiElement> stack = new Stack<PsiElement>();
-      stack.push(expression.getContainedExpression());
+      final Stack<PsiElement> stack = new Stack<PsiElement>();
+      stack.push(expression);
       while (!stack.isEmpty()) {
         PsiElement element = stack.pop();
-        findProblem(element);
-        if (element != null) {
-          for (PsiElement psiElement : element.getChildren()) {
-            stack.push(psiElement);
+        if (!(element instanceof PyTupleExpression)) {
+          findProblem(element);
+          if (element != null) {
+            for (PsiElement psiElement : element.getChildren()) {
+              stack.push(psiElement);
+            }
           }
         }
       }
@@ -92,7 +100,7 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     }
 
     private void findProblem(@Nullable final PsiElement expression) {
-      PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(expression, PsiWhiteSpace.class);
+      final PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(expression, PsiWhiteSpace.class);
       if (children != null) {
         for (PsiWhiteSpace ws : children) {
           if (ws.getText().contains("\\")) {
@@ -101,5 +109,6 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
         }
       }
     }
+
   }
 }

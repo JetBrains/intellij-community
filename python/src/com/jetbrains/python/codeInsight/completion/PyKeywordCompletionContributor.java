@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
@@ -317,16 +316,6 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static final FilterPattern PY3K = new FilterPattern(new Py3kFilter());
 
 
-  /**
-   * Tail type that adds a space and a colon and puts cursor before colon. Used in things like "if".
-   */
-  public static final TailType PRE_COLON = new TailType() {
-    public int processTail(Editor editor, int tailOffset) {
-      tailOffset = insertChar(editor, insertChar(editor, tailOffset, ' '), ':');
-      return moveCaret(editor, tailOffset, -1); // stand before ":"
-    }
-  };
-
   // ======
 
   private static void putKeywords(final CompletionResultSet result, TailType tail, @NonNls @NotNull String... words) {
@@ -362,7 +351,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          putKeywords(result, PRE_COLON, "def", "class", "for", "if", "while", "with");
+          putKeywords(result, TailType.NONE, "def", "class", "for", "if", "while", "with");
           putKeywords(result, TailType.CASE_COLON, "try");
         }
       }
@@ -456,7 +445,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         //.andNot(RIGHT_AFTER_COLON)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
-      new PyKeywordCompletionProvider(PRE_COLON, UnindentingInsertHandler.INSTANCE, "elif"));
+      new PyKeywordCompletionProvider(TailType.NONE, UnindentingInsertHandler.INSTANCE, "elif"));
   }
 
   private void addWithinTry() {
@@ -472,7 +461,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
         ) {
-          putKeyword("except", UnindentingInsertHandler.INSTANCE, PRE_COLON, result);
+          putKeyword("except", UnindentingInsertHandler.INSTANCE, TailType.NONE, result);
           putKeyword("finally", UnindentingInsertHandler.INSTANCE, TailType.CASE_COLON, result);
         }
       }
@@ -592,6 +581,24 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       new PyKeywordCompletionProvider(TailType.SPACE, "else"));
   }
 
+  private void addRaiseFrom() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(PY3K)
+             .afterLeaf(psiElement().inside(PyRaiseStatement.class)),
+           new PyKeywordCompletionProvider("from"));
+  }
+
+  private void addYieldFrom() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(PY3K)
+             .afterLeaf(psiElement().withElementType(PyTokenTypes.YIELD_KEYWORD)),
+           new PyKeywordCompletionProvider("from"));
+  }
+
   public PyKeywordCompletionContributor() {
     addStatements();
     addPreColonStatements();
@@ -608,6 +615,8 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     addPy3kLiterals();
     //addExprIf();
     addExprElse();
+    addRaiseFrom();
+    addYieldFrom();
   }
 
   private static class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {

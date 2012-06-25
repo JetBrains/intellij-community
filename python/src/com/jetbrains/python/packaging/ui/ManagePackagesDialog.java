@@ -166,7 +166,10 @@ public class ManagePackagesDialog extends DialogWrapper {
     myInstalledPackages = new HashSet<String>();
     updateInstalledNames(table);
     addManageAction();
-    myInstallToUser.setText("Install to user's site packages directory (" + PyPackageManager.getUserSite() + ")");
+    String userSiteText = "Install to user's site packages directory";
+    if (!PythonSdkType.isRemote(sdk))
+      userSiteText += " (" + PyPackageManager.getUserSite() + ")";
+    myInstallToUser.setText(userSiteText);
   }
 
   public void setSelected(String pyPackage) {

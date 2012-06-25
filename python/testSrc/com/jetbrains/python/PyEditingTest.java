@@ -257,6 +257,28 @@ public class PyEditingTest extends PyTestCase {
                 "        (a, a) for a in [])");
   }
 
+  public void testParenthesizedInIf() {
+    doTestEnter("if isinstance(bz_value, list) and <caret>(isinstance(bz_value[0], str):\n" +
+                "    pass",
+                "if isinstance(bz_value, list) and \n" +
+                "(isinstance(bz_value[0], str):\n" +
+                "    pass");
+  }
+
+  public void testEmptyStringInParenthesis() {
+    doTestEnter("a = ('<caret>')",
+                "a = (''\n" +
+                "     '')");
+  }
+
+  public void testEmptyStringInParenthesis2() {
+    doTestEnter("a = (''\n" +
+                "     <caret>'')",
+                "a = (''\n" +
+                "     \n" +
+                "     '')");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");

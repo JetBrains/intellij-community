@@ -27,23 +27,22 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JCheckBox myAttachDebuggerToSubprocess;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
-  private final Project myProject;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
 
-    myProject = configuration.getProject();
+    Project project = configuration.getProject();
 
     FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return file.isDirectory() || Comparing.equal(file.getExtension(), "py");
+        return file.isDirectory() || file.getExtension() == null || Comparing.equal(file.getExtension(), "py");
       }
     };
     //chooserDescriptor.setRoot(s.getProject().getBaseDir());
 
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
-      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Script", "", myScriptTextField, myProject,
+      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Script", "", myScriptTextField, project,
                                                                            chooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
 
         protected void onFileChoosen(VirtualFile chosenFile) {

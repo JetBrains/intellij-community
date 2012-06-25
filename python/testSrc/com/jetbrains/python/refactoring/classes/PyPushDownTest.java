@@ -54,7 +54,7 @@ public class PyPushDownTest extends PyClassRefactoringTest {
     myFixture.checkResultByFile(baseName + ".after.py");
     } catch (Exception e) {
       if (expectedError == null) throw e;
-      assertEquals(expectedError, e.getMessage());
+      assertTrue(e.getMessage(), e.getMessage().contains(expectedError));
     }
   }
 }

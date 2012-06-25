@@ -11,10 +11,11 @@ import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,12 +43,13 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   }
 
   protected LookupElementBuilder setupItem(LookupElementBuilder item) {
+    final Object object = item.getObject();
     if (!myPlainNamesOnly) {
       if (!mySuppressParentheses &&
-          item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null &&
-          !isSingleArgDecoratorCall(myContext, (PyFunction)item.getObject())) {
+          object instanceof PyFunction && ((PyFunction)object).getProperty() == null &&
+          !isSingleArgDecoratorCall(myContext, (PyFunction)object)) {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
-        final PyParameterList parameterList = ((PyFunction)item.getObject()).getParameterList();
+        final PyParameterList parameterList = ((PyFunction)object).getParameterList();
         final String params = StringUtil.join(parameterList.getParameters(), new Function<PyParameter, String>() {
           @Override
           public String fun(PyParameter pyParameter) {
@@ -56,12 +58,46 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         }, ", ");
         item = item.withTailText("(" + params + ")");
       }
-      else if (item.getObject() instanceof PyClass) {
+      else if (object instanceof PyClass) {
         item = item.withInsertHandler(PyClassInsertHandler.INSTANCE);
       }
     }
-    if (myNotice != null) {
-      return setItemNotice(item, myNotice);
+    String source = null;
+    if (object instanceof PsiElement) {
+      final PsiElement element = (PsiElement)object;
+      PyClass cls = null;
+
+      if (element instanceof PyFunction) {
+        cls = ((PyFunction)element).getContainingClass();
+      }
+      else if (element instanceof PyTargetExpression) {
+        final PyTargetExpression expr = (PyTargetExpression)element;
+        if (expr.getQualifier() != null || ScopeUtil.getScopeOwner(expr) instanceof PyClass) {
+          cls = expr.getContainingClass();
+        }
+      }
+      else if (element instanceof PyClass) {
+        final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+        if (owner instanceof PyClass) {
+          cls = (PyClass)owner;
+        }
+      }
+
+      if (cls != null) {
+        source = cls.getName();
+      }
+      else if (myContext == null || !PyUtil.inSameFile(myContext, element)) {
+        PyQualifiedName path = ResolveImportUtil.findCanonicalImportPath(element, null);
+        if (path != null) {
+          if (element instanceof PyFile) {
+            path = path.removeLastComponent();
+          }
+          source = path.toString();
+        }
+      }
+    }
+    if (source != null) {
+      item = item.withTypeText(source);
     }
     return item;
   }
@@ -107,22 +143,6 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
     if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
     LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.create(expr, referencedName).withIcon(icon));
-    if (definer instanceof PyImportElement) { // set notice to imported module name if needed
-      PsiElement maybeFromImport = definer.getParent();
-      if (maybeFromImport instanceof PyFromImportStatement) {
-        final PyFromImportStatement fromImport = (PyFromImportStatement)maybeFromImport;
-        PyReferenceExpression src = fromImport.getImportSource();
-        if (src != null) {
-          lookupItem = setItemNotice(lookupItem, src.getName());
-        }
-      }
-    }
-    if (definer instanceof PyAssignmentStatement && expr instanceof PyExpression) {
-      PyType type = ((PyExpression) expr).getType(TypeEvalContext.fast());
-      if (type != null) {
-        lookupItem = lookupItem.withTypeText(type.getName());
-      }
-    }
     myVariants.put(referencedName, lookupItem);
   }
 }

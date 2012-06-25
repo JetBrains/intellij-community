@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
@@ -28,7 +29,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URL;
@@ -122,25 +122,26 @@ public class PyPackagesPanel extends JPanel {
       }
     });
 
-    myPackagesTable.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          if (mySelectedSdk != null && myInstallButton.isEnabled()) {
-            ManagePackagesDialog dialog = new ManagePackagesDialog(myProject, mySelectedSdk, PyPackagesPanel.this);
-            Point p = e.getPoint();
-            int row = myPackagesTable.rowAtPoint(p);
-            int column = myPackagesTable.columnAtPoint(p);
-            if (row >= 0 && column >= 0) {
-              Object pyPackage = myPackagesTable.getValueAt(row, 0);
-              if (pyPackage instanceof PyPackage) {
-                dialog.setSelected(((PyPackage)pyPackage).getName());
-              }
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        if (mySelectedSdk != null && myInstallButton.isEnabled()) {
+          ManagePackagesDialog dialog = new ManagePackagesDialog(myProject, mySelectedSdk, PyPackagesPanel.this);
+          Point p = e.getPoint();
+          int row = myPackagesTable.rowAtPoint(p);
+          int column = myPackagesTable.columnAtPoint(p);
+          if (row >= 0 && column >= 0) {
+            Object pyPackage = myPackagesTable.getValueAt(row, 0);
+            if (pyPackage instanceof PyPackage) {
+              dialog.setSelected(((PyPackage)pyPackage).getName());
             }
-            dialog.show();
           }
+          dialog.show();
+          return true;
         }
+        return false;
       }
-    });
+    }.installOn(myPackagesTable);
 
     myNotificationArea.addLinkHandler(INSTALL_DISTRIBUTE, new Runnable() {
       @Override
