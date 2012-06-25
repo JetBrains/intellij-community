@@ -446,7 +446,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
         final String externalName = getExternalName(listOwner, false);
         if (rootTag != null) {
           for (XmlTag tag : rootTag.getSubTags()) {
-            if (Comparing.strEqual(tag.getAttributeValue("name"), externalName)) {
+            if (Comparing.strEqual(StringUtil.unescapeXml(tag.getAttributeValue("name")), externalName)) {
               for (XmlTag annTag : tag.getSubTags()) {
                 if (Comparing.strEqual(annTag.getAttributeValue("name"), annotationFQName)) {
                   annTag.delete();
@@ -459,7 +459,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
             }
           }
           @NonNls String text =
-            "<item name=\'" + externalName + "\'>\n";
+            "<item name=\'" + StringUtil.escapeXml(externalName) + "\'>\n";
           text += createAnnotationTag(annotationFQName, values);
           text += "</item>";
           rootTag.add(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(text));

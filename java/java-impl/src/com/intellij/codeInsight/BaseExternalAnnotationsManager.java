@@ -131,7 +131,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       final String externalName = getExternalName(listOwner, false);
       final String oldExternalName = getNormalizedExternalName(listOwner);
       for (final XmlTag tag : rootTag.getSubTags()) {
-        final String className = tag.getAttributeValue("name");
+        final String className = StringUtil.unescapeXml(tag.getAttributeValue("name"));
         if (!Comparing.strEqual(className, externalName) && !Comparing.strEqual(className, oldExternalName)) {
           continue;
         }
