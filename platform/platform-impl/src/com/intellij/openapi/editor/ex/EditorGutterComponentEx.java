@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract boolean isAnnotationsShown();
 
+  @Nullable
   public abstract FoldRegion findFoldingAnchorAt(int x, int y);
 
   public abstract int getWhitespaceSeparatorOffset();
