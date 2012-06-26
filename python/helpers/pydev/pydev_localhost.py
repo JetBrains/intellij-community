@@ -1,4 +1,8 @@
-import socket
+import pydevd_constants
+if pydevd_constants.USE_LIB_COPY:
+    import _pydev_socket as socket
+else:
+    import socket
 
 _cache = None
 def get_localhost():
@@ -15,7 +19,6 @@ def get_localhost():
     global _cache
     if _cache is None:
         try:
-            import socket
             for addr_info in socket.getaddrinfo("localhost", 80, 0, 0, socket.SOL_TCP):
                 config = addr_info[4]
                 if config[0] == '127.0.0.1':

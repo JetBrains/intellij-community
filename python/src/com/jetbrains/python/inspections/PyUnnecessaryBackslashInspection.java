@@ -5,8 +5,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RemoveUnnecessaryBackslashQuickFix;
 import com.jetbrains.python.psi.*;
@@ -52,8 +52,26 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyTupleExpression(PyTupleExpression node) {
+      if (node.getParent() instanceof PyParenthesizedExpression)
+        findProblem(node);
+    }
+
+    @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression expression) {
-      findProblem(expression);
+      final Stack<PsiElement> stack = new Stack<PsiElement>();
+      stack.push(expression);
+      while (!stack.isEmpty()) {
+        PsiElement element = stack.pop();
+        if (!(element instanceof PyTupleExpression)) {
+          findProblem(element);
+          if (element != null) {
+            for (PsiElement psiElement : element.getChildren()) {
+              stack.push(psiElement);
+            }
+          }
+        }
+      }
     }
 
     @Override
@@ -82,15 +100,15 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     }
 
     private void findProblem(@Nullable final PsiElement expression) {
-      PsiTreeUtil.processElements(expression, new PsiElementProcessor<PsiElement>() {
-        @Override
-        public boolean execute(@NotNull PsiElement ws) {
-          if (ws instanceof PsiWhiteSpace && ws.getText().contains("\\")) {
+      final PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(expression, PsiWhiteSpace.class);
+      if (children != null) {
+        for (PsiWhiteSpace ws : children) {
+          if (ws.getText().contains("\\")) {
             registerProblem(ws, "Unnecessary backslash in expression.", new RemoveUnnecessaryBackslashQuickFix());
           }
-          return true;
         }
-      });
+      }
     }
+
   }
 }

@@ -58,18 +58,24 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
 
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_file_utils
-import pydevd_import_class
 import pydevd_vars
 import traceback
 import pydevd_vm_type
 import pydevd_tracing
 import pydevd_io
 import pydev_log
-import pydev_localhost
 import pydev_monkey
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-import time
+
+if USE_LIB_COPY:
+    import _pydev_time as time
+    import _pydev_threading as threading
+else:
+    import time
+    import threading
+
 import os
+
 
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
@@ -150,7 +156,7 @@ class PyDBCommandThread(PyDBDaemonThread):
             #PydevdLog(0, 'Finishing debug communication...(3)')
 
 try:
-    import thread
+    import _pydev_thread as thread
 except ImportError:
     import _thread as thread #Py3K changed it.
 _original_start_new_thread = thread.start_new_thread
@@ -184,7 +190,7 @@ def _pydev_start_new_thread(function, args, kwargs={}):
     it and not through the threading module are properly traced.
     '''
     try:
-        import thread
+        import _pydev_thread
     except ImportError:
         import _thread as thread #Py3K changed it.
 
@@ -822,7 +828,7 @@ class PyDB:
                     line = info.pydev_next_line
                     if frame.f_lineno == line:
                         stop = True
-                    else:
+                    else :
                         if frame.f_trace is None:
                             frame.f_trace = self.trace_dispatch
                         frame.f_lineno = line
