@@ -1,5 +1,5 @@
 class Bar {
-    final def f
+    final f
 
     def Bar() {
       super()

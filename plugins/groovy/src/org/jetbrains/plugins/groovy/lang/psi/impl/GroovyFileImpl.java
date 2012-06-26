@@ -511,10 +511,18 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     CodeStyleManager styleManager = CodeStyleManager.getInstance(getManager().getProject());
     PsiElement parent = result.getContainingFile();
     TextRange range = result.getTextRange();
-    styleManager.reformatRange(parent, range.getEndOffset() - 1, range.getEndOffset() + 1);
-    styleManager.reformatRange(parent, range.getStartOffset() - 1, range.getStartOffset() + 1);
+    if (checkRange(parent, range.getEndOffset())) {
+      styleManager.reformatRange(parent, range.getEndOffset() - 1, range.getEndOffset() + 1);
+    }
+    if (checkRange(parent, range.getStartOffset())) {
+      styleManager.reformatRange(parent, range.getStartOffset() - 1, range.getStartOffset() + 1);
+    }
 
     return result;
+  }
+
+  private boolean checkRange(PsiElement parent, int offset) {
+    return parent.getTextRange().contains(offset -1) && parent.getTextRange().contains(offset+1);
   }
 
   public void removeMemberDeclaration(GrMembersDeclaration decl) {
