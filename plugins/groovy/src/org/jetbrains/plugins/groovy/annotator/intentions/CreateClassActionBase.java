@@ -16,7 +16,9 @@
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+  import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -24,7 +26,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -40,12 +44,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  * @author ilyas
  */
 public abstract class CreateClassActionBase implements IntentionAction {
-  private Type myType;
+  private CreateClassKind myType;
 
   protected final GrReferenceElement myRefElement;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase");
 
-  public CreateClassActionBase(Type type, GrReferenceElement refElement) {
+  public CreateClassActionBase(CreateClassKind type, GrReferenceElement refElement) {
     myType = type;
     myRefElement = refElement;
   }
@@ -60,6 +64,8 @@ public abstract class CreateClassActionBase implements IntentionAction {
         return GroovyBundle.message("create.class.text", referenceName);
       case INTERFACE:
         return GroovyBundle.message("create.interface.text", referenceName);
+      case ANNOTATION:
+        return GroovyBundle.message("create.annotation.text", referenceName);
       default:
         return "";
     }
@@ -75,11 +81,11 @@ public abstract class CreateClassActionBase implements IntentionAction {
   }
 
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
 
-  protected Type getType() {
+  protected CreateClassKind getType() {
     return myType;
   }
 
@@ -145,7 +151,17 @@ public abstract class CreateClassActionBase implements IntentionAction {
     }
   }
 
-  public static enum Type {
-    ENUM, CLASS, INTERFACE
+  @Nullable
+  protected PsiDirectory getTargetDirectory(Project project, String qualifier, String name, Module module, String title) {
+    CreateClassDialog dialog = new CreateClassDialog(project, title, name, qualifier, getType(), false, module) {
+      @Override
+      protected boolean reportBaseInSourceSelectionInTest() {
+        return true;
+      }
+    };
+    dialog.show();
+    if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
+
+    return dialog.getTargetDirectory();
   }
 }

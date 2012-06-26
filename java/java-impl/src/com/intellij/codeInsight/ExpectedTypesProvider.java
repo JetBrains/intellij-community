@@ -136,7 +136,7 @@ public class ExpectedTypesProvider {
 
   public static PsiType[] processExpectedTypes(@NotNull ExpectedTypeInfo[] infos,
                                                @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project) {
-    Set<PsiType> set = new LinkedHashSet<PsiType>();
+    LinkedHashSet<PsiType> set = new LinkedHashSet<PsiType>();
     for (ExpectedTypeInfo info : infos) {
       ExpectedTypeInfoImpl infoImpl = (ExpectedTypeInfoImpl)info;
 

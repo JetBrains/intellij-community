@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -22,7 +23,14 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase{
   public void testCreateFromEquals() throws Exception { doSingleTest(); }
   public void testCreateFromEqualsToPrimitiveType() throws Exception { doSingleTest(); }
 
+  @Override
+  protected void tearDown() throws Exception {
+    CreateFieldFromUsageFix.DEBUG = false;
+    super.tearDown();
+  }
+
   public void testSortByRelevance() throws Exception {
+    CreateFieldFromUsageFix.DEBUG = true;
     new WriteCommandAction(getProject()) {
       @Override
       protected void run(Result result) throws Exception {

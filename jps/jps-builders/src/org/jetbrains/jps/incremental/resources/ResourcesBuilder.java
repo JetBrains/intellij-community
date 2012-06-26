@@ -71,6 +71,9 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
                                    String sourceRoot,
                                    final SourceToOutputMapping outputToSourceMapping) throws IOException {
     final String outputRoot = context.isCompilingTests() ? module.getTestOutputPath() : module.getOutputPath();
+    if (outputRoot == null) {
+      return;
+    }
     final String relativePath = FileUtil.getRelativePath(sourceRoot, FileUtil.toSystemIndependentName(file.getPath()), '/');
     final String prefix = module.getSourceRootPrefixes().get(sourceRoot);
 

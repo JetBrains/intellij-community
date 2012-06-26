@@ -364,7 +364,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     if (myRootComponent == null) {
       myRootComponent = createComponent(myXmlFile.getRootTag(), myMetaManager.getModelByTag("<root>"));
     }
-    else if (session.getRootViews().size() == 1) {
+    else if (myRootComponent.getMetaModel() != myMetaManager.getModelByTag("merge")) {
       RadViewComponent rootComponent = myRootComponent;
       myRootComponent = createComponent(myXmlFile.getRootTag(), myMetaManager.getModelByTag("<root>"));
       myRootComponent.add(rootComponent, null);
