@@ -1,6 +1,6 @@
 """
 Copied from the python xreload (available for change)
- 
+
 Alternative to reload().
 
 This works by executing the module in a scratch namespace, and then

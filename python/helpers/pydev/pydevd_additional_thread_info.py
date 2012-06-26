@@ -1,6 +1,9 @@
 import sys
 from pydevd_constants import * #@UnusedWildImport
-import threading
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
 from pydevd_frame import PyDBFrame
 import weakref
 

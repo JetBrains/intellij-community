@@ -1,5 +1,3 @@
-import socket
-
 try:
     from code import InteractiveConsole
 except ImportError:
@@ -8,12 +6,20 @@ except ImportError:
 import os
 import sys
 
-import threading
+from pydevd_constants import USE_LIB_COPY
+
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
 
 import traceback
 
 try:
-    import Queue
+    if USE_LIB_COPY:
+        import _pydev_Queue as Queue
+    else:
+        import Queue
 except:
     import queue as Queue
 
@@ -44,7 +50,7 @@ except:
 
 try:
     try:
-        import xmlrpclib
+        import _pydev_xmlrpclib as xmlrpclib
     except ImportError:
         import xmlrpc.client as xmlrpclib
 except ImportError:

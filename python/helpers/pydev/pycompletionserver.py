@@ -16,7 +16,9 @@ except NameError:
     #If it's not defined, let's define it now.
     setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
-    
+
+import pydevd_constants
+
 try:
     from java.lang import Thread
     IS_JYTHON = True
@@ -28,9 +30,17 @@ except ImportError:
     #it is python
     IS_JYTHON = False
     SERVER_NAME = 'pycompletionserver'
-    from threading import Thread
+    if pydevd_constants.USE_LIB_COPY:
+        from _pydev_threading import Thread
+    else:
+        from threading import Thread
     import importsTipper
-    
+
+
+if pydevd_constants.USE_LIB_COPY:
+    import _pydev_socket as socket
+else:
+    import socket
 
 import sys
 if sys.platform == "darwin":
@@ -54,7 +64,11 @@ for name, mod in sys.modules.items():
 
 
 import traceback
-import time
+
+if pydevd_constants.USE_LIB_COPY:
+    import _pydev_time as time
+else:
+    import time
 
 try:
     import StringIO
@@ -219,8 +233,6 @@ class T(Thread):
 
 
     def connectToServer(self):
-        import socket
-
         self.socket = s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((HOST, self.serverPort))
@@ -251,7 +263,6 @@ class T(Thread):
     def run(self):
         # Echo server program
         try:
-            import socket
             import _pydev_log
             log = _pydev_log.Log()
             

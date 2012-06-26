@@ -1,5 +1,4 @@
 import traceback
-import os
 
 try:
     from urllib import quote

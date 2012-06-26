@@ -112,8 +112,8 @@ except:
 
 import _pydev_xmlrpclib as xmlrpclib
 from _pydev_xmlrpclib import Fault
-import SocketServer
-import BaseHTTPServer
+import _pydev_SocketServer as SocketServer
+import _pydev_BaseHTTPServer as BaseHTTPServer
 import sys
 import os
 try:

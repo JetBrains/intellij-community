@@ -9,7 +9,11 @@ _handle_exceptions = None
 NOTIFY_ALWAYS="NOTIFY_ALWAYS"
 NOTIFY_ON_TERMINATE="NOTIFY_ON_TERMINATE"
 
-import threading
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
+
 threadingCurrentThread = threading.currentThread
 
 from pydevd_comm import GetGlobalDebugger
