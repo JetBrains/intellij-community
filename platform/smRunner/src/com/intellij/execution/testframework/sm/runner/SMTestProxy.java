@@ -420,12 +420,13 @@ public class SMTestProxy extends AbstractTestProxy {
   public void printOn(final Printer printer) {
     final Printer rightPrinter = getRightPrinter(printer);
     super.printOn(rightPrinter);
+    final AbstractState oldState = myState;
 
     invokeInAlarm(new Runnable() {
       @Override
       public void run() {
         //Tests State, that provide and formats additional output
-        myState.printOn(rightPrinter);
+        oldState.printOn(rightPrinter);
       }
     });
   }
