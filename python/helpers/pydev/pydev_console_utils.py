@@ -3,13 +3,21 @@ import sys
 
 import traceback
 
+from pydevd_constants import USE_LIB_COPY
+
 try:
-    import Queue
+    if USE_LIB_COPY:
+        import _pydev_Queue as Queue
+    else:
+        import Queue
 except:
     import queue as Queue
 
 try:
-    import thread
+    if USE_LIB_COPY:
+        import _pydev_thread as thread
+    else:
+        import thread
 except:
     import _thread as thread
 

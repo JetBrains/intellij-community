@@ -16,6 +16,7 @@ except:
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
+USE_LIB_COPY = 1
 
 
 class DebugInfoHolder:
@@ -41,7 +42,7 @@ except AttributeError:
 #this value was raised from 200 to 1000.
 MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 
-import threading
+import pydev_threading as threading
 import os
 
 _nextThreadIdLock = threading.Lock()

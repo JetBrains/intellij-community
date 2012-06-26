@@ -20,7 +20,11 @@ try:
     from urllib import quote
 except:
     from urllib.parse import quote #@UnresolvedImport
-import threading
+
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
 import pydevd_resolver
 import traceback
 

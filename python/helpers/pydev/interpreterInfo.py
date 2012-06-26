@@ -21,8 +21,13 @@ try:
     True
 except:
     exec ('True, False = 1,0') #An exec is used so that python 3k does not give a syntax error
-    
-import time
+
+import pydevd_constants
+
+if pydevd_constants.USE_LIB_COPY:
+    import _pydev_time as time
+else:
+    import time
 
 if sys.platform == "cygwin":
     

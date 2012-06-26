@@ -1,4 +1,3 @@
-import xmlrpclib
 import sys
 from pydev_console_utils import BaseInterpreterInterface
 import re
