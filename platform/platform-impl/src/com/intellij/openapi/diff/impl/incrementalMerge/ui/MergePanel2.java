@@ -179,7 +179,9 @@ public class MergePanel2 implements DiffViewer {
     if (myData == null) return;
     DiffContent[] contents = myData.getContents();
     for (int i = 0; i < EDITORS_COUNT; i++) {
-      getEditorPlace(i).setDocument(contents[i].getDocument());
+      EditorPlace editorPlace = getEditorPlace(i);
+      editorPlace.setDocument(contents[i].getDocument());
+      setHighlighterSettings(null, editorPlace);
     }
     tryInitView();
   }
@@ -215,15 +217,19 @@ public class MergePanel2 implements DiffViewer {
   }
 
   public void setHighlighterSettings(@Nullable EditorColorsScheme settings) {
+    for (EditorPlace place : getEditorPlaces()) {
+      setHighlighterSettings(settings, place);
+    }
+  }
+
+  private void setHighlighterSettings(@Nullable EditorColorsScheme settings, @NotNull EditorPlace place) {
     if (settings == null) {
       settings = EditorColorsManager.getInstance().getGlobalScheme();
     }
-    for (EditorPlace place : getEditorPlaces()) {
-      Editor editor = place.getEditor();
-      DiffEditorState editorState = place.getState();
-      ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().
-        createEditorHighlighter(editorState.getFileType(), settings, editorState.getProject()));
-    }
+    Editor editor = place.getEditor();
+    DiffEditorState editorState = place.getState();
+    ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().
+      createEditorHighlighter(editorState.getFileType(), settings, editorState.getProject()));
   }
 
   public void setAdditionalLinesAndColumns(int lines, int columns) {
