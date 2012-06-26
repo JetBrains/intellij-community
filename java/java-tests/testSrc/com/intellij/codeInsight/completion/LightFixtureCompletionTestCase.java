@@ -5,8 +5,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -16,12 +14,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFixtureTestCase {
   protected LookupElement[] myItems;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
-  }
 
   @NotNull
   @Override
