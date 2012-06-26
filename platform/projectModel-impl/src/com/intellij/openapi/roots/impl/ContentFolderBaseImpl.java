@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,9 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
 
   @Override
   public VirtualFile getFile() {
+    if (!myFilePointer.isValid()) {
+      return null;
+    }
     final VirtualFile file = myFilePointer.getFile();
     return file == null || !file.isDirectory() ? null : file;
   }
