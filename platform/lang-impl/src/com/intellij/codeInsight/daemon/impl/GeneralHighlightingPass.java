@@ -59,7 +59,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
@@ -291,7 +291,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                    @NotNull final List<PsiElement> elements2,
                                    @NotNull final ProgressIndicator progress,
                                    @NotNull final Set<PsiFile> outInjected) {
-    List<DocumentWindow> injected = InjectedLanguageFacadeImpl.getCachedInjectedDocuments(myFile);
+    List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
     Collection<PsiElement> hosts = new THashSet<PsiElement>(elements1.size() + elements2.size() + injected.size());
 
     //rehighlight all injected PSI regardless the range,
@@ -325,7 +325,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               @Override
               public boolean process(PsiElement element) {
                 progress.checkCanceled();
-                InjectedLanguageFacadeImpl.enumerate(element, myFile, false, visitor);
+                InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
                 return true;
               }
             })) {
@@ -347,7 +347,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           public boolean process(final PsiFile injectedPsi) {
             DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
             if (documentWindow == null) return true;
-            Place places = InjectedLanguageFacadeImpl.getShreds(injectedPsi);
+            Place places = InjectedLanguageUtil.getShreds(injectedPsi);
             for (PsiLanguageInjectionHost.Shred place : places) {
               TextRange textRange = place.getRangeInsideHost().shiftRight(place.getHost().getTextRange().getStartOffset());
               if (textRange.isEmpty()) continue;
@@ -503,7 +503,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private void highlightInjectedSyntax(final PsiFile injectedPsi, HighlightInfoHolder holder) {
-    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = InjectedLanguageFacadeImpl
+    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = InjectedLanguageUtil
       .getHighlightTokens(injectedPsi);
     if (tokens == null) return;
 
