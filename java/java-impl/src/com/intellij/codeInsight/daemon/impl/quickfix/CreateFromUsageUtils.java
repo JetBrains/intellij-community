@@ -622,12 +622,6 @@ public class CreateFromUsageUtils {
     List<String> expectedFieldNames  = new ArrayList<String>();
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
-    if (CreateFieldFromUsageFix.DEBUG) {
-      System.out.println("CreateFromUsageUtils.guessExpectedTypes");
-      for (ExpectedTypeInfo[] infos : typesList) {
-        System.out.println("Arrays.toString(infos) = " + Arrays.toString(infos));
-      }
-    }
 
 
     if (typesList.size() == 1 && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
@@ -780,16 +774,34 @@ public class CreateFromUsageUtils {
       public int compare(final PsiMember m1, final PsiMember m2) {
         ProgressManager.checkCanceled();
         int result = JavaStatisticsManager.createInfo(null, m2).getUseCount() - JavaStatisticsManager.createInfo(null, m1).getUseCount();
+        if (CreateFieldFromUsageFix.DEBUG) {
+          System.out.println("CreateFromUsageUtils.compare");
+          System.out.println("m1 = " + m1);
+          System.out.println("m2 = " + m2);
+          System.out.println("result = " + result);
+        }
         if (result != 0) return result;
         final PsiClass aClass = m1.getContainingClass();
         final PsiClass bClass = m2.getContainingClass();
         if (aClass == null || bClass == null) return 0;
+        if (CreateFieldFromUsageFix.DEBUG) {
+          System.out.println("aClass = " + aClass);
+          System.out.println("bClass = " + bClass);
+        }
         result = JavaStatisticsManager.createInfo(null, bClass).getUseCount() - JavaStatisticsManager.createInfo(null, aClass).getUseCount();
+        if (CreateFieldFromUsageFix.DEBUG) {
+          System.out.println("result2 = " + result);
+        }
         if (result != 0) return result;
 
         WeighingComparable<PsiElement,ProximityLocation> proximity1 = PsiProximityComparator.getProximity(m1, expression);
         WeighingComparable<PsiElement,ProximityLocation> proximity2 = PsiProximityComparator.getProximity(m2, expression);
         if (proximity1 != null && proximity2 != null) {
+          if (CreateFieldFromUsageFix.DEBUG) {
+            System.out.println("proximity1 = " + proximity1);
+            System.out.println("proximity2 = " + proximity2);
+          }
+
           return proximity2.compareTo(proximity1);
         }
 
