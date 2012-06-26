@@ -237,7 +237,7 @@ public class PyCodeFragmentUtil {
   }
 
   @NotNull
-  private static List<PsiElement> getInputElements(@NotNull List<Instruction> subGraph, @NotNull List<Instruction> graph) {
+  public static List<PsiElement> getInputElements(@NotNull List<Instruction> subGraph, @NotNull List<Instruction> graph) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
     final Set<PsiElement> subGraphElements = getSubGraphElements(subGraph);
     for (Instruction instruction : getReadInstructions(subGraph)) {

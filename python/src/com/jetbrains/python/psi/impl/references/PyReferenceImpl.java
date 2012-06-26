@@ -518,7 +518,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PythonDataflowUtil.collectFunctionArgNames(element, ret);
 
     // include builtin names
-    processor.setNotice("__builtin__");
     final PyFile builtinsFile = PyBuiltinCache.getInstance(element).getBuiltinsFile();
     if (builtinsFile != null) {
       PyResolveUtil.scopeCrawlUp(processor, builtinsFile, null);

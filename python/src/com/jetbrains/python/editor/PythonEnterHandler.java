@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.actions.SplitLineAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
+  private boolean needPostProcess = false;
+
   private static final Class[] IMPLICIT_WRAP_CLASSES = new Class[]{
     PsiComment.class,
     PyParenthesizedExpression.class,
@@ -52,8 +54,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
                                 EditorActionHandler originalHandler) {
     int offset = caretOffset.get();
     if (editor instanceof EditorWindow) {
-      file = InjectedLanguageUtil.getTopLevelFile(file);
-      editor = InjectedLanguageUtil.getTopLevelEditor(editor);
+      file = InjectedLanguageFacadeImpl.getTopLevelFile(file);
+      editor = InjectedLanguageFacadeImpl.getTopLevelEditor(editor);
       offset = editor.getCaretModel().getOffset();
     }
     if (!(file instanceof PyFile)) {
@@ -83,8 +85,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    final PsiElement elementParent = element.getParent();
-    if (elementParent instanceof PyParenthesizedExpression) return Result.Continue;
+    PsiElement elementParent = element.getParent();
+    if (element.getNode().getElementType() == PyTokenTypes.LPAR) elementParent = elementParent.getParent();
+    if (elementParent instanceof PyParenthesizedExpression || elementParent instanceof PyGeneratorExpression) return Result.Continue;
 
     if (offset > 0 && !(PyTokenTypes.STRING_NODES.contains(element.getNode().getElementType()))) {
       final PsiElement prevElement = file.findElementAt(offset - 1);
@@ -96,8 +99,11 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    final PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset+1, PyStringLiteralExpression.class, false);
-    if (string != null && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
+    final PsiElement prevElement = file.findElementAt(offset - 1);
+    PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
+
+    if (string != null && PyTokenTypes.STRING_NODES.contains(prevElement.getNode().getElementType())
+        && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
       final String stringText = element.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       if (string.getTextOffset() + prefixLength >= offset) {
@@ -112,6 +118,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
       final PsiElement parent = string.getParent();
       final StringBuilder replacementString = new StringBuilder();
+      needPostProcess = true;
       if (parent instanceof PySequenceExpression || parent instanceof PyParenthesizedExpression ||
           parent instanceof PyBinaryExpression || parent instanceof PyKeyValueExpression ||
           parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
@@ -290,5 +297,17 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public Result postProcessEnter(@NotNull PsiFile file,
+                                 @NotNull Editor editor,
+                                 @NotNull DataContext dataContext) {
+    if (needPostProcess) {
+      needPostProcess = false;
+      editor.getCaretModel().moveCaretRelatively(1, 0, false, false, false);
+    }
+    return super.postProcessEnter(file, editor,
+                                  dataContext);
   }
 }

@@ -17,6 +17,7 @@ if not settings_file:
 base_path = sys.argv.pop()
 proj_name = base_path.split("/")[-1]
 sys.path.insert(0, base_path)
+os.chdir(base_path)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE',proj_name+".settings")
 from django.core import management
 from django.core.management.commands.test import Command

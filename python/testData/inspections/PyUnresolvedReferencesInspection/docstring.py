@@ -5,6 +5,10 @@ class Test(object):
   """
   some = 'hello'
 
+  def __init__(self):
+    self.some1 = 10
+
+
   def q(self, another):
     """
     @param another: another variable

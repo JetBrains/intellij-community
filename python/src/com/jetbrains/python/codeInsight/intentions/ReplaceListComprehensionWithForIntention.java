@@ -44,7 +44,7 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyListCompExpression expression = PsiTreeUtil.getTopmostParentOfType(
-                                          file.findElementAt(editor.getCaretModel().getOffset()), PyListCompExpression.class);
+        file.findElementAt(editor.getCaretModel().getOffset()), PyListCompExpression.class);
     if (expression == null) {
       return;
     }
@@ -52,11 +52,12 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
     if (parent instanceof PyAssignmentStatement) {
-      PsiElement leftExpr = ((PyAssignmentStatement)parent).getLeftHandSideExpression();
+      final PsiElement leftExpr = ((PyAssignmentStatement)parent).getLeftHandSideExpression();
+      if (leftExpr == null) return;
       PyAssignmentStatement initAssignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
                                                                          leftExpr.getText() + " = []");
       PyForStatement forStatement = createForLoop(expression, elementGenerator,
-                                                  leftExpr.getText() + ".append("+ getResult(expression).getText() +")");
+                                                  leftExpr.getText() + ".append("+ expression.getResultExpression().getText() +")");
 
       PyStatementList stList = new PyStatementListImpl(initAssignment.getNode());
       stList.add(initAssignment);
@@ -66,22 +67,31 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
 
     }
     else if (parent instanceof PyPrintStatement) {
-      PyForStatement forStatement = createForLoop(expression, elementGenerator, "print " + "(" + getResult(expression).getText() +")");
+      PyForStatement forStatement = createForLoop(expression, elementGenerator, "print " + "(" + expression.getResultExpression().getText() +")");
       parent.replace(forStatement);
     }
   }
 
-  private static PyForStatement createForLoop(PyListCompExpression expression, PyElementGenerator elementGenerator, String result) {
-    List<ComprehensionComponent> components = expression.getComponents();
-    StringBuilder stringBuilder = new StringBuilder();
+  private static PyForStatement createForLoop(final PyListCompExpression expression, final PyElementGenerator elementGenerator,
+                                              final String result) {
+    final List<ComprehensionComponent> components = expression.getComponents();
+    final StringBuilder stringBuilder = new StringBuilder();
     int slashNum = 1;
     for (ComprehensionComponent component : components) {
       if (component instanceof ComprhForComponent) {
-        stringBuilder.append("for " + ((ComprhForComponent)component).getIteratorVariable().getText()  + " in " +
-                             ((ComprhForComponent)component).getIteratedList().getText() + ":\n");
+        stringBuilder.append("for ");
+        stringBuilder.append(((ComprhForComponent)component).getIteratorVariable().getText());
+        stringBuilder.append(" in ");
+        stringBuilder.append(((ComprhForComponent)component).getIteratedList().getText());
+        stringBuilder.append(":\n");
       }
       if (component instanceof ComprhIfComponent) {
-        stringBuilder.append("if " + ((ComprhIfComponent)component).getTest().getText() + ":\n");
+        final PyExpression test = ((ComprhIfComponent)component).getTest();
+        if (test != null) {
+          stringBuilder.append("if ");
+          stringBuilder.append(test.getText());
+          stringBuilder.append(":\n");
+        }
       }
       for (int i = 0; i != slashNum; ++i)
         stringBuilder.append("\t");
@@ -90,14 +100,6 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
     stringBuilder.append(result);
     return elementGenerator.createFromText(LanguageLevel.forElement(expression), PyForStatement.class,
                              stringBuilder.toString());
-  }
-
-  private static PyElement getResult(PyListCompExpression expression) {
-    PyElement result = expression.getResultExpression();
-    if (result instanceof PyListCompExpression) {
-      return getResult((PyListCompExpression)result);
-    }
-    return result;
   }
 
  public boolean startInWriteAction() {

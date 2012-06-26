@@ -39,19 +39,19 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return true;
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-
+  @Override
+  public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PyFunction srcFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     final PyClass srcClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
 
     if (srcClass == null && srcFunction == null) return;
 
+    final PsiDirectory dir = element.getContainingFile().getContainingDirectory();
     final CreateTestDialog d = new CreateTestDialog(project);
     if (srcClass != null) {
       d.setClassName("Test"+StringUtil.capitalize(srcClass.getName()));
       d.setFileName("test_"+StringUtil.decapitalize(srcClass.getName()) + ".py");
-      PsiDirectory dir = file.getContainingDirectory();
+
       if (dir != null)
         d.setTargetDir(dir.getVirtualFile().getPath());
 
@@ -81,7 +81,6 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     else {
       d.setClassName("Test"+ StringUtil.capitalize(srcFunction.getName()));
       d.setFileName("test_"+StringUtil.decapitalize(srcFunction.getName())+ ".py");
-      PsiDirectory dir = file.getContainingDirectory();
       if (dir != null)
         d.setTargetDir(dir.getVirtualFile().getPath());
 
