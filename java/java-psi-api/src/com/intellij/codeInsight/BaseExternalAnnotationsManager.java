@@ -131,7 +131,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       try {
         VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null) continue;
-        document = JDOMUtil.loadDocument(StreamUtil.readText(virtualFile.getInputStream()));
+        document = JDOMUtil.loadDocument(escapeAttributes(StreamUtil.readText(virtualFile.getInputStream())));
       }
       catch (IOException e) {
         LOG.error(e);
@@ -225,5 +225,30 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   protected void dropCache() {
     cache.clear();
+  }
+
+  // This method is used for legacy reasons.
+  // Old external annotations sometimes are bad XML: they have "<" and ">" characters in attributes values. To prevent SAX parser from
+  // failing, we escape attributes values.
+  @NotNull
+  private static String escapeAttributes(@NotNull String invalidXml) {
+    // We assume that XML has single- and double-quote characters only for attribute values, therefore we don't any complex parsing,
+    // just have binary inAttribute state
+    StringBuilder buf = new StringBuilder();
+    boolean inAttribute = false;
+    for (int i = 0; i < invalidXml.length(); i++) {
+      char c = invalidXml.charAt(i);
+      if (inAttribute && c == '<') {
+        buf.append("&lt;");
+      } else if (inAttribute && c == '>') {
+        buf.append("&gt;");
+      } else if (c == '\"' || c == '\'') {
+        buf.append('\"');
+        inAttribute = !inAttribute;
+      } else {
+        buf.append(c);
+      }
+    }
+    return buf.toString();
   }
 }
