@@ -38,7 +38,8 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -809,13 +810,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
     final boolean compilingTests = context.isCompilingTests();
     for (Module module : chunk.getModules()) {
+      final String output = compilingTests ? module.getTestOutputPath() : module.getOutputPath();
+      if (output == null) {
+        continue;
+      }
       final Set<File> roots = new LinkedHashSet<File>();
       for (RootDescriptor descriptor : context.getModuleRoots(module)) {
         if (descriptor.isTestRoot == compilingTests) {
           roots.add(descriptor.root);
         }
       }
-      map.put(new File(compilingTests ? module.getTestOutputPath() : module.getOutputPath()), roots);
+      map.put(new File(output), roots);
     }
     return map;
   }
