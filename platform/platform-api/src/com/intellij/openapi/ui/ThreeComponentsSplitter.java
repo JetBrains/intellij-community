@@ -675,6 +675,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     protected void processMouseEvent(MouseEvent e) {
       super.processMouseEvent(e);
+      if (!isShowing()) {
+        return;
+      }
       switch (e.getID()) {
         case MouseEvent.MOUSE_ENTERED:
           setCursor(getResizeCursor());
