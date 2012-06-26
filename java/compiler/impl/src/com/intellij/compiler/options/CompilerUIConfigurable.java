@@ -18,20 +18,21 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.*;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
@@ -49,10 +50,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
-    final boolean isServerOptionEnabled = Registry.is("compiler.out-of-process.build.enabled") || ApplicationManager.getApplication().isInternal();
-    myCbUseCompileServer.setVisible(isServerOptionEnabled);
-    myCbMakeProjectOnSave.setVisible(isServerOptionEnabled);
-    myCbAllowAutomakeWhileRunningApplication.setVisible(isServerOptionEnabled);
 
     myPatternLegendLabel.setText("<html>" +
                                  "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
@@ -103,7 +100,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
-    boolean wasUsing = workspaceConfiguration.USE_COMPILE_SERVER;
+    boolean wasUsingExternalMake = workspaceConfiguration.USE_COMPILE_SERVER;
     workspaceConfiguration.USE_COMPILE_SERVER = myCbUseCompileServer.isSelected();
     workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbMakeProjectOnSave.isSelected();
     workspaceConfiguration.ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION = myCbAllowAutomakeWhileRunningApplication.isSelected();
@@ -115,14 +112,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
     // this will schedule for compilation all files that might become compilable after resource patterns' changing
     final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
-    if (!workspaceConfiguration.USE_COMPILE_SERVER) {
-      if (wasUsing) {
-        CompileServerManager.getInstance().shutdownServer();
-        monitor.watchProject(myProject);
-        monitor.scanSourcesForCompilableFiles(myProject);
-      }
-    }
-    else {
+    if (workspaceConfiguration.USE_COMPILE_SERVER) {
       monitor.suspendProject(myProject);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -130,6 +120,26 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
           BuildManager.getInstance().clearState(myProject);
         }
       });
+    }
+    else {
+      // use old make
+      if (wasUsingExternalMake) {
+        CompileServerManager.getInstance().shutdownServer();
+        monitor.watchProject(myProject);
+        monitor.scanSourcesForCompilableFiles(myProject);
+        if (!myProject.isDefault()) {
+          final File buildSystem = BuildManager.getInstance().getBuildSystemDirectory();
+          final File[] subdirs = buildSystem.listFiles();
+          if (subdirs != null) {
+            final String prefix = myProject.getName().toLowerCase(Locale.US) + "_";
+            for (File subdir : subdirs) {
+              if (subdir.getName().startsWith(prefix)) {
+                FileUtil.asyncDelete(subdir);
+              }
+            }
+          }
+        }
+      }
     }
   }
 

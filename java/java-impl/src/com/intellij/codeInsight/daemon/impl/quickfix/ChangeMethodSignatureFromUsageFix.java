@@ -73,7 +73,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
   private final boolean myChangeAllUsages;
   private final int myMinUsagesNumberToShowDialog;
   ParameterInfoImpl[] myNewParametersInfo;
-  private static final Logger LOG = Logger.getInstance("#" + ChangeMethodSignatureFromUsageFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(ChangeMethodSignatureFromUsageFix.class);
 
   ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
                                     @NotNull PsiExpression[] expressions,

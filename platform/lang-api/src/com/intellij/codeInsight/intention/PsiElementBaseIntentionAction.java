@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!file.getManager().isInProject(file)) return;
     final PsiElement element = getElement(editor, file);
     if (element != null) {
       invoke(project, editor, element);
@@ -54,6 +55,7 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    if (!file.getManager().isInProject(file)) return false;
     final PsiElement element = getElement(editor, file);
     return element != null && isAvailable(project, editor, element);
   }
@@ -71,7 +73,6 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
 
   @Nullable
   protected static PsiElement getElement(Editor editor, @NotNull PsiFile file) {
-    if (!file.getManager().isInProject(file)) return null;
     CaretModel caretModel = editor.getCaretModel();
     int position = caretModel.getOffset();
     return file.findElementAt(position);

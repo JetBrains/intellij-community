@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -135,7 +136,103 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       myHolder = null;
     }
+    else {
+      highlightDeclaration(element, holder);
+    }
   }
+
+  private static void highlightDeclaration(PsiElement element, AnnotationHolder holder) {
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof GrNamedElement) || ((GrNamedElement)parent).getNameIdentifierGroovy() != element) {
+      return;
+    }
+
+
+    if (parent instanceof GrTypeParameter) {
+      final Annotation annotation = holder.createInfoAnnotation(element, null);
+      annotation.setTextAttributes(DefaultHighlighter.TYPE_PARAMETER);
+    }
+    else if (parent instanceof GrAnnotationTypeDefinition) {
+      final Annotation annotation = holder.createInfoAnnotation(element, null);
+      annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
+    }
+    else if (parent instanceof PsiClass) {
+      final Annotation annotation = holder.createInfoAnnotation(element, null);
+      annotation.setTextAttributes(DefaultHighlighter.CLASS_REFERENCE);
+    }
+    else if (parent instanceof PsiMethod) {
+      if (!((PsiMethod)parent).isConstructor()) {
+      final Annotation annotation = holder.createInfoAnnotation(element, null);
+        annotation.setTextAttributes(DefaultHighlighter.METHOD_DECLARATION);
+      }
+    }
+    else if (parent instanceof PsiField) {
+      final boolean isStatic = ((PsiField)parent).hasModifierProperty(PsiModifier.STATIC);
+      final Annotation annotation = holder.createInfoAnnotation(element, null);
+      annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
+    }
+    else if (parent instanceof GrParameter) {
+      boolean reassigned = isReassigned((GrParameter)parent);
+      final Annotation annotation = holder.createInfoAnnotation(element, null);
+      annotation.setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER);
+    }
+    else if (parent instanceof GrVariable) {
+      boolean reassigned = isReassigned((GrVariable)parent);
+      final Annotation annotation = holder.createInfoAnnotation(element, null);
+      annotation.setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE);
+    }
+  }
+
+  private static void highlightResolved(AnnotationHolder holder, GrReferenceElement refElement, PsiElement resolved) {
+    final PsiElement refNameElement = getElementToHighlight(refElement);
+
+    if (resolved instanceof PsiField) {
+      boolean isStatic = ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC);
+      Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+      annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
+    }
+    else if (resolved instanceof GrAccessorMethod) {
+      boolean isStatic = ((GrAccessorMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
+      Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+      annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
+    }
+    else if (resolved instanceof PsiMethod) {
+      boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
+      if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
+        Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+        annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
+      }
+      else {
+        Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+        annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_METHOD_ACCESS : DefaultHighlighter.METHOD_CALL);
+      }
+    }
+    else if (resolved instanceof PsiTypeParameter) {
+      Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+      annotation.setTextAttributes(DefaultHighlighter.TYPE_PARAMETER);
+    }
+    else if (resolved instanceof PsiClass) {
+      if (((PsiClass)resolved).isAnnotationType()) {
+        Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+        annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
+      }
+      else {
+        Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+        annotation.setTextAttributes(DefaultHighlighter.CLASS_REFERENCE);
+      }
+    }
+    else if (resolved instanceof GrParameter) {
+      boolean reassigned = isReassigned((GrParameter)resolved);
+      Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+      annotation.setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER);
+    }
+    else if (resolved instanceof GrVariable) {
+      boolean reassigned = isReassigned((GrVariable)resolved);
+      Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
+      annotation.setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE);
+    }
+  }
+
 
   @Override
   public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
@@ -221,9 +318,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         return;
       }
 
-      if (resolveResult.getElement() instanceof PsiMember) {
-        highlightMemberResolved(myHolder, refElement, ((PsiMember)resolveResult.getElement()));
-      }
+      highlightResolved(myHolder, refElement, resolveResult.getElement());
 
       checkSingleResolvedElement(myHolder, refElement, resolveResult, true);
 
@@ -312,12 +407,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiElement parent = referenceExpression.getParent();
 
     if (resolved != null) {
-      if (resolved instanceof PsiMember) {
-        highlightMemberResolved(myHolder, referenceExpression, ((PsiMember)resolved));
-      }
-      else if (resolved instanceof GrVariable) {
-        highlightVariable((GrVariable)resolved, getElementToHighlight(referenceExpression));
-      }
+      highlightResolved(myHolder, referenceExpression, resolved);
 
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
@@ -402,17 +492,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static boolean isCompileStatic(PsiElement e) {
     PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class);
     return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
-  }
-
-  private void highlightVariable(GrVariable variable, PsiElement toHighlight) {
-    Annotation annotation = myHolder.createInfoAnnotation(toHighlight, null);
-    boolean reassigned = isReassigned(variable);
-    if (variable instanceof GrParameter) {
-      annotation.setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER);
-    }
-    else {
-      annotation.setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE);
-    }
   }
 
   private static boolean isReassigned(GrVariable var) {
@@ -528,12 +607,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkDuplicateMethod(typeDefinition.getMethods(), myHolder);
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
-    if (typeDefinition instanceof GrTypeParameter) {
-      highlightTypeParameterReference(myHolder, typeDefinition.getNameIdentifierGroovy());
-    }
-    else {
-      highlightClassReference(myHolder, typeDefinition.getNameIdentifierGroovy());
-    }
   }
 
   private static void checkReferenceList(AnnotationHolder holder,
@@ -664,9 +737,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitMethod(GrMethod method) {
-    if (!method.isConstructor()) {
-      myHolder.createInfoAnnotation(method.getNameIdentifierGroovy(), null).setTextAttributes(DefaultHighlighter.METHOD_DECLARATION);
-    }
+
 
     checkMethodDefinitionModifiers(myHolder, method);
     checkMethodWithTypeParamsShouldHaveReturnType(myHolder, method);
@@ -763,11 +834,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitVariable(GrVariable variable) {
     checkName(variable);
-    if (variable instanceof GrMember) {
-      highlightMember(myHolder, ((GrMember)variable));
-    } else {
-      highlightVariable(variable, variable.getNameIdentifierGroovy());
-    }
 
     PsiNamedElement duplicate = ResolveUtil
       .resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrReferenceExpression.class, GrVariable.class);
@@ -1235,13 +1301,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitAnnotation(GrAnnotation annotation) {
     super.visitAnnotation(annotation);
     final GrCodeReferenceElement ref = annotation.getClassReference();
-    GroovyResolveResult resolveResult = ref.advancedResolve();
     final PsiElement resolved = ref.resolve();
-
-    highlightAnnotation(myHolder, ref, resolveResult);
 
     if (resolved == null) return;
     assert resolved instanceof PsiClass;
+
+    highlightResolved(myHolder, ref, resolved);
 
     PsiClass anno = (PsiClass) resolved;
     if (!anno.isAnnotationType()) {
@@ -1251,9 +1316,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiElement parent = annotation.getParent();
     PsiElement owner = parent.getParent();
     String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(parent instanceof PsiModifierList ? owner : parent);
-    if (!GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
-      String description = JavaErrorMessages
-        .message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
+    if (elementTypeFields != null && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
+      String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
       myHolder.createErrorAnnotation(ref, description);
     }
   }
@@ -1623,11 +1687,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();
-    if (typeDefinition.isAnnotationType()) {
-      Annotation annotation = holder.createInfoAnnotation(typeDefinition.getNameIdentifierGroovy(), null);
-      annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
-    }
-    else if (typeDefinition.isAnonymous()) {
+    if (typeDefinition.isAnonymous()) {
       if (!configUtils.isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_7)) {
         holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("anonymous.classes.are.not.supported",
                                                                                                     configUtils
@@ -1827,33 +1887,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void highlightMemberResolved(AnnotationHolder holder, GrReferenceElement refExpr, PsiMember member) {
-    boolean isStatic = member.hasModifierProperty(PsiModifier.STATIC);
-    final PsiElement refNameElement = getElementToHighlight(refExpr);
-    Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
-
-    if (member instanceof PsiField) {
-      annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
-    }
-    else if (member instanceof GrAccessorMethod) {
-      annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
-    }
-    else if (member instanceof PsiMethod) {
-      if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)member)) {
-        annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
-      }
-      else {
-        annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_METHOD_ACCESS : DefaultHighlighter.METHOD_CALL);
-      }
-    }
-    else if (member instanceof PsiTypeParameter) {
-      highlightTypeParameterReference(holder, refExpr);
-
-    }
-    else if (member instanceof PsiClass) {
-      highlightClassReference(holder, refExpr);
-    }
-  }
 
   public static boolean isDeclarationAssignment(GrReferenceExpression refExpr) {
     if (isAssignmentLhs(refExpr)) {
@@ -1949,19 +1982,27 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       else {
         if (shouldBeInterface(refElement)) {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.INTERFACE));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE));
         }
         else if (shouldBeClass(refElement)) {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.CLASS));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.ENUM));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM));
+        }
+        else if (shouldBeAnnotation(refElement)) {
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION));
         }
         else {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.CLASS));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.INTERFACE));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.ENUM));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION));
         }
       }
     }
+  }
+
+  private static boolean shouldBeAnnotation(GrReferenceElement element) {
+    return element.getParent() instanceof GrAnnotation;
   }
 
   private static boolean shouldBeInterface(GrReferenceElement myRefElement) {
@@ -1972,52 +2013,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static boolean shouldBeClass(GrReferenceElement myRefElement) {
     PsiElement parent = myRefElement.getParent();
     return parent instanceof GrExtendsClause && !(parent.getParent() instanceof GrInterfaceDefinition);
-  }
-
-
-  private static void highlightMember(AnnotationHolder holder, GrMember member) {
-    if (member instanceof GrField) {
-      GrField field = (GrField)member;
-      PsiElement identifier = field.getNameIdentifierGroovy();
-      final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-      holder.createInfoAnnotation(identifier, null).setTextAttributes(
-        isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
-    }
-  }
-
-  private static void highlightAnnotation(AnnotationHolder holder, PsiElement refElement, GroovyResolveResult result) {
-    PsiElement element = result.getElement();
-    PsiElement parent = refElement.getParent();
-    if (element instanceof PsiClass) {
-      if (((PsiClass)element).isAnnotationType() && !(parent instanceof GrImportStatement)) {
-        final TextRange range = refElement.getTextRange();
-        Annotation annotation = holder.createInfoAnnotation(new TextRange(range.getStartOffset() - 1, range.getEndOffset()), null);
-        annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
-        GroovyPsiElement context = result.getCurrentFileResolveContext();
-        if (context instanceof GrImportStatement) {
-          final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
-          LOG.assertTrue(importReference != null);
-          annotation = holder.createInfoAnnotation(importReference, null);
-          annotation.setTextAttributes(DefaultHighlighter.ANNOTATION);
-        }
-      }
-      else if (element instanceof PsiTypeParameter) {
-        highlightTypeParameterReference(holder, refElement);
-      }
-      else {
-        highlightClassReference(holder, refElement);
-      }
-    }
-  }
-
-  private static void highlightTypeParameterReference(AnnotationHolder holder, PsiElement element) {
-    final Annotation annotation = holder.createInfoAnnotation(element, null);
-    annotation.setTextAttributes(DefaultHighlighter.TYPE_PARAMETER);
-  }
-
-  private static void highlightClassReference(AnnotationHolder holder, PsiElement classReference) {
-    final Annotation annotation = holder.createInfoAnnotation(classReference, null);
-    annotation.setTextAttributes(DefaultHighlighter.CLASS_REFERENCE);
   }
 
   public static class DuplicateVariablesProcessor extends PropertyResolverProcessor {

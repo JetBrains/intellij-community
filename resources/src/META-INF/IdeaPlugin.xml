@@ -704,6 +704,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertColorRepresentationIntentionAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
       <category>Other</category>
     </intentionAction>

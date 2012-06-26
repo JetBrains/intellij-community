@@ -62,4 +62,12 @@
     <description>Constructor parameter for @NotNull field might be annotated @NotNull itself</description>
   </problem>
 
+  <problem>
+    <file>Test.java</file>
+    <line>63</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
+    <description>Constructor parameter for @NotNull field might be annotated @NotNull itself</description>
+  </problem>
+
+
 </problems>

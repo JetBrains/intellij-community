@@ -85,7 +85,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
 
     for (final PsiType type : ExpectedTypesGetter.extractTypes(infos, true)) {
       if (type instanceof PsiArrayType) {
-        final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
+        final LookupItem item = PsiTypeLookupItem.createLookupItem(TypeConversionUtil.erasure(type), identifierCopy);
         if (item.getObject() instanceof PsiClass) {
           JavaCompletionUtil.setShowFQN(item);
         }

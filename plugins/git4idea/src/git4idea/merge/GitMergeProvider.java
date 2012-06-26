@@ -323,7 +323,8 @@ public class GitMergeProvider implements MergeProvider2 {
           for (VirtualFile f : files) {
             String path = VcsFileUtil.relativePath(root, f);
             Conflict c = cs.get(path);
-            assert c != null : "The conflict not found for the file: " + f.getPath() + "(" + path + ")";
+            log.assertTrue(c != null, String.format("The conflict not found for the file: %s(%s)%nFull ls-files output: %n%s",
+                                                    f.getPath(), path, output));
             c.myFile = f;
             if (c.myStatusTheirs == null) {
               c.myStatusTheirs = Conflict.Status.DELETED;

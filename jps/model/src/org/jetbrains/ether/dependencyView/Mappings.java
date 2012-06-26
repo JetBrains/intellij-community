@@ -1715,6 +1715,12 @@ public class Mappings {
       for (final ClassRepr c : state.classDiff.removed()) {
         myDelta.addDeletedClass(c);
 
+        final int fileName = myClassToSourceFile.get(c.name);
+
+        if (fileName != 0) {
+          myDelta.myChangedFiles.add(fileName);
+        }
+
         if (!myEasyMode) {
           mySelf.appendDependents(c, state.dependants);
           debug("Adding usages of class ", c.name);
@@ -1861,7 +1867,7 @@ public class Mappings {
           final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
           final DiffState state = new DiffState(Difference.make(pastClasses, classes));
 
-          if (!processChangedClasses(state)) {
+          if (!processChangedClasses(state) && !myEasyMode) {
             return false;
           }
 
@@ -1995,10 +2001,25 @@ public class Mappings {
             cleanupRemovedClass(delta, repr, null, dependenciesTrashBin);
           }
 
+          delta.getRemovedSuperClasses().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+            @Override
+            public boolean execute(final int a, final TIntHashSet b) {
+              if (!compiledClasses.contains(a)) {
+                final TIntHashSet old = myClassToSubclasses.get(a);
+
+                if (old != null) {
+                  old.removeAll(b.toArray());
+                  myClassToSubclasses.replace(a, old);
+                }
+              }
+
+              return true;
+            }
+          });
+
           delta.myClassToSubclasses.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
             @Override
-            public boolean execute(final int className, final TIntHashSet s) {
-              final TIntHashSet newSubClasses = s == null ? new TIntHashSet() : s;
+            public boolean execute(final int className, final TIntHashSet newSubClasses) {
               final TIntHashSet oldSubClasses = myClassToSubclasses.get(className);
 
               if (oldSubClasses != null) {
@@ -2047,8 +2068,9 @@ public class Mappings {
 
           delta.getChangedFiles().forEach(new TIntProcedure() {
             @Override
-            public boolean execute(int fileName) {
+            public boolean execute(final int fileName) {
               final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(fileName);
+
               if (classes != null) {
                 mySourceFileToClasses.replace(fileName, classes);
               }
@@ -2057,6 +2079,7 @@ public class Mappings {
               }
 
               final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(fileName);
+
               if (clusters != null) {
                 mySourceFileToUsages.replace(fileName, clusters);
               }
@@ -2071,22 +2094,6 @@ public class Mappings {
               else {
                 mySourceFileToAnnotationUsages.remove(fileName);
               }
-              return true;
-            }
-          });
-
-          delta.getRemovedSuperClasses().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-            @Override
-            public boolean execute(final int a, final TIntHashSet b) {
-              if (!compiledClasses.contains(a)) {
-                final TIntHashSet old = myClassToSubclasses.get(a);
-
-                if (old != null) {
-                  old.removeAll(b.toArray());
-                  myClassToSubclasses.replace(a, old);
-                }
-              }
-
               return true;
             }
           });
@@ -2346,7 +2353,7 @@ public class Mappings {
 
   @NotNull
   private Set<ClassRepr> getDeletedClasses() {
-    return myDeletedClasses != null ? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
+    return myDeletedClasses == null ? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
   }
 
   private TIntHashSet getChangedClasses() {

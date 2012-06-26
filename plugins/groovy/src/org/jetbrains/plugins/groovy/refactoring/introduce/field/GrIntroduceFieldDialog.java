@@ -35,9 +35,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
@@ -90,8 +90,9 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     super(context.getProject(), true);
     myContext = context;
 
-    GrTypeDefinition clazz = (GrTypeDefinition)context.getScope();
-    myIsStatic = GrIntroduceFieldHandler.shouldBeStatic(context.getPlace(), clazz);
+    final PsiClass clazz = (PsiClass)context.getScope();
+    PsiElement scope = clazz instanceof GroovyScriptClass ? clazz.getContainingFile() : clazz;
+    myIsStatic = GrIntroduceFieldHandler.shouldBeStatic(context.getPlace(), scope);
 
     initVisibility();
 
@@ -101,12 +102,16 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     initialization.add(myClassConstructorSRadioButton);
     new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton);
 
-    myCanBeInitializedOutsideBlock = canBeInitializedOutsideBlock(context.getExpression(), (GrTypeDefinition)context.getScope());
+    if (clazz instanceof GroovyScriptClass) {
+      myClassConstructorSRadioButton.setEnabled(false);
+    }
+
+    myCanBeInitializedOutsideBlock = canBeInitializedOutsideBlock(context.getExpression(), clazz);
     /*if (!myCanBeInitializedOutsideBlock) {
       myClassConstructorSRadioButton.setEnabled(false);
       myFieldDeclarationRadioButton.setEnabled(false);
     }*/
-    final GrMethod containingMethod = GrIntroduceFieldHandler.getContainingMethod(context.getPlace(), clazz);
+    final GrMethod containingMethod = GrIntroduceFieldHandler.getContainingMethod(context.getPlace(), scope);
     if (containingMethod == null) {
       myCurrentMethodRadioButton.setEnabled(false);
     }
@@ -157,7 +162,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     myTypeComboBox.addItemListener(l);
 
     isInvokedInAlwaysInvokedConstructor =
-      allOccurrencesInOneMethod(myContext.getOccurrences(), clazz) && isAlwaysInvokedConstructor(containingMethod, clazz);
+      allOccurrencesInOneMethod(myContext.getOccurrences(), scope) && isAlwaysInvokedConstructor(containingMethod, clazz);
     hasLHSUsages = hasLhsUsages(myContext);
 
     setTitle(REFACTORING_NAME);
@@ -167,7 +172,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   private void checkErrors() {
     List<String> errors = new ArrayList<String>();
-    if (myCurrentMethodRadioButton.isSelected() && myDeclareFinalCheckBox.isSelected() && !!isInvokedInAlwaysInvokedConstructor) {
+    if (myCurrentMethodRadioButton.isSelected() && myDeclareFinalCheckBox.isSelected() && !isInvokedInAlwaysInvokedConstructor) {
       errors.add(GroovyRefactoringBundle.message("final.field.cant.be.initialized.in.cur.method"));
     }
     if (myDeclareFinalCheckBox.isSelected() && myReplaceAllOccurrencesCheckBox.isSelected() && myInvokedOnLocalVar != null && hasLHSUsages) {
@@ -202,11 +207,20 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     visibility.add(myPublicRadioButton);
     visibility.add(myPropertyRadioButton);
 
-    myPrivateRadioButton.setSelected(true);
+    if (myContext.getScope() instanceof GroovyScriptClass) {
+      myPropertyRadioButton.setSelected(true);
+      myPrivateRadioButton.setEnabled(false);
+      myProtectedRadioButton.setEnabled(false);
+      myPublicRadioButton.setEnabled(false);
+      myPropertyRadioButton.setEnabled(false);
+    }
+    else {
+      myPrivateRadioButton.setSelected(true);
+    }
     new RadioUpDownListener(myPrivateRadioButton, myProtectedRadioButton, myPublicRadioButton, myPropertyRadioButton);
   }
 
-  private static boolean isAlwaysInvokedConstructor(PsiMethod method, GrTypeDefinition clazz) {
+  private static boolean isAlwaysInvokedConstructor(PsiMethod method, PsiClass clazz) {
     if (method == null) return false;
     if (!method.isConstructor()) return false;
     final PsiMethod[] constructors = clazz.getConstructors();
@@ -222,12 +236,12 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return true;
   }
 
-  private static boolean allOccurrencesInOneMethod(PsiElement[] occurrences, GrTypeDefinition clazz) {
+  private static boolean allOccurrencesInOneMethod(PsiElement[] occurrences, PsiElement scope) {
     if (occurrences.length == 0) return true;
-    GrMethod method = GrIntroduceFieldHandler.getContainingMethod(occurrences[0], clazz);
+    GrMethod method = GrIntroduceFieldHandler.getContainingMethod(occurrences[0], scope);
     if (method == null) return false;
     for (int i = 1; i < occurrences.length; i++) {
-      GrMethod other = GrIntroduceFieldHandler.getContainingMethod(occurrences[i], clazz);
+      GrMethod other = GrIntroduceFieldHandler.getContainingMethod(occurrences[i], scope);
       if (other != method) return false;
     }
     return true;
@@ -335,7 +349,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     return null;
   }
 
-  private static boolean canBeInitializedOutsideBlock(@Nullable GrExpression expression, final GrTypeDefinition scope) {
+  private static boolean canBeInitializedOutsideBlock(@Nullable GrExpression expression, final PsiClass clazz) {
     if (expression == null) return false;
     expression = (GrExpression)PsiUtil.skipParentheses(expression, false);
     if (expression == null) return false;
@@ -356,7 +370,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
         super.visitReferenceExpression(refExpr);
         final PsiElement resolved = refExpr.resolve();
         if (!(resolved instanceof GrVariable)) return;
-        if (resolved instanceof GrField && scope.getManager().areElementsEquivalent(scope, ((GrField)resolved).getContainingClass())) {
+        if (resolved instanceof GrField && clazz.getManager().areElementsEquivalent(clazz, ((GrField)resolved).getContainingClass())) {
           return;
         }
         if (resolved instanceof PsiParameter &&
@@ -375,7 +389,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   @Override
   protected void doOKAction() {
-    final GrTypeDefinition clazz = (GrTypeDefinition)myContext.getScope();
+    final PsiClass clazz = (PsiClass)myContext.getScope();
     final String name = getName();
     String message = RefactoringBundle.message("field.exists", name, clazz.getQualifiedName());
     if (clazz.findFieldByName(name, true) != null &&

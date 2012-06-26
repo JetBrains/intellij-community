@@ -29,7 +29,7 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
     "${TestUtils.testDataPath}intentions/createFieldFromParameter/"
   }
 
-  /*void test1() {doTest()}
+  void test1() {doTest()}
   void test2() {doTest()}
   void test3() {doTest()}
   void test4() {doTest()}
@@ -48,10 +48,10 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
   void _testNotNull() {doTest()}
   void _testNullable() {doTest()}
   void testSimpleTypeParameter() {doTest()}
-  void testTypeParameter() {doTest()}*/
+  void testTypeParameter() {doTest()}
 
   private void doTest() {
-    myFixture.configureByFile("before${getTestName(true)}.groovy")
+    myFixture.configureByFile("before${getTestName(false)}.groovy")
     def intentions = myFixture.availableIntentions
     for (intention in intentions) {
       if (intention instanceof IntentionActionWrapper) intention = intention.delegate
@@ -61,6 +61,6 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
         break
       }
     }
-    myFixture.checkResultByFile("after${getTestName(true)}.groovy")
+    myFixture.checkResultByFile("after${getTestName(false)}.groovy")
   }
 }

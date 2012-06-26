@@ -469,19 +469,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitInstanceofExpression(GrInstanceOfExpression expression) {
     expression.getOperand().accept(this);
-
-    ConditionInstruction cond = new ConditionInstruction(expression);
-    addNodeAndCheckPending(cond);
-    registerCondition(cond);
-
-    addNode(new InstanceOfInstruction(expression, cond));
-    NegatingGotoInstruction negation = new NegatingGotoInstruction(expression, cond);
-    addNode(negation);
-    addPendingEdge(expression, negation);
-
-    myHead = cond;
-    addNode(new InstanceOfInstruction(expression, cond));
-    myConditions.removeFirstOccurrence(cond);
+    processInstanceOf(expression);
   }
 
   public void visitReferenceExpression(GrReferenceExpression refExpr) {
@@ -538,7 +526,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     final GrExpression right = expression.getRightOperand();
     final IElementType opType = expression.getOperationTokenType();
 
-    if (opType != mLOR && opType != mLAND) {
+    if (ControlFlowBuilderUtil.isInstanceOfBinary(expression)) {
+      expression.getLeftOperand().accept(this);
+      processInstanceOf(expression);
+      return;
+    }
+
+    if (opType != mLOR && opType != mLAND && opType!=kIN) {
       left.accept(this);
       if (right != null) {
         right.accept(this);
@@ -581,6 +575,21 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myConditions.removeFirstOccurrence(condition);
 
     right.accept(this);
+  }
+
+  private void processInstanceOf(GrExpression expression) {
+    ConditionInstruction cond = new ConditionInstruction(expression);
+    addNodeAndCheckPending(cond);
+    registerCondition(cond);
+
+    addNode(new InstanceOfInstruction(expression, cond));
+    NegatingGotoInstruction negation = new NegatingGotoInstruction(expression, cond);
+    addNode(negation);
+    addPendingEdge(expression, negation);
+
+    myHead = cond;
+    addNode(new InstanceOfInstruction(expression, cond));
+    myConditions.removeFirstOccurrence(cond);
   }
 
   /**

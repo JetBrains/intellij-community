@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -380,7 +381,7 @@ public class CompletionLookupArranger extends LookupArranger {
       if (myMain != null) {
         StatisticsManager.getInstance().incUseCount(myMain);
       }
-      FeatureUsageTracker.getInstance().registerCharactersSparedByCompletion(mySpared);
+      ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics().registerInvocation(mySpared);
     }
 
     @Override

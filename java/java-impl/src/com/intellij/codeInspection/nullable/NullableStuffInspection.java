@@ -42,14 +42,17 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class NullableStuffInspection extends BaseLocalInspectionTool {
   // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
@@ -173,40 +176,13 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                        new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
               }
             }
-            if (containingClass == null) {
-              return;
-            }
-            final PsiMethod[] constructors = containingClass.getConstructors();
-            final Query<PsiReference> search = ReferencesSearch.search(field, new LocalSearchScope(constructors), false);
-            search.forEach(new Processor<PsiReference>() {
-              @Override
-              public boolean process(PsiReference reference) {
-                final PsiElement element = reference.getElement();
-                if (!(element instanceof PsiReferenceExpression)) {
-                  return true;
-                }
-                PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-                final PsiAssignmentExpression assignmentExpression = getAssignmentExpressionIfOnAssignmentLefthand(referenceExpression);
-                final PsiMethod method = PsiTreeUtil.getParentOfType(assignmentExpression, PsiMethod.class);
-                if (method == null || !method.isConstructor()) {
-                  return true;
-                }
-                if (assignmentExpression == null) {
-                  return true;
-                }
-                final PsiExpression rhs = assignmentExpression.getRExpression();
-                if (!(rhs instanceof PsiReferenceExpression)) {
-                  return true;
-                }
-                PsiReferenceExpression expression = (PsiReferenceExpression)rhs;
-                final PsiElement target = expression.resolve();
-                if (!(target instanceof PsiParameter)) {
-                  return true;
-                }
-                final PsiParameter parameter = (PsiParameter)target;
-                if (!method.equals(parameter.getDeclarationScope())) {
-                  return true;
-                }
+          }
+
+          for (PsiExpression rhs : findAllConstructorInitializers(field)) {
+            if (rhs instanceof PsiReferenceExpression) {
+              PsiElement target = ((PsiReferenceExpression)rhs).resolve();
+              if (target instanceof PsiParameter) {
+                PsiParameter parameter = (PsiParameter)target;
                 if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations()) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
                   final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
                   assert nameIdentifier2 != null : parameter;
@@ -214,7 +190,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                     .message("inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated",
                              StringUtil.getShortName(anno)),
                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
-                  return true;
+                  continue;
                 }
                 if (annotated.isDeclaredNotNull && manager.isNullable(parameter, false)) {
                   final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
@@ -234,9 +210,9 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                          new AddAnnotationFix(anno, parameter, ArrayUtil.toStringArray(annoToRemove)));
                 }
-                return true;
+
               }
-            });
+            }
           }
         }
       }
@@ -244,18 +220,6 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       private void assertValidElement(PsiMethod setter, PsiParameter parameter, PsiIdentifier nameIdentifier1) {
         LOG.assertTrue(nameIdentifier1 != null, setter.getText());
         LOG.assertTrue(parameter.isPhysical(), setter.getText());
-      }
-
-      public PsiAssignmentExpression getAssignmentExpressionIfOnAssignmentLefthand(PsiExpression expression) {
-        PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
-        if (!(parent instanceof PsiAssignmentExpression)) {
-          return null;
-        }
-        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-        if (!PsiTreeUtil.isAncestor(assignmentExpression.getLExpression(), expression, false)) {
-          return null;
-        }
-        return assignmentExpression;
       }
 
       @Override public void visitParameter(PsiParameter parameter) {
@@ -518,5 +482,43 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
       REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = myReportNullsPassedToNonAnnotatedParameter.isSelected();
     }
+  }
+
+  public static List<PsiExpression> findAllConstructorInitializers(PsiField field) {
+    final List<PsiExpression> result = new ArrayList<PsiExpression>();
+    addIfNotNull(result, field.getInitializer());
+
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass != null) {
+      LocalSearchScope scope = new LocalSearchScope(containingClass.getConstructors());
+      ReferencesSearch.search(field, scope, false).forEach(new Processor<PsiReference>() {
+        @Override
+        public boolean process(PsiReference reference) {
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            final PsiAssignmentExpression assignment = getAssignmentExpressionIfOnAssignmentLhs(element);
+            final PsiMethod method = PsiTreeUtil.getParentOfType(assignment, PsiMethod.class);
+            if (method != null && method.isConstructor() && assignment != null) {
+              addIfNotNull(result, assignment.getRExpression());
+            }
+          }
+          return true;
+        }
+      });
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiAssignmentExpression getAssignmentExpressionIfOnAssignmentLhs(PsiElement expression) {
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
+    if (!(parent instanceof PsiAssignmentExpression)) {
+      return null;
+    }
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+    if (!PsiTreeUtil.isAncestor(assignmentExpression.getLExpression(), expression, false)) {
+      return null;
+    }
+    return assignmentExpression;
   }
 }

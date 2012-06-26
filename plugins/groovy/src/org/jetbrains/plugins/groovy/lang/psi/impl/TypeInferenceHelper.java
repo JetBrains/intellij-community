@@ -33,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.InstanceOfInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
@@ -174,15 +173,11 @@ public class TypeInferenceHelper {
           public void fun(TIntObjectHashMap<TIntHashSet> m, Instruction instruction) {
             if (instruction instanceof InstanceOfInstruction) {
               final InstanceOfInstruction instanceOfInstruction = (InstanceOfInstruction)instruction;
-              final PsiElement element = instanceOfInstruction.getElement();
-              if (element instanceof GrInstanceOfExpression) {
-                final GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
-                final GrTypeElement typeElement = ((GrInstanceOfExpression)element).getTypeElement();
-                if (typeElement != null) {
-                  final int varIndex = getVarIndex(operand.getText());
-                  if (varIndex >= 0) {
-                    registerDef(m, instruction, varIndex);
-                  }
+              ReadWriteVariableInstruction i = instanceOfInstruction.getInstructionToMixin(flow);
+              if (i != null) {
+                int varIndex = getVarIndex(i.getVariableName());
+                if (varIndex >= 0) {
+                  registerDef(m, instruction, varIndex);
                 }
               }
             }
@@ -226,7 +221,9 @@ public class TypeInferenceHelper {
         String varName = instruction.getVariableName();
         if (varName == null) return null;
         ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(flow);
-        LOG.assertTrue(originalInstr != null, scope.getContainingFile().getName() + ":" + scope.getText());
+        if (originalInstr == null) {
+          LOG.error(scope.getContainingFile().getName() + ":" + scope.getText());
+        }
 
         DFAType original = getInferredType(varName, originalInstr, flow, scope);
         final PsiType mixin = instruction.inferMixinType();

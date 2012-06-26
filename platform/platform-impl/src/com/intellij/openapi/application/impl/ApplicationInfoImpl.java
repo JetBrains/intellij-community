@@ -474,7 +474,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     }
 
     myPluginsListUrl = DEFAULT_PLUGINS_HOST + "/plugins/list/";
-    myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager";
+    myPluginsDownloadUrl = DEFAULT_PLUGINS_HOST + "/pluginManager/";
 
     Element pluginsElement = parentNode.getChild(ELEMENT_PLUGINS);
     if (pluginsElement != null) {

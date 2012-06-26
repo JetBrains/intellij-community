@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
@@ -35,29 +36,40 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
     new NullableFunction<GrThisReferenceExpressionImpl, PsiType>() {
       @Override
       public PsiType fun(GrThisReferenceExpressionImpl ref) {
-        final GrReferenceExpression qualifier = ref.getQualifier();
-        if (qualifier == null) {
-          PsiClass context = PsiUtil.getContextClass(ref);
-          if (context != null) {
-            return ref.createType(context);
-          }
+        if (ref.getQualifier() == null) {
+          return resolveNonQualified(ref);
         }
         else {
-          final PsiElement resolved = qualifier.resolve();
+          return resolveQualified(ref);
+        }
+      }
+
+      @Nullable
+      private PsiType resolveQualified(GrThisReferenceExpressionImpl ref) {
+        GrReferenceExpression qualifier = ref.getQualifier();
+        assert qualifier != null;
+        final PsiElement resolved = qualifier.resolve();
+        try {
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
           if (resolved instanceof PsiClass) {
-            return JavaPsiFacade.getElementFactory(ref.getProject()).createType((PsiClass)resolved);
+            return factory.createType((PsiClass)resolved);
           }
           else {
-            try {
-              return JavaPsiFacade.getElementFactory(ref.getProject()).createTypeFromText(qualifier.getText(), ref);
-            }
-            catch (IncorrectOperationException e) {
-              return null;
-            }
+            return factory.createTypeFromText(qualifier.getText(), ref);
           }
         }
+        catch (IncorrectOperationException e) {
+          return null;
+        }
+      }
 
-        return null;
+      @Nullable
+      private PsiType resolveNonQualified(GrThisReferenceExpressionImpl ref) {
+        PsiClass context = PsiUtil.getContextClass(ref);
+        if (context != null) {
+          return ref.createType(context);
+        }
+        else return null;
       }
     };
 

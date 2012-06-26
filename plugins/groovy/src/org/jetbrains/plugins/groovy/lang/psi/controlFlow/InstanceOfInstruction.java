@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -42,32 +44,40 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
   }
 
   @Nullable
-  private GrInstanceOfExpression getApplicableInstanceof() {
+  private Pair<GrExpression, PsiType> getInstanceof() {
     final PsiElement element = getElement();
     if (element instanceof GrInstanceOfExpression) {
       GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
       final GrTypeElement typeElement = ((GrInstanceOfExpression)element).getTypeElement();
       if (operand instanceof GrReferenceExpression && ((GrReferenceExpression)operand).getQualifier() == null && typeElement != null) {
-        return (GrInstanceOfExpression)element;
+        return new Pair<GrExpression, PsiType>(((GrInstanceOfExpression)element).getOperand(), typeElement.getType());
       }
+    }
+    else if (element instanceof GrBinaryExpression && ControlFlowBuilderUtil.isInstanceOfBinary((GrBinaryExpression)element)) {
+      GrExpression left = ((GrBinaryExpression)element).getLeftOperand();
+      GrExpression right = ((GrBinaryExpression)element).getRightOperand();
+      GroovyResolveResult result = ((GrReferenceExpression)right).advancedResolve();
+      PsiClass resolved = (PsiClass)result.getElement();
+      PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createType(resolved, result.getSubstitutor());
+      return new Pair<GrExpression, PsiType>(left, type);
     }
     return null;
   }
 
   @Nullable
   public PsiType inferMixinType() {
-    GrInstanceOfExpression instanceOf = getApplicableInstanceof();
+    Pair<GrExpression, PsiType> instanceOf = getInstanceof();
     if (instanceOf == null) return null;
 
-    return instanceOf.getTypeElement().getType();
+    return instanceOf.getSecond();
   }
 
   @Override
   public ReadWriteVariableInstruction getInstructionToMixin(Instruction[] flow) {
-    GrInstanceOfExpression instanceOf = getApplicableInstanceof();
+    Pair<GrExpression, PsiType> instanceOf = getInstanceof();
     if (instanceOf == null) return null;
 
-    Instruction instruction = ControlFlowUtils.findInstruction(instanceOf.getOperand(), flow);
+    Instruction instruction = ControlFlowUtils.findInstruction(instanceOf.getFirst(), flow);
     if (instruction instanceof ReadWriteVariableInstruction) {
       return (ReadWriteVariableInstruction)instruction;
     }
@@ -77,10 +87,10 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
   @Nullable
   @Override
   public String getVariableName() {
-    GrInstanceOfExpression instanceOf = getApplicableInstanceof();
+    Pair<GrExpression, PsiType> instanceOf = getInstanceof();
     if (instanceOf == null) return null;
 
-    return instanceOf.getOperand().getText();
+    return instanceOf.getFirst().getText();
   }
 
   @Override

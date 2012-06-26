@@ -73,6 +73,8 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
 
+    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
+
     if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       final Editor editor = context.getEditor();
       final int offset = context.getTailOffset();

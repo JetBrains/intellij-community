@@ -537,6 +537,14 @@ def foo(bar) {
 }''', 'java.lang.Runnable')
   }
 
+  void testInString() {
+    doTest '''\
+def foo(ii) {
+  if (ii in String)
+    print i<caret>i
+}''', 'java.lang.String'
+  }
+
   private void doTest(String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression

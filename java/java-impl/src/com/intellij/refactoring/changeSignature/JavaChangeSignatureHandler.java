@@ -20,6 +20,8 @@ import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -99,8 +101,12 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
 
-    ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(aClass);
+    ChangeClassSignatureDialog dialog = new ChangeClassSignatureDialog(aClass, true);
+    //if (!ApplicationManager.getApplication().isUnitTestMode()){
     dialog.show();
+    //}else {
+    //  dialog.showAndGetOk()
+    //}
   }
 
   @Nullable

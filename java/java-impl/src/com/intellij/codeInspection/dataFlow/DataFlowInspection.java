@@ -34,6 +34,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -41,6 +42,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -230,8 +233,11 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isCompileConstantInIfCondition(psiAnchor)) {
           boolean evaluatesToTrue = trueSet.contains(instruction);
           if (onTheLeftSideOfConditionalAssignemnt(psiAnchor)) {
-            holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.pointless.assignment.expression",
-                                                                        Boolean.toString(evaluatesToTrue)));
+            holder.registerProblem(
+              psiAnchor,
+              InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
+              createSimplifyToAssignmentFix()
+            );
           }
           else {
             boolean report = !(psiAnchor.getParent() instanceof PsiAssertStatement) || !DONT_REPORT_TRUE_ASSERT_STATEMENTS || !evaluatesToTrue;
@@ -366,6 +372,40 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       @NotNull
       public String getFamilyName() {
         return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
+      }
+    };
+  }
+
+  @NotNull
+  private static LocalQuickFix createSimplifyToAssignmentFix() {
+    return new LocalQuickFix() {
+      @NotNull
+      @Override
+      public String getName() {
+        return InspectionsBundle.message("inspection.data.flow.simplify.to.assignment.quickfix.name");
+      }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        final PsiElement psiElement = descriptor.getPsiElement();
+        if (psiElement == null) return;
+
+        final PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(psiElement, PsiAssignmentExpression.class);
+        if (assignmentExpression == null) {
+          return;
+        }
+
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final String lExpressionText = assignmentExpression.getLExpression().getText();
+        final PsiExpression rExpression = assignmentExpression.getRExpression();
+        final String rExpressionText = rExpression != null ? rExpression.getText() : "";
+        assignmentExpression.replace(factory.createExpressionFromText(lExpressionText + " = " + rExpressionText, psiElement));
       }
     };
   }

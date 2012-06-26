@@ -6,7 +6,8 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
@@ -152,8 +153,12 @@ class OptimizedFileManager extends DefaultFileManager {
   private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, boolean recurse, ListBuffer<JavaFileObject> result) {
     final File[] children = directory.listFiles();
     if (children != null) {
+      final boolean acceptUnknownFiles = fileKinds.contains(JavaFileObject.Kind.OTHER);
       for (File child : children) {
-        if (isValidFile(child.getName(), fileKinds) && isFile(child)) {
+        if (isValidFile(child.getName(), fileKinds)) {
+          if (acceptUnknownFiles && !isFile(child)) {
+            continue;
+          }
           final JavaFileObject fe = new InputFileObject(child);
           result.append(fe);
         }

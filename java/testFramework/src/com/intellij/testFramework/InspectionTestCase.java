@@ -31,10 +31,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -153,23 +150,15 @@ public abstract class InspectionTestCase extends PsiTestCase {
     if (sourceDir[0] == null) {
       sourceDir[0] = projectDir;
     }
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-    final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-    rootModel.clear();
-    // configure source and output path
-    final ContentEntry contentEntry = rootModel.addContentEntry(projectDir);
-    contentEntry.addSourceFolder(sourceDir[0], false);
-    ext_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/ext_src"));
-    if (ext_src != null) {
-      contentEntry.addSourceFolder(ext_src, false);
-    }
-
     // IMPORTANT! The jdk must be obtained in a way it is obtained in the normal program!
     //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
-
-    rootModel.setSdk(getTestProjectSdk());
-
-    rootModel.commit();
+    PsiTestUtil.removeAllRoots(myModule, getTestProjectSdk());
+    PsiTestUtil.addContentRoot(myModule, projectDir);
+    PsiTestUtil.addSourceRoot(myModule, sourceDir[0]);
+    ext_src = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir + "/ext_src"));
+    if (ext_src != null) {
+      PsiTestUtil.addSourceRoot(myModule, ext_src);
+    }
   }
 
   @Override

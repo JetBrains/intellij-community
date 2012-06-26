@@ -1,5 +1,3 @@
-import static Util.doSomething
-
 class Util {
   static doSomething(){}
 }

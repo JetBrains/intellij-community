@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public abstract class MethodArgumentFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodArgumentFix");
+  private static final Logger LOG = Logger.getInstance(MethodArgumentFix.class);
 
   protected final PsiExpressionList myArgList;
   protected final int myIndex;
