@@ -59,26 +59,38 @@ each command has a format:
 '''
 from pydevd_constants import * #@UnusedWildImport
 
-import time
-import threading
-
-try:
-    import thread
-except ImportError:
-    import _thread as thread #Py3K changed it.
-
 import sys
-try:
-    import Queue as PydevQueue
-except ImportError:
-    import queue as PydevQueue
-from socket import socket
-from socket import AF_INET, SOCK_STREAM
+
+if USE_LIB_COPY:
+    import _pydev_time as time
+    import _pydev_threading as threading
+    try:
+        import _pydev_thread as thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
+    import _pydev_Queue as PydevQueue
+    from _pydev_socket import socket
+    from _pydev_socket import AF_INET, SOCK_STREAM
+else:
+    import time
+    import threading
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
+
+    try:
+        import Queue as PydevQueue
+    except ImportError:
+        import queue as PydevQueue
+    from socket import socket
+    from socket import AF_INET, SOCK_STREAM
+
 try:
     from urllib import quote
 except:
     from urllib.parse import quote #@Reimport @UnresolvedImport
-import time
+
 import pydevd_vars
 import pydevd_tracing
 import pydevd_vm_type
@@ -401,7 +413,7 @@ def StartClient(host, port):
     sys.exit(1)
 
 
-    
+
 #------------------------------------------------------------------------------------ MANY COMMUNICATION STUFF
     
 #=======================================================================================================================
@@ -932,7 +944,7 @@ class InternalGetCompletions(InternalThreadCommand):
                 
                 
                 def makeValid(s):
-                    return pydevd_vars.makeValidXmlValue(pydevd_vars.quote(s, '/>_= \t'))
+                    return makeValidXmlValue(pydevd_vars.quote(s, '/>_= \t'))
                 
                 msg = "<xml>"
                 

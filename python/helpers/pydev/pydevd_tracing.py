@@ -8,7 +8,11 @@ except:
     except:
         import io as StringIO
 
-import threading
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
+
 import sys #@Reimport
 import traceback
 
