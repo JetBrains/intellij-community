@@ -622,6 +622,13 @@ public class CreateFromUsageUtils {
     List<String> expectedFieldNames  = new ArrayList<String>();
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
+    if (CreateFieldFromUsageFix.DEBUG) {
+      System.out.println("CreateFromUsageUtils.guessExpectedTypes");
+      for (ExpectedTypeInfo[] infos : typesList) {
+        System.out.println("Arrays.toString(infos) = " + Arrays.toString(infos));
+      }
+    }
+
 
     if (typesList.size() == 1 && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
       ExpectedTypeInfo[] infos = typesList.get(0);
@@ -797,6 +804,11 @@ public class CreateFromUsageUtils {
       ProgressManager.checkCanceled();
       PsiClass aClass = member.getContainingClass();
       if (aClass instanceof PsiAnonymousClass || aClass == null) continue;
+      if (CreateFieldFromUsageFix.DEBUG) {
+        System.out.println("CreateFromUsageUtils.addMemberInfo");
+        System.out.println("member = " + member);
+        System.out.println("aClass = " + aClass);
+      }
 
       if (facade.getResolveHelper().isAccessible(member, expression, null)) {
         PsiClassType type;

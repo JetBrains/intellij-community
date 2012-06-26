@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.Expression;
@@ -26,7 +25,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 public class TypeExpression extends Expression {
   private final LinkedHashSet<SmartTypePointer> myItems;
@@ -34,10 +35,6 @@ public class TypeExpression extends Expression {
   public TypeExpression(final Project project, PsiType[] types) {
     final SmartTypePointerManager manager = SmartTypePointerManager.getInstance(project);
     myItems = new LinkedHashSet<SmartTypePointer>();
-    if (CreateFieldFromUsageFix.DEBUG) {
-      System.out.println("TypeExpression.TypeExpression");
-      System.out.println("types = " + Arrays.toString(types));
-    }
     for (final PsiType type : types) {
       myItems.add(manager.createSmartTypePointer(type));
     }
