@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,17 +198,17 @@ public class CharArrayUtil {
     return shiftForward(new CharArrayCharSequence(buffer), offset, chars);
   }
 
-  public static int shiftBackward(CharSequence buffer, int offset, String chars) {
+  public static int shiftBackward(CharSequence buffer, int offset, String charsToSkip) {
     if (offset >= buffer.length()) return offset;
 
     while (true) {
       if (offset < 0) break;
       char c = buffer.charAt(offset);
       int i;
-      for (i = 0; i < chars.length(); i++) {
-        if (c == chars.charAt(i)) break;
+      for (i = 0; i < charsToSkip.length(); i++) {
+        if (c == charsToSkip.charAt(i)) break;
       }
-      if (i == chars.length()) break;
+      if (i == charsToSkip.length()) break;
       offset--;
     }
     return offset;
