@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,14 +28,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 /**
  * @author Mike
  */
 public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
-  public static boolean DEBUG = false;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix");
 
   public CreateFieldFromUsageFix(PsiReferenceExpression referenceElement) {
     super(referenceElement);
@@ -74,10 +69,6 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     final PsiFile targetFile = targetClass.getContainingFile();
 
     ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
-    if (DEBUG) {
-      System.out.println("CreateFieldFromUsageFix.invokeImpl");
-      System.out.println("expectedTypes = " + Arrays.toString(expectedTypes));
-    }
 
     String fieldName = myReferenceExpression.getReferenceName();
     assert fieldName != null;
