@@ -55,7 +55,7 @@ class IntObjectTransientMultiMaplet<V extends Streamable> extends IntObjectMulti
 
   @Override
   public void replace(int key, Collection<V> value) {
-    if (value == null || value.size() == 0) {
+    if (value == null || value.isEmpty()) {
       myMap.remove(key);
     }
     else {

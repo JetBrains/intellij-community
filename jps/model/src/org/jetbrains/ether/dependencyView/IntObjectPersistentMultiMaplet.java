@@ -83,7 +83,7 @@ class IntObjectPersistentMultiMaplet<V extends Streamable> extends IntObjectMult
   public void replace(int key, Collection<V> value) {
     try {
       myCache.remove(key);
-      if (value == null || value.size() == 0) {
+      if (value == null || value.isEmpty()) {
         myMap.remove(key);
       }
       else {
