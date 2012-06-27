@@ -22,7 +22,7 @@
     <orderEntry type="library" exported="" name="cli-parser" level="project" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="module" module-name="indexing-api" />
-    <orderEntry type="module" module-name="indexing-impl" />
+    <orderEntry type="module" module-name="indexing-impl" exported="" />
     <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="module" module-name="projectModel-impl" exported="" />
   </component>
