@@ -25,7 +25,6 @@ import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlTag;
@@ -71,7 +70,7 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
       new ChooseClassDialog(moduleProvider.getModule(), "Views", false, "android.view.View");
     dialog.show();
 
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+    if (dialog.isOK()) {
       return dialog.getClassName();
     }
 
