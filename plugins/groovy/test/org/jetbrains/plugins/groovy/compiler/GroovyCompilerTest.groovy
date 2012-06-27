@@ -23,12 +23,13 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-
+import com.intellij.testFramework.TestLoggerFactory
 import junit.framework.AssertionFailedError
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.application.PathManager
 
 /**
  * @author peter
@@ -209,6 +210,26 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
     assertEmpty(make());
     assertOutput("Bar", "239");
+  }
+
+  @Override
+  void runBare() {
+    try {
+      super.runBare()
+    }
+    catch (e) {
+      println "Idea Log:"
+      println new File(TestLoggerFactory.testLogDir, "idea.log").text
+
+      def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
+      if (makeLog.exists()) {
+        println "Server Log:"
+        println makeLog.text
+      }
+      System.out.flush()
+
+      throw e
+    }
   }
 
   public void testMakeInTests() throws Throwable {
@@ -590,11 +611,9 @@ class Main {
       assert !findClassFile('FooX', dep)
     }
 
-    println '1'
     println make().join('\n')
     checkClassFiles()
 
-    println '2'
     println make().join('\n')
     checkClassFiles()
 

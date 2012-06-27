@@ -93,9 +93,10 @@ public class FileWatcher {
   private FileWatcher() {
     // to avoid deadlock (PY-1215), initialize ManagingFS reference in main thread, not in FileWatcher thread
     myManagingFS = ManagingFS.getInstance();
-
+    
+    final boolean explicitlyDisabled = Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
     try {
-      if (!"true".equals(System.getProperty(PROPERTY_WATCHER_DISABLED))) {
+      if (!explicitlyDisabled) {
         startupProcess(false);
       }
     }
@@ -117,8 +118,10 @@ public class FileWatcher {
       }, "FileWatcher shutdown hook"));
     }
     else {
-      LOG.info("Native file watcher failed to startup.");
-      notifyOnFailure("File watcher failed to startup", null);
+      String message = explicitlyDisabled ? String.format("File watcher is disabled (%s property is set)", PROPERTY_WATCHER_DISABLED)
+                                          : "File watcher failed to startup";
+      LOG.info(message);
+      notifyOnFailure(message, null);
     }
   }
 

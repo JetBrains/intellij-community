@@ -81,7 +81,10 @@ import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.*;
+import com.intellij.util.Chunk;
+import com.intellij.util.Function;
+import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -628,7 +631,6 @@ public class CompileDriver {
   }
 
 
-  public static final Key<Long> COMPILATION_START_TIMESTAMP = Key.create("COMPILATION_START_TIMESTAMP");
   public static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
 
   private void startup(final CompileScope scope,
@@ -658,7 +660,6 @@ public class CompileDriver {
     final DependencyCache dependencyCache = useExtProcessBuild ? null: createDependencyCache();
     final CompileContextImpl compileContext =
       new CompileContextImpl(myProject, compileTask, scope, dependencyCache, !isRebuild && !forceCompile, isRebuild);
-    compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
 
     if (!useExtProcessBuild) {
       for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
@@ -889,12 +890,12 @@ public class CompileDriver {
           errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
           warningCount = compileContext.getMessageCount(CompilerMessageCategory.WARNING);
           if (!myProject.isDisposed()) {
-            final String statusMessage = createStatusMessage(_status, warningCount, errorCount);
+            final String statusMessage = createStatusMessage(_status, warningCount, errorCount, duration);
             final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
             if (duration > ONE_MINUTE_MS) {
               ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);
             }
-            CompilerManager.NOTIFICATION_GROUP.createNotification(_status == ExitStatus.UP_TO_DATE ? "Compilation: all files are up to date" : statusMessage, messageType).notify(myProject);
+            CompilerManager.NOTIFICATION_GROUP.createNotification(statusMessage, messageType).notify(myProject);
             if (_status != ExitStatus.UP_TO_DATE && compileContext.getMessageCount(null) > 0) {
               compileContext.addMessage(CompilerMessageCategory.INFORMATION, statusMessage, null, -1, -1);
             }
@@ -932,19 +933,35 @@ public class CompileDriver {
     }
   }
 
-  private static String createStatusMessage(final ExitStatus status, final int warningCount, final int errorCount) {
+  private static String createStatusMessage(final ExitStatus status, final int warningCount, final int errorCount, long duration) {
+    String message;
     if (status == ExitStatus.CANCELLED) {
-      return CompilerBundle.message("status.compilation.aborted");
+      message = CompilerBundle.message("status.compilation.aborted");
     }
-    if (status == ExitStatus.UP_TO_DATE) {
-      return CompilerBundle.message("status.all.up.to.date");
+    else if (status == ExitStatus.UP_TO_DATE) {
+      message = CompilerBundle.message("status.all.up.to.date");
     }
-    if (status == ExitStatus.SUCCESS) {
-      return warningCount > 0
-             ? CompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
-             : CompilerBundle.message("status.compilation.completed.successfully");
+    else  {
+      if (status == ExitStatus.SUCCESS) {
+        message = warningCount > 0
+               ? CompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
+               : CompilerBundle.message("status.compilation.completed.successfully");
+      }
+      else {
+        message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
+      }
+      message = message + " in " + formatDuration(duration);
     }
-    return CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
+    return message;
+  }
+
+  public static String formatDuration(long duration) {
+    final long minutes = duration / 60000;
+    final long seconds = (duration % 60000) / 1000;
+    if (minutes > 0L) {
+      return minutes + " min " + seconds + " sec";
+    }
+    return seconds + " sec";
   }
 
   private ExitStatus doCompile(final CompileContextEx context, boolean isRebuild, final boolean forceCompile, final boolean onlyCheckStatus) {

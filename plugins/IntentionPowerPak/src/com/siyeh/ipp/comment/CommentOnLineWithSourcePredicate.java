@@ -16,7 +16,7 @@
 package com.siyeh.ipp.comment;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,7 +37,7 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate {
     }
 
     final PsiComment comment = (PsiComment)element;
-    if (comment instanceof PsiLanguageInjectionHost && InjectedLanguageFacadeImpl.hasInjections((PsiLanguageInjectionHost)comment)) {
+    if (comment instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)comment)) {
       return false;
     }
     final IElementType type = comment.getTokenType();

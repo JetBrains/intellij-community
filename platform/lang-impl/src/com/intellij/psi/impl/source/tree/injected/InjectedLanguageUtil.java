@@ -46,7 +46,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class InjectedLanguageFacadeImpl extends InjectedLanguageFacade {
+public class InjectedLanguageUtil extends InjectedLanguageFacade {
   static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
   public static void forceInjectionOnElement(@NotNull PsiElement host) {

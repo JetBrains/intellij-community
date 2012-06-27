@@ -17,10 +17,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -38,5 +40,15 @@ public class GrVariableImpl extends GrVariableBaseImpl<StubElement> implements G
 
   public String toString() {
     return "Variable";
+  }
+
+  @Override
+  public PsiElement getContext() {
+    if (ResolveUtil.isScriptField(this)) {
+      return getContainingFile();
+    }
+    else {
+      return super.getContext();
+    }
   }
 }

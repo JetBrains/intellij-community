@@ -36,7 +36,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -112,7 +112,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
     else {
       hostElement = myFile.getViewProvider().findElementAt(fileOffset, myFile.getLanguage());
-      element = InjectedLanguageFacadeImpl.findElementAtNoCommit(myFile, fileOffset);
+      element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
     }
     PsiFile injectedFile;
     Editor injectedEditor;
@@ -122,7 +122,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
     else {
       injectedFile = element.getContainingFile();
-      injectedEditor = InjectedLanguageFacadeImpl.getInjectedEditorForInjectedFile(myEditor, injectedFile);
+      injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
     }
 
     boolean result = true;

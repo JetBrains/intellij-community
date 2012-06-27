@@ -63,4 +63,9 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
   @NonNls
   protected abstract String getBasePath();
 
+
+  protected void addGroovyTransformField() {
+    myFixture.addClass('''package groovy.transform; public @interface Field{}''');
+  }
+
 }

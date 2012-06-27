@@ -21,7 +21,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.PsiTreeDebugBuilder;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
@@ -141,7 +141,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
   }
 
   public final String getUnescapedText() {
-    if (InjectedLanguageFacadeImpl.isInInjectedLanguagePrefixSuffix(this)) {
+    if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(this)) {
       // do not attempt to decode text if PsiElement is part of prefix/suffix
       return getText();
     }

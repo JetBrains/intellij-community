@@ -161,7 +161,7 @@ public class IncProjectBuilder {
       }
       ExternalJavacDescriptor.KEY.set(context, null);
     }
-    cleanupJavacNameTable();
+    //cleanupJavacNameTable();
   }
 
   private static boolean ourClenupFailed = false;

@@ -3,24 +3,20 @@ package org.jetbrains.plugins.groovy.lang
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
-import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
-import com.intellij.util.ThrowableRunnable
 
 /**
  * @author peter
  */
-class GroovyStressPerformanceTest extends LightCodeInsightFixtureTestCase {
-  @NotNull
-  @Override protected LightProjectDescriptor getProjectDescriptor() {
-    LightGroovyTestCase.GROOVY_DESCRIPTOR
-  }
+class GroovyStressPerformanceTest extends LightGroovyTestCase {
+
+  @Override
+  protected String getBasePath() {''}
 
   ThrowableRunnable configureAndHighlight(String text) {
     return {

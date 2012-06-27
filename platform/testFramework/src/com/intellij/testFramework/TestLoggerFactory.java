@@ -62,7 +62,7 @@ public class TestLoggerFactory implements Logger.Factory {
         return;
       }
 
-      final String logDir = PathManager.getSystemPath() + "/" + LOG_DIR;
+      final String logDir = getTestLogDir();
       String text = FileUtil.loadFile(logXmlFile);
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
@@ -89,5 +89,9 @@ public class TestLoggerFactory implements Logger.Factory {
     catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public static String getTestLogDir() {
+    return PathManager.getSystemPath() + "/" + LOG_DIR;
   }
 }

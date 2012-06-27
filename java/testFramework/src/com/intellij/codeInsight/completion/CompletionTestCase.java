@@ -19,8 +19,6 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,12 +35,6 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
   protected String myPrefix;
   protected LookupElement[] myItems;
   private CompletionType myType = CompletionType.BASIC;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
-  }
 
   @Override
   protected void tearDown() throws Exception {

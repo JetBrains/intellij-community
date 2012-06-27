@@ -10,8 +10,6 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 
@@ -25,12 +23,6 @@ import com.intellij.testFramework.TestDataPath;
 @TestDataPath("$CONTENT_ROOT/testData")
 public class CompletionStyleTest extends LightCodeInsightTestCase{
   private static final String BASE_PATH = "/codeInsight/completion/style";
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
-  }
 
   @Override
   protected LanguageLevel getLanguageLevel() {

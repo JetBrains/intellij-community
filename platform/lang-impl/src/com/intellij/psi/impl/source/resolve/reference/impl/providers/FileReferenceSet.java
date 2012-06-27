@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -306,7 +306,7 @@ public class FileReferenceSet {
 
   @Nullable
   private PsiFile getContainingFile() {
-    final PsiFile file = InjectedLanguageFacadeImpl.getTopLevelFile(myElement.getContainingFile());
+    final PsiFile file = InjectedLanguageUtil.getTopLevelFile(myElement.getContainingFile());
     if (file == null) {
       LOG.error("Invalid element: " + myElement);
     }

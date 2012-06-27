@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.RefactoringOptions;
@@ -77,8 +77,8 @@ public class Xslt2RefactoringTest extends TestBase {
       }
     };
 
-    final PsiFile file = InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(myFixture.getFile(), editor.getCaretModel().getOffset());
-    final Editor editorWindow = InjectedLanguageFacadeImpl.getInjectedEditorForInjectedFile(editor, file);
+    final PsiFile file = InjectedLanguageUtil.findInjectedPsiNoCommit(myFixture.getFile(), editor.getCaretModel().getOffset());
+    final Editor editorWindow = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, file);
     assertTrue(editorWindow instanceof EditorWindow);
 
     action.invoke(myFixture.getProject(), editorWindow, file, null);

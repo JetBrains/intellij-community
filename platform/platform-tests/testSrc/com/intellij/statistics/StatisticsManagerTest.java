@@ -19,22 +19,16 @@ public class StatisticsManagerTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
-    super.tearDown();
-  }
-
-  private void incUseCount(String value, int times) {
+  private static void incUseCount(String value, int times) {
     for (int i = 0; i < times; i++) {
       StatisticsManager.getInstance().incUseCount(new StatisticsInfo(TEST_CONTEXT, value));
     }
   }
 
-  private int getUseCount(String value) {
+  private static int getUseCount(String value) {
     return StatisticsManager.getInstance().getUseCount(new StatisticsInfo(TEST_CONTEXT, value));
   }
 

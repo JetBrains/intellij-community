@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -32,7 +31,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.update.Activatable;
@@ -174,7 +173,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
             final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
 
-            final Editor injectedEditor = InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(editor, file);
+            final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
             if (injectedEditor != null) {
               final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
               if (psiFile != null) {
