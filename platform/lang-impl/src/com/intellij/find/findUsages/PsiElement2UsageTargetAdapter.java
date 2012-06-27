@@ -29,7 +29,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
@@ -131,7 +131,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     Collection<PsiReference> refs;
 
     // in case of injected file, use host file to highlight all occurrences of the target in each injected file
-    PsiFile context = InjectedLanguageFacadeImpl.getTopLevelFile(file);
+    PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
     SearchScope searchScope = new LocalSearchScope(context);
     if (handler != null) {
       refs = handler.findReferencesToHighlight(target, searchScope);

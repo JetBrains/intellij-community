@@ -38,7 +38,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -274,7 +274,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     TextRange textRange = addedElement.getTextRange();
     final Document document = fileViewProvider.getDocument();
     if (document instanceof DocumentWindow) {
-      containingFile = InjectedLanguageFacadeImpl.getTopLevelFile(containingFile);
+      containingFile = InjectedLanguageUtil.getTopLevelFile(containingFile);
       textRange = ((DocumentWindow)document).injectedToHost(textRange);
     }
 
@@ -614,7 +614,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (!(astNode instanceof FileElement)) {
       return new Pair<PsiElement, CharTable>(null, null);
     }
-    PsiElement elementAt = InjectedLanguageFacadeImpl.findInjectedElementNoCommit(file, offset);
+    PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
     final CharTable charTable = ((FileElement)astNode).getCharTable();
     if (elementAt == null) {
       elementAt = findElementInTreeWithFormatterEnabled(file, offset);

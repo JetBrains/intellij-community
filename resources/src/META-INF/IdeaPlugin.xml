@@ -724,6 +724,12 @@
       <category>Other</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
+      <category>Other</category>
+    </intentionAction>
+
+
 
 
     <intentionAction>

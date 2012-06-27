@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -86,7 +86,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(hostFile.getProject());
     Document document = documentManager.getDocument(hostFile);
     if (document != null && documentManager.isUncommited(document)) {
-      for (DocumentWindow documentWindow : InjectedLanguageFacadeImpl.getCachedInjectedDocuments(hostFile)) {
+      for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(hostFile)) {
         PsiFile injected = documentManager.getPsiFile(documentWindow);
         if (injected != null) {
           visitor.visit(injected, Collections.<PsiLanguageInjectionHost.Shred>emptyList());
@@ -94,7 +94,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
       }
     }
     else {
-      InjectedLanguageFacadeImpl.enumerate(hostContext, hostFile, true, visitor);
+      InjectedLanguageUtil.enumerate(hostContext, hostFile, true, visitor);
     }
 
     return result.get();

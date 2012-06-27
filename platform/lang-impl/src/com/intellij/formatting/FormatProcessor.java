@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.TextChange;
@@ -42,7 +43,7 @@ class FormatProcessor {
     ALIGNMENT_PROCESSORS.put(Alignment.Anchor.LEFT, new LeftEdgeAlignmentProcessor());
     ALIGNMENT_PROCESSORS.put(Alignment.Anchor.RIGHT, new RightEdgeAlignmentProcessor());
   }
-  
+
   /**
    * There is a possible case that formatting introduced big number of changes to the underlying document. That number may be
    * big enough for that their subsequent appliance is much slower than direct replacing of the whole document text.
@@ -50,7 +51,7 @@ class FormatProcessor {
    * Current constant holds minimum number of changes that should trigger such <code>'replace whole text'</code> optimization.
    */
   private static final int BULK_REPLACE_OPTIMIZATION_CRITERIA = 3000;
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
 
   private LeafBlockWrapper myCurrentBlock;
@@ -59,9 +60,9 @@ class FormatProcessor {
   private CompositeBlockWrapper               myRootBlockWrapper;
   private TIntObjectHashMap<LeafBlockWrapper> myTextRangeToWrapper;
 
-  private final CommonCodeStyleSettings.IndentOptions myIndentOption;
-  private final CodeStyleSettings               mySettings;
-  private final Document                        myDocument;
+  private final CommonCodeStyleSettings.IndentOptions myDefaultIndentOption;
+  private final CodeStyleSettings                     mySettings;
+  private final Document                              myDocument;
 
   /**
    * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detect
@@ -82,7 +83,7 @@ class FormatProcessor {
   private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks
     = new HashMap<LeafBlockWrapper, Set<LeafBlockWrapper>>();
 
-  private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings 
+  private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings
     = new HashMap<AbstractBlockWrapper, Set<AbstractBlockWrapper>>();
 
   /**
@@ -140,11 +141,11 @@ class FormatProcessor {
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
   @NotNull
   private final FormattingProgressCallback myProgressCallback;
-  
+
   private WhiteSpace                      myLastWhiteSpace;
   private boolean                         myDisposed;
   private CommonCodeStyleSettings.IndentOptions myJavaIndentOptions;
-  
+
   @NotNull
   private State myCurrentState;
 
@@ -164,10 +165,10 @@ class FormatProcessor {
                          CommonCodeStyleSettings.IndentOptions indentOptions,
                          @Nullable FormatTextRanges affectedRanges,
                          int interestingOffset,
-                         @NotNull FormattingProgressCallback progressCallback) 
+                         @NotNull FormattingProgressCallback progressCallback)
   {
     myProgressCallback = progressCallback;
-    myIndentOption = indentOptions;
+    myDefaultIndentOption = indentOptions;
     mySettings = settings;
     myDocument = docModel.getDocument();
     myCurrentState = new WrapBlocksState(rootBlock, docModel, affectedRanges, interestingOffset);
@@ -214,7 +215,7 @@ class FormatProcessor {
    * from EDT we have no chance of performing any other actions from EDT simultaneously (e.g. we may want to show progress bar
    * that reflects current formatting state but the progress bar can' bet updated if formatting is performed during a single long
    * method call). So, we can interleave formatting iterations with GUI state updates.
-   * 
+   *
    * @param model         target formatting model
    * @param sequentially  flag that indicates what kind of processing should be used
    */
@@ -232,9 +233,9 @@ class FormatProcessor {
 
   /**
    * Asks current processor to perform processing iteration
-   * 
+   *
    * @return    <code>true</code> if the processing is finished; <code>false</code> otherwise
-   * @see #format(FormattingModel, boolean) 
+   * @see #format(FormattingModel, boolean)
    */
   public boolean iteration() {
     if (myCurrentState.isDone()) {
@@ -250,19 +251,19 @@ class FormatProcessor {
   public void stopSequentialProcessing() {
     myCurrentState.stop();
   }
-  
+
   public void formatWithoutRealModifications() {
     formatWithoutRealModifications(false);
   }
-  
+
   @SuppressWarnings({"WhileLoopSpinsOnField"})
   public void formatWithoutRealModifications(boolean sequentially) {
     myCurrentState.setNext(new AdjustWhiteSpacesState());
-    
+
     if (sequentially) {
       return;
     }
-    
+
     doIterationsSynchronously(FormattingStateId.PROCESSING_BLOCKS);
   }
 
@@ -279,11 +280,11 @@ class FormatProcessor {
   public void performModifications(FormattingModel model) {
     performModifications(model, false);
   }
-  
+
   public void performModifications(FormattingModel model, boolean sequentially) {
     assert !myDisposed;
     myCurrentState.setNext(new ApplyChangesState(model));
-    
+
     if (sequentially) {
       return;
     }
@@ -292,9 +293,9 @@ class FormatProcessor {
   }
 
   /**
-   * Perform iterations against the {@link #myCurrentState current state} until it's {@link FormattingStateId type} 
+   * Perform iterations against the {@link #myCurrentState current state} until it's {@link FormattingStateId type}
    * is {@link FormattingStateId#getPreviousStates() less} or equal to the given state.
-   * 
+   *
    * @param state   target state to process
    */
   private void doIterationsSynchronously(@NotNull FormattingStateId state) {
@@ -304,7 +305,7 @@ class FormatProcessor {
       myCurrentState.iteration();
     }
   }
-  
+
   public void setJavaIndentOptions(final CommonCodeStyleSettings.IndentOptions javaIndentOptions) {
     myJavaIndentOptions = javaIndentOptions;
   }
@@ -312,7 +313,7 @@ class FormatProcessor {
   /**
    * Decides whether applying formatter changes should be applied incrementally one-by-one or merge result should be
    * constructed locally and the whole document text should be replaced. Performs such single bulk change if necessary.
-   * 
+   *
    * @param blocksToModify        changes introduced by formatter
    * @param model                 current formatting model
    * @param indentOption          indent options to use
@@ -320,8 +321,8 @@ class FormatProcessor {
    *                              <code>false</code> otherwise
    */
   @SuppressWarnings({"deprecation"})
-  private static boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
-                                                CommonCodeStyleSettings.IndentOptions indentOption)
+  private boolean applyChangesAtBulkMode(final List<LeafBlockWrapper> blocksToModify, final FormattingModel model,
+                                         @NotNull CommonCodeStyleSettings.IndentOptions indentOption)
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
@@ -335,7 +336,8 @@ class FormatProcessor {
     for (LeafBlockWrapper block : blocksToModify) {
       WhiteSpace whiteSpace = block.getWhiteSpace();
       CharSequence newWs = documentModel.adjustWhiteSpaceIfNecessary(
-        whiteSpace.generateWhiteSpace(indentOption), whiteSpace.getStartOffset(), whiteSpace.getEndOffset(), false
+        whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, indentOption)), whiteSpace.getStartOffset(),
+        whiteSpace.getEndOffset(), false
       );
       if (changes.size() > 10000) {
         CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
@@ -361,7 +363,7 @@ class FormatProcessor {
     }
     blocks.clear();
   }
-  
+
   @Nullable
   private static DocumentEx getAffectedDocument(final FormattingModel model) {
     if (model instanceof DocumentBasedFormattingModel) {
@@ -408,13 +410,29 @@ class FormatProcessor {
     for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
       final WhiteSpace whiteSpace = block.getWhiteSpace();
       if (!whiteSpace.isReadOnly()) {
-        final String newWhiteSpace = whiteSpace.generateWhiteSpace(myIndentOption);
+        final String newWhiteSpace = whiteSpace.generateWhiteSpace(getIndentOptionsToUse(block, myDefaultIndentOption));
         if (!whiteSpace.equalsToString(newWhiteSpace)) {
           blocksToModify.add(block);
         }
       }
     }
     return blocksToModify;
+  }
+
+  @NotNull
+  private CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull AbstractBlockWrapper block,
+                                                                      @NotNull CommonCodeStyleSettings.IndentOptions fallbackIndentOptions)
+  {
+    final Language language = block.getLanguage();
+    if (language == null) {
+      return fallbackIndentOptions;
+    }
+    final CommonCodeStyleSettings commonSettings = mySettings.getCommonSettings(language);
+    if (commonSettings == null) {
+      return fallbackIndentOptions;
+    }
+    final CommonCodeStyleSettings.IndentOptions result = commonSettings.getIndentOptions();
+    return result == null ? fallbackIndentOptions : result;
   }
 
   private static TextRange shiftRange(final TextRange textRange, final int shift) {
@@ -593,8 +611,8 @@ class FormatProcessor {
 
   private boolean isCandidateToBeWrapped(final WrapImpl wrap) {
     return isSuitableInTheCurrentPosition(wrap) &&
-      (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED || wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED) &&
-      !myCurrentBlock.getWhiteSpace().isReadOnly();
+           (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED || wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED) &&
+           !myCurrentBlock.getWhiteSpace().isReadOnly();
   }
 
   private void onCurrentLineChanged() {
@@ -627,9 +645,10 @@ class FormatProcessor {
       LOG.error(String.format("Can't find alignment processor for alignment anchor %s", alignment.getAnchor()));
       return true;
     }
-    
+
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
-      myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks, myIndentOption
+      myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks,
+      getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption)
     );
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
@@ -704,7 +723,7 @@ class FormatProcessor {
   }
 
   private void adjustSpacingByIndentOffset() {
-    IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
+    IndentData offset = myCurrentBlock.calculateOffset(getIndentOptionsToUse(myCurrentBlock, myDefaultIndentOption));
     myCurrentBlock.getWhiteSpace().setSpaces(offset.getSpaces(), offset.getIndentSpaces());
   }
 
@@ -921,11 +940,11 @@ class FormatProcessor {
     ChildAttributesInfo info = getChildAttributesInfo(block, index, parent);
     if (info == null) {
       return new IndentInfo(0, 0, 0);
-    } 
+    }
 
     return adjustLineIndent(info.parent, info.attributes, info.index);
   }
-  
+
   @Nullable
   private static ChildAttributesInfo getChildAttributesInfo(@NotNull final Block block,
                                                             final int index,
@@ -972,7 +991,7 @@ class FormatProcessor {
   private IndentInfo adjustLineIndent(final AbstractBlockWrapper parent, final ChildAttributes childAttributes, final int index) {
     int alignOffset = getAlignOffsetBefore(childAttributes.getAlignment(), null);
     if (alignOffset == -1) {
-      return parent.calculateChildOffset(myIndentOption, childAttributes, index).createIndentInfo();
+      return parent.calculateChildOffset(getIndentOptionsToUse(parent, myDefaultIndentOption), childAttributes, index).createIndentInfo();
     }
     else {
       AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
@@ -1062,8 +1081,8 @@ class FormatProcessor {
 
     if (current.getEndOffset() <= offset) {
       while (!current.isIncomplete() &&
-        current.getParent() != null &&
-        current.getParent().getEndOffset() <= offset) {
+             current.getParent() != null &&
+             current.getParent().getEndOffset() <= offset) {
         current = current.getParent();
       }
       if (current.isIncomplete()) return current;
@@ -1101,7 +1120,7 @@ class FormatProcessor {
   /**
    * There is a possible case that particular block is a composite block that contains number of nested composite blocks
    * that all target the same text range. This method allows to derive the most nested block that shares the same range (if any).
-   * 
+   *
    * @param block   block to check
    * @return        the most nested block of the given one that shares the same text range if any; given block otherwise
    */
@@ -1110,7 +1129,7 @@ class FormatProcessor {
     if (!(block instanceof CompositeBlockWrapper)) {
       return block;
     }
-    
+
     AbstractBlockWrapper result = block;
     AbstractBlockWrapper candidate = block;
     while (true) {
@@ -1180,11 +1199,11 @@ class FormatProcessor {
       }
     }
   }
-  
+
   private abstract class State {
 
     private final FormattingStateId myStateId;
-    
+
     private State   myNextState;
     private boolean myDone;
 
@@ -1221,10 +1240,10 @@ class FormatProcessor {
 
     public void stop() {
     }
-    
+
     protected abstract void doIteration();
     protected abstract void prepare();
-    
+
     private void shiftStateIfNecessary() {
       if (isDone() && myNextState != null) {
         myCurrentState = myNextState;
@@ -1233,7 +1252,7 @@ class FormatProcessor {
       }
     }
   }
-  
+
   private class WrapBlocksState extends State {
 
     private final InitialInfoBuilder      myWrapper;
@@ -1247,7 +1266,7 @@ class FormatProcessor {
       super(FormattingStateId.WRAPPING_BLOCKS);
       myModel = model;
       myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
-        root, model, affectedRanges, myIndentOption, interestingOffset, myProgressCallback
+        root, model, affectedRanges, myDefaultIndentOption, interestingOffset, myProgressCallback
       );
     }
 
@@ -1260,7 +1279,7 @@ class FormatProcessor {
       if (isDone()) {
         return;
       }
-      
+
       setDone(myWrapper.iteration());
       if (!isDone()) {
         return;
@@ -1273,10 +1292,10 @@ class FormatProcessor {
       myCurrentBlock = myFirstTokenBlock;
       myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
       myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
-      myLastWhiteSpace.append(myModel.getTextLength(), myModel, myIndentOption);
+      myLastWhiteSpace.append(myModel.getTextLength(), myModel, myDefaultIndentOption);
     }
   }
-  
+
   private class AdjustWhiteSpacesState extends State {
 
     AdjustWhiteSpacesState() {
@@ -1294,11 +1313,11 @@ class FormatProcessor {
       if (blockToProcess != null) {
         myProgressCallback.afterProcessingBlock(blockToProcess);
       }
-      
+
       if (myCurrentBlock != null) {
         return;
       }
-      
+
       if (myAlignAgain.isEmpty()) {
         setDone(true);
       }
@@ -1309,7 +1328,7 @@ class FormatProcessor {
       }
     }
   }
-  
+
   private class ApplyChangesState extends State {
 
     private final FormattingModel        myModel;
@@ -1343,7 +1362,7 @@ class FormatProcessor {
         setDone(true);
         return;
       }
-      
+
       //for GeneralCodeFormatterTest
       if (myJavaIndentOptions == null) {
         myJavaIndentOptions = mySettings.getIndentOptions(StdFileTypes.JAVA);
@@ -1358,7 +1377,9 @@ class FormatProcessor {
         updatedDocument.setInBulkUpdate(true);
         myResetBulkUpdateState = true;
       }
-      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA && applyChangesAtBulkMode(myBlocksToModify, myModel, myIndentOption)) {
+      if (blocksToModifyCount > BULK_REPLACE_OPTIMIZATION_CRITERIA
+          && applyChangesAtBulkMode(myBlocksToModify, myModel, myDefaultIndentOption))
+      {
         setDone(true);
       }
     }
@@ -1367,7 +1388,11 @@ class FormatProcessor {
     protected void doIteration() {
       LeafBlockWrapper blockWrapper = myBlocksToModify.get(myIndex);
       myShift = replaceWhiteSpace(
-        myModel, blockWrapper, myShift, blockWrapper.getWhiteSpace().generateWhiteSpace(myIndentOption), myJavaIndentOptions
+        myModel,
+        blockWrapper,
+        myShift,
+        blockWrapper.getWhiteSpace().generateWhiteSpace(getIndentOptionsToUse(blockWrapper, myDefaultIndentOption)),
+        myJavaIndentOptions
       );
       myProgressCallback.afterApplyingChange(blockWrapper);
       // block could be gc'd
@@ -1375,7 +1400,7 @@ class FormatProcessor {
       blockWrapper.dispose();
       myBlocksToModify.set(myIndex, null);
       myIndex++;
-      
+
       if (myIndex >= myBlocksToModify.size()) {
         setDone(true);
       }
@@ -1384,7 +1409,7 @@ class FormatProcessor {
     @Override
     protected void setDone(boolean done) {
       super.setDone(done);
-      
+
       if (myResetBulkUpdateState) {
         DocumentEx document = getAffectedDocument(myModel);
         if (document != null) {
@@ -1392,7 +1417,7 @@ class FormatProcessor {
           myResetBulkUpdateState = false;
         }
       }
-      
+
       if (done) {
         myModel.commitChanges();
       }
