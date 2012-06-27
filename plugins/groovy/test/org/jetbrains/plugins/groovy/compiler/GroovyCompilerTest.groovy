@@ -214,14 +214,24 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   @Override
   void runBare() {
+    def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
+    def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
+    if (ideaLog.exists()) {
+      FileUtil.delete(ideaLog)
+    }
+    if (makeLog.exists()) {
+      FileUtil.delete(makeLog)
+    }
+
     try {
       super.runBare()
     }
     catch (e) {
-      println "Idea Log:"
-      println new File(TestLoggerFactory.testLogDir, "idea.log").text
+      if (ideaLog.exists()) {
+        println "Idea Log:"
+        println ideaLog.text
+      }
 
-      def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
       if (makeLog.exists()) {
         println "Server Log:"
         println makeLog.text
