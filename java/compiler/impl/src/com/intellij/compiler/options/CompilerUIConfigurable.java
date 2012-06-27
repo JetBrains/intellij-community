@@ -57,6 +57,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                                  "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
                                  "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name" +
                                  "</html>");
+    myCbAllowAutomakeWhileRunningApplication.setVisible(false);
     myCbUseCompileServer.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -180,7 +181,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     isModified |= ComparingUtils.isModified(myCbUseCompileServer, workspaceConfiguration.USE_COMPILE_SERVER);
     isModified |= ComparingUtils.isModified(myCbMakeProjectOnSave, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    isModified |= ComparingUtils.isModified(myCbAllowAutomakeWhileRunningApplication, workspaceConfiguration.ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION);
+    isModified |= ComparingUtils.isModified(myCbAllowAutomakeWhileRunningApplication, workspaceConfiguration.allowAutoMakeWhileRunningApplication());
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, compilerConfiguration.isAddNotNullAssertions());

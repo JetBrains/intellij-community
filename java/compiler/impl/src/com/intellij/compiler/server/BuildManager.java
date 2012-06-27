@@ -294,7 +294,7 @@ public class BuildManager implements ApplicationComponent{
         if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
           continue;
         }
-        if (!config.ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION) {
+        if (!config.allowAutoMakeWhileRunningApplication()) {
           final RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
           boolean hasRunningProcesses = false;
           for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
