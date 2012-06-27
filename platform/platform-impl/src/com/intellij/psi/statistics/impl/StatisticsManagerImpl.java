@@ -17,9 +17,11 @@ package com.intellij.psi.statistics.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.reference.SoftReference;
@@ -43,6 +45,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
   private final SoftReference[] myUnits = new SoftReference[UNIT_COUNT];
   private final HashSet<StatisticsUnit> myModifiedUnits = new HashSet<StatisticsUnit>();
+  private boolean myTestingStatistics;
 
   public int getUseCount(@NotNull final StatisticsInfo info) {
     if (info == StatisticsInfo.EMPTY) return 0;
@@ -57,6 +60,9 @@ public class StatisticsManagerImpl extends StatisticsManager {
 
   public void incUseCount(@NotNull final StatisticsInfo info) {
     if (info == StatisticsInfo.EMPTY) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() && !myTestingStatistics) {
+      return;
+    }
 
     final String key1 = info.getContext();
     int unitNumber = getUnitNumber(key1);
@@ -177,9 +183,17 @@ public class StatisticsManagerImpl extends StatisticsManager {
   }
 
   @TestOnly
-  public void clearStatistics() {
-    synchronized (LOCK) {
-      Arrays.fill(myUnits, null);
-    }
+  public void enableStatistics(@NotNull Disposable parentDisposable) {
+    myTestingStatistics = true;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        synchronized (LOCK) {
+          Arrays.fill(myUnits, null);
+        }
+        myTestingStatistics = false;
+      }
+    });
   }
+
 }

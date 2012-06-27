@@ -59,7 +59,7 @@ public class DfaVariableState implements Cloneable {
     }
 
     List<PsiExpression> initializers = NullableStuffInspection.findAllConstructorInitializers((PsiField)var);
-    if (!nullable && initializers.isEmpty()) {
+    if (initializers.isEmpty()) {
       return false;
     }
 
@@ -78,7 +78,7 @@ public class DfaVariableState implements Cloneable {
         return false;
       }
     }
-    return true;
+    return !nullable;
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {

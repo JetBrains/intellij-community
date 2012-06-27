@@ -49,10 +49,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+import static com.intellij.util.containers.ContainerUtilRt.createEmptyCOWList;
 
 public class NullableStuffInspection extends BaseLocalInspectionTool {
   // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
@@ -485,7 +485,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   }
 
   public static List<PsiExpression> findAllConstructorInitializers(PsiField field) {
-    final List<PsiExpression> result = new ArrayList<PsiExpression>();
+    final List<PsiExpression> result = createEmptyCOWList();
     addIfNotNull(result, field.getInitializer());
 
     PsiClass containingClass = field.getContainingClass();
