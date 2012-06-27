@@ -239,9 +239,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         if (CompletionService.getCompletionService().getAdvertisementText() == null && parameters.getInvocationCount() > 0 &&
             CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
-          final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+          final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
           if (shortcut != null) {
-            CompletionService.getCompletionService().setAdvertisementText("Pressing " + shortcut + " without a class qualifier would show all accessible static methods");
+            CompletionService.getCompletionService().setAdvertisementText("Pressing " + shortcut + " twice without a class qualifier would show all accessible static methods");
           }
         }
 
