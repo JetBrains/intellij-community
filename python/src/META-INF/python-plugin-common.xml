@@ -463,6 +463,9 @@
     <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedLoadInspection" bundle="com.jetbrains.django.ui.Django"
                      key="inspection.unresolved-load.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedLoadReferenceInspection"/>
+    <localInspection language="DjangoTemplate" shortName="EndBlockNamesInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.end-block-name.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.EndBlockNamesInspection"/>
 
     <moduleService serviceInterface="com.jetbrains.django.model.TemplateManager"
                    serviceImplementation="com.jetbrains.django.model.TemplateManager"/>
