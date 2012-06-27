@@ -182,7 +182,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
   private static boolean filenameMatchesPrefixOrType(final String fileName, final String prefix, final FileType[] suitableFileTypes, final int invocationCount) {
     final boolean prefixMatched = prefix.length() == 0 || StringUtil.startsWithIgnoreCase(fileName, prefix);
-    if (prefixMatched && (suitableFileTypes.length == 0 || invocationCount > 1)) return true;
+    if (prefixMatched && (suitableFileTypes.length == 0 || invocationCount > 2)) return true;
 
     if (prefixMatched) {
       final String extension = FileUtil.getExtension(fileName);
