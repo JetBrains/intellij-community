@@ -53,11 +53,6 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet _result) {
     if (parameters.isExtendedCompletion()) {
-      if (shouldShowSecondSmartCompletionHint(parameters) &&
-          CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
-        CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CODE_COMPLETION)));
-      }
-
       CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
       addAllClasses(parameters, parameters.getInvocationCount() <= 1,
                     JavaCompletionSorting.addJavaSorting(parameters, result).getPrefixMatcher(), new Consumer<LookupElement>() {

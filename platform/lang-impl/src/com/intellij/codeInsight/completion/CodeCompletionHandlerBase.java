@@ -151,10 +151,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass(), CompletionPhase.CommittingDocuments.class);
 
     if (time > 1) {
-      if (myCompletionType == CompletionType.CLASS_NAME) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION);
-      }
-      else if (myCompletionType == CompletionType.BASIC) {
+      if (myCompletionType == CompletionType.BASIC) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
       }
     }

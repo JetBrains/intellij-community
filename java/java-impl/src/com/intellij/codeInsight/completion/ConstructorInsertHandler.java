@@ -105,11 +105,10 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       return;
     }
 
+    if (mySmart) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
+    }
     if (isAbstract) {
-      if (mySmart) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW_ANONYMOUS);
-      }
-
       PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
 
       final Editor editor = context.getEditor();

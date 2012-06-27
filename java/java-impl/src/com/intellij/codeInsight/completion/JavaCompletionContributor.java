@@ -488,15 +488,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     }
 
-    if (parameters.getCompletionType() != CompletionType.CLASS_NAME && shouldSuggestClassNameCompletion(parameters.getPosition())) {
-      if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME)) {
-        final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
-        if (shortcut != null) {
-          return CompletionBundle.message("completion.class.name.hint", shortcut);
-        }
-      }
-    }
-
     if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 1) {
       final PsiType[] psiTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
       if (psiTypes.length > 0) {
