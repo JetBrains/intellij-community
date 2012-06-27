@@ -17,6 +17,7 @@ import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
+import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -56,6 +57,10 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
     PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       String name = "function";
+      while (IntroduceValidator.isDefinedInScope(name, lambdaExpression)) {
+        name += "1";
+      }
+
       PsiElement parent = lambdaExpression.getParent();
       if (parent instanceof PyAssignmentStatement) {
         name = ((PyAssignmentStatement)parent).getLeftHandSideExpression().getText();
