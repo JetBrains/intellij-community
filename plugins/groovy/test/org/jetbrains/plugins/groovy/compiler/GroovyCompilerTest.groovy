@@ -226,10 +226,10 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     try {
       super.runBare()
     }
-    catch (e) {
+    catch (Throwable e) {
       if (ideaLog.exists()) {
-        println "Idea Log:"
-        println ideaLog.text
+        //println "Idea Log:"
+        //println ideaLog.text
       }
 
       if (makeLog.exists()) {
