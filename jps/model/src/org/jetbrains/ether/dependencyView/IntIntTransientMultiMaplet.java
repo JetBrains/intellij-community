@@ -56,7 +56,7 @@ class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
 
   @Override
   public void replace(int key, TIntHashSet value) {
-    if (value == null) {
+    if (value == null || value.size() == 0) {
       myMap.remove(key);
     }
     else {

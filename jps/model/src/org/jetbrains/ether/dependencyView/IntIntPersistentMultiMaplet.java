@@ -78,7 +78,7 @@ class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   public void replace(int key, TIntHashSet value) {
     try {
       myCache.remove(key);
-      if (value == null) {
+      if (value == null || value.size() == 0) {
         myMap.remove(key);
       }
       else {
