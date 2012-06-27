@@ -684,7 +684,7 @@ set<caret>Foo(2)
   }
 
   public void testFieldTransform() {
-    myFixture.addClass('package groovy.transform; public @interface Field {}')
+    addGroovyTransformField()
     def ref = configureByText("""@groovy.transform.Field def aaa = 2
 def foo() { println <caret>aaa }
 """)
@@ -799,5 +799,42 @@ new A().pro<caret>p''')
     def method = resolved.staticMethod as PsiMethod
 
     assertEquals(method.parameterList.parameters[0].type.canonicalText, CommonClassNames.JAVA_LANG_STRING)
+  }
+
+  void testLocalVarNotAvailableInClass() {
+    def ref = configureByText('''\
+def aa = 5
+
+class Inner {
+  def foo() {
+    print a<caret>a
+  }
+}''')
+    assertNull(ref.resolve())
+  }
+
+  void testLocalVarNotAvailableInMethod() {
+    def ref = configureByText('''\
+def aa = 5
+
+def foo() {
+  print a<caret>a
+}''')
+    assertNull(ref.resolve())
+  }
+
+  void testScriptFieldNotAvailableInClass() {
+    def ref = configureByText('''\
+import groovy.transform.Field
+
+@Field
+def aa = 5
+
+class X {
+  def foo() {
+    print a<caret>a
+  }
+}''')
+    assertNull(ref.resolve())
   }
 }
