@@ -128,7 +128,7 @@ public class XmlCompletionContributor extends CompletionContributor {
 
     final PsiElement element = parameters.getPosition();
 
-    if (parameters.getCompletionType() == CompletionType.CLASS_NAME) {
+    if (parameters.isExtendedCompletion()) {
       completeTagName(parameters, result);
     }
 

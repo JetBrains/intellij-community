@@ -98,4 +98,8 @@ public final class CompletionParameters {
   public CompletionParameters withPosition(PsiElement element, int offset) {
     return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myLookup);
   }
+
+  public boolean isExtendedCompletion() {
+    return myCompletionType == CompletionType.CLASS_NAME || myCompletionType == CompletionType.BASIC && myInvocationCount >= 2;
+  }
 }

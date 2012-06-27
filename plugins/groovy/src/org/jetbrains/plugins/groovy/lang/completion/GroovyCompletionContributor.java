@@ -260,19 +260,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     // class name stuff
 
-    extend(CompletionType.CLASS_NAME, psiElement().withParent(GrReferenceElement.class), new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull final CompletionResultSet result) {
-        final PsiElement position = parameters.getPosition();
-        if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
-
-        if (StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) return;
-
-        completeStaticMembers(parameters).processStaticMethodsGlobally(result);
-      }
-    });
+    extend(CompletionType.CLASS_NAME, psiElement().withParent(GrReferenceElement.class), new GlobalStaticMembersProvider());
+    extend(CompletionType.BASIC, psiElement().withParent(GrReferenceElement.class), new GlobalStaticMembersProvider());
 
    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
@@ -782,6 +771,22 @@ public class GroovyCompletionContributor extends CompletionContributor {
           }
         }
       }
+    }
+  }
+
+  private static class GlobalStaticMembersProvider extends CompletionProvider<CompletionParameters> {
+    @Override
+    protected void addCompletions(@NotNull CompletionParameters parameters,
+                                  ProcessingContext context,
+                                  @NotNull final CompletionResultSet result) {
+      if (!parameters.isExtendedCompletion()) return;
+
+      final PsiElement position = parameters.getPosition();
+      if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
+
+      if (StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) return;
+
+      completeStaticMembers(parameters).processStaticMethodsGlobally(result);
     }
   }
 }

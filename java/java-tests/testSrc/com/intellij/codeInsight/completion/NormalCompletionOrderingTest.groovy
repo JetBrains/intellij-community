@@ -287,13 +287,13 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreselectMostRelevantInTheMiddleAlpha() {
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true;
 
-    myFixture.addClass("package foo; public class Elaaaaaaaaaaaaaaaaaaaa {}");
+    myFixture.addClass("package foo; public class Elxaaaaaaaaaaaaaaaaaaaa {}");
     invokeCompletion(getTestName(false) + ".java");
     myFixture.completeBasic();
     LookupImpl lookup = getLookup();
     assertPreferredItems(lookup.getList().getSelectedIndex());
-    assertEquals("Elaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
-    assertEquals("ELEMENT_A", lookup.getCurrentItem().getLookupString());
+    assertEquals("Elxaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
+    assertEquals("ELXEMENT_A", lookup.getCurrentItem().getLookupString());
   }
 
   public void testReallyAlphaSorting() {

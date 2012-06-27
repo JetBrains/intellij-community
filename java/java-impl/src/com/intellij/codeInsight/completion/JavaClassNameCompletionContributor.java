@@ -34,7 +34,6 @@ import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,24 +50,23 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
 
-  public JavaClassNameCompletionContributor() {
-    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet _result) {
-        if (shouldShowSecondSmartCompletionHint(parameters) &&
-            CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
-          CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
-        }
-
-        CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
-        addAllClasses(parameters, parameters.getInvocationCount() <= 1,
-                      JavaCompletionSorting.addJavaSorting(parameters, result).getPrefixMatcher(), new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement element) {
-            _result.addElement(element);
-          }
-        });
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet _result) {
+    if (parameters.isExtendedCompletion()) {
+      if (shouldShowSecondSmartCompletionHint(parameters) &&
+          CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
+        CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CODE_COMPLETION)));
       }
-    });
+
+      CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
+      addAllClasses(parameters, parameters.getInvocationCount() <= 1,
+                    JavaCompletionSorting.addJavaSorting(parameters, result).getPrefixMatcher(), new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          _result.addElement(element);
+        }
+      });
+    }
   }
 
   public static void addAllClasses(CompletionParameters parameters,
@@ -179,7 +177,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       return LangBundle.message("completion.no.suggestions") +
              "; " +
              StringUtil.decapitalize(
-                 CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+                 CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CODE_COMPLETION)));
     }
 
     return null;

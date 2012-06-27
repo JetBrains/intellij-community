@@ -15,7 +15,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getCompletionType() != CompletionType.CLASS_NAME) {
+    if (!parameters.isExtendedCompletion()) {
       return;
     }
 
