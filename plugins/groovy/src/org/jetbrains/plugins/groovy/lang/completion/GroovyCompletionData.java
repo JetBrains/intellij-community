@@ -115,7 +115,8 @@ public class GroovyCompletionData {
         addKeywords(result, true, "in", PsiKeyword.INSTANCEOF);
       } else if (suggestThrows(position)) {
         result.addElement(keyword(PsiKeyword.THROWS, TailType.INSERT_SPACE));
-      } else if (suggestPrimitiveTypes(position)) {
+      }
+      if (suggestPrimitiveTypes(position)) {
         boolean inCast = psiElement()
           .afterLeaf(psiElement().withText("(").withParent(psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class)))
           .accepts(position);
