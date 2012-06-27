@@ -257,7 +257,10 @@ public class JavaCompletionContributor extends CompletionContributor {
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
-    if (!isClassNamePossible(parameters.getPosition()) || !mayStartClassName(result)) return;
+    if (!isClassNamePossible(parameters.getPosition()) && parameters.getInvocationCount() <= 1 ||
+        !mayStartClassName(result)) {
+      return;
+    }
 
     if (mayShowAllClasses(parameters)) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), new Consumer<LookupElement>() {
