@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.psi.*;
@@ -46,9 +47,9 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
         shouldImport |= originalPosition != null && PsiTreeUtil.isAncestor(containingClass, originalPosition, false);
         
         if (member instanceof PsiMethod) {
-          return new JavaMethodCallElement((PsiMethod)member, shouldImport, false);
+          return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new JavaMethodCallElement((PsiMethod)member, shouldImport, false));
         }
-        return new VariableLookupItem((PsiField)member, shouldImport);
+        return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new VariableLookupItem((PsiField)member, shouldImport));
       }
 
       @Override
