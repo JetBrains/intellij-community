@@ -271,7 +271,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
         rebuildDump.close();
 
-        // assertEquals(rebuildDump.toString(), makeDump.toString());
+        assertEquals(rebuildDump.toString(), makeDump.toString());
       }
     }
     finally {
