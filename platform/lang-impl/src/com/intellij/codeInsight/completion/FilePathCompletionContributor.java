@@ -67,7 +67,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         final PsiReference psiReference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
-        if (getReference(psiReference) != null) {
+        if (getReference(psiReference) != null && parameters.getInvocationCount() == 1) {
           final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
           if (shortcut != null) {
             CompletionService.getCompletionService().setAdvertisementText(CodeInsightBundle.message("class.completion.file.path", shortcut));
@@ -307,7 +307,9 @@ public class FilePathCompletionContributor extends CompletionContributor {
         final Pair<FileReference, Boolean> fileReferencePair = getReference(psiReference);
         LOG.assertTrue(fileReferencePair != null);
 
-        fileReferencePair.getFirst().bindToElement(myFile, true);
+        FileReference ref = fileReferencePair.getFirst();
+        context.setTailOffset(ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset());
+        ref.bindToElement(myFile, true);
       }
     }
 
