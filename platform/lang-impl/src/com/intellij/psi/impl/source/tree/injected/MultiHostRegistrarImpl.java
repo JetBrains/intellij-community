@@ -256,7 +256,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         PsiFile newFile = registerDocument(documentWindow, psiFile, place, myHostPsiFile, documentManager);
         boolean mergeHappened = newFile != psiFile;
         if (mergeHappened) {
-          InjectedLanguageFacadeImpl.clearCaches(psiFile, documentWindow);
+          InjectedLanguageUtil.clearCaches(psiFile, documentWindow);
           psiFile = newFile;
           viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
           documentWindow = (DocumentWindowImpl)viewProvider.getDocument();
@@ -274,7 +274,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
         try {
           List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, place, virtualFile, myProject);
-          psiFile.putUserData(InjectedLanguageFacadeImpl.HIGHLIGHT_TOKENS, tokens);
+          psiFile.putUserData(InjectedLanguageUtil.HIGHLIGHT_TOKENS, tokens);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -385,7 +385,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                           final Place shreds,
                                           final PsiFile hostPsiFile,
                                           final PsiDocumentManager documentManager) {
-    List<DocumentWindow> injected = InjectedLanguageFacadeImpl.getCachedInjectedDocuments(hostPsiFile);
+    List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
 
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);

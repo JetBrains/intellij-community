@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -55,7 +55,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiFile psiFile = InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(file, offset);
+    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, offset);
     if (psiFile == null) return false;
     final LanguageInjectionSupport support = psiFile.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
     return support != null;
@@ -70,7 +70,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
   }
 
   private static void invokeImpl(Project project, Editor editor, PsiFile file) {
-    final PsiFile psiFile = InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(file, editor.getCaretModel().getOffset());
+    final PsiFile psiFile = InjectedLanguageUtil.findInjectedPsiNoCommit(file, editor.getCaretModel().getOffset());
     if (psiFile == null) return;
     final PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(psiFile);
     if (host == null) return;
@@ -88,7 +88,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
 
   private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host) {
     final THashSet<String> languages = new THashSet<String>();
-    final List<Pair<PsiElement, TextRange>> files = InjectedLanguageFacadeImpl.getInstance().getInjectedPsiFiles(host);
+    final List<Pair<PsiElement, TextRange>> files = InjectedLanguageUtil.getInstance().getInjectedPsiFiles(host);
     if (files == null) return false;
     for (Pair<PsiElement, TextRange> pair : files) {
       for (Language lang = pair.first.getLanguage(); lang != null; lang = lang.getBaseLanguage()) {

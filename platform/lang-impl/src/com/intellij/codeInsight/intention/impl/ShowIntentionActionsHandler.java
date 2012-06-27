@@ -40,7 +40,7 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +56,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
-      file = InjectedLanguageFacadeImpl.getTopLevelFile(file);
+      file = InjectedLanguageUtil.getTopLevelFile(file);
     }
 
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
@@ -122,9 +122,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     PsiFile fileToApply = null;
 
     int offset = hostEditor.getCaretModel().getOffset();
-    PsiFile injectedFile = InjectedLanguageFacadeImpl.findInjectedPsiNoCommit(hostFile, offset);
+    PsiFile injectedFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, offset);
     if (injectedFile != null) {
-      Editor injectedEditor = InjectedLanguageFacadeImpl.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
+      Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
       if (predicate.process(injectedFile, injectedEditor)) {
         editorToApply = injectedEditor;
         fileToApply = injectedFile;

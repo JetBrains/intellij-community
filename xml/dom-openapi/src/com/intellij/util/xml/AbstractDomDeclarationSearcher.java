@@ -19,7 +19,7 @@ import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.Consumer;
@@ -42,7 +42,7 @@ public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearc
     if (tokenType == XmlTokenType.XML_DATA_CHARACTERS && psiElement.getParent() instanceof XmlText && psiElement.getParent().getParent() instanceof XmlTag) {
       final XmlTag tag = (XmlTag)psiElement.getParent().getParent();
       for (XmlText text : tag.getValue().getTextElements()) {
-        if (InjectedLanguageFacadeImpl.hasInjections((PsiLanguageInjectionHost)text)) {
+        if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
           return;
         }
       }
@@ -50,7 +50,7 @@ public abstract class AbstractDomDeclarationSearcher extends PomDeclarationSearc
       nameElement = domManager.getDomElement(tag);
     } else if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && psiElement.getParent() instanceof XmlAttributeValue && psiElement.getParent().getParent() instanceof XmlAttribute) {
       final PsiElement attributeValue = psiElement.getParent();
-      if (InjectedLanguageFacadeImpl.hasInjections((PsiLanguageInjectionHost)attributeValue)) {
+      if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)attributeValue)) {
         return;
       }
       nameElement = domManager.getDomElement((XmlAttribute)attributeValue.getParent());

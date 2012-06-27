@@ -31,7 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.TodoItemImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
@@ -102,7 +102,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof PsiLanguageInjectionHost) {
-          InjectedLanguageFacadeImpl.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+          InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
             @Override
             public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
               if (places.size() == 1) {

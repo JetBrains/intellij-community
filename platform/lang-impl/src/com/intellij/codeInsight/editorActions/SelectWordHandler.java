@@ -32,7 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ public class SelectWordHandler extends EditorActionHandler {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }
     if (editor instanceof EditorWindow && editor.getSelectionModel().hasSelection()
-        && InjectedLanguageFacadeImpl.isSelectionIsAboutToOverflowInjectedFragment((EditorWindow)editor)) {
+        && InjectedLanguageUtil.isSelectionIsAboutToOverflowInjectedFragment((EditorWindow)editor)) {
       // selection about to spread beyond injected fragment
       editor = ((EditorWindow)editor).getDelegate();
     }

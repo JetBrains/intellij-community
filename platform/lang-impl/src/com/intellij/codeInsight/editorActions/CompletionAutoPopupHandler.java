@@ -31,7 +31,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -83,16 +83,16 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     if (editor.isDisposed()) return;
     
     // retrieve the injected file from scratch since our typing might have destroyed the old one completely
-    Editor topLevelEditor = InjectedLanguageFacadeImpl.getTopLevelEditor(editor);
+    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(topLevelEditor.getDocument());
     if (file == null) return;
 
-    PsiFile topLevelFile = InjectedLanguageFacadeImpl.getTopLevelFile(file);
+    PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
     if (!PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument())) {
       LOG.error("Non-committed document");
       PsiDocumentManager.getInstance(project).commitAllDocuments();
     }
-    Editor newEditor = InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
+    Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
     try {
       new CodeCompletionHandlerBase(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false);
     }
