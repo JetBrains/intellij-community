@@ -38,12 +38,10 @@ public class DataInputOutputUtil {
 
   public static void writeNAME(DataOutput record, final String name, AbstractStringEnumerator nameStore) throws IOException {
     final int nameId = name != null ? nameStore.enumerate(name) : 0;
-    record.writeByte(nameId & 0xFF);
-    writeINT(record, (nameId >> 8));
+    writeINT(record, nameId);
   }
 
   public static void skipNAME(DataInput record) throws IOException {
-    record.readUnsignedByte();
     readINT(record);
   }
 

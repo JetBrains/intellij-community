@@ -17,15 +17,20 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,8 +78,18 @@ public class StubSerializationHelper {
   }
 
   public void serialize(StubElement rootStub, OutputStream stream) throws IOException {
-    StubOutputStream stubOutputStream = new StubOutputStream(stream, myNameStorage);
+    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
+    FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
+    StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
+
     doSerialize(rootStub, stubOutputStream);
+    DataOutputStream resultStream = new DataOutputStream(stream);
+    DataInputOutputUtil.writeINT(resultStream, storage.myStrings.size());
+    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+    for(String s:storage.myStrings) {
+      IOUtil.writeUTFFast(buffer, resultStream, s);
+    }
+    resultStream.write(out.getInternalBuffer(), 0, out.size());
   }
 
   private int getClassId(final StubSerializer serializer) {
@@ -84,7 +99,18 @@ public class StubSerializationHelper {
   }
 
   public StubElement deserialize(InputStream stream) throws IOException {
-    StubInputStream inputStream = new StubInputStream(stream, myNameStorage);
+    FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
+    StubInputStream inputStream = new StubInputStream(stream, storage);
+    final int size = DataInputOutputUtil.readINT(inputStream);
+    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+
+    int i = 1;
+    while(i <= size) {
+      String s = IOUtil.readUTFFast(buffer, inputStream);
+      storage.myStrings.add(s);
+      storage.myEnumerates.put(s, i);
+      ++i;
+    }
     return deserialize(inputStream, null);
   }
 
@@ -105,5 +131,47 @@ public class StubSerializationHelper {
 
   private StubSerializer getClassById(int id) {
     return myIdToSerializer.get(id);
+  }
+
+  private static class FileLocalStringEnumerator implements AbstractStringEnumerator {
+    private final TObjectIntHashMap<String> myEnumerates = new TObjectIntHashMap<String>();
+    private final ArrayList<String> myStrings = new ArrayList<String>();
+
+    @Override
+    public int enumerate(@Nullable String value) throws IOException {
+      if (value == null) return 0;
+      int i = myEnumerates.get(value);
+      if (i == 0) {
+        if (myEnumerates.containsKey(value)) {
+          int a = 1;
+        }
+        myEnumerates.put(value, i = myStrings.size() + 1);
+        myStrings.add(value);
+      }
+      return i;
+    }
+
+    @Override
+    public String valueOf(int idx) throws IOException {
+      if (idx == 0) return null;
+      return myStrings.get(idx - 1);
+    }
+
+    @Override
+    public void markCorrupted() {
+    }
+
+    @Override
+    public void close() throws IOException {
+    }
+
+    @Override
+    public boolean isDirty() {
+      return false;
+    }
+
+    @Override
+    public void force() {
+    }
   }
 }
