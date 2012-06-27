@@ -323,9 +323,18 @@ public class PyBuiltinCache {
     return getObjectType("staticmethod");
   }
 
+  @Nullable
   public Ref<PyType> getStdlibType(@NotNull String key) {
     synchronized (myStdlibTypeCache) {
-      return myStdlibTypeCache.get(key);
+      final Ref<PyType> ref = myStdlibTypeCache.get(key);
+      if (ref != null) {
+        final PyType pyType = ref.get();
+        if (pyType instanceof PyClassType && !((PyClassType)pyType).isValid()) {
+          myStdlibTypeCache.clear();
+          return null;
+        }
+      }
+      return ref;
     }
   }
 

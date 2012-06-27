@@ -17,7 +17,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -25,26 +24,20 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * @author yole
  */
 public class PyClassNameCompletionContributor extends CompletionContributor {
-  public PyClassNameCompletionContributor() {
-    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull final CompletionResultSet resultSet) {
-        addVariantsFromIndex(resultSet, parameters.getOriginalFile(), PyClassNameIndex.KEY, CLASS_INSERT_HANDLER, Conditions.<PyClass>alwaysTrue());
-        addVariantsFromIndex(resultSet, parameters.getOriginalFile(), PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, TOPLEVEL_FUNCTION);
-      }
-    });
+
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    if (parameters.isExtendedCompletion()) {
+      addVariantsFromIndex(result, parameters.getOriginalFile(), PyClassNameIndex.KEY, CLASS_INSERT_HANDLER, Conditions.<PyClass>alwaysTrue());
+      addVariantsFromIndex(result, parameters.getOriginalFile(), PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, TOPLEVEL_FUNCTION);
+    }
   }
 
   private static Condition<PyFunction> TOPLEVEL_FUNCTION = new Condition<PyFunction>() {
