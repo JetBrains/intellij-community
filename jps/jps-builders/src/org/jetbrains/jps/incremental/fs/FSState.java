@@ -133,10 +133,6 @@ public class FSState {
     }
   }
 
-  public boolean isInitialized(String moduleName) {
-    return myInitialTestsScanPerformed.contains(moduleName) && myInitialProductionScanPerformed.contains(moduleName);
-  }
-
   public boolean markInitialScanPerformed(final String moduleName, boolean forTests) {
     return (forTests ? myInitialTestsScanPerformed : myInitialProductionScanPerformed).add(moduleName);
   }

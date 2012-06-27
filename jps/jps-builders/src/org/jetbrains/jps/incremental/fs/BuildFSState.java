@@ -35,11 +35,6 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean isInitialized(String moduleName) {
-    return myAlwaysScanFS || super.isInitialized(moduleName);
-  }
-
-  @Override
   public boolean markInitialScanPerformed(String moduleName, boolean forTests) {
     return myAlwaysScanFS || super.markInitialScanPerformed(moduleName, forTests);
   }
