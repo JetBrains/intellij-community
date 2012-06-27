@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -514,69 +514,69 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
   protected static void backspace() {
-    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+    doAction(IdeActions.ACTION_EDITOR_BACKSPACE);
   }
   protected static void delete() {
-    executeAction(IdeActions.ACTION_EDITOR_DELETE);
+    doAction(IdeActions.ACTION_EDITOR_DELETE);
   }
 
   protected static void home() {
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    doAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
   }
 
   protected static void end() {
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
+    doAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
   }
 
   protected static void copy() {
-    executeAction(IdeActions.ACTION_EDITOR_COPY);
+    doAction(IdeActions.ACTION_EDITOR_COPY);
   }
 
   protected static void paste() {
-    executeAction(IdeActions.ACTION_EDITOR_PASTE);
+    doAction(IdeActions.ACTION_EDITOR_PASTE);
   }
   
   protected static void moveCaretToPreviousWordWithSelection() {
-    executeAction("EditorPreviousWordWithSelection");
+    doAction("EditorPreviousWordWithSelection");
   }
 
   protected static void moveCaretToNextWordWithSelection() {
-    executeAction("EditorNextWordWithSelection");
+    doAction("EditorNextWordWithSelection");
   }
 
   protected static void cutLineBackward() {
-    executeAction("EditorCutLineBackward");
+    doAction("EditorCutLineBackward");
   }
   
   protected static void cutToLineEnd() {
-    executeAction("EditorCutLineEnd");
+    doAction("EditorCutLineEnd");
   }
 
   protected static void killToWordStart() {
-    executeAction("EditorKillToWordStart");
+    doAction("EditorKillToWordStart");
   }
   
   protected static void killToWordEnd() {
-    executeAction("EditorKillToWordEnd");
+    doAction("EditorKillToWordEnd");
   }
 
   protected static void killRegion() {
-    executeAction("EditorKillRegion");
+    doAction("EditorKillRegion");
   }
 
   protected static void killRingSave() {
-    executeAction("EditorKillRingSave");
+    doAction("EditorKillRingSave");
   }
 
   protected static void unindent() {
-    executeAction("EditorUnindentSelection");
+    doAction("EditorUnindentSelection");
   }
   
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }
   
-  protected static void executeAction(@NotNull final String actionId) {
+  private static void doAction(@NotNull final String actionId) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
