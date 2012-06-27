@@ -1027,7 +1027,6 @@ public class Mappings {
     }
 
     private void processDisappearedClasses() {
-      myDelta.runPostPasses();
       myDelta.compensateRemovedContent(myFilesToCompile);
 
       final Collection<String> removed = myDelta.getRemovedFiles();
@@ -1920,11 +1919,18 @@ public class Mappings {
     return new Differential(delta, removed, filesToCompile, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
   }
 
-  private void cleanupBackDependency(final int className, @Nullable Collection<UsageRepr.Cluster> clusters, IntIntMultiMaplet buffer) {
+  private void cleanupBackDependency(final int className, @Nullable Collection<UsageRepr.Cluster> clusters, @Nullable Collection<UsageRepr.Usage> annotationUsages, final IntIntMultiMaplet buffer) {
     if (clusters == null) {
       final int sourceFile = myClassToSourceFile.get(className);
       if (sourceFile > 0) {
         clusters = mySourceFileToUsages.get(sourceFile);
+        annotationUsages = mySourceFileToAnnotationUsages.get(sourceFile);
+      }
+    }
+
+    if (annotationUsages != null) {
+      for (final UsageRepr.Usage usage : annotationUsages) {
+        buffer.put(usage.getOwner(), className);
       }
     }
 
@@ -1943,6 +1949,7 @@ public class Mappings {
   private void cleanupRemovedClass(final Mappings delta,
                                    @NotNull final ClassRepr cr,
                                    final Collection<UsageRepr.Cluster> clusters,
+                                   final Collection<UsageRepr.Usage> annotationUsages,
                                    final IntIntMultiMaplet dependenciesTrashBin) {
     final int className = cr.name;
 
@@ -1950,7 +1957,7 @@ public class Mappings {
       delta.registerRemovedSuperClass(className, superSomething);
     }
 
-    cleanupBackDependency(className, clusters, dependenciesTrashBin);
+    cleanupBackDependency(className, clusters, annotationUsages, dependenciesTrashBin);
 
     myClassToClassDependency.remove(className);
     myClassToSubclasses.remove(className);
@@ -1972,11 +1979,10 @@ public class Mappings {
           for (final String file : removed) {
             final int fileName = myContext.get(file);
             final Set<ClassRepr> fileClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
-            final Collection<UsageRepr.Cluster> fileUsages = mySourceFileToUsages.get(fileName);
 
             if (fileClasses != null) {
               for (final ClassRepr aClass : fileClasses) {
-                cleanupRemovedClass(delta, aClass, fileUsages, dependenciesTrashBin);
+                cleanupRemovedClass(delta, aClass, mySourceFileToUsages.get(fileName), mySourceFileToAnnotationUsages.get(fileName), dependenciesTrashBin);
               }
             }
 
@@ -1986,19 +1992,13 @@ public class Mappings {
           }
         }
 
+        final TIntHashSet compiledClasses = new TIntHashSet();
+
+        addAllKeys(compiledClasses, delta.myClassToSourceFile);
+
         if (!delta.isRebuild()) {
-          final TIntHashSet compiledClasses = new TIntHashSet();
-
-          delta.myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
-            @Override
-            public boolean execute(final int a, final int b) {
-              compiledClasses.add(a);
-              return true;
-            }
-          });
-
           for (ClassRepr repr : delta.getDeletedClasses()) {
-            cleanupRemovedClass(delta, repr, null, dependenciesTrashBin);
+            cleanupRemovedClass(delta, repr, null, null, dependenciesTrashBin);
           }
 
           delta.getRemovedSuperClasses().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
@@ -2047,7 +2047,7 @@ public class Mappings {
             }
           });
 
-          delta.getChangedClasses().forEach(new TIntProcedure() {
+          compiledClasses.forEach(new TIntProcedure() {
             @Override
             public boolean execute(final int className) {
               final TIntHashSet s = delta.myClassToSubclasses.get(className);
@@ -2060,7 +2060,7 @@ public class Mappings {
                 myClassToSourceFile.remove(className);
               }
 
-              cleanupBackDependency(className, null, dependenciesTrashBin);
+              cleanupBackDependency(className, null, null, dependenciesTrashBin);
 
               return true;
             }
@@ -2309,10 +2309,20 @@ public class Mappings {
     return changed.get();
   }
 
-  private static void addAllKeys(final TIntHashSet whereToAdd, IntIntMultiMaplet maplet) {
+  private static void addAllKeys(final TIntHashSet whereToAdd, final IntIntMultiMaplet maplet) {
     maplet.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
       @Override
       public boolean execute(int key, TIntHashSet b) {
+        whereToAdd.add(key);
+        return true;
+      }
+    });
+  }
+
+  private static void addAllKeys(final TIntHashSet whereToAdd, final IntIntMaplet maplet) {
+    maplet.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int key, int b) {
         whereToAdd.add(key);
         return true;
       }
@@ -2389,18 +2399,18 @@ public class Mappings {
       myClassToSubclasses,
       myClassToClassDependency,
       mySourceFileToClasses,
-      mySourceFileToAnnotationUsages,
-      mySourceFileToUsages,
       myClassToSourceFile
+      //mySourceFileToAnnotationUsages,
+      //mySourceFileToUsages
     };
 
     final String[] info = {
       "ClassToSubclasses",
       "ClassToClassDependency",
       "SourceFileToClasses",
+      "ClassToSourceFile",
       "SourceFileToAnnotationUsages",
-      "SourceFileToUsages",
-      "ClassToSourceFile"
+      "SourceFileToUsages"
     };
 
     for (int i = 0; i < data.length; i++) {
