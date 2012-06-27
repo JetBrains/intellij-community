@@ -89,7 +89,7 @@ public class GrIntroduceFieldTest extends LightGroovyTestCase {
   }
 
   public void testScriptBody() {
-    myFixture.addClass('''package groovy.transform; public @interface Field{}''')
+    addGroovyTransformField()
     doTest('''\
 print <selection>'abc'</selection>
 ''', '''\
@@ -101,7 +101,7 @@ print <selection>f</selection>
   }
 
   public void testScriptMethod() {
-    myFixture.addClass('''package groovy.transform; public @interface Field{}''')
+    addGroovyTransformField()
     doTest('''\
 def foo() {
   print <selection>'abc'</selection>
@@ -118,7 +118,7 @@ def foo() {
   }
 
   public void testStaticScriptMethod() {
-    myFixture.addClass('''package groovy.transform; public @interface Field{}''')
+    addGroovyTransformField()
     doTest('''\
 static def foo() {
   print <selection>'abc'</selection>
@@ -135,7 +135,7 @@ static def foo() {
   }
 
   public void testScriptMethod2() {
-    myFixture.addClass('''package groovy.transform; public @interface Field{}''')
+    addGroovyTransformField()
     doTest('''\
 def foo() {
   print <selection>'abc'</selection>

@@ -1,26 +1,18 @@
 package org.jetbrains.plugins.groovy.lang;
 
 
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
  */
-public class MissingReturnTest extends LightCodeInsightFixtureTestCase {
+public class MissingReturnTest extends LightGroovyTestCase {
 
   @Override
   protected String getBasePath() {
     return "${TestUtils.testDataPath}highlighting/missingReturn";
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyHighlightingTest.GROOVY_18_PROJECT_DESCRIPTOR;
   }
 
   public void testMissingReturnWithLastLoop() throws Throwable { doTest(); }
