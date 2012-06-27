@@ -211,6 +211,9 @@ public class PythonStringUtil {
     if (text == null) {
       return false;
     }
+    if (text.startsWith("u") || text.startsWith("r")) {
+      text = text.substring(1);
+    }
     if (text.length() > 1 && text.charAt(0) == text.charAt(text.length() - 1) && (text.charAt(0) == '\'' || text.charAt(0) == '"')) {
       return true;
     }
