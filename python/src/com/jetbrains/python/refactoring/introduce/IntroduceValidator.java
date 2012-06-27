@@ -39,7 +39,7 @@ public abstract class IntroduceValidator {
   @Nullable
   public abstract String check(String name, PsiElement psiElement);
 
-  protected static boolean isDefinedInScope(String name, PsiElement psiElement) {
+  public static boolean isDefinedInScope(String name, PsiElement psiElement) {
     if (psiElement.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) != null) {
       final Pair<PsiElement,TextRange> data = psiElement.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
       psiElement = data.first;
