@@ -17,6 +17,8 @@ package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ExtensionAreas;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -32,6 +34,7 @@ import org.picocontainer.PicoContainer;
  * @author yole
  */
 public class MockProject extends MockComponentManager implements Project {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.mock.MockProject");
   private VirtualFile myBaseDir;
 
   public MockProject(PicoContainer parent, @NotNull Disposable parentDisposable) {
@@ -136,5 +139,17 @@ public class MockProject extends MockComponentManager implements Project {
   @Override
   public <T> T[] getExtensions(final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
+  }
+
+  public void projectOpened() {
+    final ProjectComponent[] components = getComponents(ProjectComponent.class);
+    for (ProjectComponent component : components) {
+      try {
+        component.projectOpened();
+      }
+      catch (Throwable e) {
+        LOG.error(component.toString(), e);
+      }
+    }
   }
 }

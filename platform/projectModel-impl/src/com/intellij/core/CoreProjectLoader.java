@@ -53,7 +53,7 @@ public class CoreProjectLoader {
     }
   }
 
-  private static void loadDirectoryProject(Project project, VirtualFile projectDir) throws IOException, JDOMException,
+  private static void loadDirectoryProject(MockProject project, VirtualFile projectDir) throws IOException, JDOMException,
                                                                                            InvalidDataException {
     VirtualFile dotIdea = projectDir.findChild(Project.DIRECTORY_STORE_FOLDER);
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
@@ -82,6 +82,7 @@ public class CoreProjectLoader {
     }
 
     moduleManager.loadModules();
+    project.projectOpened();
     //((DirectoryIndexImpl) DirectoryIndex.getInstance(project)).initialize();
   }
 

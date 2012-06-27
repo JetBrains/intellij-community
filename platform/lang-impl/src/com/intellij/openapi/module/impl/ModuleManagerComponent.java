@@ -55,12 +55,10 @@ import java.util.List;
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerComponent");
   private final ProgressManager myProgressManager;
-  private final MessageBus myMessageBus;
   private final MessageBusConnection myConnection;
 
   public ModuleManagerComponent(Project project, ProgressManager progressManager, MessageBus bus) {
-    super(project);
-    myMessageBus = bus;
+    super(project, bus);
     myConnection = bus.connect(project);
     myProgressManager = progressManager;
     myConnection.setDefaultHandler(new MessageHandler() {
@@ -119,24 +117,6 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
 
   protected boolean isUnknownModuleType(Module module) {
     return ModuleType.get(module) instanceof UnknownModuleType;
-  }
-
-  protected void fireModuleAdded(Module module) {
-    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleAdded(myProject, module);
-  }
-
-  protected void fireModuleRemoved(Module module) {
-    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(myProject, module);
-  }
-
-  protected void fireBeforeModuleRemoved(Module module) {
-    myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
-  }
-
-  protected void fireModulesRenamed(List<Module> modules) {
-    if (!modules.isEmpty()) {
-      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
-    }
   }
 
   protected void fireModulesAdded() {

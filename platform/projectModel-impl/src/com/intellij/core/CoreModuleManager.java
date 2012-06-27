@@ -18,7 +18,6 @@ package com.intellij.core;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.stores.StorageData;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -39,7 +38,7 @@ public class CoreModuleManager extends ModuleManagerImpl {
   private final Disposable myParentDisposable;
 
   public CoreModuleManager(Project project, Disposable parentDisposable) {
-    super(project);
+    super(project, project.getMessageBus());
     myParentDisposable = parentDisposable;
   }
 
