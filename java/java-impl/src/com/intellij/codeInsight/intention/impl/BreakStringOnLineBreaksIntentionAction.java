@@ -53,7 +53,7 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
       return false;
     }
 
-    if (indexOfSlashN != -1 && Comparing.equal(text.substring(indexOfSlashNSlashR, text.length()), "\\n\\r\"")){
+    if (indexOfSlashNSlashR != -1 && Comparing.equal(text.substring(indexOfSlashNSlashR, text.length()), "\\n\\r\"")){
       return false;
     }
 
