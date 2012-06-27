@@ -153,7 +153,7 @@ public class PyRequirement {
         return null;
       }
       if (s.matches("[0-9]+")) {
-        final int value = Integer.parseInt(s);
+        final long value = Long.parseLong(s);
         return String.format("%08d", value);
       }
       return "*" + s;
