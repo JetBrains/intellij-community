@@ -126,8 +126,8 @@ class InitialInfoBuilder {
                                          @Nullable final CompositeBlockWrapper parent,
                                          @Nullable WrapImpl currentWrapParent,
                                          @Nullable final Block parentBlock,
-                                         boolean rootBlockIsRightBlock
-  ) {
+                                         boolean rootBlockIsRightBlock)
+  {
     final WrapImpl wrap = (WrapImpl)rootBlock.getWrap();
     if (wrap != null) {
       wrap.registerParent(currentWrapParent);
