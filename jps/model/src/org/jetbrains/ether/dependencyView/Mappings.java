@@ -1993,8 +1993,16 @@ public class Mappings {
         }
 
         final TIntHashSet compiledClasses = new TIntHashSet();
+        final TIntHashSet compiledFiles = new TIntHashSet();
 
-        addAllKeys(compiledClasses, delta.myClassToSourceFile);
+        delta.myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
+          @Override
+          public boolean execute(final int key, final int file) {
+            compiledClasses.add(key);
+            compiledFiles.add(file);
+            return true;
+          }
+        });
 
         if (!delta.isRebuild()) {
           for (ClassRepr repr : delta.getDeletedClasses()) {
@@ -2050,8 +2058,6 @@ public class Mappings {
           compiledClasses.forEach(new TIntProcedure() {
             @Override
             public boolean execute(final int className) {
-              final TIntHashSet s = delta.myClassToSubclasses.get(className);
-
               final int sourceFile = delta.myClassToSourceFile.get(className);
               if (sourceFile > 0) {
                 myClassToSourceFile.put(className, sourceFile);
@@ -2066,7 +2072,7 @@ public class Mappings {
             }
           });
 
-          delta.getChangedFiles().forEach(new TIntProcedure() {
+          compiledFiles.forEach(new TIntProcedure() {
             @Override
             public boolean execute(final int fileName) {
               final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(fileName);
@@ -2094,6 +2100,7 @@ public class Mappings {
               else {
                 mySourceFileToAnnotationUsages.remove(fileName);
               }
+
               return true;
             }
           });
@@ -2399,9 +2406,9 @@ public class Mappings {
       myClassToSubclasses,
       myClassToClassDependency,
       mySourceFileToClasses,
-      myClassToSourceFile
-      //mySourceFileToAnnotationUsages,
-      //mySourceFileToUsages
+      myClassToSourceFile,
+      mySourceFileToAnnotationUsages,
+      mySourceFileToUsages
     };
 
     final String[] info = {
