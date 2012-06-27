@@ -824,6 +824,7 @@ def foo() {
   }
 
   void testScriptFieldNotAvailableInClass() {
+    addGroovyTransformField()
     def ref = configureByText('''\
 import groovy.transform.Field
 
@@ -836,5 +837,31 @@ class X {
   }
 }''')
     assertNull(ref.resolve())
+  }
+
+  void testInitializerOfScriptField() {
+    addGroovyTransformField()
+    def ref = configureByText('''\
+import groovy.transform.Field
+
+def xx = 5
+@Field
+def aa = 5 + x<caret>x
+''')
+    assertNull(ref.resolve())
+  }
+
+  void testInitializerOfScriptField2() {
+    addGroovyTransformField()
+    def ref = configureByText('''\
+import groovy.transform.Field
+
+@Field
+def xx = 5
+
+@Field
+def aa = 5 + x<caret>x
+''')
+    assertInstanceOf(ref.resolve(), GrVariable)
   }
 }

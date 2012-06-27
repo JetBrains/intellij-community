@@ -110,7 +110,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -167,7 +166,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         annotation.setTextAttributes(DefaultHighlighter.METHOD_DECLARATION);
       }
     }
-    else if (parent instanceof PsiField || parent instanceof GrVariable && isScriptField((GrVariable)parent)) {
+    else if (parent instanceof PsiField || parent instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)parent)) {
       final boolean isStatic = ((PsiVariable)parent).hasModifierProperty(PsiModifier.STATIC);
       final Annotation annotation = holder.createInfoAnnotation(element, null);
       annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
@@ -184,15 +183,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static boolean isScriptField(GrVariable var) {
-    PsiClass context = PsiUtil.getContextClass(var);
-    return context instanceof GroovyScriptClass && var.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null;
-  }
-
   private static void highlightResolved(AnnotationHolder holder, GrReferenceElement refElement, PsiElement resolved) {
     final PsiElement refNameElement = getElementToHighlight(refElement);
 
-    if (resolved instanceof PsiField || resolved instanceof GrVariable && isScriptField((GrVariable)resolved)) {
+    if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {
       boolean isStatic = ((PsiVariable)resolved).hasModifierProperty(PsiModifier.STATIC);
       Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
       annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
