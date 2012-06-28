@@ -26,6 +26,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 
 import java.io.File;
+import java.io.IOException;
 
 @TestDataPath("$CONTENT_ROOT/testData")
 public class ClassNameCompletionTest extends CompletionTestCase {
@@ -54,6 +55,11 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   }
 
   public void testImportAfterNew() throws Exception {
+    createClass("package pack; public class AAClass {}");
+    createClass("package pack; public class WithInnerAClass{\n" +
+                "  public static class Inner{}\n" +
+                "}");
+
     String path = BASE_PATH + "/importAfterNew";
 
     configureByFile(path + "/before1.java");
@@ -65,13 +71,23 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   }
 
   public void testAfterNewThrowable1() throws Exception {
+    addClassesForAfterNewThrowable();
     String path = BASE_PATH + "/afterNewThrowable";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
   }
 
+  private void addClassesForAfterNewThrowable() throws IOException {
+    createClass("public class OurException extends Throwable{}");
+    createClass("public class OurNotException {\n" +
+                "  public static class InnerException extends Throwable{}\n" +
+                "  public static class InnerNonException{}\n" +
+                "}");
+  }
+
   public void testAfterNewThrowable2() throws Exception {
+    addClassesForAfterNewThrowable();
     String path = BASE_PATH + "/afterNewThrowable";
 
     configureByFile(path + "/before2.java");
