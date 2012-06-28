@@ -20,10 +20,6 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.module.JavaModuleType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.PsiTestUtil;
@@ -222,21 +218,6 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   public void testInStaticImport() throws Exception { doJavaTest(); }
 
   public void testInCommentWithPackagePrefix() throws Exception { doJavaTest(); }
-
-  public void testQualifyNameOnSecondCompletion() throws Exception {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Exception {
-        final JavaModuleType type = new JavaModuleType();
-        final Module module = ModuleManager.getInstance(getProject()).newModule("second.iml", type.getId());
-        createClass(module, "package foo.bar; class AxBxCxDxEx {}");
-      }
-    }.execute().throwException();
-
-    configureByFileNoCompletion(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-source.java");
-    new CodeCompletionHandlerBase(CompletionType.CLASS_NAME).invokeCompletion(myProject, myEditor, 2, false);
-    checkResultByFile(BASE_PATH + "/nameCompletion/java/" + getTestName(false) + "-result.java");
-  }
 
   private void doJavaTest() throws Exception {
     final String path = BASE_PATH + "/nameCompletion/java";
