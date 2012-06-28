@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
@@ -47,14 +48,14 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   private final DataExternalizer<ImageInfo> myValueExternalizer = new DataExternalizer<ImageInfo>() {
     @Override
     public void save(final DataOutput out, final ImageInfo info) throws IOException {
-      out.writeInt(info.width);
-      out.writeInt(info.height);
-      out.writeInt(info.bpp);
+      DataInputOutputUtil.writeINT(out, info.width);
+      DataInputOutputUtil.writeINT(out, info.height);
+      DataInputOutputUtil.writeINT(out, info.bpp);
     }
 
     @Override
     public ImageInfo read(final DataInput in) throws IOException {
-      return new ImageInfo(in.readInt(), in.readInt(), in.readInt());
+      return new ImageInfo(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
     }
   };
 
