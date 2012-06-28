@@ -803,12 +803,10 @@ public class CodeCompletionHandlerBase {
 
   private static boolean isAutocompleteOnInvocation(final CompletionType type) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    switch (type) {
-      case CLASS_NAME: return settings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-      case SMART: return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
-      case BASIC:
-      default: return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
+    if (type == CompletionType.SMART) {
+      return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
     }
+    return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
   }
 
   private static Runnable rememberDocumentState(final Editor _editor) {
