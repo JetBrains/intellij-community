@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -227,6 +228,10 @@ public class CompletionUtil {
     
     if (object instanceof PsiElement) {
       return getOriginalElement((PsiElement)object);
+    }
+
+    if (object instanceof PsiElementNavigationItem) {
+      return ((PsiElementNavigationItem)object).getTargetElement();
     }
 
     if (object instanceof LookupValueWithPsiElement) {
