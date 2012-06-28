@@ -26,17 +26,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
 public class JavaGotoSuperHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
@@ -71,27 +67,7 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
-    PsiMember e = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
-    if (e instanceof PsiClass) {
-      PsiClass aClass = (PsiClass) e;
-      List<PsiClass> allSupers = new ArrayList<PsiClass>(Arrays.asList(aClass.getSupers()));
-      for (Iterator<PsiClass> iterator = allSupers.iterator(); iterator.hasNext();) {
-        PsiClass superClass = iterator.next();
-        if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) iterator.remove();
-      }
-      return allSupers.toArray(new PsiClass[allSupers.size()]);
-    } else if (e instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) e;
-      if (method.isConstructor()) {
-        PsiMethod constructorInSuper = PsiSuperMethodUtil.findConstructorInSuper(method);
-        if (constructorInSuper != null) {
-          return new PsiMethod[]{constructorInSuper};
-        }
-      } else {
-        return method.findSuperMethods(false);
-      }
-    }
-    return null;
+    return FindSuperElementsHelper.findSuperElements(element);
   }
 
   public boolean startInWriteAction() {
