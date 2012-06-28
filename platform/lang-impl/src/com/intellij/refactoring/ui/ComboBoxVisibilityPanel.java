@@ -15,8 +15,8 @@
  */
 package com.intellij.refactoring.ui;
 
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
@@ -35,16 +35,17 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
+public class ComboBoxVisibilityPanel<V> extends VisibilityPanelBase<V> {
   private final JLabel myLabel;
-  private final JComboBox myComboBox;
-  private final Map<String, String> myNamesMap = new HashMap<String, String>();
+  protected final JComboBox myComboBox;
+  private final Map<V, String> myNamesMap = new HashMap<V, String>();
 
-  public ComboBoxVisibilityPanel(String name, String[] options, String[] presentableNames) {
+  public ComboBoxVisibilityPanel(String name, V[] options, String[] presentableNames) {
     setLayout(new BorderLayout(0,2));
     myLabel = new JLabel(name);
     add(myLabel, BorderLayout.NORTH);
-    myComboBox = new JComboBox(presentableNames);
+    myComboBox = new JComboBox(options);
+    myComboBox.setRenderer(getRenderer());
     IJSwingUtilities.adjustComponentsOnMac(myLabel, myComboBox);
     add(myComboBox, BorderLayout.SOUTH);
     for (int i = 0; i < options.length; i++) {
@@ -66,16 +67,48 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
     DialogUtil.registerMnemonic(myLabel, myComboBox);
   }
 
-  public ComboBoxVisibilityPanel(String name, String[] options) {
-    this(name, options, options);
+  protected ListCellRendererWrapper getRenderer() {
+    return new ListCellRendererWrapper(myComboBox) {
+      @Override
+      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        setText(myNamesMap.get((V)value));
+      }
+    };
   }
 
-  public ComboBoxVisibilityPanel(String[] options) {
+  public ComboBoxVisibilityPanel(String name, V[] options) {
+    this(name, options, getObjectNames(options));
+  }
+
+  private static String[] getObjectNames(Object[] options) {
+    String[] names = new String[options.length];
+
+    for (int i = 0; i < options.length; i ++) {
+      names[i] = options[i].toString();
+    }
+
+    return names;
+  }
+
+  public ComboBoxVisibilityPanel(V[] options) {
     this(RefactoringBundle.message("visibility.combo.title"), options);
   }
 
-  public ComboBoxVisibilityPanel(String[] options, String[] presentableNames) {
+  public ComboBoxVisibilityPanel(V[] options, String[] presentableNames) {
     this(RefactoringBundle.message("visibility.combo.title"), options, presentableNames);
+  }
+
+  protected void addOption(int index, V option, String presentableName, boolean select) {
+    myNamesMap.put(option, presentableName);
+    myComboBox.insertItemAt(option, index);
+
+    if (select) {
+      myComboBox.setSelectedIndex(index);
+    }
+  }
+
+  protected void addOption(V option) {
+    addOption(myComboBox.getItemCount(), option, option.toString(), false);
   }
 
   public void setDisplayedMnemonicIndex(int index) {
@@ -83,9 +116,8 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
   }
 
   @Override
-  public String getVisibility() {
-    final String selected = (String)myComboBox.getSelectedItem();
-    return ContainerUtil.reverseMap(myNamesMap).get((selected));
+  public V getVisibility() {
+    return (V)myComboBox.getSelectedItem();
   }
 
   public void addListener(ChangeListener listener) {
@@ -97,8 +129,8 @@ public class ComboBoxVisibilityPanel extends VisibilityPanelBase {
   }
 
   @Override
-  public void setVisibility(String visibility) {
-    myComboBox.setSelectedItem(myNamesMap.get(visibility));
+  public void setVisibility(V visibility) {
+    myComboBox.setSelectedItem(visibility);
     myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
   }
 }

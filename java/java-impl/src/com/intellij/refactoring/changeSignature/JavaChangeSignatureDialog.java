@@ -80,7 +80,7 @@ import static com.intellij.refactoring.changeSignature.ChangeSignatureHandler.RE
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<ParameterInfoImpl, PsiMethod, JavaMethodDescriptor> {
+public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<ParameterInfoImpl, PsiMethod, String, JavaMethodDescriptor> {
   private ExceptionsTableModel myExceptionsModel;
   protected Set<PsiMethod> myMethodsToPropagateExceptions;
   private AnActionButton myPropExceptionsButton;
@@ -95,7 +95,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected VisibilityPanelBase createVisibilityControl() {
+  protected VisibilityPanelBase<String> createVisibilityControl() {
     return new JavaComboBoxVisibilityPanel();
   }
 
@@ -192,7 +192,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected ParameterTableModelBase<ParameterInfoImpl> createParametersInfoModel(MethodDescriptor<ParameterInfoImpl> descriptor) {
+  protected ParameterTableModelBase<ParameterInfoImpl> createParametersInfoModel(MethodDescriptor<ParameterInfoImpl, String> descriptor) {
     final PsiParameterList parameterList = ((JavaMethodDescriptor)descriptor).getMethod().getParameterList();
     return new JavaParameterTableModel(parameterList, myDefaultValueContext, this);
   }
