@@ -22,7 +22,7 @@ import static com.intellij.util.VisibilityUtil.toPresentableText;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaComboBoxVisibilityPanel extends ComboBoxVisibilityPanel implements PsiModifier {
+public class JavaComboBoxVisibilityPanel extends ComboBoxVisibilityPanel<String> implements PsiModifier {
   private static final String[] MODIFIERS = {PRIVATE, PACKAGE_LOCAL, PROTECTED, PUBLIC};
 
   private static final String[] PRESENTABLE_NAMES = {

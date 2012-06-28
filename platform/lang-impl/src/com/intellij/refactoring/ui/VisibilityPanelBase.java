@@ -20,13 +20,13 @@ import com.intellij.util.EventDispatcher;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 
-public abstract class VisibilityPanelBase extends JPanel {
+public abstract class VisibilityPanelBase<V> extends JPanel {
 
   protected final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
-  public abstract String getVisibility();
+  public abstract V getVisibility();
 
-  public abstract void setVisibility(String visibility);
+  public abstract void setVisibility(V visibility);
 
   public void addListener(ChangeListener listener) {
     myEventDispatcher.addListener(listener);
