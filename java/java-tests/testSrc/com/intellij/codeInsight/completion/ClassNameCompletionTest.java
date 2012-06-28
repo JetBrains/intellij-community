@@ -259,7 +259,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
   protected void complete() {
-    myItems = myFixture.complete(CompletionType.CLASS_NAME);
+    myItems = myFixture.complete(CompletionType.BASIC, 2);
   }
 
   private void performAction() {
