@@ -17,35 +17,31 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 
-import java.io.File;
 import java.io.IOException;
 
 @TestDataPath("$CONTENT_ROOT/testData")
-public class ClassNameCompletionTest extends CompletionTestCase {
-  private static final String BASE_PATH = "/codeInsight/completion/className/";
+public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
   protected boolean myOldSetting;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setType(CompletionType.CLASS_NAME);
     myOldSetting = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = true;
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/className/";
   }
 
   @Override
@@ -60,7 +56,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
                 "  public static class Inner{}\n" +
                 "}");
 
-    String path = BASE_PATH + "/importAfterNew";
+    String path = "/importAfterNew";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
@@ -70,9 +66,13 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
+  private void createClass(String text) {
+    myFixture.addClass(text);
+  }
+
   public void testAfterNewThrowable1() throws Exception {
     addClassesForAfterNewThrowable();
-    String path = BASE_PATH + "/afterNewThrowable";
+    String path = "/afterNewThrowable";
 
     configureByFile(path + "/before1.java");
     checkResultByFile(path + "/after1.java");
@@ -88,7 +88,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
 
   public void testAfterNewThrowable2() throws Exception {
     addClassesForAfterNewThrowable();
-    String path = BASE_PATH + "/afterNewThrowable";
+    String path = "/afterNewThrowable";
 
     configureByFile(path + "/before2.java");
     checkResultByFile(path + "/after2.java");
@@ -101,8 +101,8 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   public void testBracesAfterNew() throws Exception { doTest(); }
 
   public void testInPlainTextFile() throws Exception {
-    configureByFile(BASE_PATH + getTestName(false) + ".txt");
-    checkResultByFile(BASE_PATH + getTestName(false) + "_after.txt");
+    configureByFile(getTestName(false) + ".txt");
+    checkResultByFile(getTestName(false) + "_after.txt");
   }
 
   public void testDoubleStringBuffer() throws Exception {
@@ -117,7 +117,7 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   }
 
   public void testCamelHumpPrefix() throws Exception {
-    String path = BASE_PATH + "/java/";
+    String path = "/java/";
     configureByFile(path + getTestName(false) + ".java");
     complete();
     checkResultByFile(path + getTestName(false) + "_after.java");
@@ -125,13 +125,13 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   }
 
   private void doTest() throws Exception {
-    String path = BASE_PATH + "/java/";
+    String path = "/java/";
     configureByFile(path + getTestName(false) + ".java");
     checkResultByFile(path + getTestName(false) + "_after.java");
   }
 
   public void testNameCompletionJava() throws Exception {
-    String path = BASE_PATH + "/nameCompletion/java";
+    String path = "/nameCompletion/java";
     configureByFile(path + "/test1-source.java");
     performAction();
     checkResultByFile(path + "/test1-result.java");
@@ -141,14 +141,14 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   }
 
   public void testImplementsFiltering1() throws Exception {
-    final String path = BASE_PATH + "/nameCompletion/java";
+    final String path = "/nameCompletion/java";
     configureByFile(path + "/test4-source.java");
     performAction();
     checkResultByFile(path + "/test4-result.java");
   }
 
   public void testImplementsFiltering2() throws Exception {
-    final String path = BASE_PATH + "/nameCompletion/java";
+    final String path = "/nameCompletion/java";
     configureByFile(path + "/test3-source.java");
     performAction();
     checkResultByFile(path + "/test3-result.java");
@@ -162,66 +162,81 @@ public class ClassNameCompletionTest extends CompletionTestCase {
     checkResultByFile(path + "/implements3-result.java");
   }
 
-  @Override
-  protected boolean clearModelBeforeConfiguring() {
-    return "testAnnotationFiltering".equals(getName());
-  }
-
   public void testAnnotationFiltering() throws Exception {
-    final String path = BASE_PATH + "/nameCompletion/java";
-    configureByFile(path + "/test7-source.java");
-    performAction();
-    checkResultByFile(path + "/test7-result.java");
+    createClass("@interface MyObjectType {}");
 
+    final String path = "/nameCompletion/java";
     configureByFile(path + "/test8-source.java");
     performAction();
     checkResultByFile(path + "/test8-result.java");
+    cleanupVfs();
 
     configureByFile(path + "/test9-source.java");
     performAction();
     checkResultByFile(path + "/test9-result.java");
+    cleanupVfs();
 
     configureByFile(path + "/test9_2-source.java");
     performAction();
     checkResultByFile(path + "/test9_2-result.java");
+    cleanupVfs();
 
     configureByFile(path + "/test9_3-source.java");
     performAction();
     checkResultByFile(path + "/test9_3-result.java");
+    cleanupVfs();
 
     configureByFile(path + "/test11-source.java");
     performAction();
     checkResultByFile(path + "/test11-result.java");
+    cleanupVfs();
 
     configureByFile(path + "/test10-source.java");
     performAction();
     checkResultByFile(path + "/test10-result.java");
+    cleanupVfs();
 
     configureByFile(path + "/test12-source.java");
     performAction();
     checkResultByFile(path + "/test12-result.java");
+    cleanupVfs();
 
     configureByFile(path + "/test13-source.java");
     performAction();
     checkResultByFile(path + "/test13-result.java");
   }
 
+  private void cleanupVfs() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        for (VirtualFile file : myFixture.getTempDirFixture().getFile("").getChildren()) {
+          try {
+            file.delete(this);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    });
+  }
+
   public void testInMethodCall() throws Exception {
-    final String path = BASE_PATH + "/nameCompletion/java";
+    final String path = "/nameCompletion/java";
     configureByFile(path + "/methodCall-source.java");
     performAction();
     checkResultByFile(path + "/methodCall-result.java");
   }
 
   public void testInMethodCallQualifier() throws Exception {
-    final String path = BASE_PATH + "/nameCompletion/java";
+    final String path = "/nameCompletion/java";
     configureByFile(path + "/methodCall1-source.java");
     performAction();
     checkResultByFile(path + "/methodCall1-result.java");
   }
 
   public void testInVariableDeclarationType() throws Exception {
-    final String path = BASE_PATH + "/nameCompletion/java";
+    final String path = "/nameCompletion/java";
     configureByFile(path + "/varType-source.java");
     performAction();
     checkResultByFile(path + "/varType-result.java");
@@ -236,30 +251,21 @@ public class ClassNameCompletionTest extends CompletionTestCase {
   public void testInCommentWithPackagePrefix() throws Exception { doJavaTest(); }
 
   private void doJavaTest() throws Exception {
-    final String path = BASE_PATH + "/nameCompletion/java";
-    configureByFileNoCompletion(path + "/" + getTestName(false) + "-source.java");
+    final String path = "/nameCompletion/java";
+    myFixture.configureByFile(path + "/" + getTestName(false) + "-source.java");
     performAction();
     checkResultByFile(path + "/" + getTestName(false) + "-result.java");
   }
 
   @Override
-  protected void configureByFile(String filePath) throws Exception {
-    final String path = getTestDataPath() + new File(filePath).getParent() + "/source";
-    if (new File(path).exists()) {
-      PsiTestUtil.createTestProjectStructure(myProject, myModule, path, myFilesToDelete);
-    }
-    super.configureByFile(filePath);
+  protected void complete() {
+    myItems = myFixture.complete(CompletionType.CLASS_NAME);
   }
 
   private void performAction() {
-    CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(CompletionType.CLASS_NAME);
-    handler.invokeCompletion(myProject, myEditor);
-    final LookupManager instance = LookupManager.getInstance(myProject);
-    if (instance instanceof LookupManagerImpl) {
-      final LookupManagerImpl testLookupManager = ((LookupManagerImpl)instance);
-      if (testLookupManager.getActiveLookup() != null) {
-        testLookupManager.forceSelection(Lookup.NORMAL_SELECT_CHAR, 0);
-      }
+    complete();
+    if (LookupManager.getActiveLookup(myFixture.getEditor()) != null) {
+      myFixture.type('\n');
     }
   }
 }
