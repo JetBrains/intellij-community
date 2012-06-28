@@ -84,7 +84,7 @@ public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo.bar; public class AxBxCxDxEx {}");
 
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), myFixture.getEditor(), 2, false);
+    myFixture.complete(CompletionType.BASIC, 2);
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myFixture.getEditor());
     LookupElement[] myItems = lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
     assertEquals(2, myItems.length);

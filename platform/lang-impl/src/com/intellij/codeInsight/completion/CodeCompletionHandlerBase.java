@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
@@ -74,7 +73,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
+public class CodeCompletionHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
   final boolean invokedExplicitly;
@@ -97,11 +96,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (autopopup) {
       assert !invokedExplicitly;
     }
-  }
-
-  @Override
-  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
-    invokeCompletion(project, editor);
   }
 
   public final void invokeCompletion(final Project project, final Editor editor) {
@@ -765,11 +759,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     });
     update.addSparedChars(indicator, item, context, completionChar);
     return context;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
