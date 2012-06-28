@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -74,12 +75,14 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.elementType;
-import static com.intellij.util.containers.CollectionFactory.arrayList;
-import static com.intellij.util.containers.CollectionFactory.hashMap;
+import static com.intellij.util.containers.CollectionFactory.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SEPARATORS;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.WHITE_SPACES_OR_COMMENTS;
@@ -328,7 +331,12 @@ public class GroovyCompletionContributor extends CompletionContributor {
           GroovySmartCompletionContributor.generateInheritorVariants(parameters, result.getPrefixMatcher(), inheritors);
         }
 
-        result.addAllElements(completeReference(parameters, reference, inheritors, result.getPrefixMatcher()));
+        Runnable addSlowVariants = completeReference(parameters, reference, inheritors, result.getPrefixMatcher(), new Consumer<LookupElement>() {
+          @Override
+          public void consume(LookupElement lookupElement) {
+            result.addElement(lookupElement);
+          }
+        });
 
         if (reference.getQualifier() == null) {
           GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
@@ -342,6 +350,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
             }
           }
         }
+
+        addSlowVariants.run();
       }
     });
 
@@ -422,27 +432,37 @@ public class GroovyCompletionContributor extends CompletionContributor {
     super.fillCompletionVariants(parameters, result);
   }
 
-  static LinkedHashSet<LookupElement> completeReference(final CompletionParameters parameters,
-                                        GrReferenceElement reference, final InheritorsHolder inheritorsHolder, final PrefixMatcher matcher) {
+  @NotNull
+  static Runnable completeReference(final CompletionParameters parameters,
+                                        GrReferenceElement reference, final InheritorsHolder inheritorsHolder, final PrefixMatcher matcher, final Consumer<LookupElement> _consumer) {
+    final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
+      final Set<LookupElement> added = hashSet();
+      @Override
+      public void consume(LookupElement element) {
+        if (added.add(element)) {
+          _consumer.consume(element);
+        }
+      }
+    };
+
     final PsiElement position = parameters.getPosition();
 
     final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
 
-    LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
     final Set<String> unresolvedProps;
     if (reference instanceof GrReferenceExpression && (qualifier instanceof GrExpression || qualifier == null)) {
       unresolvedProps = CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier, (GrReferenceExpression)reference);
       for (String string : unresolvedProps) {
-        result.add(LookupElementBuilder.create(string).withItemTextUnderlined(true));
+        consumer.consume(LookupElementBuilder.create(string).withItemTextUnderlined(true));
       }
       if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
           !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
         if (parameters.getInvocationCount() == 1) {
           showInfo();
         }
-        return result;
+        return EmptyRunnable.INSTANCE;
       }
     }
     else {
@@ -451,7 +471,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     final ElementFilter classFilter = getClassFilter(position);
 
-    final List<LookupElement> items = arrayList();
+    final List<LookupElement> zeroPriority = arrayList();
     reference.processVariants(matcher, parameters, new Consumer<LookupElement>() {
       public void consume(LookupElement lookupElement) {
         Object object = lookupElement.getObject();
@@ -481,74 +501,78 @@ public class GroovyCompletionContributor extends CompletionContributor {
             ((PsiModifierListOwner)object).hasModifierProperty(PsiModifier.STATIC)) {
           if (lookupElement.getLookupString().equals(((PsiMember)object).getName())) {
             staticMembers.put(CompletionUtil.getOriginalOrSelf((PsiModifierListOwner)object), lookupElement);
-            return;
           }
         }
         if (object instanceof PsiClass && !classFilter.isAcceptable(object, position)) {
           return;
         }
 
-        items.add(lookupElement);
+        PrioritizedLookupElement prio = lookupElement.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
+        if (prio == null || prio.getPriority() == 0) {
+          zeroPriority.add(lookupElement);
+        } else {
+          consumer.consume(lookupElement);
+        }
       }
     });
 
+    for (LookupElement element : zeroPriority) {
+      consumer.consume(element);
+    }
+
     if (qualifier == null) {
-      addStaticMembers(parameters, matcher, staticMembers);
+      return addStaticMembers(parameters, matcher, staticMembers, consumer);
     }
-    items.addAll(staticMembers.values());
-
-    for (Iterator<LookupElement> iterator = items.iterator(); iterator.hasNext(); ) {
-      LookupElement element = iterator.next();
-      PrioritizedLookupElement prio = element.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
-      if (prio == null || prio.getPriority() >= 0) {
-        result.add(element);
-        iterator.remove();
-      }
-    }
-    result.addAll(items);
-
-    return result;
+    return EmptyRunnable.INSTANCE;
   }
 
-  private static void addStaticMembers(CompletionParameters parameters,
+  private static Runnable addStaticMembers(CompletionParameters parameters,
                                        final PrefixMatcher matcher,
-                                       final Map<PsiModifierListOwner, LookupElement> staticMembers) {
-    StaticMemberProcessor processor = completeStaticMembers(parameters);
-    if (parameters.getInvocationCount() < 2) {
-      processor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
-        @Override
-        public void consume(PsiMember member, PsiClass psiClass) {
-          if (member instanceof GrAccessorMethod) {
-            member = ((GrAccessorMethod)member).getProperty();
-          }
-          member = CompletionUtil.getOriginalOrSelf(member);
-          if (staticMembers.containsKey(member)) {
-            return;
-          }
-          final String name = member.getName();
-          if (name == null || !matcher.prefixMatches(name)) {
-            staticMembers.remove(member);
-            return;
-          }
-          staticMembers.put(member, createGlobalMemberElement(member, psiClass, true));
+                                       final Map<PsiModifierListOwner, LookupElement> staticMembers, final Consumer<LookupElement> consumer) {
+    final StaticMemberProcessor processor = completeStaticMembers(parameters);
+    processor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
+      @Override
+      public void consume(PsiMember member, PsiClass psiClass) {
+        if (member instanceof GrAccessorMethod) {
+          member = ((GrAccessorMethod)member).getProperty();
         }
-      });
-    } else if (StringUtil.isNotEmpty(matcher.getPrefix())) {
-      processor.processStaticMethodsGlobally(matcher, new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          PsiMember member = (PsiMember)element.getObject();
-          if (member instanceof GrAccessorMethod) {
-            member = ((GrAccessorMethod)member).getProperty();
-          }
-          member = CompletionUtil.getOriginalOrSelf(member);
-          if (staticMembers.containsKey(member)) {
-            return;
-          }
-          staticMembers.put(member, element);
+        member = CompletionUtil.getOriginalOrSelf(member);
+        if (staticMembers.containsKey(member)) {
+          return;
         }
-      });
+        final String name = member.getName();
+        if (name == null || !matcher.prefixMatches(name)) {
+          staticMembers.remove(member);
+          return;
+        }
+        JavaGlobalMemberLookupElement element = createGlobalMemberElement(member, psiClass, true);
+        staticMembers.put(member, element);
+        consumer.consume(element);
+      }
+    });
+    if (parameters.getInvocationCount() >= 2 && StringUtil.isNotEmpty(matcher.getPrefix())) {
+      return new Runnable() {
+        @Override
+        public void run() {
+          processor.processStaticMethodsGlobally(matcher, new Consumer<LookupElement>() {
+            @Override
+            public void consume(LookupElement element) {
+              PsiMember member = (PsiMember)element.getObject();
+              if (member instanceof GrAccessorMethod) {
+                member = ((GrAccessorMethod)member).getProperty();
+              }
+              member = CompletionUtil.getOriginalOrSelf(member);
+              if (staticMembers.containsKey(member)) {
+                return;
+              }
+              staticMembers.put(member, element);
+              consumer.consume(element);
+            }
+          });
+        }
+      };
     }
+    return EmptyRunnable.INSTANCE;
   }
 
   private static void showInfo() {

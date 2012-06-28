@@ -104,15 +104,18 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
         GrReferenceElement ref = createMockReference(position, type, base);
         PsiElement refName = ref.getReferenceNameElement();
         assert refName != null;
-        for (LookupElement element : GroovyCompletionContributor.completeReference(
-          parameters.withPosition(refName, refName.getTextRange().getStartOffset()), ref, inheritors, result.getPrefixMatcher())) {
-          qualifiedCollector.addElement(new JavaChainLookupElement(base, element) {
-            @Override
-            protected boolean shouldParenthesizeQualifier(PsiFile file, int startOffset, int endOffset) {
-              return false;
-            }
-          });
-        }
+        CompletionParameters newParams = parameters.withPosition(refName, refName.getTextRange().getStartOffset());
+        GroovyCompletionContributor.completeReference(newParams, ref, inheritors, result.getPrefixMatcher(), new Consumer<LookupElement>() {
+          @Override
+          public void consume(LookupElement element) {
+            qualifiedCollector.addElement(new JavaChainLookupElement(base, element) {
+              @Override
+              protected boolean shouldParenthesizeQualifier(PsiFile file, int startOffset, int endOffset) {
+                return false;
+              }
+            });
+          }
+        });
       }
     }
   }
@@ -142,11 +145,14 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
 
     final PrefixMatcher qMatcher = new CamelHumpMatcher(referenceName);
     final Set<LookupElement> variants = new LinkedHashSet<LookupElement>();
-    for (LookupElement element : GroovyCompletionContributor.completeReference(parameters, qualifier, inheritors, qMatcher)) {
-      if (qMatcher.prefixMatches(element)) {
-        variants.add(element);
+    GroovyCompletionContributor.completeReference(parameters, qualifier, inheritors, qMatcher, new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        if (qMatcher.prefixMatches(element)) {
+          variants.add(element);
+        }
       }
-    }
+    });
 
     for (PsiClass aClass : PsiShortNamesCache.getInstance(qualifier.getProject()).getClassesByName(referenceName, qualifier.getResolveScope())) {
       variants.add(GroovyCompletionUtil.createClassLookupItem(aClass));
