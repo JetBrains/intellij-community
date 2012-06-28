@@ -54,7 +54,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
   private void doTest() throws Exception {
     addClassToProject("a", "FooBar");
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.complete(CompletionType.CLASS_NAME)
+    complete()
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
@@ -69,7 +69,7 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
   public void testWhenClassExistsInSamePackage() throws Exception {
     addClassToProject("a", "FooBar")
     myFixture.configureByFile(getTestName(false) + ".groovy")
-    myFixture.complete(CompletionType.CLASS_NAME)
+    complete()
     def lookup = LookupManager.getActiveLookup(myFixture.editor)
     lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
