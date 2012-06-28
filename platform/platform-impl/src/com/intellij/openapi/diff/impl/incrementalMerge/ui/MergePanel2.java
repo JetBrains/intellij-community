@@ -251,6 +251,7 @@ public class MergePanel2 implements DiffViewer {
     for (MergeToolEditorSetting property : MergeToolEditorSetting.values()) {
       property.apply(editor, settings == null ? property.getDefault() : settings.getPreference(property));
     }
+    editor.getSettings().setLineMarkerAreaShown(true);
   }
 
   private void disposeMergeList() {
