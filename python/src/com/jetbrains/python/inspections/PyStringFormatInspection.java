@@ -181,42 +181,38 @@ public class PyStringFormatInspection extends PyInspection {
             return 1;
           }
         }
-        else if (rightExpression instanceof PySliceExpression) {
-          if (s != null) {
-            PyType type = ((PySliceExpression)rightExpression).getOperand().getType(myTypeEvalContext);
-            if (type != null) {
-              if ("list".equals(type.getName()) || "str".equals(type.getName())) {
-                checkTypeCompatible(problemTarget, builtinCache.getStrType(),
-                                    PyTypeParser.getTypeByName(problemTarget, s));
-                return 1;
-              }
-            }
-            PySliceItem sliceItem = ((PySliceExpression)rightExpression).getSliceItem();
-            if (sliceItem != null) {
-              PyExpression lower = sliceItem.getLowerBound();
-              PyExpression upper = sliceItem.getUpperBound();
-              PyExpression stride = sliceItem.getStride();
-              if (upper instanceof PyNumericLiteralExpression) {
-                BigInteger lowerVal;
-                if (lower instanceof PyNumericLiteralExpression ) {
-                  lowerVal = ((PyNumericLiteralExpression)lower).getBigIntegerValue();
-                }
-                else {
-                  lowerVal = BigInteger.ZERO;
-                }
-                int count = (((PyNumericLiteralExpression)upper).getBigIntegerValue().subtract(lowerVal)).intValue();
-                int strideVal;
-                if (stride instanceof PyNumericLiteralExpression)
-                  strideVal = ((PyNumericLiteralExpression)stride).getBigIntegerValue().intValue();
-                else
-                  strideVal = 1;
-                int res = count/strideVal;
-                int residue = count%strideVal == 0 ? 0 : 1;
-                return res + residue;
-              }
-            }
-            return -1;
+        else if (rightExpression instanceof PySliceExpression && s != null) {
+          final PyType type = ((PySliceExpression)rightExpression).getOperand().getType(myTypeEvalContext);
+          if (type == null || "list".equals(type.getName()) || "str".equals(type.getName())) {
+            checkTypeCompatible(problemTarget, builtinCache.getStrType(),
+                                PyTypeParser.getTypeByName(problemTarget, s));
+            return 1;
           }
+          PySliceItem sliceItem = ((PySliceExpression)rightExpression).getSliceItem();
+          if (sliceItem != null) {
+            PyExpression lower = sliceItem.getLowerBound();
+            PyExpression upper = sliceItem.getUpperBound();
+            PyExpression stride = sliceItem.getStride();
+            if (upper instanceof PyNumericLiteralExpression) {
+              BigInteger lowerVal;
+              if (lower instanceof PyNumericLiteralExpression ) {
+                lowerVal = ((PyNumericLiteralExpression)lower).getBigIntegerValue();
+              }
+              else {
+                lowerVal = BigInteger.ZERO;
+              }
+              int count = (((PyNumericLiteralExpression)upper).getBigIntegerValue().subtract(lowerVal)).intValue();
+              int strideVal;
+              if (stride instanceof PyNumericLiteralExpression)
+                strideVal = ((PyNumericLiteralExpression)stride).getBigIntegerValue().intValue();
+              else
+                strideVal = 1;
+              int res = count/strideVal;
+              int residue = count%strideVal == 0 ? 0 : 1;
+              return res + residue;
+            }
+          }
+          return -1;
         }
         return -1;
       }
