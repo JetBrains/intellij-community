@@ -16,10 +16,8 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Holds settings that should be used if
@@ -38,13 +36,14 @@ public class DependentSpacingRule {
   enum Trigger {
     HAS_LINE_FEEDS, DOES_NOT_HAVE_LINE_FEEDS
   }
-  
-  public static final DependentSpacingRule DEFAULT = new DependentSpacingRule(Trigger.HAS_LINE_FEEDS).registerData(Anchor.MIN_LINE_FEEDS, 1);
 
-  private final Map<Anchor, Object> myData = new HashMap<Anchor, Object>();
+  public static final DependentSpacingRule DEFAULT =
+    new DependentSpacingRule(Trigger.HAS_LINE_FEEDS).registerData(Anchor.MIN_LINE_FEEDS, 1);
+
+  private final TObjectIntHashMap<Anchor> myData = new TObjectIntHashMap<Anchor>();
 
   @NotNull private final Trigger myTrigger;
-  
+
   public DependentSpacingRule(@NotNull Trigger trigger) {
     myTrigger = trigger;
   }
@@ -62,7 +61,7 @@ public class DependentSpacingRule {
    * @param <T>     data's type
    * @see #getData(Anchor)
    */
-  public <T> DependentSpacingRule registerData(@NotNull Anchor anchor, @NotNull T data) {
+  public DependentSpacingRule registerData(@NotNull Anchor anchor, int data) {
     myData.put(anchor, data);
     return this;
   }
@@ -85,13 +84,12 @@ public class DependentSpacingRule {
    * @throws IllegalArgumentException   if no data is registered for the given anchor
    *                                    (use {@link #hasData(Anchor)} for the preliminary examination)
    */
-  @SuppressWarnings("unchecked")
-  public <T> T getData(@NotNull Anchor anchor) throws IllegalArgumentException {
+  public int getData(@NotNull Anchor anchor) throws IllegalArgumentException {
     if (!myData.containsKey(anchor)) {
       throw new IllegalArgumentException(String.format(
         "No data is registered for the dependent spacing rule %s. Registered: %s", anchor, myData
       ));
     }
-    return (T)myData.get(anchor);
+    return myData.get(anchor);
   }
 }
