@@ -108,7 +108,7 @@ class FormatProcessor {
    * <pre>
    *       int[] data = {1, 2, 3};
    * </pre>
-   * We want to keep that in one line with possible but place curly braces on separate lines if the width is not enough:
+   * We want to keep that in one line if possible but place curly braces on separate lines if the width is not enough:
    * <pre>
    *      int[] data = {    | &lt; right margin
    *          1, 2, 3       |

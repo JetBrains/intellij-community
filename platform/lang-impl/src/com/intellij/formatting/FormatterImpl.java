@@ -133,6 +133,7 @@ public class FormatterImpl extends FormatterEx
     return result;
   }
 
+  @NotNull
   public Spacing createSpacing(int minOffset,
                                int maxOffset,
                                int minLineFeeds,
@@ -141,13 +142,21 @@ public class FormatterImpl extends FormatterEx
     return getSpacingImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines,false, 0);
   }
 
+  @NotNull
   public Spacing getReadOnlySpacing() {
     return myReadOnlySpacing;
   }
-
-  public Spacing createDependentLFSpacing(int minOffset, int maxOffset, TextRange dependence, boolean keepLineBreaks,
-                                          int keepBlankLines) {
-    return new DependantSpacingImpl(minOffset, maxOffset, dependence, keepLineBreaks, keepBlankLines);
+  
+  @NotNull
+  @Override
+  public Spacing createDependentLFSpacing(int minSpaces,
+                                          int maxSpaces,
+                                          @NotNull TextRange dependencyRange,
+                                          boolean keepLineBreaks,
+                                          int keepBlankLines,
+                                          @NotNull DependentSpacingRule rule)
+  {
+    return new DependantSpacingImpl(minSpaces, maxSpaces, dependencyRange, keepLineBreaks, keepBlankLines, rule);
   }
 
   @NotNull
@@ -669,10 +678,12 @@ public class FormatterImpl extends FormatterEx
     return myAbsoluteLabelIndent;
   }
 
+  @NotNull
   public Spacing createSafeSpacing(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
     return getSpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines, false, 0);
   }
 
+  @NotNull
   public Spacing createKeepingFirstColumnSpacing(final int minSpace,
                                                  final int maxSpace,
                                                  final boolean keepLineBreaks,
@@ -680,6 +691,7 @@ public class FormatterImpl extends FormatterEx
     return getSpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines, true, 0);
   }
 
+  @NotNull
   public Spacing createSpacing(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean keepLineBreaks, final int keepBlankLines,
                                final int prefLineFeeds) {
     return getSpacingImpl(minSpaces, maxSpaces, -1, false, false, keepLineBreaks, keepBlankLines, false, prefLineFeeds);
