@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.ui.speedSearch.SpeedSearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,7 +164,14 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     popup.registerAction("deleteConfiguration_bksp", KeyStroke.getKeyStroke("BACK_SPACE"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        popup.removeSelected();
+        SpeedSearch speedSearch = popup.getSpeedSearch();
+        if (speedSearch.isHoldingFilter()) {
+          speedSearch.backspace();
+          speedSearch.update();
+        }
+        else {
+          popup.removeSelected();
+        }
       }
     });
 

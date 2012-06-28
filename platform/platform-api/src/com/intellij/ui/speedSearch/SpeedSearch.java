@@ -68,7 +68,7 @@ public class SpeedSearch {
     }
   }
 
-  protected void update() {
+  public void update() {
 
   }
 
