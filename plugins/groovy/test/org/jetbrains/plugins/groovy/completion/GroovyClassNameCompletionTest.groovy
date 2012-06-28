@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.completion;
 
 
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.codeInsight.lookup.LookupElement
@@ -36,19 +35,6 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "groovy/completion/classNameCompletion";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = true;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = old;
-    super.tearDown();
   }
 
   private void doTest() throws Exception {

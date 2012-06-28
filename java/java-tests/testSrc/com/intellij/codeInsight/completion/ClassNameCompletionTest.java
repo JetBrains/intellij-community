@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -29,25 +28,15 @@ import java.io.IOException;
 @TestDataPath("$CONTENT_ROOT/testData")
 public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
-  protected boolean myOldSetting;
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myOldSetting = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = true;
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
   }
 
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/className/";
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = myOldSetting;
-    super.tearDown();
   }
 
   public void testImportAfterNew() throws Exception {
