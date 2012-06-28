@@ -1,13 +1,6 @@
-package a.b.c
+class X {
+  def foo()
 
-import org.*
-
-class A  {
-  def foo()   {
-    switch (k){
-
-    }
-  }
   <caret>
 }
 -----
@@ -32,6 +25,7 @@ short
 static
 strictfp
 synchronized
+throws
 transient
 void
 volatile

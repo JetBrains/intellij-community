@@ -10,8 +10,4 @@ class A {
   }
 }
 -----
-META-INF
-java
-javax
-org
 static

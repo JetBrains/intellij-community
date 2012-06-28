@@ -1,6 +1,0 @@
-import static <caret> a.b
------
-META-INF
-java
-javax
-org

@@ -828,6 +828,7 @@ public class PsiUtil {
     return place == clazz;
   }
 
+
   @Nullable
   public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
     //noinspection ConstantConditions

@@ -88,7 +88,6 @@ public class KeywordHighlighter extends TextEditorHighlightingPass {
   @Override
   public void doApplyInformationToEditor() {
     if (toHighlight == null) return;
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(),
-                                                   getId());
+    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), toHighlight, getColorsScheme(), getId());
   }
 }
