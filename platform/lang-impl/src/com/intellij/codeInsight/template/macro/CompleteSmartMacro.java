@@ -16,15 +16,17 @@
 
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 
 public class CompleteSmartMacro extends BaseCompleteMacro {
   public CompleteSmartMacro() {
     super("completeSmart");
   }
 
-  CodeInsightActionHandler getCompletionHandler() {
-    return new CodeCompletionHandlerBase(CompletionType.SMART);
+  protected void invokeCompletionHandler(Project project, Editor editor) {
+    new CodeCompletionHandlerBase(CompletionType.SMART).invokeCompletion(project, editor, 1, false);
   }
 }
