@@ -561,7 +561,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   @NotNull
-  public FoldingModelEx getFoldingModel() {
+  public FoldingModelImpl getFoldingModel() {
     return myFoldingModel;
   }
 
