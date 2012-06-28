@@ -242,7 +242,7 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
                             order="last, before default"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaGlobalMemberNameCompletionContributor"
-                            id="javaGlobalMemberName" order="last, after javaClassName"/>
+                            id="javaGlobalMemberName"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor" id="javadoc"
                             order="last, before javaLegacy"/>
@@ -705,6 +705,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertColorRepresentationIntentionAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
       <category>Other</category>
     </intentionAction>
@@ -718,6 +723,12 @@
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
       <category>Other</category>
     </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
+      <category>Other</category>
+    </intentionAction>
+
 
 
 

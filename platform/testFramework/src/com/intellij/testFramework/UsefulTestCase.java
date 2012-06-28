@@ -367,15 +367,17 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedCollection(Arrays.asList(collection), checkers);
   }
 
-  public static <T> void assertSameElements(@NotNull T[] collection, @NotNull T... expected) {
+  public static <T> void assertSameElements(T[] collection, T... expected) {
     assertSameElements(Arrays.asList(collection), expected);
   }
 
-  public static <T> void assertSameElements(@NotNull Collection<? extends T> collection, @NotNull T... expected) {
+  public static <T> void assertSameElements(Collection<? extends T> collection, T... expected) {
     assertSameElements(collection, Arrays.asList(expected));
   }
 
-  public static <T> void assertSameElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
+  public static <T> void assertSameElements(Collection<? extends T> collection, Collection<T> expected) {
+    assertNotNull(collection);
+    assertNotNull(expected);
     if (collection.size() != expected.size() || !new HashSet<T>(expected).equals(new HashSet<T>(collection))) {
       Assert.assertEquals(toString(expected, "\n"), toString(collection, "\n"));
       Assert.assertEquals(new HashSet<T>(expected), new HashSet<T>(collection));

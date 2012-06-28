@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -225,7 +225,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   private static void setupEditorForInjectedLanguage() {
-    Editor editor = InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
+    Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
     if (editor instanceof EditorWindow) {
       myFile = ((EditorWindow)editor).getInjectedFile();
       myEditor = editor;
@@ -444,13 +444,13 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       return myEditor;
     }
     if (dataId.equals(AnActionEvent.injectedId(PlatformDataKeys.EDITOR.getName()))) {
-      return InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
+      return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
     }
     if (LangDataKeys.PSI_FILE.is(dataId)) {
       return myFile;
     }
     if (dataId.equals(AnActionEvent.injectedId(LangDataKeys.PSI_FILE.getName()))) {
-      Editor editor = InjectedLanguageFacadeImpl.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
+      Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
       return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
     }
     return super.getData(dataId);
@@ -514,69 +514,69 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
   protected static void backspace() {
-    doAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
   }
   protected static void delete() {
-    doAction(IdeActions.ACTION_EDITOR_DELETE);
+    executeAction(IdeActions.ACTION_EDITOR_DELETE);
   }
 
   protected static void home() {
-    doAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
   }
 
   protected static void end() {
-    doAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
   }
 
   protected static void copy() {
-    doAction(IdeActions.ACTION_EDITOR_COPY);
+    executeAction(IdeActions.ACTION_EDITOR_COPY);
   }
 
   protected static void paste() {
-    doAction(IdeActions.ACTION_EDITOR_PASTE);
+    executeAction(IdeActions.ACTION_EDITOR_PASTE);
   }
   
   protected static void moveCaretToPreviousWordWithSelection() {
-    doAction("EditorPreviousWordWithSelection");
+    executeAction("EditorPreviousWordWithSelection");
   }
 
   protected static void moveCaretToNextWordWithSelection() {
-    doAction("EditorNextWordWithSelection");
+    executeAction("EditorNextWordWithSelection");
   }
 
   protected static void cutLineBackward() {
-    doAction("EditorCutLineBackward");
+    executeAction("EditorCutLineBackward");
   }
   
   protected static void cutToLineEnd() {
-    doAction("EditorCutLineEnd");
+    executeAction("EditorCutLineEnd");
   }
 
   protected static void killToWordStart() {
-    doAction("EditorKillToWordStart");
+    executeAction("EditorKillToWordStart");
   }
   
   protected static void killToWordEnd() {
-    doAction("EditorKillToWordEnd");
+    executeAction("EditorKillToWordEnd");
   }
 
   protected static void killRegion() {
-    doAction("EditorKillRegion");
+    executeAction("EditorKillRegion");
   }
 
   protected static void killRingSave() {
-    doAction("EditorKillRingSave");
+    executeAction("EditorKillRingSave");
   }
 
   protected static void unindent() {
-    doAction("EditorUnindentSelection");
+    executeAction("EditorUnindentSelection");
   }
   
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }
   
-  private static void doAction(@NotNull final String actionId) {
+  protected static void executeAction(@NotNull final String actionId) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {

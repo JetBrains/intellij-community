@@ -19,7 +19,9 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.light.*;
+import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -353,15 +356,14 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
           @Override
           public List<GrVariable> compute() {
             final List<GrVariable> result = new ArrayList<GrVariable>();
-            myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+            myFile.accept(new GroovyRecursiveElementVisitor() {
               @Override
-              public void visitElement(PsiElement element) {
-                if (element instanceof GrVariableDeclaration &&
-                    ((GrVariableDeclaration)element).getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
-                  Collections.addAll(result, ((GrVariableDeclaration)element).getVariables());
+              public void visitVariableDeclaration(GrVariableDeclaration element) {
+                if (element.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
+                  Collections.addAll(result, element.getVariables());
                 }
 
-                super.visitElement(element);
+                super.visitVariableDeclaration(element);
               }
             });
             return result;

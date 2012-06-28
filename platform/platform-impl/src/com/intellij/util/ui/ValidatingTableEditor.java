@@ -190,7 +190,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myFixLink = new HoverHyperlinkLabel(null);
   }
 
-  protected ValidatingTableEditor(AnActionButton extraButton) {
+  protected ValidatingTableEditor(@Nullable AnActionButton ... extraButtons) {
     ToolbarDecorator decorator =
       ToolbarDecorator.createDecorator(myTable).disableRemoveAction().disableUpAction().disableDownAction();
     decorator.setAddAction(new AnActionButtonRunnable() {
@@ -211,8 +211,10 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myRemoveButton.setShortcut(CustomShortcutSet.fromString("alt DELETE")); //NON-NLS
     decorator.addExtraAction(myRemoveButton);
 
-    if (extraButton != null) {
-      decorator.addExtraAction(extraButton);
+    if (extraButtons != null &&  extraButtons.length != 0) {
+      for (AnActionButton extraButton : extraButtons) {
+        decorator.addExtraAction(extraButton);
+      }
     }
 
     myTablePanel.add(decorator.createPanel(), BorderLayout.CENTER);
@@ -240,6 +242,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
   protected ValidatingTableEditor() {
+    //noinspection NullArgumentToVariableArgMethod
     this(null);
   }
 

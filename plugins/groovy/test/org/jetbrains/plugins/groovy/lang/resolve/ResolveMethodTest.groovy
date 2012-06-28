@@ -1070,4 +1070,17 @@ extensionClasses=pack.StringExt
 
     assertNotNull(ref.resolve())
   }
+
+  void testInitializerOfScriptField() {
+    addGroovyTransformField()
+    def ref = configureByText('''\
+import groovy.transform.Field
+
+def xx(){5}
+
+@Field
+def aa = 5 + x<caret>x()
+''')
+    assertInstanceOf(ref.resolve(), GrMethod)
+  }
 }

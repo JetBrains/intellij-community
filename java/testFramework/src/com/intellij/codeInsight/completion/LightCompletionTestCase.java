@@ -19,8 +19,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
-import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 
@@ -36,12 +34,6 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   protected String myPrefix;
   protected LookupElement[] myItems;
   private CompletionType myType = CompletionType.BASIC;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
-  }
 
   @Override
   protected void tearDown() throws Exception {

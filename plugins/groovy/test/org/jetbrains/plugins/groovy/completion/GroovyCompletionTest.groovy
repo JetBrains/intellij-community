@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 public class GroovyCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/completion/";
+    return TestUtils.testDataPath + "groovy/completion/";
   }
 
   @Override
@@ -41,194 +41,194 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     super.tearDown()
   }
 
-  public void testFinishMethodWithLParen() throws Throwable {
+  public void testFinishMethodWithLParen() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getBar", "getClass", "getFoo");
     myFixture.type('(');
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testNamedParametersForApplication() throws Throwable {
+  public void testNamedParametersForApplication() {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParametersForMethodCall() throws Throwable {
+  public void testNamedParametersForMethodCall() {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParameters1() throws Throwable {
+  public void testNamedParameters1() {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParameters2() throws Throwable {
+  public void testNamedParameters2() {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParametersInMap1() throws Throwable {
+  public void testNamedParametersInMap1() {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParametersInMap2() throws Throwable {
+  public void testNamedParametersInMap2() {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParametersInSecondMap1() throws Throwable {
+  public void testNamedParametersInSecondMap1() {
     doVariantableTest();
   }
 
-  public void testNamedParametersInSecondMap2() throws Throwable {
+  public void testNamedParametersInSecondMap2() {
     doVariantableTest();
   }
 
-  public void testNamedParametersExcludeExisted() throws Throwable {
+  public void testNamedParametersExcludeExisted() {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParametersExcludeExisted2() throws Throwable {
+  public void testNamedParametersExcludeExisted2() {
     doVariantableTest("abx", "aby", "abz");
   }
 
-  public void testNamedParametersExcludeExistedMap() throws Throwable {
+  public void testNamedParametersExcludeExistedMap() {
     doVariantableTest("abx", "aby");
   }
 
-  public void testNamedParametersForNotMap() throws Throwable {
+  public void testNamedParametersForNotMap() {
     doBasicTest();
   }
 
-  public void testNamedParametersForConstructorCall() throws Throwable {
+  public void testNamedParametersForConstructorCall() {
     doVariantableTest("hahaha", "hohoho", "hashCode");
   }
 
-  public void testUnfinishedMethodTypeParameter() throws Throwable {
+  public void testUnfinishedMethodTypeParameter() {
     doVariantableTest("MyParameter", "MySecondParameter");
   }
 
-  public void testUnfinishedMethodTypeParameter2() throws Throwable {
+  public void testUnfinishedMethodTypeParameter2() {
     doVariantableTest("MyParameter", "MySecondParameter");
   }
 
-  public void testInstanceofHelpsDetermineType() throws Throwable {
+  public void testInstanceofHelpsDetermineType() {
     doBasicTest();
   }
 
-  public void testInstanceofHelpsDetermineTypeInBinaryAnd() throws Throwable { doBasicTest() }
-  public void testInstanceofHelpsDetermineTypeInBinaryOr() throws Throwable { doBasicTest() }
+  public void testInstanceofHelpsDetermineTypeInBinaryAnd() { doBasicTest() }
+  public void testInstanceofHelpsDetermineTypeInBinaryOr() { doBasicTest() }
 
-  public void testNotInstanceofDoesntHelpDetermineType() throws Throwable {
+  public void testNotInstanceofDoesntHelpDetermineType() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
   }
 
-  public void testNotInstanceofDoesntHelpDetermineType2() throws Throwable {
+  public void testNotInstanceofDoesntHelpDetermineType2() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
   }
 
-  public void testTypeParameterCompletion() throws Throwable {
+  public void testTypeParameterCompletion() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "put", "putAll");
   }
 
-  public void testCatchClauseParameter() throws Throwable {
+  public void testCatchClauseParameter() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "getCause", "getClass");
   }
 
-  public void testFieldSuggestedOnce1() throws Throwable {
+  public void testFieldSuggestedOnce1() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
     assertNull(myFixture.getLookupElements());
   }
 
-  public void testFieldSuggestedOnce2() throws Throwable {
+  public void testFieldSuggestedOnce2() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
     assertNull(myFixture.getLookupElements());
   }
 
-  public void testFieldSuggestedOnce3() throws Throwable {
+  public void testFieldSuggestedOnce3() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
     assertNull(myFixture.getLookupElements());
   }
 
-  public void testFieldSuggestedOnce4() throws Throwable {
+  public void testFieldSuggestedOnce4() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
     assertNull(myFixture.getLookupElements());
   }
 
-  public void testFieldSuggestedOnce5() throws Throwable {
+  public void testFieldSuggestedOnce5() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
     assertNull(myFixture.getLookupElements());
   }
 
-  public void testFieldSuggestedInMethodCall() throws Throwable {
+  public void testFieldSuggestedInMethodCall() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 
-  public void testMethodParameterNoSpace() throws Throwable {
+  public void testMethodParameterNoSpace() {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 
-  public void testGroovyDocParameter() throws Throwable {
+  public void testGroovyDocParameter() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "xx", "xy");
   }
 
-  public void testInnerClassExtendsImplementsCompletion() throws Throwable {
+  public void testInnerClassExtendsImplementsCompletion() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "extends", "implements");
   }
 
-  public void testInnerClassCompletion() throws Throwable {
+  public void testInnerClassCompletion() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "Inner1", "Inner2");
   }
 
-  public void testQualifiedThisCompletion() throws Throwable {
+  public void testQualifiedThisCompletion() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "foo1", "foo2");
   }
 
-  public void testQualifiedSuperCompletion() throws Throwable {
+  public void testQualifiedSuperCompletion() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "foo1", "foo2");
   }
 
-  public void testThisKeywordCompletionAfterClassName1() throws Throwable {
+  public void testThisKeywordCompletionAfterClassName1() {
     doBasicTest();
   }
 
-  public void testThisKeywordCompletionAfterClassName2() throws Throwable {
+  public void testThisKeywordCompletionAfterClassName2() {
     doBasicTest();
   }
 
-  public void testWhileInstanceof() throws Throwable { doBasicTest() }
+  public void testWhileInstanceof() { doBasicTest() }
 
-  public void testCompletionInParameterListInClosableBlock() throws Throwable { doBasicTest(); }
-  public void testCompletionInParameterListInClosableBlock3() throws Throwable { doBasicTest(); }
+  public void testCompletionInParameterListInClosableBlock() { doBasicTest(); }
+  public void testCompletionInParameterListInClosableBlock3() { doBasicTest(); }
 
-  public void testCompletionInParameterListInClosableBlock2() throws Throwable {
+  public void testCompletionInParameterListInClosableBlock2() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "aDouble");
   }
 
-  public void testStaticMemberFromInstanceContext() throws Throwable {
+  public void testStaticMemberFromInstanceContext() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "var1", "var2");
   }
 
-  public void testInstanceMemberFromStaticContext() throws Throwable {
+  public void testInstanceMemberFromStaticContext() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "var3", "var4");
   }
 
-  public void testTypeCompletionInVariableDeclaration1() throws Throwable {
+  public void testTypeCompletionInVariableDeclaration1() {
     doBasicTest();
   }
 
-  public void testTypeCompletionInVariableDeclaration2() throws Throwable {
+  public void testTypeCompletionInVariableDeclaration2() {
     doBasicTest();
   }
 
-  public void testTypeCompletionInParameter() throws Throwable {
+  public void testTypeCompletionInParameter() {
     doBasicTest();
   }
 
-  public void testGStringConcatenationCompletion() throws Throwable {
+  public void testGStringConcatenationCompletion() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence");
   }
 
-  public void testPropertyWithSecondUpperLetter() throws Exception {
+  public void testPropertyWithSecondUpperLetter() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "geteMail", "getePost");
   }
 
-  public void testInferredVariableType() throws Exception {
+  public void testInferredVariableType() {
     myFixture.configureByText "a.groovy", "def foo = 'xxx'; fo<caret>"
     def presentation = new LookupElementPresentation()
     myFixture.completeBasic()[0].renderElement(presentation)
@@ -236,7 +236,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     assert presentation.typeText == 'String'
   }
 
-  public void testSubstitutedMethodType() throws Exception {
+  public void testSubstitutedMethodType() {
     myFixture.configureByText "a.groovy", "new HashMap<String, Integer>().put<caret>x"
     def presentation = new LookupElementPresentation()
     myFixture.completeBasic()[0].renderElement(presentation)
@@ -248,7 +248,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   public void testIntCompletionInPlusMethod() {doBasicTest();}
   public void testIntCompletionInGenericParameter() {doBasicTest();}
 
-  public void testWhenSiblingIsStaticallyImported_Method() throws Exception {
+  public void testWhenSiblingIsStaticallyImported_Method() {
     myFixture.addFileToProject "foo/Foo.groovy", """package foo
       class Foo {
         static def abcMethod() {}
@@ -272,7 +272,7 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     """
   }
 
-  public void testWhenSiblingIsStaticallyImported_Field() throws Exception {
+  public void testWhenSiblingIsStaticallyImported_Field() {
     myFixture.addFileToProject "foo/Foo.groovy", """package foo
       class Foo {
         static def abcField = 4
@@ -770,7 +770,7 @@ try {} catch (AbcdException"""
     myFixture.checkResult "try {} catch (AbcdException<caret> e) {}"
   }
 
-  public void testTopLevelClassesFromPackaged() throws Throwable {
+  public void testTopLevelClassesFromPackaged() {
     myFixture.addClass "public class Fooooo {}"
     final text = "package foo; class Bar { Fooo<caret> }"
     def file = myFixture.addFileToProject("foo/Bar.groovy", text)
@@ -845,17 +845,17 @@ return foo()"""
     checkCompletion("new Abcd<caret>", '<', "new AbcdClass<<caret>>()")
   }
 
-  public void testMapKeysUsedInFile() throws Exception {
+  public void testMapKeysUsedInFile() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     doVariantableTest 'foo1', 'foo3', 'foo4', 'Foo5', 'Foo7'
   }
 
-  public void testNoClassesAsMapKeys() throws Exception {
+  public void testNoClassesAsMapKeys() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
     doVariantableTest()
   }
 
-  public void testNamedArgsUsedInFile() throws Exception {
+  public void testNamedArgsUsedInFile() {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     doVariantableTest 'false', 'foo2', 'float', 'foo1', 'foo3', 'foo4', 'foo5'
   }
@@ -877,7 +877,7 @@ class A {
 }'''
   }
 
-  public void testSuperClassProperty() throws Exception {
+  public void testSuperClassProperty() {
     checkSingleItemCompletion """
 class A { def foooooooooooo }
 
@@ -967,7 +967,7 @@ println "abcd"
 ''')
   }
 
-  public void testNoModifiersAfterDef() throws Exception {
+  public void testNoModifiersAfterDef() {
     checkSingleItemCompletion 'def priv<caret>', 'def priv<caret>'
   }
 
@@ -1079,19 +1079,19 @@ class X {
     checkCompletion 'byte v1 = (by<caret>te) 0', '\t', 'byte v1 = (byte<caret>) 0'
   }
 
-  public void testInitializerMatters() throws Exception {
+  public void testInitializerMatters() {
     myFixture.configureByText("a.groovy", "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
     myFixture.completeBasic()
     assertOrderedEquals(myFixture.lookupElementStrings, ["foo"])
   }
 
-  public void testFieldInitializerMatters() throws Exception {
+  public void testFieldInitializerMatters() {
     myFixture.configureByText("a.groovy", "class Foo { String f<caret>x = getFoo(); String getFoo() {}; }");
     myFixture.completeBasic()
     assertOrderedEquals(myFixture.lookupElementStrings, ["foo"])
   }
 
-  public void testAccessStaticViaInstanceSecond() throws Exception {
+  public void testAccessStaticViaInstanceSecond() {
     myFixture.configureByText("a.groovy", """
 public class KeyVO {
   { this.fo<caret>x }

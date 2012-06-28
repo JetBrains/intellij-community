@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,12 +144,14 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
     boolean processWholeFile = false;
     boolean processChangedTextOnly = false;
-    if (EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG || (file == null && dir != null)) {
+    final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
+    if (showDialog || (file == null && dir != null)) {
       final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
                                                            hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
       dialog.show();
       if (!dialog.isOK()) return;
-      EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = !dialog.isDoNotAskMe();
+      final boolean showDialogAtFuture = dir == null ? !dialog.isDoNotAskMe() : processChangedTextOnly;
+      EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = showDialogAtFuture;
       updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
       optimizeImports = dialog.isOptimizeImports();
       processWholeFile = dialog.isProcessWholeFile();

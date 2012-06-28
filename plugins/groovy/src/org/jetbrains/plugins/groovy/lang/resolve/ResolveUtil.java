@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -56,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -64,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getContextClass;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType;
 
 /**
@@ -696,5 +699,13 @@ public class ResolveUtil {
     PsiClass aClass = ((PsiEnumConstant)resolved).getContainingClass();
     if (aClass == null) return false;
     return qName.equals(aClass.getQualifiedName());
+  }
+
+  public static boolean isScriptField(GrVariable var) {
+    PsiClass context = getContextClass(var.getParent());
+    final GrModifierList modifierList = var.getModifierList();
+    return context instanceof GroovyScriptClass &&
+           modifierList != null &&
+           modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null;
   }
 }

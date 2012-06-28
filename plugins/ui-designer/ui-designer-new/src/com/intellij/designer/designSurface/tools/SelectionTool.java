@@ -20,6 +20,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
@@ -148,7 +149,7 @@ public class SelectionTool extends InputTool {
       myTracker.mouseUp(event, area);
     }
     super.mouseUp(event, area);
-    if (event.isPopupTrigger()) {
+    if (event.isPopupTrigger() || (SystemInfo.isMac && event.getButton() == MouseEvent.BUTTON3)) {
       ActionManager actionManager = ActionManager.getInstance();
       ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(area.getPopupPlace(), area.getPopupActions());
       popupMenu.getComponent().show(area.getNativeComponent(), event.getX(), event.getY());

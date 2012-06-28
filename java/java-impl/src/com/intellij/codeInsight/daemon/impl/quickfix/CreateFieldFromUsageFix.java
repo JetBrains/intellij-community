@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Mike
  */
 public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix");
 
   public CreateFieldFromUsageFix(PsiReferenceExpression referenceElement) {
     super(referenceElement);

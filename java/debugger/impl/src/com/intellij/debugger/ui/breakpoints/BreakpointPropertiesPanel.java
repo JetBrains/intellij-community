@@ -369,18 +369,20 @@ public abstract class BreakpointPropertiesPanel {
     insert(myClassFiltersFieldPanel, myClassFiltersField);
 
     DebuggerUIUtil.enableEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
-    ActionListener listener = new ActionListener() {
+    ActionListener updateListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateCheckboxes();
       }
     };
-    myPassCountCheckbox.addActionListener(listener);
-    myInstanceFiltersCheckBox.addActionListener(listener);
-    myClassFiltersCheckBox.addActionListener(listener);
+    myPassCountCheckbox.addActionListener(updateListener);
+    myInstanceFiltersCheckBox.addActionListener(updateListener);
+    myClassFiltersCheckBox.addActionListener(updateListener);
+    myConditionCheckbox.addActionListener(updateListener);
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
     DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
+    DebuggerUIUtil.focusEditorOnCheck(myConditionCheckbox, myConditionCombo);
 
     IJSwingUtilities.adjustComponentsOnMac(mySuspendJBCheckBox);
     IJSwingUtilities.adjustComponentsOnMac(myLogExpressionCheckBox);
@@ -873,7 +875,7 @@ public abstract class BreakpointPropertiesPanel {
         break;
       }
     }
-    if(selected != null || !myConditionCombo.getText().isEmpty()){
+    if(selected != null || !myConditionCheckbox.isSelected()){
       myPassCountCheckbox.setEnabled(false);
     } else {
       myPassCountCheckbox.setEnabled(true);
@@ -886,8 +888,8 @@ public abstract class BreakpointPropertiesPanel {
     myPassCountField.setEditable(myPassCountCheckbox.isSelected());
     myPassCountField.setEnabled (myPassCountCheckbox.isSelected());
 
-    myConditionCombo.setEnabled(true);
-    myConditionMagnifierButton.setEnabled(true);
+    myConditionCombo.setEnabled(myConditionCheckbox.isSelected());
+    myConditionMagnifierButton.setEnabled(myConditionCheckbox.isSelected());
 
     myInstanceFiltersField.setEnabled(myInstanceFiltersCheckBox.isSelected());
     myInstanceFiltersField.getTextField().setEditable(myInstanceFiltersCheckBox.isSelected());

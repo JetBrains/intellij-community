@@ -3,7 +3,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.util.ArrayUtil
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupElement;
 
 /**
  * @author peter
@@ -65,12 +66,16 @@ public class Foo {
 }
 """)
     myFixture.configureByText "a.java", "class Bar {{ abcf<caret> }}"
-    def element = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    def element = complete()[0]
     def presentation = new LookupElementPresentation()
     element.renderElement(presentation)
     assert 'Foo.abcfield' == presentation.itemText
     assert ' (foo)' == presentation.tailText
     assert 'int' == presentation.typeText
+  }
+
+  private LookupElement[] complete() {
+    myFixture.complete(CompletionType.BASIC, 2)
   }
 
   public void testQualifiedMethodName() throws Exception {
@@ -157,7 +162,7 @@ class Bar {{ abcmethod1()<caret> }}"""
     """)
 
     myFixture.configureByText("a.java", "class Bar {{ abcm<caret> }}")
-    myFixture.complete(CompletionType.CLASS_NAME)
+    complete()
     assertOrderedEquals myFixture.lookupElementStrings, "abcmethod", "abcmethod1"
   }
 
@@ -171,7 +176,7 @@ class A {
   }
 }
 """)
-    def element = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    def element = complete()[0]
     def presentation = new LookupElementPresentation()
     element.renderElement(presentation)
     assert 'foo' == presentation.itemText
@@ -190,7 +195,7 @@ class A {
   private void doTest(String input, boolean importStatic, String output) {
     myFixture.configureByText("a.java", input)
 
-    def item = assertOneElement(myFixture.complete(CompletionType.CLASS_NAME))
+    def item = assertOneElement(complete())
     if (importStatic) {
       item.'as'(StaticallyImportable).shouldBeImported = true
     }

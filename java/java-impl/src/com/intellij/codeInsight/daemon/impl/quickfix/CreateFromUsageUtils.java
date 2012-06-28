@@ -623,6 +623,7 @@ public class CreateFromUsageUtils {
 
     getExpectedInformation(expression, typesList, expectedMethodNames, expectedFieldNames);
 
+
     if (typesList.size() == 1 && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
       ExpectedTypeInfo[] infos = typesList.get(0);
       if (infos.length == 1 && infos[0].getKind() == ExpectedTypeInfo.TYPE_OR_SUBTYPE &&

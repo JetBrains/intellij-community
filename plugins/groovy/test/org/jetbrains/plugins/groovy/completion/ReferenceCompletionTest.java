@@ -55,11 +55,6 @@ public class ReferenceCompletionTest extends CompletionTestBase {
   }
 
   @Override
-  protected boolean addKeywords() {
-    return false;
-  }
-
-  @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addJdk(TestUtils.getMockJdkHome());
   }

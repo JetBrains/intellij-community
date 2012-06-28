@@ -51,7 +51,7 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
   void testTypeParameter() {doTest()}
 
   private void doTest() {
-    myFixture.configureByFile("before${getTestName(true)}.groovy")
+    myFixture.configureByFile("before${getTestName(false)}.groovy")
     def intentions = myFixture.availableIntentions
     for (intention in intentions) {
       if (intention instanceof IntentionActionWrapper) intention = intention.delegate
@@ -61,6 +61,6 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
         break
       }
     }
-    myFixture.checkResultByFile("after${getTestName(true)}.groovy")
+    myFixture.checkResultByFile("after${getTestName(false)}.groovy")
   }
 }

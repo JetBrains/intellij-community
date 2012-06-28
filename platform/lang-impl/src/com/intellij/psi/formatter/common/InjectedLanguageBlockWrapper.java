@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public final class InjectedLanguageBlockWrapper implements Block {
       DependantSpacingImpl hostSpacing = (DependantSpacingImpl)spacing;
       return new DependantSpacingImpl(
         hostSpacing.getMinSpaces(), hostSpacing.getMaxSpaces(), hostSpacing.getDependency().shiftRight(shift),
-        hostSpacing.shouldKeepLineFeeds(), hostSpacing.getKeepBlankLines()
+        hostSpacing.shouldKeepLineFeeds(), hostSpacing.getKeepBlankLines(), DependentSpacingRule.DEFAULT
       );
     } 
     return spacing;

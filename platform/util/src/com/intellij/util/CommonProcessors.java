@@ -59,19 +59,6 @@ public class CommonProcessors {
       return myCollection;
     }
 
-    public static class Sync<T> extends CollectProcessor<T> {
-      public Sync(final Collection<T> collection) {
-        super(collection);
-      }
-
-      public Sync() {
-      }
-
-      @Override
-      public synchronized boolean process(final T t) {
-        return super.process(t);
-      }
-    }
   }
 
   @NotNull

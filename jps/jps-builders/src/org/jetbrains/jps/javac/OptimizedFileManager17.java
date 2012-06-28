@@ -8,7 +8,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -129,11 +129,14 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       if (sortFiles != null) {
         Arrays.sort(files, sortFiles);
       }
-  
+      final boolean acceptUnknownFiles = fileKinds.contains(JavaFileObject.Kind.OTHER);
       for (File f: files) {
-        String fileName = f.getName();
-        if (isValidFile(fileName, fileKinds) && isFile(f)) {
-          JavaFileObject fe = new InputFileObject(this, f);
+        final String fileName = f.getName();
+        if (isValidFile(fileName, fileKinds)) {
+          if (acceptUnknownFiles && !isFile(f)) {
+            continue;
+          }
+          final JavaFileObject fe = new InputFileObject(this, f);
           resultList.append(fe);
         }
       }

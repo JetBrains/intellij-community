@@ -104,7 +104,9 @@ public class ProjectPaths {
 
   private static void addFiles(Set<File> files, final Collection<String> paths) {
     for (String root : paths) {
-      files.add(new File(root));
+      if (root != null) {
+        files.add(new File(root));
+      }
     }
   }
 

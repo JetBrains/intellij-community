@@ -85,7 +85,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       final Value value = valueIterator.next();
       if (isAssociated(value, inputId)) {
         if (toRemove == null) toRemove = new SmartList<Value>();
-        else LOG.error("Expected only one value per-inputId");
+        else LOG.error("Expected only one value per-inputId", String.valueOf(toRemove.get(0)), String.valueOf(value));
         toRemove.add(value);
       }
     }

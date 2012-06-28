@@ -17,7 +17,7 @@ package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.spellchecker.inspections.Splitter;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ public class TokenizerBase<T extends PsiElement> extends Tokenizer<T> {
 
   @Override
   public void tokenize(@NotNull T element, TokenConsumer consumer) {
-    if (element instanceof PsiLanguageInjectionHost && InjectedLanguageFacadeImpl.hasInjections((PsiLanguageInjectionHost)element)) {
+    if (element instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)element)) {
       return;
     }
     consumer.consumeToken(element, mySplitter);

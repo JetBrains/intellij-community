@@ -131,7 +131,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     if (hostPsiFile == null) return;
 
     final CopyOnWriteArrayList<DocumentWindow> injected =
-      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageFacadeImpl.getCachedInjectedDocuments(hostPsiFile);
+      (CopyOnWriteArrayList<DocumentWindow>)InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
     if (injected.isEmpty()) return;
 
     if (myProgress.isCanceled()) {
@@ -157,7 +157,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         }
         final DocumentWindow[] stillInjectedDocument = {null};
         // it is here where the reparse happens and old file contents replaced
-        InjectedLanguageFacadeImpl.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+        InjectedLanguageUtil.enumerate(element, hostPsiFile, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
           @Override
           public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
             stillInjectedDocument[0] = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
@@ -333,7 +333,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @SuppressWarnings({"ConstantConditions", "unchecked"})
   @NotNull
   public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
-    Place shreds = InjectedLanguageFacadeImpl.getShreds(injectedPsi);
+    Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);
     if (shreds == null) return Collections.emptyList();
     Object result = null; // optimization: TextRange or ArrayList
     int count = 0;
@@ -381,12 +381,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   @Override
   public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
-    return InjectedLanguageFacadeImpl.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
+    return InjectedLanguageUtil.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
   }
 
   @Override
   public void dropFileCaches(@NotNull PsiFile file) {
-    InjectedLanguageFacadeImpl.clearCachedInjectedFragmentsForFile(file);
+    InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
   }
 
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();

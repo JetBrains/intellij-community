@@ -126,7 +126,7 @@ public class AbstractPopup implements JBPopup {
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
 
-    protected void update() {
+    public void update() {
       mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());

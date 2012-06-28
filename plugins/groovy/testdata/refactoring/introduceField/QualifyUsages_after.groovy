@@ -1,5 +1,5 @@
 class Bar {
-    final def f = "bar"
+    final f = "bar"
 
     def foo() {
         def f = 5

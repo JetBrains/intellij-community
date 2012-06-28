@@ -1,5 +1,5 @@
 class X {
-    final def f
+    final f
 
     def foo() {
         if (true) {

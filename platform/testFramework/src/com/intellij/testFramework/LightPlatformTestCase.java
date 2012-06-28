@@ -68,7 +68,10 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
@@ -209,7 +212,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
-        ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK +buffer.toString());
+        ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer.toString());
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
           registerShutdownHook();
@@ -233,7 +236,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         FileBasedIndex.getInstance().registerIndexableSet(new IndexableFileSet() {
           @Override
           public boolean isInSet(@NotNull final VirtualFile file) {
-            return ourSourceRoot != null && file.getFileSystem() == ourSourceRoot.getFileSystem() && ourProject.isOpen();
+            return ourSourceRoot != null &&
+                   file.getFileSystem() == ourSourceRoot.getFileSystem() &&
+                   ourProject != null &&
+                   ourProject.isOpen();
           }
 
           @Override
@@ -313,7 +319,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     super.setUp();
     initApplication();
     ourApplication.setDataProvider(this);
-    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(), myAvailableInspectionTools);
+    doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(),
+            myAvailableInspectionTools);
     ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(getProject())).pushInjectors();
 
     storeSettings();
@@ -326,7 +333,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doSetup(final LightProjectDescriptor descriptor,
-                             final LocalInspectionTool[] localInspectionTools, final Map<String, InspectionTool> availableInspectionTools) throws Exception {
+                             final LocalInspectionTool[] localInspectionTools, final Map<String, InspectionTool> availableInspectionTools)
+    throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overriden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 
@@ -348,7 +356,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       @Override
       @NotNull
       public InspectionProfileEntry[] getInspectionTools(PsiElement element) {
-        if (availableInspectionTools != null){
+        if (availableInspectionTools != null) {
           final Collection<InspectionTool> tools = availableInspectionTools.values();
           return tools.toArray(new InspectionTool[tools.size()]);
         }
@@ -405,7 +413,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     catch (Exception e) {
 
     }
-    assertTrue("open: "+getProject().isOpen()+"; disposed:"+getProject().isDisposed()+"; startup passed:"+ passed+"; all open projects: "+
+    assertTrue("open: " +
+               getProject().isOpen() +
+               "; disposed:" +
+               getProject().isDisposed() +
+               "; startup passed:" +
+               passed +
+               "; all open projects: " +
                Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
@@ -443,8 +457,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static void enableInspectionTool(final Map<String, InspectionTool> availableLocalTools, InspectionTool wrapper) {
     final String shortName = wrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key == null){
-      HighlightDisplayKey.register(shortName, wrapper.getDisplayName(), wrapper instanceof LocalInspectionToolWrapper ? ((LocalInspectionToolWrapper)wrapper).getTool().getID() : wrapper.getShortName());
+    if (key == null) {
+      HighlightDisplayKey.register(shortName, wrapper.getDisplayName(), wrapper instanceof LocalInspectionToolWrapper
+                                                                        ? ((LocalInspectionToolWrapper)wrapper).getTool().getID()
+                                                                        : wrapper.getShortName());
     }
     availableLocalTools.put(shortName, wrapper);
   }
@@ -528,7 +544,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       public void run() {
         ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests();
         ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
-        
+
         UIUtil.dispatchAllInvocationEvents();
       }
     });
@@ -546,7 +562,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       checkEditorsReleased();
     }
     if (isLight(project)) {
-      ((ProjectImpl)project).setTemporarilyDisposed(true); // mark temporarily as disposed so that rogue component trying to access it will fail
+      ((ProjectImpl)project)
+        .setTemporarilyDisposed(true); // mark temporarily as disposed so that rogue component trying to access it will fail
       documentManager.clearUncommitedDocuments();
     }
   }
@@ -631,11 +648,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     }
     finally {
       //try{
-        tearDown();
+      tearDown();
       //}
       //catch(Throwable th){
       //  noinspection CallToPrintStackTrace
-        //th.printStackTrace();
+      //th.printStackTrace();
       //}
     }
   }
@@ -665,15 +682,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
    * @param text     - file text.
    * @return dummy psi file.
    * @throws com.intellij.util.IncorrectOperationException
+   *
    */
   protected static PsiFile createFile(@NonNls String fileName, @NonNls String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
+    return PsiFileFactory.getInstance(getProject())
+      .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), true, false);
   }
 
   protected static PsiFile createLightFile(@NonNls String fileName, String text) throws IncorrectOperationException {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), false, false);
+    return PsiFileFactory.getInstance(getProject())
+      .createFileFromText(fileName, fileType, text, LocalTimeCounter.currentTime(), false, false);
   }
 
   /**
@@ -795,6 +815,5 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       final String[] newUrls = newSdk.getRootProvider().getUrls(OrderRootType.CLASSES);
       return CollectionFactory.hashSet(myUrls).equals(CollectionFactory.hashSet(newUrls));
     }
-
   }
 }

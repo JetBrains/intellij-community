@@ -248,7 +248,7 @@ public class GrStringUtil {
     return b.toString();
   }
 
-  private static void escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean forInjection, StringBuilder b) {
+  public static void escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean forInjection, StringBuilder b) {
     escapeStringCharacters(s.length(), s, isSingleLine ? "$\"" : "$", isSingleLine, true, b);
     if (!forInjection) {
       unescapeCharacters(b, isSingleLine ? "'" : "'\"", true);
@@ -827,5 +827,29 @@ public class GrStringUtil {
     if (type == GroovyElementTypes.REGEX) return lastType == mREGEX_END || lastType == mDOLLAR_SLASH_REGEX_END;
 
     return false;
+  }
+
+  public static void getOperandText(@NotNull GrLiteral operand, @NotNull StringBuilder builder) {
+    if (operand instanceof GrRegex) {
+      StringBuilder b = new StringBuilder();
+      parseRegexCharacters(removeQuotes(operand.getText()), b, null, operand.getText().startsWith("/"));
+      escapeSymbolsForGString(b, false, false);
+    }
+    else if (operand instanceof GrString) {
+      builder.append(removeQuotes(operand.getText()));
+    }
+    else {
+      Object value = operand.getValue();
+      if (value == null) {
+        value = removeQuotes(operand.getText());
+      }
+
+      String text = value.toString();
+      StringBuilder buffer = new StringBuilder(text.length());
+      boolean containsLineFeeds = text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0;
+      escapeStringCharacters(text.length(), text, "$", false, true, buffer);
+      unescapeCharacters(buffer, containsLineFeeds?"'\"":"'", containsLineFeeds);
+      builder.append(buffer);
+    }
   }
 }

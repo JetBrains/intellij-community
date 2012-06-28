@@ -56,3 +56,12 @@ class D {
       myL = l;
     }
 }
+
+class E {
+  final @NotNull C c;
+
+  E(C c) {
+    this.c = c;
+  }
+
+}

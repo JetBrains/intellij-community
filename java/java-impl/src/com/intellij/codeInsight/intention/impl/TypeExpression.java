@@ -28,10 +28,9 @@ import com.intellij.psi.*;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 public class TypeExpression extends Expression {
-  private final Set<SmartTypePointer> myItems;
+  private final LinkedHashSet<SmartTypePointer> myItems;
 
   public TypeExpression(final Project project, PsiType[] types) {
     final SmartTypePointerManager manager = SmartTypePointerManager.getInstance(project);

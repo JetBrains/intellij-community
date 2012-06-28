@@ -294,7 +294,7 @@ public class BuildManager implements ApplicationComponent{
         if (!config.useOutOfProcessBuild() || !config.MAKE_PROJECT_ON_SAVE) {
           continue;
         }
-        if (!config.ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION) {
+        if (!config.allowAutoMakeWhileRunningApplication()) {
           final RunContentManager contentManager = ExecutionManager.getInstance(project).getContentManager();
           boolean hasRunningProcesses = false;
           for (RunContentDescriptor descriptor : contentManager.getAllDescriptors()) {
@@ -746,7 +746,7 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter(Integer.toString(port));
     cmdLine.addParameter(sessionId.toString());
 
-    final File workDirectory = new File(mySystemDirectory, SYSTEM_ROOT);
+    final File workDirectory = getBuildSystemDirectory();
     workDirectory.mkdirs();
     ensureLogConfigExists(workDirectory);
 
@@ -755,6 +755,10 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.setWorkDirectory(workDirectory);
 
     return cmdLine.createProcess();
+  }
+
+  public File getBuildSystemDirectory() {
+    return new File(mySystemDirectory, SYSTEM_ROOT);
   }
 
   private static int getMinorVersion(String vs) {

@@ -52,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -111,11 +110,13 @@ public class GroovyCompletionData {
       if (isAfterForParameter(position)) {
         addKeywords(result, true, "in");
       }
-      else if (isInfixOperatorPosition(position)) {
+      if (isInfixOperatorPosition(position)) {
         addKeywords(result, true, "in", PsiKeyword.INSTANCEOF);
-      } else if (suggestThrows(position)) {
+      }
+      if (afterAbstractMethod(position)) {
         result.addElement(keyword(PsiKeyword.THROWS, TailType.INSERT_SPACE));
-      } else if (suggestPrimitiveTypes(position)) {
+      }
+      if (suggestPrimitiveTypes(position)) {
         boolean inCast = psiElement()
           .afterLeaf(psiElement().withText("(").withParent(psiElement(GrParenthesizedExpression.class, GrTypeCastExpression.class)))
           .accepts(position);
@@ -262,7 +263,8 @@ public class GroovyCompletionData {
 
   public static void addGroovyDocKeywords(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
-    if (PlatformPatterns.psiElement(GroovyDocTokenTypes.mGDOC_TAG_NAME).andNot(PlatformPatterns.psiElement().afterLeaf(".")).accepts(position)) {
+    if (PlatformPatterns.psiElement(GroovyDocTokenTypes.mGDOC_TAG_NAME).andNot(PlatformPatterns.psiElement().afterLeaf(".")).accepts(
+      position)) {
       String[] tags = position.getParent() instanceof GrDocInlinedTag ? INLINED_DOC_TAGS : DOC_TAGS;
       for (String docTag : tags) {
         result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailType.INSERT_SPACE));
@@ -320,7 +322,9 @@ public class GroovyCompletionData {
   }
 
   public static boolean suggestClassInterfaceEnum(PsiElement context) {
-    if (suggestThrows(context) || addExtendsImplements(context).length > 0) {
+    PsiElement nextNonSpace = PsiUtil.getNextNonSpace(context);
+    if (nextNonSpace instanceof PsiErrorElement) nextNonSpace = PsiUtil.getNextNonSpace(nextNonSpace);
+    if (afterAbstractMethod(context) && nextNonSpace != null && nextNonSpace.getText().startsWith("{") || addExtendsImplements(context).length > 0) {
       return false;
     }
 
@@ -485,7 +489,7 @@ public class GroovyCompletionData {
     return false;
   }
 
-  private static boolean suggestThrows(PsiElement context) {
+  private static boolean afterAbstractMethod(PsiElement context) {
     PsiElement candidate = null;
     if (GroovyCompletionUtil.isInTypeDefinitionBody(context)) {
       PsiElement run = context;
@@ -493,7 +497,8 @@ public class GroovyCompletionData {
         run = run.getParent();
         assert run != null;
       }
-      candidate = PsiTreeUtil.getPrevSiblingOfType(run, GrMember.class);
+      candidate = PsiUtil.skipWhitespaces(run.getPrevSibling(), false);
+      if (candidate instanceof PsiErrorElement) candidate = candidate.getPrevSibling();
     }
     else if (context.getParent() instanceof PsiErrorElement) {
      candidate = context.getParent().getPrevSibling();
@@ -503,6 +508,9 @@ public class GroovyCompletionData {
   }
 
   private static boolean suggestPrimitiveTypes(PsiElement context) {
+    if (isInfixOperatorPosition(context)) return false;
+    if (isAfterForParameter(context)) return false;
+
     final PsiElement parent = context.getParent();
     if (parent == null) return false;
 

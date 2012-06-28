@@ -1110,7 +1110,7 @@ public class ListUtils {
       public static void bar() {}
     }
     """)
-    doTest()
+    doTest('\n')
   }
 
   public void testSuggestMembersOfStaticallyImportedClassesUnqualifiedOnly() throws Exception {
@@ -1338,7 +1338,7 @@ public class ListUtils {
 
   public void testListArrayListCast() { doTest('\n') }
   public void testInterfaceImplementationNoCast() { doTest() }
-  public void testStaticallyImportedMethodsBeforeExpression() { doTest() }
+  public void testStaticallyImportedMethodsBeforeExpression() { doTest('\n') }
   public void testInnerChainedReturnType() { doTest() }
   public void testOverwriteGenericsAfterNew() { doTest('\n') }
 

@@ -43,7 +43,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +113,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
       if (!editorWindow.isValid()) {
         editorWindow.dispose();
 
-        InjectedLanguageFacadeImpl.clearCaches(editorWindow.myInjectedFile, editorWindow.getDocument());
+        InjectedLanguageUtil.clearCaches(editorWindow.myInjectedFile, editorWindow.getDocument());
         iterator.remove();
       }
     }

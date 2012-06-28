@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -165,8 +166,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         annotation.setTextAttributes(DefaultHighlighter.METHOD_DECLARATION);
       }
     }
-    else if (parent instanceof PsiField) {
-      final boolean isStatic = ((PsiField)parent).hasModifierProperty(PsiModifier.STATIC);
+    else if (parent instanceof PsiField || parent instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)parent)) {
+      final boolean isStatic = ((PsiVariable)parent).hasModifierProperty(PsiModifier.STATIC);
       final Annotation annotation = holder.createInfoAnnotation(element, null);
       annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
     }
@@ -185,8 +186,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static void highlightResolved(AnnotationHolder holder, GrReferenceElement refElement, PsiElement resolved) {
     final PsiElement refNameElement = getElementToHighlight(refElement);
 
-    if (resolved instanceof PsiField) {
-      boolean isStatic = ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC);
+    if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {
+      boolean isStatic = ((PsiVariable)resolved).hasModifierProperty(PsiModifier.STATIC);
       Annotation annotation = holder.createInfoAnnotation(refNameElement, null);
       annotation.setTextAttributes(isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD);
     }
@@ -1981,19 +1982,27 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       else {
         if (shouldBeInterface(refElement)) {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.INTERFACE));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE));
         }
         else if (shouldBeClass(refElement)) {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.CLASS));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.ENUM));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM));
+        }
+        else if (shouldBeAnnotation(refElement)) {
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION));
         }
         else {
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.CLASS));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.INTERFACE));
-          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassActionBase.Type.ENUM));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.CLASS));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.INTERFACE));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ENUM));
+          annotation.registerFix(CreateClassFix.createClassFixAction(refElement, CreateClassKind.ANNOTATION));
         }
       }
     }
+  }
+
+  private static boolean shouldBeAnnotation(GrReferenceElement element) {
+    return element.getParent() instanceof GrAnnotation;
   }
 
   private static boolean shouldBeInterface(GrReferenceElement myRefElement) {

@@ -37,6 +37,7 @@ picocontainer.jar
 resolver.jar
 sanselan-0.98-snapshot.jar
 serviceMessages.jar
+snappy-java-1.0.4.1.jar
 trove4j.jar
 velocity.jar
 winp-1.16-patched.jar

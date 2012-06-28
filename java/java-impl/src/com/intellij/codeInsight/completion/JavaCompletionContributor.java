@@ -257,7 +257,10 @@ public class JavaCompletionContributor extends CompletionContributor {
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
-    if (!isClassNamePossible(parameters.getPosition()) || !mayStartClassName(result)) return;
+    if (!isClassNamePossible(parameters.getPosition()) && parameters.getInvocationCount() <= 1 ||
+        !mayStartClassName(result)) {
+      return;
+    }
 
     if (mayShowAllClasses(parameters)) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), new Consumer<LookupElement>() {
@@ -471,9 +474,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       PsiElement position = parameters.getPosition();
       if (psiElement().withParent(psiReferenceExpression().withFirstChild(psiReferenceExpression().referencing(psiClass()))).accepts(position)) {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
-          final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+          final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
           if (shortcut != null) {
-            return "Pressing " + shortcut + " without a class qualifier would show all accessible static methods";
+            return "Pressing " + shortcut + " twice without a class qualifier would show all accessible static methods";
           }
         }
       }
@@ -484,15 +487,6 @@ public class JavaCompletionContributor extends CompletionContributor {
         final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
         if (shortcut != null) {
           return CompletionBundle.message("completion.smart.hint", shortcut);
-        }
-      }
-    }
-
-    if (parameters.getCompletionType() != CompletionType.CLASS_NAME && shouldSuggestClassNameCompletion(parameters.getPosition())) {
-      if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME)) {
-        final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
-        if (shortcut != null) {
-          return CompletionBundle.message("completion.class.name.hint", shortcut);
         }
       }
     }

@@ -60,7 +60,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageFacadeImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.DefinitionsSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
@@ -154,7 +154,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       Point point = new Point(mouseEvent.getPoint());
       if (PsiDocumentManager.getInstance(myProject).isCommitted(editor.getDocument())) {
         // when document is committed, try to check injected stuff - it's fast
-        editor = InjectedLanguageFacadeImpl
+        editor = InjectedLanguageUtil
           .getEditorForInjectedLanguageNoCommit(editor, psiFile, editor.logicalPositionToOffset(editor.xyToLogicalPosition(point)));
       }
 
