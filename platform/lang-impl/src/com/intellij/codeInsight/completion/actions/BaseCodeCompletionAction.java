@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInsight.completion.actions;
 
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -37,29 +35,19 @@ import java.awt.event.InputEvent;
  * @author peter
  */
 public abstract class BaseCodeCompletionAction extends AnAction implements HintManagerImpl.ActionToIgnore, DumbAware {
-  private CompletionType myCompletionType;
 
-  protected BaseCodeCompletionAction(CompletionType completionType) {
-    myCompletionType = completionType;
+  protected BaseCodeCompletionAction() {
     setEnabledInModalContext(true);
     setInjectedContext(true);
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+  protected static void invokeCompletion(AnActionEvent e, CompletionType type, int time) {
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
     assert project != null;
     assert editor != null;
-
-    switch (myCompletionType) {
-      case BASIC: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC); break;
-      case SMART: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL); break;
-      case CLASS_NAME: FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME); break;
-    }
-
-    final InputEvent inputEvent = e.getInputEvent();
-    new CodeCompletionHandlerBase(myCompletionType).invokeCompletion(project, editor, 1, inputEvent != null && inputEvent.getModifiers() != 0);
+    InputEvent inputEvent = e.getInputEvent();
+    new CodeCompletionHandlerBase(type).invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0);
   }
 
   @Override
