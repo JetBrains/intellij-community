@@ -86,17 +86,6 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
   }
 
-  private void addGroovyObject() throws IOException {
-    myFixture.addClass("package groovy.lang;" +
-                       "public interface GroovyObject  {\n" +
-                       "    java.lang.Object invokeMethod(java.lang.String s, java.lang.Object o);\n" +
-                       "    java.lang.Object getProperty(java.lang.String s);\n" +
-                       "    void setProperty(java.lang.String s, java.lang.Object o);\n" +
-                       "    groovy.lang.MetaClass getMetaClass();\n" +
-                       "    void setMetaClass(groovy.lang.MetaClass metaClass);\n" +
-                       "}");
-  }
-
   public void testDuplicateFields() throws Throwable {
     doTest();
   }
@@ -1088,5 +1077,30 @@ private boolean onWinOrMacOS() {
 <warning descr="Not all execution paths return a value">}</warning>
 
 ''', MissingReturnInspection)
+  }
+
+  void testScriptFieldsAreAllowedOnlyInScriptBody() {
+    addGroovyTransformField()
+    testHighlighting('''\
+import groovy.transform.Field
+
+@Field
+def foo
+
+def foo() {
+  <error descr="Annotation @Field can only be used within a script body">@Field</error>
+  def bar
+}
+
+class X {
+  <error descr="Annotation @Field can only be used within a script">@Field</error>
+  def bar
+
+  def b() {
+    <error descr="Annotation @Field can only be used within a script">@Field</error>
+    def x
+  }
+}
+''')
   }
 }

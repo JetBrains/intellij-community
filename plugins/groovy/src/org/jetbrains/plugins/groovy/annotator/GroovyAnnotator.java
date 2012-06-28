@@ -110,6 +110,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -831,6 +832,19 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
+  private void checkScriptField(GrAnnotation annotation) {
+    final PsiAnnotationOwner owner = annotation.getOwner();
+    final GrMember container = PsiTreeUtil.getParentOfType(((PsiElement)owner), GrMember.class);
+    if (container != null) {
+      if (container.getContainingClass() instanceof GroovyScriptClass) {
+        myHolder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script.body"));
+      }
+      else {
+        myHolder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script"));
+      }
+    }
+  }
+
   @Override
   public void visitVariable(GrVariable variable) {
     checkName(variable);
@@ -1319,6 +1333,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (elementTypeFields != null && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
       String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
       myHolder.createErrorAnnotation(ref, description);
+    }
+
+    if (GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD.equals(((PsiClass)resolved).getQualifiedName())) {
+      checkScriptField(annotation);
     }
   }
 

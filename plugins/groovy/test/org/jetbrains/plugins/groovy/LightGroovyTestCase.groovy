@@ -68,4 +68,16 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
     myFixture.addClass('''package groovy.transform; public @interface Field{}''');
   }
 
+  protected void addGroovyObject() throws IOException {
+    myFixture.addClass('''\
+package groovy.lang;
+public interface GroovyObject {
+    java.lang.Object invokeMethod(java.lang.String s, java.lang.Object o);
+    java.lang.Object getProperty(java.lang.String s);
+    void setProperty(java.lang.String s, java.lang.Object o);
+    groovy.lang.MetaClass getMetaClass();
+    void setMetaClass(groovy.lang.MetaClass metaClass);
+}
+''');
+  }
 }
