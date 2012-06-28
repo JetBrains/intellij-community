@@ -208,6 +208,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   @Override
   public void restartRunProfile(@NotNull final Project project,
                                 @NotNull final Executor executor,
+                                @NotNull final ExecutionTarget target,
                                 @NotNull final RunnerAndConfigurationSettings configuration) {
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     final RunManagerConfig config = runManager.getConfig();
@@ -267,7 +268,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     }
 
     if (pairs.isEmpty()) {
-      ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+      ProgramRunnerUtil.executeConfiguration(project, configuration, executor, target);
       return;
     }
 
@@ -283,7 +284,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
             return;
           }
         }
-        ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+        ProgramRunnerUtil.executeConfiguration(project, configuration, executor, target);
       }
     };
     awaitingTerminationAlarm.addRequest(runnable, 100);

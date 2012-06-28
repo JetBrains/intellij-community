@@ -16,9 +16,7 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -38,6 +36,7 @@ import org.jetbrains.annotations.TestOnly;
 public class ExecutionEnvironment {
   private final Project myProject;
   private final RunContentDescriptor myContentToReuse;
+  @NotNull private ExecutionTarget myTarget;
   private RunProfile myRunProfile;
   private RunnerSettings myRunnerSettings;
   private ConfigurationPerRunnerSettings myConfigurationSettings;
@@ -52,8 +51,20 @@ public class ExecutionEnvironment {
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,
                               @NotNull final RunnerAndConfigurationSettings configuration,
                               Project project) {
-    this(configuration.getConfiguration(), project, configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner),
-         null, configuration);
+    this(runner, DefaultExecutionTarget.INSTANCE, configuration, project);
+  }
+
+  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
+                              @NotNull final ExecutionTarget target,
+                              @NotNull final RunnerAndConfigurationSettings configuration,
+                              Project project) {
+    this(configuration.getConfiguration(),
+         project,
+         target,
+         configuration.getRunnerSettings(runner),
+         configuration.getConfigurationSettings(runner),
+         null,
+         configuration);
   }
 
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
@@ -70,6 +81,17 @@ public class ExecutionEnvironment {
                                 ConfigurationPerRunnerSettings configurationSettings,
                                 @Nullable RunContentDescriptor contentToReuse,
                                 @Nullable RunnerAndConfigurationSettings settings) {
+    this(runProfile, project, DefaultExecutionTarget.INSTANCE, runnerSettings, configurationSettings, contentToReuse, settings);
+  }
+
+  public ExecutionEnvironment(@NotNull RunProfile runProfile,
+                              Project project,
+                              @NotNull ExecutionTarget target,
+                              RunnerSettings runnerSettings,
+                              ConfigurationPerRunnerSettings configurationSettings,
+                              @Nullable RunContentDescriptor contentToReuse,
+                              @Nullable RunnerAndConfigurationSettings settings) {
+    myTarget = target;
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
@@ -106,8 +128,14 @@ public class ExecutionEnvironment {
   }
 
   @Nullable
-  public RunnerAndConfigurationSettings getRunnerAndConfigurationSettings() {
-    return myRunnerAndConfigurationSettings;
+  public Project getProject() {
+    return myProject;
+  }
+
+
+  @NotNull
+  public ExecutionTarget getExecutionTarget() {
+    return myTarget;
   }
 
   @NotNull
@@ -116,8 +144,8 @@ public class ExecutionEnvironment {
   }
 
   @Nullable
-  public Project getProject() {
-    return myProject;
+  public RunnerAndConfigurationSettings getRunnerAndConfigurationSettings() {
+    return myRunnerAndConfigurationSettings;
   }
 
   /**

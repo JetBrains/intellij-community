@@ -60,28 +60,23 @@ public class RunContextAction extends BaseRunConfigurationAction {
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
     presentation.setText(myExecutor.getStartActionText(actionText), true);
 
+    boolean b = isEnabled(context);
+
+    presentation.setEnabled(b);
+    presentation.setVisible(b);
+  }
+
+  private boolean isEnabled(ConfigurationContext context) {
     RunnerAndConfigurationSettings configuration = context.findExisting();
     if (configuration == null) {
       configuration = context.getConfiguration();
     }
 
-    boolean b = true;
-    if (configuration == null) {
-      b = false;
-    }
-    else {
-      final ProgramRunner runner = getRunner(configuration.getConfiguration());
-      if (runner == null) {
-        b = false;
-      }
-      else {
-        if (ExecutorRegistry.getInstance().isStarting(context.getProject(), myExecutor.getId(), runner.getRunnerId())) {
-          b = false;
-        }
-      }
-    }
-    
-    presentation.setEnabled(b);
-    presentation.setVisible(b);
+    if (configuration == null) return false;
+
+    final ProgramRunner runner = getRunner(configuration.getConfiguration());
+    if (runner == null) return false;
+
+    return ExecutorRegistry.getInstance().isStarting(context.getProject(), myExecutor.getId(), runner.getRunnerId());
   }
 }

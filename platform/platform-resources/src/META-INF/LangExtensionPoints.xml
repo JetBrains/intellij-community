@@ -279,6 +279,9 @@
   <extensionPoint name="executor"
                   interface="com.intellij.execution.Executor"/>
 
+  <extensionPoint name="executionTargetProvider"
+                  interface="com.intellij.execution.ExecutionTargetProvider"/>
+
   <extensionPoint name="runConfigurationExtension"
                   interface="com.intellij.execution.RunConfigurationExtension"/>
 

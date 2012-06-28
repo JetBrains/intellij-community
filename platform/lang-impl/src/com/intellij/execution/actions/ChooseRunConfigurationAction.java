@@ -28,6 +28,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -234,7 +236,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor.getActionName(), executor.getIcon())) {
       RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-      ProgramRunnerUtil.executeConfiguration(project, configuration, executor, false);
+      ProgramRunnerUtil.executeConfiguration(project, configuration, executor, ExecutionTargetManager.getActiveTarget(project), false);
     }
   }
 
@@ -253,7 +255,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
   }
 
-  @Nullable
+  @NotNull
   protected Executor getCurrentExecutor() {
     return myCurrentExecutor == null ? getDefaultExecutor() : myCurrentExecutor;
   }
@@ -301,9 +303,15 @@ public class ChooseRunConfigurationAction extends AnAction {
     private final T myValue;
     private boolean myDynamic = false;
     private int myMnemonic = -1;
+    private final boolean myAddSeparatorAbove;
 
     protected ItemWrapper(@Nullable final T value) {
+      this(value, false);
+    }
+
+    protected ItemWrapper(@Nullable final T value, boolean addSeparatorAbove) {
       myValue = value;
+      myAddSeparatorAbove = addSeparatorAbove;
     }
 
     public int getMnemonic() {
@@ -326,6 +334,10 @@ public class ChooseRunConfigurationAction extends AnAction {
       myDynamic = b;
     }
 
+    public boolean addSeparatorAbove() {
+      return myAddSeparatorAbove;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
@@ -343,6 +355,7 @@ public class ChooseRunConfigurationAction extends AnAction {
       return myValue != null ? myValue.hashCode() : 0;
     }
 
+    @Nullable
     public abstract Icon getIcon();
 
     public abstract String getText();
@@ -464,6 +477,36 @@ public class ChooseRunConfigurationAction extends AnAction {
 
       final RunnerAndConfigurationSettings selectedConfiguration = manager.getSelectedConfiguration();
 
+      if (selectedConfiguration != null) {
+        boolean isFirst = true;
+        for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsFor(project, selectedConfiguration)) {
+          result.add(new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
+            @Override
+            public Icon getIcon() {
+              return eachTarget.getIcon();
+            }
+
+            @Override
+            public String getText() {
+              return eachTarget.getDisplayName();
+            }
+
+            @Override
+            public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
+              ExecutionTargetManager.setActiveTarget(project, eachTarget);
+              ProgramRunnerUtil.executeConfiguration(project, selectedConfiguration, executor);
+            }
+
+            @Override
+            public boolean available(Executor executor) {
+              return true;
+            }
+          });
+          isFirst = false;
+        }
+      }
+
+
       final Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<RunnerAndConfigurationSettings, ItemWrapper>();
       final ConfigurationType[] types = manager.getConfigurationFactories();
       for (final ConfigurationType type : types) {
@@ -492,7 +535,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
         @Override
         public String getText() {
-          return "Edit configurations...";
+          return UIUtil.removeMnemonic(ActionsBundle.message("action.editRunConfigurations.text"));
         }
 
         @Override
@@ -622,6 +665,8 @@ public class ChooseRunConfigurationAction extends AnAction {
 
     @Override
     public ListSeparator getSeparatorAbove(ItemWrapper value) {
+      if (value.addSeparatorAbove()) return new ListSeparator();
+
       final List<ItemWrapper> configurations = getValues();
       final int index = configurations.indexOf(value);
       if (index > 0 && index <= configurations.size() - 1) {
@@ -713,16 +758,35 @@ public class ChooseRunConfigurationAction extends AnAction {
       super("Actions", buildActions(project, action, settings, dynamic));
     }
 
+    @Override
+    public ListSeparator getSeparatorAbove(ActionWrapper value) {
+      return value.isAddSeparatorAbove() ? new ListSeparator() : null;
+    }
+
     private static ActionWrapper[] buildActions(@NotNull final Project project,
                                                 final ChooseRunConfigurationAction action,
                                                 @NotNull final RunnerAndConfigurationSettings settings,
                                                 final boolean dynamic) {
       final List<ActionWrapper> result = new ArrayList<ActionWrapper>();
-      final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
-      for (final Executor executor : executors) {
+
+      for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsFor(project, settings)) {
+        result.add(new ActionWrapper(eachTarget.getDisplayName(), eachTarget.getIcon()) {
+          @Override
+          public void perform() {
+            final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+            if (dynamic) manager.setTemporaryConfiguration(settings);
+            manager.setSelectedConfiguration(settings);
+
+            ExecutionTargetManager.setActiveTarget(project, eachTarget);
+            ProgramRunnerUtil.executeConfiguration(project, settings, action.getCurrentExecutor(), eachTarget);
+          }
+        });
+      }
+      boolean isFirst = true;
+      for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), settings.getConfiguration());
         if (runner != null) {
-          result.add(new ActionWrapper(executor.getActionName(), executor.getIcon()) {
+          result.add(new ActionWrapper(executor.getActionName(), executor.getIcon(), isFirst) {
             @Override
             public void perform() {
               final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
@@ -731,6 +795,7 @@ public class ChooseRunConfigurationAction extends AnAction {
               ProgramRunnerUtil.executeConfiguration(project, settings, executor);
             }
           });
+          isFirst = false;
         }
       }
 
@@ -744,7 +809,7 @@ public class ChooseRunConfigurationAction extends AnAction {
       });
 
       if (RunManager.getInstance(project).isTemporary(settings.getConfiguration()) || dynamic) {
-        result.add(new ActionWrapper("Save temp configuration", SAVE_ICON) {
+        result.add(new ActionWrapper("Save configuration", SAVE_ICON) {
           @Override
           public void perform() {
             final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
@@ -781,13 +846,23 @@ public class ChooseRunConfigurationAction extends AnAction {
   private abstract static class ActionWrapper {
     private final String myName;
     private final Icon myIcon;
+    private final boolean myAddSeparatorAbove;
 
     private ActionWrapper(String name, Icon icon) {
+      this(name, icon, false);
+    }
+
+    private ActionWrapper(String name, Icon icon, boolean addSeparatorAbove) {
       myName = name;
       myIcon = icon;
+      myAddSeparatorAbove = addSeparatorAbove;
     }
 
     public abstract void perform();
+
+    public boolean isAddSeparatorAbove() {
+      return myAddSeparatorAbove;
+    }
 
     public String getName() {
       return myName;
