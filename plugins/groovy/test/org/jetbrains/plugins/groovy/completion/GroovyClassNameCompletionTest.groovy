@@ -17,18 +17,15 @@ package org.jetbrains.plugins.groovy.completion;
 
 
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
-import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupElement
 
 /**
  * @author Maxim.Medvedev
@@ -54,47 +51,47 @@ public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCa
     super.tearDown();
   }
 
-  public void doTest(boolean force) throws Exception {
+  private void doTest() throws Exception {
     addClassToProject("a", "FooBar");
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    CommandProcessor.getInstance().executeCommand(new Runnable(){
-                                                  @Override
-                                                  void run() {
-                                                    myFixture.complete(CompletionType.CLASS_NAME);
-                                                    if (force) forceCompletion();
-                                                  }
-                                                  },"xxx", this);
+    myFixture.complete(CompletionType.CLASS_NAME)
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
-  }
-
-  private void forceCompletion() {
-    CodeCompletionHandlerBase handler = new CodeCompletionHandlerBase(CompletionType.CLASS_NAME);
-    handler.invokeCompletion(myFixture.getProject(), myFixture.getEditor());
-    final LookupManager instance = LookupManager.getInstance(myFixture.getProject());
-    if(instance.getActiveLookup() != null)
-      instance.forceSelection(Lookup.NORMAL_SELECT_CHAR, 1);
   }
 
   private void addClassToProject(@Nullable String packageName, @NotNull String name) throws IOException {
     myFixture.addClass("package $packageName; public class $name {}");
   }
 
-  public void testInFieldDeclaration() throws Exception {doTest(false);}
-  public void testInParameter() throws Exception {doTest(false);}
-  public void testInImport() throws Exception {doTest(false);}
-  public void testWhenClassExistsInSamePackage() throws Exception {doTest(true);}
-  public void testInComment() throws Exception {doTest(false);}
-  public void testInTypeElementPlace() throws Exception {doTest(false);}
-  public void testWhenImportExists() throws Exception{doTest(false);}
+  public void testInFieldDeclaration() throws Exception {doTest();}
+  public void testInParameter() throws Exception {doTest();}
+  public void testInImport() throws Exception {doTest();}
+
+  public void testWhenClassExistsInSamePackage() throws Exception {
+    addClassToProject("a", "FooBar")
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    myFixture.complete(CompletionType.CLASS_NAME)
+    def lookup = LookupManager.getActiveLookup(myFixture.editor)
+    lookup.currentItem = lookup.items[1]
+    myFixture.type('\n')
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
+
+  public void testInComment() throws Exception {doTest();}
+  public void testInTypeElementPlace() throws Exception {doTest();}
+  public void testWhenImportExists() throws Exception{doTest();}
 
   public void testFinishByDot() throws Exception{
     addClassToProject("a", "FooBar");
     myFixture.configureByText("a.groovy", "FB<caret>a")
-    myFixture.complete(CompletionType.CLASS_NAME)
+    complete()
     myFixture.type '.'.charAt(0)
     myFixture.checkResult "a.FooBar.<caret>a"
   }
-  
+
+  private LookupElement[] complete() {
+    myFixture.complete(CompletionType.BASIC, 2)
+  }
+
   public void testDelegateBasicToClassName() throws Exception{
     addClassToProject("a", "FooBarGooDoo");
     myFixture.configureByText("a.groovy", "FBGD<caret>a")
@@ -119,7 +116,7 @@ class Foo {
     myFixture.configureByText("a.groovy", """def foo() {
   abcme<caret>
 }""")
-    def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    def item = complete()[0]
 
     LookupElementPresentation presentation = renderElement(item)
     assert "Foo.abcmethod1" == presentation.itemText
@@ -144,7 +141,7 @@ class Foo {
     myFixture.configureByText("a.groovy", """def foo() {
   abcfi<caret>
 }""")
-    def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    def item = complete()[0]
     ((StaticallyImportable) item).shouldBeImported = true
     myFixture.type('\n')
     myFixture.checkResult """import static Foo.abcfield1
@@ -164,7 +161,7 @@ interface Foo {
     myFixture.configureByText("a.groovy", """def foo() {
   abcfi<caret>
 }""")
-    def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    def item = complete()[0]
     ((StaticallyImportable) item).shouldBeImported = true
     myFixture.type('\n')
     myFixture.checkResult """import static Foo.abcfield1
@@ -183,7 +180,7 @@ class Foo {
     myFixture.configureByText("a.groovy", """def foo() {
   abcme<caret>
 }""")
-    myFixture.complete(CompletionType.CLASS_NAME)
+    complete()
     myFixture.checkResult """import foo.Foo
 
 def foo() {
@@ -203,7 +200,7 @@ import static foo.Foo.anotherMethod
 
 anotherMethod()
 abcme<caret>x""")
-    def element = assertOneElement(myFixture.complete(CompletionType.CLASS_NAME)[0])
+    def element = assertOneElement(complete()[0])
 
     LookupElementPresentation presentation = renderElement(element)
     assert "abcMethod" == presentation.itemText
@@ -220,9 +217,7 @@ abcMethod()<caret>"""
   }
 
   private LookupElementPresentation renderElement(LookupElement element) {
-    def presentation = new LookupElementPresentation()
-    element.renderElement(presentation)
-    return presentation
+    return LookupElementPresentation.renderElement(element)
   }
 
   public void testNewClassName() {
@@ -244,20 +239,20 @@ new Fxoo()<caret>\n"""
   public void testOnlyAnnotationsAfterAt() {
     myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
     myFixture.configureByText "a.groovy", "@Abcd<caret>"
-    myFixture.complete(CompletionType.CLASS_NAME)
+    complete()
     myFixture.checkResult "@AbcdAnno<caret>"
   }
 
   public void testOnlyExceptionsInCatch() {
     myFixture.addClass "class AbcdClass {}; class AbcdException extends Throwable {}"
     myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret>"
-    myFixture.complete(CompletionType.CLASS_NAME)
+    complete()
     myFixture.checkResult "try {} catch (AbcdException<caret>"
   }
 
   public void testClassNameInMultilineString() {
     myFixture.configureByText "a.groovy", 'def s = """a\nAIOOBE<caret>\na"""'
-    myFixture.complete(CompletionType.CLASS_NAME)
+    complete()
     myFixture.checkResult 'def s = """a\njava.lang.ArrayIndexOutOfBoundsException<caret>\na"""'
   }
 
@@ -266,6 +261,13 @@ new Fxoo()<caret>\n"""
     myFixture.configureByText("a.groovy", """import foo.Zooooooo
 Zoooo<caret>x""")
     assertOneElement(myFixture.completeBasic())
+  }
+
+  public void testClassOnlyOnce() {
+    myFixture.addClass('class FooBarGoo {}')
+    myFixture.configureByText('a.groovy', 'FoBaGo<caret>')
+    assert !complete()
+    myFixture.checkResult('''FooBarGoo<caret>''')
   }
 
   public void testMethodFromTheSameClass() {
@@ -278,7 +280,9 @@ class A {
   }
 }
 """)
-    assert 'foo' == renderElement(myFixture.complete(CompletionType.CLASS_NAME)[0]).itemText
+    def items = complete()
+    def fooItem = items.find { renderElement(it).itemText == 'foo' }
+    LookupManager.getActiveLookup(myFixture.editor).currentItem = fooItem
     myFixture.type '\n'
     myFixture.checkResult '''
 class A {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,7 +35,12 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
       return;
     }
 
-    completeStaticMembers(parameters).processStaticMethodsGlobally(result);
+    completeStaticMembers(parameters).processStaticMethodsGlobally(result.getPrefixMatcher(), new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        result.addElement(element);
+      }
+    });
   }
 
   public static StaticMemberProcessor completeStaticMembers(CompletionParameters parameters) {
