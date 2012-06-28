@@ -335,7 +335,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
           if (isClassNamePossible(position) && JavaCompletionContributor.mayStartClassName(result)) {
             result.stopHere();
-            if (JavaCompletionContributor.mayShowAllClasses(parameters)) {
+            if (parameters.getInvocationCount() >= 2) {
               addAllClasses(parameters, result, inheritors);
             } else {
               JavaCompletionContributor.advertiseSecondCompletion(position.getProject());

@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -262,7 +261,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    if (mayShowAllClasses(parameters)) {
+    if (parameters.getInvocationCount() >= 2) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
@@ -406,10 +405,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
     
     return true;
-  }
-
-  public static boolean mayShowAllClasses(CompletionParameters parameters) {
-    return Registry.is("show.all.classes.on.first.completion") || parameters.getInvocationCount() >= 2;
   }
 
   public static boolean mayStartClassName(CompletionResultSet result) {
