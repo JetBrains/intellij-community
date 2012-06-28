@@ -81,7 +81,7 @@ public class KeywordHighlighter extends TextEditorHighlightingPass {
       return; //don't highlight foo.def
     }
 
-    result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, element, null, DefaultHighlighter.KEYWORD_ATTRIBUTES));
+    result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, element, null, DefaultHighlighter.KEYWORD));
   }
 
 
