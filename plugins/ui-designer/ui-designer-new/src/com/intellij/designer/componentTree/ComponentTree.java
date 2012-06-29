@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -58,10 +57,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     new HashMap<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>>();
   private final StartInplaceEditing myInplaceEditingAction;
   private QuickFixManager myQuickFixManager;
-  private TreeComponentDecorator myDecorator;
-  private DesignerActionPanel myActionPanel;
-  private Project myProject;
-  private FileEditor myFileEditor;
+  private DesignerEditorPanel myDesigner;
   private EditableArea myArea;
   private RadComponent myMarkComponent;
   private int myMarkFeedback;
@@ -97,18 +93,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   public void setDesignerPanel(@Nullable DesignerEditorPanel designer) {
-    if (designer == null) {
-      myDecorator = null;
-      myActionPanel = null;
-      myProject = null;
-      myFileEditor = null;
-    }
-    else {
-      myDecorator = designer.getTreeDecorator();
-      myActionPanel = designer.getActionPanel();
-      myProject = designer.getProject();
-      myFileEditor = designer.getEditor();
-    }
+    myDesigner = designer;
     myMarkComponent = null;
     myArea = null;
     myInplaceEditingAction.setDesignerPanel(designer);
@@ -131,11 +116,11 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (EditableArea.DATA_KEY.is(dataId)) {
       return myArea;
     }
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
-      return myFileEditor;
-    }
-    if (myActionPanel != null) {
-      return myActionPanel.getData(dataId);
+    if (myDesigner != null) {
+      if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+        return myDesigner.getEditor();
+      }
+      return myDesigner.getActionPanel().getData(dataId);
     }
     return null;
   }
@@ -145,7 +130,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
     Object userObject = node.getUserObject();
 
-    if (myDecorator != null && userObject instanceof TreeNodeDescriptor) {
+    if (myDesigner != null && userObject instanceof TreeNodeDescriptor) {
       TreeNodeDescriptor descriptor = (TreeNodeDescriptor)userObject;
       Object element = descriptor.getElement();
 
@@ -189,11 +174,11 @@ public final class ComponentTree extends Tree implements DataProvider {
 
   private AttributeWrapper getAttributeWrapper(RadComponent component) {
     AttributeWrapper wrapper = AttributeWrapper.DEFAULT;
-    final HighlightDisplayLevel level = getHighlightDisplayLevel(myProject, component);
+    final HighlightDisplayLevel level = getHighlightDisplayLevel(myDesigner.getProject(), component);
 
     if (level != null) {
       TextAttributesKey attributesKey =
-        SeverityRegistrar.getInstance(myProject).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
+        SeverityRegistrar.getInstance(myDesigner.getProject()).getHighlightInfoTypeBySeverity(level.getSeverity()).getAttributesKey();
       final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
 
       wrapper = new AttributeWrapper() {
@@ -229,22 +214,30 @@ public final class ComponentTree extends Tree implements DataProvider {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        RadComponent component = extractComponent(value);
+        try {
+          RadComponent component = extractComponent(value);
 
-        if (component != null) {
-          myDecorator.decorate(component, this, getAttributeWrapper(component), true);
+          if (component != null) {
+            myDesigner.getTreeDecorator().decorate(component, this, getAttributeWrapper(component), true);
 
-          if (myMarkComponent == component) {
-            if (myMarkFeedback == FeedbackTreeLayer.INSERT_SELECTION) {
-              setBorder(BorderFactory.createLineBorder(Color.RED, 1));
+            if (myMarkComponent == component) {
+              if (myMarkFeedback == FeedbackTreeLayer.INSERT_SELECTION) {
+                setBorder(BorderFactory.createLineBorder(Color.RED, 1));
+              }
+              else {
+                setBorder(new InsertBorder(myMarkFeedback));
+              }
             }
             else {
-              setBorder(new InsertBorder(myMarkFeedback));
+              setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
             }
           }
-          else {
-            setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        }
+        catch (RuntimeException e) {
+          if (myDesigner == null) {
+            throw e;
           }
+          myDesigner.showError("Tree paint operation", e);
         }
       }
     });

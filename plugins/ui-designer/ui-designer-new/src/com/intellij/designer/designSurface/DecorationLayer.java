@@ -29,10 +29,12 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class DecorationLayer extends JComponent {
+  private final DesignerEditorPanel myDesigner;
   private final EditableArea myArea;
   private boolean myShowSelection = true;
 
-  public DecorationLayer(EditableArea area) {
+  public DecorationLayer(DesignerEditorPanel designer, EditableArea area) {
+    myDesigner = designer;
     myArea = area;
   }
 
@@ -66,12 +68,17 @@ public class DecorationLayer extends JComponent {
 
   @Override
   public void paint(Graphics g) {
-    if (myArea.getRootComponent() != null) {
-      Graphics2D g2d = (Graphics2D)g;
-      paintStaticDecorators(g2d);
-      if (myShowSelection) {
-        paintSelection(g2d);
+    try {
+      if (myArea.getRootComponent() != null) {
+        Graphics2D g2d = (Graphics2D)g;
+        paintStaticDecorators(g2d);
+        if (myShowSelection) {
+          paintSelection(g2d);
+        }
       }
+    }
+    catch (Throwable e) {
+      myDesigner.showError("Paint operation", e);
     }
   }
 

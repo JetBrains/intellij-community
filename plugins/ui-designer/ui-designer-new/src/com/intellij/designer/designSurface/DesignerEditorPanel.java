@@ -262,7 +262,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myGlassLayer = new GlassLayer(myToolProvider, mySurfaceArea);
     myLayeredPane.add(myGlassLayer, LAYER_GLASS);
 
-    myDecorationLayer = new DecorationLayer(mySurfaceArea);
+    myDecorationLayer = new DecorationLayer(this, mySurfaceArea);
     myLayeredPane.add(myDecorationLayer, LAYER_DECORATION);
 
     myFeedbackLayer = new FeedbackLayer();
