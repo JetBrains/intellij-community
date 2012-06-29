@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.ShowPopupMenuAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -187,7 +186,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
           //}
         }
 
-        actionGroup.add(new ShowPopupMenuAction());
         allActionsGroup.add(actionGroup);
         allActionsGroup.addSeparator();
       }

@@ -479,7 +479,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
       if (selectedConfiguration != null) {
         boolean isFirst = true;
-        for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsFor(project, selectedConfiguration)) {
+        for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration)) {
           result.add(new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
             @Override
             public Icon getIcon() {
@@ -769,7 +769,7 @@ public class ChooseRunConfigurationAction extends AnAction {
                                                 final boolean dynamic) {
       final List<ActionWrapper> result = new ArrayList<ActionWrapper>();
 
-      for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsFor(project, settings)) {
+      for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, settings)) {
         result.add(new ActionWrapper(eachTarget.getDisplayName(), eachTarget.getIcon()) {
           @Override
           public void perform() {
@@ -799,7 +799,7 @@ public class ChooseRunConfigurationAction extends AnAction {
         }
       }
 
-      result.add(new ActionWrapper("Edit...", EDIT_ICON) {
+      result.add(new ActionWrapper("Edit...", EDIT_ICON, true) {
         @Override
         public void perform() {
           final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
