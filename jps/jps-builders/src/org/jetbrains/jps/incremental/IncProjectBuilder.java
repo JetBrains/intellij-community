@@ -656,6 +656,7 @@ public class IncProjectBuilder {
           }
           else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
             if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
+              LOG.info("Builder " + builder.getDescription() + " requested rebuild of module chunk " + chunk.getName());
               // allow rebuild from scratch only once per chunk
               rebuildFromScratchRequested = true;
               try {
