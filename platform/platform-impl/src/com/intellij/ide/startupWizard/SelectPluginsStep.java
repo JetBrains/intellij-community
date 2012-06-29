@@ -84,7 +84,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
         final IdeaPluginDescriptor pluginDescriptor = getSelectedPlugin();
         if (pluginDescriptor != null) {
           final String description = pluginDescriptor.getDescription();
-          myDescriptionArea.setText(description == null || description.startsWith("<") ? description : UIUtil.toHtml(description));
+          myDescriptionArea.setText(description == null || description.startsWith("<") ? description : UIUtil.toHtml(description, 5));
           myDescriptionArea.moveCaretPosition(0);
         }
         else {
