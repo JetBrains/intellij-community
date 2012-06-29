@@ -14,8 +14,7 @@ public class Bug {
 
     }
 
-    boolean b = true;
-    if (!b){
+    if (!true){
 
     }
   }

@@ -88,9 +88,11 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
     else {
       final PsiPrefixExpression expression = (PsiPrefixExpression)infos[0];
+      final PsiExpression e = removeRedundantNots(expression);
+
       return InspectionGadgetsBundle.message(
         "boolean.expression.can.be.simplified.problem.descriptor",
-        calculateSimplifiedPrefixExpression(expression)
+         e instanceof PsiPrefixExpression ? calculateSimplifiedPrefixExpression((PsiPrefixExpression)e) : e.getText()
       );
     }
   }
@@ -189,16 +191,16 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
   @NotNull
   private String calculateSimplifiedPrefixExpression(PsiPrefixExpression e) {
-    final PsiExpression expression = removeRedundantNots(e);
+    final PsiExpression expression = e.getOperand();
 
     final Boolean value = evaluate(expression);
 
     if (value == Boolean.TRUE) {
-      return PsiKeyword.TRUE;
+      return PsiKeyword.FALSE;
     }
 
     if (value == Boolean.FALSE) {
-      return PsiKeyword.FALSE;
+      return PsiKeyword.TRUE;
     }
 
     return expression != null ? expression.getText() : "";
