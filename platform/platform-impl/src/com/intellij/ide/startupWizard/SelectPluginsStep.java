@@ -131,7 +131,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
       if (dependent != null) {
         String name = getAbbreviatedName(dependent);
         if (requiresBuffer.length() == 0) {
-          requiresBuffer.append(" (requires ");
+          requiresBuffer.append("   (requires ");
         }
         else {
           requiresBuffer.append(", ");
@@ -145,7 +145,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
         requiresBuffer.append(", ");
       }
       else {
-        requiresBuffer.append(" (");
+        requiresBuffer.append("   (");
       }
       requiresBuffer.append("required by ");
       requiresBuffer.append(StringUtil.join(requiredBy, new Function<IdeaPluginDescriptor, String>() {
@@ -227,7 +227,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   public void fillPlugins() {
     Collections.sort(myPlugins, new Comparator<IdeaPluginDescriptor>() {
       public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
-        return o1.getName().compareTo(o2.getName());
+        return StringUtil.compare(o1.getName(), o2.getName(), true);
       }
     });
     myPluginsList.setModel(new CollectionListModel(myPlugins));
