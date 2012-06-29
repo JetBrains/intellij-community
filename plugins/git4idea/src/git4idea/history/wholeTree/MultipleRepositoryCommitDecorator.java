@@ -12,6 +12,8 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.util.Ref;
+
 import java.util.List;
 
 /**
@@ -34,6 +36,11 @@ public class MultipleRepositoryCommitDecorator implements CommitI {
   @Override
   public int compareByName(Commit c) {
     return myDelegate.compareByName(c);
+  }
+
+  @Override
+  public Ref<Integer> getAuthorIdx() {
+    return myDelegate.getAuthorIdx();
   }
 
   @Override

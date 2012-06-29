@@ -12,6 +12,8 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.util.Ref;
+
 import java.util.List;
 
 /**
@@ -20,16 +22,24 @@ import java.util.List;
 public class GroupHeaderDatePseudoCommit implements CommitI {
   private final long myTime;
   private final String myGroupName;
+  private Ref<Integer> myRef;
 
   public GroupHeaderDatePseudoCommit(final String groupName, long time) {
     myGroupName = groupName;
     myTime = time;
+    myRef = new Ref<Integer>();
   }
 
   @Override
   public int compareByName(Commit c) {
     return 0;
   }
+
+  @Override
+  public Ref<Integer> getAuthorIdx() {
+    return myRef;
+  }
+
   @Override
   public boolean holdsDecoration() {
     return true;

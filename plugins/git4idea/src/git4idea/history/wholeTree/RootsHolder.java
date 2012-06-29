@@ -38,4 +38,8 @@ public class RootsHolder {
   public List<VirtualFile> getRoots() {
     return myRoots;
   }
+
+  public boolean multipleRoots() {
+    return myRoots.size() > 1;
+  }
 }

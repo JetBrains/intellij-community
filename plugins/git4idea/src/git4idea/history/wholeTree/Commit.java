@@ -81,4 +81,8 @@ public class Commit implements Comparable<CommitI>, CommitI {
     final long result = myTime - o.getTime();
     return result == 0 ? 0 : (result < 0) ? -1 : 1;
   }
+
+  public Ref<Integer> getAuthorIdx() {
+    return myAuthorIdx;
+  }
 }
