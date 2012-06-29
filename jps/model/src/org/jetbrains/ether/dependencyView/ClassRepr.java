@@ -19,18 +19,43 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ClassRepr extends Proto {
-  private final DependencyContext context;
-  private final int fileName;
-  public final TypeRepr.AbstractType superClass;
-  public final Set<TypeRepr.AbstractType> interfaces;
-  public final Set<ElemType> targets;
-  public final RetentionPolicy policy;
+  private final DependencyContext myContext;
+  private final int myFileName;
+  private final TypeRepr.AbstractType mySuperClass;
+  private final Set<TypeRepr.AbstractType> myInterfaces;
+  private final Set<ElemType> myAnnotationTargets;
+  private final RetentionPolicy myRetentionPolicy;
 
-  public final Set<FieldRepr> fields;
-  public final Set<MethodRepr> methods;
+  private final Set<FieldRepr> myFields;
+  private final Set<MethodRepr> myMethods;
+  //public final Set<UsageRepr.Usage> myUsages;
 
-  public final int outerClassName;
-  public final boolean isLocal;
+  private final int myOuterClassName;
+  private final boolean myIsLocal;
+
+  public Set<MethodRepr> getMethods() {
+    return myMethods;
+  }
+
+  public Set<FieldRepr> getFields() {
+    return myFields;
+  }
+
+  public int getOuterClassName() {
+    return myOuterClassName;
+  }
+
+  public boolean isLocal() {
+    return myIsLocal;
+  }
+
+  public TypeRepr.AbstractType getSuperClass() {
+    return mySuperClass;
+  }
+
+  public RetentionPolicy getRetentionPolicy() {
+    return myRetentionPolicy;
+  }
 
   public abstract static class Diff extends Difference {
     public abstract Specifier<TypeRepr.AbstractType> interfaces();
@@ -60,7 +85,7 @@ public class ClassRepr extends Proto {
     final Difference diff = super.difference(past);
     int base = diff.base();
 
-    if (!superClass.equals(pastClass.superClass)) {
+    if (!mySuperClass.equals(pastClass.mySuperClass)) {
       base |= Difference.SUPERCLASS;
     }
 
@@ -69,7 +94,7 @@ public class ClassRepr extends Proto {
     return new Diff() {
       @Override
       public boolean extendsAdded() {
-        final String pastSuperName = context.getValue(((TypeRepr.ClassType)((ClassRepr)past).superClass).className);
+        final String pastSuperName = myContext.getValue(((TypeRepr.ClassType)((ClassRepr)past).mySuperClass).className);
         return (d & Difference.SUPERCLASS) > 0 && pastSuperName.equals("java/lang/Object");
       }
 
@@ -90,29 +115,29 @@ public class ClassRepr extends Proto {
 
       @Override
       public Difference.Specifier<TypeRepr.AbstractType> interfaces() {
-        return Difference.make(pastClass.interfaces, interfaces);
+        return Difference.make(pastClass.myInterfaces, myInterfaces);
       }
 
       @Override
       public Difference.Specifier<FieldRepr> fields() {
-        return Difference.make(pastClass.fields, fields);
+        return Difference.make(pastClass.myFields, myFields);
       }
 
       @Override
       public Difference.Specifier<MethodRepr> methods() {
-        return Difference.make(pastClass.methods, methods);
+        return Difference.make(pastClass.myMethods, myMethods);
       }
 
       @Override
       public Specifier<ElemType> targets() {
-        return Difference.make(pastClass.targets, targets);
+        return Difference.make(pastClass.myAnnotationTargets, myAnnotationTargets);
       }
 
       @Override
       public boolean retentionChanged() {
-        return !((policy == null && pastClass.policy == RetentionPolicy.CLASS) ||
-                 (policy == RetentionPolicy.CLASS && pastClass.policy == null) ||
-                 (policy == pastClass.policy));
+        return !((myRetentionPolicy == null && pastClass.myRetentionPolicy == RetentionPolicy.CLASS) ||
+                 (myRetentionPolicy == RetentionPolicy.CLASS && pastClass.myRetentionPolicy == null) ||
+                 (myRetentionPolicy == pastClass.myRetentionPolicy));
       }
 
       @Override
@@ -133,12 +158,12 @@ public class ClassRepr extends Proto {
   }
 
   public int[] getSupers() {
-    final int[] result = new int[interfaces.size() + 1];
+    final int[] result = new int[myInterfaces.size() + 1];
 
-    result[0] = ((TypeRepr.ClassType)superClass).className;
+    result[0] = ((TypeRepr.ClassType)mySuperClass).className;
 
     int i = 1;
-    for (TypeRepr.AbstractType t : interfaces) {
+    for (TypeRepr.AbstractType t : myInterfaces) {
       result[i++] = ((TypeRepr.ClassType)t).className;
     }
 
@@ -146,17 +171,17 @@ public class ClassRepr extends Proto {
   }
 
   public void updateClassUsages(final DependencyContext context, final UsageRepr.Cluster s) {
-    superClass.updateClassUsages(context, name, s);
+    mySuperClass.updateClassUsages(context, name, s);
 
-    for (TypeRepr.AbstractType t : interfaces) {
+    for (TypeRepr.AbstractType t : myInterfaces) {
       t.updateClassUsages(context, name, s);
     }
 
-    for (MethodRepr m : methods) {
+    for (MethodRepr m : myMethods) {
       m.updateClassUsages(context, name, s);
     }
 
-    for (FieldRepr f : fields) {
+    for (FieldRepr f : myFields) {
       f.updateClassUsages(context, name, s);
     }
   }
@@ -170,37 +195,40 @@ public class ClassRepr extends Proto {
                    final Set<ElemType> targets,
                    final RetentionPolicy policy,
                    final int outerClassName,
-                   final boolean localClassFlag) {
+                   final boolean localClassFlag){ //,
+                   //final Set<UsageRepr.Usage> usages) {
     super(a, sig, n);
-    this.context = context;
-    fileName = fn;
-    superClass = TypeRepr.createClassType(context, sup);
-    interfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
-    fields = f;
-    methods = m;
-    this.targets = targets;
-    this.policy = policy;
-    this.outerClassName = outerClassName;
-    this.isLocal = localClassFlag;
+    this.myContext = context;
+    myFileName = fn;
+    mySuperClass = TypeRepr.createClassType(context, sup);
+    myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
+    myFields = f;
+    myMethods = m;
+    this.myAnnotationTargets = targets;
+    this.myRetentionPolicy = policy;
+    this.myOuterClassName = outerClassName;
+    this.myIsLocal = localClassFlag;
+    //this.myUsages = usages;
   }
 
   public ClassRepr(final DependencyContext context, final DataInput in) {
     super(in);
     try {
-      this.context = context;
-      fileName = in.readInt();
-      superClass = TypeRepr.externalizer(context).read(in);
-      interfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
-      fields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
-      methods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
-      targets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
+      this.myContext = context;
+      myFileName = in.readInt();
+      mySuperClass = TypeRepr.externalizer(context).read(in);
+      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
+      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
+      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
+      myAnnotationTargets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = in.readUTF();
 
-      policy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
+      myRetentionPolicy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
 
-      outerClassName = in.readInt();
-      isLocal = in.readBoolean();
+      myOuterClassName = in.readInt();
+      myIsLocal = in.readBoolean();
+      //myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new HashSet<UsageRepr.Usage>(), in);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -211,15 +239,15 @@ public class ClassRepr extends Proto {
   public void save(final DataOutput out) {
     try {
       super.save(out);
-      out.writeInt(fileName);
-      superClass.save(out);
-      RW.save(interfaces, out);
-      RW.save(fields, out);
-      RW.save(methods, out);
-      RW.save(targets, UsageRepr.AnnotationUsage.elementTypeExternalizer, out);
-      out.writeUTF(policy == null ? "" : policy.toString());
-      out.writeInt(outerClassName);
-      out.writeBoolean(isLocal);
+      out.writeInt(myFileName);
+      mySuperClass.save(out);
+      RW.save(myInterfaces, out);
+      RW.save(myFields, out);
+      RW.save(myMethods, out);
+      RW.save(myAnnotationTargets, UsageRepr.AnnotationUsage.elementTypeExternalizer, out);
+      out.writeUTF(myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
+      out.writeInt(myOuterClassName);
+      out.writeBoolean(myIsLocal);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -237,7 +265,7 @@ public class ClassRepr extends Proto {
 
     ClassRepr classRepr = (ClassRepr)o;
 
-    if (fileName != classRepr.fileName) return false;
+    if (myFileName != classRepr.myFileName) return false;
     if (name != classRepr.name) return false;
 
     return true;
@@ -245,11 +273,11 @@ public class ClassRepr extends Proto {
 
   @Override
   public int hashCode() {
-    return 31 * fileName + name;
+    return 31 * myFileName + name;
   }
 
   public UsageRepr.Usage createUsage() {
-    return UsageRepr.createClassUsage(context, name);
+    return UsageRepr.createClassUsage(myContext, name);
   }
 
   public String getPackageName() {
@@ -257,7 +285,7 @@ public class ClassRepr extends Proto {
   }
 
   public String getPackageName(final int s) {
-    return getPackageName(context.getValue(s));
+    return getPackageName(myContext.getValue(s));
   }
 
   public static String getPackageName(final String raw) {
@@ -271,7 +299,7 @@ public class ClassRepr extends Proto {
   }
 
   public FieldRepr findField(final int name) {
-    for (FieldRepr f : fields) {
+    for (FieldRepr f : myFields) {
       if (f.name == name) {
         return f;
       }
@@ -283,7 +311,7 @@ public class ClassRepr extends Proto {
   public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
     final Collection<MethodRepr> result = new LinkedList<MethodRepr>();
 
-    for (MethodRepr mm : methods) {
+    for (MethodRepr mm : myMethods) {
       if (p.satisfy(mm)) {
         result.add(mm);
       }
@@ -311,13 +339,13 @@ public class ClassRepr extends Proto {
     super.toStream(context, stream);
 
     stream.print("      Filename   : ");
-    stream.println(context.getValue(fileName));
+    stream.println(context.getValue(myFileName));
 
     stream.print("      Superclass : ");
-    stream.println(superClass == null ? "<null>" : superClass.getDescr(context));
+    stream.println(mySuperClass == null ? "<null>" : mySuperClass.getDescr(context));
 
     stream.print("      Interfaces : ");
-    final TypeRepr.AbstractType[] is = interfaces.toArray(new TypeRepr.AbstractType[interfaces.size()]);
+    final TypeRepr.AbstractType[] is = myInterfaces.toArray(new TypeRepr.AbstractType[myInterfaces.size()]);
     Arrays.sort(is, new Comparator<TypeRepr.AbstractType>() {
       @Override
       public int compare(final TypeRepr.AbstractType o1, final TypeRepr.AbstractType o2) {
@@ -331,7 +359,7 @@ public class ClassRepr extends Proto {
     stream.println();
 
     stream.print("      Targets    : ");
-    final ElemType[] es = targets.toArray(new ElemType[targets.size()]);
+    final ElemType[] es = myAnnotationTargets.toArray(new ElemType[myAnnotationTargets.size()]);
     Arrays.sort(es);
     for (final ElemType e : es) {
       stream.print(e);
@@ -340,16 +368,16 @@ public class ClassRepr extends Proto {
     stream.println();
 
     stream.print("      Policy     : ");
-    stream.println(policy);
+    stream.println(myRetentionPolicy);
 
     stream.print("      Outer class: ");
-    stream.println(context.getValue(outerClassName));
+    stream.println(context.getValue(myOuterClassName));
 
     stream.print("      Local class: ");
-    stream.println(isLocal);
+    stream.println(myIsLocal);
 
     stream.println("      Fields:");
-    final FieldRepr[] fs = fields.toArray(new FieldRepr[fields.size()]);
+    final FieldRepr[] fs = myFields.toArray(new FieldRepr[myFields.size()]);
     Arrays.sort(fs, new Comparator<FieldRepr>() {
       @Override
       public int compare(final FieldRepr o1, final FieldRepr o2) {
@@ -366,7 +394,7 @@ public class ClassRepr extends Proto {
     stream.println("      End Of Fields");
 
     stream.println("      Methods:");
-    final MethodRepr[] ms = methods.toArray(new MethodRepr[methods.size()]);
+    final MethodRepr[] ms = myMethods.toArray(new MethodRepr[myMethods.size()]);
     Arrays.sort(ms, new Comparator<MethodRepr>() {
       @Override
       public int compare(final MethodRepr o1, final MethodRepr o2) {
