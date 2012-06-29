@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,11 +84,11 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
         final IdeaPluginDescriptor pluginDescriptor = getSelectedPlugin();
         if (pluginDescriptor != null) {
           final String description = pluginDescriptor.getDescription();
-          myDescriptionArea.setText(description);
+          myDescriptionArea.setText(description == null || description.startsWith("<") ? description : UIUtil.toHtml(description));
           myDescriptionArea.moveCaretPosition(0);
         }
         else {
-          myDescriptionArea.setText("Select a plugin to see its description");
+          myDescriptionArea.setText(UIUtil.toHtml("Select a plugin to see its description"));
         }
       }
     });
