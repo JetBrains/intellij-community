@@ -219,7 +219,6 @@
 
     <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
-    <testGenerator implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestGenerator"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <stubElementTypeHolder class="com.jetbrains.cython.psi.elementTypes.CythonElementTypes"/>
