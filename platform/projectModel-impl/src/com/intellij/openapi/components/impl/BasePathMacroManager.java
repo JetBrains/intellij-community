@@ -26,6 +26,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.FactoryMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +44,7 @@ public class BasePathMacroManager extends PathMacroManager {
 
   protected static void addFileHierarchyReplacements(ExpandMacroToPathMap result, String macroName, @Nullable String path) {
     if (path == null) return;
-    addFileHierarchyReplacements(result, StandardFileSystems.local().findFileByPath(path), "$" + macroName + "$");
+    addFileHierarchyReplacements(result, getLocalFileSystem().findFileByPath(path), "$" + macroName + "$");
   }
 
   private static void addFileHierarchyReplacements(ExpandMacroToPathMap result, @Nullable VirtualFile f, String macro) {
@@ -63,7 +65,7 @@ public class BasePathMacroManager extends PathMacroManager {
     if (path == null) return;
 
     String macro = "$" + macroName + "$";
-    VirtualFile dir = StandardFileSystems.local().findFileByPath(path);
+    VirtualFile dir = getLocalFileSystem().findFileByPath(path);
     boolean check = false;
     while (dir != null && dir.getParent() != null) {
       path = dir.getPath();
@@ -86,6 +88,11 @@ public class BasePathMacroManager extends PathMacroManager {
       check = true;
       dir = dir.getParent();
     }
+  }
+
+  private static VirtualFileSystem getLocalFileSystem() {
+    // Use VFM directly because of mocks in tests.
+    return VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
   }
 
   private static void putIfAbsent(final ReplacePathToMacroMap result,
