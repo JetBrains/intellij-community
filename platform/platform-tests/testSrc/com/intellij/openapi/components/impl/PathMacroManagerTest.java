@@ -120,10 +120,12 @@ public class PathMacroManagerTest {
     myOldFileSystem = FileSystem.FILE_SYSTEM;
     myFileSystem = new MockFileSystem();
     FileSystem.FILE_SYSTEM = myFileSystem;
+    BasePathMacroManager.DEBUG = true;
   }
 
   @After
   public final void restoreFilesystem() throws Exception {
+    BasePathMacroManager.DEBUG = false;
     FileSystem.FILE_SYSTEM = myOldFileSystem;
   }
 
