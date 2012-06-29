@@ -100,7 +100,7 @@ public class ExtractStyleDialog extends DialogWrapper {
     myRootNode = new CheckedTreeNode(null);
     for (XmlAttribute attribute : tag.getAttributes()) {
       String name = attribute.getName();
-      if (!"style".equalsIgnoreCase(name)) {
+      if (!"style".equalsIgnoreCase(name) && name.startsWith("android:")) {
         CheckedTreeNode treeNode = new CheckedTreeNode(attribute);
         treeNode.setChecked(!"android:layout_width".equalsIgnoreCase(name) && !"android:layout_height".equalsIgnoreCase(name));
         myRootNode.add(treeNode);

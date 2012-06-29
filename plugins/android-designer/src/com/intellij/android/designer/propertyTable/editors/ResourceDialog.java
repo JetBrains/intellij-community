@@ -20,7 +20,9 @@ import com.android.resources.ResourceType;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.componentTree.TreeNodeDescriptor;
+import com.intellij.designer.utils.SizedIcon;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -42,6 +44,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -65,6 +68,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -74,6 +78,10 @@ import java.util.List;
 public class ResourceDialog extends DialogWrapper implements TreeSelectionListener {
   private static final String ANDROID = "@android:";
   private static final String TYPE_KEY = "ResourceType";
+
+  private static final String TEXT = "Text";
+  private static final String IMAGE = "Image";
+  private static final String NONE = "None";
 
   private static final Icon RESOURCE_ITEM_ICON = AllIcons.Css.Property;
 
@@ -128,7 +136,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     mySystemPanel = new ResourcePanel(facet, types, true);
 
     myContentPanel = new JBTabbedPane();
-    myContentPanel.setPreferredSize(new Dimension(500, 400));
+    myContentPanel.setPreferredSize(new Dimension(600, 500));
     myContentPanel.addTab("Project", myProjectPanel.myComponent);
     myContentPanel.addTab("System", mySystemPanel.myComponent);
 
@@ -193,9 +201,16 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myNewResourceFileAction.getTemplatePresentation().putClientProperty(TYPE_KEY, resourceGroup.getType());
       actionGroup.add(myNewResourceFileAction);
     }
-    if (myComponent != null && ResourceType.STYLE.equals(resourceGroup.getType()) && myComponent.getTag().getAttributes().length > 0) {
-      // TODO: add StyleItem
-      //actionGroup.add(myExtractStyleAction);
+    if (myComponent != null && ResourceType.STYLE.equals(resourceGroup.getType())) {
+      boolean enabled = false;
+      for (XmlAttribute attribute : myComponent.getTag().getAttributes()) {
+        if (attribute.getName().startsWith("android:")) {
+          enabled = true;
+          break;
+        }
+      }
+      myExtractStyleAction.getTemplatePresentation().setEnabled(enabled);
+      actionGroup.add(myExtractStyleAction);
     }
 
     return actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, actionGroup);
@@ -350,6 +365,8 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
         String prefix = panel == myProjectPanel ? "@" : ANDROID;
         myResultResourceName = prefix + element.getName();
       }
+
+      panel.showPreview(element, isProjectPanel);
     }
   }
 
@@ -361,7 +378,13 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   private class ResourcePanel {
     public final Tree myTree;
     public final AbstractTreeBuilder myTreeBuilder;
-    public final JScrollPane myComponent;
+    public final JPanel myComponent;
+
+    private final JPanel myPreviewPanel;
+    private final JTextArea myTextArea;
+    private final JLabel myImageComponent;
+    private final JLabel myNoPreviewComponent;
+
     private final ResourceGroup[] myGroups;
 
     public ResourcePanel(AndroidFacet facet, ResourceType[] types, boolean system) {
@@ -420,7 +443,67 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       });
       new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
 
-      myComponent = ScrollPaneFactory.createScrollPane(myTree);
+      myComponent = new JPanel(new BorderLayout(0, 5));
+      myComponent.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+
+      myPreviewPanel = new JPanel(new CardLayout());
+      myComponent.add(myPreviewPanel, BorderLayout.SOUTH);
+
+      myTextArea = new JTextArea(5, 20);
+      myPreviewPanel.add(ScrollPaneFactory.createScrollPane(myTextArea), TEXT);
+
+      myImageComponent = new JLabel();
+      myImageComponent.setHorizontalAlignment(SwingConstants.CENTER);
+      myImageComponent.setVerticalAlignment(SwingConstants.CENTER);
+      myPreviewPanel.add(myImageComponent, IMAGE);
+
+      myNoPreviewComponent = new JLabel("No Preview");
+      myNoPreviewComponent.setHorizontalAlignment(SwingConstants.CENTER);
+      myNoPreviewComponent.setVerticalAlignment(SwingConstants.CENTER);
+      myPreviewPanel.add(myNoPreviewComponent, NONE);
+    }
+
+    public void showPreview(@Nullable ResourceItem element, boolean isProjectPanel) {
+      CardLayout layout = (CardLayout)myPreviewPanel.getLayout();
+
+      if (element == null) {
+        layout.show(myPreviewPanel, NONE);
+        return;
+      }
+
+      try {
+        VirtualFile file = element.getFile();
+        if (file == null) {
+          myTextArea.setText(null); // XXX
+          myTextArea.setEditable(isProjectPanel);
+          layout.show(myPreviewPanel, TEXT);
+        }
+        else if (ImageFileTypeManager.getInstance().isImage(file)) {
+          Icon icon = element.getPreviewIcon();
+          if (icon == null) {
+            icon = new SizedIcon(100, 100, new ImageIcon(file.getPath()));
+            element.setPreviewIcon(icon);
+          }
+          myImageComponent.setIcon(icon);
+          layout.show(myPreviewPanel, IMAGE);
+        }
+        else if (file.getFileType() == XmlFileType.INSTANCE) {
+          String value = element.getPreviewString();
+          if (value == null) {
+            value = new String(file.contentsToByteArray());
+            element.setPreviewString(value);
+          }
+          myTextArea.setText(value);
+          myTextArea.setEditable(isProjectPanel);
+          layout.show(myPreviewPanel, TEXT);
+        }
+        else {
+          layout.show(myPreviewPanel, NONE);
+        }
+      }
+      catch (IOException e) {
+        layout.show(myPreviewPanel, NONE);
+      }
     }
 
     private void select(String type, String name) {
@@ -449,7 +532,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
       Collection<String> resourceNames = manager.getValueResourceNames(resourceType);
       for (String resourceName : resourceNames) {
-        myItems.add(new ResourceItem(this, resourceName, RESOURCE_ITEM_ICON));
+        myItems.add(new ResourceItem(this, resourceName, null, RESOURCE_ITEM_ICON));
       }
 
       Set<String> fileNames = new HashSet<String>();
@@ -459,7 +542,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
           if (!resourceFile.isDirectory()) {
             String fileName = AndroidCommonUtils.getResourceName(resourceType, resourceFile.getName());
             if (fileNames.add(fileName)) {
-              myItems.add(new ResourceItem(this, fileName, resourceFile.getFileType().getIcon()));
+              myItems.add(new ResourceItem(this, fileName, resourceFile, resourceFile.getFileType().getIcon()));
             }
           }
         }
@@ -468,7 +551,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       if (type == ResourceType.ID) {
         for (String id : manager.getIds()) {
           if (!resourceNames.contains(id)) {
-            myItems.add(new ResourceItem(this, id, RESOURCE_ITEM_ICON));
+            myItems.add(new ResourceItem(this, id, null, RESOURCE_ITEM_ICON));
           }
         }
       }
@@ -502,11 +585,15 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   private static class ResourceItem {
     private final ResourceGroup myGroup;
     private final String myName;
+    private final VirtualFile myFile;
     private final Icon myIcon;
+    private String myPreviewString;
+    private Icon myPreviewIcon;
 
-    public ResourceItem(@NotNull ResourceGroup group, @NotNull String name, Icon icon) {
+    public ResourceItem(@NotNull ResourceGroup group, @NotNull String name, @Nullable VirtualFile file, Icon icon) {
       myGroup = group;
       myName = name;
+      myFile = file;
       myIcon = icon;
     }
 
@@ -518,8 +605,28 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       return myGroup.getName() + "/" + myName;
     }
 
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
     public Icon getIcon() {
       return myIcon;
+    }
+
+    public String getPreviewString() {
+      return myPreviewString;
+    }
+
+    public void setPreviewString(String previewString) {
+      myPreviewString = previewString;
+    }
+
+    public Icon getPreviewIcon() {
+      return myPreviewIcon;
+    }
+
+    public void setPreviewIcon(Icon previewIcon) {
+      myPreviewIcon = previewIcon;
     }
 
     @Override
