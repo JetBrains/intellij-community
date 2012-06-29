@@ -138,4 +138,6 @@ public interface ComponentPopupBuilder {
 
   @NotNull
   ComponentPopupBuilder setMayBeParent(boolean mayBeParent);
+
+  ComponentPopupBuilder setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
 }

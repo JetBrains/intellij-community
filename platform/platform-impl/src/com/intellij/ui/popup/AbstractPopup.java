@@ -86,6 +86,7 @@ public class AbstractPopup implements JBPopup {
   private MouseChecker myCancelOnMouseOutCallback;
   private Canceller myMouseOutCanceller;
   private boolean myCancelOnWindow;
+  private boolean myCancelOnWindowDeactivation = true;
   private Dimension myForcedSize;
   private Point myForcedLocation;
   private ChildFocusWatcher myFocusWatcher;
@@ -194,7 +195,8 @@ public class AbstractPopup implements JBPopup {
                      Component settingsButtons,
                      @Nullable final Processor<JBPopup> pinCallback,
                      boolean mayBeParent,
-                     boolean showShadow) {
+                     boolean showShadow,
+                     boolean cancelOnWindowDeactivation) {
     if (requestFocus && !focusable) {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
     }
@@ -207,6 +209,7 @@ public class AbstractPopup implements JBPopup {
     myPaintShadow = showShadow && !SystemInfo.isMac && !movable && !resizable && Registry.is("ide.popup.dropShadow");
     myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner() && resizable);
     myMayBeParent = mayBeParent;
+    myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
 
     myContent.add(component, BorderLayout.CENTER);
     if (adText != null) {
@@ -1244,6 +1247,14 @@ public class AbstractPopup implements JBPopup {
 
   public boolean isCancelOnClickOutside() {
     return myCancelOnClickOutside;
+  }
+
+  public boolean isCancelOnWindowDeactivation() {
+    return myCancelOnWindowDeactivation;
+  }
+
+  public void setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
+    myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
   }
 
   private class Canceller implements AWTEventListener {
