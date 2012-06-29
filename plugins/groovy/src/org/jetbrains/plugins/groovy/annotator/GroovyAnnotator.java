@@ -108,6 +108,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -849,8 +850,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitVariable(GrVariable variable) {
     checkName(variable);
 
-    PsiNamedElement duplicate = ResolveUtil
-      .resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrReferenceExpression.class, GrVariable.class);
+    final GrVariable toSearchFor = ResolveUtil.isScriptField(variable)? GrScriptField.createScriptFieldFrom(variable):variable;
+    PsiNamedElement duplicate = ResolveUtil.resolveExistingElement(variable, new DuplicateVariablesProcessor(toSearchFor), GrReferenceExpression.class, GrVariable.class);
     if (duplicate == null) {
       if (variable instanceof GrParameter) {
         @SuppressWarnings({"ConstantConditions"})
@@ -867,7 +868,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     if (duplicate instanceof GrVariable) {
-      if (variable instanceof GrField || !(duplicate instanceof GrField)) {
+      if ((variable instanceof GrField || ResolveUtil.isScriptField(variable)) /*&& duplicate instanceof PsiField*/ ||
+          !(duplicate instanceof GrField)) {
         final String key = duplicate instanceof GrField ? "field.already.defined" : "variable.already.defined";
         myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message(key, variable.getName()));
       }

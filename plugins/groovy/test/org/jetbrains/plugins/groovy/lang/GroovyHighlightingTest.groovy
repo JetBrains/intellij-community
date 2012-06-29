@@ -1103,4 +1103,25 @@ class X {
 }
 ''')
   }
+
+  void testDuplicatedScriptField() {
+    addGroovyTransformField()
+    testHighlighting('''\
+import groovy.transform.Field
+
+while(true) {
+  @Field def <error descr="Field 'foo' already defined">foo</error>
+}
+
+while(false) {
+  @Field def <error descr="Field 'foo' already defined">foo</error>
+}
+
+while(i) {
+  def foo
+}
+
+def foo
+''')
+  }
 }
