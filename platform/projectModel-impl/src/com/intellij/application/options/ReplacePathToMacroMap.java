@@ -16,6 +16,7 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
+import com.intellij.openapi.components.impl.BasePathMacroManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,6 +67,13 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   public void addMacroReplacement(String path, String macroName) {
     final String p = quotePath(path);
     final String m = "$" + macroName + "$";
+
+    if (BasePathMacroManager.DEBUG) {
+      System.out.println("BasePathMacroManager.addFileHierarchyReplacements");
+      System.out.println("path = " + p);
+      System.out.println("macro = " + macroName);
+    }
+
 
     put(p, m);
     for (String protocol : PROTOCOLS) {
