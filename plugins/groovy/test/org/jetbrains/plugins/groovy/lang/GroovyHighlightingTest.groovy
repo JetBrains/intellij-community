@@ -1124,4 +1124,25 @@ while(i) {
 def foo
 ''')
   }
+
+  void testReturnTypeInStaticallyCompiledMethod() {
+   addCompileStatic();
+   testHighlighting('''\
+import groovy.transform.CompileStatic
+@CompileStatic
+int method(x, y, z) {
+    if (x) {
+        <error descr="Cannot assign 'String' to 'int'">'String'</error>
+    } else if (y) {
+        42
+    }
+    else if (z) {
+      return <error descr="Cannot assign 'String' to 'int'">'abc'</error>
+    }
+    else {
+      return 43
+    }
+}
+''')
+ }
 }

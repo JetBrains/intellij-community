@@ -80,4 +80,12 @@ public interface GroovyObject {
 }
 ''');
   }
+
+  void addCompileStatic() {
+   myFixture.addClass('''\
+package groovy.transform;
+public @interface CompileStatic{
+}
+''')
+  }
 }
