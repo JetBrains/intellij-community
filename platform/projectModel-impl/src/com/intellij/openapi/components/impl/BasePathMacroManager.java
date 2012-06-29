@@ -72,7 +72,7 @@ public class BasePathMacroManager extends PathMacroManager {
     }
     path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/");
     boolean check = false;
-    while (StringUtil.isNotEmpty(path)) {
+    while (StringUtil.isNotEmpty(path) && path.contains("/")) {
       if (DEBUG) {
         System.out.println("path = " + path);
         System.out.println("macro = " + macro);
