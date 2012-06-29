@@ -47,12 +47,11 @@ public class BreakStringOnLineBreaksIntentionAction extends PsiElementBaseIntent
     }
 
     final int indexOfSlashN = text.indexOf("\\n");
-    final int indexOfSlashNSlashR = text.indexOf("\\n\\r");
-
     if (indexOfSlashN == -1 || Comparing.equal(text.substring(indexOfSlashN, text.length()), "\\n\"")){
       return false;
     }
 
+    final int indexOfSlashNSlashR = text.indexOf("\\n\\r");
     if (indexOfSlashNSlashR != -1 && Comparing.equal(text.substring(indexOfSlashNSlashR, text.length()), "\\n\\r\"")){
       return false;
     }
