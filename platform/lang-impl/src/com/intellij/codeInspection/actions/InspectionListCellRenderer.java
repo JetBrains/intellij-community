@@ -85,8 +85,8 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
     }
     else {
       // E.g. "..." item
-      Component component = super.getListCellRendererComponent(list, value, index, sel, focus);
-      return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(component) : component;
+      return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(UIUtil.getListBackground()) :
+             super.getListCellRendererComponent(list, value, index, sel, focus);
     }
 
     return panel;

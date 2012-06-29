@@ -136,8 +136,12 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     if (message == null) return null;
     @NonNls String ioExceptionPrefix = "java.io.IOException:";
     if (message.startsWith(ioExceptionPrefix)){
-      message = message.substring(ioExceptionPrefix.length());
+      return message.substring(ioExceptionPrefix.length());
     }
+    if (message.contains("File already exists")){
+      return message;
+    }
+
     return IdeBundle.message("error.unable.to.parse.template.message", myTemplate.getName(), message);
   }
 
