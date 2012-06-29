@@ -758,63 +758,68 @@ public class FSRecords implements Forceable {
   public static int[] list(int id) {
     try {
       r.lock();
-      final DataInputStream input = readAttribute(id, CHILDREN_ATT);
-      if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
+      try {
+        final DataInputStream input = readAttribute(id, CHILDREN_ATT);
+        if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
-      final int count = DataInputOutputUtil.readINT(input);
-      final int[] result = ArrayUtil.newIntArray(count);
-      for (int i = 0; i < count; i++) {
-        int childId = DataInputOutputUtil.readINT(input);
-        childId = childId >= 0 ? childId + id : -childId;
-        result[i] = childId;
+        final int count = DataInputOutputUtil.readINT(input);
+        final int[] result = ArrayUtil.newIntArray(count);
+        for (int i = 0; i < count; i++) {
+          int childId = DataInputOutputUtil.readINT(input);
+          childId = childId >= 0 ? childId + id : -childId;
+          result[i] = childId;
+        }
+        input.close();
+        return result;
       }
-      input.close();
-      return result;
+      finally {
+        r.unlock();
+      }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
     }
   }
 
   public static Pair<String[],int[]> listAll(int parentId) {
     try {
       r.lock();
-      final DataInputStream input = readAttribute(parentId, CHILDREN_ATT);
-      if (input == null) return Pair.create(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_INT_ARRAY);
+      try {
+        final DataInputStream input = readAttribute(parentId, CHILDREN_ATT);
+        if (input == null) return Pair.create(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_INT_ARRAY);
 
-      final int count = DataInputOutputUtil.readINT(input);
-      final int[] ids = ArrayUtil.newIntArray(count);
-      final String[] names = ArrayUtil.newStringArray(count);
-      for (int i = 0; i < count; i++) {
-        int id = DataInputOutputUtil.readINT(input);
-        id = id >= 0 ? id + parentId : -id;
-        ids[i] = id;
-        names[i] = getName(id);
+        final int count = DataInputOutputUtil.readINT(input);
+        final int[] ids = ArrayUtil.newIntArray(count);
+        final String[] names = ArrayUtil.newStringArray(count);
+        for (int i = 0; i < count; i++) {
+          int id = DataInputOutputUtil.readINT(input);
+          id = id >= 0 ? id + parentId : -id;
+          ids[i] = id;
+          names[i] = getName(id);
+        }
+        input.close();
+        return Pair.create(names, ids);
       }
-      input.close();
-      return Pair.create(names, ids);
+      finally {
+        r.unlock();
+      }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
     }
   }
 
   public static boolean wereChildrenAccessed(int id) {
     try {
       r.lock();
-      return findAttributePage(id, CHILDREN_ATT, false) != 0;
+      try {
+        return findAttributePage(id, CHILDREN_ATT, false) != 0;
+      } finally {
+        r.unlock();
+      }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
     }
   }
 
@@ -873,19 +878,21 @@ public class FSRecords implements Forceable {
   public static int getParent(int id) {
     try {
       r.lock();
-      final int parentId = getRecordInt(id, PARENT_OFFSET);
-      if (parentId == id) {
-        LOG.error("Cyclic parent child relations in the database. id = " + id);
-        return 0;
-      }
+      try {
+        final int parentId = getRecordInt(id, PARENT_OFFSET);
+        if (parentId == id) {
+          LOG.error("Cyclic parent child relations in the database. id = " + id);
+          return 0;
+        }
 
-      return parentId;
+        return parentId;
+      }
+      finally {
+        r.unlock();
+      }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
     }
   }
 
@@ -911,14 +918,16 @@ public class FSRecords implements Forceable {
   public static String getName(int id) {
     try {
       r.lock();
-      final int nameId = getRecordInt(id, NAME_OFFSET);
-      return nameId != 0 ? getNames().valueOf(nameId) : "";
+      try {
+        final int nameId = getRecordInt(id, NAME_OFFSET);
+        return nameId != 0 ? getNames().valueOf(nameId) : "";
+      }
+      finally {
+        r.unlock();
+      }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
     }
   }
 
@@ -1195,13 +1204,15 @@ public class FSRecords implements Forceable {
   public static int getContentId(int fileId) {
     try {
       r.lock();
-      return getContentRecordId(fileId);
+      try {
+        return getContentRecordId(fileId);
+      }
+      finally {
+        r.unlock();
+      }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
-    }
-    finally {
-      r.unlock();
     }
   }
 

@@ -1,3 +1,0 @@
-(?x)abc #foo \q bar
-# foo
-(?-xi)xyz(?i:ABC)

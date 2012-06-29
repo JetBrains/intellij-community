@@ -11,20 +11,41 @@ import java.io.IOException;
  */
 public class LogParser {
 
+  private static final String COMPILING_START_STR = "incremental.java.JavaBuilder - Compiling";
+
   public static void main(String[] args) throws IOException {
     final String logPath = args[0];
 
     long totalTime = 0L;
+    int totalFileCount = 0;
     final BufferedReader reader = new BufferedReader(new FileReader(new File(logPath)));
     try {
       String line = reader.readLine();
       while (line != null) {
-        if (line.contains("incremental.java.JavaBuilder - Compiling")) {
+        if (line.contains(COMPILING_START_STR)) {
           final long startTime = getTime(line);
           final String nextLine = reader.readLine();
           if (nextLine != null && nextLine.contains("- Dependency analysis found")) {
             final long endTime = getTime(nextLine);
             totalTime += (endTime - startTime);
+            final int index = line.indexOf(COMPILING_START_STR);
+            if (index > 0) {
+              final StringBuilder buf = new StringBuilder();
+              for (int idx = index + COMPILING_START_STR.length(); idx < line.length(); idx++) {
+                final char ch = line.charAt(idx);
+                if (ch == ' ' || ch == '\t') {
+                  continue;
+                }
+                if (!Character.isDigit(ch)) {
+                  break;
+                }
+                buf.append(ch);
+              }
+              if (buf.length() > 0) {
+                final int fileCount = Integer.parseInt(buf.toString());
+                totalFileCount += fileCount;
+              }
+            }
           }
         }
         line = reader.readLine();
@@ -39,6 +60,7 @@ public class LogParser {
     long minutes = seconds / 60;
     seconds = seconds % 60;
 
+    System.out.println("Files compiled: " + totalFileCount);
     System.out.println("Total time spent compiling java " + minutes + " min " + seconds + " sec " + millis + " ms");
   }
 

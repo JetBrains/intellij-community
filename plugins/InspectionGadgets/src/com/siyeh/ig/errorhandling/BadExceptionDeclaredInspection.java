@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
@@ -59,11 +60,12 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
    */
   public boolean ignoreTestCases = false;
 
+  public boolean ignoreLibraryOverrides = false;
+
   public BadExceptionDeclaredInspection() {
     if (exceptionsString.length() != 0) {
       exceptions.clear();
-      final List<String> strings =
-        StringUtil.split(exceptionsString, ",");
+      final List<String> strings = StringUtil.split(exceptionsString, ",");
       for (String string : strings) {
         exceptions.add(string);
       }
@@ -80,32 +82,44 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "bad.exception.declared.display.name");
+    return InspectionGadgetsBundle.message("bad.exception.declared.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "bad.exception.declared.problem.descriptor");
+    return InspectionGadgetsBundle.message("bad.exception.declared.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
+    final JComponent panel = new JPanel(new GridBagLayout());
     final ListTable table =
       new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
     JPanel tablePanel =
       UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), "java.lang.Throwable");
-    final CheckBox checkBox =
-      new CheckBox(InspectionGadgetsBundle.message("bad.exception.declared.ignore.exceptions.declared.in.tests.option"), this,
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.weightx = 1.0;
+    constraints.weighty = 1.0;
+    constraints.fill = GridBagConstraints.BOTH;
+    panel.add(tablePanel, constraints);
+
+    final CheckBox checkBox1 =
+      new CheckBox(InspectionGadgetsBundle.message("ignore.exceptions.declared.in.tests.option"), this,
                    "ignoreTestCases");
-    final JComponent panel = new JPanel(new BorderLayout());
-    panel.add(tablePanel, BorderLayout.CENTER);
-    panel.add(checkBox, BorderLayout.SOUTH);
+    constraints.gridy = 1;
+    constraints.weighty = 0.0;
+    panel.add(checkBox1, constraints);
+
+    final CheckBox checkBox2 =
+      new CheckBox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"), this,
+                   "ignoreLibraryOverrides");
+    constraints.gridy = 2;
+    panel.add(checkBox2, constraints);
     return panel;
   }
-
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
@@ -119,17 +133,18 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
       super.visitMethod(method);
       if (ignoreTestCases) {
         final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null &&
-            TestFrameworks.getInstance().isTestClass(containingClass)) {
+        if (containingClass != null && TestFrameworks.getInstance().isTestClass(containingClass)) {
           return;
         }
         if (TestUtils.isJUnitTestMethod(method)) {
           return;
         }
       }
+      if (ignoreLibraryOverrides && LibraryUtil.isOverrideOfLibraryMethod(method)) {
+        return;
+      }
       final PsiReferenceList throwsList = method.getThrowsList();
-      final PsiJavaCodeReferenceElement[] references =
-        throwsList.getReferenceElements();
+      final PsiJavaCodeReferenceElement[] references = throwsList.getReferenceElements();
       for (PsiJavaCodeReferenceElement reference : references) {
         final PsiElement element = reference.resolve();
         if (!(element instanceof PsiClass)) {
@@ -137,8 +152,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
         }
         final PsiClass thrownClass = (PsiClass)element;
         final String qualifiedName = thrownClass.getQualifiedName();
-        if (qualifiedName != null &&
-            exceptions.contains(qualifiedName)) {
+        if (qualifiedName != null && exceptions.contains(qualifiedName)) {
           registerError(reference);
         }
       }

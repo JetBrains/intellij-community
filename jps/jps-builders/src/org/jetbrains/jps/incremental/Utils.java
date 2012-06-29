@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 
@@ -54,8 +55,16 @@ public class Utils {
     }
   }
 
+  @Nullable
   public static File convertToFile(final URI uri) {
-    return new File(toURI(uri.getPath(), false));
+    if (uri == null) {
+      return null;
+    }
+    final String path = uri.getPath();
+    if (path == null) {
+      return null;
+    }
+    return new File(toURI(path, false));
   }
 
   public static boolean intersects(Set<Module> set1, Set<Module> set2) {

@@ -5,13 +5,11 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -24,12 +22,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -224,7 +220,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
             final Collection<CandidateInfo> candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
             boolean invokeOverride = candidatesToImplement.isEmpty();
             if (invokeOverride){
-              chooseAndOverrideMethodsInAdapter(project, editor, aClass);
+              OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
             }
             else{
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -247,59 +243,4 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
       }
     };
   }
-
-  private static void chooseAndOverrideMethodsInAdapter(final Project project, final Editor editor, final PsiAnonymousClass aClass) {
-    PsiClass baseClass = aClass.getBaseClassType().resolve();
-    if (baseClass == null) return;
-    PsiMethod[] allBaseMethods = baseClass.getMethods();
-    if(allBaseMethods.length == 0) return;
-
-    List<PsiMethodMember> methods = new ArrayList<PsiMethodMember>();
-    for (final PsiMethod method : allBaseMethods) {
-      if (OverrideImplementUtil.isOverridable(method)) {
-        methods.add(new PsiMethodMember(method, PsiSubstitutor.UNKNOWN));
-      }
-    }
-
-    boolean canInsertOverride = PsiUtil.isLanguageLevel5OrHigher(aClass) && (PsiUtil.isLanguageLevel6OrHigher(aClass) || !aClass.isInterface());
-    final PsiMethodMember[] array = methods.toArray(new PsiMethodMember[methods.size()]);
-    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(array, false, true, project, canInsertOverride);
-    chooser.setTitle(CompletionBundle.message("completion.smarttype.select.methods.to.override"));
-    chooser.setCopyJavadocVisible(true);
-
-    chooser.show();
-    List<PsiMethodMember> selected = chooser.getSelectedElements();
-    if (selected == null || selected.isEmpty()) return;
-
-
-    try{
-      final List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selected, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-
-      final int offset = editor.getCaretModel().getOffset();
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          try{
-            for (PsiGenerationInfo<PsiMethod> prototype : prototypes) {
-              PsiStatement[] statements = prototype.getPsiMember().getBody().getStatements();
-              if (statements.length > 0 && PsiType.VOID.equals(prototype.getPsiMember().getReturnType())) {
-                statements[0].delete(); // remove "super(..)" call
-              }
-            }
-
-            List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
-            resultMembers.get(0).positionCaret(editor, true);
-          }
-          catch(IncorrectOperationException e){
-            LOG.error(e);
-          }
-        }
-      });
-    }
-    catch(IncorrectOperationException ioe){
-      LOG.error(ioe);
-    }
-  }
-
-
 }

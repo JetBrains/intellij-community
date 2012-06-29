@@ -45,6 +45,7 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
@@ -595,14 +596,21 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private static void fillGlobalLibraries(List<GlobalLibrary> globals) {
-    final Iterator<Library> iterator = LibraryTablesRegistrar.getInstance().getLibraryTable().getLibraryIterator();
-    while (iterator.hasNext()) {
-      Library library = iterator.next();
-      final String name = library.getName();
+    final LibraryTablesRegistrar tableRegistrar = LibraryTablesRegistrar.getInstance();
+    List<LibraryTable> tables = new ArrayList<LibraryTable>();
+    tables.add(tableRegistrar.getLibraryTable());
 
-      if (name != null) {
-        final List<String> paths = convertToLocalPaths(library.getFiles(OrderRootType.CLASSES));
-        globals.add(new GlobalLibrary(name, paths));
+    tables.addAll(tableRegistrar.getCustomLibraryTables());
+    for (LibraryTable libraryTable : tables) {
+      final Iterator<Library> iterator = libraryTable.getLibraryIterator();
+      while (iterator.hasNext()) {
+        Library library = iterator.next();
+        final String name = library.getName();
+
+        if (name != null) {
+          final List<String> paths = convertToLocalPaths(library.getFiles(OrderRootType.CLASSES));
+          globals.add(new GlobalLibrary(name, paths));
+        }
       }
     }
   }

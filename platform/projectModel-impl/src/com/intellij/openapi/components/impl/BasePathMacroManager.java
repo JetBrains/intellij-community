@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
+  public static boolean DEBUG = false;
   private PathMacrosImpl myPathMacros;
 
   public BasePathMacroManager(@Nullable PathMacros pathMacros) {
@@ -65,10 +66,17 @@ public class BasePathMacroManager extends PathMacroManager {
     if (path == null) return;
 
     String macro = "$" + macroName + "$";
-    VirtualFile dir = getLocalFileSystem().findFileByPath(path);
+    if (DEBUG) {
+      System.out.println("BasePathMacroManager.addFileHierarchyReplacements");
+      System.out.println("macroName = " + macroName);
+    }
+    path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/");
     boolean check = false;
-    while (dir != null && dir.getParent() != null) {
-      path = dir.getPath();
+    while (StringUtil.isNotEmpty(path) && path.contains("/")) {
+      if (DEBUG) {
+        System.out.println("path = " + path);
+        System.out.println("macro = " + macro);
+      }
 
       putIfAbsent(result, "file:" + path, "file:" + macro, check);
       putIfAbsent(result, "file:/" + path, "file:/" + macro, check);
@@ -80,13 +88,13 @@ public class BasePathMacroManager extends PathMacroManager {
         putIfAbsent(result, path, macro, check);
       }
 
-      if (dir.getPath().equals(stopAt)) {
+      if (path.equals(stopAt)) {
         break;
       }
 
       macro += "/..";
       check = true;
-      dir = dir.getParent();
+      path = StringUtil.getPackageName(path, '/');
     }
   }
 

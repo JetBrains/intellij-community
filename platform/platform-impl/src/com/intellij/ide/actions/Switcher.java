@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -390,7 +391,7 @@ public class Switcher extends AnAction implements DumbAware {
           if (values != null && values.length == 1) {
             final VirtualFile parent = ((FileInfo)values[0]).first.getParent();
             if (parent != null) {
-              pathLabel.setText(getTitle2Text(parent.getPresentableUrl()));
+              pathLabel.setText(getTitle2Text(FileUtil.getLocationRelativeToUserHome(parent.getPresentableUrl())));
             } else {
               pathLabel.setText(" ");
             }

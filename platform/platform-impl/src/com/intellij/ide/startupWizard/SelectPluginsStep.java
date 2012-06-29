@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,11 +84,11 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
         final IdeaPluginDescriptor pluginDescriptor = getSelectedPlugin();
         if (pluginDescriptor != null) {
           final String description = pluginDescriptor.getDescription();
-          myDescriptionArea.setText(description);
+          myDescriptionArea.setText(description == null || description.startsWith("<") ? description : UIUtil.toHtml(description, 5));
           myDescriptionArea.moveCaretPosition(0);
         }
         else {
-          myDescriptionArea.setText("Select a plugin to see its description");
+          myDescriptionArea.setText(UIUtil.toHtml("Select a plugin to see its description"));
         }
       }
     });
@@ -131,7 +131,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
       if (dependent != null) {
         String name = getAbbreviatedName(dependent);
         if (requiresBuffer.length() == 0) {
-          requiresBuffer.append(" (requires ");
+          requiresBuffer.append("   (requires ");
         }
         else {
           requiresBuffer.append(", ");
@@ -145,7 +145,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
         requiresBuffer.append(", ");
       }
       else {
-        requiresBuffer.append(" (");
+        requiresBuffer.append("   (");
       }
       requiresBuffer.append("required by ");
       requiresBuffer.append(StringUtil.join(requiredBy, new Function<IdeaPluginDescriptor, String>() {
@@ -227,7 +227,7 @@ public class SelectPluginsStep extends WizardStep<StartupWizardModel> {
   public void fillPlugins() {
     Collections.sort(myPlugins, new Comparator<IdeaPluginDescriptor>() {
       public int compare(final IdeaPluginDescriptor o1, final IdeaPluginDescriptor o2) {
-        return o1.getName().compareTo(o2.getName());
+        return StringUtil.compare(o1.getName(), o2.getName(), true);
       }
     });
     myPluginsList.setModel(new CollectionListModel(myPlugins));
