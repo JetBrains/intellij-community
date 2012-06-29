@@ -27,7 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -55,17 +55,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeThat;
 
 /**
  * @author mike
  */
 @RunWith(JMock.class)
 public class PathMacroManagerTest {
-  private static final String APP_HOME = PathManager.getHomePath();
-  private static final String USER_HOME = StringUtil.trimEnd(SystemProperties.getUserHome(), "/");
+  private static final String APP_HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
+  private static final String USER_HOME = FileUtil.toSystemIndependentName(StringUtil.trimEnd(SystemProperties.getUserHome(), "/"));
 
   private Module myModule;
   private ProjectEx myProject;
