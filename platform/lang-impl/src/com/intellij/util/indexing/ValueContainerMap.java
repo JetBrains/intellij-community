@@ -117,13 +117,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, ValueContaine
             final int idCount = DataInputOutputUtil.readSINT(in);
             for (int i = 0; i < idCount; i++) {
               final int id = DataInputOutputUtil.readSINT(in);
-              if (id < 0) {
-                valueContainer.removeValue(-id, value);
-                valueContainer.setNeedsCompacting(true);
-              }
-              else {
-                valueContainer.addValue(id, value);
-              }
+              valueContainer.addValue(id, value);
             }
           }
         }
