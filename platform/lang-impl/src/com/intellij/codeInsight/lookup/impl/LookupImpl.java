@@ -260,7 +260,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     mySortingLabel.setIcon(lexi ? lexiSortIcon : relevanceSortIcon);
     mySortingLabel.setToolTipText(lexi ? "Click to sort variants by relevance" : "Click to sort variants alphabetically");
 
-    resort();
+    resort(false);
   }
 
   public void setArranger(LookupArranger arranger) {
@@ -314,7 +314,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     mySelectionTouched = selectionTouched;
   }
 
-  public void resort() {
+  public void resort(boolean addAgain) {
     final List<LookupElement> items = getItems();
 
     synchronized (myList) {
@@ -322,8 +322,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       ((DefaultListModel)myList.getModel()).clear();
     }
 
-    for (final LookupElement item : items) {
-      addItem(item, itemMatcher(item));
+    if (addAgain) {
+      for (final LookupElement item : items) {
+        addItem(item, itemMatcher(item));
+      }
     }
     refreshUi(true, true);
   }
@@ -529,7 +531,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @NotNull
   @Override
   public String itemPattern(@NotNull LookupElement element) {
-    return itemMatcher(element).getPrefix() + myAdditionalPrefix;
+    String prefix = itemMatcher(element).getPrefix();
+    return myAdditionalPrefix.isEmpty() ? prefix : prefix + myAdditionalPrefix;
   }
 
   @Override
