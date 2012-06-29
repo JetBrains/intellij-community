@@ -1361,7 +1361,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     Disposer.register(getProject(), balloon);
 
     final StripeButton button = stripe.getButtonFor(toolWindowId);
-    LOG.assertTrue(button != null, "Button was not found, popup won't be shown");
+    LOG.assertTrue(button != null, "Button was not found, popup won't be shown. Toolwindow id: " +
+                                   toolWindowId +
+                                   ", message: " +
+                                   text +
+                                   ", message type: " +
+                                   type);
     if (button == null) return;
 
     final Runnable show = new Runnable() {
