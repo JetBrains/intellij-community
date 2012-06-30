@@ -81,6 +81,8 @@ public interface GroovyObject {
 ''');
   }
 
+
+  public static final String IMPORT_COMPILE_STATIC = 'import groovy.transform.CompileStatic'
   void addCompileStatic() {
    myFixture.addClass('''\
 package groovy.transform;

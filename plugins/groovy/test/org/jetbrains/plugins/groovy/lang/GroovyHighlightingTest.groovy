@@ -1145,4 +1145,21 @@ int method(x, y, z) {
 }
 ''')
  }
+
+  void testReassignedVarInClosure() {
+    addCompileStatic()
+    testHighlighting("""
+$IMPORT_COMPILE_STATIC
+
+@CompileStatic
+test() {
+    def var = "abc"
+    def cl = {
+        var = new Date()
+    }
+    cl()
+    var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
+}
+""")
+  }
 }
