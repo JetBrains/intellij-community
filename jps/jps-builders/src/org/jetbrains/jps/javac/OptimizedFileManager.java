@@ -100,7 +100,7 @@ class OptimizedFileManager extends DefaultFileManager {
           collectFromDirectoryRecursively(directory, kinds, results, true);
         }
         else {
-          collectFromDirectory(directory, kinds, false, results);
+          collectFromDirectory(directory, kinds, results);
         }
       }
     }
@@ -150,7 +150,7 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, boolean recurse, ListBuffer<JavaFileObject> result) {
+  private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result) {
     final File[] children = directory.listFiles();
     if (children != null) {
       final boolean acceptUnknownFiles = fileKinds.contains(JavaFileObject.Kind.OTHER);
