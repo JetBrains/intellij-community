@@ -20,12 +20,12 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
@@ -37,10 +37,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.codeInsight.GrReassignedLocalVarsChecker;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -62,9 +61,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mAT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMEMBER_POINTER;
@@ -73,7 +74,6 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMEMBER_P
  * @author ilyas
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpression> implements GrReferenceExpression {
-  private static final Key<CachedValue<PsiType>> LEAST_UPPER_BOUND_TYPE = Key.create("least upper bound type");
 
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -589,7 +589,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
-      PsiType result = checkReassignedVar(refExpr);
+      PsiType result = GrReassignedLocalVarsChecker.checkReassignedVar(refExpr, true);
       if (result!=null) return result;
 
 
@@ -618,72 +618,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
       return inferred;
     }
-  }
-
-  @Nullable
-  private static PsiType checkReassignedVar(GrReferenceExpressionImpl refExpr) {
-    if (!PsiUtil.isCompileStatic(refExpr) || refExpr.getQualifier() != null) {
-      return null;
-    }
-
-    final PsiElement resolved = refExpr.resolve();
-    if (!GroovyRefactoringUtil.isLocalVariable(resolved)) {
-      return null;
-    }
-
-    return getLeastUpperBoundByVar((GrVariable)resolved);
-  }
-
-  @Nullable
-  private static PsiType getLeastUpperBoundByVar(final GrVariable resolved) {
-    CachedValue<PsiType> data = resolved.getUserData(LEAST_UPPER_BOUND_TYPE);
-    if (data == null) {
-      data = CachedValuesManager.getManager(resolved.getProject()).createCachedValue(new CachedValueProvider<PsiType>() {
-        @Override
-        public Result<PsiType> compute() {
-          return Result.create(getLeastUpperBoundByVarImpl(resolved), PsiModificationTracker.MODIFICATION_COUNT, ProjectRootManager.getInstance(
-            resolved.getProject()));
-        }
-      }, false);
-    }
-    return data.getValue();
-  }
-
-  @Nullable
-  private static PsiType getLeastUpperBoundByVarImpl(final GrVariable resolved) {
-    return RecursionManager.doPreventingRecursion(resolved, false, new NullableComputable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(resolved);
-        final Collection<PsiReference> all = ReferencesSearch.search(resolved, resolved.getResolveScope()).findAll();
-        boolean hasClosureReassigns = false;
-        for (PsiReference reference : all) {
-          final PsiElement ref = reference.getElement();
-          if (ref instanceof GrReferenceExpression &&
-              PsiUtil.isLValue(((GrReferenceExpression)ref)) &&
-              ControlFlowUtils.findControlFlowOwner(ref) != flowOwner) {
-            hasClosureReassigns = true;
-            break;
-          }
-        }
-
-        if (!hasClosureReassigns) {
-          return null;
-        }
-
-        PsiType result = null;
-
-        final PsiManager manager = resolved.getManager();
-        for (PsiReference reference : all) {
-          final PsiElement ref = reference.getElement();
-          if (ref instanceof GrReferenceExpression &&
-              PsiUtil.isLValue(((GrReferenceExpression)ref))) {
-            result = TypesUtil.getLeastUpperBoundNullable(result, TypeInferenceHelper.getInitializerFor(ref), manager);
-          }
-        }
-        return result;
-      }
-    });
   }
 
   public PsiType getType() {

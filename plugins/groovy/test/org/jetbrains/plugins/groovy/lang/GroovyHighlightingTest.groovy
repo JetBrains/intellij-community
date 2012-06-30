@@ -1162,4 +1162,27 @@ test() {
 }
 """)
   }
+
+  void testReassignedVarInClosureInspection() {
+    addCompileStatic()
+    testHighlighting("""\
+test() {
+    def var = "abc"
+    def cl = {
+        <warning descr="Local variable var is reassigned in closure with other type">var</warning> = new Date()
+    }
+    cl()
+    var.toUpperCase()
+}
+
+test2() {
+    def var = "abc"
+    def cl = {
+        var = 'cde'
+    }
+    cl()
+    var.toUpperCase()
+}
+""", GrReassignedInClosureLocalVarInspection)
+  }
 }

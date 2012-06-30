@@ -739,6 +739,11 @@
                      displayName="Result of increment or decrement used"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" enabledByDefault="true" level="WARNING"
+                     shortName="GrReassignedInClosureLocalVar"
+                     displayName="Local variable is reassigned in closure or anonymous class"
+                     groupName="Potentially confusing code constructs"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrReassignedInClosureLocalVarInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="UnnecessaryQualifiedReference"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unnecessary.qualified.reference" groupName="Potentially confusing code constructs" enabledByDefault="false"
