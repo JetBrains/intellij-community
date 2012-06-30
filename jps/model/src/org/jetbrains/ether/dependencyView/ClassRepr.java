@@ -1,6 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
+import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
@@ -28,7 +29,7 @@ public class ClassRepr extends Proto {
 
   private final Set<FieldRepr> myFields;
   private final Set<MethodRepr> myMethods;
-  //public final Set<UsageRepr.Usage> myUsages;
+  private final Set<UsageRepr.Usage> myUsages;
 
   private final int myOuterClassName;
   private final boolean myIsLocal;
@@ -55,6 +56,14 @@ public class ClassRepr extends Proto {
 
   public RetentionPolicy getRetentionPolicy() {
     return myRetentionPolicy;
+  }
+
+  public Set<UsageRepr.Usage> getUsages() {
+    return myUsages;
+  }
+
+  public boolean addUsage(final UsageRepr.Usage usage) {
+    return myUsages.add(usage);
   }
 
   public abstract static class Diff extends Difference {
@@ -89,6 +98,9 @@ public class ClassRepr extends Proto {
       base |= Difference.SUPERCLASS;
     }
 
+    if (!myUsages.equals(pastClass.myUsages)) {
+      base |= Difference.USAGES;
+    }
     final int d = base;
 
     return new Diff() {
@@ -170,19 +182,19 @@ public class ClassRepr extends Proto {
     return result;
   }
 
-  public void updateClassUsages(final DependencyContext context, final UsageRepr.Cluster s) {
-    mySuperClass.updateClassUsages(context, name, s);
+  public void updateClassUsages(final DependencyContext context, final Set<UsageRepr.Usage> s) {
+    mySuperClass.updateClassUsages(context, myName, s);
 
     for (TypeRepr.AbstractType t : myInterfaces) {
-      t.updateClassUsages(context, name, s);
+      t.updateClassUsages(context, myName, s);
     }
 
     for (MethodRepr m : myMethods) {
-      m.updateClassUsages(context, name, s);
+      m.updateClassUsages(context, myName, s);
     }
 
     for (FieldRepr f : myFields) {
-      f.updateClassUsages(context, name, s);
+      f.updateClassUsages(context, myName, s);
     }
   }
 
@@ -195,8 +207,8 @@ public class ClassRepr extends Proto {
                    final Set<ElemType> targets,
                    final RetentionPolicy policy,
                    final int outerClassName,
-                   final boolean localClassFlag){ //,
-                   //final Set<UsageRepr.Usage> usages) {
+                   final boolean localClassFlag,
+                   final Set<UsageRepr.Usage> usages) {
     super(a, sig, n);
     this.myContext = context;
     myFileName = fn;
@@ -208,7 +220,7 @@ public class ClassRepr extends Proto {
     this.myRetentionPolicy = policy;
     this.myOuterClassName = outerClassName;
     this.myIsLocal = localClassFlag;
-    //this.myUsages = usages;
+    this.myUsages = usages;
   }
 
   public ClassRepr(final DependencyContext context, final DataInput in) {
@@ -228,7 +240,7 @@ public class ClassRepr extends Proto {
 
       myOuterClassName = in.readInt();
       myIsLocal = in.readBoolean();
-      //myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new HashSet<UsageRepr.Usage>(), in);
+      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new HashSet<UsageRepr.Usage>(), in);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -248,6 +260,7 @@ public class ClassRepr extends Proto {
       out.writeUTF(myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
       out.writeInt(myOuterClassName);
       out.writeBoolean(myIsLocal);
+      RW.save(myUsages, UsageRepr.externalizer(myContext), out);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -255,7 +268,7 @@ public class ClassRepr extends Proto {
   }
 
   public boolean isAnnotation() {
-    return (access & Opcodes.ACC_ANNOTATION) > 0;
+    return (myAccess & Opcodes.ACC_ANNOTATION) > 0;
   }
 
   @Override
@@ -266,22 +279,22 @@ public class ClassRepr extends Proto {
     ClassRepr classRepr = (ClassRepr)o;
 
     if (myFileName != classRepr.myFileName) return false;
-    if (name != classRepr.name) return false;
+    if (myName != classRepr.myName) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return 31 * myFileName + name;
+    return 31 * myFileName + myName;
   }
 
   public UsageRepr.Usage createUsage() {
-    return UsageRepr.createClassUsage(myContext, name);
+    return UsageRepr.createClassUsage(myContext, myName);
   }
 
   public String getPackageName() {
-    return getPackageName(name);
+    return getPackageName(myName);
   }
 
   public String getPackageName(final int s) {
@@ -300,7 +313,7 @@ public class ClassRepr extends Proto {
 
   public FieldRepr findField(final int name) {
     for (FieldRepr f : myFields) {
-      if (f.name == name) {
+      if (f.myName == name) {
         return f;
       }
     }
@@ -381,11 +394,11 @@ public class ClassRepr extends Proto {
     Arrays.sort(fs, new Comparator<FieldRepr>() {
       @Override
       public int compare(final FieldRepr o1, final FieldRepr o2) {
-        if (o1.name == o2.name) {
-          return o1.type.getDescr(context).compareTo(o2.type.getDescr(context));
+        if (o1.myName == o2.myName) {
+          return o1.myType.getDescr(context).compareTo(o2.myType.getDescr(context));
         }
 
-        return context.getValue(o1.name).compareTo(context.getValue(o2.name));
+        return context.getValue(o1.myName).compareTo(context.getValue(o2.myName));
       }
     });
     for (final FieldRepr f : fs) {
@@ -398,20 +411,20 @@ public class ClassRepr extends Proto {
     Arrays.sort(ms, new Comparator<MethodRepr>() {
       @Override
       public int compare(final MethodRepr o1, final MethodRepr o2) {
-        if (o1.name == o2.name) {
-          final String d1 = o1.type.getDescr(context);
-          final String d2 = o2.type.getDescr(context);
+        if (o1.myName == o2.myName) {
+          final String d1 = o1.myType.getDescr(context);
+          final String d2 = o2.myType.getDescr(context);
 
           final int c = d1.compareTo(d2);
 
           if (c == 0) {
-            final int l1 = o1.argumentTypes.length;
-            final int l2 = o2.argumentTypes.length;
+            final int l1 = o1.myArgumentTypes.length;
+            final int l2 = o2.myArgumentTypes.length;
 
             if (l1 == l2) {
               for (int i = 0; i<l1; i++) {
-                final String d11 = o1.argumentTypes[i].getDescr(context);
-                final String d22 = o2.argumentTypes[i].getDescr(context);
+                final String d11 = o1.myArgumentTypes[i].getDescr(context);
+                final String d22 = o2.myArgumentTypes[i].getDescr(context);
 
                 final int cc = d11.compareTo(d22);
 
@@ -429,12 +442,33 @@ public class ClassRepr extends Proto {
           return c;
         }
 
-        return context.getValue(o1.name).compareTo(context.getValue(o2.name));
+        return context.getValue(o1.myName).compareTo(context.getValue(o2.myName));
       }
     });
     for (final MethodRepr m : ms) {
       m.toStream(context, stream);
     }
     stream.println("      End Of Methods");
+
+    stream.println("      Usages:");
+
+    final List<String> usages = new LinkedList<String>();
+
+    for (final UsageRepr.Usage u : myUsages) {
+      final ByteOutputStream bas = new ByteOutputStream();
+
+      u.toStream(myContext, new PrintStream(bas));
+
+      bas.close();
+      usages.add(bas.toString());
+    }
+
+    Collections.sort(usages);
+
+    for (final String s : usages) {
+      stream.println(s);
+    }
+
+    stream.println("      End Of Usages");
   }
 }
