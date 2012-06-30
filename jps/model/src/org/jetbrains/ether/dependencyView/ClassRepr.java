@@ -1,14 +1,10 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
@@ -455,11 +451,17 @@ public class ClassRepr extends Proto {
     final List<String> usages = new LinkedList<String>();
 
     for (final UsageRepr.Usage u : myUsages) {
-      final ByteOutputStream bas = new ByteOutputStream();
+      final ByteArrayOutputStream bas = new ByteArrayOutputStream();
 
       u.toStream(myContext, new PrintStream(bas));
 
-      bas.close();
+      try {
+        bas.close();
+      }
+      catch (final Exception e) {
+        throw new RuntimeException(e);
+      }
+
       usages.add(bas.toString());
     }
 
