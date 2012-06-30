@@ -15,8 +15,8 @@
  */
 package com.intellij.execution;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,9 +24,12 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class ExecutionTargetManager {
+  public static final Topic<ExecutionTargetListener> TOPIC = Topic.create("ExecutionTarget topic", ExecutionTargetListener.class);
+
+
   @NotNull
   public static ExecutionTargetManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExecutionTargetManager.class);
+    return project.getComponent(ExecutionTargetManager.class);
   }
 
   @NotNull

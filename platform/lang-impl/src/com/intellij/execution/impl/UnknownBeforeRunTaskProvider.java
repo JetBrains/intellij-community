@@ -20,6 +20,7 @@ import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
@@ -62,7 +63,7 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     return false;
   }
 
-  public boolean executeTask(DataContext context, RunConfiguration configuration, UnknownTask task) {
+  public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, UnknownTask task) {
     return true;
   }
 

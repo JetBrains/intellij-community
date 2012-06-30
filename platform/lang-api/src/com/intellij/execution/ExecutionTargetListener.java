@@ -13,38 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public abstract class ExecutionTarget {
-  @NotNull
-  public abstract String getId();
-
-  @NotNull
-  public abstract String getDisplayName();
-
-  @Nullable
-  public abstract Icon getIcon();
-
-  public abstract boolean canRun(@NotNull RunnerAndConfigurationSettings configuration);
-
-  @Override
-  public boolean equals(Object obj) {
-    return obj == this || (getClass().isInstance(obj) && getId().equals(((ExecutionTarget)obj).getId()));
-  }
-
-  @Override
-  public int hashCode() {
-    return getId().hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return getId();
-  }
+public interface ExecutionTargetListener {
+  void activeTargetChanged(@NotNull ExecutionTarget newTarget);
 }

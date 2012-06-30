@@ -15,7 +15,6 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -23,10 +22,11 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ExecutionManager {
-  public static final Topic<ExecutionListener> EXECUTION_TOPIC = new Topic<ExecutionListener>("configuration executed", ExecutionListener.class,
-                                                                                              Topic.BroadcastDirection.TO_PARENT);
+  public static final Topic<ExecutionListener> EXECUTION_TOPIC
+    = new Topic<ExecutionListener>("configuration executed", ExecutionListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public static ExecutionManager getInstance(final Project project) {
     return project.getComponent(ExecutionManager.class);
@@ -34,16 +34,21 @@ public abstract class ExecutionManager {
 
   public abstract RunContentManager getContentManager();
 
-  public abstract void compileAndRun(Runnable startRunnable, RunProfile configuration, RunProfileState state, Runnable onCancelRunnable);
+  public abstract void compileAndRun(@NotNull Runnable startRunnable,
+                                     @NotNull ExecutionEnvironment env,
+                                     @Nullable RunProfileState state,
+                                     @Nullable Runnable onCancelRunnable);
 
   public abstract ProcessHandler[] getRunningProcesses();
 
-  public abstract void startRunProfile(@NotNull RunProfileStarter starter, @NotNull RunProfileState state,
-                              @NotNull Project project, @NotNull Executor executor, @NotNull ExecutionEnvironment env);
+  public abstract void startRunProfile(@NotNull RunProfileStarter starter,
+                                       @NotNull RunProfileState state,
+                                       @NotNull Project project,
+                                       @NotNull Executor executor,
+                                       @NotNull ExecutionEnvironment env);
 
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,
                                          @NotNull ExecutionTarget target,
                                          @NotNull RunnerAndConfigurationSettings configuration);
-
 }

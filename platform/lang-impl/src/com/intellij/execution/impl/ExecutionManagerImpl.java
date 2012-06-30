@@ -18,7 +18,10 @@ package com.intellij.execution.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -101,9 +104,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return handlers.toArray(new ProcessHandler[handlers.size()]);
   }
 
-  public void compileAndRun(final Runnable startRunnable, final RunProfile configuration, final @Nullable RunProfileState state, @Nullable final Runnable onCancelRunnable) {
-    if (configuration instanceof RunConfiguration) {
-      final RunConfiguration runConfiguration = (RunConfiguration)configuration;
+  public void compileAndRun(@NotNull final Runnable startRunnable, @NotNull final ExecutionEnvironment env, final @Nullable RunProfileState state, @Nullable final Runnable onCancelRunnable) {
+    RunProfile profile = env.getRunProfile();
+
+    if (profile instanceof RunConfiguration) {
+      final RunConfiguration runConfiguration = (RunConfiguration)profile;
       final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
 
       final List<BeforeRunTask> activeTasks = new ArrayList<BeforeRunTask>();
@@ -120,7 +125,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           public void run() {
             for (BeforeRunTask task : activeTasks) {
               BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
-              if(provider != null && !provider.executeTask(dataContext, runConfiguration, task)) {
+              if(provider != null && !provider.executeTask(dataContext, runConfiguration, env, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
                 }
@@ -194,8 +199,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       startRunnable.run();
     }
     else {
-      final RunnerSettings runnerSettings = env.getRunnerSettings();
-      compileAndRun(startRunnable, runnerSettings != null ? runnerSettings.getRunProfile() : profile, state, new Runnable() {
+      compileAndRun(startRunnable, env, state, new Runnable() {
         public void run() {
           if (!project.isDisposed()) {
             project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(executor.getId(), env);

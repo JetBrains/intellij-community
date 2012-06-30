@@ -39,9 +39,11 @@ public interface RunnerAndConfigurationSettings {
 
   String getName();
 
-  RunnerSettings getRunnerSettings(ProgramRunner runner);
+  @NotNull
+  RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner);
 
-  ConfigurationPerRunnerSettings getConfigurationSettings(ProgramRunner runner);
+  @NotNull
+  ConfigurationPerRunnerSettings getConfigurationSettings(@NotNull ProgramRunner runner);
 
   @Nullable
   ConfigurationType getType();
