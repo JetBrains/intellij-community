@@ -44,4 +44,8 @@ public class MockExecutionTargetManager extends ExecutionTargetManager {
   public List<ExecutionTarget> getTargetsFor(@Nullable RunnerAndConfigurationSettings settings) {
     return Collections.singletonList(DefaultExecutionTarget.INSTANCE);
   }
+
+  @Override
+  public void update() {
+  }
 }
