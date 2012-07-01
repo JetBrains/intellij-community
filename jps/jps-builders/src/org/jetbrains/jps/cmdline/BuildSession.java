@@ -162,49 +162,61 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private void runBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> artifacts, Map<String, String> builderParams, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
     boolean forceCleanCaches = false;
-    ProjectDescriptor pd;
-    final Project project = loadProject(projectPath);
 
-    final File dataStorageRoot = Utils.getDataStorageRoot(project);
-    if (!dataStorageRoot.exists()) {
-      // invoked the very first time for this project. Force full rebuild
-      buildType = BuildType.PROJECT_REBUILD;
+    final File dataStorageRoot = Utils.getDataStorageRoot(projectPath);
+    if (dataStorageRoot == null) {
+      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " + projectPath));
+      return;
     }
-
-    final boolean inMemoryMappingsDelta = System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
-    ProjectTimestamps projectTimestamps = null;
-    BuildDataManager dataManager = null;
-    try {
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
-      dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
-      if (dataManager.versionDiffers()) {
-        forceCleanCaches = true;
-        msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
-      }
-    }
-    catch (Exception e) {
-      // second try
-      LOG.info(e);
-      if (projectTimestamps != null) {
-        projectTimestamps.close();
-      }
-      if (dataManager != null) {
-        dataManager.close();
-      }
-      forceCleanCaches = true;
-      FileUtil.delete(dataStorageRoot);
-      projectTimestamps = new ProjectTimestamps(dataStorageRoot);
-      dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
-      // second attempt succeded
-      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
-    }
-
     final BuildFSState fsState = new BuildFSState(false);
-    pd = new ProjectDescriptor(project, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
-    myProjectDescriptor = pd;
 
     try {
-      loadFsState(myProjectDescriptor, dataStorageRoot, myInitialFSDelta);
+      final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta);
+      if (shouldApplyEvent && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
+        applyFSEvent(null, myInitialFSDelta);
+        return;
+      }
+      if (!dataStorageRoot.exists()) {
+        // invoked the very first time for this project. Force full rebuild
+        buildType = BuildType.PROJECT_REBUILD;
+      }
+
+      final boolean inMemoryMappingsDelta = System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
+      ProjectTimestamps projectTimestamps = null;
+      BuildDataManager dataManager = null;
+      try {
+        projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+        dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
+        if (dataManager.versionDiffers()) {
+          forceCleanCaches = true;
+          msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
+        }
+      }
+      catch (Exception e) {
+        // second try
+        LOG.info(e);
+        if (projectTimestamps != null) {
+          projectTimestamps.close();
+        }
+        if (dataManager != null) {
+          dataManager.close();
+        }
+        forceCleanCaches = true;
+        FileUtil.delete(dataStorageRoot);
+        projectTimestamps = new ProjectTimestamps(dataStorageRoot);
+        dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
+        // second attempt succeded
+        msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
+      }
+
+      final Project project = loadProject(projectPath);
+      final ProjectDescriptor pd = new ProjectDescriptor(project, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
+      myProjectDescriptor = pd;
+      if (shouldApplyEvent) {
+        applyFSEvent(pd, myInitialFSDelta);
+      }
+
+
       // free memory
       myInitialFSDelta = null;
       // ensure events from controller are processed after FSState initialization
@@ -254,15 +266,18 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
     }
     finally {
-      saveData(pd, dataStorageRoot);
+      saveData(fsState, dataStorageRoot);
     }
   }
 
-  private void saveData(ProjectDescriptor pd, File dataStorageRoot) {
+  private void saveData(final BuildFSState fsState, File dataStorageRoot) {
     final boolean wasInterrupted = Thread.interrupted();
     try {
-      saveFsState(dataStorageRoot, pd.fsState, myLastEventOrdinal);
-      pd.release();
+      saveFsState(dataStorageRoot, fsState, myLastEventOrdinal);
+      final ProjectDescriptor pd = myProjectDescriptor;
+      if (pd != null) {
+        pd.release();
+      }
     }
     finally {
       if (wasInterrupted) {
@@ -307,20 +322,22 @@ final class BuildSession implements Runnable, CanceledStatus {
       return;
     }
 
-    final Timestamps timestamps = pd.timestamps.getStorage();
+    if (pd != null) {
+      final Timestamps timestamps = pd.timestamps.getStorage();
 
-    for (String deleted : event.getDeletedPathsList()) {
-      final File file = new File(deleted);
-      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
-      if (rd != null) {
-        pd.fsState.registerDeleted(rd.module, file, rd.isTestRoot, timestamps);
+      for (String deleted : event.getDeletedPathsList()) {
+        final File file = new File(deleted);
+        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+        if (rd != null) {
+          pd.fsState.registerDeleted(rd.module, file, rd.isTestRoot, timestamps);
+        }
       }
-    }
-    for (String changed : event.getChangedPathsList()) {
-      final File file = new File(changed);
-      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
-      if (rd != null) {
-        pd.fsState.markDirty(file, rd, timestamps);
+      for (String changed : event.getChangedPathsList()) {
+        final File file = new File(changed);
+        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+        if (rd != null) {
+          pd.fsState.markDirty(file, rd, timestamps);
+        }
       }
     }
 
@@ -365,7 +382,8 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void loadFsState(final ProjectDescriptor pd, File dataStorageRoot, CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
+  private boolean loadFsState(final BuildFSState fsState, File dataStorageRoot, CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
+    boolean shouldApplyEvent = false;
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final InputStream fs = new FileInputStream(file);
@@ -381,20 +399,21 @@ final class BuildSession implements Runnable, CanceledStatus {
       try {
         final long savedOrdinal = in.readLong();
         if (initialEvent != null && (savedOrdinal + 1L == initialEvent.getOrdinal())) {
-          pd.fsState.load(in);
+          fsState.load(in);
           myLastEventOrdinal = savedOrdinal;
-          applyFSEvent(pd, initialEvent);
+          shouldApplyEvent = true;
+          //applyFSEvent(pd, initialEvent);
         }
         else {
           // either the first start or some events were lost, forcing scan
-          pd.fsState.clearAll();
+          fsState.clearAll();
           myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
         }
       }
       finally {
         in.close();
       }
-      return; // successfully initialized
+      return shouldApplyEvent; // successfully initialized
 
     }
     catch (FileNotFoundException ignored) {
@@ -403,7 +422,12 @@ final class BuildSession implements Runnable, CanceledStatus {
       LOG.error(e);
     }
     myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
-    pd.fsState.clearAll();
+    fsState.clearAll();
+    return shouldApplyEvent;
+  }
+
+  private static boolean containsChanges(CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
+    return event.getChangedPathsCount() != 0 || event.getDeletedPathsCount() != 0;
   }
 
   private void finishBuild(Throwable error, boolean hadBuildErrors, boolean markedUptodateFiles) {

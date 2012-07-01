@@ -160,6 +160,32 @@ final class FilesDelta {
     return forTests? myTestsToRecompile : mySourcesToRecompile;
   }
 
+  public boolean hasSourcesToRecompile() {
+    synchronized (myTestsToRecompile) {
+      if(!myTestsToRecompile.isEmpty()) {
+        for (Set<File> files : myTestsToRecompile.values()) {
+          if (!files.isEmpty()) {
+            return true;
+          }
+        }
+      }
+    }
+    synchronized (mySourcesToRecompile) {
+      if(!mySourcesToRecompile.isEmpty()) {
+        for (Set<File> files : mySourcesToRecompile.values()) {
+          if (!files.isEmpty()) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean hasPathsToDelete() {
+    return !myDeletedTests.isEmpty() || !myDeletedProduction.isEmpty();
+  }
+
   public Set<String> getDeletedPaths(boolean isTest) {
     final Set<String> deleted = isTest ? myDeletedTests : myDeletedProduction;
     synchronized (deleted) {

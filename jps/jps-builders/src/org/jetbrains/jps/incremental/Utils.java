@@ -2,11 +2,13 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -34,6 +36,57 @@ public class Utils {
     final String name = project.getProjectName().toLowerCase(Locale.US);
     return new File(ourSystemRoot, name + "_" + Integer.toHexString(project.getLocationHash()));
   }
+
+  @Nullable
+  public static File getDataStorageRoot(String projectPath) {
+    projectPath = FileUtil.toCanonicalPath(projectPath);
+    if (projectPath == null) {
+      return null;
+    }
+
+    String name;
+    final int locationHash;
+
+    final File rootFile = new File(projectPath);
+    if (rootFile.isFile() && projectPath.endsWith(".ipr")) {
+      name = StringUtil.trimEnd(rootFile.getName(), ".ipr");
+      locationHash = projectPath.hashCode();
+    }
+    else {
+      File directoryBased = null;
+      if (".idea".equals(rootFile.getName())) {
+        directoryBased = rootFile;
+      }
+      else {
+        File child = new File(rootFile, ".idea");
+        if (child.exists()) {
+          directoryBased = child;
+        }
+      }
+      if (directoryBased == null) {
+        return null;
+      }
+      try {
+        name = getDirectoryBaseProjectName(directoryBased);
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+        return null;
+      }
+      locationHash = directoryBased.getPath().hashCode();
+    }
+
+    return new File(ourSystemRoot, name.toLowerCase(Locale.US) + "_" + Integer.toHexString(locationHash));
+  }
+
+  private static String getDirectoryBaseProjectName(File dir) throws IOException {
+    File nameFile = new File(dir, ".name");
+    if (nameFile.isFile()) {
+      return FileUtil.loadFile(nameFile).trim();
+    }
+    return StringUtil.replace(dir.getParentFile().getName(), ":", "");
+  }
+
 
   public static URI toURI(String localPath) {
     return toURI(localPath, true);
