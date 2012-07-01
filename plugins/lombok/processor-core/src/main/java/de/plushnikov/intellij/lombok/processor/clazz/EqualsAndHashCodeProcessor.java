@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -69,13 +68,10 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
 
   protected void validateCallSuperParamForObject(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder) {
     Boolean callSuperProperty = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "callSuper", Boolean.class);
-    if (null != callSuperProperty && callSuperProperty) {
-      final PsiClass superClass = psiClass.getSuperClass();
-      if (null != superClass && CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-        builder.addError("Generating equals/hashCode with a supercall to java.lang.Object is pointless.",
-            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
-            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", null));
-      }
+    if (null != callSuperProperty && callSuperProperty && PsiClassUtil.hasSuperClass(psiClass)) {
+      builder.addError("Generating equals/hashCode with a supercall to java.lang.Object is pointless.",
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"),
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", null));
     }
   }
 

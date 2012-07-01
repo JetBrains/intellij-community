@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -17,6 +16,7 @@ import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
 import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
@@ -61,15 +61,12 @@ public abstract class AbstractLombokClassProcessor extends AbstractLombokProcess
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
     Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper", Boolean.class);
-    if (null == callSuperProperty) {
-      final PsiClass superClass = psiClass.getSuperClass();
-      if (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-        builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-            "even though this class does not extend java.lang.Object." +
-            "If this is intentional, add '(callSuper=false)' to your type.",
-            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
-            PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
-      }
+    if (null == callSuperProperty && PsiClassUtil.hasSuperClass(psiClass)) {
+      builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
+          "even though this class does not extend java.lang.Object." +
+          "If this is intentional, add '(callSuper=false)' to your type.",
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
+          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
     }
   }
 

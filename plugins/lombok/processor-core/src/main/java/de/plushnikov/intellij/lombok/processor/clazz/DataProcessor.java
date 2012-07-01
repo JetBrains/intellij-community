@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -44,8 +43,7 @@ public class DataProcessor extends AbstractLombokClassProcessor {
 
   protected void validateCallSuperParam(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, String generatedMethodName) {
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, EqualsAndHashCode.class)) {
-      final PsiClass superClass = psiClass.getSuperClass();
-      if (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
+      if (PsiClassUtil.hasSuperClass(psiClass)) {
         builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
             "even though this class does not extend java.lang.Object." +
             "If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.",
