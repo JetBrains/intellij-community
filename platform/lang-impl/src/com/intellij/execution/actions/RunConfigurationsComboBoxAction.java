@@ -158,8 +158,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
       RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
       if (selected != null) {
+        ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
         for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selected)) {
-          allActionsGroup.add(new SelectTargetAction(project, eachTarget));
+          allActionsGroup.add(new SelectTargetAction(project, eachTarget, eachTarget.equals(activeTarget)));
         }
         allActionsGroup.addSeparator();
       }
@@ -248,11 +249,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static class SelectTargetAction extends ToggleAction {
+  private static class SelectTargetAction extends AnAction {
     private final Project myProject;
     private final ExecutionTarget myTarget;
 
-    public SelectTargetAction(final Project project, final ExecutionTarget target) {
+    public SelectTargetAction(final Project project, final ExecutionTarget target, boolean selected) {
       myProject = project;
       myTarget = target;
 
@@ -260,15 +261,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       Presentation presentation = getTemplatePresentation();
       presentation.setText(name, false);
       presentation.setDescription("Select " + name);
+      if (selected) {
+        presentation.setIcon(AllIcons.Actions.Checked);
+        presentation.setSelectedIcon(AllIcons.Actions.Checked_selected);
+      }
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myTarget.equals(ExecutionTargetManager.getActiveTarget(myProject));
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void actionPerformed(AnActionEvent e) {
       ExecutionTargetManager.setActiveTarget(myProject, myTarget);
       updateButton(ExecutionTargetManager.getActiveTarget(myProject),
                    RunManagerEx.getInstanceEx(myProject).getSelectedConfiguration(),

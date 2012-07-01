@@ -18,24 +18,19 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.Executor;
 
-/**
- * @author spleaner
- */
-public class ChooseDebugConfigurationAction extends ChooseRunConfigurationAction {
-
+public class ChooseDebugConfigurationPopupAction extends ChooseRunConfigurationPopupAction {
   @Override
   protected Executor getDefaultExecutor() {
-    return super.getAlternateExecutor();
+    return super.getAlternativeExecutor();
+  }
+
+  @Override
+  protected Executor getAlternativeExecutor() {
+    return super.getDefaultExecutor();
   }
 
   @Override
   protected String getAdKey() {
     return "debug.configuration.alternate.action.ad";
   }
-
-  @Override
-  protected Executor getAlternateExecutor() {
-    return super.getDefaultExecutor();
-  }
-
 }
