@@ -8,12 +8,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +28,7 @@ public class LombokLightModifierList11Impl extends LightModifierList {
 
   public LombokLightModifierList11Impl(PsiManager manager, final Language language, String... modifiers) {
     super(manager, language, modifiers);
-    myAnnotations = CollectionFactory.newTroveMap();
+    myAnnotations = new HashMap<String, PsiAnnotation>();
   }
 
   public void setModifierProperty(@PsiModifier.ModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {

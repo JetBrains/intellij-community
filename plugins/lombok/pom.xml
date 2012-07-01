@@ -275,13 +275,6 @@
         <artifactId>bootstrap</artifactId>
         <version>${idea.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.jetbrains.thirdparty</groupId>
-        <artifactId>trove4j</artifactId>
-        <version>${idea.version}</version>
-        <scope>system</scope>
-        <systemPath>D:/Projekte/Idea/ideaIC-117.418/lib/trove4j.jar</systemPath>
-      </dependency>
 
       <dependency>
         <groupId>org.picocontainer</groupId>

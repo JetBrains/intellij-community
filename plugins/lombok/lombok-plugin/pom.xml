@@ -62,11 +62,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jetbrains.thirdparty</groupId>
-      <artifactId>trove4j</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>

@@ -15,12 +15,12 @@ import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -40,8 +40,8 @@ public class LombokLightModifierList extends LightElement implements PsiModifier
   public LombokLightModifierList(@NotNull PsiManager manager, @NotNull Language language, @NotNull PsiElement parent) {
     super(manager, language);
     myParentElement = parent;
-    myModifiers = CollectionFactory.newTroveSet();
-    myAnnotations = CollectionFactory.newTroveMap();
+    myModifiers = new HashSet<String>();
+    myAnnotations = new HashMap<String, PsiAnnotation>();
   }
 
   public void addModifier(@Modifier @NotNull @NonNls String modifier) {

@@ -47,10 +47,5 @@
       <version>${idea11.version}</version>
       <type>pom</type>
     </dependency>
-    <dependency>
-      <groupId>org.jetbrains.thirdparty</groupId>
-      <artifactId>trove4j</artifactId>
-      <version>${idea11.version}</version>
-    </dependency>
   </dependencies>
 </project>
