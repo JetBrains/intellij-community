@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.lombok.util;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -9,6 +10,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -82,5 +84,22 @@ public class PsiClassUtil {
 
   public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
     return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+  }
+
+  public static boolean hasSuperClass(@Nonnull final PsiClass psiClass) {
+    final PsiClass superClass = psiClass.getSuperClass();
+    return null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName());
+  }
+
+  public static boolean hasMultiArgumentConstructor(@Nonnull final PsiClass psiClass) {
+    boolean result = false;
+    final PsiMethod[] definedConstructors = collectClassConstructorIntern(psiClass);
+    for (PsiMethod psiMethod : definedConstructors) {
+      if(psiMethod.getParameterList().getParametersCount() > 0) {
+        result = true;
+        break;
+      }
+    }
+    return result;
   }
 }

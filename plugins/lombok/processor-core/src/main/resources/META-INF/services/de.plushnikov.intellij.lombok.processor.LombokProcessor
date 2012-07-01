@@ -13,6 +13,8 @@ de.plushnikov.intellij.lombok.processor.clazz.EqualsAndHashCodeProcessor
 de.plushnikov.intellij.lombok.processor.clazz.GetterProcessor
 de.plushnikov.intellij.lombok.processor.clazz.SetterProcessor
 de.plushnikov.intellij.lombok.processor.clazz.ToStringProcessor
+de.plushnikov.intellij.lombok.processor.clazz.FluentSetterProcessor
+de.plushnikov.intellij.lombok.processor.clazz.SingletonProcessor
 de.plushnikov.intellij.lombok.processor.clazz.log.CommonsLogProcessor
 de.plushnikov.intellij.lombok.processor.clazz.log.Log4jProcessor
 de.plushnikov.intellij.lombok.processor.clazz.log.LogProcessor
