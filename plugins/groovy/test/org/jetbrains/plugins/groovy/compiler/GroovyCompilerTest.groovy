@@ -231,15 +231,13 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
         //println "Idea Log:"
         //println ideaLog.text
       }
-
-
-      throw e
-    }
-    finally {
       if (makeLog.exists()) {
         println "Server Log:"
         println makeLog.text
       }
+      throw e
+    }
+    finally {
       System.out.flush()
     }
   }
