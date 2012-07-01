@@ -53,8 +53,22 @@
       </activation>
       <properties>
         <idea.version>${idea11.version}</idea.version>
-        <plugin.supported.build.from>110.3</plugin.supported.build.from>
+        <plugin.supported.build.from>110.3</plugin.supported.build.from><!--118.749-->
         <plugin.supported.build.to/>
+      </properties>
+    </profile>
+    <profile>
+      <id>intellij-11</id>
+      <activation>
+        <property>
+          <name>IntelliJ</name>
+          <value>11</value>
+        </property>
+      </activation>
+      <properties>
+        <idea.version>${idea11.version}</idea.version>
+        <plugin.supported.build.from>110.3</plugin.supported.build.from>
+        <plugin.supported.build.to>118</plugin.supported.build.to>
       </properties>
     </profile>
     <profile>
@@ -144,6 +158,7 @@
     <idea9.version>9.0.4</idea9.version>
     <idea10.version>10.5.4</idea10.version>
     <idea11.version>11.1.2</idea11.version>
+    <idea12.version>12.0-SNAPSHOT</idea12.version>
 
     <!-- maven.build.timestamp since 2.1.0-M1 -->
     <maven.min.version>2.1.0</maven.min.version>
@@ -254,6 +269,12 @@
       <dependency>
         <groupId>org.jetbrains.idea</groupId>
         <artifactId>util</artifactId>
+        <version>${idea.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jetbrains.idea</groupId>
+        <artifactId>util-rt</artifactId>
         <version>${idea.version}</version>
         <scope>provided</scope>
       </dependency>

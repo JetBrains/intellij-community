@@ -1,9 +1,5 @@
 package de.plushnikov.intellij.lombok.quickfix;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -13,20 +9,22 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameValuePair;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Plushnikov Michail
  */
 public class ChangeAnnotationParameterQuickFix implements IntentionAction, LocalQuickFix {
   private final PsiAnnotation myAnnotation;
-  private final String        myName;
-  private final String        myNewValue;
+  private final String myName;
+  private final String myNewValue;
 
   public ChangeAnnotationParameterQuickFix(@NotNull PsiAnnotation psiAnnotation, @NotNull String name) {
     this(psiAnnotation, name, null);
@@ -107,12 +105,16 @@ public class ChangeAnnotationParameterQuickFix implements IntentionAction, Local
     PsiNameValuePair[] attributes = myAnnotation.getParameterList().getAttributes();
     for (PsiNameValuePair attribute : attributes) {
       @NonNls final String attributeName = attribute.getName();
-      if (Comparing.equal(myName, attributeName) || attributeName == null && myName.equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
+      if (equals(myName, attributeName) || attributeName == null && myName.equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
         result = attribute;
         break;
       }
     }
     return result;
+  }
+
+  private boolean equals(CharSequence cs1, CharSequence cs2) {
+    return cs1 == null ? cs2 == null : cs1.equals(cs2);
   }
 
   public boolean startInWriteAction() {

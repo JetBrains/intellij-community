@@ -1,18 +1,16 @@
 package de.plushnikov.intellij.lombok.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.PsiClassImpl;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Plushnikov Michail
@@ -27,7 +25,14 @@ public class PsiClassUtil {
    */
   @NotNull
   public static PsiMethod[] collectClassMethodsIntern(@NotNull PsiClass psiClass) {
-    return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
+    Collection<PsiMethod> result = new ArrayList<PsiMethod>();
+    for (PsiElement psiElement : psiClass.getChildren()) {
+      if (psiElement instanceof PsiMethod) {
+        result.add((PsiMethod) psiElement);
+      }
+    }
+    return result.toArray(new PsiMethod[result.size()]);
+    //return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
   }
 
   @NotNull
@@ -65,7 +70,14 @@ public class PsiClassUtil {
    */
   @NotNull
   public static PsiField[] collectClassFieldsIntern(@NotNull PsiClass psiClass) {
-    return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
+    Collection<PsiField> result = new ArrayList<PsiField>();
+    for (PsiElement psiElement : psiClass.getChildren()) {
+      if (psiElement instanceof PsiField) {
+        result.add((PsiField) psiElement);
+      }
+    }
+    return result.toArray(new PsiField[result.size()]);
+    //return ((PsiClassImpl) psiClass).getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
   }
 
   public static PsiClassType getClassType(@NotNull PsiClass psiClass) {
