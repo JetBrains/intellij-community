@@ -693,6 +693,9 @@ public class BuildManager implements ApplicationComponent{
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      cmdLine.addParameter("-Dtest.mode=true");
+    }
 
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
     if (shouldGenerateIndex != null) {

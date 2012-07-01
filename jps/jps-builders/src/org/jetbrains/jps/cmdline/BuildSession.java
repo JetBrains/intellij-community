@@ -331,12 +331,22 @@ final class BuildSession implements Runnable, CanceledStatus {
         if (rd != null) {
           pd.fsState.registerDeleted(rd.module, file, rd.isTestRoot, timestamps);
         }
+        else {
+          if (Utils.IS_TEST_MODE) {
+            LOG.info("Skipping deleted path: " + file.getPath());
+          }
+        }
       }
       for (String changed : event.getChangedPathsList()) {
         final File file = new File(changed);
         final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
         if (rd != null) {
           pd.fsState.markDirty(file, rd, timestamps);
+        }
+        else {
+          if (Utils.IS_TEST_MODE) {
+            LOG.info("Skipping dirty path: " + file.getPath());
+          }
         }
       }
     }

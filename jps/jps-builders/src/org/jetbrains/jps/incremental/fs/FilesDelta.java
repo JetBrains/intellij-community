@@ -1,10 +1,12 @@
 package org.jetbrains.jps.incremental.fs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.Utils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -14,6 +16,8 @@ import java.util.*;
 
 /** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
 final class FilesDelta {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
+
   private final Set<String> myDeletedProduction = Collections.synchronizedSet(new HashSet<String>());
   private final Set<String> myDeletedTests = Collections.synchronizedSet(new HashSet<String>());
   private final Map<File, Set<File>> mySourcesToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>()); // srcRoot -> set of sources
@@ -57,7 +61,11 @@ final class FilesDelta {
       }
       int filesCount = in.readInt();
       while (filesCount-- > 0) {
-        files.add(new File(IOUtil.readString(in)));
+        final File file = new File(IOUtil.readString(in));
+        if (Utils.IS_TEST_MODE) {
+          LOG.info("Loaded " + file.getPath());
+        }
+        files.add(file);
       }
     }
   }
@@ -115,6 +123,10 @@ final class FilesDelta {
   }
 
   private boolean _addToRecompiled(File root, boolean isTestRoot, File file) {
+    if (Utils.IS_TEST_MODE) {
+      LOG.info("Marking dirty: " + file.getPath());
+    }
+
     final Map<File, Set<File>> toRecompile = isTestRoot ? myTestsToRecompile : mySourcesToRecompile;
     Set<File> files;
     synchronized (toRecompile) {
@@ -123,8 +135,8 @@ final class FilesDelta {
         files = createSetOfFiles();
         toRecompile.put(root, files);
       }
+      return files.add(file);
     }
-    return files.add(file);
   }
 
   public void addDeleted(File file, boolean isTest) {
@@ -136,7 +148,11 @@ final class FilesDelta {
       }
     }
     final Set<String> deleted = isTest? myDeletedTests : myDeletedProduction;
-    deleted.add(FileUtil.toCanonicalPath(file.getPath()));
+    final String path = FileUtil.toCanonicalPath(file.getPath());
+    deleted.add(path);
+    if (Utils.IS_TEST_MODE) {
+      LOG.info("Marking deleted: " + path);
+    }
   }
 
   public void clearDeletedPaths(boolean isTest) {

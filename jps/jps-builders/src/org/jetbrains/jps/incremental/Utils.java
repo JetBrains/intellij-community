@@ -20,6 +20,7 @@ import java.util.*;
 public class Utils {
   public static final Key<Map<String, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home", ".idea-build"));
+  public static final boolean IS_TEST_MODE = Boolean.parseBoolean(System.getProperty("test.mode", "false"));
 
   private Utils() {
   }
