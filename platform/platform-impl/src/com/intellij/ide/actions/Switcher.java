@@ -310,7 +310,7 @@ public class Switcher extends AnAction implements DumbAware {
           g.drawLine(0, 0, 0, getHeight());
         }
       };
-      separator.setBackground(UIUtil.getControlColor());
+      separator.setBackground(toolWindows.getBackground());
 
       int selectionIndex = -1;
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
