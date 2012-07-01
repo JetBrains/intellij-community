@@ -20,7 +20,6 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.compiler.CompileServerManager
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
@@ -233,13 +232,15 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
         //println ideaLog.text
       }
 
+
+      throw e
+    }
+    finally {
       if (makeLog.exists()) {
         println "Server Log:"
         println makeLog.text
       }
       System.out.flush()
-
-      throw e
     }
   }
 
@@ -256,7 +257,6 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       "}");
 
     def javaFile = myFixture.addFileToProject("tests/Java.java", "public class Java {}");
-    BuildManager.instance.notifyFilesChanged([sub.virtualFile.path, javaFile.virtualFile.path])
 
     assertEmpty(make());
     assertOutput("Sub", "hello");
