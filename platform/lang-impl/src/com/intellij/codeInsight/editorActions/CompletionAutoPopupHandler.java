@@ -79,7 +79,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
 
   public static void invokeCompletion(CompletionType completionType,
                                       boolean autopopup,
-                                      Project project, Editor editor, int time) {
+                                      Project project, Editor editor, int time, boolean restart) {
     if (editor.isDisposed()) return;
     
     // retrieve the injected file from scratch since our typing might have destroyed the old one completely
@@ -94,7 +94,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
     }
     Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
     try {
-      new CodeCompletionHandlerBase(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false);
+      new CodeCompletionHandlerBase(completionType, false, autopopup, false).invokeCompletion(project, newEditor, time, false, restart);
     }
     catch (IndexNotReadyException ignored) {
     }

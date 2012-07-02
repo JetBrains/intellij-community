@@ -55,7 +55,7 @@ public class FileEqualsUsageInspection extends InternalInspection {
         if (clazz == null) return;
 
         String methodName = method.getName();
-        if ("java.io.File".equals(clazz.getQualifiedName())
+        if (CommonClassNames.JAVA_IO_FILE.equals(clazz.getQualifiedName())
             && ("equals".equals(methodName) || "compareTo".equals(methodName) || "hashCode".equals(methodName))) {
           holder.registerProblem(methodExpression,
                                  "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on MacOS. Use FileUtil.filesEquals/fileHashCode/compareFiles instead",

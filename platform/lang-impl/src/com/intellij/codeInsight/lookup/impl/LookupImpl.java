@@ -1396,14 +1396,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myScrollBarIncreaseButton.setPreferredSize(buttonSize);
       myScrollBarIncreaseButton.setMinimumSize(buttonSize);
       myScrollBarIncreaseButton.setMaximumSize(buttonSize);
-      myScrollPane.getVerticalScrollBar().revalidate();
-      myScrollPane.getVerticalScrollBar().repaint();
+      JScrollBar scrollBar = myScrollPane.getVerticalScrollBar();
+      scrollBar.revalidate();
+      scrollBar.repaint();
 
       final Dimension iconSize = myProcessIcon.getPreferredSize();
-      myIconPanel.setBounds(getWidth() - iconSize.width, 0, iconSize.width, iconSize.height);
+      myIconPanel.setBounds(getWidth() - iconSize.width - (scrollBar.isVisible() ? scrollBar.getWidth() : 0), 0, iconSize.width, iconSize.height);
 
       final Dimension sortSize = mySortingLabel.getPreferredSize();
-      final Point sbLocation = SwingUtilities.convertPoint(myScrollPane.getVerticalScrollBar(), 0, 0, myLayeredPane);
+      final Point sbLocation = SwingUtilities.convertPoint(scrollBar, 0, 0, myLayeredPane);
 
       final int sortHeight = Math.max(adHeight, mySortingLabel.getPreferredSize().height);
       mySortingLabel.setBounds(sbLocation.x, getHeight() - sortHeight, sortSize.width, sortHeight);
