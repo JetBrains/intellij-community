@@ -179,8 +179,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   }
 
   private static boolean shouldShowSecondSmartCompletionHint(final CompletionParameters parameters) {
-    return parameters.getCompletionType() == CompletionType.CLASS_NAME &&
-           parameters.getInvocationCount() == 1 &&
+    return parameters.getCompletionType() == CompletionType.BASIC &&
+           parameters.getInvocationCount() == 2 &&
            parameters.getOriginalFile().getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 }
