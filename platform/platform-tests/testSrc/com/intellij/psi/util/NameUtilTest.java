@@ -380,6 +380,7 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testPreferStartMatchToMiddleMatch() {
+    assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
     assertPreference("*f", "barfoo", "barFoo");
     assertPreference("*f", "barfoo", "foo");

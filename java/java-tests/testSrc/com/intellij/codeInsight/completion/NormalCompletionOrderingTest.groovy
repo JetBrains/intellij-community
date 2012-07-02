@@ -378,4 +378,9 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, 'fooy', 'foox', 'fooAClass', 'fooBar');
   }
 
+  public void testUnderscoresDontMakeMatchMiddle() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    checkPreferredItems(0, '_fooBar', 'FooBar')
+  }
+
 }

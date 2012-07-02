@@ -147,10 +147,7 @@ public class CompletionServiceImpl extends CompletionService{
         Iterable<TextRange> fragments = matcher.matchingFragments(ls);
         if (fragments != null) {
           Iterator<TextRange> iterator = fragments.iterator();
-          if (!ls.isEmpty() && prefix.charAt(0) == ls.charAt(0)) {
-            return false;
-          }
-          if (iterator.hasNext() && iterator.next().contains(0)) {
+          if (!iterator.hasNext() || MinusculeMatcher.isStartMatch(ls, iterator.next().getStartOffset())) {
             return false;
           }
         }
