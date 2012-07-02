@@ -149,12 +149,11 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     long idleTime = app.getIdleTime();
 
     final String uptimeS = FeatureStatisticsBundle.message("feature.statistics.application.uptime",
-                                                           ApplicationNamesInfo.getInstance().getProductName(),
+                                                           ApplicationNamesInfo.getInstance().getFullProductName(),
                                                            DateFormatUtil.formatDuration(uptime));
 
-    final String idleTimeS = FeatureStatisticsBundle .message("feature.statistics.application.idle.time",
-                                                              ApplicationNamesInfo.getInstance().getProductName(),
-                                                              DateFormatUtil.formatDuration(idleTime));
+    final String idleTimeS = FeatureStatisticsBundle.message("feature.statistics.application.idle.time",
+                                                             DateFormatUtil.formatDuration(idleTime));
 
     String labelText = uptimeS + ", " + idleTimeS;
     CompletionStatistics stats = ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics();

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -64,6 +65,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/afterNewThrowable";
 
     configureByFile(path + "/before1.java");
+    myFixture.type('\n');
     checkResultByFile(path + "/after1.java");
   }
 
@@ -80,6 +82,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/afterNewThrowable";
 
     configureByFile(path + "/before2.java");
+    myFixture.type('\n');
     checkResultByFile(path + "/after2.java");
   }
 
@@ -92,6 +95,12 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   public void testInPlainTextFile() throws Exception {
     configureByFile(getTestName(false) + ".txt");
     checkResultByFile(getTestName(false) + "_after.txt");
+  }
+
+  public void testInPropertiesFile() throws Exception {
+    myFixture.configureByText("a.properties", "abc = StrinBui<caret>");
+    complete();
+    myFixture.checkResult("abc = java.lang.StringBuilder<caret>");
   }
 
   public void testDoubleStringBuffer() throws Exception {
@@ -198,6 +207,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   private void cleanupVfs() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
         for (VirtualFile file : myFixture.getTempDirFixture().getFile("").getChildren()) {
           try {
             file.delete(this);

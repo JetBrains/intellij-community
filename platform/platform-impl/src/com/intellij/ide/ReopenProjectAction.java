@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.awt.event.InputEvent;
+import java.io.File;
 
 /**
 * @author yole
@@ -50,8 +51,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     final int modifiers = e.getModifiers();
     final boolean forceOpenInNewFrame = (modifiers & InputEvent.CTRL_MASK) != 0 || (modifiers & InputEvent.SHIFT_MASK) != 0;
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (!RecentProjectsManagerBase.isValidProjectPath(myProjectPath)) {
-      Messages.showErrorDialog(project, "The project path " + FileUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
+    File file = new File(myProjectPath);
+    if (!file.exists() || !file.isDirectory()) {
+      Messages.showErrorDialog(project, "The directory " + FileUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
                                         "If it is on a removable or network drive, please make sure that the drive is connected.",
                                "Reopen Project");
       return;

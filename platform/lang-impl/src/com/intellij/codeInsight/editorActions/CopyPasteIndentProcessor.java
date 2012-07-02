@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharArrayUtil;
@@ -20,6 +21,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author yole
@@ -40,9 +42,9 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     Document document = editor.getDocument();
     int selStartLine = document.getLineNumber(startOffsets[0]);
     int selEndLine = document.getLineNumber(endOffsets[0]);
-    if (selStartLine == selEndLine) {
-      return null;
-    }
+    //if (selStartLine == selEndLine) {
+    //  return null;
+    //}
     // check that selection starts at or before the first non-whitespace character on a line
     for (int offset = startOffsets[0] - 1; offset >= document.getLineStartOffset(selStartLine); offset--) {
       if (!Character.isWhitespace(document.getCharsSequence().charAt(offset))) {
@@ -132,20 +134,29 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
       @Override
       public void run() {
         String pastedText = document.getText(TextRange.create(bounds));
-        if (pastedText.trim().indexOf("\n") < 0) {
+
+        int startLine = document.getLineNumber(bounds.getStartOffset());
+        int endLine = document.getLineNumber(bounds.getEndOffset());
+        if (!pastedText.trim().contains("\n") && startLine == endLine) {
           // don't indent single-line text
           return;
         }
-        int startLine = document.getLineNumber(bounds.getStartOffset());
-        int endLine = document.getLineNumber(bounds.getEndOffset());
+
         int startLineStart = document.getLineStartOffset(startLine);
         // don't indent first line if there's any text before it
         final String textBeforeFirstLine = document.getText(new TextRange(startLineStart, bounds.getStartOffset()));
         if (textBeforeFirstLine.trim().length() == 0) {
           EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
         }
+
+        final List<String> strings = StringUtil.split(pastedText, "\n");
+        //if (strings.get(strings.size() - 1))
+
+        if (strings.get(0).trim().startsWith("def") ||
+            strings.get(0).trim().startsWith("class")) endLine -=1;
+
         for (int i = startLine+1; i <= endLine; i++) {
-          EditorActionUtil.indentLine(project, editor, i, caretColumn - value.getIndent());
+          EditorActionUtil.indentLine(project, editor, i, value.getIndent());
         }
         indented.set(Boolean.TRUE);
       }

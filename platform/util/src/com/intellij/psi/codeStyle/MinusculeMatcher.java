@@ -264,7 +264,9 @@ public class MinusculeMatcher implements Matcher {
         if (p < 0) {
           break;
         }
-        matchingCase += c == myPattern[p] ? 1 : 0;
+        if (Character.isUpperCase(myPattern[p]) || i == range.getStartOffset()) {
+          matchingCase += c == myPattern[p] ? 1 : 0;
+        }
       }
       fragmentCount++;
     }

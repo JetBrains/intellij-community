@@ -265,6 +265,11 @@ public abstract class RadComponent {
     return null;
   }
 
+  @Nullable
+  public RadComponent wrapIn(MetaModel target) throws Exception {
+    return null;
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Utils

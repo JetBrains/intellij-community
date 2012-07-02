@@ -226,14 +226,14 @@ new Fxoo()<caret>\n"""
     myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
     myFixture.configureByText "a.groovy", "@Abcd<caret>"
     complete()
-    myFixture.checkResult "@AbcdAnno<caret>"
+    assert myFixture.lookupElementStrings[0] == 'AbcdAnno'
   }
 
   public void testOnlyExceptionsInCatch() {
     myFixture.addClass "class AbcdClass {}; class AbcdException extends Throwable {}"
     myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret>"
     complete()
-    myFixture.checkResult "try {} catch (AbcdException<caret>"
+    assert myFixture.lookupElementStrings[0] == 'AbcdException'
   }
 
   public void testClassNameInMultilineString() {

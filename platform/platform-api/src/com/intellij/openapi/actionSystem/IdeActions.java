@@ -255,4 +255,6 @@ public interface IdeActions {
   String ACTION_REDO = "$Redo";
   String GROUP_REFACTOR = "RefactoringMenu";
   String CHANGES_VIEW_ROLLBACK = "ChangesView.Rollback";
+
+  String CONSOLE_CLEAR_ALL = "ConsoleView.ClearAll";
 }

@@ -177,6 +177,7 @@ public class DesignerActionPanel implements DataProvider {
       myDynamicPopupGroup.removeAll();
     }
 
+    WrapInAction.fill(myDesigner, myDynamicPopupGroup, area);
     MorphingAction.fill(myDesigner, myDynamicPopupGroup, area);
 
     return myPopupGroup;
