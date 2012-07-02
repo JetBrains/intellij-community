@@ -1272,4 +1272,22 @@ class Foo {
     myFixture.checkResult 'class Foo {{ boolean <caret> }}'
   }
 
+  @Override
+  protected void tearDown() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    super.tearDown()
+  }
+
+  public void testBackspaceShouldShowPreviousVariants() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    myFixture.addClass("class OuterX { static class TrueLine {} }")
+    myFixture.configureByText 'a.java', 'class Foo{ void foo(int truex) { return tr<caret> }}'
+    type 'ue'
+    assert myFixture.lookupElementStrings == ['true', 'truex']
+    type 'l'
+    assert myFixture.lookupElementStrings == ['TrueLine']
+    type '\b'
+    assert myFixture.lookupElementStrings == ['true', 'truex']
+  }
+
 }

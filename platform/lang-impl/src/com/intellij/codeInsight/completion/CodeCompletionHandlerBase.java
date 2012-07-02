@@ -100,14 +100,18 @@ public class CodeCompletionHandlerBase {
 
   public final void invokeCompletion(final Project project, final Editor editor) {
     try {
-      invokeCompletion(project, editor, 1, false);
+      invokeCompletion(project, editor, 1);
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
     }
   }
 
-  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers) {
+  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time) {
+    invokeCompletion(project, editor, time, false, false);
+  }
+
+  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers, boolean restarted) {
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
@@ -210,28 +214,38 @@ public class CodeCompletionHandlerBase {
     };
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
-
-      int offset = editor.getCaretModel().getOffset();
-      int psiOffset = Math.max(0, offset - 1);
-
-      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, psiOffset);
-      if (elementAt == null) {
-        elementAt = psiFile.findElementAt(psiOffset);
-      }
-      if (elementAt == null) return;
-
-      Language language = PsiUtilBase.findLanguageFromElement(elementAt);
-
-      for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-        final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
-        if (result == ThreeState.YES) return;
-        if (result == ThreeState.NO) break;
+      if (!restarted && shouldSkipAutoPopup(editor, psiFile)) {
+        return;
       }
     } else {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
     }
 
     insertDummyIdentifier(initializationContext[0], hasModifiers, time);
+  }
+
+  private static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
+    int offset = editor.getCaretModel().getOffset();
+    int psiOffset = Math.max(0, offset - 1);
+
+    PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, psiOffset);
+    if (elementAt == null) {
+      elementAt = psiFile.findElementAt(psiOffset);
+    }
+    if (elementAt == null) return true;
+
+    Language language = PsiUtilBase.findLanguageFromElement(elementAt);
+
+    for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
+      final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
+      if (result == ThreeState.YES) {
+        return true;
+      }
+      if (result == ThreeState.NO) {
+        return false;
+      }
+    }
+    return false;
   }
 
   @NotNull

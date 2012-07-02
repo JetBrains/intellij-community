@@ -29,6 +29,6 @@ public class CompleteMacro extends BaseCompleteMacro {
 
   protected void invokeCompletionHandler(Project project, Editor editor) {
     new CodeCompletionHandlerBase(CompletionType.BASIC, ApplicationManager.getApplication().isUnitTestMode(), false, true)
-      .invokeCompletion(project, editor, 1, false);
+      .invokeCompletion(project, editor, 1);
   }
 }

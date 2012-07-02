@@ -941,7 +941,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
               }
             };
             Editor editor = getCompletionEditor();
-            handler.invokeCompletion(getProject(), editor, invocationCount, false);
+            handler.invokeCompletion(getProject(), editor, invocationCount);
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
           }
         }, null, null);

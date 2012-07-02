@@ -121,7 +121,7 @@ public class AutoPopupController implements Disposable {
             PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
             if (file != null && condition != null && !condition.value(file)) return;
 
-            CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0);
+            CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
           }
         });
       }

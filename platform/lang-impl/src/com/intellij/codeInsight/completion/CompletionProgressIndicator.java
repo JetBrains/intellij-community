@@ -658,7 +658,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
             if (phase.checkExpired()) return;
     
             CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
-                                                        isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount());
+                                                        isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(), true);
           }
         });
       }
