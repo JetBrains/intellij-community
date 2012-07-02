@@ -5,8 +5,7 @@
 
   <resource-bundle>messages.DesignerBundle</resource-bundle>
 
-  <depends>com.intellij.java-i18n</depends>
-  <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.lang</depends>
 
   <project-components>
     <component>
