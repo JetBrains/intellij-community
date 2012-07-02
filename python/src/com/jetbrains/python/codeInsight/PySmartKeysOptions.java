@@ -10,6 +10,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 public class PySmartKeysOptions extends BeanConfigurable<CodeInsightSettings> implements UnnamedConfigurable {
   public PySmartKeysOptions() {
     super(CodeInsightSettings.getInstance());
-    checkBox("INDENT_TO_CARET_ON_PASTE", "Indent pasted lines relative to caret location");
+    checkBox("INDENT_TO_CARET_ON_PASTE", "Smart indent pasted lines");
   }
 }
