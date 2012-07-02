@@ -120,6 +120,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("foo bar", "fooGooBar");
     assertMatches("foo bar", "fooGoo bar");
     assertDoesntMatch(" b", "fbi");
+    assertDoesntMatch(" for", "performAction");
     assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("getUsage"));
     assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("getMyUsage"));
   }
