@@ -150,8 +150,10 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       getMemValueContainer(key).removeAssociatedValue(inputId);
       return;
     }
-
-    myMap.remove(key); //
+    final ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
+    if (valueContainer != null) {
+      valueContainer.dropMergedData();
+    }
 
     myBackendStorage.removeAllValues(key, inputId);
   }
