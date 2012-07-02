@@ -17,12 +17,19 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
@@ -37,15 +44,13 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
 
       registrar.register(fixRange, new CreateEnumConstantFromUsageFix(refExpr), null);
-      registrar.register(fixRange, new CreateConstantFieldFromUsageFix(refExpr), null);
-      registrar.register(fixRange, new CreateFieldFromUsageFix(refExpr), null);
       registrar.register(new RenameWrongRefFix(refExpr));
 
       if (!ref.isQualified()) {
         registrar.register(fixRange, new BringVariableIntoScopeFix(refExpr), null);
-        registrar.register(fixRange, new CreateLocalFromUsageFix(refExpr), null);
-        registrar.register(fixRange, new CreateParameterFromUsageFix(refExpr), null);
       }
+
+      registerPriorityActions(registrar,fixRange,refExpr);
     }
 
     registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
@@ -63,6 +68,57 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
       registrar.register(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
     }
+  }
+
+  private static void registerPriorityActions(@NotNull final QuickFixActionRegistrar registrar,
+                                                         @NotNull final TextRange fixRange,
+                                                         @NotNull final PsiReferenceExpression refExpr) {
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
+
+    final Map<VariableKind, IntentionAction> map = new HashMap<VariableKind, IntentionAction>() {
+      {
+        put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
+        put(VariableKind.STATIC_FINAL_FIELD, new CreateConstantFieldFromUsageFix(refExpr));
+        if (!refExpr.isQualified()) {
+          put(VariableKind.LOCAL_VARIABLE, new CreateLocalFromUsageFix(refExpr));
+          put(VariableKind.PARAMETER, new CreateParameterFromUsageFix(refExpr));
+        }
+      }
+    };
+
+    final VariableKind kind = getKind(styleManager, refExpr);
+    if (map.containsKey(kind)){
+      map.put(kind, PriorityIntentionActionWrapper.highPriority(map.get(kind)));
+    }
+
+    for (IntentionAction action : map.values()){
+      registrar.register(fixRange, action, null);
+    }
+  }
+
+  @NotNull
+  private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager,
+                                      @NotNull PsiReferenceExpression refExpr) {
+    final String reference = refExpr.getText();
+
+    if (reference.toUpperCase().equals(reference)){
+      return VariableKind.STATIC_FINAL_FIELD;
+    }
+
+    for (VariableKind kind : VariableKind.values()) {
+      final String prefix = styleManager.getPrefixByVariableKind(kind);
+      final String suffix = styleManager.getSuffixByVariableKind(kind);
+
+      if (prefix.isEmpty() && suffix.isEmpty()) {
+        continue;
+      }
+
+      if (reference.startsWith(prefix) && reference.endsWith(suffix)) {
+        return kind;
+      }
+    }
+
+    return VariableKind.LOCAL_VARIABLE;
   }
 
   @Override
