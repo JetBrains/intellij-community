@@ -358,7 +358,7 @@ public class NameUtil {
       }
       return i - 1;
     }
-    while (i < text.length() && !isWordStart(text, i) && !!Character.isLetterOrDigit(text.charAt(i))) {
+    while (i < text.length() && !isWordStart(text, i) && Character.isLetterOrDigit(text.charAt(i))) {
       i++;
     }
     return i;
@@ -384,6 +384,8 @@ public class NameUtil {
     boolean matches(String name);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   public static com.intellij.util.text.Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
     MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
     return buildMatcher(pattern, options);
