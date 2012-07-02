@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.UnknownConfigurationType;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -28,15 +29,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.ui.popup.WizardPopup;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -52,39 +52,47 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-public class ChooseRunConfigurationPopup {
+/**
+ * @author spleaner
+ */
+public class ChooseRunConfigurationAction extends AnAction {
   private static final Icon EDIT_ICON = AllIcons.Actions.EditSource;
   private static final Icon SAVE_ICON = AllIcons.RunConfigurations.SaveTempConfig;
 
-  private final Project myProject;
-  @NotNull private final String myAddKey;
-  @NotNull private final Executor myDefaultExecutor;
-  @Nullable private final Executor myAlternativeExecutor;
-
   private Executor myCurrentExecutor;
   private boolean myEditConfiguration;
-  private final RunListPopup myPopup;
 
-  public ChooseRunConfigurationPopup(@NotNull Project project,
-                                     @NotNull String addKey,
-                                     @NotNull Executor defaultExecutor,
-                                     @Nullable Executor alternativeExecutor) {
-    myProject = project;
-    myAddKey = addKey;
-    myDefaultExecutor = defaultExecutor;
-    myAlternativeExecutor = alternativeExecutor;
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    assert project != null;
 
-    myPopup = new RunListPopup(new ConfigurationListPopupStep(this, myProject, String.format("%s", myDefaultExecutor.getActionName())));
-  }
+    final Executor executor = getDefaultExecutor();
+    assert executor != null;
 
-  public void show() {
+    final RunListPopup popup = new RunListPopup(project, new ConfigurationListPopupStep(this, project, String.format("%s", executor.getActionName()))) {
+      @Override
+      protected void handleShiftClick(final boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup) {
+        try {
+          myCurrentExecutor = getAlternateExecutor();
+          popup._handleSelect(handleFinalChoices, inputEvent);
+        } finally {
+          myCurrentExecutor = null;
+        }
+      }
+    };
+    registerActions(popup);
 
-    final String adText = getAdText(myAlternativeExecutor);
+    final String adText = getAdText(getAlternateExecutor());
     if (adText != null) {
-      myPopup.setAdText(adText);
+      popup.setAdText(adText);
     }
 
-    myPopup.showCenteredInCurrentWindow(myProject);
+    popup.showCenteredInCurrentWindow(project);
+  }
+
+  protected String getAdKey() {
+    return "run.configuration.alternate.action.ad";
   }
 
   protected static boolean canRun(@NotNull final Executor executor, final RunnerAndConfigurationSettings settings) {
@@ -94,7 +102,7 @@ public class ChooseRunConfigurationPopup {
   @Nullable
   protected String getAdText(final Executor alternateExecutor) {
     final PropertiesComponent properties = PropertiesComponent.getInstance();
-    if (alternateExecutor != null && !properties.isTrueValue(myAddKey)) {
+    if (alternateExecutor != null && !properties.isTrueValue(getAdKey())) {
       return String
         .format("Hold %s to %s", KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke("SHIFT")), alternateExecutor.getActionName());
     }
@@ -113,29 +121,39 @@ public class ChooseRunConfigurationPopup {
   private void registerActions(final RunListPopup popup) {
     popup.registerAction("alternateExecutor", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        myCurrentExecutor = myAlternativeExecutor;
-        updatePresentation();
+        myCurrentExecutor = getAlternateExecutor();
+        updatePresentation(popup);
       }
     });
 
     popup.registerAction("restoreDefaultExecutor", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        myCurrentExecutor = myDefaultExecutor;
-        updatePresentation();
+        myCurrentExecutor = getDefaultExecutor();
+        updatePresentation(popup);
       }
     });
 
 
     popup.registerAction("invokeAction", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
-        popup.handleSelect(true);
+        try {
+          popup.handleSelect(true);
+        }
+        finally {
+          myCurrentExecutor = null;
+        }
       }
     });
 
     popup.registerAction("editConfiguration", KeyStroke.getKeyStroke("F4"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         myEditConfiguration = true;
-        popup.handleSelect(true);
+        try {
+          popup.handleSelect(true);
+        }
+        finally {
+          myEditConfiguration = false;
+        }
       }
     });
 
@@ -159,39 +177,39 @@ public class ChooseRunConfigurationPopup {
       }
     });
 
-    final Action action0 = createNumberAction(0, popup, myDefaultExecutor);
-    final Action action0_ = createNumberAction(0, popup, myAlternativeExecutor);
+    final Action action0 = createNumberAction(0, popup, getDefaultExecutor());
+    final Action action0_ = createNumberAction(0, popup, getAlternateExecutor());
     popup.registerAction("0Action", KeyStroke.getKeyStroke("0"), action0);
     popup.registerAction("0Action_", KeyStroke.getKeyStroke("shift pressed 0"), action0_);
     popup.registerAction("0Action1", KeyStroke.getKeyStroke("NUMPAD0"), action0);
     popup.registerAction("0Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD0"), action0_);
 
-    final Action action1 = createNumberAction(1, popup, myDefaultExecutor);
-    final Action action1_ = createNumberAction(1, popup, myAlternativeExecutor);
+    final Action action1 = createNumberAction(1, popup, getDefaultExecutor());
+    final Action action1_ = createNumberAction(1, popup, getAlternateExecutor());
     popup.registerAction("1Action", KeyStroke.getKeyStroke("1"), action1);
     popup.registerAction("1Action_", KeyStroke.getKeyStroke("shift pressed 1"), action1_);
     popup.registerAction("1Action1", KeyStroke.getKeyStroke("NUMPAD1"), action1);
     popup.registerAction("1Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD1"), action1_);
 
-    final Action action2 = createNumberAction(2, popup, myDefaultExecutor);
-    final Action action2_ = createNumberAction(2, popup, myAlternativeExecutor);
+    final Action action2 = createNumberAction(2, popup, getDefaultExecutor());
+    final Action action2_ = createNumberAction(2, popup, getAlternateExecutor());
     popup.registerAction("2Action", KeyStroke.getKeyStroke("2"), action2);
     popup.registerAction("2Action_", KeyStroke.getKeyStroke("shift pressed 2"), action2_);
     popup.registerAction("2Action1", KeyStroke.getKeyStroke("NUMPAD2"), action2);
     popup.registerAction("2Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD2"), action2_);
 
-    final Action action3 = createNumberAction(3, popup, myDefaultExecutor);
-    final Action action3_ = createNumberAction(3, popup, myAlternativeExecutor);
+    final Action action3 = createNumberAction(3, popup, getDefaultExecutor());
+    final Action action3_ = createNumberAction(3, popup, getAlternateExecutor());
     popup.registerAction("3Action", KeyStroke.getKeyStroke("3"), action3);
     popup.registerAction("3Action_", KeyStroke.getKeyStroke("shift pressed 3"), action3_);
     popup.registerAction("3Action1", KeyStroke.getKeyStroke("NUMPAD3"), action3);
     popup.registerAction("3Action_1", KeyStroke.getKeyStroke("shift pressed NUMPAD3"), action3_);
   }
 
-  private void updatePresentation() {
+  private void updatePresentation(ListPopupImpl listPopup) {
     final Executor executor = getCurrentExecutor();
     if (executor != null) {
-      myPopup.setCaption(executor.getActionName());
+      listPopup.setCaption(executor.getActionName());
     }
   }
 
@@ -227,9 +245,41 @@ public class ChooseRunConfigurationPopup {
     manager.removeConfiguration(configurationSettings);
   }
 
+  @Nullable
+  protected Executor getDefaultExecutor() {
+    return DefaultRunExecutor.getRunExecutorInstance();
+  }
+
+  @Nullable
+  protected Executor getAlternateExecutor() {
+    return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+  }
+
   @NotNull
   protected Executor getCurrentExecutor() {
-    return myCurrentExecutor == null ? myDefaultExecutor : myCurrentExecutor;
+    return myCurrentExecutor == null ? getDefaultExecutor() : myCurrentExecutor;
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final Presentation presentation = e.getPresentation();
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+
+    presentation.setEnabled(true);
+    if (project == null || project.isDisposed()) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
+
+    if (null == getDefaultExecutor()) {
+      presentation.setEnabled(false);
+      presentation.setVisible(false);
+      return;
+    }
+
+    presentation.setEnabled(true);
+    presentation.setVisible(true);
   }
 
   private static Action createNumberAction(final int number, final ListPopupImpl listPopup, final Executor executor) {
@@ -249,12 +299,18 @@ public class ChooseRunConfigurationPopup {
     };
   }
 
-  private abstract static class Wrapper {
+  private abstract static class ItemWrapper<T> {
+    private final T myValue;
+    private boolean myDynamic = false;
     private int myMnemonic = -1;
     private final boolean myAddSeparatorAbove;
-    private boolean myChecked;
 
-    protected Wrapper(boolean addSeparatorAbove) {
+    protected ItemWrapper(@Nullable final T value) {
+      this(value, false);
+    }
+
+    protected ItemWrapper(@Nullable final T value, boolean addSeparatorAbove) {
+      myValue = value;
       myAddSeparatorAbove = addSeparatorAbove;
     }
 
@@ -262,44 +318,8 @@ public class ChooseRunConfigurationPopup {
       return myMnemonic;
     }
 
-    public boolean isChecked() {
-      return myChecked;
-    }
-
-    public void setChecked(boolean checked) {
-      myChecked = checked;
-    }
-
     public void setMnemonic(int mnemonic) {
       myMnemonic = mnemonic;
-    }
-
-    public boolean addSeparatorAbove() {
-      return myAddSeparatorAbove;
-    }
-
-    @Nullable
-    public abstract Icon getIcon();
-
-    public abstract String getText();
-
-    public boolean canBeDeleted() {
-      return false;
-    }
-  }
-
-  private abstract static class ItemWrapper<T> extends Wrapper {
-    private final T myValue;
-    private boolean myDynamic;
-
-
-    protected ItemWrapper(@Nullable final T value) {
-      this(value, false);
-    }
-
-    protected ItemWrapper(@Nullable final T value, boolean addSeparatorAbove) {
-      super(addSeparatorAbove);
-      myValue = value;
     }
 
     public T getValue() {
@@ -312,6 +332,10 @@ public class ChooseRunConfigurationPopup {
 
     public void setDynamic(final boolean b) {
       myDynamic = b;
+    }
+
+    public boolean addSeparatorAbove() {
+      return myAddSeparatorAbove;
     }
 
     @Override
@@ -331,6 +355,11 @@ public class ChooseRunConfigurationPopup {
       return myValue != null ? myValue.hashCode() : 0;
     }
 
+    @Nullable
+    public abstract Icon getIcon();
+
+    public abstract String getText();
+
     public abstract void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull final DataContext context);
 
     @Nullable
@@ -346,7 +375,7 @@ public class ChooseRunConfigurationPopup {
       return false;
     }
 
-    public PopupStep getNextStep(Project project, ChooseRunConfigurationPopup action) {
+    public PopupStep getNextStep(Project project, ChooseRunConfigurationAction action) {
       return PopupStep.FINAL_CHOICE;
     }
 
@@ -396,23 +425,23 @@ public class ChooseRunConfigurationPopup {
         }
 
         @Override
-        public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationPopup action) {
+        public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationAction action) {
           return new ConfigurationActionsStep(project, action, getValue(), isDynamic());
         }
       };
     }
 
     public boolean canBeDeleted() {
-      return !isDynamic() && getValue() instanceof RunnerAndConfigurationSettings;
+      return !isDynamic() && getValue() != null;
     }
   }
 
   private static final class ConfigurationListPopupStep extends BaseListPopupStep<ItemWrapper> {
     private final Project myProject;
-    private final ChooseRunConfigurationPopup myAction;
+    private final ChooseRunConfigurationAction myAction;
     private int myDefaultConfiguration = -1;
 
-    private ConfigurationListPopupStep(@NotNull final ChooseRunConfigurationPopup action,
+    private ConfigurationListPopupStep(@NotNull final ChooseRunConfigurationAction action,
                                        @NotNull final Project project,
                                        @NotNull final String title) {
       super(title, createSettingsList(project));
@@ -450,13 +479,8 @@ public class ChooseRunConfigurationPopup {
 
       if (selectedConfiguration != null) {
         boolean isFirst = true;
-        final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
         for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selectedConfiguration)) {
           result.add(new ItemWrapper<ExecutionTarget>(eachTarget, isFirst) {
-            {
-              setChecked(eachTarget.equals(activeTarget));
-            }
-
             @Override
             public Icon getIcon() {
               return eachTarget.getIcon();
@@ -483,8 +507,7 @@ public class ChooseRunConfigurationPopup {
       }
 
 
-      final Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting =
-        new LinkedHashMap<RunnerAndConfigurationSettings, ItemWrapper>();
+      final Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<RunnerAndConfigurationSettings, ItemWrapper>();
       final ConfigurationType[] types = manager.getConfigurationFactories();
       for (final ConfigurationType type : types) {
         if (!(type instanceof UnknownConfigurationType)) {
@@ -556,9 +579,9 @@ public class ChooseRunConfigurationPopup {
 
     @NotNull
     private static List<RunnerAndConfigurationSettings> populateWithDynamicRunners(final List<ItemWrapper> result,
-                                                                                   Map<RunnerAndConfigurationSettings, ItemWrapper> existing,
-                                                                                   final Project project, final RunManagerEx manager,
-                                                                                   final RunnerAndConfigurationSettings selectedConfiguration) {
+                                                                                       Map<RunnerAndConfigurationSettings, ItemWrapper> existing,
+                                                                                       final Project project, final RunManagerEx manager,
+                                                                                       final RunnerAndConfigurationSettings selectedConfiguration) {
 
       final ArrayList<RunnerAndConfigurationSettings> contextConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
       final DataContext dataContext = DataManager.getInstance().getDataContext();
@@ -586,8 +609,7 @@ public class ChooseRunConfigurationPopup {
               wrapper.setMnemonic(i);
               i++;
             }
-          }
-          else {
+          } else {
             if (selectedConfiguration != null && configuration.equals(selectedConfiguration)) continue;
             contextConfigurations.add(configuration);
 
@@ -620,7 +642,7 @@ public class ChooseRunConfigurationPopup {
               }
 
               @Override
-              public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationPopup action) {
+              public PopupStep getNextStep(@NotNull final Project project, @NotNull final ChooseRunConfigurationAction action) {
                 return new ConfigurationActionsStep(project, action, configuration, isDynamic());
               }
 
@@ -699,8 +721,8 @@ public class ChooseRunConfigurationPopup {
       if (finalChoice && wrapper.available(executor)) {
         return doFinalStep(new Runnable() {
           public void run() {
-            if (executor == myAction.myAlternativeExecutor) {
-              PropertiesComponent.getInstance().setValue(myAction.myAddKey, Boolean.toString(true));
+            if (executor == myAction.getAlternateExecutor()) {
+              PropertiesComponent.getInstance().setValue(myAction.getAdKey(), Boolean.toString(true));
             }
 
             wrapper.perform(myProject, executor, DataManager.getInstance().getDataContext());
@@ -731,29 +753,24 @@ public class ChooseRunConfigurationPopup {
 
   private static final class ConfigurationActionsStep extends BaseListPopupStep<ActionWrapper> {
     private ConfigurationActionsStep(@NotNull final Project project,
-                                     ChooseRunConfigurationPopup action,
+                                     ChooseRunConfigurationAction action,
                                      @NotNull final RunnerAndConfigurationSettings settings, final boolean dynamic) {
       super("Actions", buildActions(project, action, settings, dynamic));
     }
 
     @Override
     public ListSeparator getSeparatorAbove(ActionWrapper value) {
-      return value.addSeparatorAbove() ? new ListSeparator() : null;
+      return value.isAddSeparatorAbove() ? new ListSeparator() : null;
     }
 
     private static ActionWrapper[] buildActions(@NotNull final Project project,
-                                                final ChooseRunConfigurationPopup action,
+                                                final ChooseRunConfigurationAction action,
                                                 @NotNull final RunnerAndConfigurationSettings settings,
                                                 final boolean dynamic) {
       final List<ActionWrapper> result = new ArrayList<ActionWrapper>();
 
-      final ExecutionTarget active = ExecutionTargetManager.getActiveTarget(project);
       for (final ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, settings)) {
         result.add(new ActionWrapper(eachTarget.getDisplayName(), eachTarget.getIcon()) {
-          {
-            setChecked(eachTarget.equals(active));
-          }
-
           @Override
           public void perform() {
             final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
@@ -765,7 +782,6 @@ public class ChooseRunConfigurationPopup {
           }
         });
       }
-
       boolean isFirst = true;
       for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), settings.getConfiguration());
@@ -823,27 +839,32 @@ public class ChooseRunConfigurationPopup {
     @NotNull
     @Override
     public String getTextFor(ActionWrapper value) {
-      return value.getText();
+      return value.getName();
     }
   }
 
-  private abstract static class ActionWrapper extends Wrapper {
+  private abstract static class ActionWrapper {
     private final String myName;
     private final Icon myIcon;
+    private final boolean myAddSeparatorAbove;
 
     private ActionWrapper(String name, Icon icon) {
       this(name, icon, false);
     }
 
     private ActionWrapper(String name, Icon icon, boolean addSeparatorAbove) {
-      super(addSeparatorAbove);
       myName = name;
       myIcon = icon;
+      myAddSeparatorAbove = addSeparatorAbove;
     }
 
     public abstract void perform();
 
-    public String getText() {
+    public boolean isAddSeparatorAbove() {
+      return myAddSeparatorAbove;
+    }
+
+    public String getName() {
       return myName;
     }
 
@@ -855,13 +876,11 @@ public class ChooseRunConfigurationPopup {
   private static class RunListElementRenderer extends PopupListElementRenderer {
     private JLabel myLabel;
     private final ListPopupImpl myPopup1;
-    private final boolean myHasSideBar;
 
-    private RunListElementRenderer(ListPopupImpl popup, boolean hasSideBar) {
+    private RunListElementRenderer(ListPopupImpl popup) {
       super(popup);
 
       myPopup1 = popup;
-      myHasSideBar = hasSideBar;
     }
 
     @Override
@@ -870,7 +889,7 @@ public class ChooseRunConfigurationPopup {
         myLabel = new JLabel();
         myLabel.setPreferredSize(new JLabel("8.").getPreferredSize());
       }
-
+      
       final JComponent result = super.createItemComponent();
       result.add(myLabel, BorderLayout.WEST);
       return result;
@@ -880,51 +899,34 @@ public class ChooseRunConfigurationPopup {
     protected void customizeComponent(JList list, Object value, boolean isSelected) {
       super.customizeComponent(list, value, isSelected);
 
-      myLabel.setVisible(myHasSideBar);
-
       ListPopupStep<Object> step = myPopup1.getListStep();
       boolean isSelectable = step.isSelectable(value);
       myLabel.setEnabled(isSelectable);
-      myLabel.setIcon(null);
 
       if (isSelected) {
         setSelected(myLabel);
-      }
-      else {
+      } else {
         setDeselected(myLabel);
       }
 
-      if (value instanceof Wrapper) {
-        Wrapper wrapper = (Wrapper)value;
-        final int mnemonic = wrapper.getMnemonic();
+      if (value instanceof ItemWrapper) {
+        final int mnemonic = ((ItemWrapper)value).getMnemonic();
         if (mnemonic != -1) {
           myLabel.setText(mnemonic + ".");
           myLabel.setDisplayedMnemonicIndex(0);
-        }
-        else {
-          if (wrapper.isChecked()) {
-            myLabel.setIcon(isSelected ? AllIcons.Actions.Checked_selected : AllIcons.Actions.Checked);
-          }
+        } else {
           myLabel.setText("");
         }
       }
     }
   }
 
-  private class RunListPopup extends ListPopupImpl {
-    public RunListPopup(ListPopupStep step) {
+  private abstract static class RunListPopup extends ListPopupImpl {
+    private final Project myProject_;
+
+    public RunListPopup(final Project project, ListPopupStep step) {
       super(step);
-      registerActions(this);
-    }
-
-    protected RunListPopup(WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
-      super(aParent, aStep, parentValue);
-      registerActions(this);
-    }
-
-    @Override
-    protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-      return new RunListPopup(parent, (ListPopupStep)step, parentValue);
+      myProject_ = project;
     }
 
     @Override
@@ -941,30 +943,16 @@ public class ChooseRunConfigurationPopup {
       super.handleSelect(handleFinalChoices, e);
     }
 
-    protected void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup) {
-      myCurrentExecutor = myAlternativeExecutor;
-      popup._handleSelect(handleFinalChoices, inputEvent);
-    }
+    protected abstract void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup);
 
     @Override
     protected ListCellRenderer getListElementRenderer() {
-      boolean hasSideBar = false;
-      for (Object each : getListStep().getValues()) {
-        if (each instanceof Wrapper) {
-          if (((Wrapper)each).getMnemonic() != -1 || ((Wrapper)each).isChecked()) {
-            hasSideBar = true;
-            break;
-          }
-        }
-      }
-      return new RunListElementRenderer(this, hasSideBar);
+      return new RunListElementRenderer(this);
     }
 
     public void removeSelected() {
       final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-      if (!propertiesComponent.isTrueValue("run.configuration.delete.ad")) {
-        propertiesComponent.setValue("run.configuration.delete.ad", Boolean.toString(true));
-      }
+      if (!propertiesComponent.isTrueValue("run.configuration.delete.ad")) propertiesComponent.setValue("run.configuration.delete.ad", Boolean.toString(true));
 
       final int index = getSelectedIndex();
       if (index == -1) {
@@ -973,15 +961,14 @@ public class ChooseRunConfigurationPopup {
 
       final Object o = getListModel().get(index);
       if (o != null && o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
-        deleteConfiguration(myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
+        deleteConfiguration(myProject_, (RunnerAndConfigurationSettings) ((ItemWrapper)o).getValue());
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
         values.remove(o);
 
-        if (index < values.size()) {
+        if (index < values.size()){
           onChildSelectedFor(values.get(index));
-        }
-        else if (index - 1 >= 0) {
+        } else if (index - 1 >= 0) {
           onChildSelectedFor(values.get(index - 1));
         }
       }
