@@ -54,6 +54,7 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_TRANSFORM_COMPILE_STATIC = "groovy.transform.CompileStatic";
   @NonNls public static final String GROOVY_TRANSFORM_TYPE_CHECKED = "groovy.transform.TypeChecked";
   @NonNls public static final String GROOVY_TRANSFORM_TYPE_CHECKING_MODE = "groovy.transform.TypeCheckingMode";
+  @NonNls public static final String JAVA_LANG_CHAR_SEQUENCE = "java.lang.CharSequence";
 
 
   private GroovyCommonClassNames() {
