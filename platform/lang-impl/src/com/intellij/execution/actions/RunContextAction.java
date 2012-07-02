@@ -20,7 +20,6 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,23 +60,23 @@ public class RunContextAction extends BaseRunConfigurationAction {
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
     presentation.setText(myExecutor.getStartActionText(actionText), true);
 
-    Pair<Boolean, Boolean> b = isEnabledAndVisible(context);
+    boolean b = isEnabled(context);
 
-    presentation.setEnabled(b.first);
-    presentation.setVisible(b.second);
+    presentation.setEnabled(b);
+    presentation.setVisible(b);
   }
 
-  private Pair<Boolean, Boolean> isEnabledAndVisible(ConfigurationContext context) {
+  private boolean isEnabled(ConfigurationContext context) {
     RunnerAndConfigurationSettings configuration = context.findExisting();
     if (configuration == null) {
       configuration = context.getConfiguration();
     }
 
-    if (configuration == null) return Pair.create(false, false);
+    if (configuration == null) return false;
 
     final ProgramRunner runner = getRunner(configuration.getConfiguration());
-    if (runner == null) return Pair.create(false, false);
+    if (runner == null) return false;
 
-    return Pair.create(!ExecutorRegistry.getInstance().isStarting(context.getProject(), myExecutor.getId(), runner.getRunnerId()), true);
+    return ExecutorRegistry.getInstance().isStarting(context.getProject(), myExecutor.getId(), runner.getRunnerId());
   }
 }
