@@ -274,7 +274,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleEditor.getComponent());
   }
 
-  private boolean isFullEditorMode() {
+  public boolean isFullEditorMode() {
     return myPanel.getComponentCount() == 1;
   }
 
