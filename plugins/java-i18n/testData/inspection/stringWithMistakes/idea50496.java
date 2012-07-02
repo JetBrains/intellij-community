@@ -13,21 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.inspection;
-
-/**
- * Created by IntelliJ IDEA.
- * User: Ekaterina Shliakhovetskaja
- */
-public class DocCommentWithMistakesInspectionTest extends JavaSpellcheckerInspectionTestCase {
-
-   
-  @Override
-  protected String getBasePath() {
-    return getSpellcheckerTestDataPath() + "/inspection/docCommentWithMistakes";
-  }
-
-  public void testJava() throws Throwable {
-    doTest("SPITest6.java");
-  }
+class Idea50496 {
+  public static final String FOO = "\nclass";
+  public static final String s2 = "\n<TYPO descr="Typo: In word 'fooquux'">fooquux</TYPO>";
 }
