@@ -604,11 +604,11 @@ println new Bar().zzz
 }
 
 class GppProjectDescriptor extends DefaultLightProjectDescriptor {
-  static def instance = new GppProjectDescriptor()
+  public static final instance = new GppProjectDescriptor()
 
   @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-    final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY++").getModifiableModel();
+    final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY++").modifiableModel;
     modifiableModel.addRoot(JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.absoluteTestDataPath + "mockGroovypp/groovypp-0.9.0_1.8.2.jar!/"), OrderRootType.CLASSES)
     modifiableModel.addRoot(JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/"), OrderRootType.CLASSES);
     modifiableModel.commit();
