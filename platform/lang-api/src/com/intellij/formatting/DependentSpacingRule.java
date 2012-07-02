@@ -29,11 +29,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class DependentSpacingRule {
 
-  enum Anchor {
+  public enum Anchor {
     MIN_LINE_FEEDS, MAX_LINE_FEEDS
   }
 
-  enum Trigger {
+  public enum Trigger {
     HAS_LINE_FEEDS, DOES_NOT_HAVE_LINE_FEEDS
   }
 

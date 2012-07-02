@@ -29,9 +29,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
-import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import static org.jetbrains.plugins.github.GithubUtil.*;
@@ -106,8 +107,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
     final GitRepository gitRepository = manager.getRepositoryForFile(root);
     // Check that given repository is properly configured git repository
-    final GitRemote gitRemote = findGitHubRemoteBranch(gitRepository);
-    final String pushUrl = getGithubUrl(gitRemote);
+    final String githubRemoteUrl = findGithubRemoteUrl(gitRepository);
 
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final String rootPath = root.getPath();
@@ -117,38 +117,84 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return;
     }
 
-    String userAndRepository = getUserAndRepositoryOrShowError(project, pushUrl);
+    String branch = getBranchNameOnRemote(project, root);
+    if (branch == null) {
+      return;
+    }
 
-    // Get current tracked branch
+    String relativePath = path.substring(rootPath.length());
+    String urlToOpen = makeUrlToOpen(e, relativePath, branch, githubRemoteUrl);
+    BrowserUtil.launchBrowser(urlToOpen);
+  }
+
+  private static String makeUrlToOpen(@NotNull AnActionEvent e, @NotNull String relativePath, @NotNull String branch,
+                                      @NotNull String githubRemoteUrl) {
+    final StringBuilder builder = new StringBuilder();
+    builder.append(makeGithubRepoUrlFromRemoteUrl(githubRemoteUrl)).append("/blob/").append(branch).append(relativePath);
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    if (editor != null) {
+      final int line = editor.getCaretModel().getLogicalPosition().line + 1; // lines are counted internally from 0, but from 1 on github
+      builder.append("#L").append(line);
+    }
+    return builder.toString();
+  }
+
+  @NotNull
+  private static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
+    remoteUrl = removeEndingDotGit(remoteUrl);
+    if (remoteUrl.startsWith("http")) {
+      return remoteUrl;
+    }
+    if (remoteUrl.startsWith("git://")) {
+      return "https" + remoteUrl.substring(3);
+    }
+    return convertFromSshToHttp(remoteUrl);
+  }
+
+  @NotNull
+  private static String convertFromSshToHttp(@NotNull String remoteUrl) {
+    // Format: git@github.com:account/repository
+    int indexOfAt = remoteUrl.indexOf("@");
+    if (indexOfAt < 0) {
+      throw new IllegalStateException("Invalid remote Github SSH url: " + remoteUrl);
+    }
+    String withoutPrefix = remoteUrl.substring(indexOfAt + 1, remoteUrl.length());
+    return "https://" + withoutPrefix.replace(':', '/');
+  }
+
+  @NotNull
+  private static String removeEndingDotGit(@NotNull String url) {
+    final String DOT_GIT = ".git";
+    if (url.endsWith(DOT_GIT)) {
+      return url.substring(0, url.length() - DOT_GIT.length());
+    }
+    return url;
+  }
+
+  @Nullable
+  public static String getBranchNameOnRemote(@NotNull Project project, @NotNull VirtualFile root) {
     final GitBranch tracked;
     try {
       final GitBranch current = GitBranch.current(project, root);
       if (current == null) {
         Messages.showErrorDialog(project, "Cannot find local branch", CANNOT_OPEN_IN_BROWSER);
-        return;
+        return null;
       }
       tracked = current.tracked(project, root);
       if (tracked == null || !tracked.isRemote()) {
         Messages.showErrorDialog(project, "Cannot find tracked branch for branch: " + current.getFullName(), CANNOT_OPEN_IN_BROWSER);
-        return;
+        return null;
       }
     }
     catch (VcsException e1) {
       Messages.showErrorDialog(project, "Error occurred while inspecting branches: " + e1, CANNOT_OPEN_IN_BROWSER);
-      return;
+      return null;
     }
     String branch = tracked.getName();
     if (branch.startsWith("origin/")) {
       branch = branch.substring(7);
     }
-
-    final StringBuilder builder = new StringBuilder();
-    builder.append("https://github.com/").append(userAndRepository).append("/blob/").append(branch).append(path.substring(rootPath.length()));
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    if (editor != null) {
-      final int line = editor.getCaretModel().getLogicalPosition().line;
-      builder.append("#L").append(line);
-    }
-    BrowserUtil.launchBrowser(builder.toString());
+    return branch;
   }
+
 }

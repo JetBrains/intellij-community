@@ -144,7 +144,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
               }
             }
             catch (VcsException e1) {
-              //
+              exception[0] = e1;
             }
             catch (SVNException e1) {
               exception[0] = new VcsException(e);
@@ -215,7 +215,11 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     if (wcRootInfo == null || wcRootInfo.getURL() == null) {
         throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revision.getRevisionNumber().asString());
     }
-    final SVNURL wasUrl = wcRootInfo.getURL().appendPath(relativePath, true);
+    SVNURL wasUrl = wcRootInfo.getURL();
+    final String[] strings = relativePath.replace('\\','/').split("/");
+    for (String string : strings) {
+      wasUrl = wasUrl.appendPath(string, true);
+    }
 
     final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
