@@ -77,7 +77,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   public static String applyMiddleMatching(String prefix) {
     if (Registry.is("ide.completion.middle.matching") && !prefix.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      return " " + StringUtil.replace(prefix, ".", ". ").trim();
+      return "*" + StringUtil.replace(prefix, ".", ". ").trim();
     }
     return prefix;
   }
