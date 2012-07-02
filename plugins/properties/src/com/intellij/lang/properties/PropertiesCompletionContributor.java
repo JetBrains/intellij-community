@@ -15,16 +15,26 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionInitializationContext;
-import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class PropertiesCompletionContributor extends CompletionContributor {
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
+    if (parameters.isExtendedCompletion()) {
+      CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, new Consumer<CompletionResult>() {
+        public void consume(final CompletionResult completionResult) {
+          result.passResult(completionResult);
+        }
+      });
+    }
+  }
+
   @Override
   public void beforeCompletion(@NotNull CompletionInitializationContext context) {
     if (context.getFile() instanceof PropertiesFile) {

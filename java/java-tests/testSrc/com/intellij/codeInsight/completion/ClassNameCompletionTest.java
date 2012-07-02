@@ -95,6 +95,12 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(getTestName(false) + "_after.txt");
   }
 
+  public void testInPropertiesFile() throws Exception {
+    myFixture.configureByText("a.properties", "abc = StrinBui<caret>");
+    complete();
+    myFixture.checkResult("abc = java.lang.StringBuilder<caret>");
+  }
+
   public void testDoubleStringBuffer() throws Exception {
     createClass("package java.lang; public class StringBuffer {}");
     doTest();

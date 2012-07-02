@@ -29,8 +29,7 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
-    if (parameters.getCompletionType() != CompletionType.BASIC ||
-        !JavaCompletionContributor.mayStartClassName(result) ||
+    if (!JavaCompletionContributor.mayStartClassName(result) ||
         !position.getContainingFile().getLanguage().isKindOf(StdLanguages.XML)) {
       return;
     }
@@ -42,18 +41,7 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
     }
 
     if (empty || parameters.isExtendedCompletion()) {
-      final int invocationCount = parameters.getInvocationCount();
-      CompletionParameters classParams;
-      if (empty) {
-        classParams = parameters.withType(CompletionType.CLASS_NAME);
-      }
-      else if (invocationCount > 1) {
-        classParams = parameters.withType(CompletionType.CLASS_NAME).withInvocationCount(invocationCount - 1);
-      } else {
-        return;
-      }
-
-      CompletionService.getCompletionService().getVariantsFromContributors(classParams, null, new Consumer<CompletionResult>() {
+      CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, new Consumer<CompletionResult>() {
         public void consume(final CompletionResult completionResult) {
           LookupElement lookupElement = completionResult.getLookupElement();
           JavaPsiClassReferenceElement classElement = lookupElement.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);

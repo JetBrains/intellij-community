@@ -22,6 +22,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
@@ -52,16 +53,28 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet _result) {
-    if (parameters.isExtendedCompletion()) {
+    if (parameters.getCompletionType() == CompletionType.CLASS_NAME ||
+      parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
       CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
-      addAllClasses(parameters, parameters.getInvocationCount() <= 1,
-                    JavaCompletionSorting.addJavaSorting(parameters, result).getPrefixMatcher(), new Consumer<LookupElement>() {
+      addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
           _result.addElement(element);
         }
       });
     }
+  }
+
+  private static boolean mayContainClassName(CompletionParameters parameters) {
+    PsiElement position = parameters.getPosition();
+    PsiFile file = position.getContainingFile();
+    if (file instanceof PsiPlainTextFile || file.getFileType() instanceof CustomSyntaxTableFileType) {
+      return true;
+    }
+    if (SkipAutopopupInStrings.isInStringLiteral(position)) {
+      return true;
+    }
+    return false;
   }
 
   public static void addAllClasses(CompletionParameters parameters,
