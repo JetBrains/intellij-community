@@ -113,7 +113,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   public void setActiveTarget(@NotNull ExecutionTarget target) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (myActiveTargetLock) {
-      updateActiveTarget(RunManager.getInstance(myProject).getSelectedConfiguration(), target);
+      doSetActiveTarget(target);
     }
   }
 
@@ -122,18 +122,12 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   private void updateActiveTarget(@Nullable RunnerAndConfigurationSettings settings) {
-    updateActiveTarget(settings, null);
-  }
-
-  private void updateActiveTarget(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget toSelect) {
     List<ExecutionTarget> suitable = settings == null ? Collections.singletonList(DefaultExecutionTarget.INSTANCE)
                                                       : getTargetsFor(settings);
     synchronized (myActiveTargetLock) {
-      if (toSelect == null) toSelect = myActiveTarget;
-
       int index = -1;
-      if (toSelect != null) {
-        index = suitable.indexOf(toSelect);
+      if (myActiveTarget != null) {
+        index = suitable.indexOf(myActiveTarget);
       }
       else if (mySavedActiveTargetId != null) {
         for (int i = 0, size = suitable.size(); i < size; i++) {
@@ -170,11 +164,5 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       }
     }
     return Collections.unmodifiableList(result);
-  }
-
-  @Override
-  public void update() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    updateActiveTarget();
   }
 }

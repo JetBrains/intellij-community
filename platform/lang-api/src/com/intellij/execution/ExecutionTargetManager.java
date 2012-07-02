@@ -57,10 +57,6 @@ public abstract class ExecutionTargetManager {
     return settings != null && target != null && settings.canRunOn(target) && target.canRun(settings);
   }
 
-  public static void update(@NotNull Project project) {
-    getInstance(project).update();
-  }
-
   @NotNull
   public abstract ExecutionTarget getActiveTarget();
 
@@ -68,6 +64,4 @@ public abstract class ExecutionTargetManager {
 
   @NotNull
   public abstract List<ExecutionTarget> getTargetsFor(@Nullable RunnerAndConfigurationSettings settings);
-
-  public abstract void update();
 }
