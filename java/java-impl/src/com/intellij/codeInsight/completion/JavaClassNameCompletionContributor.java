@@ -31,7 +31,6 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
@@ -74,6 +73,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     if (SkipAutopopupInStrings.isInStringLiteral(position)) {
       return true;
     }
+    if (PsiTreeUtil.getParentOfType(position, PsiComment.class, false) != null) {
+      return true;
+    }
     return false;
   }
 
@@ -83,22 +85,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                                    @NotNull final Consumer<LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
 
-    final ElementFilter filter;
-    if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(insertedElement) ||
-        JavaCompletionContributor.INSIDE_METHOD_THROWS_CLAUSE.accepts(insertedElement) ||
-        JavaCompletionContributor.IN_CATCH_TYPE.accepts(insertedElement) ||
-        JavaCompletionContributor.IN_MULTI_CATCH_TYPE.accepts(insertedElement)) {
-      filter = new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
-    }
-    else if (JavaCompletionContributor.IN_RESOURCE_TYPE.accepts(insertedElement)) {
-      filter = new AssignableFromFilter(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
-    }
-    else if (IN_TYPE_PARAMETER.accepts(insertedElement)) {
-      filter = new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class));
-    }
-    else {
-      filter = TrueFilter.INSTANCE;
-    }
+    final ElementFilter filter =
+      IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) : TrueFilter.INSTANCE;
 
     final boolean inJavaContext = parameters.getPosition() instanceof PsiIdentifier;
     final boolean afterNew = AFTER_NEW.accepts(insertedElement);
@@ -120,13 +108,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    final boolean lookingForAnnotations = psiElement().afterLeaf("@").accepts(insertedElement);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
     AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
         @Override
         public void consume(PsiClass psiClass) {
-          if (lookingForAnnotations && !psiClass.isAnnotationType()) return;
-
           if (filter.isAcceptable(psiClass, insertedElement)) {
             if (!inJavaContext) {
               consumer.consume(AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING));
