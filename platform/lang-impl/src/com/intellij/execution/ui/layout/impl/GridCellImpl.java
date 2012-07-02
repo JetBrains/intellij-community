@@ -232,6 +232,7 @@ public class GridCellImpl implements GridCell {
     return info.
       setIcon(content.getIcon()).
       setText(content.getDisplayName()).
+      setTooltipText(content.getDescription()).
       setActionsContextComponent(content.getActionsContextComponent()).
       setActions(content.getActions(), content.getPlace());
   }
