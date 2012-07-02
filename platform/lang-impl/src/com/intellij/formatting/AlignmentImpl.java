@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ class AlignmentImpl extends Alignment {
    *      Try to find out result from those filtered blocks using the following algorithm:
    *      <ol>
    *        <li>
-   *            Use last block (block which has the greatest start offset) after the block which
+   *            Use the last block (block which has the greatest start offset) after the block which
    *            {@link AbstractBlockWrapper#getWhiteSpace() white space} contains line feeds;
    *        </li>
    *        <li>

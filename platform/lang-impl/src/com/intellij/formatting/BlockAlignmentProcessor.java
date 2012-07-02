@@ -45,6 +45,9 @@ public interface BlockAlignmentProcessor {
     /** Already processed block was realigned because of {@link AlignmentImpl#isAllowBackwardShift() backward alignment}. */
     BACKWARD_BLOCK_ALIGNED,
 
+    /** Detected that backward alignment dependency graph is cycled. */
+    RECURSION_DETECTED,
+    
     /**
      * It was necessary to align already processed block because of {@link AlignmentImpl#isAllowBackwardShift() backward alignment}
      * but that can't be done (e.g. that backward block {@link AbstractBlockWrapper#getWhiteSpace() white space} is read-only).

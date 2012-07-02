@@ -68,7 +68,8 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final ASTNode astNode = child;
-        AlignmentStrategy alignmentStrategyToUse = ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(myNode.getElementType()) ? myAlignmentStrategy
+        AlignmentStrategy alignmentStrategyToUse = ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(myNode.getElementType())
+          ? myAlignmentStrategy
           : AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, child));
         child = processChild(result, astNode, alignmentStrategyToUse, childWrap, indent, offset);
         if (astNode != child && child != null) {
