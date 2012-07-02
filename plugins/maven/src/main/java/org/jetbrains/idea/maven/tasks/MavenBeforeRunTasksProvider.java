@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,7 +118,10 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return task.getGoal() != null && task.getProjectPath() != null;
   }
 
-  public boolean executeTask(final DataContext context, RunConfiguration configuration, final MavenBeforeRunTask task) {
+  public boolean executeTask(final DataContext context,
+                             RunConfiguration configuration,
+                             ExecutionEnvironment env,
+                             final MavenBeforeRunTask task) {
     final Semaphore targetDone = new Semaphore();
     final boolean[] result = new boolean[]{true};
     try {

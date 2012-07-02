@@ -300,7 +300,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (!UIUtil.isReallyTypedEvent(e)) return;
 
       char c = e.getKeyChar();
-      if (Character.isLetterOrDigit(c) || c == '_' || c == '*' || c == '/' || c == ':') {
+      if (Character.isLetterOrDigit(c) || c == '_' || c == '*' || c == '/' || c == ':' || c == '.' || c == '#') {
         manageSearchPopup(new SearchPopup(String.valueOf(c)));
         e.consume();
       }

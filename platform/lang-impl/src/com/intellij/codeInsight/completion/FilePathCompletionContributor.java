@@ -176,7 +176,6 @@ public class FilePathCompletionContributor extends CompletionContributor {
         }
       }
     };
-    extend(CompletionType.CLASS_NAME, psiElement(), provider);
     extend(CompletionType.BASIC, psiElement(), provider);
   }
 

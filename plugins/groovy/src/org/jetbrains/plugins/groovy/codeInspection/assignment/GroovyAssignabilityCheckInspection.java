@@ -812,6 +812,13 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
 
+    protected void registerError(@NotNull PsiElement location,
+                                 ProblemHighlightType highlightType,
+                                 Object... args) {
+      registerError(location, (String)args[0], LocalQuickFix.EMPTY_ARRAY, highlightType);
+    }
+
+
     @Override
     public void visitElement(GroovyPsiElement element) {
       //do nothing

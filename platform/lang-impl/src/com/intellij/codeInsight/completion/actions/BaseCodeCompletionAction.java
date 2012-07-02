@@ -47,7 +47,7 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
     assert project != null;
     assert editor != null;
     InputEvent inputEvent = e.getInputEvent();
-    new CodeCompletionHandlerBase(type).invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0);
+    new CodeCompletionHandlerBase(type).invokeCompletion(project, editor, time, inputEvent != null && inputEvent.getModifiers() != 0, false);
   }
 
   @Override

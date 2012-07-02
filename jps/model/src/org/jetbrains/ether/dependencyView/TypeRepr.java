@@ -10,6 +10,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -28,7 +29,7 @@ class TypeRepr {
   }
 
   interface AbstractType extends RW.Savable {
-    void updateClassUsages(DependencyContext context, int owner, UsageRepr.Cluster s);
+    void updateClassUsages(DependencyContext context, int owner, Set<UsageRepr.Usage> s);
     String getDescr(DependencyContext context);
     void save(DataOutput out);
   }
@@ -42,7 +43,7 @@ class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final int owner, final UsageRepr.Cluster s) {
+    public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
 
     }
 
@@ -105,7 +106,7 @@ class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final int owner, final UsageRepr.Cluster s) {
+    public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
       elementType.updateClassUsages(context, owner, s);
     }
 
@@ -150,8 +151,8 @@ class TypeRepr {
     }
 
     @Override
-    public void updateClassUsages(final DependencyContext context, final int owner, final UsageRepr.Cluster s) {
-      s.addUsage(owner, UsageRepr.createClassUsage(context, className));
+    public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
+      s.add(UsageRepr.createClassUsage(context, className));
     }
 
     ClassType(final int className) {

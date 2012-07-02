@@ -23,6 +23,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -69,7 +70,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
 
   public abstract boolean canExecuteTask(RunConfiguration configuration, T task);
 
-  public abstract boolean executeTask(DataContext context, RunConfiguration configuration, T task);
+  public abstract boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, T task);
 
   /**
    *
@@ -77,16 +78,6 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
    */
   public boolean isSingleton() {
     return false;
-  }
-
-  /**
-   * Get runner id that current run is about to be made by
-   * @param context data context that is passed to <code>{@link #executeTask(com.intellij.openapi.actionSystem.DataContext, com.intellij.execution.configurations.RunConfiguration, BeforeRunTask)}</code>
-   * @return runner id
-   */
-  @Nullable
-  public static String getRunnerId(DataContext context) {
-    return (String)context.getData(RUNNER_ID);
   }
 
   @Nullable

@@ -43,12 +43,21 @@ public abstract class CommandLineState implements RunnableState {
     myEnvironment = environment;
   }
 
+  public ExecutionEnvironment getEnvironment() {
+    return myEnvironment;
+  }
+
   public RunnerSettings getRunnerSettings() {
     return myEnvironment.getRunnerSettings();
   }
 
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myEnvironment.getConfigurationSettings();
+  }
+
+  @NotNull
+  public ExecutionTarget getExecutionTarget() {
+    return myEnvironment.getExecutionTarget();
   }
 
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {

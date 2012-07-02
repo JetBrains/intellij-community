@@ -920,7 +920,7 @@ public class AllIcons {
     public static final Icon HidePassed = IconLoader.getIcon("/runConfigurations/hidePassed.png"); // 16x16
     public static final Icon IgnoredTest = IconLoader.getIcon("/runConfigurations/ignoredTest.png"); // 16x16
     public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png"); // 16x16
-    public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.png"); // 16x16
+    public static final Icon UnitTest = IconLoader.getIcon("/runConfigurations/junit.png"); // 16x16
     public static final Icon LoadingTree = IconLoader.getIcon("/runConfigurations/loadingTree.png"); // 16x16
     public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png"); // 16x16
     public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.png"); // 16x16

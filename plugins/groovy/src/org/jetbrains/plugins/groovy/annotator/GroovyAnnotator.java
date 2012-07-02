@@ -103,7 +103,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -133,7 +132,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (element instanceof GroovyPsiElement) {
       myHolder = holder;
       ((GroovyPsiElement)element).accept(this);
-      if (isCompileStatic(element)) {
+      if (PsiUtil.isCompileStatic(element)) {
         GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
       }
       myHolder = null;
@@ -414,7 +413,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = myHolder.createInfoAnnotation(referenceExpression, GroovyBundle.message("cannot.reference.nonstatic", referenceExpression.getReferenceName()));
-          annotation.setTextAttributes(isCompileStatic(referenceExpression) ? DefaultHighlighter.BAD_CHARACTER : DefaultHighlighter.UNRESOLVED_ACCESS);
+          annotation.setTextAttributes(PsiUtil.isCompileStatic(referenceExpression) ? DefaultHighlighter.BAD_CHARACTER : DefaultHighlighter.UNRESOLVED_ACCESS);
         }
       }
     }
@@ -458,7 +457,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
       Annotation annotation;
 
-      boolean compileStatic = isCompileStatic(referenceExpression) || referenceExpression.getQualifier() == null && isInStaticMethod(referenceExpression);
+      boolean compileStatic = PsiUtil.isCompileStatic(referenceExpression) || referenceExpression.getQualifier() == null && isInStaticMethod(referenceExpression);
       if (compileStatic) {
         annotation = myHolder.createErrorAnnotation(elt, GroovyBundle.message("cannot.resolve", referenceExpression.getReferenceName()));
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
@@ -489,11 +488,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static boolean isInStaticMethod(GrReferenceExpression referenceExpression) {
     PsiMember context = PsiTreeUtil.getParentOfType(referenceExpression, PsiMember.class, true, GrClosableBlock.class);
     return context instanceof PsiMethod && context.hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  private static boolean isCompileStatic(PsiElement e) {
-    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
-    return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
   }
 
   private static boolean isReassigned(GrVariable var) {

@@ -261,20 +261,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
     MapKeysCompletionProvider.register(this);
     GroovyDocCompletionProvider.register(this);
 
-    // class name stuff
-
-    extend(CompletionType.CLASS_NAME, psiElement().withParent(GrReferenceElement.class), new GlobalStaticMembersProvider());
-
-   extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters,
-                                    ProcessingContext context,
-                                    @NotNull CompletionResultSet result) {
-        result.stopHere();
-        addAllClasses(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), new InheritorsHolder(parameters.getPosition(), result));
-      }
-    });
-
     extend(CompletionType.BASIC, STATEMENT_START, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
@@ -827,27 +813,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
           }
         }
       }
-    }
-  }
-
-  private static class GlobalStaticMembersProvider extends CompletionProvider<CompletionParameters> {
-    @Override
-    protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
-                                  @NotNull final CompletionResultSet result) {
-      if (!parameters.isExtendedCompletion()) return;
-
-      final PsiElement position = parameters.getPosition();
-      if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
-
-      if (StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) return;
-
-      completeStaticMembers(parameters).processStaticMethodsGlobally(result.getPrefixMatcher(), new Consumer<LookupElement>() {
-        @Override
-        public void consume(LookupElement element) {
-          result.addElement(element);
-        }
-      });
     }
   }
 }

@@ -20,7 +20,11 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.ProgramRunnerUtil;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
+import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
@@ -32,9 +36,8 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 class TestClass extends TestObject {
   public TestClass(final Project project,
                    final JUnitConfiguration configuration,
-                   RunnerSettings runnerSettings,
-                   ConfigurationPerRunnerSettings configurationSettings) {
-    super(project, configuration, runnerSettings, configurationSettings);
+                   ExecutionEnvironment environment) {
+    super(project, configuration, environment);
   }
 
   protected void initialize() throws ExecutionException {

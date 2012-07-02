@@ -59,25 +59,22 @@ public class CamelHumpMatcher extends PrefixMatcher {
     String prefix = applyMiddleMatching(myPrefix);
 
     if (!caseSensitive) {
-      return NameUtil.buildCompletionMatcher(prefix, 0, true, true);
+      return NameUtil.buildMatcher(prefix, NameUtil.MatchingCaseSensitivity.NONE);
     }
 
     switch (CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
       case CodeInsightSettings.NONE:
-        return NameUtil.buildCompletionMatcher(prefix, 0, true, true);
+        return NameUtil.buildMatcher(prefix, NameUtil.MatchingCaseSensitivity.NONE);
       case CodeInsightSettings.FIRST_LETTER:
-        int exactPrefixLen = prefix.startsWith("*") ? 0 : 1;
-        return NameUtil.buildCompletionMatcher(prefix, exactPrefixLen, true, true);
-      case CodeInsightSettings.ALL:
-        return NameUtil.buildCompletionMatcher(prefix, 1, false, false);
+        return NameUtil.buildMatcher(prefix, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
       default:
-        return NameUtil.buildCompletionMatcher(prefix, 0, true, false);
+        return NameUtil.buildMatcher(prefix, NameUtil.MatchingCaseSensitivity.ALL);
     }
   }
 
   public static String applyMiddleMatching(String prefix) {
     if (Registry.is("ide.completion.middle.matching") && !prefix.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      return " " + StringUtil.replace(prefix, ".", ". ").trim();
+      return "*" + StringUtil.replace(prefix, ".", ". ").trim();
     }
     return prefix;
   }

@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.codeInsight.GrReassignedLocalVarsChecker;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -73,6 +74,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mMEMBER_P
  * @author ilyas
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpression> implements GrReferenceExpression {
+
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -587,7 +589,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
-      final PsiType inferred = TypeInferenceHelper.getInferredType(refExpr);
+      PsiType result = GrReassignedLocalVarsChecker.checkReassignedVar(refExpr, true);
+      if (result!=null) return result;
+
+
+      final PsiType inferred = refExpr.getQualifier() == null ? TypeInferenceHelper.getInferredType(refExpr) : null;
       final PsiType nominal = refExpr.getNominalType();
       if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {

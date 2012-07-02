@@ -15,13 +15,13 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.execution.actions.ChooseDebugConfigurationAction;
+import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.AbstractDebuggerSession;
+import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,7 +49,7 @@ public class ResumeAction extends XDebuggerActionBase {
   @Override
   public void actionPerformed(AnActionEvent e) {
     if (!performWithHandler(e)) {
-      new ChooseDebugConfigurationAction().actionPerformed(e);
+      new ChooseDebugConfigurationPopupAction().actionPerformed(e);
     }
   }
 

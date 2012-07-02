@@ -18,6 +18,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.util.Factory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,9 +39,11 @@ public interface RunnerAndConfigurationSettings {
 
   String getName();
 
-  RunnerSettings getRunnerSettings(ProgramRunner runner);
+  @NotNull
+  RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner);
 
-  ConfigurationPerRunnerSettings getConfigurationSettings(ProgramRunner runner);
+  @NotNull
+  ConfigurationPerRunnerSettings getConfigurationSettings(@NotNull ProgramRunner runner);
 
   @Nullable
   ConfigurationType getType();
@@ -48,6 +51,8 @@ public interface RunnerAndConfigurationSettings {
   void checkSettings() throws RuntimeConfigurationException;
 
   void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
+
+  boolean canRunOn(@NotNull ExecutionTarget target);
 
   void setTemporary(boolean temporary);
 

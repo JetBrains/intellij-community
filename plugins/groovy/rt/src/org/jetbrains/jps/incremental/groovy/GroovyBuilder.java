@@ -49,7 +49,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     try {
       final List<File> toCompile = collectChangedFiles(context, chunk);
-      LOG.info((myForStubs ? "stubs" : "groovyc") + ", toCompile=" + toCompile);
+      if (Utils.IS_TEST_MODE) {
+        LOG.info((myForStubs ? "stubs" : "groovyc") + ", toCompile=" + toCompile);
+      }
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -108,14 +110,18 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
 
       for (CompilerMessage message : handler.getCompilerMessages()) {
-        LOG.info(message.toString());
+        if (Utils.IS_TEST_MODE) {
+          LOG.info(message.toString());
+        }
         context.processMessage(message);
       }
 
 
       List<GroovycOSProcessHandler.OutputItem> compiled = new ArrayList<GroovycOSProcessHandler.OutputItem>();
       for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
-        LOG.info("Compiled " + item);
+        if (Utils.IS_TEST_MODE) {
+          LOG.info("Compiled " + item);
+        }
         compiled.add(ensureCorrectOutput(context, chunk, item, generationOutputs, compilerOutput));
       }
 

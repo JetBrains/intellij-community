@@ -19,6 +19,7 @@ package com.intellij.execution.junit;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
@@ -35,9 +36,8 @@ import org.jetbrains.annotations.NotNull;
 class TestMethod extends TestObject {
   public TestMethod(final Project project,
                     final JUnitConfiguration configuration,
-                    RunnerSettings runnerSettings,
-                    ConfigurationPerRunnerSettings configurationSettings) {
-    super(project, configuration, runnerSettings, configurationSettings);
+                    ExecutionEnvironment environment) {
+    super(project, configuration, environment);
   }
 
   protected void initialize() throws ExecutionException {
