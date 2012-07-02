@@ -536,7 +536,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
       else {
         AlignmentStrategy alignmentStrategyToUse = AlignmentStrategy.wrap(arrangeChildAlignment(child, alignmentStrategy));
-        if (myAlignmentStrategy != null && myAlignmentStrategy.getAlignment(nodeType, childType) != null
+        if (myAlignmentStrategy.getAlignment(nodeType, childType) != null
             && (nodeType == JavaElementType.IMPLEMENTS_LIST || nodeType == JavaElementType.CLASS))
         {
           alignmentStrategyToUse = myAlignmentStrategy;
@@ -991,7 +991,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     // The whole idea of variable declarations alignment is that complete declaration blocks which children are to be aligned hold
     // reference to the same AlignmentStrategy object, hence, reuse the same Alignment objects. So, there is no point in checking
     // if it's necessary to align sub-blocks if shared strategy is not defined.
-    if (myAlignmentStrategy == null || !mySettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
+    if (!mySettings.ALIGN_GROUP_FIELD_DECLARATIONS) {
       return null;
     }
 

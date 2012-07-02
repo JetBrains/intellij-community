@@ -20,6 +20,7 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.compiler.CompileServerManager
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
 import com.intellij.openapi.module.Module
@@ -29,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestLoggerFactory
 import junit.framework.AssertionFailedError
-import com.intellij.openapi.application.PathManager
 
 /**
  * @author peter
@@ -231,14 +231,14 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
         //println "Idea Log:"
         //println ideaLog.text
       }
-
       if (makeLog.exists()) {
         println "Server Log:"
         println makeLog.text
       }
-      System.out.flush()
-
       throw e
+    }
+    finally {
+      System.out.flush()
     }
   }
 
@@ -247,13 +247,15 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
     assertEmpty(make());
 
-    myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
-                                                   "  Super xxx() {}\n" +
-                                                   "  static void main(String[] args) {" +
-                                                   "    println 'hello'" +
-                                                   "  }" +
-                                                   "}");
-    myFixture.addFileToProject("tests/Java.java", "public class Java {}");
+    def sub = myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
+      "  Super xxx() {}\n" +
+      "  static void main(String[] args) {" +
+      "    println 'hello'" +
+      "  }" +
+      "}");
+
+    def javaFile = myFixture.addFileToProject("tests/Java.java", "public class Java {}");
+
     assertEmpty(make());
     assertOutput("Sub", "hello");
   }

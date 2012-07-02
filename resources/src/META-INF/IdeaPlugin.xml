@@ -241,8 +241,6 @@
                             order="before javaLegacy"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
                             order="last, before default"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaGlobalMemberNameCompletionContributor"
-                            id="javaGlobalMemberName"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor" id="javadoc"
                             order="last, before javaLegacy"/>

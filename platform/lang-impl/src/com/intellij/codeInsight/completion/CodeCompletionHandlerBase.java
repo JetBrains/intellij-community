@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
@@ -74,7 +73,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
+public class CodeCompletionHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private final CompletionType myCompletionType;
   final boolean invokedExplicitly;
@@ -99,21 +98,20 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  @Override
-  public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile psiFile) {
-    invokeCompletion(project, editor);
-  }
-
   public final void invokeCompletion(final Project project, final Editor editor) {
     try {
-      invokeCompletion(project, editor, 1, false);
+      invokeCompletion(project, editor, 1);
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Code completion is not available here while indices are being built");
     }
   }
 
-  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers) {
+  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time) {
+    invokeCompletion(project, editor, time, false, false);
+  }
+
+  public final void invokeCompletion(@NotNull final Project project, @NotNull final Editor editor, int time, boolean hasModifiers, boolean restarted) {
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
@@ -216,28 +214,38 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     };
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
-
-      int offset = editor.getCaretModel().getOffset();
-      int psiOffset = Math.max(0, offset - 1);
-
-      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, psiOffset);
-      if (elementAt == null) {
-        elementAt = psiFile.findElementAt(psiOffset);
-      }
-      if (elementAt == null) return;
-
-      Language language = PsiUtilBase.findLanguageFromElement(elementAt);
-
-      for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-        final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
-        if (result == ThreeState.YES) return;
-        if (result == ThreeState.NO) break;
+      if (!restarted && shouldSkipAutoPopup(editor, psiFile)) {
+        return;
       }
     } else {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
     }
 
     insertDummyIdentifier(initializationContext[0], hasModifiers, time);
+  }
+
+  private static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
+    int offset = editor.getCaretModel().getOffset();
+    int psiOffset = Math.max(0, offset - 1);
+
+    PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, psiOffset);
+    if (elementAt == null) {
+      elementAt = psiFile.findElementAt(psiOffset);
+    }
+    if (elementAt == null) return true;
+
+    Language language = PsiUtilBase.findLanguageFromElement(elementAt);
+
+    for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
+      final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
+      if (result == ThreeState.YES) {
+        return true;
+      }
+      if (result == ThreeState.NO) {
+        return false;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -767,11 +775,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return context;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   private static boolean isCopyUpToDate(Document document, @NotNull PsiFile file) {
@@ -814,12 +817,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   private static boolean isAutocompleteOnInvocation(final CompletionType type) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    switch (type) {
-      case CLASS_NAME: return settings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-      case SMART: return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
-      case BASIC:
-      default: return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
+    if (type == CompletionType.SMART) {
+      return settings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
     }
+    return settings.AUTOCOMPLETE_ON_CODE_COMPLETION;
   }
 
   private static Runnable rememberDocumentState(final Editor _editor) {

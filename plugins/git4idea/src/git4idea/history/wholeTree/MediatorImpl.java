@@ -14,14 +14,17 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CalledInBackground;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.Ticket;
+import com.intellij.util.containers.Convertor;
 import git4idea.history.browser.CachedRefs;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -128,6 +131,70 @@ public class MediatorImpl implements Mediator {
   @Override
   public void oneFinished() {
     if (myController.isEmpty()) {
+      myUIRefresh.finished();
+      myTableWrapper.finished();
+    }
+  }
+
+  @CalledInAwt
+  @Override
+  public void reloadSetFixed(final Map<AbstractHash, Long> starred, final RootsHolder rootsHolder) {
+    myTicket.increment();
+
+    final List<AbstractHash> hash = new ArrayList<AbstractHash>(starred.keySet());
+    Collections.sort(hash, new Comparator<AbstractHash>() {
+      @Override
+      public int compare(AbstractHash o1, AbstractHash o2) {
+        return Comparing.compare(starred.get(o2), starred.get(o1));
+      }
+    });
+
+    final boolean multipleRoots = rootsHolder.multipleRoots();
+    final List<CommitI> filtered = new ArrayList<CommitI>();
+    final List<AbstractHash> missing = new ArrayList<AbstractHash>();
+    int cInHashes = 0;
+    final int count = myTableWrapper.myTableModel.getRowCount();
+    for (int i = 0; i < count && hash.size() > cInHashes; i++) {
+      final CommitI at = myTableWrapper.myTableModel.getCommitAt(i);
+      if (at.holdsDecoration()) continue;
+      final AbstractHash obj = hash.get(cInHashes);
+      if (at.getHash().equals(obj)) {
+        // commit + multiple repo
+        final Commit commit = new Commit(at.getHash().getString(), at.getTime(), at.getAuthorIdx());
+        if (multipleRoots) {
+          filtered.add(new MultipleRepositoryCommitDecorator(commit, at.selectRepository(SelectorList.getInstance())));
+        } else {
+          filtered.add(commit);
+        }
+        ++ cInHashes;
+      } else if (starred.get(obj) > at.getTime()) {
+        missing.add(obj);
+        ++ cInHashes;
+      }
+    }
+
+    for (; cInHashes < hash.size(); ++ cInHashes) {
+      missing.add(hash.get(cInHashes));
+    }
+
+    myTableWrapper.reset(false, true);
+    myController.reset();
+    myHaveRestrictingFilters = true;
+
+    if (! filtered.isEmpty()) {
+      myTableWrapper.appendResult(myTicket.copy(), filtered, Collections.<List<AbstractHash>>emptyList());
+    }
+    if (! missing.isEmpty()) {
+      final GitLogFilters filters =
+        new GitLogFilters(null, null, null, ObjectsConvertor.convert(missing, new Convertor<AbstractHash, String>() {
+          @Override
+          public String convert(AbstractHash o) {
+            return o.getString();
+          }
+        }));
+      filters.setUseOnlyHashes(true);
+      myLoader.loadSkeleton(myTicket.copy(), rootsHolder, Collections.<String>emptyList(), filters, myController, false);
+    } else {
       myUIRefresh.finished();
       myTableWrapper.finished();
     }

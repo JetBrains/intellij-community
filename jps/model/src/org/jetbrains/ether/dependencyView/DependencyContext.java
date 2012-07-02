@@ -16,7 +16,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 class DependencyContext {
-  private final static String stringTableName = "strings.tab";
+  private final static String STRING_TABLE_NAME = "strings.tab";
   private final PersistentStringEnumerator myEnumerator;
 
   private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<TypeRepr.AbstractType, TypeRepr.AbstractType>();
@@ -57,7 +57,7 @@ class DependencyContext {
   }
 
   DependencyContext(final File rootDir) throws IOException {
-    final File file = getTableFile(rootDir, stringTableName);
+    final File file = getTableFile(rootDir, STRING_TABLE_NAME);
 
     myEnumerator = new PersistentStringEnumerator(file, true);
   }

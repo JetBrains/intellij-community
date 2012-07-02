@@ -441,7 +441,7 @@ public class IdeaProjectLoader {
         def path = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))
         if (url in jarDirs.keySet()) {
           def paths = []
-          collectChildJars(path, jarDirs[url], paths)
+          collectChildJars(new File(path), jarDirs[url], paths)
           paths.each {
             library.addClasspath it.toString()
           }
@@ -457,15 +457,14 @@ public class IdeaProjectLoader {
     return library
   }
 
-  private def collectChildJars(String path, boolean recursively, List<String> paths) {
-    def dir = new File(path)
+  private def collectChildJars(File dir, boolean recursively, List<String> paths) {
     dir.listFiles()?.each {File child ->
       if (child.isDirectory()) {
         if (recursively) {
-          collectChildJars(path, recursively, paths)
+          collectChildJars(child, recursively, paths)
         }
       }
-      else if (child.name.endsWith(".jar")) {
+      else if (child.name.endsWith(".jar") || child.name.endsWith(".zip")) {
         paths << child.absolutePath
       }
     }

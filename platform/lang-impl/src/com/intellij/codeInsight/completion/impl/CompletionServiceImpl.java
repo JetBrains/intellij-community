@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,11 +26,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Consumer;
@@ -37,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * @author peter
@@ -45,6 +52,7 @@ public class CompletionServiceImpl extends CompletionService{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
+  private static CodeInsightSettings ourSettings = CodeInsightSettings.getInstance();
 
   public CompletionServiceImpl() {
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
@@ -101,6 +109,51 @@ public class CompletionServiceImpl extends CompletionService{
       return ourPhase.indicator;
     }
     return null;
+  }
+
+  private static int getPrefixMatchingDegree(LookupElement item, CompletionLocation location) {
+    final MinusculeMatcher matcher = getMinusculeMatcher(location.getCompletionParameters().getLookup().itemPattern(item));
+
+    int max = Integer.MIN_VALUE;
+    for (String lookupString : item.getAllLookupStrings()) {
+      max = Math.max(max, matcher.matchingDegree(lookupString));
+    }
+    return max;
+  }
+
+  private static volatile Pair<String, MinusculeMatcher> lastMatcher;
+
+  private static MinusculeMatcher getMinusculeMatcher(String prefix) {
+    final int setting = ourSettings.COMPLETION_CASE_SENSITIVE;
+    final NameUtil.MatchingCaseSensitivity sensitivity =
+      setting == CodeInsightSettings.NONE ? NameUtil.MatchingCaseSensitivity.NONE :
+      setting == CodeInsightSettings.FIRST_LETTER ? NameUtil.MatchingCaseSensitivity.FIRST_LETTER : NameUtil.MatchingCaseSensitivity.ALL;
+
+    Pair<String, MinusculeMatcher> pair = lastMatcher;
+    if (pair != null && pair.first.equals(prefix)) {
+      return pair.second;
+    }
+
+    MinusculeMatcher matcher = new MinusculeMatcher(CamelHumpMatcher.applyMiddleMatching(prefix), sensitivity);
+    lastMatcher = Pair.create(prefix, matcher);
+    return matcher;
+  }
+
+  private static boolean isMiddleMatch(LookupElement element, CompletionLocation location) {
+    String prefix = location.getCompletionParameters().getLookup().itemPattern(element);
+    if (StringUtil.isNotEmpty(prefix)) {
+      MinusculeMatcher matcher = getMinusculeMatcher(prefix);
+      for (String ls : element.getAllLookupStrings()) {
+        Iterable<TextRange> fragments = matcher.matchingFragments(ls);
+        if (fragments != null) {
+          Iterator<TextRange> iterator = fragments.iterator();
+          if (!iterator.hasNext() || MinusculeMatcher.isStartMatch(ls, iterator.next().getStartOffset())) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   private static class CompletionResultSetImpl extends CompletionResultSet {
@@ -244,7 +297,7 @@ public class CompletionServiceImpl extends CompletionService{
           @NotNull
           @Override
           public Comparable getWeight(LookupElement element) {
-            return PrefixMatchingWeigher.isMiddleMatch(element, location);
+            return isMiddleMatch(element, location);
           }
         };
       }
@@ -260,7 +313,7 @@ public class CompletionServiceImpl extends CompletionService{
               @NotNull
               @Override
               public Comparable getWeight(LookupElement element) {
-                return -PrefixMatchingWeigher.getPrefixMatchingDegree(element, location);
+                return -getPrefixMatchingDegree(element, location);
               }
             };
           }

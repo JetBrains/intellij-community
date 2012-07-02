@@ -269,16 +269,29 @@ public class MinusculeMatcher implements Matcher {
       fragmentCount++;
     }
 
+    if (first == null) {
+      return 0;
+    }
+
     int commonStart = 0;
     while (commonStart < name.length() && commonStart < myPattern.length && name.charAt(commonStart) == myPattern[commonStart]) {
       commonStart++;
     }
 
-    boolean prefixMatching = first != null && first.getStartOffset() == 0;
-    boolean middleWordStart = first != null && first.getStartOffset() > 0 && NameUtil.isWordStart(name, first.getStartOffset());
-    int startIndex = first != null ? first.getStartOffset() : 42;
+    int startIndex = first.getStartOffset();
+    boolean prefixMatching = isStartMatch(name, startIndex);
+    boolean middleWordStart = !prefixMatching && NameUtil.isWordStart(name, first.getStartOffset());
 
     return -fragmentCount + matchingCase * 10 + commonStart - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
+  }
+
+  public static boolean isStartMatch(String name, int startIndex) {
+    for (int i = 0; i < startIndex; i++) {
+      if (!NameUtil.isWordSeparator(name.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

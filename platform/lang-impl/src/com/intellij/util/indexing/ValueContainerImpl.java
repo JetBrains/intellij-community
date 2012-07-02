@@ -97,7 +97,6 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  @Override
   public boolean removeValue(int inputId, Value value) {
     final Object input = getInput(value);
     if (input == null) {

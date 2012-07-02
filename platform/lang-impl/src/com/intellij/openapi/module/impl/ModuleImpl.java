@@ -285,7 +285,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     if (myName == null) return "Module (not initialized)";
-    return "Module: '" + getName() + "' " +(isDisposed() ? "(Disposed)" : "path: '" + getModuleFilePath() + "'");
+    return "Module: '" + getName();
   }
 
   private static String moduleNameByFileName(@NotNull String fileName) {

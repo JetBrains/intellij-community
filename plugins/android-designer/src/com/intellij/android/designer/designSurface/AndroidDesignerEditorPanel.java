@@ -403,7 +403,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       }
     }
 
-    StringBuilder builder = new StringBuilder("SDK: ");
+    StringBuilder builder = new StringBuilder();
+
+    builder.append("ActiveTool: ").append(myToolProvider.getActiveTool());
+    builder.append("\nSDK: ");
 
     try {
       AndroidPlatform platform = AndroidPlatform.getInstance(getModule());

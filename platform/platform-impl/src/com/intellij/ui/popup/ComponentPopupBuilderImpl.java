@@ -51,6 +51,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Computable<Boolean> myCallback = null;
   private Project myProject;
   private boolean myCancelOnClickOutside = true;
+  private boolean myCancelOnWindowDeactivation = true;
   private final Set<JBPopupListener> myListeners = new LinkedHashSet<JBPopupListener>();
   private boolean myUseDimServiceForXYLocation;
 
@@ -196,6 +197,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     return this;
   }
 
+  @Override
+  public ComponentPopupBuilder setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
+    myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
+    return this;
+  }
+
   @NotNull
   public ComponentPopupBuilder setProject(Project project) {
     myProject = project;
@@ -211,7 +218,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
                                               myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
-                                              myShowShadow);
+                                              myShowShadow, myCancelOnWindowDeactivation);
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }

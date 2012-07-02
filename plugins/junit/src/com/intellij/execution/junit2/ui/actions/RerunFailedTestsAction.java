@@ -42,7 +42,7 @@ public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   @Override
   public MyRunProfile getRunProfile() {
     final JUnitConfiguration configuration = (JUnitConfiguration)getModel().getProperties().getConfiguration();
-    final TestMethods testMethods = new TestMethods(configuration.getProject(), configuration, myRunnerSettings, myConfigurationPerRunnerSettings, getFailedTests(configuration.getProject()));
+    final TestMethods testMethods = new TestMethods(configuration.getProject(), configuration, myEnvironment, getFailedTests(configuration.getProject()));
     return new MyRunProfile(configuration) {
       @NotNull
       public Module[] getModules() {

@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 import java.util.Map;
@@ -233,9 +234,8 @@ public class MavenModuleImporter {
       try {
         EncodingManager.getInstance().setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
       }
-      catch (UnsupportedCharsetException ignored) {
-
-      }
+      catch (UnsupportedCharsetException ignored) {/**/}
+      catch (IllegalCharsetNameException ignored) {/**/}
     }
   }
 

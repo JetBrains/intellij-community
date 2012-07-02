@@ -38,18 +38,15 @@ import java.util.Set;
 
 public class PointlessBooleanExpressionInspection extends BaseInspection {
 
-  private static final Set<IElementType> booleanTokens = new HashSet<IElementType>(7);
-
-  static {
-    booleanTokens.add(JavaTokenType.ANDAND);
-    booleanTokens.add(JavaTokenType.AND);
-    booleanTokens.add(JavaTokenType.OROR);
-    booleanTokens.add(JavaTokenType.OR);
-    booleanTokens.add(JavaTokenType.XOR);
-    booleanTokens.add(JavaTokenType.EQEQ);
-    booleanTokens.add(JavaTokenType.NE);
-  }
-
+  private static final Set<IElementType> booleanTokens = new HashSet<IElementType>() {{
+    add(JavaTokenType.ANDAND);
+    add(JavaTokenType.AND);
+    add(JavaTokenType.OROR);
+    add(JavaTokenType.OR);
+    add(JavaTokenType.XOR);
+    add(JavaTokenType.EQEQ);
+    add(JavaTokenType.NE);
+  }};
 
   /**
    * @noinspection PublicField
@@ -91,9 +88,11 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
     else {
       final PsiPrefixExpression expression = (PsiPrefixExpression)infos[0];
+      final PsiExpression e = removeRedundantNots(expression);
+
       return InspectionGadgetsBundle.message(
         "boolean.expression.can.be.simplified.problem.descriptor",
-        calculateSimplifiedPrefixExpression(expression)
+         e instanceof PsiPrefixExpression ? calculateSimplifiedPrefixExpression((PsiPrefixExpression)e) : e.getText()
       );
     }
   }
@@ -172,10 +171,8 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
   private static String createStringForNegatedExpression(PsiExpression exp) {
     if (ComparisonUtils.isComparison(exp)) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)exp;
-      final String negatedComparison =
-        ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)exp;
+      final String negatedComparison = ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       assert rhs != null;
@@ -194,16 +191,16 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
   @NotNull
   private String calculateSimplifiedPrefixExpression(PsiPrefixExpression e) {
-    final PsiExpression expression = removeRedundantNots(e);
+    final PsiExpression expression = e.getOperand();
 
     final Boolean value = evaluate(expression);
 
     if (value == Boolean.TRUE) {
-      return PsiKeyword.TRUE;
+      return PsiKeyword.FALSE;
     }
 
     if (value == Boolean.FALSE) {
-      return PsiKeyword.FALSE;
+      return PsiKeyword.TRUE;
     }
 
     return expression != null ? expression.getText() : "";
@@ -314,16 +311,13 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       }
 
       final boolean isPointless;
-      if (sign.equals(JavaTokenType.EQEQ) ||
-          sign.equals(JavaTokenType.NE)) {
+      if (sign.equals(JavaTokenType.EQEQ) || sign.equals(JavaTokenType.NE)) {
         isPointless = equalityExpressionIsPointless(operands);
       }
-      else if (sign.equals(JavaTokenType.ANDAND) ||
-               sign.equals(JavaTokenType.AND)) {
+      else if (sign.equals(JavaTokenType.ANDAND) || sign.equals(JavaTokenType.AND)) {
         isPointless = andExpressionIsPointless(operands);
       }
-      else if (sign.equals(JavaTokenType.OROR) ||
-               sign.equals(JavaTokenType.OR)) {
+      else if (sign.equals(JavaTokenType.OROR) || sign.equals(JavaTokenType.OR)) {
         isPointless = orExpressionIsPointless(operands);
       }
       else if (sign.equals(JavaTokenType.XOR)) {
@@ -384,7 +378,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   @Nullable
   private Boolean evaluate(@Nullable PsiExpression expression) {
     if (m_ignoreExpressionsContainingConstants && !(expression instanceof PsiLiteralExpression)) {
-      return false;
+      return null;
     }
 
     if (expression == null) {

@@ -90,4 +90,8 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
   public JComponent createCustomComponent(Presentation presentation) {
     return myComponent;
   }
+
+  public void setTextFieldFg(boolean inactive) {
+    myField.getTextEditor().setForeground(inactive ? UIUtil.getInactiveTextColor() : UIUtil.getActiveTextColor());
+  }
 }

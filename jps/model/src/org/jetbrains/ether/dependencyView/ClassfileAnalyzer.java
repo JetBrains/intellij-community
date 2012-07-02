@@ -18,10 +18,10 @@ import java.util.*;
  */
 
 class ClassfileAnalyzer {
-  private final DependencyContext context;
+  private final DependencyContext myContext;
 
   ClassfileAnalyzer(DependencyContext context) {
-    this.context = context;
+    this.myContext = context;
   }
 
   private static class Holder<T> {
@@ -46,7 +46,7 @@ class ClassfileAnalyzer {
       }
 
       public void visitEnum(String name, String desc, String value) {
-        policy = RetentionPolicy.valueOf(value);
+        myRetentionPolicy = RetentionPolicy.valueOf(value);
       }
 
       public AnnotationVisitor visitAnnotation(String name, String desc) {
@@ -70,7 +70,7 @@ class ClassfileAnalyzer {
       }
 
       public void visitEnum(final String name, String desc, final String value) {
-        targets.add(ElemType.valueOf(value));
+        myTargets.add(ElemType.valueOf(value));
       }
 
       public AnnotationVisitor visitAnnotation(String name, String desc) {
@@ -86,15 +86,15 @@ class ClassfileAnalyzer {
     }
 
     private class AnnotationCrawler extends AnnotationVisitor {
-      private final TypeRepr.ClassType type;
-      private final ElemType target;
+      private final TypeRepr.ClassType myType;
+      private final ElemType myTarget;
 
       private final TIntHashSet myUsedArguments = new TIntHashSet();
 
       private AnnotationCrawler(final TypeRepr.ClassType type, final ElemType target) {
         super(Opcodes.ASM4);
-        this.type = type;
-        this.target = target;
+        this.myType = type;
+        this.myTarget = target;
         final Set<ElemType> targets = myAnnotationTargets.get(type);
         if (targets == null) {
           myAnnotationTargets.put(type, EnumSet.of(target));
@@ -102,7 +102,7 @@ class ClassfileAnalyzer {
         else {
           targets.add(target);
         }
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, type.className));
+        myUsages.add(UsageRepr.createClassUsage(myContext, type.className));
       }
 
       private String getMethodDescr(final Object value) {
@@ -150,49 +150,47 @@ class ClassfileAnalyzer {
       }
 
       public void visit(String name, Object value) {
-        final int residence = context.get(classNameHolder.get());
         final String methodDescr = getMethodDescr(value);
-        final int methodName = context.get(name);
+        final int methodName = myContext.get(name);
 
         if (value instanceof Type) {
           final String className = ((Type)value).getClassName().replace('.', '/');
 
           if (className != null) {
-            usages.addUsage(residence, UsageRepr.createClassUsage(context, context.get(className)));
+            myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(className)));
           }
         }
 
-        usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, type.className, methodDescr));
-        usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, type.className, methodDescr));
+        myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.className, methodDescr));
+        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className, methodDescr));
 
         myUsedArguments.add(methodName);
       }
 
       public void visitEnum(String name, String desc, String value) {
-        final int residence = context.get(classNameHolder.get());
-        final int methodName = context.get(name);
+        final int methodName = myContext.get(name);
         final String methodDescr = "()" + desc;
 
-        usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, type.className, methodDescr));
-        usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, type.className, methodDescr));
+        myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.className, methodDescr));
+        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className, methodDescr));
 
         myUsedArguments.add(methodName);
       }
 
       public AnnotationVisitor visitAnnotation(String name, String desc) {
-        return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(context, context.get(desc)), target);
+        return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), myTarget);
       }
 
       public AnnotationVisitor visitArray(String name) {
-        myUsedArguments.add(context.get(name));
+        myUsedArguments.add(myContext.get(name));
         return this;
       }
 
       public void visitEnd() {
-        final TIntHashSet s = myAnnotationArguments.get(type);
+        final TIntHashSet s = myAnnotationArguments.get(myType);
 
         if (s == null) {
-          myAnnotationArguments.put(type, myUsedArguments);
+          myAnnotationArguments.put(myType, myUsedArguments);
         }
         else {
           s.retainAll(myUsedArguments.toArray());
@@ -201,10 +199,10 @@ class ClassfileAnalyzer {
     }
 
     private void processSignature(final String sig) {
-      if (sig != null) new SignatureReader(sig).accept(signatureCrawler);
+      if (sig != null) new SignatureReader(sig).accept(mySignatureCrawler);
     }
 
-    private final SignatureVisitor signatureCrawler = new SignatureVisitor(Opcodes.ASM4) {
+    private final SignatureVisitor mySignatureCrawler = new SignatureVisitor(Opcodes.ASM4) {
       public void visitFormalTypeParameter(String name) {
         return;
       }
@@ -265,86 +263,84 @@ class ClassfileAnalyzer {
       }
 
       public void visitClassType(String name) {
-        usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, context.get(name)));
+        myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(name)));
       }
     };
 
-    Boolean takeIntoAccount = false;
+    private Boolean myTakeIntoAccount = false;
 
-    final int fileName;
-    int access;
-    int name;
-    String superClass;
-    String[] interfaces;
-    String signature;
+    private final int myFileName;
+    private int myAccess;
+    private int myName;
+    private String mySuperClass;
+    private String[] myInterfaces;
+    private String mySignature;
 
-    final Holder<String> classNameHolder = new Holder<String>();
-    final Holder<String> outerClassName = new Holder<String>();
-    final Holder<Boolean> localClassFlag = new Holder<Boolean>();
+    final Holder<String> myClassNameHolder = new Holder<String>();
+    final Holder<String> myOuterClassName = new Holder<String>();
+    final Holder<Boolean> myLocalClassFlag = new Holder<Boolean>();
 
     {
-      localClassFlag.set(false);
+      myLocalClassFlag.set(false);
     }
 
-    final Set<MethodRepr> methods = new HashSet<MethodRepr>();
-    final Set<FieldRepr> fields = new HashSet<FieldRepr>();
-    final List<String> nestedClasses = new ArrayList<String>();
-    final UsageRepr.Cluster usages = new UsageRepr.Cluster();
-    final Set<UsageRepr.Usage> annotationUsages = new HashSet<UsageRepr.Usage>();
-    final Set<ElemType> targets = EnumSet.noneOf(ElemType.class);
-    RetentionPolicy policy = null;
+    private final Set<MethodRepr> myMethods = new HashSet<MethodRepr>();
+    private final Set<FieldRepr> myFields = new HashSet<FieldRepr>();
+    private final List<String> myNestedClasses = new ArrayList<String>();
+    private final Set<UsageRepr.Usage> myUsages = new HashSet<UsageRepr.Usage>();
+    private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
+    private RetentionPolicy myRetentionPolicy = null;
 
     final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new HashMap<TypeRepr.ClassType, TIntHashSet>();
     final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new HashMap<TypeRepr.ClassType, Set<ElemType>>();
 
     public ClassCrawler(final int fn) {
       super(Opcodes.ASM4);
-      fileName = fn;
+      myFileName = fn;
     }
 
     private boolean notPrivate(final int access) {
       return (access & Opcodes.ACC_PRIVATE) == 0;
     }
 
-    public Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> getResult() {
+    public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
       final ClassRepr repr =
-        takeIntoAccount ? new ClassRepr(
-          context, access, fileName, name, context.get(signature), context.get(superClass), interfaces, nestedClasses, fields, methods, targets, policy, context.get(outerClassName.get()), localClassFlag.get()) : null;
+        myTakeIntoAccount ? new ClassRepr(
+          myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces, myNestedClasses,
+          myFields,
+          myMethods, myTargets, myRetentionPolicy, myContext
+          .get(myOuterClassName.get()), myLocalClassFlag.get(), myUsages) : null;
 
       if (repr != null) {
-        repr.updateClassUsages(context, usages);
+        repr.updateClassUsages(myContext, myUsages);
       }
 
-      return new Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>>(repr,
-                                                                                new Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>(usages,
-                                                                                                                                  annotationUsages));
+      return new Pair<ClassRepr, Set<UsageRepr.Usage>>(repr, myUsages);
     }
 
     @Override
     public void visit(int version, int a, String n, String sig, String s, String[] i) {
-      takeIntoAccount = notPrivate(a);
+      myTakeIntoAccount = notPrivate(a);
 
-      access = a;
-      name = context.get(n);
-      signature = sig;
-      superClass = s;
-      interfaces = i;
+      myAccess = a;
+      myName = myContext.get(n);
+      mySignature = sig;
+      mySuperClass = s;
+      myInterfaces = i;
 
-      classNameHolder.set(n);
+      myClassNameHolder.set(n);
 
-      final int residence = context.get(classNameHolder.get());
-
-      if (superClass != null) {
-        final int superclassName = context.get(superClass);
-        usages.addUsage(residence, UsageRepr.createClassUsage(context, superclassName));
-        usages.addUsage(residence, UsageRepr.createClassExtendsUsage(context, superclassName));
+      if (mySuperClass != null) {
+        final int superclassName = myContext.get(mySuperClass);
+        myUsages.add(UsageRepr.createClassUsage(myContext, superclassName));
+        myUsages.add(UsageRepr.createClassExtendsUsage(myContext, superclassName));
       }
 
-      if (interfaces != null) {
-        for (String it : interfaces) {
-          final int interfaceName = context.get(it);
-          usages.addUsage(residence, UsageRepr.createClassUsage(context, interfaceName));
-          usages.addUsage(residence, UsageRepr.createClassExtendsUsage(context, interfaceName));
+      if (myInterfaces != null) {
+        for (String it : myInterfaces) {
+          final int interfaceName = myContext.get(it);
+          myUsages.add(UsageRepr.createClassUsage(myContext, interfaceName));
+          myUsages.add(UsageRepr.createClassExtendsUsage(myContext, interfaceName));
         }
       }
 
@@ -358,7 +354,7 @@ class ClassfileAnalyzer {
         final Set<ElemType> targets = entry.getValue();
         final TIntHashSet usedArguments = myAnnotationArguments.get(type);
 
-        annotationUsages.add(UsageRepr.createAnnotationUsage(context, type, usedArguments, targets));
+        myUsages.add(UsageRepr.createAnnotationUsage(myContext, type, usedArguments, targets));
       }
     }
 
@@ -373,8 +369,8 @@ class ClassfileAnalyzer {
       }
 
       return new AnnotationCrawler(
-        (TypeRepr.ClassType)TypeRepr.getType(context, context.get(desc)),
-        (access & Opcodes.ACC_ANNOTATION) > 0 ? ElemType.ANNOTATION_TYPE : ElemType.TYPE
+        (TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)),
+        (myAccess & Opcodes.ACC_ANNOTATION) > 0 ? ElemType.ANNOTATION_TYPE : ElemType.TYPE
       );
     }
 
@@ -387,13 +383,13 @@ class ClassfileAnalyzer {
       processSignature(signature);
 
       if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
-        fields.add(new FieldRepr(context, access, context.get(n), context.get(desc), context.get(signature), value));
+        myFields.add(new FieldRepr(myContext, access, myContext.get(n), myContext.get(desc), myContext.get(signature), value));
       }
 
       return new FieldVisitor(Opcodes.ASM4) {
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-          return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(context, context.get(desc)), ElemType.FIELD);
+          return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), ElemType.FIELD);
         }
       };
     }
@@ -408,14 +404,14 @@ class ClassfileAnalyzer {
         @Override
         public void visitEnd() {
           if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
-            methods.add(new MethodRepr(context, access, context.get(n), context.get(signature), desc, exceptions, defaultValue.get()));
+            myMethods.add(new MethodRepr(myContext, access, myContext.get(n), myContext.get(signature), desc, exceptions, defaultValue.get()));
           }
         }
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
           return new AnnotationCrawler(
-            (TypeRepr.ClassType)TypeRepr.getType(context, context.get(desc)), "<init>".equals(n) ? ElemType.CONSTRUCTOR : ElemType.METHOD
+            (TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), "<init>".equals(n) ? ElemType.CONSTRUCTOR : ElemType.METHOD
           );
         }
 
@@ -430,13 +426,13 @@ class ClassfileAnalyzer {
 
         @Override
         public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-          return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(context, context.get(desc)), ElemType.PARAMETER);
+          return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(myContext, myContext.get(desc)), ElemType.PARAMETER);
         }
 
         @Override
         public void visitLdcInsn(Object cst) {
           if (cst instanceof Type) {
-            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, context.get(((Type)cst).getInternalName())));
+            myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(((Type)cst).getInternalName())));
           }
 
           super.visitLdcInsn(cst);
@@ -444,17 +440,16 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitMultiANewArrayInsn(String desc, int dims) {
-          final TypeRepr.ArrayType typ = (TypeRepr.ArrayType)TypeRepr.getType(context, context.get(desc));
+          final TypeRepr.ArrayType typ = (TypeRepr.ArrayType)TypeRepr.getType(myContext, myContext.get(desc));
           final TypeRepr.AbstractType element = typ.getDeepElementType();
 
           if (element instanceof TypeRepr.ClassType) {
-            final int residence = context.get(classNameHolder.get());
             final int className = ((TypeRepr.ClassType)element).className;
-            usages.addUsage(residence, UsageRepr.createClassUsage(context, className));
-            usages.addUsage(residence, UsageRepr.createClassNewUsage(context, className));
+            myUsages.add(UsageRepr.createClassUsage(myContext, className));
+            myUsages.add(UsageRepr.createClassNewUsage(myContext, className));
           }
 
-          typ.updateClassUsages(context, name, usages);
+          typ.updateClassUsages(myContext, myName, myUsages);
 
           super.visitMultiANewArrayInsn(desc, dims);
         }
@@ -462,14 +457,14 @@ class ClassfileAnalyzer {
         @Override
         public void visitLocalVariable(String n, String desc, String signature, Label start, Label end, int index) {
           processSignature(signature);
-          TypeRepr.getType(context, context.get(desc)).updateClassUsages(context, name, usages);
+          TypeRepr.getType(myContext, myContext.get(desc)).updateClassUsages(myContext, myName, myUsages);
           super.visitLocalVariable(n, desc, signature, start, end, index);
         }
 
         @Override
         public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
           if (type != null) {
-            TypeRepr.createClassType(context, context.get(type)).updateClassUsages(context, name, usages);
+            TypeRepr.createClassType(myContext, myContext.get(type)).updateClassUsages(myContext, myName, myUsages);
           }
 
           super.visitTryCatchBlock(start, end, handler, type);
@@ -477,48 +472,45 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitTypeInsn(int opcode, String type) {
-          final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(context, context.get(type)) : TypeRepr.createClassType(context, context.get(type));
+          final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(myContext, myContext.get(type)) : TypeRepr.createClassType(
+            myContext, myContext.get(type));
 
           if (opcode == Opcodes.NEW) {
-            final int residence = context.get(classNameHolder.get());
-            usages.addUsage(residence, UsageRepr.createClassUsage(context, ((TypeRepr.ClassType)typ).className));
-            usages.addUsage(residence, UsageRepr.createClassNewUsage(context, ((TypeRepr.ClassType)typ).className));
+            myUsages.add(UsageRepr.createClassUsage(myContext, ((TypeRepr.ClassType)typ).className));
+            myUsages.add(UsageRepr.createClassNewUsage(myContext, ((TypeRepr.ClassType)typ).className));
           }
           else if (opcode == Opcodes.ANEWARRAY) {
             if (typ instanceof TypeRepr.ClassType) {
-              final int residence = context.get(classNameHolder.get());
-              usages.addUsage(residence, UsageRepr.createClassUsage(context, ((TypeRepr.ClassType)typ).className));
-              usages.addUsage(residence, UsageRepr.createClassNewUsage(context, ((TypeRepr.ClassType)typ).className));
+              myUsages.add(UsageRepr.createClassUsage(myContext, ((TypeRepr.ClassType)typ).className));
+              myUsages.add(UsageRepr.createClassNewUsage(myContext, ((TypeRepr.ClassType)typ).className));
             }
           }
 
-          typ.updateClassUsages(context, name, usages);
+          typ.updateClassUsages(myContext, myName, myUsages);
 
           super.visitTypeInsn(opcode, type);
         }
 
         @Override
         public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-          final int residence = context.get(classNameHolder.get());
-          final int fieldName = context.get(name);
-          final int fieldOwner = context.get(owner);
-          final int descr = context.get(desc);
+          final int fieldName = myContext.get(name);
+          final int fieldOwner = myContext.get(owner);
+          final int descr = myContext.get(desc);
 
           if (opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC) {
-            usages.addUsage(residence, UsageRepr.createFieldAssignUsage(context, fieldName, fieldOwner, descr));
+            myUsages.add(UsageRepr.createFieldAssignUsage(myContext, fieldName, fieldOwner, descr));
           }
-          usages.addUsage(residence, UsageRepr.createFieldUsage(context, fieldName, fieldOwner, descr));
+          myUsages.add(UsageRepr.createFieldUsage(myContext, fieldName, fieldOwner, descr));
           super.visitFieldInsn(opcode, owner, name, desc);
         }
 
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-          final int residence = context.get(classNameHolder.get());
-          final int methodName = context.get(name);
-          final int methodOwner = context.get(owner);
+          final int methodName = myContext.get(name);
+          final int methodOwner = myContext.get(owner);
 
-          usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, methodOwner, desc));
-          usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, methodOwner, desc));
+          myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, methodOwner, desc));
+          myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, methodOwner, desc));
 
           super.visitMethodInsn(opcode, owner, name, desc);
         }
@@ -528,21 +520,21 @@ class ClassfileAnalyzer {
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
       if (outerName != null && outerName.equals(name) && notPrivate(access)) {
-        nestedClasses.add(innerName);
+        myNestedClasses.add(innerName);
       }
     }
 
     @Override
     public void visitOuterClass(final String owner, final String name, final String desc) {
-      outerClassName.set(owner);
+      myOuterClassName.set(owner);
 
       if (name != null) {
-        localClassFlag.set(true);
+        myLocalClassFlag.set(true);
       }
     }
   }
 
-  public Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> analyze(final int fileName, final ClassReader cr) {
+  public Pair<ClassRepr, Set<UsageRepr.Usage>> analyze(final int fileName, final ClassReader cr) {
     final ClassCrawler visitor = new ClassCrawler(fileName);
 
     cr.accept(visitor, 0);

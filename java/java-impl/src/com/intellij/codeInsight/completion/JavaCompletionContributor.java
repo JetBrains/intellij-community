@@ -22,7 +22,7 @@ import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -209,7 +208,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     final PsiElement position = parameters.getPosition();
-    if (!position.getContainingFile().getLanguage().isKindOf(StdLanguages.JAVA)) {
+    if (!position.getContainingFile().getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return;
     }
 
@@ -231,8 +230,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
 
+    PrefixMatcher matcher = result.getPrefixMatcher();
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, result.getPrefixMatcher(), inheritors);
+      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
     }
 
     if (IMPORT_REFERENCE.accepts(position)) {
@@ -251,6 +251,19 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     addAllClasses(parameters, result, inheritors);
+
+    final PsiElement parent = position.getParent();
+    if (parent instanceof PsiReferenceExpression &&
+        !((PsiReferenceExpression)parent).isQualified() &&
+        parameters.isExtendedCompletion() &&
+        StringUtil.isNotEmpty(matcher.getPrefix())) {
+      new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          result.addElement(element);
+        }
+      });
+    }
     result.stopHere();
   }
 
@@ -262,7 +275,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    if (mayShowAllClasses(parameters)) {
+    if (parameters.getInvocationCount() >= 2) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
@@ -406,10 +419,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
     
     return true;
-  }
-
-  public static boolean mayShowAllClasses(CompletionParameters parameters) {
-    return Registry.is("show.all.classes.on.first.completion") || parameters.getInvocationCount() >= 2;
   }
 
   public static boolean mayStartClassName(CompletionResultSet result) {

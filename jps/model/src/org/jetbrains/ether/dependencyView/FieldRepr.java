@@ -5,6 +5,7 @@ import com.intellij.util.io.DataExternalizer;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,8 +15,8 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 class FieldRepr extends ProtoMember {
-  public void updateClassUsages(final DependencyContext context, final int owner, final UsageRepr.Cluster s) {
-    type.updateClassUsages(context, owner, s);
+  public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {
+    myType.updateClassUsages(context, owner, s);
   }
 
   public FieldRepr(final DependencyContext context, final int a, final int n, final int d, final int s, final Object v) {
@@ -33,12 +34,12 @@ class FieldRepr extends ProtoMember {
 
     final FieldRepr fieldRepr = (FieldRepr)o;
 
-    return name == fieldRepr.name;
+    return myName == fieldRepr.myName;
   }
 
   @Override
   public int hashCode() {
-    return 31 * name;
+    return 31 * myName;
   }
 
   public static DataExternalizer<FieldRepr> externalizer(final DependencyContext context) {
@@ -56,10 +57,10 @@ class FieldRepr extends ProtoMember {
   }
 
   public UsageRepr.Usage createUsage(final DependencyContext context, final int owner) {
-    return UsageRepr.createFieldUsage(context, name, owner, context.get(type.getDescr(context)));
+    return UsageRepr.createFieldUsage(context, myName, owner, context.get(myType.getDescr(context)));
   }
 
   public UsageRepr.Usage createAssignUsage(final DependencyContext context, final int owner) {
-    return UsageRepr.createFieldAssignUsage(context, name, owner, context.get(type.getDescr(context)));
+    return UsageRepr.createFieldAssignUsage(context, myName, owner, context.get(myType.getDescr(context)));
   }
 }

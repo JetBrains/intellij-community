@@ -55,17 +55,17 @@
       <separator/>
       <action class="org.intellij.images.editor.actions.ZoomInAction"
               id="Images.Editor.ZoomIn"
-              icon="/org/intellij/images/icons/ZoomIn.png"
+              icon="/graph/zoomIn.png"
               text="Zoom In"
               use-shortcut-of="ExpandAll" />
       <action class="org.intellij.images.editor.actions.ZoomOutAction"
               id="Images.Editor.ZoomOut"
-              icon="/org/intellij/images/icons/ZoomOut.png"
+              icon="/graph/zoomOut.png"
               text="Zoom Out"
               use-shortcut-of="CollapseAll"/>
       <action class="org.intellij.images.editor.actions.ActualSizeAction"
               id="Images.Editor.ActualSize"
-              icon="/org/intellij/images/icons/ActualSize.png"
+              icon="/graph/actualZoom.png"
               text="Zoom to Actual Size">
         <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>

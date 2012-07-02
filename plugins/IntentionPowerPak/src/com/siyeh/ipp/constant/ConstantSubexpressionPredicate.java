@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Nullable;
 
 class ConstantSubexpressionPredicate implements PsiElementPredicate {
 
@@ -63,6 +64,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
     return value != null;
   }
 
+  @Nullable
   static PsiPolyadicExpression getSubexpression(PsiPolyadicExpression expression, PsiJavaToken token) {
     final PsiExpression[] operands = expression.getOperands();
     if (operands.length == 2) {
@@ -77,7 +79,7 @@ class ConstantSubexpressionPredicate implements PsiElementPredicate {
         return (PsiPolyadicExpression)factory.createExpressionFromText(binaryExpressionText, expression);
       }
     }
-    throw null;
+    return null;
   }
 
   private static boolean isPartOfLargerExpression(PsiPolyadicExpression expression) {

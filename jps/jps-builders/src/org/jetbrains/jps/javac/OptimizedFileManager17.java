@@ -29,6 +29,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
   private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
+  private final Map<File, SoftReference<File[]>> myDirectoryCache = new HashMap<File, SoftReference<File[]>>();
+  public static final File[] NULL_FILE_ARRAY = new File[0];
 
   public OptimizedFileManager17() throws Throwable {
     super(new Context(), true, null);
@@ -54,8 +56,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
   @Override
   public Iterable<JavaFileObject> list(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
-    Iterable<? extends File> path = getLocation(location);
-    if (path == null) {
+    Iterable<? extends File> locationRoots = getLocation(location);
+    if (locationRoots == null) {
       return List.nil();
     }
 
@@ -63,36 +65,36 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     
     ListBuffer<JavaFileObject> results = new ListBuffer<JavaFileObject>();
 
-    for (File file : path) {
-      Archive archive = myArchives.get(file);
+    for (File root : locationRoots) {
+      Archive archive = myArchives.get(root);
       
       final boolean isFile;
       if (archive != null) {
         isFile = true;
       }
       else {
-        isFile = isFile(file);
+        isFile = isFile(root);
       }
       
       if (isFile) {
         // Not a directory; either a file or non-existant, create the archive
         try {
           if (archive == null) {
-            archive = openArchive(file);
+            archive = openArchive(root);
           }
           listArchive(archive, subdirectory, kinds, recurse, results);
         } 
         catch (IOException ex) {
-          log.error("error.reading.file", file, getMessage(ex));
+          log.error("error.reading.file", root, getMessage(ex));
         }
       }
       else {
-        final File dir = subdirectory.getFile(file);
+        final File dir = subdirectory.getFile(root);
         if (recurse) {
-          listDirectoryRecursively(dir, kinds, results, true);
+          listDirectoryRecursively(dir, kinds, results, true, !location.isOutputLocation());
         }
         else {
-          listDirectory(dir, kinds, results);
+          listDirectory(dir, kinds, results, !location.isOutputLocation());
         }
       }
       
@@ -123,8 +125,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
   
-  private void listDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList) {
-    final File[] files = directory.listFiles();
+  private void listDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList, boolean canUseCache) {
+    final File[] files = listChildren(directory, canUseCache);
     if (files != null) {
       if (sortFiles != null) {
         Arrays.sort(files, sortFiles);
@@ -143,8 +145,8 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
 
-  private void listDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList, boolean isRootCall) {
-    final File[] children = file.listFiles();
+  private void listDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList, boolean isRootCall, boolean canUseCache) {
+    final File[] children = listChildren(file, canUseCache);
     final String fileName = file.getName();
     if (children != null) { // is directory
       if (isRootCall || SourceVersion.isIdentifier(fileName)) {
@@ -152,7 +154,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
           Arrays.sort(children, sortFiles);
         }
         for (File child : children) {
-          listDirectoryRecursively(child, fileKinds, resultList, false);
+          listDirectoryRecursively(child, fileKinds, resultList, false, canUseCache);
         }
       }
     }
@@ -164,6 +166,19 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
   
+  private File[] listChildren(File file, boolean canUseCache) {
+    if (!canUseCache) {
+      return file.listFiles();
+    }
+    final SoftReference<File[]> ref = myDirectoryCache.get(file);
+    File[] cached = ref != null? ref.get() : null;
+    if (cached == null) {
+      cached = file.listFiles();
+      myDirectoryCache.put(file, new SoftReference<File[]>(cached != null? cached : NULL_FILE_ARRAY));
+    }
+    return cached == NULL_FILE_ARRAY ? null : cached;
+  }
+
   private boolean isFile(File root) {
     Boolean cachedIsFile = myIsFile.get(root);
     if (cachedIsFile == null) {

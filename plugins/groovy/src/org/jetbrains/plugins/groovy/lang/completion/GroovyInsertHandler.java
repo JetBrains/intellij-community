@@ -66,8 +66,8 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       }
 
       CaretModel caretModel = editor.getCaretModel();
-      int offset = context.getStartOffset() + method.getName().length();
-      PsiFile file = PsiDocumentManager.getInstance(method.getProject()).getPsiFile(document);
+      int offset = context.getTailOffset();
+      PsiFile file = context.getFile();
       assert file != null;
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
       assert elementAt != null;

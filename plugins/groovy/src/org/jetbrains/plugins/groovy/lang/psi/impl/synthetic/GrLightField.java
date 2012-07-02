@@ -42,10 +42,10 @@ import java.util.Map;
  */
 public class GrLightField extends GrLightVariable implements GrField {
 
-  private GrAccessorMethod mySetter;
-  private GrAccessorMethod[] myGetters;
+  protected GrAccessorMethod mySetter;
+  protected GrAccessorMethod[] myGetters;
 
-  private boolean mySetterInitialized = false;
+  protected boolean mySetterInitialized = false;
 
   private final PsiClass myContainingClass;
 

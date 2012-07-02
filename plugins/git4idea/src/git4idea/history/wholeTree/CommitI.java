@@ -12,6 +12,8 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.openapi.util.Ref;
+
 import java.util.List;
 
 /**
@@ -26,4 +28,5 @@ public interface CommitI {
   int getWireNumber();
   void setWireNumber(int wireNumber);
   int compareByName(Commit c);
+  Ref<Integer> getAuthorIdx();
 }

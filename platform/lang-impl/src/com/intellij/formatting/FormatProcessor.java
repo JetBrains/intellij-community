@@ -108,7 +108,7 @@ class FormatProcessor {
    * <pre>
    *       int[] data = {1, 2, 3};
    * </pre>
-   * We want to keep that in one line with possible but place curly braces on separate lines if the width is not enough:
+   * We want to keep that in one line if possible but place curly braces on separate lines if the width is not enough:
    * <pre>
    *      int[] data = {    | &lt; right margin
    *          1, 2, 3       |
@@ -667,6 +667,8 @@ class FormatProcessor {
         myCurrentBlock = offsetResponsibleBlock.getNextBlock();
         onCurrentLineChanged();
         return false;
+      case RECURSION_DETECTED:
+        myCurrentBlock = offsetResponsibleBlock; // Fall through to the 'register alignment to skip'.
       case UNABLE_TO_ALIGN_BACKWARD_BLOCK:
         myAlignmentsToSkip.add(alignment);
         return false;
@@ -1179,8 +1181,8 @@ class FormatProcessor {
   }
 
   private static int calcShift(final IndentInside lastLineIndent, final IndentInside whiteSpaceIndent,
-                               final CommonCodeStyleSettings.IndentOptions options
-  ) {
+                               final CommonCodeStyleSettings.IndentOptions options)
+  {
     if (lastLineIndent.equals(whiteSpaceIndent)) return 0;
     if (options.USE_TAB_CHARACTER) {
       if (lastLineIndent.whiteSpaces > 0) {
@@ -1198,6 +1200,22 @@ class FormatProcessor {
         return whiteSpaceIndent.whiteSpaces - lastLineIndent.whiteSpaces;
       }
     }
+  }
+
+  /**
+   * Utility method to use during debugging formatter processing.
+   * 
+   * @return    text that contains intermediate formatter-introduced changes (even not committed yet)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  @NotNull
+  private String getCurrentText() {
+    StringBuilder result = new StringBuilder();
+    for (LeafBlockWrapper block = myFirstTokenBlock; block != null; block = block.getNextBlock()) {
+      result.append(block.getWhiteSpace().generateWhiteSpace(getIndentOptionsToUse(block, myDefaultIndentOption)));
+      result.append(myDocument.getCharsSequence().subSequence(block.getStartOffset(), block.getEndOffset()));
+    }
+    return result.toString();
   }
 
   private abstract class State {

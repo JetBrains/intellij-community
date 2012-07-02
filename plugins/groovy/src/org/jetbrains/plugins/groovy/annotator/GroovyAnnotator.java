@@ -103,13 +103,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -131,7 +132,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (element instanceof GroovyPsiElement) {
       myHolder = holder;
       ((GroovyPsiElement)element).accept(this);
-      if (isCompileStatic(element)) {
+      if (PsiUtil.isCompileStatic(element)) {
         GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
       }
       myHolder = null;
@@ -412,7 +413,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
         if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
           Annotation annotation = myHolder.createInfoAnnotation(referenceExpression, GroovyBundle.message("cannot.reference.nonstatic", referenceExpression.getReferenceName()));
-          annotation.setTextAttributes(isCompileStatic(referenceExpression) ? DefaultHighlighter.BAD_CHARACTER : DefaultHighlighter.UNRESOLVED_ACCESS);
+          annotation.setTextAttributes(PsiUtil.isCompileStatic(referenceExpression) ? DefaultHighlighter.BAD_CHARACTER : DefaultHighlighter.UNRESOLVED_ACCESS);
         }
       }
     }
@@ -456,7 +457,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
       Annotation annotation;
 
-      boolean compileStatic = isCompileStatic(referenceExpression) || referenceExpression.getQualifier() == null && isInStaticMethod(referenceExpression);
+      boolean compileStatic = PsiUtil.isCompileStatic(referenceExpression) || referenceExpression.getQualifier() == null && isInStaticMethod(referenceExpression);
       if (compileStatic) {
         annotation = myHolder.createErrorAnnotation(elt, GroovyBundle.message("cannot.resolve", referenceExpression.getReferenceName()));
         annotation.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
@@ -487,11 +488,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private static boolean isInStaticMethod(GrReferenceExpression referenceExpression) {
     PsiMember context = PsiTreeUtil.getParentOfType(referenceExpression, PsiMember.class, true, GrClosableBlock.class);
     return context instanceof PsiMethod && context.hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  private static boolean isCompileStatic(PsiElement e) {
-    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class);
-    return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
   }
 
   private static boolean isReassigned(GrVariable var) {
@@ -831,12 +827,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
+  private void checkScriptField(GrAnnotation annotation) {
+    final PsiAnnotationOwner owner = annotation.getOwner();
+    final GrMember container = PsiTreeUtil.getParentOfType(((PsiElement)owner), GrMember.class);
+    if (container != null) {
+      if (container.getContainingClass() instanceof GroovyScriptClass) {
+        myHolder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script.body"));
+      }
+      else {
+        myHolder.createErrorAnnotation(annotation, GroovyBundle.message("annotation.field.can.only.be.used.within.a.script"));
+      }
+    }
+  }
+
   @Override
   public void visitVariable(GrVariable variable) {
     checkName(variable);
 
-    PsiNamedElement duplicate = ResolveUtil
-      .resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrReferenceExpression.class, GrVariable.class);
+    final GrVariable toSearchFor = ResolveUtil.isScriptField(variable)? GrScriptField.createScriptFieldFrom(variable):variable;
+    PsiNamedElement duplicate = ResolveUtil.resolveExistingElement(variable, new DuplicateVariablesProcessor(toSearchFor), GrReferenceExpression.class, GrVariable.class);
     if (duplicate == null) {
       if (variable instanceof GrParameter) {
         @SuppressWarnings({"ConstantConditions"})
@@ -853,7 +862,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     if (duplicate instanceof GrVariable) {
-      if (variable instanceof GrField || !(duplicate instanceof GrField)) {
+      if ((variable instanceof GrField || ResolveUtil.isScriptField(variable)) /*&& duplicate instanceof PsiField*/ ||
+          !(duplicate instanceof GrField)) {
         final String key = duplicate instanceof GrField ? "field.already.defined" : "variable.already.defined";
         myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message(key, variable.getName()));
       }
@@ -1319,6 +1329,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (elementTypeFields != null && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
       String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
       myHolder.createErrorAnnotation(ref, description);
+    }
+
+    if (GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD.equals(((PsiClass)resolved).getQualifiedName())) {
+      checkScriptField(annotation);
     }
   }
 

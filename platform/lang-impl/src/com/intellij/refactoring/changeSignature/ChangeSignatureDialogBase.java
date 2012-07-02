@@ -72,7 +72,7 @@ import java.util.Set;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M extends PsiElement, D extends MethodDescriptor<P>>
+public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M extends PsiElement, V, D extends MethodDescriptor<P, V>>
   extends RefactoringDialog {
 
   protected static final String EXIT_SILENTLY = "";
@@ -89,7 +89,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
   private MethodSignatureComponent mySignatureArea;
   private final Alarm myUpdateSignatureAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  protected VisibilityPanelBase myVisibilityPanel;
+  protected VisibilityPanelBase<V> myVisibilityPanel;
   protected PsiCodeFragment myReturnTypeCodeFragment;
   private DelegationPanel myDelegationPanel;
   protected AnActionButton myPropagateParamChangesButton;
@@ -101,7 +101,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected abstract LanguageFileType getFileType();
 
-  protected abstract ParameterTableModelBase<P> createParametersInfoModel(MethodDescriptor<P> method);
+  protected abstract ParameterTableModelBase<P> createParametersInfoModel(MethodDescriptor<P, V> method);
 
   protected abstract BaseRefactoringProcessor createRefactoringProcessor();
 
@@ -113,7 +113,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
 
   protected abstract String calculateSignature();
 
-  protected abstract VisibilityPanelBase createVisibilityControl();
+  protected abstract VisibilityPanelBase<V> createVisibilityControl();
 
   public ChangeSignatureDialogBase(Project project, final D method, boolean allowDelegation, PsiElement defaultValueContext) {
     super(project, true);
@@ -148,7 +148,7 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     }
   }
 
-  protected String getVisibility() {
+  protected V getVisibility() {
     if (myVisibilityPanel != null) {
       return myVisibilityPanel.getVisibility();
     }

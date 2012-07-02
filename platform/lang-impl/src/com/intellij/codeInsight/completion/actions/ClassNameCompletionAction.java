@@ -17,10 +17,13 @@
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ClassNameCompletionAction extends BaseCodeCompletionAction{
-  public ClassNameCompletionAction() {
-    super(CompletionType.CLASS_NAME);
+
+  public void actionPerformed(AnActionEvent e) {
+    invokeCompletion(e, CompletionType.BASIC, 2);
   }
+
 
 }

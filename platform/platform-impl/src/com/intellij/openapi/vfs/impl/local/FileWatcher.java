@@ -118,7 +118,7 @@ public class FileWatcher {
       }, "FileWatcher shutdown hook"));
     }
     else {
-      String message = explicitlyDisabled ? String.format("File watcher is disabled (%s property is set)", PROPERTY_WATCHER_DISABLED)
+      String message = explicitlyDisabled ? String.format("File watcher is disabled ('%s' property is set)", PROPERTY_WATCHER_DISABLED)
                                           : "File watcher failed to startup";
       LOG.info(message);
       notifyOnFailure(message, null);

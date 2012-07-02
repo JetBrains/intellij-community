@@ -40,7 +40,7 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsPossessiveQuantifiers() {
-    return false;
+    return true;
   }
 
   @Override

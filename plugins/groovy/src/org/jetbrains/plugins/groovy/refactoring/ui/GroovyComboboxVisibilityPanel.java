@@ -24,7 +24,7 @@ import static com.intellij.util.VisibilityUtil.toPresentableText;
 /**
  * @author Max Medvedev
  */
-public class GroovyComboboxVisibilityPanel extends ComboBoxVisibilityPanel {
+public class GroovyComboboxVisibilityPanel extends ComboBoxVisibilityPanel<String> {
   private static final String[] MODIFIERS = {PRIVATE, PROTECTED, PUBLIC, GrModifier.DEF};
 
   private static final String[] PRESENTABLE_NAMES = {

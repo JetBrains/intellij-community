@@ -58,6 +58,18 @@ public class MasterDetailPopupBuilder {
   private ActionToolbar myActionToolbar;
   private boolean myAddDetailViewToEast = true;
   private Dimension myMinSize;
+  private boolean myCancelOnWindowDeactivation = true;
+
+
+  public String getDimensionServiceKey() {
+    return myDimensionServiceKey;
+  }
+
+  public void setDimensionServiceKey(String dimensionServiceKey) {
+    myDimensionServiceKey = dimensionServiceKey;
+  }
+
+  private String myDimensionServiceKey;
 
 
   public MasterDetailPopupBuilder setDetailView(DetailView detailView) {
@@ -176,7 +188,9 @@ public class MasterDetailPopupBuilder {
       setResizable(true).
       setAutoselectOnMouseMove(false).
       setSettingButton(toolBar).
-      setSouthComponent(footerPanel);
+      setSouthComponent(footerPanel).
+      setCancelOnWindowDeactivation(myCancelOnWindowDeactivation);
+
 
     if (myAddDetailViewToEast) {
       builder.
@@ -193,6 +207,7 @@ public class MasterDetailPopupBuilder {
       setItemChoosenCallback(runnable).
       setCloseOnEnter(myCloseOnEnter).
       setMayBeParent(true).
+      setDimensionServiceKey(myDimensionServiceKey).
       setFilteringEnabled(new Function<Object, String>() {
         public String fun(Object o) {
           return ((ItemWrapper)o).speedSearchText();
@@ -268,6 +283,11 @@ public class MasterDetailPopupBuilder {
 
   public MasterDetailPopupBuilder setMinSize(Dimension minSize) {
     myMinSize = minSize;
+    return this;
+  }
+
+  public MasterDetailPopupBuilder setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
+    myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
     return this;
   }
 

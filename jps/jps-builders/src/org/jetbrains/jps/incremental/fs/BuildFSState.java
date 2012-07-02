@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental.fs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.CompilerExcludes;
@@ -8,6 +9,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.FileProcessor;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
@@ -21,6 +23,7 @@ import java.util.Set;
  *         Date: 12/16/11
  */
 public class BuildFSState extends FSState {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.BuildFSState");
 
   private final Set<String> myContextModules = new HashSet<String>();
   private volatile FilesDelta myCurrentRoundDelta;
@@ -143,6 +146,9 @@ public class BuildFSState extends FSState {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
               delta.markRecompile(rd.root, rd.isTestRoot, file);
+              if (Utils.IS_TEST_MODE) {
+                LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
+              }
             }
             else {
               marked = true;
@@ -150,6 +156,9 @@ public class BuildFSState extends FSState {
             }
           }
           else {
+            if (Utils.IS_TEST_MODE) {
+              LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
+            }
             delta.markRecompile(rd.root, rd.isTestRoot, file);
           }
         }

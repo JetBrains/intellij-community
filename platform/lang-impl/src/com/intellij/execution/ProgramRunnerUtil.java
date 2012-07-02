@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +52,11 @@ public class ProgramRunnerUtil {
     return RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
   }
 
-  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration,
-                                            @NotNull final Executor executor, final boolean showSettings) {
+  public static void executeConfiguration(@NotNull final Project project,
+                                          @NotNull final RunnerAndConfigurationSettings configuration,
+                                          @NotNull final Executor executor,
+                                          @NotNull final ExecutionTarget target,
+                                          final boolean showSettings) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     if (runner == null) {
       LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration.getConfiguration().getFactory().getName());
@@ -62,16 +66,22 @@ public class ProgramRunnerUtil {
       return;
     }
 
+    if (!ExecutionTargetManager.canRun(configuration, target)) {
+      ExecutionUtil.handleExecutionError(
+        project, executor.getToolWindowId(), configuration.getConfiguration(),
+        new ExecutionException(StringUtil.escapeXml("Cannot run '" + configuration.getName() + "' on '" + target.getDisplayName() + "'")));
+      return;
+    }
+
     if (!RunManagerImpl.canRunConfiguration(configuration, executor) || (showSettings && RunManagerImpl.isEditBeforeRun(configuration))) {
-      final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
-      if (!result) {
+      if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon())) {
         return;
       }
 
       while (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
-        if (0 == Messages.showYesNoDialog(project, "Configuration is still wrong. Do you want to edit it again?", "Change Configuration Settings", Messages.getErrorIcon())) {
-          final boolean result2 = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());
-          if (!result2) {
+        if (0 == Messages.showYesNoDialog(project, "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
+                                          "Edit", "Continue Anyway", Messages.getErrorIcon())) {
+          if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon())) {
             return;
           }
         } else {
@@ -86,16 +96,24 @@ public class ProgramRunnerUtil {
     }
 
     try {
-      runner.execute(executor, new ExecutionEnvironment(runner, configuration, project));
+      runner.execute(executor, new ExecutionEnvironment(runner, target, configuration, project));
     }
     catch (ExecutionException e) {
       ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), configuration.getConfiguration(), e);
     }
   }
 
-  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration,
-                                          @NotNull final Executor executor) {
-    executeConfiguration(project, configuration, executor, true);
+  public static void executeConfiguration(@NotNull Project project,
+                                          @NotNull RunnerAndConfigurationSettings configuration,
+                                          @NotNull Executor executor,
+                                          @NotNull ExecutionTarget target) {
+    executeConfiguration(project, configuration, executor, target, true);
+  }
+
+  public static void executeConfiguration(@NotNull Project project,
+                                          @NotNull RunnerAndConfigurationSettings configuration,
+                                          @NotNull Executor executor) {
+    executeConfiguration(project, configuration, executor, ExecutionTargetManager.getActiveTarget(project));
   }
 
   public static Icon getConfigurationIcon(final Project project, final RunnerAndConfigurationSettings settings, final boolean invalid) {

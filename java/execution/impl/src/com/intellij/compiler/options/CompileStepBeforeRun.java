@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption;
 import com.intellij.execution.remote.RemoteConfiguration;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.compiler.CompileContext;
@@ -98,7 +99,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return true;
   }
 
-  public boolean executeTask(DataContext context, final RunConfiguration configuration, MakeBeforeRunTask task) {
+  public boolean executeTask(DataContext context, final RunConfiguration configuration, ExecutionEnvironment env, MakeBeforeRunTask task) {
     if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
       return true;
     }

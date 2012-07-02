@@ -39,10 +39,12 @@ import java.awt.event.MouseEvent;
  */
 public abstract class BasePopupAction extends DumbAwareAction implements CustomComponentAction {
   private static final Icon ARROWS_ICON = AllIcons.Ide.Statusbar_arrows;
+  public static final Color DARKER = UIUtil.getInactiveTextColor().darker().darker();
   protected final JLabel myLabel;
   protected final JPanel myPanel;
   protected final Project myProject;
   protected DefaultActionGroup myAsTextAction;
+  private boolean myGreyed;
 
   public BasePopupAction(final Project project, final String labeltext, final String asTextLabel) {
     myProject = project;
@@ -53,7 +55,7 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
     final JLabel show = new JLabel(labeltext);
     show.setForeground(UIUtil.getInactiveTextColor());
     show.setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 2));
-    myLabel.setForeground(UIUtil.getInactiveTextColor().darker().darker());
+    myLabel.setForeground(DARKER);
     myPanel.add(show);
     myPanel.add(myLabel);
     myPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 3));
@@ -81,7 +83,7 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
       public void mouseExited(MouseEvent e) {
         super.mouseExited(e);
         show.setForeground(UIUtil.getInactiveTextColor());
-        myLabel.setForeground(UIUtil.getInactiveTextColor().darker().darker());
+        setLabelFg();
       }
     });
     myAsTextAction = new DefaultActionGroup(asTextLabel, true);
@@ -139,5 +141,14 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
       }
     });
     return myAsTextAction;
+  }
+
+  public void greyPanelFg(boolean value) {
+    myGreyed = value;
+    setLabelFg();
+  }
+
+  private void setLabelFg() {
+    myLabel.setForeground(myGreyed ? UIUtil.getInactiveTextColor() : DARKER);
   }
 }

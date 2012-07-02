@@ -26,6 +26,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -120,8 +121,13 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("foo bar", "fooGooBar");
     assertMatches("foo bar", "fooGoo bar");
     assertDoesntMatch(" b", "fbi");
-    assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("getUsage"));
-    assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("getMyUsage"));
+    assertDoesntMatch(" for", "performAction");
+    assertTrue(caseInsensitiveMatcher(" us").matches("getUsage"));
+    assertTrue(caseInsensitiveMatcher(" us").matches("getMyUsage"));
+  }
+
+  private static Matcher caseInsensitiveMatcher(String pattern) {
+    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testStartDot() {
@@ -194,11 +200,11 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testLowerCaseWords() throws Exception {
-    assertTrue(matches("uct", "unit_controller_test", true));
-    assertTrue(matches("unictest", "unit_controller_test", true));
-    assertTrue(matches("uc", "unit_controller_test", true));
-    assertFalse(matches("nc", "unit_controller_test", true));
-    assertFalse(matches("utc", "unit_controller_test", true));
+    assertTrue(matches("uct", "unit_controller_test"));
+    assertTrue(matches("unictest", "unit_controller_test"));
+    assertTrue(matches("uc", "unit_controller_test"));
+    assertFalse(matches("nc", "unit_controller_test"));
+    assertFalse(matches("utc", "unit_controller_test"));
   }
 
   public void testObjectiveCCases() throws Exception {
@@ -221,9 +227,9 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*Git*", "AtpGenerationItem");
     assertMatches("Collec*Util*", "CollectionUtils");
     assertMatches("Collec*Util*", "CollectionUtilsTest");
-    assertTrue(NameUtil.buildCompletionMatcher("*us", 0, true, true).matches("usage"));
-    assertTrue(NameUtil.buildCompletionMatcher(" us", 0, true, true).matches("usage"));
-    assertTrue(NameUtil.buildCompletionMatcher(" fo. ba", 0, true, true).matches("getFoo.getBar"));
+    assertTrue(caseInsensitiveMatcher("*us").matches("usage"));
+    assertTrue(caseInsensitiveMatcher(" us").matches("usage"));
+    assertTrue(caseInsensitiveMatcher(" fo. ba").matches("getFoo.getBar"));
     assertMatches(" File. sepa", "File.separator");
     assertMatches(" File. sepa", "File._separator");
     assertMatches(" File. _sepa", "File._separator");
@@ -231,32 +237,35 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testMiddleMatchingFirstLetterSensitive() {
-    assertTrue(NameUtil.buildCompletionMatcher(" cl", 1, true, true).matches("getClass"));
-    assertTrue(NameUtil.buildCompletionMatcher(" EUC-", 1, true, true).matches("x-EUC-TW"));
-    assertTrue(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("aaa"));
-    assertFalse(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("Aaa"));
-    assertFalse(NameUtil.buildCompletionMatcher(" a", 1, true, true).matches("Aaa"));
-    assertFalse(NameUtil.buildCompletionMatcher(" _bl", 1, true, true).matches("_top"));
+    assertTrue(firstLetterMatcher(" cl").matches("getClass"));
+    assertTrue(firstLetterMatcher(" EUC-").matches("x-EUC-TW"));
+    assertTrue(firstLetterMatcher(" a").matches("aaa"));
+    assertFalse(firstLetterMatcher(" a").matches("Aaa"));
+    assertFalse(firstLetterMatcher(" a").matches("Aaa"));
+    assertFalse(firstLetterMatcher(" _bl").matches("_top"));
+  }
+
+  private static Matcher firstLetterMatcher(String pattern) {
+    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
   }
 
   public void testSpaceInCompletionPrefix() throws Exception {
-    assertTrue(NameUtil.buildCompletionMatcher("create ", 0, true, true).matches("create module"));
+    assertTrue(caseInsensitiveMatcher("create ").matches("create module"));
   }
 
   public void testLong() throws Exception {
-    assertTrue(matches("Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqual", "Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqualsIntellijIdeaRulezzz", false));
+    assertTrue(matches("Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqual", "Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqualsIntellijIdeaRulezzz"));
   }
 
   private static void assertMatches(@NonNls String pattern, @NonNls String name) {
-    assertTrue(matches(pattern, name, false));
+    assertTrue(matches(pattern, name));
   }
   private static void assertDoesntMatch(@NonNls String pattern, @NonNls String name) {
-    assertFalse(matches(pattern, name, false));
+    assertFalse(matches(pattern, name));
   }
 
-  private static boolean matches(@NonNls final String pattern, @NonNls final String name, final boolean lowerCaseWords) {
-    //System.out.println("\n--- " + name + " " + lowerCaseWords);
-    return NameUtil.buildMatcher(pattern, 0, true, true, lowerCaseWords).matches(name);
+  private static boolean matches(@NonNls final String pattern, @NonNls final String name) {
+    return caseInsensitiveMatcher(pattern).matches(name);
   }
 
   public void testLowerCaseHumps() {
@@ -380,6 +389,7 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testPreferStartMatchToMiddleMatch() {
+    assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
     assertPreference("*f", "barfoo", "barFoo");
     assertPreference("*f", "barfoo", "foo");

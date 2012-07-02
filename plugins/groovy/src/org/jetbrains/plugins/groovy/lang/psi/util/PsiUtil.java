@@ -1298,4 +1298,9 @@ public class PsiUtil {
     }
     return oldImports;
   }
+
+  public static boolean isCompileStatic(PsiElement e) {
+    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
+    return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
+  }
 }

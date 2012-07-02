@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -58,7 +57,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -164,7 +162,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     @Override
     public void visitMethod(GrMethod method) {
-      if (GroovyPsiManager.getInstance(method.getProject()).isCompileStatic(method)) return;
+      if (!shouldProcess(method)) return;
 
       super.visitMethod(method);
       final GrOpenBlock block = method.getBlock();
@@ -176,13 +174,16 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         @Override
         public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
           if (returnValue != null &&
-              !(returnValue.getParent() instanceof GrReturnStatement) &&
               !isNewInstanceInitialingByTuple(returnValue)) {
             checkAssignability(expectedType, returnValue);
           }
           return true;
         }
       });
+    }
+
+    protected boolean shouldProcess(GrMethod method) {
+      return !GroovyPsiManager.getInstance(method.getProject()).isCompileStatic(method);
     }
 
     @Override
@@ -195,25 +196,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
       if (GroovyPsiManager.getInstance(typeDefinition.getProject()).isCompileStatic(typeDefinition)) return;
       super.visitTypeDefinition(typeDefinition);
-    }
-
-    @Override
-    public void visitReturnStatement(GrReturnStatement returnStatement) {
-      super.visitReturnStatement(returnStatement);
-
-      final GrMethod method = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, true, GrClosableBlock.class);
-      if (method == null) return;
-
-      final GrExpression value = returnStatement.getReturnValue();
-      if (isNewInstanceInitialingByTuple(value)) return;
-
-      final PsiType expectedType = method.getReturnType();
-      if (value == null || expectedType == null) return;
-
-      //don't check if the return type is void. the check is done inside annotator, because it's a compilation error
-      if (expectedType == PsiType.VOID) return;
-
-      checkAssignability(expectedType, value);
     }
 
     @Override
@@ -785,6 +767,10 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
   private static class AnnotatingVisitor extends MyVisitor {
     private AnnotationHolder myHolder;
 
+    @Override
+    protected boolean shouldProcess(GrMethod method) {
+      return true;
+    }
 
     @Override
     protected void registerError(@NotNull final PsiElement location,
@@ -825,6 +811,13 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         });
       }
     }
+
+    protected void registerError(@NotNull PsiElement location,
+                                 ProblemHighlightType highlightType,
+                                 Object... args) {
+      registerError(location, (String)args[0], LocalQuickFix.EMPTY_ARRAY, highlightType);
+    }
+
 
     @Override
     public void visitElement(GroovyPsiElement element) {

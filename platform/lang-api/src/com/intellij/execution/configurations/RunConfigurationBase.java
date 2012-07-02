@@ -16,6 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,7 @@ import java.util.List;
 /**
  * @author dyoma
  */
-public abstract class RunConfigurationBase extends UserDataHolderBase implements RunConfiguration {
+public abstract class RunConfigurationBase extends UserDataHolderBase implements RunConfiguration, TargetAwareRunProfile {
   private final ConfigurationFactory myFactory;
   private final Project myProject;
   private String myName = "";
@@ -94,6 +95,10 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   public void checkRunnerSettings(@NotNull ProgramRunner runner, @Nullable RunnerSettings runnerSettings,
                                   @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
+  }
+
+  public boolean canRunOn(@NotNull ExecutionTarget target) {
+    return true;
   }
 
   public final boolean equals(final Object obj) {

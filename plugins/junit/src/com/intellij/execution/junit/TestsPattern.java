@@ -22,7 +22,10 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -50,9 +53,8 @@ import java.util.Set;
 public class TestsPattern extends TestPackage {
   public TestsPattern(final Project project,
                       final JUnitConfiguration configuration,
-                      RunnerSettings runnerSettings,
-                      ConfigurationPerRunnerSettings configurationSettings) {
-    super(project, configuration, runnerSettings, configurationSettings);
+                      ExecutionEnvironment environment) {
+    super(project, configuration, environment);
   }
 
   @Override

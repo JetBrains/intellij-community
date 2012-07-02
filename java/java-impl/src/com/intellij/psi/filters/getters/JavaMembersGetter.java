@@ -45,7 +45,7 @@ public class JavaMembersGetter extends MembersGetter {
   }
 
   public void addMembers(CompletionParameters parameters, boolean searchInheritors, final Consumer<LookupElement> results) {
-    final StaticMemberProcessor processor = JavaGlobalMemberNameCompletionContributor.completeStaticMembers(parameters);
+    final StaticMemberProcessor processor = new JavaStaticMemberProcessor(parameters);
     final PsiElement position = parameters.getPosition();
     if (myExpectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(myExpectedType)) {
       addConstantsFromTargetClass(position, results, searchInheritors, processor);

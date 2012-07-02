@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Extends {@link SpacingImpl} in order to add notion of dependency range.
@@ -24,29 +25,50 @@ import com.intellij.openapi.util.TextRange;
  * <code>'Dependency'</code> here affect {@link #getMinLineFeeds() minLineFieeds} property value. See property contract for more details.
  */
 public class DependantSpacingImpl extends SpacingImpl {
-  private final TextRange myDependency;
-  private static final int DEPENDENCE_CONTAINS_LF_MASK = 0x10;
+  private static final int DEPENDENCE_CONTAINS_LF_MASK      = 0x10;
   private static final int DEPENDENT_REGION_LF_CHANGED_MASK = 0x20;
+
+  @NotNull private final TextRange myDependency;
+  @NotNull private final DependentSpacingRule myRule;
+
 
   public DependantSpacingImpl(final int minSpaces,
                               final int maxSpaces,
-                              TextRange dependency,
+                              @NotNull TextRange dependency,
                               final boolean keepLineBreaks,
-                              final int keepBlankLines) {
+                              final int keepBlankLines,
+                              @NotNull DependentSpacingRule rule)
+  {
     super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines, false, 0);
     myDependency = dependency;
+    myRule = rule;
   }
 
   /**
    * @return    <code>1</code> if dependency has line feeds; <code>0</code> otherwise
    */
   public int getMinLineFeeds() {
-    if ((myFlags & DEPENDENCE_CONTAINS_LF_MASK) != 0) {
-      return 1;
+    if (!isTriggered()) {
+      return super.getMinLineFeeds();
     }
-    else {
-      return 0;
+    
+    if (myRule.hasData(DependentSpacingRule.Anchor.MIN_LINE_FEEDS)) {
+      return myRule.getData(DependentSpacingRule.Anchor.MIN_LINE_FEEDS);
     }
+
+    if (myRule.hasData(DependentSpacingRule.Anchor.MAX_LINE_FEEDS)) {
+      return myRule.getData(DependentSpacingRule.Anchor.MAX_LINE_FEEDS);
+    }
+    return super.getMinLineFeeds();
+  }
+
+  @Override
+  public int getKeepBlankLines() {
+    if (!isTriggered() || !myRule.hasData(DependentSpacingRule.Anchor.MAX_LINE_FEEDS)) {
+      return super.getKeepBlankLines();
+    }
+    
+    return 0;
   }
 
   public void refresh(FormatProcessor formatter) {
@@ -58,14 +80,16 @@ public class DependantSpacingImpl extends SpacingImpl {
     else myFlags &= ~DEPENDENCE_CONTAINS_LF_MASK;
   }
 
+  @NotNull
   public TextRange getDependency() {
     return myDependency;
   }
 
   /**
-   * Allows to answer whether the target dependent regions has been changed during formatting.
+   * Allows to answer whether 'contains line feed' status has been changed for the target dependent region during formatting.
    * 
-   * @return    <code>true</code> if target dependent region has been changed during formatting; <code>false</code> otherwise
+   * @return    <code>true</code> if target 'contains line feed' status has been changed for the target dependent region during formatting;
+   *            <code>false</code> otherwise
    */
   public final boolean isDependentRegionChanged() {
     return (myFlags & DEPENDENT_REGION_LF_CHANGED_MASK) != 0;
@@ -84,5 +108,10 @@ public class DependantSpacingImpl extends SpacingImpl {
   public String toString() {
     return "<DependantSpacing: minSpaces=" + getMinSpaces() + " maxSpaces=" + getMaxSpaces() + " minLineFeeds=" + getMinLineFeeds() + " dep=" +
            myDependency + ">";
+  }
+
+  private boolean isTriggered() {
+    return myRule.getTrigger() == DependentSpacingRule.Trigger.HAS_LINE_FEEDS
+           ^ (myFlags & DEPENDENCE_CONTAINS_LF_MASK) == 0;
   }
 }

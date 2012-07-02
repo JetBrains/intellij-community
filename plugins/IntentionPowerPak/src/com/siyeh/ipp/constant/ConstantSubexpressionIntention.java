@@ -66,6 +66,9 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     }
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element.getParent();
     final PsiPolyadicExpression subexpression = ConstantSubexpressionPredicate.getSubexpression(polyadicExpression, token);
+    if (subexpression == null) {
+      return;
+    }
     final Object value = ExpressionUtils.computeConstantExpression(subexpression);
     final StringBuilder newExpressionText = new StringBuilder();
     final PsiExpression[] operands = polyadicExpression.getOperands();

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class JUnitConfigurationType implements ConfigurationType {
-  public static final Icon ICON = AllIcons.RunConfigurations.Junit;
+  public static final Icon ICON = AllIcons.RunConfigurations.UnitTest;
   private final ConfigurationFactory myFactory;
 
   /**reflection*/

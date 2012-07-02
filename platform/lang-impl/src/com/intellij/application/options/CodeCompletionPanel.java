@@ -40,7 +40,6 @@ public class CodeCompletionPanel {
 
   private JCheckBox myCbOnCodeCompletion;
   private JCheckBox myCbOnSmartTypeCompletion;
-  private JCheckBox myCbOnClassNameCompletion;
 
   private JCheckBox myCbParameterInfoPopup;
   private JTextField myParameterInfoDelayField;
@@ -49,9 +48,9 @@ public class CodeCompletionPanel {
   private JComboBox myCaseSensitiveCombo;
   private JComboBox myFocusLookup;
   private JCheckBox myCbSorting;
-  private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.casesensitive.all");
-  private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.casesensitive.none");
-  private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.casesensitive.first.letter");
+  private static final String CASE_SENSITIVE_ALL = ApplicationBundle.message("combobox.autocomplete.case.sensitive.all");
+  private static final String CASE_SENSITIVE_NONE = ApplicationBundle.message("combobox.autocomplete.case.sensitive.none");
+  private static final String CASE_SENSITIVE_FIRST_LETTER = ApplicationBundle.message("combobox.autocomplete.case.sensitive.first.letter");
   private static final String[] CASE_VARIANTS = {CASE_SENSITIVE_ALL, CASE_SENSITIVE_NONE, CASE_SENSITIVE_FIRST_LETTER};
   private static final String[] FOCUS_VARIANTS = {"Never", "'Smart'", "Always"};
 
@@ -89,7 +88,6 @@ public class CodeCompletionPanel {
 
     hideOption(myCbShowStaticAfterInstance, OptionId.COMPLETION_SHOW_STATIC_AFTER_IMPORT);
     hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
-    hideOption(myCbOnClassNameCompletion, OptionId.COMPLETION_CLASS_NAME);
 
     reset();
   }
@@ -121,7 +119,6 @@ public class CodeCompletionPanel {
 
     myCbOnCodeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     myCbOnSmartTypeCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
-    myCbOnClassNameCompletion.setSelected(codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION);
     myCbAutocompleteCommonPrefix.setSelected(codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
     myCbShowStaticAfterInstance.setSelected(codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
 
@@ -147,11 +144,11 @@ public class CodeCompletionPanel {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
 
     codeInsightSettings.COMPLETION_CASE_SENSITIVE = getCaseSensitiveValue();
+    //noinspection MagicConstant
     codeInsightSettings.AUTOPOPUP_FOCUS_POLICY = getFocusLookupValue();
 
     codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION = myCbOnCodeCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = myCbOnSmartTypeCompletion.isSelected();
-    codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = myCbOnClassNameCompletion.isSelected();
     codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX = myCbAutocompleteCommonPrefix.isSelected();
     codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE = myCbShowStaticAfterInstance.isSelected();
     codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO = myCbShowFullParameterSignatures.isSelected();
@@ -176,12 +173,13 @@ public class CodeCompletionPanel {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     boolean isModified = false;
 
+    //noinspection ConstantConditions
     isModified |= getCaseSensitiveValue() != codeInsightSettings.COMPLETION_CASE_SENSITIVE;
+    //noinspection MagicConstant
     isModified |= getFocusLookupValue() != codeInsightSettings.AUTOPOPUP_FOCUS_POLICY;
 
     isModified |= isModified(myCbOnCodeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CODE_COMPLETION);
     isModified |= isModified(myCbOnSmartTypeCompletion, codeInsightSettings.AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION);
-    isModified |= isModified(myCbOnClassNameCompletion, codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION);
     isModified |= isModified(myCbAutocompleteCommonPrefix, codeInsightSettings.AUTOCOMPLETE_COMMON_PREFIX);
     isModified |= isModified(myCbShowStaticAfterInstance, codeInsightSettings.SHOW_STATIC_AFTER_INSTANCE);
     isModified |= isModified(myCbShowFullParameterSignatures, codeInsightSettings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO);
@@ -213,7 +211,7 @@ public class CodeCompletionPanel {
         return defaultValue;
       }
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
     return value;
   }
@@ -232,7 +230,6 @@ public class CodeCompletionPanel {
     }
   }
 
-  @MagicConstant(intValues = {CodeInsightSettings.NEVER, CodeInsightSettings.SMART, CodeInsightSettings.ALWAYS})
   private int getFocusLookupValue() {
     return myFocusLookup.getSelectedIndex() + 1;
   }

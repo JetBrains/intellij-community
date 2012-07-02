@@ -13,15 +13,16 @@
 package git4idea.history.wholeTree;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Ticket;
 import git4idea.history.browser.CachedRefs;
-import git4idea.history.browser.SymbolicRefsI;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author irengrig
@@ -48,4 +49,7 @@ public interface Mediator {
   void acceptStashHead(final Ticket ticket, VirtualFile root, Pair<AbstractHash, AbstractHash> hash);
 
   void oneFinished();
+
+  @CalledInAwt
+  void reloadSetFixed(Map<AbstractHash, Long> starred, RootsHolder rootsHolder);
 }

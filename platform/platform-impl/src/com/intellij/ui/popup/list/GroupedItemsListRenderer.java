@@ -16,6 +16,7 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -40,10 +41,13 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
   }
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    final JComponent result =
-        configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value), myDescriptor.getIconFor(value),
-                           myDescriptor.getIconFor(value), isSelected, myDescriptor.hasSeparatorAboveOf(value),
-                           myDescriptor.getCaptionAboveOf(value), -1);
+    String caption = myDescriptor.getCaptionAboveOf(value);
+    boolean hasSeparator = myDescriptor.hasSeparatorAboveOf(value);
+    if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
+
+    final JComponent result = configureComponent(myDescriptor.getTextFor(value), myDescriptor.getTooltipFor(value),
+                                                 myDescriptor.getIconFor(value), myDescriptor.getIconFor(value), isSelected, hasSeparator,
+                                                 caption, -1);
 
     customizeComponent(list, value, isSelected);
     return result;
