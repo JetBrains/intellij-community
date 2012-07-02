@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -198,6 +199,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   private void cleanupVfs() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
+        FileDocumentManager.getInstance().saveAllDocuments();
         for (VirtualFile file : myFixture.getTempDirFixture().getFile("").getChildren()) {
           try {
             file.delete(this);
