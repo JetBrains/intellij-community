@@ -214,10 +214,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       final String textWithMnemonic = getTemplatePresentation().getTextWithMnemonic();
       if (selectedConfiguration != null) {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
-
-        ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-        enabled = ExecutionTargetManager.canRun(selectedConfiguration, target)
-                  &&  runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
+        enabled = runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
 
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
@@ -247,12 +244,10 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       if (configuration == null) {
         return;
       }
-
-      ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
       if (configuration.isSingleton()) {
-        ExecutionManager.getInstance(project).restartRunProfile(project, myExecutor, target, configuration);
+        ExecutionManager.getInstance(project).restartRunProfile(project, myExecutor, configuration);
       } else {
-        ProgramRunnerUtil.executeConfiguration(project, configuration, myExecutor, target);
+        ProgramRunnerUtil.executeConfiguration(project, configuration, myExecutor);
       }
     }
   }

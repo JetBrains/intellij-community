@@ -60,10 +60,7 @@ public class RestartAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    ExecutionManager.getInstance(myEnvironment.getProject()).restartRunProfile(myEnvironment.getProject(),
-                                                                               myExecutor,
-                                                                               myEnvironment.getExecutionTarget(),
-                                                                               myEnvironment.getRunnerAndConfigurationSettings());
+    ExecutionManager.getInstance(myEnvironment.getProject()).restartRunProfile(myEnvironment.getProject(), myExecutor, myEnvironment.getRunnerAndConfigurationSettings());
   }
 
   public void restart() {
@@ -77,13 +74,8 @@ public class RestartAction extends AnAction implements DumbAware {
     }
     try {
       final ExecutionEnvironment old = myEnvironment;
-      myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(),
-                                                            project,
-                                                            old.getExecutionTarget(),
-                                                            old.getRunnerSettings(),
-                                                            old.getConfigurationSettings(),
-                                                            myDescriptor,
-                                                            old.getRunnerAndConfigurationSettings()));
+      myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(), project, old.getRunnerSettings(),
+                                                            old.getConfigurationSettings(), myDescriptor, old.getRunnerAndConfigurationSettings()));
     }
     catch (RunCanceledByUserException ignore) {
     }

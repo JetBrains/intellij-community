@@ -148,7 +148,8 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     final ProgramRunner runner = ProgramRunnerUtil.getRunner(executorId, settings);
     if (runner == null)
       return false;
-    return runner.canRun(executorId, settings.getConfiguration());
+    final ExecutionEnvironment environment = new ExecutionEnvironment(runner, settings, myProject);
+    return runner.canRun(executorId, environment.getRunProfile());
   }
 
   @Override

@@ -43,7 +43,6 @@ public abstract class ExecutionManager {
 
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,
-                                         @NotNull ExecutionTarget target,
                                          @NotNull RunnerAndConfigurationSettings configuration);
 
 }

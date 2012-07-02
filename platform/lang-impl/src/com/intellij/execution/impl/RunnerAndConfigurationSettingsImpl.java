@@ -16,7 +16,10 @@
 
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +29,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -293,14 +295,6 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
         }
       }
     }
-  }
-
-  @Override
-  public boolean canRunOn(@NotNull ExecutionTarget target) {
-    if (myConfiguration instanceof TargetAwareRunProfile) {
-      return ((TargetAwareRunProfile)myConfiguration).canRunOn(target);
-    }
-    return true;
   }
 
   private static Comparator<Element> createRunnerComparator() {
