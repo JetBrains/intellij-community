@@ -16,10 +16,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.configurations.RuntimeConfigurationError;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -46,8 +43,9 @@ class TestDirectory extends TestPackage {
 
   public TestDirectory(Project project,
                        JUnitConfiguration configuration,
-                       ExecutionEnvironment environment) {
-    super(project, configuration, environment);
+                       RunnerSettings runnerSettings,
+                       ConfigurationPerRunnerSettings configurationSettings) {
+    super(project, configuration, runnerSettings, configurationSettings);
     myProject = project;
   }
 

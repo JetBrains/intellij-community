@@ -18,7 +18,6 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntIcons;
 import com.intellij.lang.ant.config.AntBuildFile;
@@ -106,7 +105,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return findTargetToExecute(task) != null;
   }
 
-  public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, AntBeforeRunTask task) {
+  public boolean executeTask(DataContext context, RunConfiguration configuration, AntBeforeRunTask task) {
     final AntBuildTarget target = findTargetToExecute(task);
     if (target != null) {
       return AntConfigurationImpl.executeTargetSynchronously(context, target);

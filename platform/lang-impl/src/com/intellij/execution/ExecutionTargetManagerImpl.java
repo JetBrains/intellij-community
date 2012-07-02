@@ -17,11 +17,10 @@ package com.intellij.execution;
 
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,14 +28,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
-@State(name = "XcodeMetaData", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE, scheme = StorageScheme.DEFAULT)})
-public class ExecutionTargetManagerImpl extends ExecutionTargetManager implements ProjectComponent, PersistentStateComponent<Element> {
+public class ExecutionTargetManagerImpl extends ExecutionTargetManager implements ProjectComponent {
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();
   @Nullable private ExecutionTarget myActiveTarget;
-
-  @Nullable private String mySavedActiveTargetId;
 
   public ExecutionTargetManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -51,33 +46,11 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   @Override
-  public Element getState() {
-    synchronized (myActiveTargetLock) {
-      Element state = new Element("state");
-
-      String id = myActiveTarget == null ? mySavedActiveTargetId : myActiveTarget.getId();
-      if (id != null) state.setAttribute("SELECTED_TARGET", id);
-      return state;
-    }
-  }
-
-  @Override
-  public void loadState(Element state) {
-    synchronized (myActiveTargetLock) {
-      if (myActiveTarget == null && mySavedActiveTargetId == null) {
-        mySavedActiveTargetId = state.getAttributeValue("SELECTED_TARGET");
-      }
-    }
-  }
-
-  @Override
   public void initComponent() {
     RunManagerImpl.getInstanceImpl(myProject).addRunManagerListener(new RunManagerAdapter() {
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-        if (settings == RunManager.getInstance(myProject).getSelectedConfiguration()) {
-          updateActiveTarget(settings);
-        }
+        updateActiveTarget(settings);
       }
 
       @Override
@@ -113,7 +86,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   public void setActiveTarget(@NotNull ExecutionTarget target) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (myActiveTargetLock) {
-      doSetActiveTarget(target);
+      myActiveTarget = target;
     }
   }
 
@@ -122,32 +95,12 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   private void updateActiveTarget(@Nullable RunnerAndConfigurationSettings settings) {
-    List<ExecutionTarget> suitable = settings == null ? Collections.singletonList(DefaultExecutionTarget.INSTANCE)
-                                                      : getTargetsFor(settings);
+    if (settings == null) return;
+
+    List<ExecutionTarget> suitable = getTargetsFor(settings);
     synchronized (myActiveTargetLock) {
-      int index = -1;
-      if (myActiveTarget != null) {
-        index = suitable.indexOf(myActiveTarget);
-      }
-      else if (mySavedActiveTargetId != null) {
-        for (int i = 0, size = suitable.size(); i < size; i++) {
-          if (suitable.get(i).getId().equals(mySavedActiveTargetId)) {
-            index = i;
-            break;
-          }
-        }
-      }
-      doSetActiveTarget(index >= 0 ? suitable.get(index) : ContainerUtil.getFirstItem(suitable, DefaultExecutionTarget.INSTANCE));
-    }
-  }
-
-  private void doSetActiveTarget(@NotNull ExecutionTarget newTarget) {
-    mySavedActiveTargetId = null;
-
-    ExecutionTarget prev = myActiveTarget;
-    myActiveTarget = newTarget;
-    if (prev != null && !prev.equals(myActiveTarget)) {
-      myProject.getMessageBus().syncPublisher(TOPIC).activeTargetChanged(myActiveTarget);
+      int index = suitable.indexOf(myActiveTarget);
+      myActiveTarget = index >= 0 ? suitable.get(index) : ContainerUtil.getFirstItem(suitable, DefaultExecutionTarget.INSTANCE);
     }
   }
 

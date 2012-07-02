@@ -78,7 +78,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    return TestObject.fromString(myData.TEST_OBJECT, getProject(), this, env);
+    return TestObject.fromString(myData.TEST_OBJECT, getProject(), this, env.getRunnerSettings(), env.getConfigurationSettings());
   }
 
 
@@ -548,7 +548,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
     public TestObject getTestObject(final Project project, final JUnitConfiguration configuration) {
       //TODO[dyoma]!
-      return TestObject.fromString(TEST_OBJECT, project, configuration, null);
+      return TestObject.fromString(TEST_OBJECT, project, configuration, null, null);
     }
 
     public Module setMainClass(final PsiClass testClass) {

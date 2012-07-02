@@ -17,6 +17,8 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -73,8 +75,9 @@ public class TestPackage extends TestObject {
 
   public TestPackage(final Project project,
                      final JUnitConfiguration configuration,
-                     ExecutionEnvironment environment) {
-    super(project, configuration, environment);
+                     RunnerSettings runnerSettings,
+                     ConfigurationPerRunnerSettings configurationSettings) {
+    super(project, configuration, runnerSettings, configurationSettings);
   }
 
 

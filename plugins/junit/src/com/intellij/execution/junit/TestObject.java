@@ -32,7 +32,6 @@ import com.intellij.execution.junit2.ui.model.RootTestInfo;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -82,25 +81,26 @@ public abstract class TestObject implements JavaCommandLine {
   protected JavaParameters myJavaParameters;
   private final Project myProject;
   protected final JUnitConfiguration myConfiguration;
-  private final ExecutionEnvironment myEnvironment;
+  private final RunnerSettings myRunnerSettings;
+  private final ConfigurationPerRunnerSettings myConfigurationSettings;
   protected File myTempFile = null;
   public File myListenersFile;
 
   public static TestObject fromString(final String id,
                                       final Project project,
                                       final JUnitConfiguration configuration,
-                                      ExecutionEnvironment environment) {
+                                      RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings) {
     if (JUnitConfiguration.TEST_METHOD.equals(id))
-      return new TestMethod(project, configuration, environment);
+      return new TestMethod(project, configuration, runnerSettings, configurationSettings);
     if (JUnitConfiguration.TEST_CLASS.equals(id))
-      return new TestClass(project, configuration, environment);
+      return new TestClass(project, configuration, runnerSettings, configurationSettings);
     if (JUnitConfiguration.TEST_PACKAGE.equals(id))
-      return new TestPackage(project, configuration, environment);
+      return new TestPackage(project, configuration, runnerSettings, configurationSettings);
     else if (JUnitConfiguration.TEST_DIRECTORY.equals(id)) {
-      return new TestDirectory(project, configuration, environment);
+      return new TestDirectory(project, configuration, runnerSettings, configurationSettings);
     }
     if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
-      return new TestsPattern(project, configuration, environment);
+      return new TestsPattern(project, configuration, runnerSettings, configurationSettings);
     }
     return NOT_CONFIGURED;
   }
@@ -112,22 +112,24 @@ public abstract class TestObject implements JavaCommandLine {
 
   protected TestObject(final Project project,
                        final JUnitConfiguration configuration,
-                       ExecutionEnvironment environment) {
+                       RunnerSettings runnerSettings,
+                       ConfigurationPerRunnerSettings configurationSettings) {
     myProject = project;
     myConfiguration = configuration;
-    myEnvironment = environment;
+    myRunnerSettings = runnerSettings;
+    myConfigurationSettings = configurationSettings;
   }
 
   public abstract String suggestActionName();
 
   @Override
   public RunnerSettings getRunnerSettings() {
-    return myEnvironment.getRunnerSettings();
+    return myRunnerSettings;
   }
 
   @Override
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
-    return myEnvironment.getConfigurationSettings();
+    return myConfigurationSettings;
   }
 
   public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
@@ -144,7 +146,7 @@ public abstract class TestObject implements JavaCommandLine {
                                        myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null);
   }
 
-  private static final TestObject NOT_CONFIGURED = new TestObject(null, null, null) {
+  private static final TestObject NOT_CONFIGURED = new TestObject(null, null, null, null) {
     @Override
     public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
       return null;
@@ -202,7 +204,7 @@ public abstract class TestObject implements JavaCommandLine {
     myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-      ext.updateJavaParameters(myConfiguration, myJavaParameters, getRunnerSettings());
+      ext.updateJavaParameters(myConfiguration, myJavaParameters, myRunnerSettings);
     }
 
     final Object[] listeners = Extensions.getExtensions(IDEAJUnitListener.EP_NAME);
@@ -210,7 +212,7 @@ public abstract class TestObject implements JavaCommandLine {
     for (final Object listener : listeners) {
       boolean enabled = true;
       for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        if (ext.isListenerDisabled(myConfiguration, listener, getRunnerSettings())) {
+        if (ext.isListenerDisabled(myConfiguration, listener, myRunnerSettings)) {
           enabled = false;
           break;
         }
@@ -342,7 +344,7 @@ public abstract class TestObject implements JavaCommandLine {
     }
 
     final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView.getComponent());
-    rerunFailedTestsAction.init(consoleProperties, myEnvironment);
+    rerunFailedTestsAction.init(consoleProperties, myRunnerSettings, myConfigurationSettings);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       @Override
       public TestFrameworkRunningModel get() {
@@ -370,7 +372,7 @@ public abstract class TestObject implements JavaCommandLine {
       return;
     }
 
-    if (getRunnerSettings().getData() != null) {
+    if (myRunnerSettings.getData() != null) {
       final String actionName = executor.getActionName();
       throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase() + ".");
     }

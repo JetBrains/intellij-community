@@ -42,9 +42,4 @@ public abstract class ExecutionTarget {
   public int hashCode() {
     return getId().hashCode();
   }
-
-  @Override
-  public String toString() {
-    return getId();
-  }
 }

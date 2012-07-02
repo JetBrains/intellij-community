@@ -269,11 +269,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      ExecutionTargetManager.setActiveTarget(myProject, myTarget);
-      updateButton(ExecutionTargetManager.getActiveTarget(myProject),
-                   RunManagerEx.getInstanceEx(myProject).getSelectedConfiguration(),
-                   myProject,
-                   e.getPresentation());
+      if (state) {
+        ExecutionTargetManager.setActiveTarget(myProject, myTarget);
+        updateButton(ExecutionTargetManager.getActiveTarget(myProject),
+                     RunManagerEx.getInstanceEx(myProject).getSelectedConfiguration(),
+                     myProject,
+                     e.getPresentation());
+      }
     }
   }
 

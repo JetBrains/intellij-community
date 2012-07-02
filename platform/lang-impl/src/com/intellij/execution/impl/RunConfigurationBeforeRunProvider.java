@@ -152,10 +152,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
-  public boolean executeTask(final DataContext dataContext,
-                             RunConfiguration configuration,
-                             final ExecutionEnvironment env,
-                             RunConfigurableBeforeRunTask task) {
+  public boolean executeTask(final DataContext dataContext, RunConfiguration configuration, RunConfigurableBeforeRunTask task) {
     RunnerAndConfigurationSettings settings = task.getSettings();
     if (settings == null) {
       return false;
@@ -166,14 +163,9 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     if (runner == null)
       return false;
     final ExecutionEnvironment environment = new ExecutionEnvironment(runner, settings, myProject);
-    if (!ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
-      return false;
-    }
-
     if (!runner.canRun(executorId, environment.getRunProfile())) {
       return false;
     }
-
     else {
       final Semaphore targetDone = new Semaphore();
       final boolean[] result = new boolean[1];

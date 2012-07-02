@@ -320,8 +320,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     };
   }
 
-  @NotNull
-  public RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner) {
+  public RunnerSettings getRunnerSettings(ProgramRunner runner) {
     RunnerSettings settings = myRunnerSettings.get(runner);
     if (settings == null) {
       settings = createRunnerSettings(runner);
@@ -330,8 +329,7 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     return settings;
   }
 
-  @NotNull
-  public ConfigurationPerRunnerSettings getConfigurationSettings(@NotNull ProgramRunner runner) {
+  public ConfigurationPerRunnerSettings getConfigurationSettings(ProgramRunner runner) {
     ConfigurationPerRunnerSettings settings = myConfigurationPerRunnerSettings.get(runner);
     if (settings == null) {
       settings = new ConfigurationPerRunnerSettings(runner.getRunnerId(), myConfiguration.createRunnerSettings(new InfoProvider(runner)));

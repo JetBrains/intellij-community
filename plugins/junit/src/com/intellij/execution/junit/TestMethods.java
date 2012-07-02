@@ -20,11 +20,12 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.info.TestInfo;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,9 +45,10 @@ public class TestMethods extends TestMethod {
 
   public TestMethods(final Project project,
                      final JUnitConfiguration configuration,
-                     ExecutionEnvironment environment,
+                     RunnerSettings runnerSettings,
+                     ConfigurationPerRunnerSettings configurationSettings,
                      Collection<AbstractTestProxy> failedTests) {
-    super(project, configuration, environment);
+    super(project, configuration, runnerSettings, configurationSettings);
     myFailedTests = failedTests;
   }
 

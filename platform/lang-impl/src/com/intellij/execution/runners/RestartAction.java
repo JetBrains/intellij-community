@@ -78,8 +78,8 @@ public class RestartAction extends AnAction implements DumbAware {
     try {
       final ExecutionEnvironment old = myEnvironment;
       myRunner.execute(myExecutor, new ExecutionEnvironment(old.getRunProfile(),
-                                                            old.getExecutionTarget(),
                                                             project,
+                                                            old.getExecutionTarget(),
                                                             old.getRunnerSettings(),
                                                             old.getConfigurationSettings(),
                                                             myDescriptor,
