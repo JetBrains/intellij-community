@@ -93,8 +93,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
-        final PyTestGenerator generator = new PyTestGenerator();
-        PsiFile e = (PsiFile)generator.generateTest(project, d);
+        PsiFile e = PyTestCreator.generateTest(project, d);
         final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
         documentManager.commitAllDocuments();
 
