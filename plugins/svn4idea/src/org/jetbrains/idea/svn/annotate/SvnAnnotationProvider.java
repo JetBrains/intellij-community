@@ -144,7 +144,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
               }
             }
             catch (VcsException e1) {
-              //
+              exception[0] = e1;
             }
             catch (SVNException e1) {
               exception[0] = new VcsException(e);
