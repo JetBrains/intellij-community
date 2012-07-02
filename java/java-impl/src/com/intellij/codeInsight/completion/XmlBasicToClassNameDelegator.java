@@ -29,7 +29,8 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
-    if (!JavaCompletionContributor.mayStartClassName(result) ||
+    if (parameters.getCompletionType() != CompletionType.BASIC ||
+        !JavaCompletionContributor.mayStartClassName(result) ||
         !position.getContainingFile().getLanguage().isKindOf(StdLanguages.XML)) {
       return;
     }
