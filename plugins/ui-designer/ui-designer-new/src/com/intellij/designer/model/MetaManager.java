@@ -43,12 +43,14 @@ public abstract class MetaManager {
   private static final String NAME = "name";
   private static final String ITEM = "item";
   private static final String TAG = "tag";
+  private static final String WRAP_IN = "wrap-in";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.model.MetaManager");
 
   private final Map<String, MetaModel> myTag2Model = new HashMap<String, MetaModel>();
   private final Map<String, MetaModel> myTarget2Model = new HashMap<String, MetaModel>();
   private final List<PaletteGroup> myPaletteGroups = new ArrayList<PaletteGroup>();
+  private final List<MetaModel> myWrapModels = new ArrayList<MetaModel>();
 
   private PropertyChangeSupport myPaletteChangeSupport;
 
@@ -71,6 +73,14 @@ public abstract class MetaManager {
 
       for (Object element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
         loadGroup((Element)element);
+      }
+
+      Element wrapInElement = rootElement.getChild(WRAP_IN);
+      if (wrapInElement != null) {
+        for (Object element : wrapInElement.getChildren(ITEM)) {
+          Element item = (Element)element;
+          myWrapModels.add(myTag2Model.get(item.getAttributeValue("tag")));
+        }
       }
 
       for (Map.Entry<MetaModel, List<String>> entry : modelToMorphing.entrySet()) {
@@ -207,6 +217,10 @@ public abstract class MetaManager {
   @Nullable
   public MetaModel getModelByTarget(String target) {
     return myTarget2Model.get(target);
+  }
+
+  public List<MetaModel> getWrapInModels() {
+    return myWrapModels;
   }
 
   public List<PaletteGroup> getPaletteGroups() {

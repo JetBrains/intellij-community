@@ -62,4 +62,8 @@ public abstract class RadLayout {
   public ICaption getCaption(RadComponent component) {
     return null;
   }
+
+  public boolean isWrapIn(List<RadComponent> components) {
+    return true;
+  }
 }
