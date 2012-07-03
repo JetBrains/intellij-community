@@ -40,6 +40,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -198,8 +199,9 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   }
 
   private static String formatCharacterCount(int count, boolean full) {
-    String result = count > 1024 * 1024 ? (count / 1024 / 1024) + "M" :
-               count > 1024 ? (count / 1024) + "K" :
+    DecimalFormat oneDigit = new DecimalFormat("0.0");
+    String result = count > 1024 * 1024 ? oneDigit.format((double)count / 1024 / 1024) + "M" :
+               count > 1024 ? oneDigit.format((double)count / 1024) + "K" :
                String.valueOf(count);
     if (full) {
       return result + " characters";
