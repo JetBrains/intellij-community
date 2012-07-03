@@ -77,9 +77,11 @@ public class WrapInAction extends AnAction {
     }
 
     RadComponent parent = parents.iterator().next();
-    RadLayout layout = parent.getLayout();
-    if (layout != null && !layout.isWrapIn(selection)) {
-      return;
+    if (selection.size() > 1) {
+      RadLayout layout = parent.getLayout();
+      if (layout != null && !layout.isWrapIn(selection)) {
+        return;
+      }
     }
 
     WrapInProvider provider = designer.getWrapInProvider();
@@ -97,6 +99,6 @@ public class WrapInAction extends AnAction {
       wrapGroup.add(new WrapInAction(designer, area, provider, parent, selection, wrapModel));
     }
 
-    group.add(wrapGroup);
+    //group.add(wrapGroup); // XXX
   }
 }
