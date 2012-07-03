@@ -11,7 +11,7 @@ except:
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
-from pydevd_constants import *
+import pydevd_constants
 
 
 MAX_ITEMS_TO_HANDLE = 500
@@ -230,7 +230,7 @@ class DictResolver:
         if isinstance(key, str):
             return "'%s'"%key
         else:
-            if not IS_PY3K:
+            if not pydevd_constants.IS_PY3K:
                 if isinstance(key, unicode):
                     return "u'%s'"%key
             return key
