@@ -253,6 +253,10 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (qualifier instanceof PyQualifiedExpression) {
         Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
         for (PyExpression ex : attrs) {
+          final String name = ex.getName();
+          if (name != null && name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
+            continue;
+          }
           if (ex instanceof PsiNamedElement && qualifierType instanceof PyClassType) {
             variants.add(LookupElementBuilder.create((PsiNamedElement)ex)
                            .withTypeText(qualifierType.getName())
