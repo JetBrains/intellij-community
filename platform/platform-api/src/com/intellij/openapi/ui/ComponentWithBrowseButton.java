@@ -52,6 +52,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   public ComponentWithBrowseButton(Comp component, @Nullable ActionListener browseActionListener) {
     super(new BorderLayout(SystemInfo.isMac? 0 : 2, 0));
     myComponent = component;
+    // required! otherwise JPanel will occasionally gain focus instead of the component
+    setFocusable(false);
     add(myComponent, BorderLayout.CENTER);
 
     myBrowseButton=new FixedSizeButton(myComponent);
