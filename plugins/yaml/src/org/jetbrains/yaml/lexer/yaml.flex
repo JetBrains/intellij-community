@@ -57,7 +57,7 @@ LINE =                          .*
 COMMENT =                       "#"{LINE}
 
 ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
-KEY =                           {ID}":"
+KEY =                           [^\n\-\ {}\[\]#]!(!([^\n{}>:]*)|{LINE}" #"{LINE})":"
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
 ESCAPE_SEQUENCE=                \\[^\n]
@@ -77,7 +77,12 @@ STRING=                         '([^\\']|{ESCAPE_SEQUENCE}|(''))*?'?
 
 <YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
 
-{COMMENT}                       {   return COMMENT; }
+{COMMENT}                       { char prev = previousChar();
+                                  // YAML spec: when a comment follows another syntax element,
+                                  //  it must be separated from it by space characters.
+                                  return (prev == '\n' || prev == '\t' || prev == ' ' || prev == Character.MAX_VALUE) ?
+                                         COMMENT : TEXT;
+                                }
 
 {EOL}                           {   yybegin(YYINITIAL);
                                     return EOL;

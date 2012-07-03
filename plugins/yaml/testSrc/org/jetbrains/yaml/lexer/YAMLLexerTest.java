@@ -195,4 +195,16 @@ public class YAMLLexerTest extends LexerTestCase {
            "  name: [] # todo: \"Not specified\"\n" +
            "en #comment: TODO");
   }
+
+  public void testNon_comment() {
+    doTest("hello: hello#my_non_comment");
+  }
+
+  public void testNon_comment2() {
+    doTest("foo#non_comment: text");
+  }
+
+  public void testKey_with_brackets() {
+    doTest("foo[in_brackets]: text");
+  }
 }
