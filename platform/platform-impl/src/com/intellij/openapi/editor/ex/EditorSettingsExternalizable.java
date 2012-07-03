@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -50,6 +51,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = "Changed";
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
+    public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = false;
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = 500;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
@@ -356,7 +358,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void setEnsureNewLineAtEOF(boolean ensure) {
     myOptions.IS_ENSURE_NEWLINE_AT_EOF = ensure;
   }
-
+  
   public String getStripTrailingSpaces() {
     return myOptions.STRIP_TRAILING_SPACES;
   } // TODO: move to CodeEditorManager or something else
@@ -365,6 +367,14 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
   }
 
+  public boolean isShowQuickDocOnMouseOverElement() {
+    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
+  }
+  
+  public void setShowQuickDocOnMouseOverElement(boolean show) {
+    myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
+  }
+  
   public boolean isRefrainFromScrolling() {
     return myOptions.REFRAIN_FROM_SCROLLING;
   }

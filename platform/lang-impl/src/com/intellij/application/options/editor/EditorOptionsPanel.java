@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
+import com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -83,6 +85,7 @@ public class EditorOptionsPanel {
   private JTextField myCustomSoftWrapIndent;
   private JCheckBox myCbShowAllSoftWraps;
   private JCheckBox myPreselectCheckBox;
+  private JCheckBox myCbShowQuickDocOnCheckBox;
 
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
@@ -156,6 +159,7 @@ public class EditorOptionsPanel {
     }
 
     myCbEnsureBlankLineBeforeCheckBox.setSelected(editorSettings.isEnsureNewLineAtEOF());
+    myCbShowQuickDocOnCheckBox.setSelected(editorSettings.isShowQuickDocOnMouseOverElement());
 
     // Advanced mouse
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
@@ -234,6 +238,12 @@ public class EditorOptionsPanel {
     }
 
     editorSettings.setEnsureNewLineAtEOF(myCbEnsureBlankLineBeforeCheckBox.isSelected());
+
+    if (myCbShowQuickDocOnCheckBox.isSelected() ^ editorSettings.isShowQuickDocOnMouseOverElement()) {
+      boolean enabled = myCbShowQuickDocOnCheckBox.isSelected();
+      editorSettings.setShowQuickDocOnMouseOverElement(enabled);
+      ServiceManager.getService(QuickDocOnMouseOverManager.class).setEnabled(enabled);
+    }
 
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
 
@@ -341,6 +351,7 @@ public class EditorOptionsPanel {
     // Strip trailing spaces, ensure EOL on EOF on save
     isModified |= !getStripTrailingSpacesValue().equals(editorSettings.getStripTrailingSpaces());
     isModified |= isModified(myCbEnsureBlankLineBeforeCheckBox, editorSettings.isEnsureNewLineAtEOF());
+    isModified |= isModified(myCbShowQuickDocOnCheckBox, editorSettings.isShowQuickDocOnMouseOverElement());
 
     // advanced mouse
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
