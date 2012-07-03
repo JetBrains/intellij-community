@@ -70,6 +70,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_GUTTER, "Editor Gutter Popup Menu"));
     myIdToNameList.add(new Pair(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.EDITOR_TAB_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionsTreeUtil.PROJECT_VIEW_POPUP));
+    myIdToNameList.add(new Pair(IdeActions.GROUP_SCOPE_VIEW_POPUP, "Scope View Popup Menu"));
     myIdToNameList.add(new Pair(IdeActions.GROUP_FAVORITES_VIEW_POPUP, ActionsTreeUtil.FAVORITES_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_COMMANDER_POPUP, ActionsTreeUtil.COMMANDER_POPUP));
     myIdToNameList.add(new Pair(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP));
