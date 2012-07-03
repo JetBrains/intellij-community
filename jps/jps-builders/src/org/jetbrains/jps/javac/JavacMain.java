@@ -49,16 +49,16 @@ public class JavacMain {
 
     final boolean nowUsingJavac = compiler == SYSTEM_JAVA_COMPILER;
 
+    if (nowUsingJavac && useEclipseCompiler) {
+      final String message = "Eclipse Batch Compiler was not found in classpath";
+      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
+      return false;
+    }
+
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
     final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink, canceledStatus));
-
-    if (nowUsingJavac && useEclipseCompiler) {
-      final String message = "Eclipse Batch Compiler was not found in classpath, using Javac instead";
-      fileManager.getContext().reportMessage(Diagnostic.Kind.WARNING, message);
-      System.err.println(message);
-    }
 
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
