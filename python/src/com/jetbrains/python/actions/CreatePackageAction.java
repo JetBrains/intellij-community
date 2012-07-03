@@ -66,7 +66,7 @@ public class CreatePackageAction extends DumbAwareAction {
     }
     if (template != null) {
       try {
-        FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(), directory);
+        FileTemplateUtil.createFromTemplate(template, PyNames.INIT_DOT_PY, fileTemplateManager.getDefaultProperties(directory.getProject()), directory);
       }
       catch (Exception e) {
         LOG.error(e);
