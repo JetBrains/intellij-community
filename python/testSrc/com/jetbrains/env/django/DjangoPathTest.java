@@ -2,6 +2,7 @@ package com.jetbrains.env.django;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.django.run.DjangoServerRunConfiguration;
 import com.jetbrains.django.run.DjangoServerRunConfigurationType;
 import com.jetbrains.django.testRunner.DjangoTestsConfigurationType;
@@ -9,6 +10,7 @@ import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -37,24 +39,38 @@ public class DjangoPathTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForOutput("Development server is running");
 
-        final String[] splittedOutput = output().split("\\n");
-        final ArrayList<String> outputList = Lists.newArrayList();
-        for (String s : splittedOutput) {
-          if (s.equals("The end of sys.path"))
-            break;
-          outputList.add(s);
-        }
-
-        assertEquals(getTestDataPath(), outputList.get(1));
-        assertTrue(outputList.contains(PythonHelpersLocator.getHelpersRoot().getPath()));
-        assertEquals(outputList.indexOf(PythonHelpersLocator.getHelpersRoot().getPath()),
-                     outputList.lastIndexOf(PythonHelpersLocator.getHelpersRoot().getPath()));
-        assertEquals(outputList.indexOf(getTestDataPath()),
-                     outputList.lastIndexOf(getTestDataPath()));
+        doTest(output(), getTestDataPath());
       }
-
     });
+  }
 
+  private static void doTest(String output, String testDataPath) {
+    final String[] splittedOutput = output.split("\\n");
+    final ArrayList<String> outputList = Lists.newArrayList();
+    for (String s : splittedOutput) {
+      if (s.equals("The end of sys.path")) {
+        break;
+      }
+      outputList.add(norm(s));
+    }
+
+    String helpersRoot = PythonHelpersLocator.getHelpersRoot().getPath();
+    helpersRoot = norm(helpersRoot);
+
+    testDataPath = norm(testDataPath);
+
+
+    Assert.assertEquals(testDataPath, outputList.get(1));
+
+    assertTrue(outputList.contains(helpersRoot));
+    assertEquals(outputList.indexOf(helpersRoot),
+                 outputList.lastIndexOf(helpersRoot));
+    assertEquals(outputList.indexOf(testDataPath),
+                 outputList.lastIndexOf(testDataPath));
+  }
+
+  private static String norm(String testDataPath) {
+    return FileUtil.toSystemIndependentName(testDataPath);
   }
 
   public void testTestPath() throws IOException {
@@ -72,23 +88,9 @@ public class DjangoPathTest extends PyEnvTestCase {
 
       public void testing() throws Exception {
         waitForOutput("The end of sys.path");
-        final String[] splittedOutput = output().split("\\n");
-        final ArrayList<String> outputList = Lists.newArrayList();
-        for (String s : splittedOutput) {
-          if (s.equals("The end of sys.path"))
-            break;
-          outputList.add(s);
-        }
-
-        assertEquals(getTestDataPath(), outputList.get(1));
-        assertTrue(outputList.contains(PythonHelpersLocator.getHelpersRoot().getPath()));
-        assertEquals(outputList.indexOf(PythonHelpersLocator.getHelpersRoot().getPath()),
-                     outputList.lastIndexOf(PythonHelpersLocator.getHelpersRoot().getPath()));
-        assertEquals(outputList.indexOf(getTestDataPath()),
-                     outputList.lastIndexOf(getTestDataPath()));
+        doTest(output(), getTestDataPath());
       }
     });
-
   }
 
   public void testManagePath() throws IOException {
@@ -106,8 +108,9 @@ public class DjangoPathTest extends PyEnvTestCase {
         final String[] splittedOutput = output().split("\\n");
         final ArrayList<String> outputList = Lists.newArrayList();
         for (String s : splittedOutput) {
-          if (s.equals("The end of sys.path"))
+          if (s.equals("The end of sys.path")) {
             break;
+          }
           outputList.add(s);
         }
 
@@ -119,6 +122,5 @@ public class DjangoPathTest extends PyEnvTestCase {
                      outputList.lastIndexOf(getTestDataPath()));
       }
     });
-
   }
 }
