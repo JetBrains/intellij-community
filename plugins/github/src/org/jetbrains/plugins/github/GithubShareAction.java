@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.tasks.github.GithubApiUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitDeprecatedRemote;
@@ -161,7 +162,7 @@ public class GithubShareAction extends DumbAwareAction {
                                                 @NotNull String description, boolean aPrivate) throws IOException {
     String path = "/user/repos";
     String requestBody = prepareRequest(name, description, aPrivate);
-    JsonElement result = GithubUtil.postRequest(host, login, password, path, requestBody);
+    JsonElement result = GithubApiUtil.postRequest(host, login, password, path, requestBody);
     if (result == null) {
       return false;
     }
