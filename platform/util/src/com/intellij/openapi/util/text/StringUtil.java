@@ -1331,6 +1331,9 @@ public class StringUtil extends StringUtilRt {
     return value.indexOf(ch) >= 0;
   }
 
+  /**
+   * @deprecated use #capitalize(String)
+   */
   @Nullable
   public static String firstLetterToUpperCase(@Nullable final String displayString) {
     if (displayString == null || displayString.isEmpty()) return displayString;
