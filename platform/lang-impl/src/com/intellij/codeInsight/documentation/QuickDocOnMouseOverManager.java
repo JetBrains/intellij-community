@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiDocumentManager;
@@ -45,24 +46,6 @@ import java.util.Map;
  */
 public class QuickDocOnMouseOverManager {
   
-  private static final long QUICK_DOC_DELAY_MILLIS;
-  static {
-    long delay = 500;
-    String property = System.getProperty("editor.auto.quick.doc.delay.ms");
-    if (property != null) {
-      try {
-        long parsed = Long.parseLong(property);
-        if (parsed > 0) {
-          delay = parsed;
-        }
-      }
-      catch (Exception e) {
-        // Ignore.
-      }
-    }
-    QUICK_DOC_DELAY_MILLIS = delay;
-  }
-
   @NotNull private final EditorMouseMotionListener myMouseListener       = new MyEditorMouseListener();
   @NotNull private final VisibleAreaListener       myVisibleAreaListener = new MyVisibleAreaListener();
   @NotNull private final CaretListener             myCaretListener       = new MyCaretListener();
@@ -179,7 +162,7 @@ public class QuickDocOnMouseOverManager {
     myDelayedQuickDocInfo = new DelayedQuickDocInfo(documentationManager, editor, targetElementUnderMouse, elementUnderMouse);
 
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(myRequest, QUICK_DOC_DELAY_MILLIS);
+    myAlarm.addRequest(myRequest, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
   }
 
   private void closeAutoQuickDocComponentIfNecessary() {
