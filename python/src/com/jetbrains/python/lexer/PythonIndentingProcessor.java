@@ -322,6 +322,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
       }
     }
     myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, startPos, end));
+    myProcessSpecialTokensPending = true;
   }
 
   protected void processIndent(int whiteSpaceStart, IElementType whitespaceTokenType) {
