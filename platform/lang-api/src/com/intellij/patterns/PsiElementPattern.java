@@ -303,7 +303,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     });
   }
   
-  public Self insideStarting(final ElementPattern<PsiElement> ancestor) {
+  public Self insideStarting(final ElementPattern<? extends PsiElement> ancestor) {
     return with(new PatternCondition<PsiElement>("insideStarting") {
       @Override
       public boolean accepts(@NotNull PsiElement start, ProcessingContext context) {
