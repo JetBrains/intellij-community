@@ -568,4 +568,9 @@ public class PythonCompletionTest extends PyTestCase {
   public void testFromNamespacePackageImport() {
     doMultiFileTest();
   }
+
+  // PY-6829
+  public void testFakeNameInQualifiedReference() {
+    doTest();
+  }
 }
