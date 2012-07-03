@@ -22,10 +22,20 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author Dmitry Avdeev
  */
 public class TaskUtil {
+
+  private static final Pattern DATE_PATTERN = Pattern.compile("(\\d\\d\\d\\d[/-]\\d\\d[/-]\\d\\d).*(\\d\\d:\\d\\d:\\d\\d).*");
+  private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
   public static String formatTask(Task task, String format) {
     return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
@@ -49,5 +59,14 @@ public class TaskUtil {
       text = task.getSummary();
     }
     return StringUtil.first(text, 60, true);
+  }
+
+  @Nullable
+  public static Date parseDate(String date) throws ParseException {
+    final Matcher m = DATE_PATTERN.matcher(date);
+    if (m.find()) {
+      return DATE_FORMAT.parse(m.group(1).replace('-', '/') + " " + m.group(2));
+    }
+    return null;
   }
 }
