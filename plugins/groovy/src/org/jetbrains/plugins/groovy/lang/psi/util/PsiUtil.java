@@ -828,6 +828,7 @@ public class PsiUtil {
     return place == clazz;
   }
 
+
   @Nullable
   public static PsiElement skipWhitespaces(@Nullable PsiElement elem, boolean forward) {
     //noinspection ConstantConditions
@@ -1296,5 +1297,10 @@ public class PsiUtil {
       }
     }
     return oldImports;
+  }
+
+  public static boolean isCompileStatic(PsiElement e) {
+    PsiMember containingMember = PsiTreeUtil.getParentOfType(e, PsiMember.class, false);
+    return containingMember != null && GroovyPsiManager.getInstance(containingMember.getProject()).isCompileStatic(containingMember);
   }
 }

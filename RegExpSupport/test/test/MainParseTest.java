@@ -15,7 +15,7 @@
  */
 package test;
 
-import com.intellij.openapi.util.io.FileUtil;
+import org.intellij.lang.regexp.RegExpFileType;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -30,185 +30,191 @@ import java.util.regex.PatternSyntaxException;
 
 public class MainParseTest extends BaseParseTestcase {
 
-    private ByteArrayOutputStream myOut;
+  private ByteArrayOutputStream myOut;
 
-    enum Result {
-        OK, ERR
+  enum Result {
+    OK, ERR
+  }
+
+  static class Test {
+    String pattern;
+    boolean showWarnings = true;
+    boolean showInfo = false;
+    Result expectedResult;
+
+    Test(String pattern, Result result, boolean warn, boolean info) {
+      this.pattern = pattern;
+      expectedResult = result;
+      showWarnings = warn;
+      showInfo = info;
     }
-    static class Test {
-        boolean showWarnings = true;
-        boolean showInfo = false;
-        Result expectedResult;
+  }
 
-        Test(Result result, boolean warn, boolean info) {
-            expectedResult = result;
-            showWarnings = warn;
-            showInfo = info;
+  private final Map<String, Test> myMap = new LinkedHashMap<String, Test>();
+
+  @Override
+  protected void setUp() throws Exception {
+    final Document document = new SAXBuilder().build(new File(getTestDataRoot(), "/RETest.xml"));
+    final List<Element> list = XPath.selectNodes(document.getRootElement(), "//test");
+
+    int i = 0;
+    for (Element element : list) {
+      final String name;
+      final Element parent = (Element)element.getParent();
+      final String s = parent.getName();
+      final String t = parent.getAttribute("id") == null ? "" : parent.getAttribute("id").getValue() + "-";
+      if (!"tests".equals(s)) {
+        name = s + "/test-" + t + ++i + ".regexp";
+      }
+      else {
+        name = "test-" + t + ++i + ".regexp";
+      }
+      final Result result = Result.valueOf((String)XPath.selectSingleNode(element, "string(expected)"));
+      final boolean warn = !"false".equals(element.getAttributeValue("warning"));
+      final boolean info = "true".equals(element.getAttributeValue("info"));
+
+      final String pattern = (String)XPath.selectSingleNode(element, "string(pattern)");
+      myMap.put(name, new Test(pattern, result, warn, info));
+      if (!"false".equals(element.getAttributeValue("verify"))) {
+        try {
+          Pattern.compile(pattern);
+          if (result == Result.ERR) {
+            System.out.println("Incorrect FAIL value for " + pattern);
+          }
         }
-    }
-
-    private final Map<String, Test> myMap = new LinkedHashMap<String, Test>();
-
-    @Override
-    protected void setUp() throws Exception {
-        final Document document = new SAXBuilder().build(new File(getTestDataRoot(), "/RETest.xml"));
-        final List<Element> list = XPath.selectNodes(document.getRootElement(), "//test");
-        new File(getTestDataPath()).mkdirs();
-
-        int i = 0;
-        for (Element element : list) {
-            final String name;
-            final Element parent = (Element)element.getParent();
-            final String s = parent.getName();
-            final String t = parent.getAttribute("id") == null ? "" : parent.getAttribute("id").getValue() + "-";
-            if (!"tests".equals(s)) {
-                name = s + "/test-" + t + ++i + ".regexp";
-            } else {
-                name = "test-" + t + ++i + ".regexp";
-            }
-            final Result result = Result.valueOf((String)XPath.selectSingleNode(element, "string(expected)"));
-            final boolean warn = !"false".equals(element.getAttributeValue("warning"));
-            final boolean info = "true".equals(element.getAttributeValue("info"));
-            myMap.put(name, new Test(result, warn, info));
-
-            final File file = new File(getTestDataPath(), name);
-            file.getParentFile().mkdirs();
-
-            final FileWriter stream = new FileWriter(file);
-            final String pattern = (String)XPath.selectSingleNode(element, "string(pattern)");
-            if (!"false".equals(element.getAttributeValue("verify"))) try {
-                Pattern.compile(pattern);
-                if (result == Result.ERR) {
-                    System.out.println("Incorrect FAIL value for " + pattern);
-                }
-            } catch (PatternSyntaxException e) {
-                if (result == Result.OK) {
-                    System.out.println("Incorrect OK value for " + pattern);
-                }
-            }
-            stream.write(pattern);
-            stream.close();
+        catch (PatternSyntaxException e) {
+          if (result == Result.OK) {
+            System.out.println("Incorrect OK value for " + pattern);
+          }
         }
-
-        super.setUp();
-
-        myOut = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(myOut));
+      }
     }
 
-    @Override
-    protected String getTestDataPath() {
-        return super.getTestDataPath()+"/gen/";
-    }
+    super.setUp();
 
-    public void testSimple() throws Exception {
-        doTest("simple/");
-    }
+    myOut = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(myOut));
+  }
 
-    public void testQuantifiers() throws Exception {
-        doTest("quantifiers/");
-    }
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/gen/";
+  }
 
-    public void testGroups() throws Exception {
-        doTest("groups/");
-    }
+  public void testSimple() throws Exception {
+    doTest("simple/");
+  }
 
-    public void testCharclasses() throws Exception {
-        doTest("charclasses/");
-    }
+  public void testQuantifiers() throws Exception {
+    doTest("quantifiers/");
+  }
 
-    public void testEscapes() throws Exception {
-        doTest("escapes/");
-    }
+  public void testGroups() throws Exception {
+    doTest("groups/");
+  }
 
-    public void testAnchors() throws Exception {
-        doTest("anchors/");
-    }
+  public void testCharclasses() throws Exception {
+    doTest("charclasses/");
+  }
 
-    public void testNamedchars() throws Exception {
-        doTest("namedchars/");
-    }
+  public void testEscapes() throws Exception {
+    doTest("escapes/");
+  }
 
-    public void testBackrefs() throws Exception {
-        doTest("backrefs/");
-    }
+  public void testAnchors() throws Exception {
+    doTest("anchors/");
+  }
 
-    public void testComplex() throws Exception {
-        doTest("complex/");
-    }
+  public void testNamedchars() throws Exception {
+    doTest("namedchars/");
+  }
 
-    public void testIncomplete() throws Exception {
-        doTest("incomplete/");
-    }
+  public void testBackrefs() throws Exception {
+    doTest("backrefs/");
+  }
 
-    public void testRealLife() throws Exception {
-        doTest("real-life/");
-    }
+  public void testComplex() throws Exception {
+    doTest("complex/");
+  }
 
-    public void testRegressions() throws Exception {
-        doTest("regressions/");
-    }
+  public void testIncomplete() throws Exception {
+    doTest("incomplete/");
+  }
 
-    public void testBugs() throws Exception {
-        doTest("bug/");
-    }
+  public void testRealLife() throws Exception {
+    doTest("real-life/");
+  }
 
-    public void testFromXML() throws Exception {
-        doTest(null);
-    }
+  public void testRegressions() throws Exception {
+    doTest("regressions/");
+  }
 
-    private void doTest(String prefix) throws IOException {
-        int n = 0;
-      int failed = 0;
-      for (String name : myMap.keySet()) {
-            if (prefix == null && name.contains("/")) {
-                continue;
-            }
-            if (prefix != null && !name.startsWith(prefix)) {
-                continue;
-            }
-            System.out.print("filename = " + name);
-            n++;
+  public void testBugs() throws Exception {
+    doTest("bug/");
+  }
 
-            final MainParseTest.Test test = myMap.get(name);
-            try {
-                myFixture.testHighlighting(test.showWarnings, true, test.showInfo, name);
+  public void testFromXML() throws Exception {
+    doTest(null);
+  }
 
-                if (test.expectedResult == Result.ERR) {
-                    System.out.println("  FAILED. Expression incorrectly parsed OK: " + FileUtil.loadFile(new File(getTestDataPath(), name)));
-                    failed++;
-                } else {
-                    System.out.println("  OK");
-                }
-            } catch (Throwable e) {
-                if (test.expectedResult == Result.ERR) {
-                    System.out.println("  OK");
-                } else {
-                    e.printStackTrace();
-                    System.out.println("  FAILED. Expression = " + FileUtil.loadFile(new File(getTestDataPath(), name)));
-                    if (myOut.size() > 0) {
-                        String line;
-                        final BufferedReader reader = new BufferedReader(new StringReader(myOut.toString()));
-                        do {
-                            line = reader.readLine();
-                        } while (line != null && (line.trim().length() == 0 || line.trim().equals("ERROR:")));
-                        if (line != null) {
-                            if (line.matches(".*java.lang.Error: junit.framework.AssertionFailedError:.*")) {
-                                System.out.println("ERROR: " + line.replace("java.lang.Error: junit.framework.AssertionFailedError:", ""));
-                            }
-                        } else {
-                            System.out.println("ERROR: " + myOut.toString());
-                        }
-                    }
-                    failed++;
-                }
-            }
-            myOut.reset();
+  private void doTest(String prefix) throws IOException {
+    int n = 0;
+    int failed = 0;
+    for (String name : myMap.keySet()) {
+      if (prefix == null && name.contains("/")) {
+        continue;
+      }
+      if (prefix != null && !name.startsWith(prefix)) {
+        continue;
+      }
+      System.out.print("filename = " + name);
+      n++;
+
+      final MainParseTest.Test test = myMap.get(name);
+      try {
+        myFixture.configureByText(RegExpFileType.INSTANCE, test.pattern);
+        myFixture.testHighlighting(test.showWarnings, true, test.showInfo);
+
+        if (test.expectedResult == Result.ERR) {
+          System.out.println("  FAILED. Expression incorrectly parsed OK: " + test.pattern);
+          failed++;
         }
-
-        System.out.println("");
-        System.out.println(n + " Tests executed, " + failed + " failed");
-
-        assertFalse(failed > 0);
+        else {
+          System.out.println("  OK");
+        }
+      }
+      catch (Throwable e) {
+        if (test.expectedResult == Result.ERR) {
+          System.out.println("  OK");
+        }
+        else {
+          e.printStackTrace();
+          System.out.println("  FAILED. Expression = " + test.pattern);
+          if (myOut.size() > 0) {
+            String line;
+            final BufferedReader reader = new BufferedReader(new StringReader(myOut.toString()));
+            do {
+              line = reader.readLine();
+            }
+            while (line != null && (line.trim().length() == 0 || line.trim().equals("ERROR:")));
+            if (line != null) {
+              if (line.matches(".*java.lang.Error: junit.framework.AssertionFailedError:.*")) {
+                System.out.println("ERROR: " + line.replace("java.lang.Error: junit.framework.AssertionFailedError:", ""));
+              }
+            }
+            else {
+              System.out.println("ERROR: " + myOut.toString());
+            }
+          }
+          failed++;
+        }
+      }
+      myOut.reset();
     }
+
+    System.out.println("");
+    System.out.println(n + " Tests executed, " + failed + " failed");
+
+    assertFalse(failed > 0);
+  }
 }

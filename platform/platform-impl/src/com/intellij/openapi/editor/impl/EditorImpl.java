@@ -1336,23 +1336,78 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return new Point(x, y);
   }
 
-  private int getTabbedTextWidth(int startOffset, int length, int xOffset) {
+  private int calcEndOffset(int startOffset, int visualColumn) {
+    FoldRegion[] regions = myFoldingModel.fetchTopLevel();
+    if (regions == null) {
+      return startOffset + visualColumn;
+    }
+    
+    int low = 0;
+    int high = regions.length - 1;
+    int i = -1;
+
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      FoldRegion midVal = regions[mid];
+
+      if (midVal.getStartOffset() <= startOffset && midVal.getEndOffset() > startOffset) {
+        i = mid;
+        break;
+      }
+      
+      if (midVal.getStartOffset() < startOffset)
+        low = mid + 1;
+      else if (midVal.getStartOffset() > startOffset)
+        high = mid - 1;
+    }
+    if (i < 0) {
+      i = low;
+    }
+    
+    int result = startOffset;
+    int columnsToProcess = visualColumn;
+    for (; i < regions.length; i++) {
+      FoldRegion region = regions[i];
+      
+      // Process text between the last fold region end and current fold region start.
+      int nonFoldTextColumnsNumber = region.getStartOffset() - result;
+      if (nonFoldTextColumnsNumber >= columnsToProcess) {
+        return result + columnsToProcess;
+      }
+      columnsToProcess -= nonFoldTextColumnsNumber;
+      
+      // Process fold region.
+      int placeHolderLength = region.getPlaceholderText().length();
+      if (placeHolderLength >= columnsToProcess) {
+        return region.getEndOffset();
+      }
+      result = region.getEndOffset();
+      columnsToProcess -= placeHolderLength;
+    }
+    return result + columnsToProcess;
+  }
+  
+  private int getTabbedTextWidth(int startOffset, int targetColumn, int xOffset) {
     int x = xOffset;
     if (startOffset == 0 && myPrefixText != null) {
       x += myPrefixWidthInPixels;
     }
-    if (length <= 0) return x;
+    if (targetColumn <= 0) return x;
     int offset = startOffset;
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int textLength = myDocument.getTextLength();
-    IterationState state = new IterationState(this, startOffset, startOffset + length, false);
+    
+    // We need to calculate max offset to provide to the IterationState here based on the given start offset and target
+    // visual column. The problem is there is a possible case that there is a collapsed fold region at the target interval,
+    // so, we can't just use 'startOffset + targetColumn' as a max end offset.
+    IterationState state = new IterationState(this, startOffset, calcEndOffset(startOffset, targetColumn), false);
     try {
       int fontType = state.getMergedAttributes().getFontType();
       int spaceSize = EditorUtil.getSpaceWidth(fontType, this);
 
       int column = 0;
       outer:
-      while (column < length) {
+      while (column < targetColumn) {
         if (offset >= textLength) break;
 
         if (offset >= state.getEndOffset()) {
@@ -1375,7 +1430,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           for (char aPlaceholder : placeholder) {
             x += EditorUtil.charWidth(aPlaceholder, fontType, this);
             column++;
-            if (column >= length) break outer;
+            if (column >= targetColumn) break outer;
           }
           offset = region.getEndOffset();
         }
@@ -1404,8 +1459,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
 
-      if (column != length) {
-        x += EditorUtil.getSpaceWidth(fontType, this) * (length - column);
+      if (column != targetColumn) {
+        x += EditorUtil.getSpaceWidth(fontType, this) * (targetColumn - column);
       }
 
       return x;

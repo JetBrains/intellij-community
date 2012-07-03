@@ -133,8 +133,18 @@ public class FSState {
     }
   }
 
-  public boolean isInitialized(String moduleName) {
-    return myInitialTestsScanPerformed.contains(moduleName) && myInitialProductionScanPerformed.contains(moduleName);
+  public boolean hasWorkToDo() {
+    for (Map.Entry<String, FilesDelta> entry : myDeltas.entrySet()) {
+      final String moduleName = entry.getKey();
+      if (!myInitialProductionScanPerformed.contains(moduleName) || !myInitialTestsScanPerformed.contains(moduleName)) {
+        return true;
+      }
+      final FilesDelta delta = entry.getValue();
+      if (delta.hasPathsToDelete() || delta.hasSourcesToRecompile()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean markInitialScanPerformed(final String moduleName, boolean forTests) {

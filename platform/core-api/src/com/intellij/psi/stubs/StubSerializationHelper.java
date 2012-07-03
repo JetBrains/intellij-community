@@ -16,24 +16,30 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.LogUtil;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
+import jsr166e.SequenceLock;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Author: dmitrylomov
  */
 public class StubSerializationHelper {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubSerializationHelper");
-
   private AbstractStringEnumerator myNameStorage;
 
   protected final TIntObjectHashMap<StubSerializer<? extends StubElement>> myIdToSerializer = new TIntObjectHashMap<StubSerializer<? extends StubElement>>();
@@ -42,6 +48,7 @@ public class StubSerializationHelper {
   public StubSerializationHelper(AbstractStringEnumerator nameStorage) {
     myNameStorage = nameStorage;
   }
+
   public void assignId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
     final int id = persistentId(serializer);
     final StubSerializer old = myIdToSerializer.put(id, serializer);
@@ -73,8 +80,18 @@ public class StubSerializationHelper {
   }
 
   public void serialize(StubElement rootStub, OutputStream stream) throws IOException {
-    StubOutputStream stubOutputStream = new StubOutputStream(stream, myNameStorage);
+    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
+    FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
+    StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
+
     doSerialize(rootStub, stubOutputStream);
+    DataOutputStream resultStream = new DataOutputStream(stream);
+    DataInputOutputUtil.writeINT(resultStream, storage.myStrings.size());
+    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+    for(String s:storage.myStrings) {
+      IOUtil.writeUTFFast(buffer, resultStream, s);
+    }
+    resultStream.write(out.getInternalBuffer(), 0, out.size());
   }
 
   private int getClassId(final StubSerializer serializer) {
@@ -83,8 +100,71 @@ public class StubSerializationHelper {
     return idValue;
   }
 
+  private static class RecentStringInterner {
+    private final int myStripeMask;
+    private final SLRUCache<String, String>[] myInterns;
+    private final Lock[] myStripeLocks;
+    private final LowMemoryWatcher myClearingCallback;
+
+    private RecentStringInterner(int capacity) {
+      final int stripes = 16;
+      myInterns = new SLRUCache[stripes];
+      myStripeLocks = new Lock[myInterns.length];
+      for(int i = 0; i < myInterns.length; ++i) {
+        myInterns[i] = new SLRUCache<String, String>(capacity / stripes, capacity / stripes) {
+          @NotNull
+          @Override
+          public String createValue(String key) {
+            return key;
+          }
+        };
+        myStripeLocks[i] = new SequenceLock();
+      }
+
+      assert Integer.highestOneBit(stripes) == stripes;
+      myStripeMask = stripes - 1;
+      myClearingCallback = LowMemoryWatcher.register(new Runnable() {
+        @Override
+        public void run() {
+          clear();
+        };
+      });
+    }
+
+    String get(String s) {
+      final int stripe = Math.abs(s.hashCode()) & myStripeMask;
+      try {
+        myStripeLocks[stripe].lock();
+        return myInterns[stripe].get(s);
+      } finally {
+        myStripeLocks[stripe].unlock();
+      }
+    }
+
+    void clear() {
+      for(int i = 0; i < myInterns.length; ++i) {
+        myStripeLocks[i].lock();
+        myInterns[i].clear();
+        myStripeLocks[i].unlock();
+      }
+    }
+  }
+
+  private final RecentStringInterner myStringInterner = new RecentStringInterner(8192);
+
   public StubElement deserialize(InputStream stream) throws IOException {
-    StubInputStream inputStream = new StubInputStream(stream, myNameStorage);
+    FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
+    StubInputStream inputStream = new StubInputStream(stream, storage);
+    final int size = DataInputOutputUtil.readINT(inputStream);
+    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
+
+    int i = 1;
+    while(i <= size) {
+      String s = myStringInterner.get(IOUtil.readUTFFast(buffer, inputStream));
+      storage.myStrings.add(s);
+      storage.myEnumerates.put(s, i);
+      ++i;
+    }
     return deserialize(inputStream, null);
   }
 
@@ -105,5 +185,47 @@ public class StubSerializationHelper {
 
   private StubSerializer getClassById(int id) {
     return myIdToSerializer.get(id);
+  }
+
+  private static class FileLocalStringEnumerator implements AbstractStringEnumerator {
+    private final TObjectIntHashMap<String> myEnumerates = new TObjectIntHashMap<String>();
+    private final ArrayList<String> myStrings = new ArrayList<String>();
+
+    @Override
+    public int enumerate(@Nullable String value) throws IOException {
+      if (value == null) return 0;
+      int i = myEnumerates.get(value);
+      if (i == 0) {
+        if (myEnumerates.containsKey(value)) {
+          int a = 1;
+        }
+        myEnumerates.put(value, i = myStrings.size() + 1);
+        myStrings.add(value);
+      }
+      return i;
+    }
+
+    @Override
+    public String valueOf(int idx) throws IOException {
+      if (idx == 0) return null;
+      return myStrings.get(idx - 1);
+    }
+
+    @Override
+    public void markCorrupted() {
+    }
+
+    @Override
+    public void close() throws IOException {
+    }
+
+    @Override
+    public boolean isDirty() {
+      return false;
+    }
+
+    @Override
+    public void force() {
+    }
   }
 }

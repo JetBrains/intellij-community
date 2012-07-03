@@ -33,28 +33,31 @@ public abstract class ClickListener {
 
   public void installOn(final Component c) {
     myListener = new MouseAdapter() {
-      private Point clickPoint;
+      private Point pressPoint;
+      private Point lastClickPoint;
       private long lastTimeClicked = -1;
       private int clickCount = 0;
 
       @Override
       public void mousePressed(MouseEvent e) {
-        if (Math.abs(lastTimeClicked - e.getWhen()) > TIME_EPS) {
+        if (Math.abs(lastTimeClicked - e.getWhen()) > TIME_EPS || (lastClickPoint != null && !isWithinEps(lastClickPoint, e.getPoint()))) {
           clickCount = 0;
+          lastClickPoint = null;
         }
         clickCount++;
         lastTimeClicked = e.getWhen();
 
         if (!e.isPopupTrigger()) {
-          clickPoint = e.getPoint();
+          pressPoint = e.getPoint();
         }
       }
 
       @Override
       public void mouseReleased(MouseEvent e) {
         Point releasedAt = e.getPoint();
-        Point clickedAt = clickPoint;
-        clickPoint = null;
+        Point clickedAt = pressPoint;
+        lastClickPoint = clickedAt;
+        pressPoint = null;
 
         if (e.isConsumed()) return;
 
@@ -62,7 +65,7 @@ public abstract class ClickListener {
         if (e.isPopupTrigger()) return;
         if (releasedAt.x < 0 || releasedAt.y < 0 || releasedAt.x >= c.getWidth() || releasedAt.y >= c.getHeight()) return;
 
-        if (Math.abs(clickedAt.x - releasedAt.x) < EPS && Math.abs(clickedAt.y - releasedAt.y) < EPS) {
+        if (isWithinEps(releasedAt, clickedAt)) {
           if (onClick(e, clickCount)) {
             e.consume();
           }
@@ -71,6 +74,10 @@ public abstract class ClickListener {
     };
 
     c.addMouseListener(myListener);
+  }
+
+  private static boolean isWithinEps(Point releasedAt, Point clickedAt) {
+    return Math.abs(clickedAt.x - releasedAt.x) < EPS && Math.abs(clickedAt.y - releasedAt.y) < EPS;
   }
 
   public void uninstall(Component c) {

@@ -53,7 +53,7 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
     expectedTypeMember,
     nonInitialized,
     classLiteral,
-    className,
+    classNameOrGlobalStatic,
   }
 
   @NotNull
@@ -105,6 +105,11 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
     }
 
     if (myCompletionType == CompletionType.BASIC) {
+      StaticallyImportable callElement = item.as(StaticallyImportable.CLASS_CONDITION_KEY);
+      if (callElement != null && callElement.canBeImported() && !callElement.willBeImported()) {
+        return MyResult.classNameOrGlobalStatic;
+      }
+
       if (object instanceof PsiKeyword && PsiKeyword.CLASS.equals(item.getLookupString())) {
         return MyResult.classLiteral;
       }
@@ -114,7 +119,7 @@ public class PreferLocalVariablesLiteralsAndAnnoMethodsWeigher extends LookupEle
       }
 
       if (object instanceof PsiClass) {
-        return MyResult.className;
+        return MyResult.classNameOrGlobalStatic;
       }
 
       if (object instanceof PsiField && myNonInitializedFields.contains(object)) {

@@ -84,25 +84,10 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
     // to block 'i3' and reformatting starts back after 'i1'. Now 'i2' is shifted to left as well in order to align to the
     // new 'i1' position. That changes 'i3' position as well that causes 'i1' to be shifted right one more time.
     // Hence, we have endless cycle here. We remember information about blocks that caused indentation change because of
-    // alignment of blocks located before them and post error every time we detect endless cycle.
+    // alignment of blocks located before them and skip alignment every time we detect an endless cycle.
     Set<LeafBlockWrapper> blocksCausedRealignment = context.backwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
     if (blocksCausedRealignment != null && blocksCausedRealignment.contains(context.targetBlock)) {
-      StringBuilder messageBuilder = new StringBuilder();
-      TextRange targetRange = context.targetBlock.getTextRange();
-      messageBuilder.append(
-        String.format("Formatting error - code block %s is set to be shifted right because of its alignment with "
-                      + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
-                      + "subsequent block to be shifted right as well - cyclic dependency.",
-                      offsetResponsibleBlock.getTextRange(), targetRange
-        ));
-      messageBuilder.append(context.targetBlock.getDebugInfo());
-      messageBuilder.append("\nBlock content: '")
-        .append(context.document.getText().substring(targetRange.getStartOffset(), targetRange.getEndOffset()))
-        .append("'\n");
-      messageBuilder.append("Note: document text is attached to this report.");
-      LogMessageEx.error(LOG, messageBuilder.toString(), context.document.getText());
-      blocksCausedRealignment.add(context.targetBlock);
-      return Result.UNABLE_TO_ALIGN_BACKWARD_BLOCK;
+      return Result.RECURSION_DETECTED;
     }
 
     WhiteSpace previousWhiteSpace = offsetResponsibleBlock.getWhiteSpace();

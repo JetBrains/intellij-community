@@ -30,11 +30,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * @author max
@@ -441,12 +439,16 @@ public class PagedFileStorage implements Forceable {
     private static final int FILE_INDEX_SHIFT = 16;
     private final boolean checkThreadAccess;
     public final StorageLockContext myDefaultStorageLockContext;
-
-    private int myMappingChangeCount;
-    private final LinkedHashMap<Integer, ByteBufferWrapper> myMap;
-    private long mySizeLimit;
-    private long mySize;
     private final ConcurrentHashMap<Integer, PagedFileStorage> myIndex2Storage = new ConcurrentHashMap<Integer, PagedFileStorage>();
+
+    private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
+    private final SequenceLock mySegmentsAccessLock = new SequenceLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
+
+    private final SequenceLock mySegmentsAllocationLock = new SequenceLock();
+    private final ConcurrentLinkedQueue<ByteBufferWrapper> mySegmentsToRemove = new ConcurrentLinkedQueue<ByteBufferWrapper>();
+    private volatile long mySize;
+    private volatile long mySizeLimit;
+    private volatile int myMappingChangeCount;
 
     public StorageLock() {
       this(true);
@@ -457,7 +459,7 @@ public class PagedFileStorage implements Forceable {
       myDefaultStorageLockContext = new StorageLockContext(this);
 
       mySizeLimit = UPPER_LIMIT;
-      myMap = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f) {
+      mySegments = new LinkedHashMap<Integer, ByteBufferWrapper>(10, 0.75f) {
         @Override
         protected boolean removeEldestEntry(Map.Entry<Integer, ByteBufferWrapper> eldest) {
           return mySize > mySizeLimit;
@@ -469,8 +471,9 @@ public class PagedFileStorage implements Forceable {
           // this method can be called after removeEldestEntry
           ByteBufferWrapper wrapper = super.remove(key);
           if (wrapper != null) {
+            ++myMappingChangeCount;
+            mySegmentsToRemove.offer(wrapper);
             mySize -= wrapper.myLength;
-            wrapper.dispose();
           }
           return wrapper;
         }
@@ -502,33 +505,79 @@ public class PagedFileStorage implements Forceable {
     }
 
     private ByteBufferWrapper get(Integer key) {
-      ByteBufferWrapper wrapper = myMap.get(key);
-      if (wrapper != null) {
+      ByteBufferWrapper wrapper;
+      try {         // fast path
+        mySegmentsAccessLock.lock();
+        wrapper = mySegments.get(key);
+        if (wrapper != null) return wrapper;
+      }
+      finally {
+        mySegmentsAccessLock.unlock();
+      }
+
+      mySegmentsAllocationLock.lock();
+      try {
+        // check if anybody cared about our segment
+        mySegmentsAccessLock.lock();
+        try {
+          wrapper = mySegments.get(key);
+          if (wrapper != null) return wrapper;
+        } finally {
+          mySegmentsAccessLock.unlock();
+        }
+
+        long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
+        wrapper = createValue(key);
+
+        if (IOStatistics.DEBUG) {
+          long finished = System.currentTimeMillis();
+          if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
+            IOStatistics.dump(
+              "Mapping " + wrapper.myLength + " from " + wrapper.myPosition + " file:" + wrapper.myFile + " for " + (finished - started));
+          }
+        }
+
+        mySegmentsAccessLock.lock();
+        try {
+          mySegments.put(key, wrapper);
+          mySize += wrapper.myLength;
+        }
+        finally {
+          mySegmentsAccessLock.unlock();
+        }
+
+        ensureSize(mySizeLimit);
+
         return wrapper;
       }
-
-      long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
-      wrapper = createValue(key);
-      mySize += wrapper.myLength;
-
-      if (IOStatistics.DEBUG) {
-        long finished = System.currentTimeMillis();
-        if (finished - started > IOStatistics.MIN_IO_TIME_TO_REPORT) {
-          IOStatistics.dump(
-            "Mapping " + wrapper.myLength + " from " + wrapper.myPosition + " file:" + wrapper.myFile + " for " + (finished - started));
-        }
+      finally {
+        mySegmentsAllocationLock.unlock();
       }
-      myMap.put(key, wrapper);
+    }
 
-      ensureSize(mySizeLimit);
-      return wrapper;
+    private void disposeRemovedSegments() {
+      assert mySegmentsAllocationLock.isHeldByCurrentThread();
+      Iterator<ByteBufferWrapper> iterator = mySegmentsToRemove.iterator();
+      while(iterator.hasNext()) {
+        iterator.next().dispose();
+        iterator.remove();
+      }
     }
 
     private void ensureSize(long sizeLimit) {
-      while (mySize > sizeLimit) {
-        // we still have to drop something
-        myMap.doRemoveEldestEntry();
+      assert mySegmentsAllocationLock.isHeldByCurrentThread();
+
+      try {
+        mySegmentsAccessLock.lock();
+        while (mySize > sizeLimit) {
+          // we still have to drop something
+          mySegments.doRemoveEldestEntry();
+        }
+      } finally {
+        mySegmentsAccessLock.unlock();
       }
+
+      disposeRemovedSegments();
     }
 
     @NotNull
@@ -541,7 +590,7 @@ public class PagedFileStorage implements Forceable {
       if (off > owner.length()) {
         throw new IndexOutOfBoundsException("off=" + off + " key.owner.length()=" + owner.length());
       }
-      ++myMappingChangeCount;
+
       int min = Math.min((int)(owner.length() - off), owner.myPageSize);
       ByteBufferWrapper wrapper = ByteBufferWrapper.readWriteDirect(owner.myFile, off, min);
       IOException oome = null;
@@ -586,30 +635,49 @@ public class PagedFileStorage implements Forceable {
     }
 
     private @Nullable Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
-      checkThreadAccess(storageLockContext);
-      Map<Integer, ByteBufferWrapper> mineBuffers = null;
-      for (Map.Entry<Integer, ByteBufferWrapper> entry : myMap.entrySet()) {
-        if ((entry.getKey() & FILE_INDEX_MASK) == index) {
-          if (mineBuffers == null) {
-            mineBuffers = new TreeMap<Integer, ByteBufferWrapper>(new Comparator<Integer>() {
-              @Override
-              public int compare(Integer o1, Integer o2) {
-                return o1 - o2;
-              }
-            });
+      mySegmentsAccessLock.lock();
+      try {
+        checkThreadAccess(storageLockContext);
+        Map<Integer, ByteBufferWrapper> mineBuffers = null;
+        for (Map.Entry<Integer, ByteBufferWrapper> entry : mySegments.entrySet()) {
+          if ((entry.getKey() & FILE_INDEX_MASK) == index) {
+            if (mineBuffers == null) {
+              mineBuffers = new TreeMap<Integer, ByteBufferWrapper>(new Comparator<Integer>() {
+                @Override
+                public int compare(Integer o1, Integer o2) {
+                  return o1 - o2;
+                }
+              });
+            }
+            mineBuffers.put(entry.getKey(), entry.getValue());
           }
-          mineBuffers.put(entry.getKey(), entry.getValue());
         }
+        return mineBuffers;
       }
-      return mineBuffers;
+      finally {
+        mySegmentsAccessLock.unlock();
+      }
     }
 
     private void unmapBuffersForOwner(int index, StorageLockContext storageLockContext) {
       final Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
 
       if (buffers != null) {
-        for (Integer key : buffers.keySet()) {
-          myMap.remove(key);
+        mySegmentsAccessLock.lock();
+        try {
+          for (Integer key : buffers.keySet()) {
+            mySegments.remove(key);
+          }
+        }
+        finally {
+          mySegmentsAccessLock.unlock();
+        }
+
+        mySegmentsAllocationLock.lock();
+        try {
+          disposeRemovedSegments();
+        } finally {
+          mySegmentsAllocationLock.unlock();
         }
       }
     }
@@ -618,14 +686,32 @@ public class PagedFileStorage implements Forceable {
       Map<Integer, ByteBufferWrapper> buffers = getBuffersOrderedForOwner(index, storageLockContext);
 
       if (buffers != null) {
-        for(ByteBufferWrapper buffer:buffers.values()) {
-          buffer.flush();
+        mySegmentsAllocationLock.lock();
+        try {
+          for(ByteBufferWrapper buffer:buffers.values()) {
+            buffer.flush();
+          }
+        }
+        finally {
+          mySegmentsAllocationLock.unlock();
         }
       }
     }
 
     public void invalidateBuffer(int page) {
-      myMap.remove(page);
+      mySegmentsAccessLock.lock();
+      try {
+        mySegments.remove(page);
+      } finally {
+        mySegmentsAccessLock.unlock();
+      }
+      mySegmentsAllocationLock.lock();
+      try {
+        disposeRemovedSegments();
+      }
+      finally {
+        mySegmentsAllocationLock.unlock();
+      }
     }
   }
 

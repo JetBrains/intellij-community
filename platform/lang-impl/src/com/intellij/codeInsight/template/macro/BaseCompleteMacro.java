@@ -16,13 +16,12 @@
 
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -40,8 +39,6 @@ public abstract class BaseCompleteMacro extends Macro {
   protected BaseCompleteMacro(@NonNls String name) {
     myName = name;
   }
-
-  abstract CodeInsightActionHandler getCompletionHandler ();
 
   public String getName() {
     return myName;
@@ -78,7 +75,7 @@ public abstract class BaseCompleteMacro extends Macro {
 
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
-            getCompletionHandler().invoke(project, editor, psiFile);
+            invokeCompletionHandler(project, editor);
             Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
 
             if (lookup != null) {
@@ -88,7 +85,7 @@ public abstract class BaseCompleteMacro extends Macro {
               TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
               if (templateState != null) {
                 TextRange range = templateState.getCurrentVariableRange();
-                if (range != null && range.getLength() > 0/* && TemplateEditorUtil.getOffset(editor) == range.getEndOffset()*/) {
+                if (range != null && range.getLength() > 0) {
                   templateState.nextTab();
                 }
               }
@@ -103,6 +100,8 @@ public abstract class BaseCompleteMacro extends Macro {
       ApplicationManager.getApplication().invokeLater(runnable);
     }
   }
+
+  protected abstract void invokeCompletionHandler(Project project, Editor editor);
 
   private static class MyLookupListener extends LookupAdapter {
     private final ExpressionContext myContext;

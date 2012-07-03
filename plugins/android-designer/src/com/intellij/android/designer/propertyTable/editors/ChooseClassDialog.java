@@ -80,7 +80,7 @@ public class ChooseClassDialog extends DialogWrapper implements ListSelectionLis
     };
 
     setTitle(title);
-    getOKAction().setEnabled(false);
+    setOKActionEnabled(false);
 
     init();
   }
@@ -119,7 +119,7 @@ public class ChooseClassDialog extends DialogWrapper implements ListSelectionLis
   @Override
   public void valueChanged(ListSelectionEvent e) {
     PsiClass psiClass = (PsiClass)myList.getSelectedValue();
-    getOKAction().setEnabled(psiClass != null);
+    setOKActionEnabled(psiClass != null);
     myResultClassName = psiClass == null ? null : psiClass.getQualifiedName();
   }
 }

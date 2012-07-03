@@ -26,6 +26,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
@@ -361,6 +362,6 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
   }
 
   public static String getUserHome() {
-    return StringUtil.trimEnd(SystemProperties.getUserHome(), "/");
+    return StringUtil.trimEnd(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()), "/");
   }
 }

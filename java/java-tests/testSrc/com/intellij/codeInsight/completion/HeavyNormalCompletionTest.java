@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -16,6 +17,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 /**
@@ -82,7 +84,7 @@ public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.addClass("package foo.bar; public class AxBxCxDxEx {}");
 
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), myFixture.getEditor(), 2, false);
+    myFixture.complete(CompletionType.BASIC, 2);
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myFixture.getEditor());
     LookupElement[] myItems = lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
     assertEquals(2, myItems.length);
@@ -97,6 +99,15 @@ public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
     assertOrderedEquals(myFixture.getLookupElementStrings(), "getAaa", "getBbb");
     myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getCaretModel().getOffset() + 2);
     assertNull(myFixture.completeBasic());
+  }
+
+  public void testQualifyInaccessibleClassName() throws Exception {
+    PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "second", myFixture.getTempDirFixture().findOrCreateDir("second"));
+    myFixture.addFileToProject("second/foo/bar/AxBxCxDxEx.java", "package foo.bar; class AxBxCxDxEx {}");
+
+    myFixture.configureByText("a.java", "class Main { ABCDE<caret> }");
+    myFixture.complete(CompletionType.BASIC, 3);
+    myFixture.checkResult("class Main { foo.bar.AxBxCxDxEx<caret> }");
   }
 
 }

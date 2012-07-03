@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -23,10 +24,10 @@ import java.util.List;
  */
 public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase {
 
-  protected void doTest() throws Throwable {
+  protected void doTest() {
     doTest("");
   }
-  protected void doTest(String directory) throws Throwable {
+  protected void doTest(String directory) {
     final List<String> stringList = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
     if (directory.length()!=0) directory += "/";
     final String fileName = directory + getTestName(true) + "." + getExtension();
@@ -50,7 +51,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
             @Override
             public boolean value(LookupElement lookupElement) {
               final Object o = lookupElement.getObject();
-              return !(o instanceof PsiMember) && !(o instanceof GrVariable) && !(o instanceof GroovyResolveResult);
+              return !(o instanceof PsiMember) && !(o instanceof GrVariable) && !(o instanceof GroovyResolveResult) && !(o instanceof PsiPackage);
             }
           });
         }
@@ -78,10 +79,6 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
 
   protected String getExtension() {
     return "groovy";
-  }
-
-  protected boolean addKeywords() {
-    return true;
   }
 
   protected boolean addReferenceVariants() {

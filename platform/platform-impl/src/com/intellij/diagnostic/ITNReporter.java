@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
@@ -203,9 +201,8 @@ public class ITNReporter extends ErrorReportSubmitter {
               msg = DiagnosticBundle.message("error.report.sending.failure");
             }
             if (e instanceof UpdateAvailableException) {
-              ApplicationInfoEx appInfo = (ApplicationInfoEx) ApplicationManager.getApplication().getComponent(ApplicationInfo.class);
               String message = DiagnosticBundle.message(
-                appInfo.isEAP() ? "error.report.new.eap.build.message" : "error.report.new.build.message", e.getMessage());
+                "error.report.new.eap.build.message", e.getMessage());
                 showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon());
               callback.consume(new SubmittedReportInfo(null, "0", SubmittedReportInfo.SubmissionStatus.FAILED));
             }

@@ -22,7 +22,7 @@ import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
@@ -209,7 +208,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     final PsiElement position = parameters.getPosition();
-    if (!position.getContainingFile().getLanguage().isKindOf(StdLanguages.JAVA)) {
+    if (!position.getContainingFile().getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return;
     }
 
@@ -231,8 +230,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
 
+    PrefixMatcher matcher = result.getPrefixMatcher();
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, result.getPrefixMatcher(), inheritors);
+      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
     }
 
     if (IMPORT_REFERENCE.accepts(position)) {
@@ -251,15 +251,31 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     addAllClasses(parameters, result, inheritors);
+
+    final PsiElement parent = position.getParent();
+    if (parent instanceof PsiReferenceExpression &&
+        !((PsiReferenceExpression)parent).isQualified() &&
+        parameters.isExtendedCompletion() &&
+        StringUtil.isNotEmpty(matcher.getPrefix())) {
+      new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          result.addElement(element);
+        }
+      });
+    }
     result.stopHere();
   }
 
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
                                    final InheritorsHolder inheritors) {
-    if (!isClassNamePossible(parameters.getPosition()) || !mayStartClassName(result)) return;
+    if (!isClassNamePossible(parameters.getPosition()) && parameters.getInvocationCount() <= 1 ||
+        !mayStartClassName(result)) {
+      return;
+    }
 
-    if (mayShowAllClasses(parameters)) {
+    if (parameters.getInvocationCount() >= 2) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
@@ -405,10 +421,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     return true;
   }
 
-  public static boolean mayShowAllClasses(CompletionParameters parameters) {
-    return Registry.is("show.all.classes.on.first.completion") || parameters.getInvocationCount() >= 2;
-  }
-
   public static boolean mayStartClassName(CompletionResultSet result) {
     String prefix = result.getPrefixMatcher().getPrefix();
     if (StringUtil.isEmpty(prefix)) {
@@ -471,9 +483,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       PsiElement position = parameters.getPosition();
       if (psiElement().withParent(psiReferenceExpression().withFirstChild(psiReferenceExpression().referencing(psiClass()))).accepts(position)) {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
-          final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
+          final String shortcut = getActionShortcut(IdeActions.ACTION_CODE_COMPLETION);
           if (shortcut != null) {
-            return "Pressing " + shortcut + " without a class qualifier would show all accessible static methods";
+            return "Pressing " + shortcut + " twice without a class qualifier would show all accessible static methods";
           }
         }
       }
@@ -484,15 +496,6 @@ public class JavaCompletionContributor extends CompletionContributor {
         final String shortcut = getActionShortcut(IdeActions.ACTION_SMART_TYPE_COMPLETION);
         if (shortcut != null) {
           return CompletionBundle.message("completion.smart.hint", shortcut);
-        }
-      }
-    }
-
-    if (parameters.getCompletionType() != CompletionType.CLASS_NAME && shouldSuggestClassNameCompletion(parameters.getPosition())) {
-      if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_CLASSNAME)) {
-        final String shortcut = getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION);
-        if (shortcut != null) {
-          return CompletionBundle.message("completion.class.name.hint", shortcut);
         }
       }
     }

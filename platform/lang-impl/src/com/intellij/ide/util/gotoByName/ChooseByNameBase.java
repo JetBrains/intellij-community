@@ -52,10 +52,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ClickListener;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -1406,9 +1403,11 @@ public abstract class ChooseByNameBase {
   private static final String EXTRA_ELEM = "...";
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
 
-  public static Component renderNonPrefixSeparatorComponent(Component component) {
-    component.setFont(component.getFont().deriveFont(Font.PLAIN, component.getFont().getSize() - 2));
-    return component;
+  public static Component renderNonPrefixSeparatorComponent(Color backgroundColor) {
+    final TitledSeparator separator = new TitledSeparator();
+    separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
+    separator.setBackground(backgroundColor);
+    return separator;
   }
 
   private class CalcElementsThread implements Runnable {

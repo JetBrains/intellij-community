@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.util.ImageInfoReader;
 import org.jetbrains.annotations.NotNull;
@@ -47,21 +48,30 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   private final DataExternalizer<ImageInfo> myValueExternalizer = new DataExternalizer<ImageInfo>() {
     @Override
     public void save(final DataOutput out, final ImageInfo info) throws IOException {
-      out.writeInt(info.width);
-      out.writeInt(info.height);
-      out.writeInt(info.bpp);
+      DataInputOutputUtil.writeINT(out, info.width);
+      DataInputOutputUtil.writeINT(out, info.height);
+      DataInputOutputUtil.writeINT(out, info.bpp);
     }
 
     @Override
     public ImageInfo read(final DataInput in) throws IOException {
-      return new ImageInfo(in.readInt(), in.readInt(), in.readInt());
+      return new ImageInfo(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
     }
   };
 
   private final SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
     @Override
     protected ImageInfo computeValue(@NotNull FileContent inputData) {
-      final ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent());
+      VirtualFile file = inputData.getFile();
+      final ImageInfoReader.Info info;
+      if (file.getFileSystem() == TempFileSystem.getInstance()) {    // for tests load content directly as we are now not requiring content index
+        try {
+          info = ImageInfoReader.getInfo(file.contentsToByteArray());
+        } catch (IOException ex) { return null; }
+      }
+      else {
+        info = ImageInfoReader.getInfo(file.getPath());
+      }
       return info != null? new ImageInfo(info.width, info.height, info.bpp) : null;
     }
   };
@@ -94,8 +104,13 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   }
 
   @Override
+  public boolean dependsOnFileContent() {
+    return false;
+  }
+
+  @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   public static class ImageInfo {

@@ -142,7 +142,7 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
 
     add(new GlassLayer(designer.getToolProvider(), myArea), DesignerEditorPanel.LAYER_GLASS);
 
-    myDecorationLayer = new DecorationLayer(myArea);
+    myDecorationLayer = new DecorationLayer(designer, myArea);
     add(myDecorationLayer, DesignerEditorPanel.LAYER_DECORATION);
 
     myFeedbackLayer = new FeedbackLayer();

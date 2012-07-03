@@ -59,8 +59,8 @@ class XmlMover extends LineMover {
     final XmlText text2 = PsiTreeUtil.getParentOfType(movedEndElement, XmlText.class);
 
     // Let's do not care about injections for this mover
-    if ( ( text != null && InjectedLanguageManager.getInstance(file.getProject()).getInjectedPsiFiles(text) != null) ||
-         ( text2 != null && InjectedLanguageManager.getInstance(file.getProject()).getInjectedPsiFiles(text2) != null)) {
+    if ( ( text != null && InjectedLanguageManager.getInstance(text.getProject()).getInjectedPsiFiles(text) != null) ||
+         ( text2 != null && InjectedLanguageManager.getInstance(text2.getProject()).getInjectedPsiFiles(text2) != null)) {
       return false;
     }
 

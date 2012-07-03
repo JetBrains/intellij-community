@@ -32,14 +32,14 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
+import com.intellij.testFramework.vcs.MockChangeListManagerGate;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
+import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import org.junit.After;
@@ -129,9 +129,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     });
 
     // there should be kind-a waiting for after change list manager finds all changes and runs inner refresh of copies in the above method
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
+    if (myInitChangeListManager) {
+      ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      changeListManager.ensureUpToDate(false);
+    }
   }
 
   @After

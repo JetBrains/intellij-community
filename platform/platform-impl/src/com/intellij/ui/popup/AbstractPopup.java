@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -86,6 +87,7 @@ public class AbstractPopup implements JBPopup {
   private MouseChecker myCancelOnMouseOutCallback;
   private Canceller myMouseOutCanceller;
   private boolean myCancelOnWindow;
+  private boolean myCancelOnWindowDeactivation = true;
   private Dimension myForcedSize;
   private Point myForcedLocation;
   private ChildFocusWatcher myFocusWatcher;
@@ -126,7 +128,7 @@ public class AbstractPopup implements JBPopup {
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown = false;
 
-    protected void update() {
+    public void update() {
       mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
@@ -194,7 +196,8 @@ public class AbstractPopup implements JBPopup {
                      Component settingsButtons,
                      @Nullable final Processor<JBPopup> pinCallback,
                      boolean mayBeParent,
-                     boolean showShadow) {
+                     boolean showShadow,
+                     boolean cancelOnWindowDeactivation) {
     if (requestFocus && !focusable) {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
     }
@@ -207,6 +210,7 @@ public class AbstractPopup implements JBPopup {
     myPaintShadow = showShadow && !SystemInfo.isMac && !movable && !resizable && Registry.is("ide.popup.dropShadow");
     myContent = createContentPanel(resizable, myPopupBorder, isToDrawMacCorner() && resizable);
     myMayBeParent = mayBeParent;
+    myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
 
     myContent.add(component, BorderLayout.CENTER);
     if (adText != null) {
@@ -1244,6 +1248,14 @@ public class AbstractPopup implements JBPopup {
 
   public boolean isCancelOnClickOutside() {
     return myCancelOnClickOutside;
+  }
+
+  public boolean isCancelOnWindowDeactivation() {
+    return myCancelOnWindowDeactivation;
+  }
+
+  public void setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
+    myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
   }
 
   private class Canceller implements AWTEventListener {

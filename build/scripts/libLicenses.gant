@@ -238,6 +238,7 @@ libraryLicense(name: "YourKit Java Profiler", libraryName: "yjp-controller-api-r
 libraryLicense(name: "protobuf", version: "2.3.0", license: "New BSD", url: "http://code.google.com/p/protobuf/", licenseUrl: "http://code.google.com/p/protobuf/source/browse/trunk/COPYING.txt?r=367")
 libraryLicense(name: "Netty", libraryName: "Netty", version: "3.3.1", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Kryo", libraryName: "Kryo", version: "1.04", license: "New BSD License", url: "http://code.google.com/p/kryo/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
+libraryLicense(name: "Snappy-Java", libraryName: "Snappy-Java", version: "1.0.4.1", license: "Apache 2.0", url: "http://code.google.com/p/snappy-java/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")

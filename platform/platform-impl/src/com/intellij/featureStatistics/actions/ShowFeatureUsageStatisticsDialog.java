@@ -149,19 +149,18 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     long idleTime = app.getIdleTime();
 
     final String uptimeS = FeatureStatisticsBundle.message("feature.statistics.application.uptime",
-                                                           ApplicationNamesInfo.getInstance().getProductName(),
+                                                           ApplicationNamesInfo.getInstance().getFullProductName(),
                                                            DateFormatUtil.formatDuration(uptime));
 
-    final String idleTimeS = FeatureStatisticsBundle .message("feature.statistics.application.idle.time",
-                                                              ApplicationNamesInfo.getInstance().getProductName(),
-                                                              DateFormatUtil.formatDuration(idleTime));
+    final String idleTimeS = FeatureStatisticsBundle.message("feature.statistics.application.idle.time",
+                                                             DateFormatUtil.formatDuration(idleTime));
 
     String labelText = uptimeS + ", " + idleTimeS;
     CompletionStatistics stats = ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics();
     if (stats.dayCount > 0 && stats.sparedCharacters > 0) {
       String total = formatCharacterCount(stats.sparedCharacters, true);
       String perDay = formatCharacterCount(stats.sparedCharacters / stats.dayCount, false);
-      labelText += "<br>Code completion has saved you from typing at least " + total + "  since " + DateFormatUtil.formatDate(stats.startDate) +
+      labelText += "<br>Code completion has saved you from typing at least " + total + " since " + DateFormatUtil.formatDate(stats.startDate) +
                    " (\u2245" + perDay + " per working day)";
     }
     controlsPanel.add(new JLabel("<html><body>" + labelText + "</body></html>"), BorderLayout.NORTH);
@@ -199,11 +198,11 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   }
 
   private static String formatCharacterCount(int count, boolean full) {
-    String result = count > 1024 * 1024 ? (count / 1024 / 1024) + "MB " :
-               count > 1024 ? (count / 1024) + "KB " :
-               count + " characters";
-    if (full && count > 1024) {
-      return result + " code";
+    String result = count > 1024 * 1024 ? (count / 1024 / 1024) + "M" :
+               count > 1024 ? (count / 1024) + "K" :
+               String.valueOf(count);
+    if (full) {
+      return result + " characters";
     }
     return result;
   }

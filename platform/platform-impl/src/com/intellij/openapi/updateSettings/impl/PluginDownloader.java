@@ -18,6 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -374,10 +375,12 @@ public class PluginDownloader {
   }
 
   public static PluginDownloader createDownloader(IdeaPluginDescriptor pluginDescriptor) throws UnsupportedEncodingException {
+    String installationUUID = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
+
     final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
     @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
                          URLEncoder.encode(pluginDescriptor.getPluginId().getIdString(), "UTF8") +
-                         "&build=" + buildNumber.asString();
+                         "&build=" + buildNumber.asString() + "&uuid=" + URLEncoder.encode(installationUUID, "UTF8");
     if (pluginDescriptor instanceof PluginNode && ((PluginNode)pluginDescriptor).getDownloadUrl() != null){
       url = ((PluginNode)pluginDescriptor).getDownloadUrl();
     }

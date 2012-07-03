@@ -37,6 +37,7 @@ public class GitLogFilters {
   private final Map<VirtualFile, ChangesFilter.Filter> myStructureFilters;
   @Nullable
   private final List<String> myPossibleReferencies;
+  private boolean myUseOnlyHashes;
 
   public GitLogFilters() {
     this(null, null, null, null);
@@ -110,5 +111,13 @@ public class GitLogFilters {
 
   public boolean haveStructuresForRoot(VirtualFile root) {
     return haveStructureFilter() && myStructureFilters.containsKey(root);
+  }
+
+  public boolean isUseOnlyHashes() {
+    return myUseOnlyHashes;
+  }
+
+  public void setUseOnlyHashes(boolean useOnlyHashes) {
+    myUseOnlyHashes = useOnlyHashes;
   }
 }

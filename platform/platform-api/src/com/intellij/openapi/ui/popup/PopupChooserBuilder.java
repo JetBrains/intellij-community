@@ -82,6 +82,8 @@ public class PopupChooserBuilder {
   private int myAdAlignment = SwingUtilities.LEFT;
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
+  private boolean myCancelOnWindowDeactivation = true;
+
 
   public JScrollPane getScrollPane() {
     return myScrollPane;
@@ -289,7 +291,8 @@ public class PopupChooserBuilder {
       .setMayBeParent(myMayBeParent)
       .setLocateWithinScreenBounds(true)
       .setCancelOnOtherWindowOpen(true)
-      .setModalContext(myModalContext);
+      .setModalContext(myModalContext)
+      .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation);
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
@@ -550,4 +553,8 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  public PopupChooserBuilder setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
+    myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
+    return this;
+  }
 }

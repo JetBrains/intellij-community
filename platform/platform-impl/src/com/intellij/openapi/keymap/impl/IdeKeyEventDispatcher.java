@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,7 +364,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private static final Set<String> ALT_GR_LAYOUTS = new HashSet<String>(Arrays.asList(
-    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk"
+    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv"
   ));
 
   private boolean inInitState() {
@@ -375,6 +375,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) {
+      if (Registry.is("actionSystem.force.alt.gr")) {
+        return false;
+      }
       final InputContext inputContext = focusOwner.getInputContext();
       if (inputContext != null) {
         Locale locale = inputContext.getLocale();

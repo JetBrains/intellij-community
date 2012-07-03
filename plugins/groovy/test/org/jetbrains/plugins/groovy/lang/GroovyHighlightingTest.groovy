@@ -19,20 +19,10 @@ package org.jetbrains.plugins.groovy.lang;
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
 import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
-import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
@@ -50,32 +40,13 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*
 import org.jetbrains.plugins.groovy.codeInspection.confusing.*
 
-import static org.jetbrains.plugins.groovy.util.TestUtils.getMockGroovy1_8LibraryName
-
 /**
  * @author peter
  */
-public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
-  public static final DefaultLightProjectDescriptor GROOVY_18_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(mockGroovy1_8LibraryName + '!/');
-      assertTrue(groovyJar != null);
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
-    }
-  };
-
+public class GroovyHighlightingTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.testDataPath + 'highlighting/';
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GROOVY_18_PROJECT_DESCRIPTOR;
   }
 
   public void testDuplicateClosurePrivateVariable() throws Throwable {
@@ -113,17 +84,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     addGroovyObject();
     myFixture.addFileToProject("Foo.groovy", "interface Foo {}");
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
-  }
-
-  private void addGroovyObject() throws IOException {
-    myFixture.addClass("package groovy.lang;" +
-                       "public interface GroovyObject  {\n" +
-                       "    java.lang.Object invokeMethod(java.lang.String s, java.lang.Object o);\n" +
-                       "    java.lang.Object getProperty(java.lang.String s);\n" +
-                       "    void setProperty(java.lang.String s, java.lang.Object o);\n" +
-                       "    groovy.lang.MetaClass getMetaClass();\n" +
-                       "    void setMetaClass(groovy.lang.MetaClass metaClass);\n" +
-                       "}");
   }
 
   public void testDuplicateFields() throws Throwable {
@@ -1117,5 +1077,112 @@ private boolean onWinOrMacOS() {
 <warning descr="Not all execution paths return a value">}</warning>
 
 ''', MissingReturnInspection)
+  }
+
+  void testScriptFieldsAreAllowedOnlyInScriptBody() {
+    addGroovyTransformField()
+    testHighlighting('''\
+import groovy.transform.Field
+
+@Field
+def foo
+
+def foo() {
+  <error descr="Annotation @Field can only be used within a script body">@Field</error>
+  def bar
+}
+
+class X {
+  <error descr="Annotation @Field can only be used within a script">@Field</error>
+  def bar
+
+  def b() {
+    <error descr="Annotation @Field can only be used within a script">@Field</error>
+    def x
+  }
+}
+''')
+  }
+
+  void testDuplicatedScriptField() {
+    addGroovyTransformField()
+    testHighlighting('''\
+import groovy.transform.Field
+
+while(true) {
+  @Field def <error descr="Field 'foo' already defined">foo</error>
+}
+
+while(false) {
+  @Field def <error descr="Field 'foo' already defined">foo</error>
+}
+
+while(i) {
+  def foo
+}
+
+def foo
+''')
+  }
+
+  void testReturnTypeInStaticallyCompiledMethod() {
+   addCompileStatic();
+   testHighlighting('''\
+import groovy.transform.CompileStatic
+@CompileStatic
+int method(x, y, z) {
+    if (x) {
+        <error descr="Cannot assign 'String' to 'int'">'String'</error>
+    } else if (y) {
+        42
+    }
+    else if (z) {
+      return <error descr="Cannot assign 'String' to 'int'">'abc'</error>
+    }
+    else {
+      return 43
+    }
+}
+''')
+ }
+
+  void testReassignedVarInClosure() {
+    addCompileStatic()
+    testHighlighting("""
+$IMPORT_COMPILE_STATIC
+
+@CompileStatic
+test() {
+    def var = "abc"
+    def cl = {
+        var = new Date()
+    }
+    cl()
+    var.<error descr="Cannot resolve symbol 'toUpperCase'">toUpperCase</error>()
+}
+""")
+  }
+
+  void testReassignedVarInClosureInspection() {
+    addCompileStatic()
+    testHighlighting("""\
+test() {
+    def var = "abc"
+    def cl = {
+        <warning descr="Local variable var is reassigned in closure with other type">var</warning> = new Date()
+    }
+    cl()
+    var.toUpperCase()
+}
+
+test2() {
+    def var = "abc"
+    def cl = {
+        var = 'cde'
+    }
+    cl()
+    var.toUpperCase()
+}
+""", GrReassignedInClosureLocalVarInspection)
   }
 }

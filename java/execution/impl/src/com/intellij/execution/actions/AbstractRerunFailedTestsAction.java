@@ -52,14 +52,11 @@ public class AbstractRerunFailedTestsAction extends AnAction {
   private TestFrameworkRunningModel myModel;
   private Getter<TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
-  protected RunnerSettings myRunnerSettings;
-  protected ConfigurationPerRunnerSettings myConfigurationPerRunnerSettings;
+  protected ExecutionEnvironment myEnvironment;
 
   public void init(final TestConsoleProperties consoleProperties,
-                   final RunnerSettings runnerSettings,
-                   final ConfigurationPerRunnerSettings configurationSettings) {
-    myConfigurationPerRunnerSettings = configurationSettings;
-    myRunnerSettings = runnerSettings;
+                   final ExecutionEnvironment environment) {
+    myEnvironment = environment;
     myConsoleProperties = consoleProperties;
   }
 
@@ -99,8 +96,9 @@ public class AbstractRerunFailedTestsAction extends AnAction {
       final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       assert runner != null;
-      runner.execute(executor, new ExecutionEnvironment(profile, profile.getProject(), myRunnerSettings, myConfigurationPerRunnerSettings,
-                                                        null));
+      runner.execute(executor, new ExecutionEnvironment(runner, myEnvironment.getExecutionTarget(),
+                                                        myEnvironment.getRunnerAndConfigurationSettings(),
+                                                        myEnvironment.getProject()));
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

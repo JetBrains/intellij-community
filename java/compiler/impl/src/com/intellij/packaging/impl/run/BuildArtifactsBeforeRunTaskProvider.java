@@ -20,6 +20,7 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConfigurationSettingsEditorWrapper;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -161,7 +162,10 @@ public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<B
     return false;
   }
 
-  public boolean executeTask(DataContext context, RunConfiguration configuration, final BuildArtifactsBeforeRunTask task) {
+  public boolean executeTask(DataContext context,
+                             RunConfiguration configuration,
+                             ExecutionEnvironment env,
+                             final BuildArtifactsBeforeRunTask task) {
     final Ref<Boolean> result = Ref.create(false);
     final Semaphore finished = new Semaphore();
 

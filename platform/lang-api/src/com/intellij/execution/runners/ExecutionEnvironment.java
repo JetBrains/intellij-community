@@ -16,9 +16,7 @@
 
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -32,16 +30,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author spleaner
- */
+
 public class ExecutionEnvironment {
-  private final Project myProject;
-  private final RunContentDescriptor myContentToReuse;
-  private RunProfile myRunProfile;
-  private RunnerSettings myRunnerSettings;
-  private ConfigurationPerRunnerSettings myConfigurationSettings;
+  @Nullable private final Project myProject;
+
+  @NotNull private RunProfile myRunProfile;
+  @NotNull private ExecutionTarget myTarget;
+
+  @Nullable private RunnerSettings myRunnerSettings;
+  @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
+  @Nullable private final RunContentDescriptor myContentToReuse;
 
   @TestOnly
   public ExecutionEnvironment() {
@@ -51,25 +50,48 @@ public class ExecutionEnvironment {
 
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,
                               @NotNull final RunnerAndConfigurationSettings configuration,
+                              @Nullable Project project) {
+    this(runner, DefaultExecutionTarget.INSTANCE, configuration, project);
+  }
+
+  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
+                              @NotNull final ExecutionTarget target,
+                              @NotNull final RunnerAndConfigurationSettings configuration,
                               Project project) {
-    this(configuration.getConfiguration(), project, configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner),
-         null, configuration);
+    this(configuration.getConfiguration(),
+         target,
+         project,
+         configuration.getRunnerSettings(runner),
+         configuration.getConfigurationSettings(runner),
+         null,
+         configuration);
   }
 
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                              Project project,
-                              RunnerSettings runnerSettings,
-                              ConfigurationPerRunnerSettings configurationSettings,
+                              @Nullable Project project,
+                              @Nullable RunnerSettings runnerSettings,
+                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
                               @Nullable RunContentDescriptor contentToReuse) {
     this(runProfile, project, runnerSettings, configurationSettings, contentToReuse, null);
   }
 
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
-                                Project project,
-                                RunnerSettings runnerSettings,
-                                ConfigurationPerRunnerSettings configurationSettings,
-                                @Nullable RunContentDescriptor contentToReuse,
-                                @Nullable RunnerAndConfigurationSettings settings) {
+                              @Nullable Project project,
+                              @Nullable RunnerSettings runnerSettings,
+                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                              @Nullable RunContentDescriptor contentToReuse,
+                              @Nullable RunnerAndConfigurationSettings settings) {
+    this(runProfile, DefaultExecutionTarget.INSTANCE, project, runnerSettings, configurationSettings, contentToReuse, settings);
+  }
+
+  public ExecutionEnvironment(@NotNull RunProfile runProfile,
+                              @NotNull ExecutionTarget target,
+                              @Nullable Project project,
+                              @Nullable RunnerSettings runnerSettings,
+                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                              @Nullable RunContentDescriptor contentToReuse,
+                              @Nullable RunnerAndConfigurationSettings settings) {
+    myTarget = target;
     myRunProfile = runProfile;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
@@ -82,15 +104,23 @@ public class ExecutionEnvironment {
    * @deprecated use {@link #ExecutionEnvironment(ProgramRunner, com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.openapi.project.Project)}
    */
   @Deprecated
-  public ExecutionEnvironment(@NotNull final ProgramRunner runner, @NotNull final RunnerAndConfigurationSettings configuration, final DataContext context) {
-    this(configuration.getConfiguration(), PlatformDataKeys.PROJECT.getData(context), configuration.getRunnerSettings(runner), configuration.getConfigurationSettings(runner), null, configuration);
+  public ExecutionEnvironment(@NotNull final ProgramRunner runner,
+                              @NotNull final RunnerAndConfigurationSettings configuration,
+                              @NotNull final DataContext context) {
+    this(configuration.getConfiguration(),
+         PlatformDataKeys.PROJECT.getData(context),
+         configuration.getRunnerSettings(runner),
+         configuration.getConfigurationSettings(runner),
+         null,
+         configuration);
   }
 
   /**
    * @deprecated use {@link #ExecutionEnvironment(com.intellij.execution.configurations.RunProfile, com.intellij.openapi.project.Project, com.intellij.execution.configurations.RunnerSettings, com.intellij.execution.configurations.ConfigurationPerRunnerSettings, com.intellij.execution.ui.RunContentDescriptor)}
    */
   @Deprecated
-  public ExecutionEnvironment(@NotNull final RunProfile profile, final DataContext dataContext) {
+  public ExecutionEnvironment(@NotNull final RunProfile profile,
+                              @NotNull final DataContext dataContext) {
     this(profile, PlatformDataKeys.PROJECT.getData(dataContext), null, null, null);
   }
 
@@ -99,15 +129,21 @@ public class ExecutionEnvironment {
    */
   @Deprecated
   public ExecutionEnvironment(@NotNull final RunProfile runProfile,
-                              final RunnerSettings runnerSettings,
-                              final ConfigurationPerRunnerSettings configurationSettings,
-                              final DataContext dataContext) {
+                              @Nullable final RunnerSettings runnerSettings,
+                              @Nullable final ConfigurationPerRunnerSettings configurationSettings,
+                              @NotNull final DataContext dataContext) {
     this(runProfile, PlatformDataKeys.PROJECT.getData(dataContext), runnerSettings, configurationSettings, null);
   }
 
   @Nullable
-  public RunnerAndConfigurationSettings getRunnerAndConfigurationSettings() {
-    return myRunnerAndConfigurationSettings;
+  public Project getProject() {
+    return myProject;
+  }
+
+
+  @NotNull
+  public ExecutionTarget getExecutionTarget() {
+    return myTarget;
   }
 
   @NotNull
@@ -116,8 +152,8 @@ public class ExecutionEnvironment {
   }
 
   @Nullable
-  public Project getProject() {
-    return myProject;
+  public RunnerAndConfigurationSettings getRunnerAndConfigurationSettings() {
+    return myRunnerAndConfigurationSettings;
   }
 
   /**
@@ -138,15 +174,22 @@ public class ExecutionEnvironment {
   }
 
   @Nullable
+  public String getRunnerId() {
+    return myConfigurationSettings == null ? null : myConfigurationSettings.getRunnerId();
+  }
+
+  @Nullable
   public RunnerSettings getRunnerSettings() {
     return myRunnerSettings;
   }
 
+  @Nullable
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myConfigurationSettings;
   }
 
-  @Nullable public RunProfileState getState(final Executor executor) throws ExecutionException {
+  @Nullable
+  public RunProfileState getState(final Executor executor) throws ExecutionException {
     return myRunProfile.getState(executor, this);
   }
 }

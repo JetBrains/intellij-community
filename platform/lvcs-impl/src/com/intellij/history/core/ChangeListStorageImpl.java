@@ -119,30 +119,33 @@ public class ChangeListStorageImpl implements ChangeListStorage {
       isCompletelyBroken = true;
     }
 
-    notifyUser("Local History storage file has become corrupted and was rebuilt.");
+    notifyUser("Local History storage file has become corrupted and will be rebuilt.");
   }
 
 
   public static void notifyUser(String message) {
     final String logFile = PathManager.getLogPath();
+    String createIssuePart = "<br>" +
+                             "<br>" +
+                             "Please attach log files from <a href=\"file\">" + logFile + "</a><br>" +
+                             "to the <a href=\"url\">YouTrack issue</a>";
 
     Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
                                               "Local History is broken",
-                                              message + "<br>" +
-                                              "<br>" +
-                                              "Please attach log files from <a href=\"file\">" + logFile + "</a><br>" +
-                                              "to the <a href=\"url\">YouTrack issue</a>",
+                                              message /*+ createIssuePart*/,
                                               NotificationType.ERROR,
                                               new NotificationListener() {
                                                 @Override
                                                 public void hyperlinkUpdate(@NotNull Notification notification,
                                                                             @NotNull HyperlinkEvent event) {
-                                                  if ("url".equals(event.getDescription())) {
-                                                    BrowserUtil.launchBrowser("http://youtrack.jetbrains.net/issue/IDEA-71270");
-                                                  }
-                                                  else {
-                                                    File file = new File(logFile);
-                                                    ShowFilePathAction.openFile(file);
+                                                  if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                    if ("url".equals(event.getDescription())) {
+                                                      BrowserUtil.launchBrowser("http://youtrack.jetbrains.net/issue/IDEA-71270");
+                                                    }
+                                                    else {
+                                                      File file = new File(logFile);
+                                                      ShowFilePathAction.openFile(file);
+                                                    }
                                                   }
                                                 }
                                               }), null);

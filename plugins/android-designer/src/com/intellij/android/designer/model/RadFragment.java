@@ -24,7 +24,6 @@ import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.editors.TextEditor;
-import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +85,7 @@ public class RadFragment extends RadViewComponent implements IConfigurableCompon
       new ChooseClassDialog(moduleProvider.getModule(), "Fragments", true, "android.app.Fragment", "android.support.v4.app.Fragment");
     dialog.show();
 
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+    if (dialog.isOK()) {
       return dialog.getClassName();
     }
 

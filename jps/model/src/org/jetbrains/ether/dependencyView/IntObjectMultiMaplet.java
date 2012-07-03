@@ -74,10 +74,6 @@ abstract class IntObjectMultiMaplet<V extends Streamable> implements Streamable 
     for (final int a : keys) {
       final Collection<V> b = get(a);
 
-      if (b.size() == 0) {
-        continue;
-      }
-
       stream.print("  Key: ");
       stream.println(context.getValue(a));
       stream.println("  Values:");

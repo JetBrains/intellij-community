@@ -30,6 +30,8 @@ class OptimizedFileManager extends DefaultFileManager {
   private final Map<File, Archive> myArchives;
   private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
   private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = new HashMap<InputFileObject, SoftReference<CharBuffer>>();
+  private final Map<File, SoftReference<File[]>> myDirectoryCache = new HashMap<File, SoftReference<File[]>>();
+  public static final File[] NULL_FILE_ARRAY = new File[0];
 
   public OptimizedFileManager() throws Throwable {
     super(new Context(), true, null);
@@ -76,14 +78,16 @@ class OptimizedFileManager extends DefaultFileManager {
 
   @Override
   public Iterable<JavaFileObject> list(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
-    Iterable<? extends File> path = getLocation(location);
-    if (path == null) return Collections.emptyList();
+    Iterable<? extends File> locationRoots = getLocation(location);
+    if (locationRoots == null) {
+      return Collections.emptyList();
+    }
 
-    String relativePath = packageName.replace('.', File.separatorChar);
+    final String relativePath = packageName.replace('.', File.separatorChar);
     ListBuffer<JavaFileObject> results = new ListBuffer<JavaFileObject>();
 
-    for (File root : path) {
-      Archive archive = myArchives.get(root);
+    for (File root : locationRoots) {
+      final Archive archive = myArchives.get(root);
       final boolean isFile;
       if (archive != null) {
         isFile = true;
@@ -95,12 +99,12 @@ class OptimizedFileManager extends DefaultFileManager {
         collectFromArchive(root, archive, relativePath, kinds, recurse, results);
       }
       else {
-        File directory = relativePath.length() != 0 ? new File(root, relativePath) : root;
+        final File directory = relativePath.length() != 0 ? new File(root, relativePath) : root;
         if (recurse) {
-          collectFromDirectoryRecursively(directory, kinds, results, true);
+          collectFromDirectoryRecursively(directory, kinds, results, true, !location.isOutputLocation());
         }
         else {
-          collectFromDirectory(directory, kinds, false, results);
+          collectFromDirectory(directory, kinds, results, !location.isOutputLocation());
         }
       }
     }
@@ -150,8 +154,8 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, boolean recurse, ListBuffer<JavaFileObject> result) {
-    final File[] children = directory.listFiles();
+  private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean canUseCache) {
+    final File[] children = listChildren(directory, canUseCache);
     if (children != null) {
       final boolean acceptUnknownFiles = fileKinds.contains(JavaFileObject.Kind.OTHER);
       for (File child : children) {
@@ -166,13 +170,13 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private void collectFromDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean isRootCall) {
-    final File[] children = file.listFiles();
+  private void collectFromDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean isRootCall, boolean canUseCache) {
+    final File[] children = listChildren(file, canUseCache);
     final String name = file.getName();
     if (children != null) { // is directory
       if (isRootCall || SourceVersion.isIdentifier(name)) {
         for (File child : children) {
-          collectFromDirectoryRecursively(child, fileKinds, result, false);
+          collectFromDirectoryRecursively(child, fileKinds, result, false, canUseCache);
         }
       }
     }
@@ -182,6 +186,19 @@ class OptimizedFileManager extends DefaultFileManager {
         result.append(fe);
       }
     }
+  }
+
+  private File[] listChildren(File file, boolean canUseCache) {
+    if (!canUseCache) {
+      return file.listFiles();
+    }
+    final SoftReference<File[]> ref = myDirectoryCache.get(file);
+    File[] cached = ref != null? ref.get() : null;
+    if (cached == null) {
+      cached = file.listFiles();
+      myDirectoryCache.put(file, new SoftReference<File[]>(cached != null? cached : NULL_FILE_ARRAY));
+    }
+    return cached == NULL_FILE_ARRAY ? null : cached;
   }
 
   private void collectArchiveFiles(Archive archive, String relativePath, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result) {

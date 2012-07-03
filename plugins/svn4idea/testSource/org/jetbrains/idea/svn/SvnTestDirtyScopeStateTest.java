@@ -20,9 +20,9 @@ import java.util.List;
 public class SvnTestDirtyScopeStateTest extends SvnTestCase {
   @Override
   public void setUp() throws Exception {
+    myInitChangeListManager = false;
     super.setUp();
 
-    myInitChangeListManager = false;
     final VcsDirtyScopeVfsListener vfsListener = ApplicationManager.getApplication().getComponent(VcsDirtyScopeVfsListener.class);
     vfsListener.setForbid(true);
   }

@@ -51,6 +51,7 @@ import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -300,7 +301,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   public String getFileTooltipText(VirtualFile file) {
-    return file.getPresentableUrl();
+    return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
   }
 
   public void updateFilePresentation(VirtualFile file) {

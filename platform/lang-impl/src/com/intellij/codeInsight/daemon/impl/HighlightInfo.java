@@ -382,6 +382,15 @@ public class HighlightInfo implements Segment {
                              htmlEscapeToolTip(message), type.getSeverity(element), false, Boolean.FALSE, false);
   }
 
+  public static HighlightInfo createHighlightInfo(@NotNull final HighlightInfoType type,
+                                                  @NotNull final PsiElement element,
+                                                  @Nullable final String message,
+                                                  @Nullable final TextAttributesKey attributesKey) {
+    TextRange textRange = element.getTextRange();
+    // do not use HighlightInfoFilter
+    return new HighlightInfo(null, attributesKey, type, textRange.getStartOffset(), textRange.getEndOffset(), message,
+                             htmlEscapeToolTip(message), type.getSeverity(element), false, Boolean.FALSE, false);
+  }
 
 
   public static HighlightInfo fromAnnotation(@NotNull Annotation annotation) {

@@ -206,7 +206,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testLocalVarsOverMethods() {
-    checkPreferredItems(0, "value", "valueOf");
+    checkPreferredItems(0, "value", "validate", "validateTree", "valueOf");
   }
 
   public void testCurrentClassBest() {
@@ -287,13 +287,13 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   public void testPreselectMostRelevantInTheMiddleAlpha() {
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true;
 
-    myFixture.addClass("package foo; public class Elaaaaaaaaaaaaaaaaaaaa {}");
+    myFixture.addClass("package foo; public class Elxaaaaaaaaaaaaaaaaaaaa {}");
     invokeCompletion(getTestName(false) + ".java");
     myFixture.completeBasic();
     LookupImpl lookup = getLookup();
     assertPreferredItems(lookup.getList().getSelectedIndex());
-    assertEquals("Elaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
-    assertEquals("ELEMENT_A", lookup.getCurrentItem().getLookupString());
+    assertEquals("Elxaaaaaaaaaaaaaaaaaaaa", lookup.getItems().get(0).getLookupString());
+    assertEquals("ELXEMENT_A", lookup.getCurrentItem().getLookupString());
   }
 
   public void testReallyAlphaSorting() {
@@ -368,6 +368,19 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferClassToItsConstants() {
     checkPreferredItems 0, 'Calendar', 'Calendar.FIELD_COUNT'
+  }
+
+  public void testPreferLocalsToStaticsInSecondCompletion() {
+    myFixture.addClass('public class FooZoo { public static void fooBar() {}  }')
+    myFixture.addClass('public class fooAClass {}')
+    configureNoCompletion(getTestName(false) + ".java");
+    myFixture.complete(CompletionType.BASIC, 2);
+    assertPreferredItems(0, 'fooy', 'foox', 'fooAClass', 'fooBar');
+  }
+
+  public void testUnderscoresDontMakeMatchMiddle() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
+    checkPreferredItems(0, '_fooBar', 'FooBar')
   }
 
 }

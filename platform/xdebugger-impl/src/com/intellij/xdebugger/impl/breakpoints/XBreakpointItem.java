@@ -31,13 +31,6 @@ import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPane
 
 import javax.swing.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: intendia
- * Date: 10.05.12
- * Time: 1:14
- * To change this template use File | Settings | File Templates.
- */
 class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
 
@@ -84,17 +77,6 @@ class XBreakpointItem extends BreakpointItem {
 
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
-
-    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
-    if (sourcePosition != null) {
-      if (!showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine())) {
-        return;
-      }
-    }
-    else {
-      panel.clearEditor();
-    }
-
     if (!editorOnly) {
 
       XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel =
@@ -102,6 +84,15 @@ class XBreakpointItem extends BreakpointItem {
       propertiesPanel.loadProperties();
       panel.setDetailPanel(propertiesPanel.getMainPanel());
     }
+
+    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
+    if (sourcePosition != null) {
+      showInEditor(panel, sourcePosition.getFile(), sourcePosition.getLine());
+    }
+    else {
+      panel.clearEditor();
+    }
+    panel.getDetailPanel().revalidate();
   }
 
   @Override

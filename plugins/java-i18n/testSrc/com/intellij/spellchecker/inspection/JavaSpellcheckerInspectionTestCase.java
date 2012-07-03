@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.inspection;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,8 +29,8 @@ public abstract class JavaSpellcheckerInspectionTestCase extends JavaCodeInsight
   @NonNls
   protected String DATA_PATH = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/plugins/spellchecker/core/tests/testData";
 
-  protected void doTest(String file, LocalInspectionTool... tools) throws Throwable {
-    myFixture.enableInspections(tools);
+  protected void doTest(String file) {
+    myFixture.enableInspections(SpellcheckerInspectionTestCase.getInspectionTools());
     myFixture.testHighlighting(false, false, true, file);
   }
 

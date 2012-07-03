@@ -16,14 +16,20 @@
 
 package com.intellij.codeInsight.completion.actions;
 
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 
 /**
  *  @author peter
  */
 public class CodeCompletionAction extends BaseCodeCompletionAction {
-  public CodeCompletionAction() {
-    super(CompletionType.BASIC);
+
+  public void actionPerformed(AnActionEvent e) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
+    invokeCompletion(e, CompletionType.BASIC, 1);
   }
+
 
 }

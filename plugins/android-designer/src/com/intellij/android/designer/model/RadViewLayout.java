@@ -43,4 +43,7 @@ public class RadViewLayout extends RadLayout {
                                            JComponent shortcuts,
                                            List<RadComponent> selection) {
   }
+
+  public void wrapIn(RadViewComponent newParent, List<RadViewComponent> components) throws Exception {
+  }
 }

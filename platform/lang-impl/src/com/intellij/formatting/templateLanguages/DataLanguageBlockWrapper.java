@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +33,10 @@ import java.util.List;
  *         Date: Jun 30, 2009
  *         Time: 7:18:37 PM
  */
-public class DataLanguageBlockWrapper implements ASTBlock, BlockWithParent {
+public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithParent {
   private final Block myOriginal;
   private final Indent myIndent;
+  @Nullable private final Language myLanguage;
   private List<Block> myBlocks;
   private List<TemplateLanguageBlock> myTlBlocks;
   private BlockWithParent myParent;
@@ -44,8 +47,18 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockWithParent {
     assert !(original instanceof DataLanguageBlockWrapper) && !(original instanceof TemplateLanguageBlock);
     myOriginal = original;
     myIndent = indent;
-  }
 
+    final ASTNode node = getNode();
+    Language language = null;
+    if (node != null) {
+      final PsiElement psi = node.getPsi();
+      if (psi != null) {
+        language = psi.getLanguage();
+      }
+    }
+    myLanguage = language;
+  }
+  
   @NotNull
   public TextRange getTextRange() {
     return myOriginal.getTextRange();
@@ -57,6 +70,13 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockWithParent {
       myBlocks = buildBlocks();
     }
     return myBlocks;
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    // Use base language code style settings for the template blocks.
+    return myLanguage;
   }
 
   private List<Block> buildBlocks() {

@@ -26,8 +26,9 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -381,13 +383,13 @@ public class GrClassImplUtil {
     return true;
   }
 
-  private static boolean isSameDeclaration(PsiElement place, PsiElement element) {
+  public static boolean isSameDeclaration(PsiElement place, PsiElement element) {
     if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod)element).getProperty();
-
     if (!(element instanceof GrField)) return false;
+    if (element instanceof GrScriptField) element = ((GrScriptField)element).getOriginalVariable();
     while (place != null) {
-      place = place.getParent();
       if (place == element) return true;
+      place = place.getParent();
       if (place instanceof GrClosableBlock) return false;
     }
     return false;

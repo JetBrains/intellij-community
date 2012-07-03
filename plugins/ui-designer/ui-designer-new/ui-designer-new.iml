@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="icons" />
-    <orderEntry type="module" module-name="java-i18n" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="platform-api" />

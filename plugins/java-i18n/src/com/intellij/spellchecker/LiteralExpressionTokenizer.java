@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.PsiClassType;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
+import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +37,8 @@ import java.util.Collections;
 public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> {
   @Override
   public void tokenize(@NotNull PsiLiteralExpression element, TokenConsumer consumer) {
-    if (!(element.getType() instanceof PsiClassType)) {
+    PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl) element;
+    if (literalExpression.getLiteralElementType() != JavaTokenType.STRING_LITERAL) {
       return;  // not a string literal
     }
 
@@ -44,6 +47,23 @@ public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> 
       return;
     }
 
-    consumer.consumeToken(element, PlainTextSplitter.getInstance());
+    String text = literalExpression.getInnerText();
+    if (text == null) {
+      return;
+    }
+    if (!text.contains("\\")) {
+      consumer.consumeToken(element, PlainTextSplitter.getInstance());
+    }
+    else {
+      processTextWithEscapeSequences(element, text, consumer);
+    }
+  }
+
+  public static void processTextWithEscapeSequences(PsiLiteralExpression element, String text, TokenConsumer consumer) {
+    StringBuilder unescapedText = new StringBuilder();
+    int[] offsets = new int[text.length()+1];
+    PsiLiteralExpressionImpl.parseStringCharacters(text, unescapedText, offsets);
+
+    EscapeSequenceTokenizer.processTextWithOffsets(element, consumer, unescapedText, offsets);
   }
 }

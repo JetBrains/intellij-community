@@ -105,7 +105,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
                         }
                       }
                     }
-                  }, ModalityState.NON_MODAL);
+                  }, ModalityState.NON_MODAL, myProject.getDisposed());
                 }
               }
             }

@@ -15,11 +15,9 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Ticket;
@@ -27,13 +25,10 @@ import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
-import git4idea.GitRevisionNumber;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.history.browser.ChangesFilter;
 import git4idea.history.browser.SymbolicRefsI;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 
 import java.util.*;
 
@@ -80,21 +75,23 @@ public class LoadController implements Loader {
         new LoaderAndRefresherImpl.OneRootHolder(root) :
         new LoaderAndRefresherImpl.ManyCaseHolder(i, rootsHolder);
 
-      final boolean haveStructureFilter = filters.haveStructureFilter();
-      // check if no files under root are selected
-      if (haveStructureFilter && ! filters.haveStructuresForRoot(root)) {
-        ++ i;
-        continue;
-      }
-      filters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
-        @Override
-        public void consume(final List<ChangesFilter.Filter> filters) {
-          final LoaderAndRefresherImpl loaderAndRefresher =
-          new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
-                                     loadGrowthController.getId(), haveStructureFilter, topoOrder);
-          list.add(loaderAndRefresher);
+      if (! filters.isUseOnlyHashes()) {
+        final boolean haveStructureFilter = filters.haveStructureFilter();
+        // check if no files under root are selected
+        if (haveStructureFilter && ! filters.haveStructuresForRoot(root)) {
+          ++ i;
+          continue;
         }
-      }, true, root);
+        filters.callConsumer(new Consumer<List<ChangesFilter.Filter>>() {
+          @Override
+          public void consume(final List<ChangesFilter.Filter> filters) {
+            final LoaderAndRefresherImpl loaderAndRefresher =
+              new LoaderAndRefresherImpl(ticket, filters, myMediator, startingPoints, myDetailsCache, myProject, rootHolder, myUsersIndex,
+                                         loadGrowthController.getId(), haveStructureFilter, topoOrder);
+            list.add(loaderAndRefresher);
+          }
+        }, true, root);
+      }
 
       shortLoaders.add(new ByRootLoader(myProject, rootHolder, myMediator, myDetailsCache, ticket, myUsersIndex, filters, startingPoints));
       ++ i;

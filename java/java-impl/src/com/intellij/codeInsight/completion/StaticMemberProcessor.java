@@ -46,17 +46,9 @@ public abstract class StaticMemberProcessor {
     addIfNotNull(myStaticImportedClasses, psiClass);
   }
 
-  public void processStaticMethodsGlobally(final CompletionResultSet resultSet) {
+  public void processStaticMethodsGlobally(PrefixMatcher matcher, Consumer<LookupElement> consumer) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
 
-    final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        resultSet.addElement(element);
-      }
-    };
-
-    final PrefixMatcher matcher = resultSet.getPrefixMatcher();
     final GlobalSearchScope scope = myPosition.getResolveScope();
     final PsiShortNamesCache namesCache = PsiShortNamesCache.getInstance(myProject);
     for (final String methodName : namesCache.getAllMethodNames()) {

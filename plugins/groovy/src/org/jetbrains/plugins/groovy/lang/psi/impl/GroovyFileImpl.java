@@ -43,11 +43,10 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -126,7 +125,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       return true;
     }
 
-    PsiClass scriptClass = getScriptClass();
+    GroovyScriptClass scriptClass = getScriptClass();
     if (scriptClass != null) {
       if (!(lastParent instanceof GrTypeDefinition)) {
         if (!scriptClass.processDeclarations(processor, state, lastParent, place)) return false;
@@ -294,9 +293,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     PsiElement run = lastParent == null ? getLastChild() : lastParent.getPrevSibling();
     while (run != null) {
-      if (!(run instanceof GrTopLevelDefinition) &&
-          !(run instanceof GrImportStatement) &&
-          isDeclarationVisible(lastParent, run) &&
+      if (shouldProcess(lastParent, run) &&
           !run.processDeclarations(processor, state, null, place)) {
         return false;
       }
@@ -306,13 +303,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return true;
   }
 
-  private static boolean isDeclarationVisible(PsiElement lastParent, PsiElement decl) {
-    if (lastParent instanceof GrMethod && decl instanceof GrVariableDeclaration) {
-      return false;
-    }
-    return true;
+  private static boolean shouldProcess(PsiElement lastParent, PsiElement run) {
+    return !(run instanceof GrTopLevelDefinition || run instanceof GrImportStatement || lastParent instanceof GrMember);
   }
-
 
   public GrImportStatement[] getImportStatements() {
     List<GrImportStatement> result = new ArrayList<GrImportStatement>();
@@ -521,7 +514,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return result;
   }
 
-  private boolean checkRange(PsiElement parent, int offset) {
+  private static boolean checkRange(PsiElement parent, int offset) {
     return parent.getTextRange().contains(offset -1) && parent.getTextRange().contains(offset+1);
   }
 

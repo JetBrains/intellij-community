@@ -50,11 +50,17 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFile> {
 
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
-    setFont(editorFont);
-    return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(component) : component;
+    if (value == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
+      Object previousElement = index > 0 ? list.getModel().getElementAt(index - 1) : null;
+      return ChooseByNameBase.renderNonPrefixSeparatorComponent(getBackgroundColor(previousElement));
+    }
+    else {
+      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+      setFont(editorFont);
+      return component;
+    }
   }
 
   protected String getContainerText(PsiFile element, String name) {

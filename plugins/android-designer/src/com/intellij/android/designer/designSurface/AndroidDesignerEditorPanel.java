@@ -31,6 +31,7 @@ import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.WrapInProvider;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
 import com.intellij.designer.palette.PaletteItem;
@@ -77,6 +78,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private volatile RenderSession mySession;
   private boolean myParseTime;
   private int myProfileLastVersion;
+  private WrapInProvider myWrapInProvider;
 
   public AndroidDesignerEditorPanel(@NotNull DesignerEditor editor,
                                     @NotNull Project project,
@@ -403,7 +405,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       }
     }
 
-    StringBuilder builder = new StringBuilder("SDK: ");
+    StringBuilder builder = new StringBuilder();
+
+    builder.append("ActiveTool: ").append(myToolProvider.getActiveTool());
+    builder.append("\nSDK: ");
 
     try {
       AndroidPlatform platform = AndroidPlatform.getInstance(getModule());
@@ -459,6 +464,14 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   public TreeComponentDecorator getTreeDecorator() {
     return myTreeDecorator;
+  }
+
+  @Override
+  public WrapInProvider getWrapInProvider() {
+    if (myWrapInProvider == null) {
+      myWrapInProvider = new AndroidWrapInProvider(getProject());
+    }
+    return myWrapInProvider;
   }
 
   private static final ComponentDecorator NON_RESIZE_DECORATOR = new NonResizeSelectionDecorator(Color.RED, 2);

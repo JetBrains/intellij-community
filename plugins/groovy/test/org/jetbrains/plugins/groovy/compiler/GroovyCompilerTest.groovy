@@ -20,15 +20,16 @@ package org.jetbrains.plugins.groovy.compiler;
 import com.intellij.compiler.CompileServerManager
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-
+import com.intellij.testFramework.TestLoggerFactory
 import junit.framework.AssertionFailedError
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 
 /**
  * @author peter
@@ -211,18 +212,50 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Bar", "239");
   }
 
+  @Override
+  void runBare() {
+    def ideaLog = new File(TestLoggerFactory.testLogDir, "idea.log")
+    def makeLog = new File(PathManager.systemPath, "compile-server/server.log")
+    if (ideaLog.exists()) {
+      FileUtil.delete(ideaLog)
+    }
+    if (makeLog.exists()) {
+      FileUtil.delete(makeLog)
+    }
+
+    try {
+      super.runBare()
+    }
+    catch (Throwable e) {
+      if (ideaLog.exists()) {
+        //println "Idea Log:"
+        //println ideaLog.text
+      }
+      if (makeLog.exists()) {
+        println "Server Log:"
+        println makeLog.text
+      }
+      throw e
+    }
+    finally {
+      System.out.flush()
+    }
+  }
+
   public void testMakeInTests() throws Throwable {
     setupTestSources();
     myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
     assertEmpty(make());
 
-    myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
-                                                   "  Super xxx() {}\n" +
-                                                   "  static void main(String[] args) {" +
-                                                   "    println 'hello'" +
-                                                   "  }" +
-                                                   "}");
-    myFixture.addFileToProject("tests/Java.java", "public class Java {}");
+    def sub = myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
+      "  Super xxx() {}\n" +
+      "  static void main(String[] args) {" +
+      "    println 'hello'" +
+      "  }" +
+      "}");
+
+    def javaFile = myFixture.addFileToProject("tests/Java.java", "public class Java {}");
+
     assertEmpty(make());
     assertOutput("Sub", "hello");
   }
@@ -590,11 +623,9 @@ class Main {
       assert !findClassFile('FooX', dep)
     }
 
-    println '1'
     println make().join('\n')
     checkClassFiles()
 
-    println '2'
     println make().join('\n')
     checkClassFiles()
 

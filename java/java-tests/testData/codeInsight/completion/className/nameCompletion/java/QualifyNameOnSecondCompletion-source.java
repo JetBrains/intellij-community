@@ -1,4 +1,0 @@
-class Main {
-
-    ABCDE<caret>
-}

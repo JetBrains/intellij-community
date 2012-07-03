@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.util.indexing.IOUtils;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,15 +39,12 @@ public class SerializedStubTree {
   }
   
   public SerializedStubTree(DataInput in) throws IOException {
-    myLength = in.readInt();
-    myBytes = new byte[myLength];
-    myStubElement = null;
-    in.readFully(myBytes);
+    myBytes = IOUtils.readCompressed(in);
+    myLength = myBytes.length;
   }
 
-  public void write(DataOutput out) throws IOException{
-    out.writeInt(myLength);
-    out.write(myBytes, 0, myLength);
+  public void write(DataOutput out) throws IOException {
+    IOUtils.writeCompressed(out, myBytes, myLength);
   }
 
   // willIndexStub is one time optimization hint, once can safely pass false

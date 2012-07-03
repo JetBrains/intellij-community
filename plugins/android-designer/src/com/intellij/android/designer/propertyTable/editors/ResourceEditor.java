@@ -17,6 +17,7 @@ package com.intellij.android.designer.propertyTable.editors;
 
 import com.android.resources.ResourceType;
 import com.intellij.android.designer.model.ModelParser;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
@@ -26,7 +27,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -50,6 +50,7 @@ public class ResourceEditor extends PropertyEditor {
   private final ResourceType[] myTypes;
   private ComponentWithBrowseButton myEditor;
   protected RadComponent myRootComponent;
+  private RadComponent myComponent;
   private JCheckBox myCheckBox;
   private final Border myCheckBoxBorder = new JTextField().getBorder();
   private boolean myIgnoreCheckBoxValue;
@@ -207,6 +208,7 @@ public class ResourceEditor extends PropertyEditor {
                                  Object object,
                                  @Nullable InplaceContext inplaceContext) {
     myRootComponent = rootComponent;
+    myComponent = component;
     String value = (String)object;
     JTextField text = getComboText();
 
@@ -270,10 +272,10 @@ public class ResourceEditor extends PropertyEditor {
 
   protected void showDialog() {
     ModuleProvider moduleProvider = myRootComponent.getClientProperty(ModelParser.MODULE_KEY);
-    ResourceDialog dialog = new ResourceDialog(moduleProvider.getModule(), myTypes, (String)getValue());
+    ResourceDialog dialog = new ResourceDialog(moduleProvider.getModule(), myTypes, (String)getValue(), (RadViewComponent)myComponent);
     dialog.show();
 
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+    if (dialog.isOK()) {
       setValue(dialog.getResourceName());
     }
     else if (myBooleanResourceValue != null) {

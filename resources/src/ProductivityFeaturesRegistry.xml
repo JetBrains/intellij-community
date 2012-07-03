@@ -94,23 +94,11 @@
       first-show="1"
       successive-show="3"/>
     <feature
-      id="editing.completion.classname"
-      tip-file="ClassNameCompletion.html"
-      min-usage-count="7"
-      first-show="3"
-      successive-show="5"/>
-    <feature
       id="editing.completion.smarttype.general"
       tip-file="SmartTypeCompletion.html"
       min-usage-count="10"
       first-show="2"
       successive-show="3"/>
-    <feature
-      id="editing.completion.smarttype.anonymous"
-      tip-file="SmartTypeAnonymous.html"
-      min-usage-count="7"
-      first-show="3"
-      successive-show="4"/>
     <feature
       id="editing.completion.smarttype.afternew"
       tip-file="SmartTypeAfterNew.html"
@@ -124,23 +112,12 @@
       first-show="5"
       successive-show="7"/>
     <feature
-      id="editing.completion.second.classname"
-      tip-file="SecondClassNameCompletion.html"
-      min-usage-count="8"
-      first-show="10"
-      successive-show="3">
-      <dependency id="editing.completion.basic"/>
-      <dependency id="editing.completion.classname"/>
-      <dependency id="editing.completion.smarttype.general"/>
-      </feature>
-    <feature
       id="editing.completion.second.basic"
       tip-file="SecondBasicClassNameCompletion.html"
       min-usage-count="8"
       first-show="10"
       successive-show="3">
       <dependency id="editing.completion.basic"/>
-      <dependency id="editing.completion.classname"/>
       <dependency id="editing.completion.smarttype.general"/>
       </feature>
     <feature

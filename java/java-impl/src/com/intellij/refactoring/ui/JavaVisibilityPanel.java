@@ -36,7 +36,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-public class JavaVisibilityPanel extends VisibilityPanelBase {
+public class JavaVisibilityPanel extends VisibilityPanelBase<String> {
   private JRadioButton myRbAsIs;
   private JRadioButton myRbEscalate;
   private final JRadioButton myRbPrivate;

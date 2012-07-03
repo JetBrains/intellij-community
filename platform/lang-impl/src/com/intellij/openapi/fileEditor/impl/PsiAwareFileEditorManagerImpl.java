@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -86,7 +87,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       tooltipText.append(module.getName());
       tooltipText.append("] ");
     }
-    tooltipText.append(file.getPresentableUrl());
+    tooltipText.append(FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl()));
     return tooltipText.toString();
   }
 

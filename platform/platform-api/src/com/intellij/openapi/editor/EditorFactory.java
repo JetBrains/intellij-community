@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public abstract class EditorFactory implements ApplicationComponent {
    *
    * @return the editor factory instance.
    */
+  @Nullable
   public static EditorFactory getInstance() {
     final Application application = ApplicationManager.getApplication();
     return application == null ? null : application.getComponent(EditorFactory.class);
@@ -168,7 +169,7 @@ public abstract class EditorFactory implements ApplicationComponent {
 
   /**
    * Registers a listener for receiving notifications when editor instances are created and released
-   * and removes the listener when {@link parentDisposable} get disposed.
+   * and removes the listener when the <code>'parentDisposable'</code> gets disposed.
    *
    * @param listener the listener instance.
    * @param parentDisposable the Disposable which triggers the removal of the listener
@@ -176,7 +177,7 @@ public abstract class EditorFactory implements ApplicationComponent {
   public abstract void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Unregisters a listener for receiving notifications when editor instances are created
+   * Un-registers a listener for receiving notifications when editor instances are created
    * and released.
    *
    * @param listener the listener instance.

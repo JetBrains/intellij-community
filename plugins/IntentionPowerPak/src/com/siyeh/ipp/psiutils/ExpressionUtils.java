@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Bas Leijdekkers
+ * Copyright 2009-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,24 @@
  */
 package com.siyeh.ipp.psiutils;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpressionUtils {
 
-  private ExpressionUtils() {
-  }
+  private ExpressionUtils() {}
 
   @Nullable
-  public static Object computeConstantExpression(PsiExpression expression) {
+  public static Object computeConstantExpression(@NotNull PsiExpression expression) {
     return computeConstantExpression(expression, false);
   }
 
   public static Object computeConstantExpression(
-    PsiExpression expression, boolean throwExceptionOnOverflow) {
+    @NotNull PsiExpression expression, boolean throwExceptionOnOverflow) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiConstantEvaluationHelper constantEvaluationHelper =
@@ -41,7 +41,7 @@ public class ExpressionUtils {
                                                               throwExceptionOnOverflow);
   }
 
-  public static boolean isNegated(PsiExpression expression) {
+  public static boolean isNegated(@NotNull PsiExpression expression) {
     final PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiPrefixExpression)) {
       return false;

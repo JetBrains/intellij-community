@@ -6,7 +6,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +131,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
    * @param node The node which may contain custom region start.
    * @return True if the node marks a custom region start.
    */
-  protected final boolean isCustomRegionStart(ASTNode node) {
+  public final boolean isCustomRegionStart(ASTNode node) {
     if (isCustomFoldingCandidate(node)) {
       String nodeText = node.getText();
       CustomFoldingProvider defaultProvider = getDefaultProvider(nodeText);

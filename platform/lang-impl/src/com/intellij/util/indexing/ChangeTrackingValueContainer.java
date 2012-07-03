@@ -49,11 +49,9 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
     if (merged != null) {
       merged.addValue(inputId, value);
     }
-    ValueContainerImpl<Value> added = myAdded;
-    if (added == null) {
-      myAdded = added = new ValueContainerImpl<Value>();
-    }
-    added.addValue(inputId, value); // will flush the changes & caller should ensure exclusiveness to avoid intermediate visibility issues
+
+    if (myAdded == null) myAdded = new ValueContainerImpl<Value>();
+    myAdded.addValue(inputId, value);
   }
 
   @Override
@@ -63,27 +61,10 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       merged.removeAssociatedValue(inputId);
     }
 
-    ValueContainerImpl<Value> added = myAdded;
-    if (added != null) added.removeAssociatedValue(inputId);
+    if (myAdded != null) myAdded.removeAssociatedValue(inputId);
 
-    TIntHashSet invalidated = myInvalidated;
-    if (invalidated == null) {
-      invalidated = new TIntHashSet(1);
-    }
-    invalidated.add(inputId);
-    myInvalidated = invalidated; // volatile write
-  }
-
-  @Override
-  public boolean removeValue(int inputId, Value value) {
-    ValueContainerImpl<Value> merged = myMerged;
-    if (merged != null) {
-      merged.removeValue(inputId, value);
-    }
-    ValueContainerImpl<Value> added = myAdded;
-    if (added != null) added.removeValue(inputId, value);
-
-    return true;
+    if (myInvalidated == null) myInvalidated = new TIntHashSet(1);
+    myInvalidated.add(inputId);
   }
 
   @Override
@@ -142,9 +123,8 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().copy();
       }
 
-      TIntHashSet invalidated = myInvalidated;
-      if (invalidated != null) {
-        invalidated.forEach(new TIntProcedure() {
+      if (myInvalidated != null) {
+        myInvalidated.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int inputId) {
             newMerged.removeAssociatedValue(inputId);
@@ -153,9 +133,8 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
         });
       }
 
-      ValueContainerImpl<Value> added = myAdded;
-      if (added != null) {
-        added.forEach(new ContainerAction<Value>() {
+      if (myAdded != null) {
+        myAdded.forEach(new ContainerAction<Value>() {
           @Override
           public boolean perform(final int id, final Value value) {
             newMerged.removeAssociatedValue(id); // enforcing "one-value-per-file for particular key" invariant

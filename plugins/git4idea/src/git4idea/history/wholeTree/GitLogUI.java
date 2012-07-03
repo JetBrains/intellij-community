@@ -146,16 +146,19 @@ public class GitLogUI implements Disposable {
   private JPanel myEqualToHeadr;
   private boolean myThereAreFilters;
   private final GitLogUI.MyShowTreeAction myMyShowTreeAction;
+  private final GitLogShowOnlyStarredCommitsAction myFilterStarredAction;
+  private boolean myIsFilterByStarOn;
   private JLabel myOrderLabel;
   private boolean myProjectScope;
   private ActionPopupMenu myContextMenu;
-  private final Set<AbstractHash> myMarked;
+  private final Map<AbstractHash, Long> myMarked;
   private final Runnable myRefresh;
   private JViewport myTableViewPort;
   private GitLogUI.MyGotoCommitAction myMyGotoCommitAction;
   private final Set<VirtualFile> myClearedHighlightingRoots;
   private final Splitter myDetailsSplitter;
   private JScrollPane myTableScrollPane;
+  private GitLogUI.MyTextFieldAction myTextFieldAction;
 
   public GitLogUI(Project project, final Mediator mediator) {
     myProject = project;
@@ -169,7 +172,7 @@ public class GitLogUI implements Disposable {
     myDescriptionRenderer = new DescriptionRenderer();
     myCommentSearchContext.addHighlighter(myDescriptionRenderer.myInner.myWorker);
     myCommitsInRepositoryChangesBrowser = new ArrayList<CommitI>();
-    myMarked = new HashSet<AbstractHash>();
+    myMarked = new HashMap<AbstractHash, Long>();
     myClearedHighlightingRoots = new HashSet<VirtualFile>();
 
     mySelectionRequestsMerger = new RequestsMerger(new Runnable() {
@@ -187,8 +190,10 @@ public class GitLogUI implements Disposable {
     myState = StepType.CONTINUE;
 
     initUiRefresh();
-    myAuthorRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES,                                                                          SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myAuthorRenderer = new HighLightingRenderer(HIGHLIGHT_TEXT_ATTRIBUTES, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     myMyShowTreeAction = new MyShowTreeAction();
+    myIsFilterByStarOn = false;
+    myFilterStarredAction = new GitLogShowOnlyStarredCommitsAction(createOnOffForFilterStarred());
     myRefresh = new Runnable() {
       @Override
       public void run() {
@@ -198,7 +203,37 @@ public class GitLogUI implements Disposable {
     myDetailsSplitter = new Splitter(true, 0.6f);
     myDetailsSplitter.setShowDividerControls(true);
   }
-  
+
+  private OnOff createOnOffForFilterStarred() {
+    return new OnOff() {
+      @Override
+      public boolean isOn() {
+        return myIsFilterByStarOn;
+      }
+
+      @Override
+      public void on() {
+        myIsFilterByStarOn = true;
+        toggleOtherFiltersPresentation();
+        reloadRequest();
+      }
+
+      @Override
+      public void off() {
+        myIsFilterByStarOn = false;
+        toggleOtherFiltersPresentation();
+        reloadRequest();
+      }
+
+      private void toggleOtherFiltersPresentation() {
+        myStructureFilterAction.greyPanelFg(myIsFilterByStarOn);
+        myBranchSelectorAction.greyPanelFg(myIsFilterByStarOn);
+        myUsersFilterAction.greyPanelFg(myIsFilterByStarOn);
+        myTextFieldAction.setTextFieldFg(myIsFilterByStarOn);
+      }
+    };
+  }
+
   public void initFromSettings() {
     final GitLogSettings settings = GitLogSettings.getInstance(myProject);
     mySelectedBranch = settings.getSelectedBranch();
@@ -717,7 +752,7 @@ public class GitLogUI implements Disposable {
     }, new Processor<AbstractHash>() {
       @Override
       public boolean process(AbstractHash hash) {
-        return myMarked.contains(hash);
+        return myMarked.containsKey(hash);
       }
     });
 
@@ -859,7 +894,8 @@ public class GitLogUI implements Disposable {
     });
     myUserFilterI = new MyFilterUi(myRefresh);
     myUsersFilterAction = new UsersFilterAction(myProject, myUserFilterI);
-    group.add(new MyTextFieldAction());
+    myTextFieldAction = new MyTextFieldAction();
+    group.add(myTextFieldAction);
     group.add(myBranchSelectorAction);
     group.add(myUsersFilterAction);
     Getter<List<VirtualFile>> rootsGetter = new Getter<List<VirtualFile>>() {
@@ -872,6 +908,7 @@ public class GitLogUI implements Disposable {
     myStructureFilterAction = new StructureFilterAction(myProject, myStructureFilter);
     group.add(myStructureFilterAction);
     myCherryPickAction = new MyCherryPick();
+    group.add(myFilterStarredAction);
     group.add(myCherryPickAction);
     group.add(ActionManager.getInstance().getAction("ChangesView.CreatePatchFromChanges"));
     myRefreshAction = new MyRefreshAction();
@@ -1244,7 +1281,7 @@ public class GitLogUI implements Disposable {
         myPanel.setBackground(bg);
         final GitCommit commit = (GitCommit)value;
 
-        final boolean marked = myMarked.contains(commit.getShortHash());
+        final boolean marked = myMarked.containsKey(commit.getShortHash());
         final int localSize = commit.getLocalBranches() == null ? 0 : commit.getLocalBranches().size();
         final int remoteSize = commit.getRemoteBranches() == null ? 0 : commit.getRemoteBranches().size();
         final int tagsSize = commit.getTags().size();
@@ -1529,7 +1566,7 @@ public class GitLogUI implements Disposable {
     myCommentSearchContext.clear();
     myUsersSearchContext.clear();
 
-    myThereAreFilters = ! (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected);
+    myThereAreFilters = (! (commentFilterEmpty && (myUserFilterI.myFilter == null) && myStructureFilter.myAllSelected)) || myIsFilterByStarOn;
     final boolean topoOrder = (! myThereAreFilters) && myRootsUnderVcs.size() == 1 ? GitLogSettings.getInstance(myProject).isTopoOrder() : false;
     myOrderLabel.setVisible(false);
     setOrderText(topoOrder);
@@ -1546,6 +1583,9 @@ public class GitLogUI implements Disposable {
       }
       myUsersSearchContext.clear();
       myMediator.reload(new RootsHolder(myRootsUnderVcs), startingPoints, new GitLogFilters(), topoOrder);
+    } else if (myIsFilterByStarOn) {
+      myUsersSearchContext.clear();
+      myMediator.reloadSetFixed(myMarked, new RootsHolder(myRootsUnderVcs));
     } else {
       ChangesFilter.Comment comment = null;
       if (! commentFilterEmpty) {
@@ -2311,7 +2351,7 @@ public class GitLogUI implements Disposable {
     }
   }
 
-  public class MyToggleCommitMark extends AnAction {
+  public class MyToggleCommitMark extends DumbAwareAction {
     public MyToggleCommitMark() {
       super("Mark", "Mark", ourMarkIcon);
     }
@@ -2332,7 +2372,7 @@ public class GitLogUI implements Disposable {
         for (int selectedRow : selectedRows) {
           final CommitI commitAt = myTableModel.getCommitAt(selectedRow);
           if (commitAt.holdsDecoration()) continue;
-          myMarked.add(commitAt.getHash());
+          myMarked.put(commitAt.getHash(), commitAt.getTime());
         }
       }
       myJBTable.repaint();
@@ -2359,7 +2399,7 @@ public class GitLogUI implements Disposable {
       for (int selectedRow : selectedRows) {
         final CommitI commitAt = myTableModel.getCommitAt(selectedRow);
         if (commitAt.holdsDecoration()) continue;
-        if (myMarked.contains(commitAt.getHash())) {
+        if (myMarked.containsKey(commitAt.getHash())) {
           haveSelected = true;
         } else {
           haveUnSelected = true;

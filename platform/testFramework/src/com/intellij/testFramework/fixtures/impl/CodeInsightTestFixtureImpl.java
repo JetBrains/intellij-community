@@ -98,8 +98,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
@@ -943,7 +941,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
               }
             };
             Editor editor = getCompletionEditor();
-            handler.invokeCompletion(getProject(), editor, invocationCount, false);
+            handler.invokeCompletion(getProject(), editor, invocationCount);
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
           }
         }, null, null);

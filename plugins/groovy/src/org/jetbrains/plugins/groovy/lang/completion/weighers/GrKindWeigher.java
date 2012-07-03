@@ -21,11 +21,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -86,6 +88,15 @@ public class GrKindWeigher extends CompletionWeigher {
 
       if (isPriorityKeyword(o)) return NotQualifiedKind.local;
       if (isLightElement(o)) return NotQualifiedKind.unknown;
+      if (o instanceof PsiClass) {
+        if (((PsiClass)o).isAnnotationType() && GroovyCompletionContributor.AFTER_AT.accepts(position)) {
+          return NotQualifiedKind.restrictedClass;
+        }
+        if (GroovyCompletionContributor.IN_CATCH_TYPE.accepts(position) &&
+            InheritanceUtil.isInheritor((PsiClass)o, CommonClassNames.JAVA_LANG_THROWABLE)) {
+          return NotQualifiedKind.restrictedClass;
+        }
+      }
       if (o instanceof PsiMember) {
         final PsiClass containingClass = ((PsiMember)o).getContainingClass();
         if (isAccessor((PsiMember)o)) return NotQualifiedKind.accessor;
@@ -145,18 +156,19 @@ public class GrKindWeigher extends CompletionWeigher {
     return qualifier.getManager().areElementsEquivalent(member.getContainingClass(), psiClass);
   }
 
-  private static enum NotQualifiedKind {
+  private enum NotQualifiedKind {
     arrayType,
     innerClass,
     unknown,
     accessor,
     member,
     currentClassMember,
+    restrictedClass,
     local,
     onTop
   }
 
-  private static enum QualifiedKind {
+  private enum QualifiedKind {
     innerClass,
     unknown,
     accessor,

@@ -36,6 +36,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.TreeItem;
+import com.intellij.util.containers.Convertor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -243,7 +244,8 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     Collection<TreeItem<Pair<AbstractUrl, String>>> list = items;
     TreeItem<Pair<AbstractUrl, String>> item = null;
     for (AbstractTreeNode obj : parentElements) {
-      item = findNextItem(obj, list);
+      AbstractUrl objUrl = createUrlByElement(obj.getValue(), myProject);
+      item = findNextItem(objUrl, list);
       if (item == null) return false;
       list = item.getChildren();
     }
@@ -285,19 +287,30 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return true;
   }
 
-  public synchronized boolean removeRoot(@NotNull String name, @NotNull List<AbstractTreeNode> elements) {
+  public synchronized boolean removeRootByElements(@NotNull String name, @NotNull List<Object> elements) {
+    return findListToRemoveFrom(name, elements, new Convertor<Object, AbstractUrl>() {
+      @Override
+      public AbstractUrl convert(Object o) {
+        return createUrlByElement(o, myProject);
+      }
+    });
+  }
+
+  private <T> boolean findListToRemoveFrom(@NotNull String name, @NotNull final List<T> elements,
+                                                                       final Convertor<T, AbstractUrl> convertor) {
     Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
     if (elements.size() > 1) {
-      final List<AbstractTreeNode> sublist = elements.subList(0, elements.size() - 1);
-      for (AbstractTreeNode obj : sublist) {
-        final TreeItem<Pair<AbstractUrl, String>> item = findNextItem(obj, list);
+      final List<T> sublist = elements.subList(0, elements.size() - 1);
+      for (T obj : sublist) {
+        AbstractUrl objUrl = convertor.convert(obj);
+        final TreeItem<Pair<AbstractUrl, String>> item = findNextItem(objUrl, list);
         if (item == null || item.getChildren() == null) return false;
         list = item.getChildren();
       }
     }
 
     TreeItem<Pair<AbstractUrl, String>> found = null;
-    AbstractUrl url = createUrlByElement(elements.get(elements.size() - 1).getValue(), myProject);
+    AbstractUrl url = convertor.convert(elements.get(elements.size() - 1));
     if (url == null) return false;
     for (TreeItem<Pair<AbstractUrl, String>> pair : list) {
       if (url.equals(pair.getData().getFirst())) {
@@ -305,17 +318,25 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
         break;
       }
     }
+
     if (found != null) {
       list.remove(found);
       fireListeners.rootsChanged(name);
       return true;
     }
-
     return false;
   }
 
-  private TreeItem<Pair<AbstractUrl, String>> findNextItem(AbstractTreeNode obj, Collection<TreeItem<Pair<AbstractUrl, String>>> list) {
-    AbstractUrl url = createUrlByElement(obj.getValue(), myProject);
+  public synchronized boolean removeRoot(@NotNull String name, @NotNull List<AbstractTreeNode> elements) {
+    return findListToRemoveFrom(name, elements, new Convertor<AbstractTreeNode, AbstractUrl>() {
+      @Override
+      public AbstractUrl convert(AbstractTreeNode obj) {
+        return createUrlByElement(obj.getValue(), myProject);
+      }
+    });
+  }
+
+  private TreeItem<Pair<AbstractUrl, String>> findNextItem(AbstractUrl url, Collection<TreeItem<Pair<AbstractUrl, String>>> list) {
     for (TreeItem<Pair<AbstractUrl, String>> pair : list) {
       if (url.equals(pair.getData().getFirst())) {
         return pair;

@@ -20,10 +20,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -64,7 +64,7 @@ public class StaticPathReferenceProvider extends PathReferenceProviderBase {
 
   @Nullable
   public PathReference getPathReference(@NotNull final String path, @NotNull final PsiElement element) {
-    final ArrayList<PsiReference> list = new ArrayList<PsiReference>(5);
+    final List<PsiReference> list = new SmartList<PsiReference>();
     createReferences(element, list, true);
     if (list.isEmpty()) return null;
 

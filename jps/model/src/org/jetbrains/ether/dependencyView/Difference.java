@@ -29,6 +29,7 @@ abstract class Difference {
   public static final int VALUE = 4;
   public static final int SIGNATURE = 8;
   public static final int SUPERCLASS = 16;
+  public static final int USAGES = 32;
 
   public interface Specifier<T> {
     Collection<T> added();

@@ -44,6 +44,10 @@ public final class CompletionParameters {
     myLookup = lookup;
   }
 
+  public CompletionParameters delegateToClassName() {
+    return withType(CompletionType.CLASS_NAME).withInvocationCount(myInvocationCount - 1);
+  }
+
   public CompletionParameters withType(CompletionType type) {
     return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myLookup);
   }
@@ -97,5 +101,9 @@ public final class CompletionParameters {
 
   public CompletionParameters withPosition(PsiElement element, int offset) {
     return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myLookup);
+  }
+
+  public boolean isExtendedCompletion() {
+    return myCompletionType == CompletionType.BASIC && myInvocationCount >= 2;
   }
 }

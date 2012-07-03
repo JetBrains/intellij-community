@@ -99,8 +99,7 @@ public class StringRef {
   }
 
   public static StringRef fromStream(DataInput in, AbstractStringEnumerator store) throws IOException {
-    final int low = in.readUnsignedByte();
-    final int nameId = (DataInputOutputUtil.readINT(in) << 8) | low;
+    final int nameId = DataInputOutputUtil.readINT(in);
 
     return nameId != 0 ? new StringRef(nameId, store) : null;
   }

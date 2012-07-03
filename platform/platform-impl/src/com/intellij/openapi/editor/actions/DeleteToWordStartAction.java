@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,12 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.util.text.CharArrayUtil;
 
 public class DeleteToWordStartAction extends TextComponentEditorAction {
   public DeleteToWordStartAction() {
@@ -48,31 +45,10 @@ public class DeleteToWordStartAction extends TextComponentEditorAction {
   }
 
   private static void deleteToWordStart(Editor editor) {
-    final CaretModel caretModel = editor.getCaretModel();
-    int endOffset = caretModel.getOffset();
-    
-    // The logic is as follows:
-    //   1. Check are there white-space symbols starting at the current caret position going backwards. Delete them if any;
-    //   2. Otherwise locate previous word start and delete the text up to it;
-    // Example:
-    //    'test string    <caret>' -> 'test string<caret>'
-    //    'test string<caret>'     -> 'test <caret>'
-
+    int endOffset = editor.getCaretModel().getOffset();
+    EditorActionUtil.moveCaretToPreviousWord(editor, false);
+    int startOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    int startOffset = -1;
-    if (!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
-      int i = CharArrayUtil.shiftBackward(document.getCharsSequence(), Math.max(0, endOffset - 1), " \t\n");
-      if (i >= 0 && i < endOffset - 1) {
-        startOffset = i + 1; // We need offset of the first white space symbol, not offset of the last non-white space symbol before it.
-      }
-    }
-
-    if (startOffset < 0) {
-      EditorActionUtil.moveCaretToPreviousWord(editor, false);
-      startOffset = caretModel.getOffset();
-    }
-    
     document.deleteString(startOffset, endOffset);
   }
 }

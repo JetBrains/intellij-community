@@ -450,6 +450,7 @@ public class GithubUtil {
     final String host = githubSettings.getHost();
     final String username = githubSettings.getLogin();
 
+    // TODO this doesn't work with organizational accounts
     final String userRepoMarkerSSHProtocol = host + ":" + username + "/";
     final String userRepoMarkerOtherProtocols = host + "/" + username + "/";
     for (String pushUrl : gitRemote.getUrls()) {

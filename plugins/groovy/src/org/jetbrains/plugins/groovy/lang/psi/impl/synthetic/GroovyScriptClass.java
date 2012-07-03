@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -43,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -199,7 +201,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public PsiField[] getFields() {
-    return PsiField.EMPTY_ARRAY;
+    return getScriptFields();
   }
 
   @NotNull
@@ -348,21 +350,22 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return false;
   }
 
-  private List<GrVariable> getScriptFields() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<List<GrVariable>>() {
+  private GrField[] getScriptFields() {
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GrField[]>() {
       @Override
-      public Result<List<GrVariable>> compute() {
-        List<GrVariable> result = RecursionManager.doPreventingRecursion(GroovyScriptClass.this, true, new Computable<List<GrVariable>>() {
+      public Result<GrField[]> compute() {
+        List<GrField> result = RecursionManager.doPreventingRecursion(GroovyScriptClass.this, true, new Computable<List<GrField>>() {
           @Override
-          public List<GrVariable> compute() {
-            final List<GrVariable> result = new ArrayList<GrVariable>();
+          public List<GrField> compute() {
+            final List<GrField> result = new ArrayList<GrField>();
             myFile.accept(new GroovyRecursiveElementVisitor() {
               @Override
               public void visitVariableDeclaration(GrVariableDeclaration element) {
                 if (element.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
-                  Collections.addAll(result, element.getVariables());
+                  for (GrVariable variable : element.getVariables()) {
+                    result.add(GrScriptField.createScriptFieldFrom(variable));
+                  }
                 }
-
                 super.visitVariableDeclaration(element);
               }
             });
@@ -373,14 +376,14 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
         if (result == null) {
           result = Collections.emptyList();
         }
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, myFile);
+        return Result.create(result.toArray(new GrField[result.size()]), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, myFile);
       }
     });
   }
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
                                      @NotNull final ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     for (GrTopLevelDefinition definition : myFile.getTopLevelDefinitions()) {
       if (!(definition instanceof PsiClass)) {
@@ -389,10 +392,11 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     }
 
     for (GrVariable variable : getScriptFields()) {
-      if (!ResolveUtil.processElement(processor, variable, state)) {
-        return false;
+      if (!GrClassImplUtil.isSameDeclaration(place, variable)) {
+        if (!ResolveUtil.processElement(processor, variable, state)) {
+          return false;
+        }
       }
-
     }
 
     if (!ResolveUtil.processElement(processor, myMainMethod, state) || !ResolveUtil.processElement(processor, myRunMethod, state)) {

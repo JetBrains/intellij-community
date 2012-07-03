@@ -62,6 +62,23 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     myMatcher = matcher;
   }
 
+  protected static Color getBackgroundColor(@Nullable Object value) {
+    if (value instanceof PsiElement) {
+      PsiFile psiFile = ((PsiElement)value).getContainingFile();
+      final FileColorManager colorManager = FileColorManager.getInstance(psiFile.getProject());
+
+      if (colorManager.isEnabled()) {
+        final Color fileBgColor = colorManager.getRendererBackground(psiFile);
+
+        if (fileBgColor != null) {
+          return fileBgColor;
+        }
+      }
+    }
+
+    return UIUtil.getListBackground();
+  }
+
   private class LeftRenderer extends ColoredListCellRenderer {
     private final String myModuleName;
     private Matcher myMatcher;

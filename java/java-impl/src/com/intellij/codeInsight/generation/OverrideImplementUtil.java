@@ -521,7 +521,7 @@ public class OverrideImplementUtil {
     chooseAndOverrideOrImplementMethods(project, editor, aClass, true);
   }
 
-  private static void chooseAndOverrideOrImplementMethods(final Project project,
+  public static void chooseAndOverrideOrImplementMethods(final Project project,
                                                           final Editor editor,
                                                           final PsiClass aClass,
                                                           final boolean toImplement){

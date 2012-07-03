@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +41,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreInTestCode = false;
 
+  @SuppressWarnings("PublicField")
+  public boolean ignoreLibraryOverrides = false;
+
   @Override
   @NotNull
   public String getID() {
@@ -49,8 +53,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overly.broad.throws.clause.display.name");
+    return InspectionGadgetsBundle.message("overly.broad.throws.clause.display.name");
   }
 
   @Override
@@ -83,7 +86,10 @@ public class TooBroadThrowsInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.in.tests.option"),
+                      "ignoreInTestCode");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.exceptions.declared.on.library.override.option"),
+                      "ignoreLibraryOverrides");
     return panel;
   }
 
@@ -162,6 +168,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
         return;
       }
       if (ignoreInTestCode && TestUtils.isInTestCode(method)) {
+        return;
+      }
+      if (ignoreLibraryOverrides && LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
       final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);

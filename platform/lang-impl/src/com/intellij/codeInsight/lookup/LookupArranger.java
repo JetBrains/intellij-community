@@ -36,11 +36,6 @@ public abstract class LookupArranger {
 
   public abstract Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction);
 
-  public final void clearItems() {
-    prefixChanged();
-    myItems.clear();
-  }
-
   public abstract LookupArranger createEmptyCopy();
 
   protected static void addPrefixItems(Lookup lookup, LinkedHashSet<LookupElement> result, boolean exactly, Collection<LookupElement> items) {

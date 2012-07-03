@@ -74,10 +74,6 @@ abstract class IntIntMultiMaplet implements Streamable {
     for (final int a : keys) {
       final TIntHashSet b = get(a);
 
-      if (b.size() == 0) {
-        continue;
-      }
-
       stream.print("  Key: ");
       stream.println(context.getValue(a));
       stream.println("  Values:");

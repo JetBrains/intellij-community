@@ -1,0 +1,31 @@
+class X {
+  def foo()
+
+  <caret>
+}
+-----
+abstract
+boolean
+byte
+char
+class
+def
+double
+enum
+final
+float
+int
+interface
+long
+native
+private
+protected
+public
+short
+static
+strictfp
+synchronized
+throws
+transient
+void
+volatile

@@ -406,6 +406,9 @@
   <action id="GotoLine">
     <keyboard-shortcut first-keystroke="control G"/>
   </action>
+  <action id="GotoCustomRegion">
+    <keyboard-shortcut first-keystroke="control alt PERIOD"/>
+  </action>
   <action id="FindInPath">
     <keyboard-shortcut first-keystroke="control shift F"/>
   </action>

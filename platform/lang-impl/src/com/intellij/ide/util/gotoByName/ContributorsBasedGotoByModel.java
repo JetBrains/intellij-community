@@ -56,8 +56,13 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     return new NavigationItemListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(component) : component;
+        if (value == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
+          Object previousElement = index > 0 ? list.getModel().getElementAt(index - 1) : null;
+          return ChooseByNameBase.renderNonPrefixSeparatorComponent(getBackgroundColor(previousElement));
+        }
+        else {
+          return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        }
       }
     };
   }

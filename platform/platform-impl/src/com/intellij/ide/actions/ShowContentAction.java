@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class ShowContentAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     final ToolWindow window = getWindow(e);
-    e.getPresentation().setEnabled(window != null);
+    e.getPresentation().setEnabled(window != null && window.getContentManager().getContentCount() > 1);
     e.getPresentation().setText(window == null || window.getContentUiType() == ToolWindowContentUiType.TABBED
                                 ? "Show List of Tabs"
                                 : "Show List of Views");

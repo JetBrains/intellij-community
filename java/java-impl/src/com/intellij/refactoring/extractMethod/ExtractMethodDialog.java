@@ -72,7 +72,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
   private final InputVariables myVariableData;
   private final PsiClass myTargetClass;
-  private ComboBoxVisibilityPanel myVisibilityPanel;
+  private ComboBoxVisibilityPanel<String> myVisibilityPanel;
 
   private boolean myDefaultVisibility = true;
   private boolean myChangingVisibility;
@@ -300,7 +300,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     return optionsPanel;
   }
 
-  private ComboBoxVisibilityPanel createVisibilityPanel() {
+  private ComboBoxVisibilityPanel<String> createVisibilityPanel() {
     final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
     panel.setVisibility(PsiModifier.PRIVATE);
     panel.addListener(new ChangeListener() {

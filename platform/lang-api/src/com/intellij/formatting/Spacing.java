@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The spacing setting for a formatting model block. Indicates the number of spaces and/or
@@ -100,19 +101,50 @@ public abstract class Spacing {
    *                       to which the spacing setting instance is related, or <code>Integer.MAX_VALUE</code>
    *                       if the number of spaces is not limited. Spaces are deleted if there are
    *                       more than this amount of spaces in the document.
-   * @param dependance     The text range checked for the presense of line breaks.
+   * @param dependency     The text range checked for the presence of line breaks.
    * @param keepLineBreaks Whether the existing line breaks between the blocks should be preserved.
    * @param keepBlankLines Whether the existing blank lines between the blocks should be preserved.
    * @return the spacing setting instance.
    */
   public static Spacing createDependentLFSpacing(int minSpaces,
                                                  int maxSpaces,
-                                                 TextRange dependance,
+                                                 TextRange dependency,
                                                  boolean keepLineBreaks,
-                                                 int keepBlankLines) {
-    return myFactory.createDependentLFSpacing(minSpaces, maxSpaces, dependance, keepLineBreaks, keepBlankLines);
+                                                 int keepBlankLines)
+  {
+    return createDependentLFSpacing(minSpaces, maxSpaces, dependency, keepLineBreaks, keepBlankLines, DependentSpacingRule.DEFAULT);
   }
 
+  /**
+   * Creates a spacing setting instance which uses settings from the given dependent spacing rule if the specified text range changes
+   * its 'has line feed' status during formatting (new line feed is added and the range hasn't contained them before
+   * or it contained line feed(s) and it was removed during formatting).
+   * <p/>
+   * Used for formatting rules like the "next line if wrapped" brace placement.
+   * 
+   * @param minSpaces        The minimum number of spaces that should be present between the blocks
+   *                         to which the spacing setting instance is related. Spaces are inserted
+   *                         if there are less than this amount of spaces in the document.
+   * @param maxSpaces        The maximum number of spaces that should be present between the blocks
+   *                         to which the spacing setting instance is related, or <code>Integer.MAX_VALUE</code>
+   *                         if the number of spaces is not limited. Spaces are deleted if there are
+   *                         more than this amount of spaces in the document.
+   * @param dependencyRange  The text range checked for the presence of line breaks.
+   * @param keepLineBreaks   Whether the existing line breaks between the blocks should be preserved.
+   * @param keepBlankLines   Whether the existing blank lines between the blocks should be preserved.
+   * @param rule             settings to use if dependent region changes its 'contains line feed' status during formatting
+   * @return                 the spacing setting instance for the given parameters
+   */
+  public static Spacing createDependentLFSpacing(int minSpaces,
+                                                 int maxSpaces,
+                                                 @NotNull TextRange dependencyRange,
+                                                 boolean keepLineBreaks,
+                                                 int keepBlankLines,
+                                                 @NotNull DependentSpacingRule rule)
+  {
+    return myFactory.createDependentLFSpacing(minSpaces, maxSpaces, dependencyRange, keepLineBreaks, keepBlankLines, rule);
+  }
+  
   /**
    * Creates a spacing setting instance which preserves the presence of spaces between the blocks but,
    * if spaces are present, may insert or delete the spaces. Used, for example, for HTML formatting

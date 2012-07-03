@@ -42,6 +42,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,6 +96,23 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
 
   public void setPatternMatcher(final Matcher matcher) {
     myMatcher = matcher;
+  }
+
+  protected static Color getBackgroundColor(@Nullable Object value) {
+    if (value instanceof PsiElement || value instanceof DataProvider) {
+      final PsiElement psiElement = value instanceof PsiElement
+                                    ? (PsiElement)value
+                                    : LangDataKeys.PSI_ELEMENT.getData((DataProvider) value);
+      if (psiElement != null) {
+        final FileColorManager fileColorManager = FileColorManager.getInstance(psiElement.getProject());
+        final Color fileColor = fileColorManager.getRendererBackground(psiElement.getContainingFile());
+        if (fileColor != null) {
+          return fileColor;
+        }
+      }
+    }
+
+    return UIUtil.getListBackground();
   }
 
   private static class LeftRenderer extends ColoredListCellRenderer {

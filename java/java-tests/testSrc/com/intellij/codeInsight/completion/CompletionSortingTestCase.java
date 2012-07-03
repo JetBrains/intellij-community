@@ -71,7 +71,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
 
   protected static void refreshSorting(final LookupImpl lookup) {
     lookup.setSelectionTouched(false);
-    lookup.resort();
+    lookup.resort(true);
   }
 
   protected static void imitateItemSelection(final LookupImpl lookup, final int index) {

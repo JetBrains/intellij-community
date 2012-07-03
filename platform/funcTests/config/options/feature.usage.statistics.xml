@@ -14,7 +14,6 @@
     <feature id="codeassists.javadoc.external" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="tag.name.completion" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="ui.recentchanges" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
-    <feature id="editing.completion.smarttype.anonymous" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="diagram.show" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="refactoring.introduceVariable" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="ui.tree.speedsearch" count="5" last-shown="0" last-used="1317813527648" average-frequency="2666" shown-count="0" />
@@ -57,7 +56,6 @@
     <feature id="editing.completion.replace" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="editing.select.word" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="codeassists.comment.block" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
-    <feature id="editing.completion.classname" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="editing.completion.cancelByControlArrows" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="codeassists.highlight.implements" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="codeassists.quickdefinition" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
@@ -65,7 +63,6 @@
     <feature id="jar.diff" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="navigation.recent.files" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="codeassists.highlight.return" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
-    <feature id="editing.completion.second.classname" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="editing.completion.smarttype.general" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="editing.completion.camelHumps" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />
     <feature id="codeassists.overrideimplement" count="0" last-shown="0" last-used="0" average-frequency="0" shown-count="0" />

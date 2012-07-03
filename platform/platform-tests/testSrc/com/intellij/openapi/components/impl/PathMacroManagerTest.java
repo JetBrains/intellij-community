@@ -24,7 +24,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
@@ -43,48 +43,38 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.picocontainer.PicoContainer;
 
 import java.util.List;
 
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeThat;
 
 /**
  * @author mike
  */
 @RunWith(JMock.class)
 public class PathMacroManagerTest {
-  private static final String APP_HOME = PathManager.getHomePath();
-  private static final String USER_HOME = StringUtil.trimEnd(SystemProperties.getUserHome(), "/");
+  private static final String APP_HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
+  private static final String USER_HOME = FileUtil.toSystemIndependentName(StringUtil.trimEnd(SystemProperties.getUserHome(), "/"));
 
   private Module myModule;
   private ProjectEx myProject;
   private PathMacrosImpl myPathMacros;
-  private Mockery context = new JUnit4Mockery();
-  {
-    context.setImposteriser(ClassImposteriser.INSTANCE);
-  }
+  private Mockery context;
 
   protected ApplicationEx myApplication;
   private IFileSystem myOldFileSystem;
   protected MockFileSystem myFileSystem;
-  protected PicoContainer myAppPico;
 
   @Before
   public final void setupApplication() throws Exception {
+    context = new JUnit4Mockery();
+    context.setImposteriser(ClassImposteriser.INSTANCE);
     myApplication = context.mock(ApplicationEx.class, "application");
-    myAppPico = context.mock(PicoContainer.class);
 
     context.checking(new Expectations() {
       {
-        allowing(myApplication).isUnitTestMode();
-        will(returnValue(false));
-        allowing(myApplication).getName();
-        will(returnValue("IDEA"));
-        allowing(myApplication).getPicoContainer();
-        will(returnValue(myAppPico));
+        allowing(myApplication).isUnitTestMode(); will(returnValue(false));
+        allowing(myApplication).getName(); will(returnValue("IDEA"));
 
         //some tests leave invokeLaters after them...
         allowing(myApplication).invokeLater(with(any(Runnable.class)), with(any(ModalityState.class)));
@@ -112,10 +102,12 @@ public class PathMacroManagerTest {
     myOldFileSystem = FileSystem.FILE_SYSTEM;
     myFileSystem = new MockFileSystem();
     FileSystem.FILE_SYSTEM = myFileSystem;
+    BasePathMacroManager.DEBUG = true;
   }
 
   @After
   public final void restoreFilesystem() throws Exception {
+    BasePathMacroManager.DEBUG = false;
     FileSystem.FILE_SYSTEM = myOldFileSystem;
   }
 
@@ -125,22 +117,14 @@ public class PathMacroManagerTest {
     myProject = context.mock(ProjectEx.class);
 
     final VirtualFile projectFile = context.mock(VirtualFile.class, "projectFile");
-    final VirtualFile projectParentFile = context.mock(VirtualFile.class, "projectParentFile");
-    final VirtualFile moduleFile = context.mock(VirtualFile.class, "moduleFile");
-    final VirtualFile moduleParentFile = context.mock(VirtualFile.class, "moduleParentFile");
 
     context.checking(new Expectations() {{
       allowing(myModule).isDisposed(); will(returnValue(false));
       allowing(myProject).isDisposed(); will(returnValue(false));
 
       allowing(projectFile).getPath(); will(returnValue(projectPath));
-      allowing(projectFile).getParent(); will(returnValue(projectParentFile));
-      allowing(projectParentFile).getPath(); will(returnValue(StringUtil.getPackageName(projectPath, '/')));
 
       final String moduleFilePath = projectPath + "/module/module.iml";
-      allowing(moduleFile).getPath(); will(returnValue(moduleFilePath));
-      allowing(moduleFile).getParent(); will(returnValue(moduleParentFile));
-      allowing(projectParentFile).getPath(); will(returnValue(StringUtil.getPackageName(moduleFilePath, '/')));
 
       allowing(myApplication).getComponent(with(equal(PathMacros.class))); will(returnValue(myPathMacros));
       allowing(myPathMacros).addMacroReplacements(with(any(ReplacePathToMacroMap.class)));
@@ -153,8 +137,6 @@ public class PathMacroManagerTest {
 
   @Test
   public void testRightMacrosOrder_RelativeValues_NoVariables() throws Exception {
-    assumeThat(SystemInfo.isWindows, is(false));
-
     setUpMocks("/tmp/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myPathMacros, myModule).getReplacePathMap();
@@ -198,8 +180,6 @@ public class PathMacroManagerTest {
 
   @Test
   public void testPathsOutsideProject() throws Exception {
-    assumeThat(SystemInfo.isWindows, is(false));
-
     setUpMocks("/tmp/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ProjectPathMacroManager(myPathMacros, myProject).getReplacePathMap();
@@ -236,8 +216,6 @@ public class PathMacroManagerTest {
 
   @Test
   public void testProjectUnderUserHome() throws Exception {
-    assumeThat(SystemInfo.isWindows, is(false));
-
     setUpMocks(USER_HOME + "/IdeaProjects/foo");
 
     final ReplacePathToMacroMap replacePathMap = new ModulePathMacroManager(myPathMacros, myModule).getReplacePathMap();

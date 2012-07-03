@@ -2,14 +2,11 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import gnu.trove.TIntHashSet;
-import org.jetbrains.annotations.NotNull;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.asm4.Type;
 import org.jetbrains.ether.RW;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -36,131 +33,37 @@ class UsageRepr {
 
   }
 
-  public static class Cluster implements RW.Savable, Streamable {
-    private final Map<Usage, TIntHashSet> myUsageToDependenciesMap = new HashMap<Usage, TIntHashSet>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-
-    public Cluster() {
-    }
-
-    public Cluster(final DependencyContext context, final DataInput in) {
-      try {
-        final int size = in.readInt();
-
-        for (int i = 0; i < size; i++) {
-          final Usage u = externalizer(context).read(in);
-          final TIntHashSet s = RW.read(new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR), in);
-          myUsageToDependenciesMap.put(u, s);
-        }
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    @Override
-    public void save(final DataOutput out) {
-      try {
-        out.writeInt(myUsageToDependenciesMap.size());
-        for (Map.Entry<Usage, TIntHashSet> entry : myUsageToDependenciesMap.entrySet()) {
-          final Usage u = entry.getKey();
-          u.save(out);
-          final TIntHashSet deps = entry.getValue();
-          RW.save(deps, out);
-        }
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public void addUsage(final int residence, final Usage usage) {
-      TIntHashSet s = myUsageToDependenciesMap.get(usage);
-
-      if (s == null) {
-        s = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-        myUsageToDependenciesMap.put(usage, s);
-      }
-
-      s.add(residence);
-    }
-
-    @NotNull
-    public Set<Usage> getUsages() {
-      return Collections.unmodifiableSet(myUsageToDependenciesMap.keySet());
-    }
-
-    public TIntHashSet getResidence(final Usage usage) {
-      return myUsageToDependenciesMap.get(usage);
-    }
-
-    public boolean isEmpty() {
-      return myUsageToDependenciesMap.isEmpty();
-    }
-
-    public static DataExternalizer<Cluster> clusterExternalizer(final DependencyContext context) {
-      return new DataExternalizer<Cluster>() {
-        @Override
-        public void save(final DataOutput out, final Cluster value) throws IOException {
-          value.save(out);
-        }
-
-        @Override
-        public Cluster read(final DataInput in) throws IOException {
-          return new Cluster(context, in);
-        }
-      };
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Cluster cluster = (Cluster)o;
-
-      if (!myUsageToDependenciesMap.equals(cluster.myUsageToDependenciesMap)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myUsageToDependenciesMap.hashCode();
-    }
-
-    @Override
-    public void toStream(DependencyContext context, PrintStream stream) {
-      //To change body of implemented methods use File | Settings | File Templates.
-    }
-  }
-
   public static abstract class Usage implements RW.Savable, Streamable {
     public abstract int getOwner();
-
-    @Override
-    public void toStream(DependencyContext context, PrintStream stream) {
-      //To change body of implemented methods use File | Settings | File Templates.
-    }
   }
 
   public static abstract class FMUsage extends Usage {
-    public final int name;
-    public final int owner;
+    public final int myName;
+    public final int myOwner;
+
+    abstract void kindToStream (PrintStream stream);
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      kindToStream(stream);
+      stream.println("          Name : " + context.getValue(myName));
+      stream.println("          Owner: " + context.getValue(myOwner));
+    }
 
     @Override
     public int getOwner() {
-      return owner;
+      return myOwner;
     }
 
     private FMUsage(final int name, final int owner) {
-      this.name = name;
-      this.owner = owner;
+      this.myName = name;
+      this.myOwner = owner;
     }
 
     private FMUsage(final DataInput in) {
       try {
-        name = in.readInt();
-        owner = in.readInt();
+        myName = in.readInt();
+        myOwner = in.readInt();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -170,8 +73,8 @@ class UsageRepr {
     protected final void save(final byte tag, final DataOutput out) {
       try {
         out.writeByte(tag);
-        out.writeInt(name);
-        out.writeInt(owner);
+        out.writeInt(myName);
+        out.writeInt(myOwner);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -185,40 +88,50 @@ class UsageRepr {
 
       FMUsage fmUsage = (FMUsage)o;
 
-      if (name != fmUsage.name) return false;
-      if (owner != fmUsage.owner) return false;
+      if (myName != fmUsage.myName) return false;
+      if (myOwner != fmUsage.myOwner) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      return 31 * name + owner;
+      return 31 * myName + myOwner;
     }
   }
 
   public static class FieldUsage extends FMUsage {
-    public final TypeRepr.AbstractType type;
+    public final TypeRepr.AbstractType myType;
 
     private FieldUsage(final DependencyContext context, final int name, final int owner, final int descriptor) {
       super(name, owner);
-      type = TypeRepr.getType(context, descriptor);
+      myType = TypeRepr.getType(context, descriptor);
     }
 
     private FieldUsage(final DependencyContext context, final DataInput in) {
       super(in);
       try {
-        type = TypeRepr.externalizer(context).read(in);
+        myType = TypeRepr.externalizer(context).read(in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
 
+    protected void kindToStream(final PrintStream stream) {
+      stream.println("FieldUsage:");
+    }
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      super.toStream(context, stream);
+      stream.println("          Type: " + myType.getDescr(context));
+    }
+
     @Override
     public void save(final DataOutput out) {
       save(FIELD_USAGE, out);
-      type.save(out);
+      myType.save(out);
     }
 
     @Override
@@ -228,12 +141,12 @@ class UsageRepr {
 
       final FieldUsage that = (FieldUsage)o;
 
-      return type.equals(that.type) && name == that.name && owner == that.owner;
+      return myType.equals(that.myType) && myName == that.myName && myOwner == that.myOwner;
     }
 
     @Override
     public int hashCode() {
-      return 31 * (31 * type.hashCode() + name) + owner;
+      return 31 * (31 * myType.hashCode() + myName) + myOwner;
     }
   }
 
@@ -247,9 +160,14 @@ class UsageRepr {
     }
 
     @Override
+    protected void kindToStream(final PrintStream stream) {
+      stream.println("FieldAssignUsage:");
+    }
+
+    @Override
     public void save(final DataOutput out) {
       save(FIELD_ASSIGN_USAGE, out);
-      type.save(out);
+      myType.save(out);
     }
 
     @Override
@@ -259,7 +177,7 @@ class UsageRepr {
 
       final FieldAssignUsage that = (FieldAssignUsage)o;
 
-      return type.equals(that.type) && name == that.name && owner == that.owner;
+      return myType.equals(that.myType) && myName == that.myName && myOwner == that.myOwner;
     }
 
     @Override
@@ -269,21 +187,21 @@ class UsageRepr {
   }
 
   public static class MethodUsage extends FMUsage {
-    public final TypeRepr.AbstractType[] argumentTypes;
-    public final TypeRepr.AbstractType returnType;
+    public final TypeRepr.AbstractType[] myArgumentTypes;
+    public final TypeRepr.AbstractType myReturnType;
 
     private MethodUsage(final DependencyContext context, final int name, final int owner, final String descriptor) {
       super(name, owner);
-      argumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
-      returnType = TypeRepr.getType(context, Type.getReturnType(descriptor));
+      myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
+      myReturnType = TypeRepr.getType(context, Type.getReturnType(descriptor));
     }
 
     private MethodUsage(final DependencyContext context, final DataInput in) {
       super(in);
       try {
         final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
-        argumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[in.readInt()]);
-        returnType = externalizer.read(in);
+        myArgumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[in.readInt()]);
+        myReturnType = externalizer.read(in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -293,8 +211,8 @@ class UsageRepr {
     @Override
     public void save(final DataOutput out) {
       save(METHOD_USAGE, out);
-      RW.save(argumentTypes, out);
-      returnType.save(out);
+      RW.save(myArgumentTypes, out);
+      myReturnType.save(out);
     }
 
     @Override
@@ -304,20 +222,39 @@ class UsageRepr {
 
       final MethodUsage that = (MethodUsage)o;
 
-      if (!Arrays.equals(argumentTypes, that.argumentTypes)) return false;
-      if (returnType != null ? !returnType.equals(that.returnType) : that.returnType != null) return false;
-      if (name != that.name) return false;
-      if (owner != that.owner) return false;
+      if (!Arrays.equals(myArgumentTypes, that.myArgumentTypes)) return false;
+      if (myReturnType != null ? !myReturnType.equals(that.myReturnType) : that.myReturnType != null) return false;
+      if (myName != that.myName) return false;
+      if (myOwner != that.myOwner) return false;
 
-      return Arrays.equals(argumentTypes, that.argumentTypes) &&
-             returnType.equals(that.returnType) &&
-             name == that.name &&
-             owner == that.owner;
+      return Arrays.equals(myArgumentTypes, that.myArgumentTypes) &&
+             myReturnType.equals(that.myReturnType) &&
+             myName == that.myName &&
+             myOwner == that.myOwner;
     }
 
     @Override
     public int hashCode() {
-      return ((31 * Arrays.hashCode(argumentTypes) + (returnType.hashCode())) * 31 + (name)) * 31 + (owner);
+      return ((31 * Arrays.hashCode(myArgumentTypes) + (myReturnType.hashCode())) * 31 + (myName)) * 31 + (myOwner);
+    }
+
+    @Override
+    void kindToStream(final PrintStream stream) {
+      stream.println("MethodUsage:");
+    }
+
+    @Override
+    public void toStream(DependencyContext context, PrintStream stream) {
+      super.toStream(context, stream);
+
+      stream.println("          Arguments:");
+
+      for (final TypeRepr.AbstractType at : myArgumentTypes) {
+        stream.println("            " + at.getDescr(context));
+      }
+
+      stream.println("          Return type:");
+      stream.println("            " + myReturnType.getDescr(context));
     }
   }
 
@@ -369,6 +306,17 @@ class UsageRepr {
       result = 31 * result + myArity;
       return result;
     }
+
+    @Override
+    void kindToStream(final PrintStream stream) {
+      stream.println("MetaMethodUsage:");
+    }
+
+    @Override
+    public void toStream(DependencyContext context, PrintStream stream) {
+      super.toStream(context, stream);
+      stream.println("          Arity: " + Integer.toString(myArity));
+    }
   }
 
   public static class ClassUsage extends Usage {
@@ -417,23 +365,28 @@ class UsageRepr {
     public int hashCode() {
       return myClassName;
     }
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      stream.println("ClassUsage: " + context.getValue(myClassName));
+    }
   }
 
   public static class ClassExtendsUsage extends Usage {
-    protected final int className;
+    protected final int myClassName;
 
     @Override
     public int getOwner() {
-      return className;
+      return myClassName;
     }
 
     private ClassExtendsUsage(final int className) {
-      this.className = className;
+      this.myClassName = className;
     }
 
     private ClassExtendsUsage(final DataInput in) {
       try {
-        className = in.readInt();
+        myClassName = in.readInt();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -444,7 +397,7 @@ class UsageRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_EXTENDS_USAGE);
-        out.writeInt(className);
+        out.writeInt(myClassName);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -453,7 +406,7 @@ class UsageRepr {
 
     @Override
     public int hashCode() {
-      return className + 1;
+      return myClassName + 1;
     }
 
     @Override
@@ -463,9 +416,14 @@ class UsageRepr {
 
       ClassExtendsUsage that = (ClassExtendsUsage)o;
 
-      if (className != that.className) return false;
+      if (myClassName != that.myClassName) return false;
 
       return true;
+    }
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      stream.println("ClassExtendsUsage: " + context.getValue(myClassName));
     }
   }
 
@@ -482,7 +440,7 @@ class UsageRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(CLASS_NEW_USAGE);
-        out.writeInt(className);
+        out.writeInt(myClassName);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -491,7 +449,12 @@ class UsageRepr {
 
     @Override
     public int hashCode() {
-      return className + 2;
+      return myClassName + 2;
+    }
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      stream.println("ClassNewUsage: " + context.getValue(myClassName));
     }
   }
 
@@ -514,34 +477,34 @@ class UsageRepr {
       }
     };
 
-    final TypeRepr.ClassType type;
-    final TIntHashSet usedArguments;
-    final Set<ElemType> usedTargets;
+    final TypeRepr.ClassType myType;
+    final TIntHashSet myUsedArguments;
+    final Set<ElemType> myUsedTargets;
 
     public boolean satisfies(final Usage usage) {
       if (usage instanceof AnnotationUsage) {
         final AnnotationUsage annotationUsage = (AnnotationUsage)usage;
 
-        if (!type.equals(annotationUsage.type)) {
+        if (!myType.equals(annotationUsage.myType)) {
           return false;
         }
 
         boolean argumentsSatisfy = false;
 
-        if (usedArguments != null) {
-          final TIntHashSet arguments = new TIntHashSet(usedArguments.toArray());
+        if (myUsedArguments != null) {
+          final TIntHashSet arguments = new TIntHashSet(myUsedArguments.toArray());
 
-          arguments.removeAll(annotationUsage.usedArguments.toArray());
+          arguments.removeAll(annotationUsage.myUsedArguments.toArray());
 
           argumentsSatisfy = !arguments.isEmpty();
         }
 
         boolean targetsSatisfy = false;
 
-        if (usedTargets != null) {
-          final Collection<ElemType> targets = EnumSet.copyOf(usedTargets);
+        if (myUsedTargets != null) {
+          final Collection<ElemType> targets = EnumSet.copyOf(myUsedTargets);
 
-          targets.retainAll(annotationUsage.usedTargets);
+          targets.retainAll(annotationUsage.myUsedTargets);
 
           targetsSatisfy = !targets.isEmpty();
         }
@@ -553,18 +516,18 @@ class UsageRepr {
     }
 
     private AnnotationUsage(final TypeRepr.ClassType type, final TIntHashSet usedArguments, final Set<ElemType> targets) {
-      this.type = type;
-      this.usedArguments = usedArguments;
-      this.usedTargets = targets;
+      this.myType = type;
+      this.myUsedArguments = usedArguments;
+      this.myUsedTargets = targets;
     }
 
     private AnnotationUsage(final DependencyContext context, final DataInput in) {
       final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
 
       try {
-        type = (TypeRepr.ClassType)externalizer.read(in);
-        usedArguments = RW.read(new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR), in);
-        usedTargets = (EnumSet<ElemType>)RW.read(elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
+        myType = (TypeRepr.ClassType)externalizer.read(in);
+        myUsedArguments = RW.read(new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR), in);
+        myUsedTargets = (EnumSet<ElemType>)RW.read(elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -575,9 +538,9 @@ class UsageRepr {
     public void save(final DataOutput out) {
       try {
         out.writeByte(ANNOTATION_USAGE);
-        type.save(out);
-        RW.save(usedArguments, out);
-        RW.save(usedTargets, elementTypeExternalizer, out);
+        myType.save(out);
+        RW.save(myUsedArguments, out);
+        RW.save(myUsedTargets, elementTypeExternalizer, out);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -586,7 +549,7 @@ class UsageRepr {
 
     @Override
     public int getOwner() {
-      return type.className;
+      return myType.className;
     }
 
     @Override
@@ -596,19 +559,61 @@ class UsageRepr {
 
       AnnotationUsage that = (AnnotationUsage)o;
 
-      if (usedArguments != null ? !usedArguments.equals(that.usedArguments) : that.usedArguments != null) return false;
-      if (usedTargets != null ? !usedTargets.equals(that.usedTargets) : that.usedTargets != null) return false;
-      if (type != null ? !type.equals(that.type) : that.type != null) return false;
+      if (myUsedArguments != null ? !myUsedArguments.equals(that.myUsedArguments) : that.myUsedArguments != null) return false;
+      if (myUsedTargets != null ? !myUsedTargets.equals(that.myUsedTargets) : that.myUsedTargets != null) return false;
+      if (myType != null ? !myType.equals(that.myType) : that.myType != null) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = type != null ? type.hashCode() : 0;
-      result = 31 * result + (usedArguments != null ? usedArguments.hashCode() : 0);
-      result = 31 * result + (usedTargets != null ? usedTargets.hashCode() : 0);
+      int result = myType != null ? myType.hashCode() : 0;
+      result = 31 * result + (myUsedArguments != null ? myUsedArguments.hashCode() : 0);
+      result = 31 * result + (myUsedTargets != null ? myUsedTargets.hashCode() : 0);
       return result;
+    }
+
+    @Override
+    public void toStream(final DependencyContext context, final PrintStream stream) {
+      stream.println("    AnnotationUsage:");
+      stream.println("      Type     : " + myType.getDescr(context));
+
+      final List<String> arguments = new LinkedList<String>();
+
+      if (myUsedArguments != null) {
+        myUsedArguments.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(final int value) {
+            arguments.add(context.getValue(value));
+            return true;
+          }
+        });
+      }
+
+      Collections.sort(arguments);
+
+      final List<String> targets = new LinkedList<String>();
+
+      if (myUsedTargets != null) {
+        for (final ElemType e : myUsedTargets) {
+          targets.add(e.toString());
+        }
+      }
+
+      Collections.sort(targets);
+
+      stream.println("      Arguments:");
+
+      for (final String s : arguments) {
+        stream.println("        " + s);
+      }
+
+      stream.println("      Targets  :");
+
+      for (final String s : targets) {
+        stream.println("        " + s);
+      }
     }
   }
 
@@ -641,7 +646,10 @@ class UsageRepr {
     return context.getUsage(new ClassNewUsage(name));
   }
 
-  public static Usage createAnnotationUsage(final DependencyContext context, final TypeRepr.ClassType type, final TIntHashSet usedArguments, final Set<ElemType> targets) {
+  public static Usage createAnnotationUsage(final DependencyContext context,
+                                            final TypeRepr.ClassType type,
+                                            final TIntHashSet usedArguments,
+                                            final Set<ElemType> targets) {
     return context.getUsage(new AnnotationUsage(type, usedArguments, targets));
   }
 

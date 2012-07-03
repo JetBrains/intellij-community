@@ -344,7 +344,7 @@ public class CreateXmlResourceDialog extends DialogWrapper {
   }
 
   @Nullable
-  private static ValidationInfo checkIfResourceAlreadyExists(@NotNull Module selectedModule,
+  public static ValidationInfo checkIfResourceAlreadyExists(@NotNull Module selectedModule,
                                                              @NotNull String resourceName,
                                                              @NotNull ResourceType resourceType,
                                                              @NotNull List<String> dirNames,

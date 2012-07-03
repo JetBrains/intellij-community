@@ -75,7 +75,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   private JCheckBox myCbSpecifyType;
   private JLabel myNameLabel;
   private MethodSignatureComponent mySignature;
-  private ComboBoxVisibilityPanel myVisibilityPanel;
+  private ComboBoxVisibilityPanel<String> myVisibilityPanel;
   private Splitter mySplitter;
   private JCheckBox myForceReturnCheckBox;
   private ParameterTablePanel myParameterTablePanel;

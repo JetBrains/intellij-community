@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement;
 
 import java.util.List;
 
-public interface MethodDescriptor<P extends ParameterInfo> {
+public interface MethodDescriptor<P extends ParameterInfo, V> {
 
   enum ReadWriteOption { ReadWrite, Read, None }
 
@@ -29,7 +29,7 @@ public interface MethodDescriptor<P extends ParameterInfo> {
 
   int getParametersCount();
 
-  String getVisibility();
+  V getVisibility();
 
   PsiElement getMethod();
 

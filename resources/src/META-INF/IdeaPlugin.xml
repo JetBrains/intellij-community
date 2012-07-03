@@ -240,8 +240,6 @@
                             order="before javaLegacy"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.JavaClassNameCompletionContributor" id="javaClassName"
                             order="last, before default"/>
-    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaGlobalMemberNameCompletionContributor"
-                            id="javaGlobalMemberName" order="last, after javaClassName"/>
 
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaDocCompletionContributor" id="javadoc"
                             order="last, before javaLegacy"/>
@@ -722,6 +720,12 @@
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
       <category>Other</category>
     </intentionAction>
+
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.BreakStringOnLineBreaksIntentionAction</className>
+      <category>Other</category>
+    </intentionAction>
+
 
 
 

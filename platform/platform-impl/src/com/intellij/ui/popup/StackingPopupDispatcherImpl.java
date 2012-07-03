@@ -210,7 +210,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     if (myStack.isEmpty()) return false;
 
     final AbstractPopup popup = (AbstractPopup)myStack.pop();
-    if (popup != null && popup.isVisible()){
+    if (popup != null && popup.isVisible() && popup.isCancelOnWindowDeactivation()) {
       popup.cancel();
       return true;
     }

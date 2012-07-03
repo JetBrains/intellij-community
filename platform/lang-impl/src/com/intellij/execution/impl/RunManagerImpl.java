@@ -423,7 +423,8 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return myConfigurations.values();
   }
 
-  public static boolean canRunConfiguration(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Executor executor) {
+  public static boolean canRunConfiguration(@NotNull final RunnerAndConfigurationSettings configuration,
+                                            @NotNull final Executor executor) {
     try {
       configuration.checkSettings(executor);
     }

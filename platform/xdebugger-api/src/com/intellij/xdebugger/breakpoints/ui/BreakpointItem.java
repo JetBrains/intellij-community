@@ -34,13 +34,6 @@ import com.intellij.xdebugger.ui.DebuggerColors;
 
 import javax.swing.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 5/9/12
- * Time: 4:48 AM
- * To change this template use File | Settings | File Templates.
- */
 public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem> {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
 
@@ -52,14 +45,14 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
 
   public abstract boolean isDefaultBreakpoint();
 
-  protected boolean showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
+  protected static void showInEditor(DetailView panel, VirtualFile virtualFile, int line) {
     TextAttributes attributes =
       EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
     DetailView.PreviewEditorState state = DetailView.PreviewEditorState.create(virtualFile, line, attributes);
 
     if (state.equals(panel.getEditorState())) {
-      return false;
+      return;
     }
 
     panel.navigateInPreviewEditor(state);
@@ -81,7 +74,6 @@ public abstract class BreakpointItem extends ItemWrapper implements Comparable<B
         }
       }
     }
-    return true;
   }
 
   @Override

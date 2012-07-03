@@ -17,6 +17,7 @@ package com.intellij.ui.table;
 
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -192,7 +193,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     return row >= 0 && row < list.size() ? list.get(convertRowIndexToModel(row)) : null;
   }
 
-  @Nullable
+  @NotNull
   public List<Item> getSelectedObjects() {
     final int[] selectedRows = getSelectedRows();
     if (selectedRows == null || (selectedRows.length == 0)) return Collections.emptyList();

@@ -94,7 +94,7 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   @NotNull
   public static PsiElement[] createFileResource(@NotNull AndroidFacet facet,
                                                 @NotNull final ResourceType resType,
-                                                @NotNull String resName,
+                                                @Nullable String resName,
                                                 boolean chooseResName) {
     final CreateResourceFileAction action = getInstance();
 

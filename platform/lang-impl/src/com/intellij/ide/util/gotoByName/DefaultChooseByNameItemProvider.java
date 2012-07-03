@@ -62,7 +62,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     List<String> namesList = new ArrayList<String>();
     String[] names = base.getNames(everywhere);
-    getNamesByPattern(base, names, cancelled, namesList, namePattern);
+    getNamesByPattern(base, names, cancelled, namesList, namePattern,
+                      modifiedNamePattern != null ? NameUtil.MatchingCaseSensitivity.ALL : NameUtil.MatchingCaseSensitivity.NONE);
     if (cancelled.compute()) {
       throw new ProcessCanceledException();
     }
@@ -72,7 +73,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       final Set<String> matched = new HashSet<String>(namesList);
       List<String> additionalNamesList = new ArrayList<String>();
       namePattern = modifiedNamePattern;
-      getNamesByPattern(base, names, cancelled, additionalNamesList, namePattern);
+      getNamesByPattern(base, names, cancelled, additionalNamesList, namePattern, NameUtil.MatchingCaseSensitivity.NONE);
       additionalNamesList = ContainerUtil.filter(additionalNamesList, new Condition<String>() {
         @Override
         public boolean value(String name) {
@@ -90,13 +91,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     List<Object> sameNameElements = new SmartList<Object>();
     boolean previousElemSeparator = false;
+    boolean wasElement = false;
 
     for (String name : namesList) {
       if (cancelled.compute()) {
         throw new ProcessCanceledException();
       }
       if (name == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
-        previousElemSeparator = true;
+        previousElemSeparator = wasElement;
         continue;
       }
       final Object[] elements = base.getModel().getElementsByName(name, everywhere, namePattern);
@@ -112,12 +114,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
           if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
           if (!consumer.process(element)) return;
           previousElemSeparator = false;
+          wasElement = true;
         }
       }
       else if (elements.length == 1 && matchesQualifier(elements[0], qualifierPattern, base)) {
         if (previousElemSeparator && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return;
         if (!consumer.process(elements[0])) return;
         previousElemSeparator = false;
+        wasElement = true;
       }
     }
   }
@@ -171,7 +175,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return answer.isEmpty() ? Collections.singletonList(s) : answer;
   }
 
-  private static boolean matchesQualifier(final Object element, final String qualifierPattern, final ChooseByNameBase base) {
+  private static boolean matchesQualifier(final Object element,
+                                          final String qualifierPattern,
+                                          final ChooseByNameBase base) {
     final String name = base.getModel().getFullName(element);
     if (name == null) return false;
 
@@ -180,7 +186,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
         @Override
         public Pair<String, MinusculeMatcher> fun(String s) {
-          return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s)));
+          return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s), NameUtil.MatchingCaseSensitivity.NONE));
         }
       });
 
@@ -215,15 +221,16 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   @Override
   public List<String> filterNames(ChooseByNameBase base, String[] names, String pattern) {
     ArrayList<String> res = new ArrayList<String>();
-    getNamesByPattern(base, names, null, res, pattern);
+    getNamesByPattern(base, names, null, res, pattern, NameUtil.MatchingCaseSensitivity.NONE);
     return res;
   }
 
   private static void getNamesByPattern(ChooseByNameBase base,
-                                 String[] names,
-                                 @Nullable Computable<Boolean> cancelled,
-                                 final List<String> list,
-                                 String pattern)
+                                        String[] names,
+                                        @Nullable Computable<Boolean> cancelled,
+                                        final List<String> list,
+                                        String pattern,
+                                        NameUtil.MatchingCaseSensitivity caseSensitivity)
     throws ProcessCanceledException {
     if (!base.canShowListForEmptyPattern()) {
       LOG.assertTrue(!pattern.isEmpty(), base);
@@ -233,7 +240,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       pattern = pattern.substring(1);
     }
 
-    final MinusculeMatcher matcher = buildPatternMatcher(pattern);
+    final MinusculeMatcher matcher = buildPatternMatcher(pattern, caseSensitivity);
 
     try {
       for (String name : names) {
@@ -265,8 +272,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return matches;
   }
 
-  private static MinusculeMatcher buildPatternMatcher(String pattern) {
-    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+  private static MinusculeMatcher buildPatternMatcher(String pattern, NameUtil.MatchingCaseSensitivity caseSensitivity) {
+    return NameUtil.buildMatcher(pattern, caseSensitivity);
   }
 
   private static class MatchesComparator implements Comparator<String> {

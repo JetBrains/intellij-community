@@ -141,20 +141,16 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
     try {
-      checkFinishWithSharp(CompletionType.BASIC);
+      checkFinishWithSharp();
     }
     finally {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old;
     }
   }
 
-  public void testFinishWithSharpClassName() throws Throwable {
-    checkFinishWithSharp(CompletionType.CLASS_NAME);
-  }
-
-  private void checkFinishWithSharp(CompletionType completionType) throws Exception {
+  private void checkFinishWithSharp() throws Exception {
     myFixture.configureByFile("FinishWithSharp.java");
-    myFixture.complete(completionType);
+    myFixture.completeBasic();
     type('#');
     checkResultByFile("FinishWithSharp_after.java");
     final List<LookupElement> items = getLookup().getItems();

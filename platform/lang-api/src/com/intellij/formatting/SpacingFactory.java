@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,43 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Internal interface for creating spacing instances.
  */
 
 interface SpacingFactory {
-  public Spacing createSpacing(int minSpaces,
+
+  @NotNull
+  Spacing createSpacing(int minSpaces,
                                int maxSpaces,
                                int minLineFeeds,
                                boolean keepLineBreaks,
                                int keepBlankLines);
 
-  public Spacing getReadOnlySpacing();
+  @NotNull
+  Spacing getReadOnlySpacing();
+  
+  @NotNull
+  Spacing createDependentLFSpacing(int minSpaces,
+                                   int maxSpaces,
+                                   @NotNull TextRange dependencyRange,
+                                   boolean keepLineBreaks,
+                                   int keepBlankLines,
+                                   @NotNull DependentSpacingRule rule);
 
-  public Spacing createDependentLFSpacing(int minSpaces,
-                                          int maxSpaces,
-                                          TextRange dependance,
-                                          boolean keepLineBreaks,
-                                          int keepBlankLines);
+  @NotNull
+  Spacing createSafeSpacing(boolean keepLineBreaks,
+                            int keepBlankLines);
 
-  public Spacing createSafeSpacing(boolean keepLineBreaks,
-                                   int keepBlankLines);
+  @NotNull
+  Spacing createKeepingFirstColumnSpacing(final int minSpaces,
+                                          final int maxSpaces,
+                                          final boolean keepLineBreaks,
+                                          final int keepBlankLines);
 
-  public Spacing createKeepingFirstColumnSpacing(final int minSpaces,
-                                                 final int maxSpaces,
-                                                 final boolean keepLineBreaks,
-                                                 final int keepBlankLines);
-
+  @NotNull
   Spacing createSpacing(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean keepLineBreaks,
                      final int keepBlankLines, final int prefLineFeeds);
 }

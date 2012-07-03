@@ -111,7 +111,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   private class MySpeedSearch extends SpeedSearch {
     boolean searchFieldShown = false;
 
-    protected void update() {
+    public void update() {
       mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());

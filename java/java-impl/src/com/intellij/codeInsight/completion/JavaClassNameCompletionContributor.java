@@ -22,6 +22,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
@@ -30,11 +31,9 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
-import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,24 +50,33 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
 
-  public JavaClassNameCompletionContributor() {
-    extend(CompletionType.CLASS_NAME, psiElement(), new CompletionProvider<CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet _result) {
-        if (shouldShowSecondSmartCompletionHint(parameters) &&
-            CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.SECOND_CLASS_NAME_COMPLETION)) {
-          CompletionService.getCompletionService().setAdvertisementText(CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet _result) {
+    if (parameters.getCompletionType() == CompletionType.CLASS_NAME ||
+      parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
+      CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
+      addAllClasses(parameters, parameters.getInvocationCount() <= 1, result.getPrefixMatcher(), new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          _result.addElement(element);
         }
+      });
+    }
+  }
 
-        CompletionResultSet result = _result.withPrefixMatcher(CompletionUtil.findReferenceOrAlphanumericPrefix(parameters));
-        addAllClasses(parameters, parameters.getInvocationCount() <= 1,
-                      JavaCompletionSorting.addJavaSorting(parameters, result).getPrefixMatcher(), new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement element) {
-            _result.addElement(element);
-          }
-        });
-      }
-    });
+  private static boolean mayContainClassName(CompletionParameters parameters) {
+    PsiElement position = parameters.getPosition();
+    PsiFile file = position.getContainingFile();
+    if (file instanceof PsiPlainTextFile || file.getFileType() instanceof CustomSyntaxTableFileType) {
+      return true;
+    }
+    if (SkipAutopopupInStrings.isInStringLiteral(position)) {
+      return true;
+    }
+    if (PsiTreeUtil.getParentOfType(position, PsiComment.class, false) != null) {
+      return true;
+    }
+    return false;
   }
 
   public static void addAllClasses(CompletionParameters parameters,
@@ -77,22 +85,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
                                    @NotNull final Consumer<LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
 
-    final ElementFilter filter;
-    if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(insertedElement) ||
-        JavaCompletionContributor.INSIDE_METHOD_THROWS_CLAUSE.accepts(insertedElement) ||
-        JavaCompletionContributor.IN_CATCH_TYPE.accepts(insertedElement) ||
-        JavaCompletionContributor.IN_MULTI_CATCH_TYPE.accepts(insertedElement)) {
-      filter = new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
-    }
-    else if (JavaCompletionContributor.IN_RESOURCE_TYPE.accepts(insertedElement)) {
-      filter = new AssignableFromFilter(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
-    }
-    else if (IN_TYPE_PARAMETER.accepts(insertedElement)) {
-      filter = new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class));
-    }
-    else {
-      filter = TrueFilter.INSTANCE;
-    }
+    final ElementFilter filter =
+      IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) : TrueFilter.INSTANCE;
 
     final boolean inJavaContext = parameters.getPosition() instanceof PsiIdentifier;
     final boolean afterNew = AFTER_NEW.accepts(insertedElement);
@@ -114,13 +108,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    final boolean lookingForAnnotations = psiElement().afterLeaf("@").accepts(insertedElement);
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
     AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
         @Override
         public void consume(PsiClass psiClass) {
-          if (lookingForAnnotations && !psiClass.isAnnotationType()) return;
-
           if (filter.isAcceptable(psiClass, insertedElement)) {
             if (!inJavaContext) {
               consumer.consume(AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING));
@@ -179,15 +170,15 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
       return LangBundle.message("completion.no.suggestions") +
              "; " +
              StringUtil.decapitalize(
-                 CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CLASS_NAME_COMPLETION)));
+                 CompletionBundle.message("completion.class.name.hint.2", getActionShortcut(IdeActions.ACTION_CODE_COMPLETION)));
     }
 
     return null;
   }
 
   private static boolean shouldShowSecondSmartCompletionHint(final CompletionParameters parameters) {
-    return parameters.getCompletionType() == CompletionType.CLASS_NAME &&
-           parameters.getInvocationCount() == 1 &&
+    return parameters.getCompletionType() == CompletionType.BASIC &&
+           parameters.getInvocationCount() == 2 &&
            parameters.getOriginalFile().getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 }

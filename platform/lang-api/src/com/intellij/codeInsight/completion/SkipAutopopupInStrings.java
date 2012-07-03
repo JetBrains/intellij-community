@@ -39,15 +39,21 @@ public class SkipAutopopupInStrings extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(psiFile, offset));
-    if (definition != null) {
-      if (isStringLiteral(contextElement, definition) || isStringLiteral(contextElement.getParent(), definition) ||
-          isStringLiteralWithError(contextElement, definition) || isStringLiteralWithError(contextElement.getParent(), definition)) {
-        return ThreeState.YES;
-      }
+    if (isInStringLiteral(contextElement)) {
+      return ThreeState.YES;
     }
 
     return ThreeState.UNSURE;
+  }
+
+  public static boolean isInStringLiteral(PsiElement element) {
+    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(PsiUtilBase.findLanguageFromElement(element));
+    if (definition == null) {
+      return false;
+    }
+
+    return isStringLiteral(element, definition) || isStringLiteral(element.getParent(), definition) ||
+            isStringLiteralWithError(element, definition) || isStringLiteralWithError(element.getParent(), definition);
   }
 
   private static boolean isStringLiteral(PsiElement element, ParserDefinition definition) {

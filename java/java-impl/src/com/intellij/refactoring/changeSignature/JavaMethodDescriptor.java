@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl> {
+public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl, String> {
 
   private final PsiMethod myMethod;
 
