@@ -329,6 +329,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         final File file = new File(deleted);
         final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
         if (rd != null) {
+          if (Utils.IS_TEST_MODE) {
+            LOG.info("Applying deleted path from fs event: " + file.getPath());
+          }
           pd.fsState.registerDeleted(rd.module, file, rd.isTestRoot, timestamps);
         }
         else {
@@ -341,6 +344,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         final File file = new File(changed);
         final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
         if (rd != null) {
+          if (Utils.IS_TEST_MODE) {
+            LOG.info("Applying dirty path from fs event: " + file.getPath());
+          }
           pd.fsState.markDirty(file, rd, timestamps);
         }
         else {

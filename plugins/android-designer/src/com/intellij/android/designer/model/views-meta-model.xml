@@ -1447,6 +1447,15 @@
     </creation>
   </meta>
 
+  <wrap-in>
+    <item tag="FrameLayout"/>
+    <item tag="LinearLayout"/>
+    <item tag="TableLayout"/>
+    <item tag="TableRow"/>
+    <item tag="GridLayout"/>
+    <item tag="RelativeLayout"/>
+  </wrap-in>
+
   <!-- ================= Palette ================= -->
 
   <palette>

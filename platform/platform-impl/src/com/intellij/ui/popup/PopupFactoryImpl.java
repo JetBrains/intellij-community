@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -65,6 +66,14 @@ import java.util.HashMap;
 import java.util.List;
 
 public class PopupFactoryImpl extends JBPopupFactory {
+
+  /**
+   * Allows to get an editor position for which a popup with auxiliary information might be shown.
+   * <p/>
+   * Primary intention for this key is to hint popup position for the non-caret location.
+   */
+  public static final Key<VisualPosition> ANCHOR_POPUP_POSITION = Key.create("popup.anchor.position");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
   private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
@@ -78,7 +87,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public JBPopup createMessage(String text) {
-    return createListPopup(new BaseListPopupStep<String>(null, new String[]{text})); 
+    return createListPopup(new BaseListPopupStep<String>(null, new String[]{text}));
   }
 
   @Override
@@ -98,28 +107,34 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return null;
   }
 
-  public ListPopup createConfirmation(String title, final String yesText, String noText, final Runnable onYes, final Runnable onNo, int defaultOptionIndex) {
+  public ListPopup createConfirmation(String title,
+                                      final String yesText,
+                                      String noText,
+                                      final Runnable onYes,
+                                      final Runnable onNo,
+                                      int defaultOptionIndex)
+  {
 
-      final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, new String[]{yesText, noText}) {
-        public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
-          if (selectedValue.equals(yesText)) {
-            onYes.run();
-          }
-          else {
-            onNo.run();
-          }
-          return FINAL_CHOICE;
+    final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, new String[]{yesText, noText}) {
+      public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
+        if (selectedValue.equals(yesText)) {
+          onYes.run();
         }
-
-        public void canceled() {
+        else {
           onNo.run();
         }
+        return FINAL_CHOICE;
+      }
 
-        public boolean isMnemonicsNavigationEnabled() {
-          return true;
-        }
-      };
-      step.setDefaultOptionIndex(defaultOptionIndex);
+      public void canceled() {
+        onNo.run();
+      }
+
+      public boolean isMnemonicsNavigationEnabled() {
+        return true;
+      }
+    };
+    step.setDefaultOptionIndex(defaultOptionIndex);
 
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     return app == null || !app.isUnitTestMode() ? new ListPopupImpl(step) : new MockConfirmation(step, yesText);
@@ -127,13 +142,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
 
   private static ListPopup createActionGroupPopup(final String title,
-                                          final ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          boolean showNumbers,
-                                          boolean useAlphaAsNumbers,
-                                          boolean showDisabledActions,
-                                          boolean honorActionMnemonics,
-                                          final Runnable disposeCallback,
+                                                  final ActionGroup actionGroup,
+                                                  @NotNull DataContext dataContext,
+                                                  boolean showNumbers,
+                                                  boolean useAlphaAsNumbers,
+                                                  boolean showDisabledActions,
+                                                  boolean honorActionMnemonics,
+                                                  final Runnable disposeCallback,
                                           final int maxRowCount) {
     return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
                                   maxRowCount, null, null);
@@ -458,14 +473,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public RelativePoint guessBestPopupLocation(Editor editor) {
-    CaretModel caretModel = editor.getCaretModel();
-    final VisualPosition visualPosition;
-    if (caretModel.isUpToDate()) {
-      visualPosition = caretModel.getVisualPosition();
+    VisualPosition visualPosition = editor.getUserData(ANCHOR_POPUP_POSITION);
+
+    if (visualPosition == null) {
+      CaretModel caretModel = editor.getCaretModel();
+      if (caretModel.isUpToDate()) {
+        visualPosition = caretModel.getVisualPosition();
+      }
+      else {
+        visualPosition = editor.offsetToVisualPosition(caretModel.getOffset());
+      }
     }
-    else {
-      visualPosition = editor.offsetToVisualPosition(caretModel.getOffset());
-    }
+    
     Point p = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();

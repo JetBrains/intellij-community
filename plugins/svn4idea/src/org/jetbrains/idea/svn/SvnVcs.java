@@ -163,7 +163,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     @Override
     public boolean process(Exception e) {
       if (e instanceof SVNException) {
-        if (SVNErrorCode.SQLITE_ERROR.equals(((SVNException)e).getErrorMessage().getErrorCode())) {
+        final SVNErrorCode errorCode = ((SVNException)e).getErrorMessage().getErrorCode();
+        if (SVNErrorCode.WC_LOCKED.equals(errorCode)) {
+          return true;
+        } else if (SVNErrorCode.SQLITE_ERROR.equals(errorCode)) {
           Throwable cause = ((SVNException)e).getErrorMessage().getCause();
           if (cause instanceof SqlJetException) {
             return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());

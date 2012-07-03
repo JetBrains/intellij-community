@@ -33,6 +33,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 class ToolsPanel extends JPanel {
   static enum Direction {
@@ -487,5 +488,53 @@ class ToolsPanel extends JPanel {
       result.add(group.getName());
     }
     return ArrayUtil.toStringArray(result);
+  }
+
+  void addSelectionListener(TreeSelectionListener listener) {
+    myTree.getSelectionModel().addTreeSelectionListener(listener);
+  }
+
+  @Nullable
+  Tool getSingleSelectedTool() {
+    final TreePath[] selectionPaths = myTree.getSelectionPaths();
+    if (selectionPaths == null || selectionPaths.length != 1) {
+      return null;
+    }
+    Object toolOrToolGroup = ((CheckedTreeNode)selectionPaths[0].getLastPathComponent()).getUserObject();
+    if (toolOrToolGroup instanceof Tool) {
+      return (Tool)toolOrToolGroup;
+    }
+    return null;
+  }
+
+  public void selectTool(final String actionId) {
+    Object root = myTree.getModel().getRoot();
+    if (root == null || !(root instanceof CheckedTreeNode)) {
+      return;
+    }
+    final List<CheckedTreeNode> nodes = new ArrayList<CheckedTreeNode>();
+    new Object() {
+      @SuppressWarnings("unchecked")
+      public void collect(CheckedTreeNode node) {
+        if (node.isLeaf()) {
+          Object userObject = node.getUserObject();
+          if (userObject instanceof Tool && actionId.equals(((Tool)userObject).getActionId())) {
+            nodes.add(node);
+          }
+        }
+        else {
+          for (int i = 0; i < node.getChildCount(); i++) {
+            final TreeNode child = node.getChildAt(i);
+            if (child instanceof CheckedTreeNode) {
+              collect((CheckedTreeNode)child);
+            }
+          }
+        }
+      }
+    }.collect((CheckedTreeNode)root);
+    if (nodes.isEmpty()) {
+      return;
+    }
+    myTree.getSelectionModel().setSelectionPath(new TreePath(nodes.get(0).getPath()));
   }
 }

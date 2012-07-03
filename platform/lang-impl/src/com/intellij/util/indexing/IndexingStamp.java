@@ -50,13 +50,15 @@ public class IndexingStamp {
     private Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
         try {
-          long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
-          while(stream.available() > 0) {
-            ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
-            if (id != null) {
-              long stamp = IndexInfrastructure.getIndexCreationStamp(id);
-              if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
-              if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
+          if (stream.available() > 0) {
+            long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
+            while(stream.available() > 0) {
+              ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
+              if (id != null) {
+                long stamp = IndexInfrastructure.getIndexCreationStamp(id);
+                if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+                if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
+              }
             }
           }
         }

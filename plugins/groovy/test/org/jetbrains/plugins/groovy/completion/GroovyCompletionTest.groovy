@@ -712,17 +712,17 @@ format(<caret>)"""
   }
 
   public void testOnlyAnnotationsAfterAt() {
-    myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
+    myFixture.addClass "class AbcdClass {}; @interface AbcdXAnno {}"
     myFixture.configureByText "a.groovy", "@Abcd<caret> class A {}"
     myFixture.completeBasic()
-    myFixture.checkResult "@AbcdAnno<caret> class A {}"
+    assert myFixture.lookupElementStrings[0] == 'AbcdXAnno'
   }
 
   public void testOnlyAnnotationsAfterAtInMethodParameters() {
     myFixture.addClass "class AbcdClass {}; @interface AbcdAnno {}"
     myFixture.configureByText "a.groovy", "def foo(@Abcd<caret> ) {}"
     myFixture.completeBasic()
-    myFixture.checkResult "def foo(@AbcdAnno<caret> ) {}"
+    assert myFixture.lookupElementStrings[0] == 'AbcdAnno'
   }
 
   public void testNoCompletionInClassBodyComments() {
@@ -767,6 +767,8 @@ try {} catch (AbcdException"""
     myFixture.addClass "class AbcdClass {}; class AbcdException extends Throwable {}"
     myFixture.configureByText "a.groovy", "try {} catch (Abcd<caret> e) {}"
     myFixture.completeBasic()
+    assert myFixture.lookupElementStrings[0] == 'AbcdException'
+    myFixture.type('\n')
     myFixture.checkResult "try {} catch (AbcdException<caret> e) {}"
   }
 

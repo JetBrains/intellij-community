@@ -377,6 +377,7 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testMatchingDegree() {
+    assertPreference("jscote", "JsfCompletionTest", "JSCompletionTest", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("OCO", "OneCoolObject", "OCObject");
     assertPreference("MUp", "MavenUmlProvider", "MarkUp");
     assertPreference("MUP", "MarkUp", "MavenUmlProvider");
@@ -398,6 +399,11 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference(" EUC-", "x-EUC-TW", "EUC-JP");
     assertPreference(" boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  public void testPreferWordBoundaryMatch() {
+    assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+    assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testPreferEarlyMatching() {

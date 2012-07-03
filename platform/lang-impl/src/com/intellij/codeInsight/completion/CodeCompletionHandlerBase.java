@@ -86,6 +86,7 @@ public class CodeCompletionHandlerBase {
 
   public CodeCompletionHandlerBase(CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
     myCompletionType = completionType;
+    LOG.assertTrue(myCompletionType != CompletionType.CLASS_NAME, "Class name completion shouldn't be invoked directly");
     this.invokedExplicitly = invokedExplicitly;
     this.autopopup = autopopup;
     this.synchronous = synchronous;

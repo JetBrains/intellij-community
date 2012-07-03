@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,6 @@ import com.intellij.spellchecker.inspections.Splitter;
 public abstract class TokenConsumer {
   public void consumeToken(PsiElement element, Splitter splitter) {
     consumeToken(element, false, splitter);
-  }
-
-  public void consumeToken(PsiElement element, String value, int offset, Splitter splitter) {
-    String text = element.getText();
-    consumeToken(element, value, false, offset, TextRange.allOf(text), splitter);
   }
 
   public void consumeToken(PsiElement element, boolean useRename, Splitter splitter) {

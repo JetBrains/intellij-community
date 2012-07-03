@@ -24,6 +24,7 @@ import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.tools.*;
 import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.WrapInProvider;
 import com.intellij.designer.palette.PaletteGroup;
 import com.intellij.designer.palette.PaletteItem;
 import com.intellij.designer.palette.PaletteToolWindowManager;
@@ -727,6 +728,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public void dispose() {
     Disposer.dispose(myProgressIcon);
+  }
+
+  @Nullable
+  public WrapInProvider getWrapInProvider() {
+    return null;
   }
 
   public RadComponent getRootComponent() {

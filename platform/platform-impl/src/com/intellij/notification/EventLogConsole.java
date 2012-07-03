@@ -88,10 +88,13 @@ class EventLogConsole {
 
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
 
+    final ClearLog clearLog = new ClearLog();
+    clearLog.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.CONSOLE_CLEAR_ALL).getShortcutSet(), editor.getContentComponent());
+
     editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();
-        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, createPopupActions(actionManager));
+        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, createPopupActions(actionManager, clearLog));
         final MouseEvent mouseEvent = event.getMouseEvent();
         menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
       }
@@ -99,31 +102,12 @@ class EventLogConsole {
     return editor;
   }
 
-  private DefaultActionGroup createPopupActions(ActionManager actionManager) {
+  private DefaultActionGroup createPopupActions(ActionManager actionManager, ClearLog action) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new EditorCopyAction());
     group.add(actionManager.getAction(IdeActions.ACTION_COMPARE_CLIPBOARD_WITH_SELECTION));
     group.addSeparator();
-    group.add(new DumbAwareAction("Clear All") {
-      @Override
-      public void update(AnActionEvent e) {
-        final boolean enabled = e.getData(PlatformDataKeys.EDITOR) != null;
-        e.getPresentation().setEnabled(enabled);
-        e.getPresentation().setVisible(enabled);
-      }
-
-      public void actionPerformed(final AnActionEvent e) {
-        for (Notification notification : myProjectModel.getNotifications()) {
-          notification.expire();
-          myProjectModel.removeNotification(notification);
-        }
-        myProjectModel.setStatusMessage(null, 0);
-        final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-        if (editor != null) {
-          editor.getDocument().deleteString(0, editor.getDocument().getTextLength());
-        }
-      }
-    });
+    group.add(action);
     return group;
   }
 
@@ -240,4 +224,28 @@ class EventLogConsole {
     document.insertString(document.getTextLength(), s);
   }
 
+  private class ClearLog extends DumbAwareAction {
+    public ClearLog() {
+      super("Clear All");
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      final boolean enabled = e.getData(PlatformDataKeys.EDITOR) != null;
+      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setVisible(enabled);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      for (Notification notification : myProjectModel.getNotifications()) {
+        notification.expire();
+        myProjectModel.removeNotification(notification);
+      }
+      myProjectModel.setStatusMessage(null, 0);
+      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      if (editor != null) {
+        editor.getDocument().deleteString(0, editor.getDocument().getTextLength());
+      }
+    }
+  }
 }
