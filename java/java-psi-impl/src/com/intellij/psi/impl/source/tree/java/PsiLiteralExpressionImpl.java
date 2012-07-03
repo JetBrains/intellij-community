@@ -176,7 +176,7 @@ public class PsiLiteralExpressionImpl
     }
     if (type == JavaTokenType.STRING_LITERAL) {
       String innerText = getInnerText();
-      return innerText == null ? null : internedParseStringCharacters(text);
+      return innerText == null ? null : internedParseStringCharacters(innerText);
     }
     if (type == JavaTokenType.TRUE_KEYWORD) {
       return Boolean.TRUE;
