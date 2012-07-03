@@ -64,6 +64,6 @@ public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> 
     int[] offsets = new int[text.length()+1];
     PsiLiteralExpressionImpl.parseStringCharacters(text, unescapedText, offsets);
 
-    EscapeSequenceTokenizer.processTextWithOffsets(element, consumer, unescapedText, offsets);
+    EscapeSequenceTokenizer.processTextWithOffsets(element, consumer, unescapedText, offsets, 1);
   }
 }

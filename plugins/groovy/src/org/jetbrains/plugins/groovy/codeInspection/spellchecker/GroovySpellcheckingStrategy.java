@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.groovy.codeInspection.spellchecker;
 
 import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
+import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer;
 import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
@@ -27,31 +27,43 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 /**
  * @author peter
  */
 public class GroovySpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
   private final GrDocCommentTokenizer myDocCommentTokenizer = new GrDocCommentTokenizer();
+  private Tokenizer<PsiElement> myStringTokenizer = new Tokenizer<PsiElement>() {
+    @Override
+    public void tokenize(@NotNull PsiElement literal, TokenConsumer consumer) {
+      String text = GrStringUtil.removeQuotes(literal.getText());
+      if (!text.contains("\\")) {
+        consumer.consumeToken(literal, PlainTextSplitter.getInstance());
+      }
+      else {
+        StringBuilder unescapedText = new StringBuilder();
+        int[] offsets = new int[text.length() + 1];
+        GrStringUtil.parseStringCharacters(text, unescapedText, offsets);
+        EscapeSequenceTokenizer.processTextWithOffsets(literal, consumer, unescapedText, offsets, GrStringUtil.getStartQuote(literal.getText()).length());
+      }
+    }
+  };
 
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
+    if (TokenSets.STRING_LITERAL_SET.contains(element.getNode().getElementType())) {
+      return myStringTokenizer;
+    }
     if (element instanceof GrNamedElement) {
       final PsiElement name = ((GrNamedElement)element).getNameIdentifierGroovy();
       if (TokenSets.STRING_LITERAL_SET.contains(name.getNode().getElementType())) {
-        return new Tokenizer<GrNamedElement>() {
-          @Override
-          public void tokenize(@NotNull GrNamedElement element, TokenConsumer consumer) {
-            String text = name.getText();
-            TextRange range = GroovyStringLiteralManipulator.getLiteralRange(text);
-            consumer.consumeToken(name, text, false, 0, range, PlainTextSplitter.getInstance());
-          }
-        };
+        return EMPTY_TOKENIZER;
       }
     }
     if (element instanceof PsiDocComment) return myDocCommentTokenizer;
+    //if (element instanceof GrLiteralImpl && ((GrLiteralImpl)element).isStringLiteral()) return myStringTokenizer;
     return super.getTokenizer(element);
   }
 
