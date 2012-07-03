@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.GuiUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -35,14 +36,23 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof IProperty) {
-      @NonNls String info = "\n\"" + ((IProperty)element).getValue() + "\"";
-      PsiFile file = element.getContainingFile();
-      if (file != null) {
-        info += " [" + file.getName() + "]";
-      }
-      return info;
+      return "\"" + renderPropertyValue((IProperty)element) + "\"" + getLocationString(element);
     }
     return null;
+  }
+
+  private static String getLocationString(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    return file != null ? " [" + file.getName() + "]" : "";
+  }
+
+  @NotNull
+  private static String renderPropertyValue(IProperty prop) {
+    String raw = prop.getValue();
+    if (raw == null) {
+      return "<i>empty</i>";
+    }
+    return StringUtil.escapeXml(raw);
   }
 
   public String generateDoc(final PsiElement element, final PsiElement originalElement) {
@@ -63,11 +73,8 @@ public class PropertiesDocumentationProvider extends AbstractDocumentationProvid
           info += "</div>";
         }
       }
-      info += "\n<b>" + property.getName() + "</b>=\"" + ((IProperty)element).getValue() + "\"";
-      PsiFile file = element.getContainingFile();
-      if (file != null) {
-        info += " [" + file.getName() + "]";
-      }
+      info += "\n<b>" + property.getName() + "</b>=\"" + renderPropertyValue(((IProperty)element)) + "\"";
+      info += getLocationString(element);
       return info;
     }
     return null;
