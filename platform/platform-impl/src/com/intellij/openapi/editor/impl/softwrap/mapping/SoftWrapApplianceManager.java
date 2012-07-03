@@ -589,6 +589,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
           myContext.currentPosition.offset--;
           myContext.currentPosition.logicalColumn -= columnsDiff;
           myContext.currentPosition.visualColumn -= columnsDiff;
+          myContext.currentPosition.x -= pixelsDiff;
         }
       }
     }
@@ -897,6 +898,10 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
    */
   public boolean addListener(@NotNull SoftWrapAwareDocumentParsingListener listener) {
     return myListeners.add(listener);
+  }
+
+  public boolean removeListener(@NotNull SoftWrapAwareDocumentParsingListener listener) {
+    return myListeners.remove(listener);
   }
 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
