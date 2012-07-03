@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -173,6 +174,12 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   protected final void registerError(@NotNull PsiElement location,
                                      Object... infos) {
+    registerError(location, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, infos);
+  }
+
+  protected final void registerError(@NotNull PsiElement location,
+                                     final ProblemHighlightType highlightType,
+                                     Object... infos) {
     if (location.getTextLength() == 0 && !(location instanceof PsiFile)) {
       return;
     }
@@ -181,7 +188,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
       fix.setOnTheFly(onTheFly);
     }
     final String description = inspection.buildErrorString(infos);
-    holder.registerProblem(location, description, fixes);
+    holder.registerProblem(location, description, highlightType, fixes);
   }
 
   protected final void registerErrorAtOffset(@NotNull PsiElement location,
