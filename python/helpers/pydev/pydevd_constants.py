@@ -39,14 +39,7 @@ except AttributeError:
 #this value was raised from 200 to 1000.
 MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
-
 import os
-
-_nextThreadIdLock = threading.Lock()
 
 #=======================================================================================================================
 # Python 3?
@@ -74,6 +67,13 @@ except AttributeError:
         IS_64_BITS = False
 
 USE_LIB_COPY = not IS_PY3K and sys.version_info[1] >= 6
+
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
+
+_nextThreadIdLock = threading.Lock()
 
 #=======================================================================================================================
 # Jython?
