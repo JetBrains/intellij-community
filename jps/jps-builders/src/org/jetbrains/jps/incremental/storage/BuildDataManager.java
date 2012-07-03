@@ -115,6 +115,7 @@ public class BuildDataManager implements StorageOwner {
         }
       }
     }
+    saveVersion();
   }
 
   public void flush(boolean memoryCachesOnly) {
