@@ -16,9 +16,6 @@ except:
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
-USE_LIB_COPY = 1
-
-
 class DebugInfoHolder:
     #we have to put it here because it can be set through the command line (so, the 
     #already imported references would not have it).
@@ -75,6 +72,8 @@ except AttributeError:
         IS_64_BITS = struct.calcsize("P") * 8 > 32
     except:
         IS_64_BITS = False
+
+USE_LIB_COPY = not IS_PY3K and sys.version_info[1] >= 6
 
 #=======================================================================================================================
 # Jython?
