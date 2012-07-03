@@ -45,21 +45,28 @@ public class PyTransformConditionalExpressionIntention extends BaseIntentionActi
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyAssignmentStatement assignmentStatement =
+    final PyAssignmentStatement assignmentStatement =
           PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyAssignmentStatement.class);
     assert assignmentStatement != null;
-    PyConditionalExpression expression =
-      (PyConditionalExpression)assignmentStatement.getAssignedValue();
-    assert expression != null;
-    String condition = expression.getCondition().getText();
-    String truePart = expression.getTruePart().getText();
-    String falsePart = expression.getFalsePart().getText();
-    String target = assignmentStatement.getLeftHandSideExpression().getText();
-
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    String text = "if " + condition + ":\n\t" + target + " = " + truePart + "\nelse:\n\t" + target + " = " + falsePart;
-    PyIfStatement ifStatement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyIfStatement.class, text);
-    assignmentStatement.replace(ifStatement);
+    final PyExpression assignedValue =
+      assignmentStatement.getAssignedValue();
+    if (assignedValue instanceof PyConditionalExpression) {
+      final PyConditionalExpression expression = (PyConditionalExpression)assignedValue;
+      final PyExpression condition = expression.getCondition();
+      final PyExpression falsePart = expression.getFalsePart();
+      if (condition != null && falsePart != null) {
+        final String truePartText = expression.getTruePart().getText();
+        final PyExpression leftHandSideExpression = assignmentStatement.getLeftHandSideExpression();
+        if (leftHandSideExpression != null) {
+          final String targetText = leftHandSideExpression.getText();
+          final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+          final String text = "if " + condition.getText() + ":\n\t" + targetText + " = " + truePartText
+                        + "\nelse:\n\t" + targetText + " = " + falsePart.getText();
+          final PyIfStatement ifStatement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyIfStatement.class, text);
+          assignmentStatement.replace(ifStatement);
+        }
+      }
+    }
   }
 
 }

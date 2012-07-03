@@ -320,16 +320,18 @@ public class StatementMover extends LineMover {
             }
           }
         }
-        
-        PyStatementList stList = ((PyStatementPart)statementPart2).getStatementList();
-        if (stList != null && stList.getStatements().length > 0) {
-          if (down && stList.getStatements()[stList.getStatements().length-1] == element2) {
-            PyStatementPart parent = PsiTreeUtil.getParentOfType(statementPart2, PyStatementPart.class);
-            if (parent != null) {
-              stList = parent.getStatementList();
-              if (stList != null && stList.getStatements().length > 0) {
-                if (stList.getStatements()[stList.getStatements().length-1] == statementPart2) {
-                  statementPart2 = parent;
+
+        if (statementPart2 != null) {
+          PyStatementList stList = ((PyStatementPart)statementPart2).getStatementList();
+          if (stList != null && stList.getStatements().length > 0) {
+            if (down && stList.getStatements()[stList.getStatements().length-1] == element2) {
+              PyStatementPart parent = PsiTreeUtil.getParentOfType(statementPart2, PyStatementPart.class);
+              if (parent != null) {
+                stList = parent.getStatementList();
+                if (stList != null && stList.getStatements().length > 0) {
+                  if (stList.getStatements()[stList.getStatements().length-1] == statementPart2) {
+                    statementPart2 = parent;
+                  }
                 }
               }
             }

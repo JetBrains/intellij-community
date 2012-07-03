@@ -42,7 +42,11 @@ except AttributeError:
 #this value was raised from 200 to 1000.
 MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 
-import pydev_threading as threading
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
+
 import os
 
 _nextThreadIdLock = threading.Lock()

@@ -1064,7 +1064,7 @@ public class PyUtil {
 
   @Nullable
   public static PyClass getMetaClass(@NotNull final PyClass pyClass) {
-    final PyTargetExpression metaClassAttribute = pyClass.findClassAttribute(PyNames.DUNDER_METACLASS, true);
+    final PyTargetExpression metaClassAttribute = pyClass.findClassAttribute(PyNames.DUNDER_METACLASS, false);
     if (metaClassAttribute != null) {
       final PyExpression expression = metaClassAttribute.findAssignedValue();
       final PyClass metaclass = getMetaFromExpression(expression);

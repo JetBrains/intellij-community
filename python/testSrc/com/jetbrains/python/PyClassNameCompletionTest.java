@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -9,21 +8,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
  * @author yole
  */
 public class PyClassNameCompletionTest extends PyTestCase {
-  private boolean myOldAutocompleteValue;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    myOldAutocompleteValue = codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION;
-    codeInsightSettings.AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = true;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CLASS_NAME_COMPLETION = myOldAutocompleteValue;
-    super.tearDown();
-  }
 
   public void testSimple() {
     doTest();
@@ -53,7 +37,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
     final String path = "/completion/className/" + getTestName(true);
     myFixture.copyDirectoryToProject(path, "");
     myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
-    myFixture.complete(CompletionType.CLASS_NAME);
+    myFixture.complete(CompletionType.BASIC, 2);
     myFixture.checkResultByFile(path + "/" + getTestName(true) + ".after.py");
   }
 }

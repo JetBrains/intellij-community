@@ -339,7 +339,11 @@ public class PyNames {
    * @return true iff name is not reserved and is a well-formed identifier.
    */
   public static boolean isIdentifier(@NotNull @NonNls String name) {
-    return ! isReserved(name) && IDENTIFIER_PATTERN.matcher(name).matches();
+    return ! isReserved(name) && isIndentifierString(name);
+  }
+
+  public static boolean isIndentifierString(String name) {
+    return IDENTIFIER_PATTERN.matcher(name).matches();
   }
 
   public static boolean isRightOperatorName(@Nullable String name) {

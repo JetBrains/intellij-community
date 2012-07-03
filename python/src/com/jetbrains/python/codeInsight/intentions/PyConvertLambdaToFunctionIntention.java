@@ -17,6 +17,7 @@ import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
+import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -56,6 +57,10 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
     PyLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyLambdaExpression.class);
     if (lambdaExpression != null) {
       String name = "function";
+      while (IntroduceValidator.isDefinedInScope(name, lambdaExpression)) {
+        name += "1";
+      }
+
       PsiElement parent = lambdaExpression.getParent();
       if (parent instanceof PyAssignmentStatement) {
         name = ((PyAssignmentStatement)parent).getLeftHandSideExpression().getText();
@@ -70,25 +75,14 @@ public class PyConvertLambdaToFunctionIntention extends BaseIntentionAction {
       functionBuilder.statement("return " + body.getText());
       PyFunction function = functionBuilder.buildFunction(project, LanguageLevel.getDefault());
 
-      PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(lambdaExpression, PyFunction.class);
-      if (parentFunction != null ) {
-        PyClass parentClass = PsiTreeUtil.getTopmostParentOfType(parentFunction, PyClass.class);
-        if (parentClass != null) {
-          PsiElement classParent = parentClass.getParent();
-          function = (PyFunction)classParent.addBefore(function, parentClass);
-        } else {
-          PsiElement funcParent = parentFunction.getParent();
-          function = (PyFunction)funcParent.addBefore(function, parentFunction);
-        }
-      } else {
-        PyStatement statement = PsiTreeUtil.getTopmostParentOfType(lambdaExpression,
-                                                                   PyStatement.class);
-        if (statement != null) {
-          PsiElement statementParent = statement.getParent();
-          if (statementParent != null)
-            function = (PyFunction)statementParent.addBefore(function, statement);
-        }
+      final PyStatement statement = PsiTreeUtil.getParentOfType(lambdaExpression,
+                                                                 PyStatement.class);
+      if (statement != null) {
+        final PsiElement statementParent = statement.getParent();
+        if (statementParent != null)
+          function = (PyFunction)statementParent.addBefore(function, statement);
       }
+
       function = CodeInsightUtilBase
         .forcePsiPostprocessAndRestoreElement(function);
 

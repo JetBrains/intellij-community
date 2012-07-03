@@ -207,6 +207,10 @@ public class PyIntentionTest extends PyTestCase {
     doNegativeTest(PyBundle.message("INTN.convert.lambda.to.function"));
   }
 
+  public void testConvertLambdaToFunction2() {    //PY-6835
+    doTest(PyBundle.message("INTN.convert.lambda.to.function"));
+  }
+
   public void testConvertVariadicParam() { //PY-2264
     doTest(PyBundle.message("INTN.convert.variadic.param"));
   }
