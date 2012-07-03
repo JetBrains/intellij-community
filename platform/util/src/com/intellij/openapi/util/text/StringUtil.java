@@ -1658,13 +1658,11 @@ public class StringUtil extends StringUtilRt {
   @NonNls private static final String[] REPLACES_REFS = {"&lt;", "&gt;", "&amp;", "&#39;", "&quot;"};
   @NonNls private static final String[] REPLACES_DISP = {"<", ">", "&", "'", "\""};
 
-  @Nullable
   public static String unescapeXml(@Nullable final String text) {
     if (text == null) return null;
     return replace(text, REPLACES_REFS, REPLACES_DISP);
   }
 
-  @Nullable
   public static String escapeXml(@Nullable final String text) {
     if (text == null) return null;
     return replace(text, REPLACES_DISP, REPLACES_REFS);

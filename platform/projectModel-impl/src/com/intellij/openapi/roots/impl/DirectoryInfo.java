@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -80,12 +81,13 @@ public class DirectoryInfo {
            "}";
   }
 
+  @NotNull
   public List<OrderEntry> getOrderEntries() {
     return orderEntries == null ? Collections.<OrderEntry>emptyList() : orderEntries;
   }
 
   @SuppressWarnings({"unchecked"})
-  public void addOrderEntries(Collection<OrderEntry> orderEntries,
+  public void addOrderEntries(@NotNull Collection<OrderEntry> orderEntries,
                               @Nullable final DirectoryInfo parentInfo,
                               @Nullable final List<OrderEntry> oldParentEntries) {
     if (orderEntries.isEmpty()) {

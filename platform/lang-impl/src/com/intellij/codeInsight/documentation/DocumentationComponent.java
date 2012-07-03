@@ -146,7 +146,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
 
       {
-        enableEvents(KeyEvent.KEY_EVENT_MASK);
+        enableEvents(AWTEvent.KEY_EVENT_MASK);
       }
 
       protected void processKeyEvent(KeyEvent e) {
