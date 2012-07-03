@@ -381,6 +381,11 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFile.class, "m2.py");
   }
 
+  // PY-6866
+  public void testFunctionAndSubmoduleNamedIdentically() {
+    assertResolvesTo(PyFunction.class, "m1");
+  }
+
   private void prepareTestDirectory() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
