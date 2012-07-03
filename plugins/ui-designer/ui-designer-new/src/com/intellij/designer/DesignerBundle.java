@@ -40,7 +40,9 @@ public class DesignerBundle {
 
   private static ResourceBundle getBundle() {
     ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
+    if (ourBundle != null) {
+      bundle = ourBundle.get();
+    }
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(BUNDLE);
       ourBundle = new SoftReference<ResourceBundle>(bundle);

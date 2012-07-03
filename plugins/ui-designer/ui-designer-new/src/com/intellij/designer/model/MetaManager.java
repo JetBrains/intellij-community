@@ -45,7 +45,7 @@ public abstract class MetaManager {
   private static final String TAG = "tag";
   private static final String WRAP_IN = "wrap-in";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.model.MetaManager");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.designer.model.MetaManager");
 
   private final Map<String, MetaModel> myTag2Model = new HashMap<String, MetaModel>();
   private final Map<String, MetaModel> myTarget2Model = new HashMap<String, MetaModel>();
@@ -111,7 +111,7 @@ public abstract class MetaManager {
     String target = element.getAttributeValue("class");
     String tag = element.getAttributeValue(TAG);
 
-    MetaModel meta = new MetaModel(model, target, tag);
+    MetaModel meta = createModel(model, target, tag);
 
     String layout = element.getAttributeValue("layout");
     if (layout != null) {
@@ -144,41 +144,15 @@ public abstract class MetaManager {
 
     Element properties = element.getChild("properties");
     if (properties != null) {
-      Attribute inplace = properties.getAttribute("inplace");
-      if (inplace != null) {
-        meta.setInplaceProperties(StringUtil.split(inplace.getValue(), " "));
-      }
-
-      Attribute top = properties.getAttribute("top");
-      if (top != null) {
-        meta.setTopProperties(StringUtil.split(top.getValue(), " "));
-      }
-
-      Attribute normal = properties.getAttribute("normal");
-      if (normal != null) {
-        meta.setNormalProperties(StringUtil.split(normal.getValue(), " "));
-      }
-
-      Attribute important = properties.getAttribute("important");
-      if (important != null) {
-        meta.setImportantProperties(StringUtil.split(important.getValue(), " "));
-      }
-
-      Attribute expert = properties.getAttribute("expert");
-      if (expert != null) {
-        meta.setExpertProperties(StringUtil.split(expert.getValue(), " "));
-      }
-
-      Attribute deprecated = properties.getAttribute("deprecated");
-      if (deprecated != null) {
-        meta.setDeprecatedProperties(StringUtil.split(deprecated.getValue(), " "));
-      }
+      loadProperties(meta, properties);
     }
 
     Element morphing = element.getChild("morphing");
     if (morphing != null) {
       modelToMorphing.put(meta, StringUtil.split(morphing.getAttribute("to").getValue(), " "));
     }
+
+    loadOther(meta, element);
 
     if (tag != null) {
       myTag2Model.put(tag, meta);
@@ -187,6 +161,45 @@ public abstract class MetaManager {
     if (target != null) {
       myTarget2Model.put(target, meta);
     }
+  }
+
+  protected MetaModel createModel(Class<RadComponent> model, String target, String tag) throws Exception {
+    return new MetaModel(model, target, tag);
+  }
+
+  protected void loadProperties(MetaModel meta, Element properties) throws Exception {
+    Attribute inplace = properties.getAttribute("inplace");
+    if (inplace != null) {
+      meta.setInplaceProperties(StringUtil.split(inplace.getValue(), " "));
+    }
+
+    Attribute top = properties.getAttribute("top");
+    if (top != null) {
+      meta.setTopProperties(StringUtil.split(top.getValue(), " "));
+    }
+
+    Attribute normal = properties.getAttribute("normal");
+    if (normal != null) {
+      meta.setNormalProperties(StringUtil.split(normal.getValue(), " "));
+    }
+
+    Attribute important = properties.getAttribute("important");
+    if (important != null) {
+      meta.setImportantProperties(StringUtil.split(important.getValue(), " "));
+    }
+
+    Attribute expert = properties.getAttribute("expert");
+    if (expert != null) {
+      meta.setExpertProperties(StringUtil.split(expert.getValue(), " "));
+    }
+
+    Attribute deprecated = properties.getAttribute("deprecated");
+    if (deprecated != null) {
+      meta.setDeprecatedProperties(StringUtil.split(deprecated.getValue(), " "));
+    }
+  }
+
+  protected void loadOther(MetaModel meta, Element element) throws Exception {
   }
 
   private void loadGroup(Element element) throws Exception {
