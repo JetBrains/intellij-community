@@ -302,7 +302,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
+  private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
     final Collection<Module> modulesToClean = context.getProject().getModules().values();
     final Map<File, Set<Pair<String, Boolean>>> rootsToDelete = new HashMap<File, Set<Pair<String, Boolean>>>(); // map: outputRoot-> setOfPairs([module, isTest])
     final Set<File> annotationOutputs = new HashSet<File>(); // separate collection because no root intersection checks needed for annotation generated sources
@@ -385,7 +385,9 @@ public class IncProjectBuilder {
     }
 
     context.processMessage(new ProgressMessage("Cleaning output directories..."));
-    FileUtil.asyncDelete(filesToDelete);
+    myAsyncTasks.add(
+      FileUtil.asyncDelete(filesToDelete)
+    );
   }
 
   private static void appendRootInfo(Map<File, Set<Pair<String, Boolean>>> rootsToDelete, File out, Module module, boolean isTest) {
@@ -458,7 +460,9 @@ public class IncProjectBuilder {
               rootFiles.add(rd.root);
               context.getProjectDescriptor().fsState.clearRecompile(rd);
             }
-            FileUtil.asyncDelete(rootFiles);
+            myAsyncTasks.add(
+              FileUtil.asyncDelete(rootFiles)
+            );
           }
 
           try {
