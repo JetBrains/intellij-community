@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.tasks.github.GithubApiUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,8 +45,6 @@ import org.jetbrains.annotations.NotNull;
         )}
 )
 public class GithubSettings implements PersistentStateComponent<Element> {
-
-  public static final String DEFAULT_GITHUB_HOST = "github.com";
 
   private static final String GITHUB_SETTINGS_TAG = "GithubSettings";
   private static final String LOGIN = "Login";
@@ -157,7 +156,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public String getHost() {
-    return myHost != null ? myHost : DEFAULT_GITHUB_HOST;
+    return myHost != null ? myHost : GithubApiUtil.DEFAULT_GITHUB_HOST;
   }
 
   public boolean isAnonymous() {
@@ -190,7 +189,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setHost(final String host) {
-    myHost = host != null ? host : DEFAULT_GITHUB_HOST;
+    myHost = host != null ? host : GithubApiUtil.DEFAULT_GITHUB_HOST;
   }
 
   public void setAnonymousGist(final boolean anonymousGist) {

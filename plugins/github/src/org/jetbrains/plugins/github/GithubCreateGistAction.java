@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.tasks.github.GithubApiUtil;
 import git4idea.GitVcs;
 import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
@@ -158,7 +159,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     String requestBody = prepareJsonRequest(description, isPrivate, text, file);
     try {
-      JsonElement jsonElement = GithubUtil.postRequest("https://api.github.com", login, password, "/gists", requestBody);
+      JsonElement jsonElement = GithubApiUtil.postRequest("https://api.github.com", login, password, "/gists", requestBody);
       if (jsonElement == null) {
         LOG.info("Null JSON response returned by GitHub");
         showError(project, "Failed to create gist", "Empty JSON response returned by GitHub", null, null);
