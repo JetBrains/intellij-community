@@ -157,7 +157,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("jps-model")
       }
 
-      fileset(dir: "$home/jps/lib", includes: "optimizedFileManager.jar")
+      fileset(dir: "$home/jps/lib") {
+        include(name: "optimizedFileManager.jar")
+        include(name: "ecj-*.jar")
+      }
 
       fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
 

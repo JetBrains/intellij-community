@@ -50,9 +50,20 @@ public class EclipseCompiler extends ExternalCompiler {
 
   private final Project myProject;
   private final List<File> myTempFiles = new ArrayList<File>();
+  private static final String COMPILER_CLASS_NAME = "org.eclipse.jdt.core.compiler.batch.BatchCompiler";
   @NonNls private static final String PATH_TO_COMPILER_JAR = findJarPah();
 
   private static String findJarPah() {
+    try {
+      final Class<?> aClass = Class.forName(COMPILER_CLASS_NAME);
+      final String path = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+      if (path != null) {
+        return path;
+      }
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+
     File dir = new File(PathManager.getLibPath());
     File[] jars = dir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, String name) {

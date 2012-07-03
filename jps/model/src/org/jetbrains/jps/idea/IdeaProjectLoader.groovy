@@ -246,8 +246,9 @@ public class IdeaProjectLoader {
         configuration.excludes.addExcludedDirectory(getFileByUrl(it."@url"), Boolean.parseBoolean(it."@includeSubdirectories"))
       }
     }
-
+    configuration.options.putAll(loadOptions(componentTag));
     configuration.javacOptions.putAll(loadOptions(getComponent(root, "JavacSettings")))
+    configuration.eclipseOptions.putAll(loadOptions(getComponent(root, "EclipseCompilerSettings")))
 
     def annotationProcessingTag = componentTag?.annotationProcessing
     if (annotationProcessingTag != null) {
