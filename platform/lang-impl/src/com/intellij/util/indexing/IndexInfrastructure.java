@@ -82,7 +82,7 @@ public class IndexInfrastructure {
     finally {
       ourIndexIdToCreationStamp.clear();
       os.close();
-      file.setLastModified(Math.max(System.currentTimeMillis(), prevLastModifiedValue + 1000));
+      file.setLastModified(Math.max(System.currentTimeMillis(), prevLastModifiedValue + 2000));
     }
   }
 
