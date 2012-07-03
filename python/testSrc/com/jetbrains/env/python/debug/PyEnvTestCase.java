@@ -65,7 +65,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
   private void runTest(@NotNull PyTestTask testTask) {
     if (notEnvConfiguration()) {
-      System.out.println("Running under teamcity but not by Env configuration. Skipping.");
+      fail("Running under teamcity but not by Env configuration. Skipping.");
       return;
     }
 
