@@ -323,16 +323,17 @@ abstract class FoldRegionsTree {
   }
 
   public int getLastTopLevelIndexBefore(int offset) {
-    if (!isFoldingEnabledAndUpToDate()) return -1;
+    int[] endOffsets = myCachedEndOffsets;
+    if (!isFoldingEnabledAndUpToDate() || endOffsets == null) return -1;
 
     int start = 0;
-    int end = myCachedEndOffsets.length - 1;
+    int end = endOffsets.length - 1;
 
     while (start <= end) {
       int i = (start + end) / 2;
-      if (offset < myCachedEndOffsets[i]) {
+      if (offset < endOffsets[i]) {
         end = i - 1;
-      } else if (offset > myCachedEndOffsets[i]) {
+      } else if (offset > endOffsets[i]) {
         start = i + 1;
       }
       else {
