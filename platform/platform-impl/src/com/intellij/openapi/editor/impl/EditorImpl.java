@@ -2508,7 +2508,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                          @NotNull Rectangle clip,
                          @NotNull LogicalPosition clipStartPosition,
                          int clipStartOffset,
-                         int clipEndOffset) {
+                         int clipEndOffset)
+  {
     myCurrentFontType = null;
     myLastCache = null;
     final int plainSpaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, this);

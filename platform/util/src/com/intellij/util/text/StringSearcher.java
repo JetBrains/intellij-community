@@ -38,14 +38,14 @@ public class StringSearcher {
   }
 
   public StringSearcher(@NotNull String pattern, boolean caseSensitive, boolean forwardDirection) {
-    LOG.assertTrue(pattern.length() > 0);
+    LOG.assertTrue(!pattern.isEmpty());
     myPattern = pattern;
     myCaseSensitive = caseSensitive;
     myForwardDirection = forwardDirection;
     myPatternArray = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase().toCharArray();
     myPatternLength = myPatternArray.length;
     Arrays.fill(mySearchTable, -1);
-    myJavaIdentifier = pattern.length() == 0 ||
+    myJavaIdentifier = pattern.isEmpty() ||
                        Character.isJavaIdentifierPart(pattern.charAt(0)) &&
                        Character.isJavaIdentifierPart(pattern.charAt(pattern.length() - 1));
   }

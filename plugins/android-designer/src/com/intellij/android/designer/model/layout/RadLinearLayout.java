@@ -21,6 +21,7 @@ import com.intellij.android.designer.designSurface.layout.actions.LayoutMarginOp
 import com.intellij.android.designer.designSurface.layout.actions.LayoutWeightOperation;
 import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
 import com.intellij.android.designer.designSurface.layout.flow.FlowStaticDecorator;
+import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.android.designer.model.layout.actions.AbstractGravityAction;
@@ -34,6 +35,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -279,5 +281,72 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     }
 
     actionGroup.add(new OrientationAction(designer, components, horizontal, override));
+  }
+
+  @Override
+  public boolean isWrapIn(List<RadComponent> components) {
+    List<RadComponent> children = myContainer.getChildren();
+
+    int[] indexes = new int[components.size()];
+    for (int i = 0; i < indexes.length; i++) {
+      indexes[i] = children.indexOf(components.get(i));
+    }
+    Arrays.sort(indexes);
+
+    for (int i = 0; i < indexes.length - 1; i++) {
+      if (indexes[i + 1] - indexes[i] != 1) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  @Override
+  public void wrapIn(final RadViewComponent newParent, final List<RadViewComponent> components) throws Exception {
+    final boolean horizontal = isHorizontal();
+    RadViewComponent firstComponent = components.get(0);
+    boolean single = components.size() == 1;
+    String layoutWidth = single ? firstComponent.getTag().getAttributeValue("android:layout_width") : "wrap_content";
+    String layoutHeight = single ? firstComponent.getTag().getAttributeValue("android:layout_height") : "wrap_content";
+    String layoutGravity = firstComponent.getTag().getAttributeValue("android:layout_gravity");
+
+    if (horizontal) {
+      for (RadViewComponent component : components.subList(1, components.size())) {
+        String height = component.getTag().getAttributeValue("android:layout_height");
+        if ("fill_parent".equals(height) || "match_parent".equals(height)) {
+          layoutHeight = "fill_parent";
+          layoutGravity = null;
+        }
+        if (layoutGravity != null && layoutGravity.equals(component.getTag().getAttributeValue("android:layout_gravity"))) {
+
+        }
+      }
+    }
+    else {
+
+    }
+
+    if (newParent.getLayout() instanceof RadLinearLayout) {
+      RadLinearLayout layout = (RadLinearLayout)newParent.getLayout();
+      if (horizontal != layout.isHorizontal()) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            newParent.getTag().setAttribute("android:orientation", horizontal ? "horizontal" : "vertical");
+          }
+        });
+      }
+    }
+    else {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          for (RadViewComponent component : components) {
+            ModelParser.deleteAttribute(component.getTag(), "android:layout_gravity");
+          }
+        }
+      });
+    }
   }
 }

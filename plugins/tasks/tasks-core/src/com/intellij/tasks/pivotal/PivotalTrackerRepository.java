@@ -9,6 +9,7 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.SimpleComment;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HTTPMethod;
@@ -25,9 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.InputStream;
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,8 +40,6 @@ import java.util.regex.Pattern;
 public class PivotalTrackerRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.pivotal.PivotalTrackerRepository");
   private static final String API_URL = "/services/v3";
-  private static final Pattern DATE_PATTERN = Pattern.compile("(\\d\\d\\d\\d[/-]\\d\\d[/-]\\d\\d).*(\\d\\d:\\d\\d:\\d\\d).*");
-  private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
   private Pattern myPattern;
   private String myProjectId;
@@ -246,12 +243,9 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   }
 
   @Nullable
-  public static Date parseDate(final Element element, final String name) throws ParseException {
-    final Matcher m = DATE_PATTERN.matcher(element.getChildText(name));
-    if (m.find()) {
-      return DATE_FORMAT.parse(m.group(1).replace('-', '/') + " " + m.group(2));
-    }
-    return null;
+  private static Date parseDate(final Element element, final String name) throws ParseException {
+    String date = element.getChildText(name);
+    return TaskUtil.parseDate(date);
   }
 
   private HttpMethod doREST(final String request, final HTTPMethod type) throws Exception {

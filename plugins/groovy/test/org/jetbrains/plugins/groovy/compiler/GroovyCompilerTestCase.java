@@ -224,6 +224,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     file.setBinaryContent(file.contentsToByteArray(), file.getModificationStamp() + 1, file.getTimeStamp() + 1);
     File ioFile = VfsUtil.virtualToIoFile(file);
     assert ioFile.setLastModified(ioFile.lastModified() - 100000);
+    file.refresh(false, false);
   }
 
   protected static void setFileText(final PsiFile file, final String barText) throws IOException {

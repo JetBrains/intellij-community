@@ -362,8 +362,9 @@ public class ChooseRunConfigurationPopup {
       return new ItemWrapper<RunnerAndConfigurationSettings>(settings) {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
-          RunManagerEx.getInstanceEx(project).setSelectedConfiguration(getValue());
-          ProgramRunnerUtil.executeConfiguration(project, getValue(), executor);
+          RunnerAndConfigurationSettings config = getValue();
+          RunManagerEx.getInstanceEx(project).setSelectedConfiguration(config);
+          doRunConfiguration(config, executor, project);
         }
 
         @Override
@@ -470,7 +471,7 @@ public class ChooseRunConfigurationPopup {
             @Override
             public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
               ExecutionTargetManager.setActiveTarget(project, eachTarget);
-              ProgramRunnerUtil.executeConfiguration(project, selectedConfiguration, executor);
+              doRunConfiguration(selectedConfiguration, executor, project);
             }
 
             @Override
@@ -531,12 +532,7 @@ public class ChooseRunConfigurationPopup {
           if (dialog.isOK()) {
             SwingUtilities.invokeLater(new Runnable() {
               public void run() {
-                final RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
-                if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
-                  if (canRun(executor, configuration)) {
-                    ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
-                  }
-                }
+                doRunConfiguration(RunManager.getInstance(project).getSelectedConfiguration(), executor, project);
               }
             });
           }
@@ -616,7 +612,7 @@ public class ChooseRunConfigurationPopup {
               public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
                 manager.setTemporaryConfiguration(configuration);
                 RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-                ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+                doRunConfiguration(configuration, executor, project);
               }
 
               @Override
@@ -729,6 +725,14 @@ public class ChooseRunConfigurationPopup {
     }
   }
 
+  private static void doRunConfiguration(RunnerAndConfigurationSettings configuration, Executor executor, Project project) {
+    if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
+      if (canRun(executor, configuration)) {
+        ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
+      }
+    }
+  }
+
   private static final class ConfigurationActionsStep extends BaseListPopupStep<ActionWrapper> {
     private ConfigurationActionsStep(@NotNull final Project project,
                                      ChooseRunConfigurationPopup action,
@@ -761,7 +765,7 @@ public class ChooseRunConfigurationPopup {
             manager.setSelectedConfiguration(settings);
 
             ExecutionTargetManager.setActiveTarget(project, eachTarget);
-            ProgramRunnerUtil.executeConfiguration(project, settings, action.getCurrentExecutor(), eachTarget);
+            doRunConfiguration(settings, action.getCurrentExecutor(), project);
           }
         });
       }
@@ -776,7 +780,7 @@ public class ChooseRunConfigurationPopup {
               final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
               if (dynamic) manager.setTemporaryConfiguration(settings);
               manager.setSelectedConfiguration(settings);
-              ProgramRunnerUtil.executeConfiguration(project, settings, executor);
+              doRunConfiguration(settings, executor, project);
             }
           });
           isFirst = false;

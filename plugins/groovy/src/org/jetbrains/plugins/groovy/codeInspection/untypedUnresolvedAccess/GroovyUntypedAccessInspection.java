@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isDeclarationAssignment;
+import static org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isDeclarationAssignment;
 
 /**
  * @author Maxim.Medvedev

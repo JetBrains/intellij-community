@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Processor;
@@ -45,6 +46,8 @@ public class UnixProcessManager {
       }
     }
     catch (Exception e) {
+      Logger log = Logger.getInstance(UnixProcessManager.class);
+      log.warn("Can't load c library", e);
       C_LIB = null;
     }
   }

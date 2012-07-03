@@ -17,8 +17,12 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
+import com.intellij.openapi.editor.impl.DefaultEditorTextRepresentationHelper;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.TestFileType;
 import gnu.trove.TIntHashSet;
@@ -994,9 +998,37 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     assertEquals(text.substring(0, text.indexOf("line")) + text.substring(text.indexOf('9')), myEditor.getDocument().getText());
     assertEquals(position, caretModel.getVisualPosition());
   }
+
+  public void testNoUnnecessaryHorizontalScrollBar() throws IOException {
+    // Inspired by IDEA-87184
+    final String text = "12345678 abcdefgh";
+    init(15, 7, text);
+    myEditor.getCaretModel().moveToOffset(text.length());
+    final Ref<Boolean> fail = new Ref<Boolean>(true);
+    SoftWrapApplianceManager applianceManager = ((SoftWrapModelImpl)myEditor.getSoftWrapModel()).getApplianceManager();
+    SoftWrapAwareDocumentParsingListener listener = new SoftWrapAwareDocumentParsingListenerAdapter() {
+      @Override
+      public void beforeSoftWrapLineFeed(@NotNull EditorPosition position) {
+        if (position.x == text.indexOf("a") * 7) {
+          fail.set(false);
+        }
+      }
+    };
+    applianceManager.addListener(listener);
+    try {
+      backspace();
+    }
+    finally {
+      applianceManager.removeListener(listener);
+    }
+    assertFalse(fail.get());
+  }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {
-    int symbolWidthInPixels = 7;
+    init(visibleWidthInColumns, 7, fileText);
+  }
+
+  private void init(final int visibleWidthInColumns, final int symbolWidthInPixels, @NotNull String fileText) throws IOException {
     init(visibleWidthInColumns * symbolWidthInPixels, fileText, symbolWidthInPixels);
   }
   

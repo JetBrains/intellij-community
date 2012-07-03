@@ -79,7 +79,12 @@ public class MavenUtil {
   public static final String M2_CONF_FILE = "m2.conf";
   public static final String REPOSITORY_DIR = "repository";
   public static final String LIB_DIR = "lib";
-  public static final String SUPER_POM_PATH = "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML;
+
+  @SuppressWarnings("unchecked")
+  private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
+    Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML),
+    Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
+  };
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
 
@@ -341,7 +346,7 @@ public class MavenUtil {
                                              boolean interactive) throws IOException {
     FileTemplateManager manager = FileTemplateManager.getInstance();
     FileTemplate fileTemplate = manager.getJ2eeTemplate(templateName);
-    Properties allProperties = manager.getDefaultProperties();
+    Properties allProperties = manager.getDefaultProperties(project);
     if (!interactive) {
       allProperties.putAll(properties);
     }
@@ -687,30 +692,28 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static VirtualFile doResolveSuperPomFile(@Nullable File mavenHome) {
-    File lib = resolveMavenLib(mavenHome);
-    if (lib == null) return null;
+  public static VirtualFile doResolveSuperPomFile(@NotNull File mavenHome) {
+    File[] files = mavenHome.listFiles();
+    if (files == null) return null;
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(lib);
-    if (file == null) return null;
+    for (File library : files) {
 
-    VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-    if (root == null) return null;
+      for (Pair<Pattern, String> path : SUPER_POM_PATHS) {
+        if (path.first.matcher(library.getName()).matches()) {
+          VirtualFile libraryVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(library);
+          if (libraryVirtualFile == null) continue;
 
-    return root.findFileByRelativePath(SUPER_POM_PATH);
-  }
+          VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(libraryVirtualFile);
+          if (root == null) continue;
 
-  @Nullable
-  public static File resolveMavenLib(@NotNull File dir) {
-    File[] files = dir.listFiles();
-    if (files != null) {
-      Pattern pattern = Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar");
-      for (File each : files) {
-        if (pattern.matcher(each.getName()).matches()) {
-          return each;
+          VirtualFile pomFile = root.findFileByRelativePath(path.second);
+          if (pomFile != null) {
+            return pomFile;
+          }
         }
       }
     }
+
     return null;
   }
 

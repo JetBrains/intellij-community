@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
+import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -448,7 +448,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         PsiElement resolved = resolveResult.getElement();
         if (resolved == null) {
           GrExpression qualifier = referenceExpression.getQualifierExpression();
-          if (qualifier == null && GroovyAnnotator.isDeclarationAssignment(referenceExpression)) return;
+          if (qualifier == null && GrHighlightUtil.isDeclarationAssignment(referenceExpression)) return;
         }
 
         if (!checkCannotInferArgumentTypes(referenceExpression)) return;

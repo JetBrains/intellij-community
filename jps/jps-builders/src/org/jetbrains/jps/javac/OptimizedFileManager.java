@@ -17,7 +17,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * WARNING: Loaded via reflection, do not delete
@@ -28,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 class OptimizedFileManager extends DefaultFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
-  private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
+  private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
   private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = new HashMap<InputFileObject, SoftReference<CharBuffer>>();
   private final Map<File, SoftReference<File[]>> myDirectoryCache = new HashMap<File, SoftReference<File[]>>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
@@ -271,20 +270,12 @@ class OptimizedFileManager extends DefaultFileManager {
   }
 
   private class InputFileObject extends BaseFileObject {
-    /** The file's name.
-     */
-    private String name;
 
     /** The underlying file.
      */
     final File f;
 
     public InputFileObject(File f) {
-      this(f.getName(), f);
-    }
-
-    public InputFileObject(String name, File f) {
-      this.name = name;
       this.f = f;
     }
 
@@ -306,15 +297,16 @@ class OptimizedFileManager extends DefaultFileManager {
 
     @Deprecated
     public String getName() {
-      return name;
+      return f.getPath();
     }
 
-    public boolean isNameCompatible(String cn, JavaFileObject.Kind kind) {
-      String n = cn + kind.extension;
-      if (name.equals(n)) {
+    public boolean isNameCompatible(String simpleName, JavaFileObject.Kind kind) {
+      final String n = simpleName + kind.extension;
+      final String fileName = f.getName();
+      if (fileName.equals(n)) {
         return true;
       }
-      if (name.equalsIgnoreCase(n)) {
+      if (fileName.equalsIgnoreCase(n)) {
         try {
           // allow for Windows
           return (f.getCanonicalFile().getName().equals(n));

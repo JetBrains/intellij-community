@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
+import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.annotator.GroovyAnnotator.isDeclarationAssignment;
+import static org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isDeclarationAssignment;
 
 /**
  * @author Maxim.Medvedev
@@ -76,7 +76,7 @@ public class GroovyUnresolvedAccessInspection extends BaseInspection {
       PsiElement parent = refExpr.getParent();
       if (!(parent instanceof GrCall) && ResolveUtil.isKeyOfMap(refExpr)) return; // It's a key of map.
 
-      if (!GroovyAnnotator.shouldHighlightAsUnresolved(refExpr)) return;
+      if (!GrHighlightUtil.shouldHighlightAsUnresolved(refExpr)) return;
       
       if (qualifier != null && isBuilderInvocation(refExpr)) return;
 

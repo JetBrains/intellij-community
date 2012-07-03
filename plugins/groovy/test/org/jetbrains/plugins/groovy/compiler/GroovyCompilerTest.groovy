@@ -30,6 +30,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestLoggerFactory
 import junit.framework.AssertionFailedError
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 
 /**
  * @author peter
@@ -244,8 +247,20 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   public void testMakeInTests() throws Throwable {
     setupTestSources();
+    myFixture.project.messageBus.connect(testRootDisposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      void before(List<? extends VFileEvent> events) {
+      }
+
+      @Override
+      void after(List<? extends VFileEvent> events) {
+        println events
+      }
+    })
     myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
     assertEmpty(make());
+
+    println 'after first make'
 
     def sub = myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
       "  Super xxx() {}\n" +

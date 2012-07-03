@@ -215,7 +215,7 @@ public class OpenFileDescriptor implements Navigatable {
     }
   }
 
-  private void unfoldCurrentLine(@NotNull final Editor editor) {
+  private static void unfoldCurrentLine(@NotNull final Editor editor) {
     final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     final int offset = editor.getCaretModel().getOffset();
     int line = editor.getDocument().getLineNumber(offset);
@@ -226,7 +226,7 @@ public class OpenFileDescriptor implements Navigatable {
       @Override
       public void run() {
         for (FoldRegion region : allRegions) {
-          if (!region.isExpanded() && range.intersects(TextRange.create(region))) /*region.getStartOffset() <= offset && offset <= region.getEndOffset()*/ {
+          if (!region.isExpanded() && range.intersects(TextRange.create(region))) {
             region.setExpanded(true);
           }
         }
@@ -240,14 +240,15 @@ public class OpenFileDescriptor implements Navigatable {
 
   @Override
   public boolean canNavigate() {
-    return myProject != null;
+    return myFile.isValid();
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return myProject != null;
+    return canNavigate();
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }

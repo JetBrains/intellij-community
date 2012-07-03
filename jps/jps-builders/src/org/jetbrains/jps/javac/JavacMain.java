@@ -7,6 +7,7 @@ import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import javax.tools.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -41,19 +42,38 @@ public class JavacMain {
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
 
-    fileManager.setOutputDirectories(outputDirToRoots);
+    try {
+      fileManager.setOutputDirectories(outputDirToRoots);
+    }
+    catch (IOException e) {
+      fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+      return false;
+    }
+
     if (!classpath.isEmpty()) {
-      if (!fileManager.setLocation(StandardLocation.CLASS_PATH, classpath)) {
+      try {
+        fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
+      }
+      catch (IOException e) {
+        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
         return false;
       }
     }
     if (!platformClasspath.isEmpty()) {
-      if (!fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, platformClasspath)) {
+      try {
+        fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, platformClasspath);
+      }
+      catch (IOException e) {
+        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
         return false;
       }
     }
     if (!sourcePath.isEmpty()) {
-      if (!fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath)) {
+      try {
+        fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
+      }
+      catch (IOException e) {
+        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
         return false;
       }
     }

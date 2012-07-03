@@ -16,6 +16,8 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,24 +30,22 @@ import java.util.Set;
 public class Comparing {
   private Comparing() { }
 
-  public static <T> boolean equal(T arg1, T arg2){
+  public static <T> boolean equal(@Nullable T arg1, @Nullable T arg2){
     if (arg1 == null || arg2 == null){
       return arg1 == arg2;
     }
-    else if (arg1 instanceof Object[] && arg2 instanceof Object[]){
+    if (arg1 instanceof Object[] && arg2 instanceof Object[]){
       Object[] arr1 = (Object[])arg1;
       Object[] arr2 = (Object[])arg2;
       return Arrays.equals(arr1, arr2);
     }
-    else if (arg1 instanceof CharSequence && arg2 instanceof CharSequence) {
+    if (arg1 instanceof CharSequence && arg2 instanceof CharSequence) {
       return equal((CharSequence)arg1, (CharSequence)arg2, true);
     }
-    else{
-      return arg1.equals(arg2);
-    }
+    return arg1.equals(arg2);
   }
 
-  public static <T> boolean equal(T[] arr1, T[] arr2){
+  public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2){
     if (arr1 == null || arr2 == null){
       return arr1 == arr2;
     }
@@ -60,7 +60,7 @@ public class Comparing {
     return equal(arg1, arg2, true);
   }
 
-  public static boolean equal(CharSequence s1, CharSequence s2, boolean caseSensitive) {
+  public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
     if (s1 == s2) return true;
     if (s1 == null || s2 == null) return false;
 
@@ -84,7 +84,7 @@ public class Comparing {
     return true;
   }
 
-  public static boolean equal(String arg1, String arg2, boolean caseSensitive){
+  public static boolean equal(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive){
     if (arg1 == null || arg2 == null){
       return arg1 == arg2;
     }
@@ -97,11 +97,11 @@ public class Comparing {
     return strEqual(arg1, arg2, true);
   }
 
-  public static boolean strEqual(String arg1, String arg2, boolean caseSensitive){
+  public static boolean strEqual(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive){
     return equal(arg1 == null ? "" : arg1, arg2 == null ? "" : arg2, caseSensitive);
   }
 
-  public static <T> boolean haveEqualElements(Collection<T> a, Collection<T> b) {
+  public static <T> boolean haveEqualElements(@NotNull Collection<T> a, @NotNull Collection<T> b) {
     if (a.size() != b.size()) {
       return false;
     }
@@ -115,7 +115,7 @@ public class Comparing {
     return true;
   }
 
-  public static <T> boolean haveEqualElements(T[] a, T[] b) {
+  public static <T> boolean haveEqualElements(@Nullable T[] a, @Nullable T[] b) {
     if (a == null || b == null) {
       return a == b;
     }
@@ -133,7 +133,7 @@ public class Comparing {
     return true;
   }
 
-  public static int hashcode(Object obj) { return obj == null ? 0 : obj.hashCode(); }
+  public static int hashcode(@Nullable Object obj) { return obj == null ? 0 : obj.hashCode(); }
   public static int hashcode(Object obj1, Object obj2) { return hashcode(obj1) ^ hashcode(obj2); }
 
   public static int compare(byte o1, byte o2) {
@@ -152,7 +152,7 @@ public class Comparing {
     return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
   }
 
-  public static int compare(byte[] o1, byte[] o2) {
+  public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {
     if (o1 == o2) return 0;
     if (o1 == null) return 1;
     if (o2 == null) return -1;
@@ -167,7 +167,7 @@ public class Comparing {
     return 0;
   }
 
-  public static <T extends Comparable<T>> int compare(final T o1, final T o2) {
+  public static <T extends Comparable<T>> int compare(@Nullable final T o1, @Nullable final T o2) {
     if (o1 == null) return o2 == null ? 0 : -1;
     if (o2 == null) return 1;
     return o1.compareTo(o2);

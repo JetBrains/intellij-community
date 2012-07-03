@@ -63,7 +63,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     PsiMethod method = (PsiMethod) psiElement;
     Set<PsiMethod> methodAndOverriders = new HashSet<PsiMethod>();
     Set<PsiClass> containingClasses = new HashSet<PsiClass>();
-    List<PsiElement> renamedReferences = new ArrayList<PsiElement>();
+    LinkedHashSet<PsiElement> renamedReferences = new LinkedHashSet<PsiElement>();
     List<MemberHidesOuterMemberUsageInfo> outerHides = new ArrayList<MemberHidesOuterMemberUsageInfo>();
     List<MemberHidesStaticImportUsageInfo> staticImportHides = new ArrayList<MemberHidesStaticImportUsageInfo>();
 

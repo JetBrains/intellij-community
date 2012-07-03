@@ -260,7 +260,7 @@
 
     <readWriteAccessDetector implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReadWriteAccessDetector" order="before java"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesHandlerFactory"/>
-    <highlightUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GrHighlightOverridingMethodsHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GrHighlightHandlerFactory"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
     <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer"/>
     <lang.documentationProvider language="Groovy"
@@ -1363,7 +1363,10 @@
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.annotator.KeywordHighlightFactory</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.annotator.GrKeywordAndDeclarationHighlightFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.annotator.GrReferenceHighlighterFactory</implementation-class>
     </component>
     <component>
       <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>

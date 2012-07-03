@@ -588,14 +588,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     protected void fillMapWithOrderEntries(final VirtualFile root,
-                                           final Collection<OrderEntry> orderEntries,
+                                           @NotNull final Collection<OrderEntry> orderEntries,
                                            @Nullable final Module module,
                                            @Nullable final VirtualFile libraryClassRoot,
                                            @Nullable final VirtualFile librarySourceRoot,
                                            @Nullable final DirectoryInfo parentInfo, @Nullable final ProgressIndicator progress) {
       
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
-
         private final Stack<List<OrderEntry>> myEntries = new Stack<List<OrderEntry>>();
 
         @Override

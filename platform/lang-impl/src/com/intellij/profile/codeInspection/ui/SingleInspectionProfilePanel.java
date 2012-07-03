@@ -580,7 +580,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   static String renderSeverity(HighlightSeverity severity) {
-    return severity.toString().toLowerCase();
+    return StringUtil.capitalizeWords(severity.toString().toLowerCase(), true);
   }
 
   private void toggleToolNode(final InspectionConfigTreeNode toolNode) {

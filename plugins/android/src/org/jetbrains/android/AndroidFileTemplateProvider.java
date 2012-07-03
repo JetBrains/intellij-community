@@ -84,18 +84,18 @@ public class AndroidFileTemplateProvider implements FileTemplateGroupDescriptorF
                                         @NotNull VirtualFile rootDir,
                                         @NotNull String templateName,
                                         @NotNull String fileName) throws Exception {
-    return createFromTemplate(project, rootDir, templateName, fileName, FileTemplateManager.getInstance().getDefaultProperties());
+    return createFromTemplate(project, rootDir, templateName, fileName, FileTemplateManager.getInstance().getDefaultProperties(project));
   }
 
-  public static PsiElement createFromTemplate(String templateName, String fileName, PsiDirectory directory, Properties properties)
+  public static PsiElement createFromTemplate(String templateName, String fileName, @NotNull PsiDirectory directory, Properties properties)
     throws Exception {
     FileTemplateManager manager = FileTemplateManager.getInstance();
     FileTemplate template = manager.getJ2eeTemplate(templateName);
     return FileTemplateUtil.createFromTemplate(template, fileName, properties, directory);
   }
 
-  public static PsiElement createFromTemplate(String templateName, String fileName, PsiDirectory directory) throws Exception {
-    return createFromTemplate(templateName, fileName, directory, FileTemplateManager.getInstance().getDefaultProperties());
+  public static PsiElement createFromTemplate(String templateName, String fileName, @NotNull PsiDirectory directory) throws Exception {
+    return createFromTemplate(templateName, fileName, directory, FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()));
   }
 
   @NotNull

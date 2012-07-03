@@ -49,11 +49,11 @@ import java.util.regex.Pattern;
 public class FileHeaderChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.FileHeaderChecker");
 
-  static ProblemDescriptor checkFileHeader(final PsiFile file, final InspectionManager manager, boolean onTheFly) {
+  static ProblemDescriptor checkFileHeader(@NotNull final PsiFile file, final InspectionManager manager, boolean onTheFly) {
     FileTemplate template = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     TIntObjectHashMap<String> offsetToProperty = new TIntObjectHashMap<String>();
     String templateText = template.getText().trim();
-    String regex = templateToRegex(templateText, offsetToProperty);
+    String regex = templateToRegex(templateText, offsetToProperty, file.getProject());
     regex = StringUtil.replace(regex, "with", "(?:with|by)");
     regex = ".*("+regex+").*";
     String fileText = file.getText();
@@ -144,9 +144,9 @@ public class FileHeaderChecker {
     return new LocalQuickFix[]{replaceTemplateFix,editFileTemplateFix};
   }
 
-  private static String templateToRegex(final String text, TIntObjectHashMap<String> offsetToProperty) {
+  private static String templateToRegex(final String text, TIntObjectHashMap<String> offsetToProperty, Project project) {
     String regex = text;
-    @NonNls Collection<String> properties = new ArrayList<String>((Collection)FileTemplateManager.getInstance().getDefaultProperties().keySet());
+    @NonNls Collection<String> properties = new ArrayList<String>((Collection)FileTemplateManager.getInstance().getDefaultProperties(project).keySet());
     properties.add("PACKAGE_NAME");
 
     regex = escapeRegexChars(regex);

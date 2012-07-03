@@ -120,7 +120,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
 
     FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
 
-    Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
+    Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties(dir.getProject());
     Properties properties = new Properties(defaultProperties);
     properties.setProperty(FileTemplate.ATTRIBUTE_NAME, name);
 

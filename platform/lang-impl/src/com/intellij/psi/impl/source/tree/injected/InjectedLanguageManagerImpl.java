@@ -122,7 +122,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
 
   public void startRunInjectors(@NotNull final Document hostDocument, final boolean synchronously) {
     if (myProject.isDisposed()) return;
-    assert synchronously || !ApplicationManager.getApplication().isWriteAccessAllowed();
+    if (!synchronously && ApplicationManager.getApplication().isWriteAccessAllowed()) return;
     // use cached to avoid recreate PSI in alien project
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     final PsiFile hostPsiFile = documentManager.getCachedPsiFile(hostDocument);

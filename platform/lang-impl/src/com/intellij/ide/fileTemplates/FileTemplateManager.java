@@ -17,6 +17,7 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,13 @@ public abstract class FileTemplateManager{
 
   @NotNull 
   public abstract Properties getDefaultProperties();
+
+  @NotNull
+  public Properties getDefaultProperties(Project project) {
+    Properties properties = getDefaultProperties();
+    properties.setProperty("PROJECT_NAME", project.getName());
+    return properties;
+  }
 
   /**
    * Creates a new template with specified name.

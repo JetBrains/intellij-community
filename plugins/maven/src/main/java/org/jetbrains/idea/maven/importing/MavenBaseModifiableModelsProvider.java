@@ -40,13 +40,14 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 public abstract class MavenBaseModifiableModelsProvider implements MavenModifiableModelsProvider {
   protected ModifiableModuleModel myModuleModel;
   protected Map<Module, ModifiableRootModel> myRootModels = new THashMap<Module, ModifiableRootModel>();
   protected Map<Module, ModifiableFacetModel> myFacetModels = new THashMap<Module, ModifiableFacetModel>();
-  protected Map<Library, Library.ModifiableModel> myLibraryModels = new THashMap<Library, Library.ModifiableModel>();
+  protected Map<Library, Library.ModifiableModel> myLibraryModels = new IdentityHashMap<Library, Library.ModifiableModel>();
   protected ModifiableArtifactModel myArtifactModel;
   protected final Project myProject;
   private MavenBaseModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;

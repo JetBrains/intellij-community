@@ -183,7 +183,8 @@ public class LowLevelSearchUtil {
   }
 
   public static int searchWord(@NotNull CharSequence text,
-                               char[] textArray, int startOffset,
+                               char[] textArray,
+                               int startOffset,
                                int endOffset,
                                @NotNull StringSearcher searcher,
                                @Nullable ProgressIndicator progress) {

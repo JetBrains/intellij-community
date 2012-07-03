@@ -628,7 +628,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       return false;
     }
 
-    if (psiElement().withSuperParent(2, PsiConditionalExpression.class).accepts(position)) {
+    if (psiElement().withSuperParent(2, PsiConditionalExpression.class).andNot(psiElement().insideStarting(psiElement(PsiConditionalExpression.class))).accepts(position)) {
       return false;
     }
 

@@ -823,7 +823,7 @@ public class FSRecords implements Forceable {
     }
   }
 
-  public static void updateList(int id, int[] children) {
+  public static void updateList(int id, @NotNull int[] children) {
     try {
       w.lock();
       DbConnection.markDirty();

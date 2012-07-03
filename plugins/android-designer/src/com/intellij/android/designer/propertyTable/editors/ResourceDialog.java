@@ -210,7 +210,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
         }
       }
       myExtractStyleAction.getTemplatePresentation().setEnabled(enabled);
-      actionGroup.add(myExtractStyleAction);
+      //actionGroup.add(myExtractStyleAction); // XXX
     }
 
     return actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, actionGroup);
@@ -366,7 +366,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
         myResultResourceName = prefix + element.getName();
       }
 
-      panel.showPreview(element, isProjectPanel);
+      //panel.showPreview(element, isProjectPanel); // XXX
     }
   }
 
@@ -447,7 +447,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myComponent.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
       myPreviewPanel = new JPanel(new CardLayout());
-      myComponent.add(myPreviewPanel, BorderLayout.SOUTH);
+      //myComponent.add(myPreviewPanel, BorderLayout.SOUTH); // XXX
 
       myTextArea = new JTextArea(5, 20);
       myPreviewPanel.add(ScrollPaneFactory.createScrollPane(myTextArea), TEXT);

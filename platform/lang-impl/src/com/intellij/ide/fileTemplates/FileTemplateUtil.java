@@ -266,7 +266,7 @@ public class FileTemplateUtil{
                                               @Nullable ClassLoader classLoader) throws Exception {
     @NotNull final Project project = directory.getProject();
     if (props == null) {
-      props = FileTemplateManager.getInstance().getDefaultProperties();
+      props = FileTemplateManager.getInstance().getDefaultProperties(directory.getProject());
     }
     FileTemplateManager.getInstance().addRecentName(template.getName());
     fillDefaultProperties(props, directory);

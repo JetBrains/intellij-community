@@ -17,7 +17,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: 9/24/11
  */
-class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
+class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager{
 
   private final Context myContext;
   private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
@@ -37,26 +37,36 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     myContext = context;
   }
 
-  public boolean setOutputDirectories(final Map<File, Set<File>> outputDirToSrcRoots) {
+  public void setOutputDirectories(final Map<File, Set<File>> outputDirToSrcRoots) throws IOException{
     for (File outputDir : outputDirToSrcRoots.keySet()) {
       // this will validate output dirs
-      if (!setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputDir))) {
-        return false;
-      }
+      setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputDir));
     }
     myOutputsMap = outputDirToSrcRoots;
-    return true;
   }
 
-  public boolean setLocation(Location location, Iterable<? extends File> path) {
-    try {
-      getStdManager().setLocation(location, path);
-    }
-    catch (IOException e) {
-      myContext.reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-      return false;
-    }
-    return true;
+  public void setLocation(Location location, Iterable<? extends File> path) throws IOException{
+    getStdManager().setLocation(location, path);
+  }
+
+  public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(Iterable<? extends File> files) {
+    return getStdManager().getJavaFileObjectsFromFiles(files);
+  }
+
+  public Iterable<? extends JavaFileObject> getJavaFileObjects(File... files) {
+    return getStdManager().getJavaFileObjects(files);
+  }
+
+  public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(Iterable<String> names) {
+    return getStdManager().getJavaFileObjectsFromStrings(names);
+  }
+
+  public Iterable<? extends JavaFileObject> getJavaFileObjects(String... names) {
+    return getStdManager().getJavaFileObjects(names);
+  }
+
+  public Iterable<? extends File> getLocation(Location location) {
+    return getStdManager().getLocation(location);
   }
 
   public boolean isSameFile(FileObject a, FileObject b) {
@@ -212,5 +222,9 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (counter == 0 && myContext.isCanceled()) {
       throw new CompilationCanceledException();
     }
+  }
+
+  public Context getContext() {
+    return myContext;
   }
 }

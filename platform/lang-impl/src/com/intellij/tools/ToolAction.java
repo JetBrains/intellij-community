@@ -19,6 +19,7 @@ package com.intellij.tools;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 
 /**
@@ -34,11 +35,15 @@ public class ToolAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
-    final HackyDataContext dataContext = new HackyDataContext(e.getDataContext());
+    runTool(myActionId, e.getDataContext());
+  }
+
+  static void runTool(String actionId, DataContext context) {
+    MacroManager.getInstance().cacheMacrosPreview(context);
+    final HackyDataContext dataContext = new HackyDataContext(context);
     Tool[] tools = ToolManager.getInstance().getTools();
     for (Tool tool : tools) {
-      if (myActionId.equals(tool.getActionId())) {
+      if (actionId.equals(tool.getActionId())) {
         tool.execute(dataContext);
         break;
       }

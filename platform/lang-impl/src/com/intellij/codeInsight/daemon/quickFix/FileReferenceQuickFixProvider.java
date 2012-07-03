@@ -155,7 +155,7 @@ public class FileReferenceQuickFixProvider {
             FileTemplate template = FileTemplateManager.getInstance().getTemplate(templateName);
             if (template != null) {
               try {
-                return template.getText(FileTemplateManager.getInstance().getDefaultProperties());
+                return template.getText(FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()));
               } catch (IOException ex) {
                 throw new RuntimeException(ex);
               }

@@ -1,5 +1,8 @@
 package com.intellij.tasks.github;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,21 +12,13 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.pivotal.PivotalTrackerRepository;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.InputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -81,26 +76,9 @@ public class GitHubRepository extends BaseRepositoryImpl {
            (!StringUtil.isEmpty(getRepoName()) ? "/" + getRepoName() : "");
   }
 
-  private HttpMethod doREST(String request, boolean post) throws Exception {
-    final HttpClient client = getHttpClient();
-    client.getParams().setContentCharset("UTF-8");
-    String uri = getUrl() + request;
-    HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
-    configureHttpMethod(method);
-    client.executeMethod(method);
-    return method;
-  }
-
   @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
-    @SuppressWarnings({"unchecked"}) List<Object> children = getIssues(query);
-    List<Task> taskList = ContainerUtil.mapNotNull(children, new NullableFunction<Object, Task>() {
-      public Task fun(Object o) {
-        return createIssue((Element)o, false);
-      }
-    });
-
-    return taskList.toArray(new Task[taskList.size()]);
+    return ArrayUtil.toObjectArray(getIssues(query), Task.class);
   }
 
   @Override
@@ -108,44 +86,90 @@ public class GitHubRepository extends BaseRepositoryImpl {
     return GITHUB_HOST;
   }
 
-  private List getIssues(String query) throws Exception {
-    String url;
-    if (!StringUtil.isEmpty(query)) {
-      url = buildUrl("/search/") + "/open/";
-      url += encodeUrl(query);
-    } else {
-      url = buildUrl("/list/") + "/open";
+  @NotNull
+  private List<Task> getIssues(String query) throws Exception {
+    String path;
+    boolean noQuery = StringUtil.isEmpty(query);
+    if (!noQuery) {
+      query = encodeUrl(query);
+      path = "/legacy/issues/search/" + getRepoAuthor() + "/" + getRepoName() + "/open/" + encodeUrl(query);
     }
-    HttpMethod method = doREST(url, false);
-    InputStream stream = method.getResponseBodyAsStream();
-    Element element = new SAXBuilder(false).build(stream).getRootElement();
-
-    if (!"issues".equals(element.getName())) {
-      LOG.warn("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode());
-      throw new Exception("Error fetching issues for: " + url + ", HTTP status code: " + method.getStatusCode() +
-                          "\n" + element.getText());
+    else {
+      path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues";
     }
 
-    return element.getChildren("issue");
+    JsonElement response = GithubApiUtil.getRequest(getUrl(), getUsername(), getPassword(), path);
+
+    JsonArray issuesArray;
+    if (noQuery) {
+      if (response == null || !response.isJsonArray()) {
+        throw errorFetchingIssues(response);
+      }
+      issuesArray = response.getAsJsonArray();
+    }
+    else {
+      if (response == null || !response.isJsonObject() || !response.getAsJsonObject().has("issues")) {
+        throw errorFetchingIssues(response);
+      }
+      issuesArray = response.getAsJsonObject().get("issues").getAsJsonArray();
+    }
+
+    return parseTasksFromArray(issuesArray);
+  }
+
+  @NotNull
+  private List<Task> parseTasksFromArray(JsonArray issuesArray) {
+    List<Task> tasks = new ArrayList<Task>();
+    for (JsonElement element : issuesArray) {
+      Task issue = createIssue(element.getAsJsonObject());
+      if (issue == null) {
+        LOG.warn("Couldn't parse issue from " + element);
+      }
+      else {
+        tasks.add(issue);
+      }
+    }
+    return tasks;
+  }
+
+  @NotNull
+  private Exception errorFetchingIssues(@Nullable JsonElement response) {
+    return new Exception(String.format("Error fetching issues for: %s%nResponse: %s", getUrl(), response));
   }
 
   @Nullable
-  private Task createIssue(final Element element, boolean parseComments) {
-    final String id = element.getChildText("number");
+  private Task createIssue(JsonObject issueObject) {
+    final JsonElement id = issueObject.get("number");
     if (id == null) {
       return null;
     }
-    final String summary = element.getChildText("title");
+    final JsonElement summary = issueObject.get("title");
     if (summary == null) {
       return null;
     }
-    final boolean isClosed = !"open".equals(element.getChildText("state"));
-    final String description = element.getChildText("body");
+    JsonElement state = issueObject.get("state");
+    if (state == null) {
+      return null;
+    }
+    final boolean isClosed = !"open".equals(state.getAsString());
+    final JsonElement description = issueObject.get("body");
     final Ref<Date> updated = new Ref<Date>();
     final Ref<Date> created = new Ref<Date>();
     try {
-      updated.set(PivotalTrackerRepository.parseDate(element, "updated-at"));
-      created.set(PivotalTrackerRepository.parseDate(element, "created-at"));
+      JsonElement updatedAt = issueObject.get("updated_at");
+      if (updatedAt != null) {
+        updated.set(TaskUtil.parseDate(updatedAt.getAsString()));
+      }
+      else {
+        LOG.warn("Couldn't find 'updated-at' field for the issue: " + issueObject);
+      }
+      JsonElement createdAt = issueObject.get("created_at");
+      if (createdAt != null) {
+        created.set(TaskUtil.parseDate(createdAt.getAsString()));
+      }
+      else {
+        LOG.warn("Couldn't find 'created-at' field for the issue: " + issueObject);
+      }
     } catch (ParseException e) {
       LOG.warn(e);
     }
@@ -171,18 +195,18 @@ public class GitHubRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public String getSummary() {
-        return summary;
+        return summary.getAsString();
       }
 
       public String getDescription() {
-        return description;
+        return description.getAsString();
       }
 
       @NotNull
       @Override
       public Comment[] getComments() {
         try {
-          return fetchComments(id);
+          return fetchComments(id.getAsString());
         } catch (Exception e) {
           LOG.warn("Error fetching comments for " + id, e);
         }
@@ -228,30 +252,58 @@ public class GitHubRepository extends BaseRepositoryImpl {
   }
 
   private Comment[] fetchComments(final String id) throws Exception {
-    final String url = buildUrl("/comments/") + "/" + id;
-    final HttpMethod method = doREST(url, false);
-    final InputStream stream = method.getResponseBodyAsStream();
-    final Element element = new SAXBuilder(false).build(stream).getRootElement();
-    return element.getName().equals("comments") ? createComments(element) : Comment.EMPTY_ARRAY;
+    String path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues/" + id + "/comments";
+    JsonElement response = GithubApiUtil.getRequest(getUrl(), getUsername(), getPassword(), path);
+    if (response == null || !response.isJsonArray()) {
+      throw new Exception(String.format("Couldn't get information about issue %s%nResponse: %s", id, response));
+    }
+    return createComments(response.getAsJsonArray());
   }
 
-  private static Comment[] createComments(final Element element) {
+  private static Comment[] createComments(final JsonArray response) {
     final List<Comment> comments = new ArrayList<Comment>();
-    //noinspection unchecked
-    for (Element comment : (List<Element>)element.getChildren("comment")) {
-      final String text = comment.getChildText("body");
-      if (text == null) continue;
-      final String author = comment.getChildText("user");
-      final String gravatarId = comment.getChildText("gravatar-id");
-      final Ref<Date> date = new Ref<Date>();
-      try {
-        date.set(PivotalTrackerRepository.parseDate(comment, "created-at"));
-      } catch (ParseException e) {
-        LOG.warn(e);
+
+    for (JsonElement element : response) {
+      Comment comment = parseComment(element);
+      if (comment != null) {
+        comments.add(comment);
       }
-      comments.add(new GitHubComment(date.get(), author, text, gravatarId));
+      else {
+        LOG.warn("Couldn't parse comment from " + element);
+      }
     }
-    return comments.toArray(new Comment[comments.size()]);
+    return ArrayUtil.toObjectArray(comments, Comment.class);
+  }
+
+  @Nullable
+  private static Comment parseComment(JsonElement element) {
+    JsonObject commentObject = element.getAsJsonObject();
+    final JsonElement text = commentObject.get("body");
+    if (text == null) {
+      return null;
+    }
+    JsonElement user = commentObject.get("user");
+    if (user == null || !user.isJsonObject()) {
+      return null;
+    }
+
+    final JsonElement author = user.getAsJsonObject().get("login");
+    final JsonElement gravatar = user.getAsJsonObject().get("gravatar_id");
+    final Ref<Date> date = new Ref<Date>();
+    try {
+      JsonElement createdAt = commentObject.get("created_at");
+      if (createdAt != null) {
+        date.set(TaskUtil.parseDate(createdAt.getAsString()));
+      }
+      else {
+        LOG.warn("Couldn't get creation date for the comment: " + element);
+      }
+    }
+    catch (ParseException e) {
+      LOG.warn(e);
+    }
+    return new GitHubComment(date.get(), author == null ? null : author.getAsString(),
+                             text.getAsString(), gravatar == null ? null : gravatar.getAsString());
   }
 
   @Nullable
@@ -268,16 +320,12 @@ public class GitHubRepository extends BaseRepositoryImpl {
 
   @Override
   public Task findTask(String id) throws Exception {
-    final String realId = getRealId(id);
-    if (realId == null) return null;
-    HttpMethod method = doREST(buildUrl("/show/") + "/" + realId, false);
-    InputStream stream = method.getResponseBodyAsStream();
-    Element element = new SAXBuilder(false).build(stream).getRootElement();
-    return element.getName().equals("issue") ? createIssue(element, true) : null;
-  }
-
-  private String buildUrl(final String start) {
-    return API_URL + "/issues" + start + getRepoAuthor() + "/" + myRepoName;
+    String path = "/repos/" + getRepoAuthor() + "/" + getRepoName() + "/issues/" + id;
+    JsonElement response = GithubApiUtil.getRequest(getUrl(), getUsername(), getPassword(), path);
+    if (response == null || !response.isJsonObject()) {
+      throw new Exception(String.format("Couldn't get information about issue %s%nResponse: %s", id, response));
+    }
+    return createIssue(response.getAsJsonObject());
   }
 
   @Override

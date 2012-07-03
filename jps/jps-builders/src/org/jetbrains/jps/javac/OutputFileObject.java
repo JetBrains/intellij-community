@@ -4,7 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.Utils;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
 import java.io.*;
 import java.net.URI;
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     myOutputRoot = outputRoot;
     myRelativePath = relativePath;
     myFile = file;
-    myClassName = className;
+    myClassName = className != null? className.replace('/', '.') : null;
     mySourceFile = srcUri != null? Utils.convertToFile(srcUri) : null;
   }
 
