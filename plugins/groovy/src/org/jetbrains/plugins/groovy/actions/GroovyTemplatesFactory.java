@@ -80,7 +80,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
                                            @NonNls String... parameters) throws IncorrectOperationException {
     final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
 
-    Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties());
+    Properties properties = new Properties(FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()));
     JavaTemplateUtil.setPackageNameAttribute(properties, directory);
     properties.setProperty(NAME_TEMPLATE_PROPERTY, name);
     properties.setProperty(LOW_CASE_NAME_TEMPLATE_PROPERTY, name.substring(0, 1).toLowerCase() + name.substring(1));

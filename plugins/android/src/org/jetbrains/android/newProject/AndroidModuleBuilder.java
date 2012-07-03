@@ -459,7 +459,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         return;
       }
 
-      Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
+      Properties properties = FileTemplateManager.getInstance().getDefaultProperties(project);
       properties.setProperty("TARGET", platform.getTarget().hashString());
       AndroidFileTemplateProvider.createFromTemplate(project, contentRoot, AndroidFileTemplateProvider.DEFAULT_PROPERTIES_TEMPLATE,
                                                      SdkConstants.FN_PROJECT_PROPERTIES, properties);
