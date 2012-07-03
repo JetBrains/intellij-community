@@ -244,9 +244,11 @@ public class LookupCellRenderer implements ListCellRenderer {
       return getGrayedForeground(isSelected);
     }
 
-    final Color tailForeground = presentation.getTailForeground();
-    if (tailForeground != null) {
-      return tailForeground;
+    if (!isSelected) {
+      final Color tailForeground = presentation.getTailForeground();
+      if (tailForeground != null) {
+        return tailForeground;
+      }
     }
 
     return defaultForeground;

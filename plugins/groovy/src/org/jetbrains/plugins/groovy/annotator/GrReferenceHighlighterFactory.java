@@ -28,17 +28,15 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Max Medvedev
  */
-public class KeywordHighlightFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  protected KeywordHighlightFactory(Project project) {
+public class GrReferenceHighlighterFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+  protected GrReferenceHighlighterFactory(Project project) {
     super(project);
-
     TextEditorHighlightingPassRegistrar.getInstance(project).registerTextEditorHighlightingPass(this, null, null, false, -1);
   }
-
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     if (!(file instanceof GroovyFile)) return null;
-    return new KeywordHighlighter((GroovyFile)file, editor.getDocument());
+    return new GrReferenceHighlighter(editor.getDocument(), (GroovyFile)file);
   }
 }

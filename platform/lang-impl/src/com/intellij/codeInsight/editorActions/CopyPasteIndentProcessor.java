@@ -12,7 +12,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharArrayUtil;
@@ -21,7 +20,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author yole
@@ -149,11 +147,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
         }
 
-        final List<String> strings = StringUtil.split(pastedText, "\n");
-        //if (strings.get(strings.size() - 1))
-
-        if (strings.get(0).trim().startsWith("def") ||
-            strings.get(0).trim().startsWith("class")) endLine -=1;
+        if (caretColumn > value.getIndent()) endLine -=1;
 
         for (int i = startLine+1; i <= endLine; i++) {
           EditorActionUtil.indentLine(project, editor, i, value.getIndent());

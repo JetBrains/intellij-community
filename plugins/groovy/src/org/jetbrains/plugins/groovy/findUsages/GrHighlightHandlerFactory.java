@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author Max Medvedev
  */
-public class GrHighlightOverridingMethodsHandlerFactory implements HighlightUsagesHandlerFactory {
+public class GrHighlightHandlerFactory implements HighlightUsagesHandlerFactory {
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(Editor editor, PsiFile file) {
     int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
@@ -47,6 +47,9 @@ public class GrHighlightOverridingMethodsHandlerFactory implements HighlightUsag
       PsiElement grand = parent.getParent();
       if (!(grand instanceof GrTypeDefinition)) return null;
       return new GrHighlightOverridingMethodsHandler(editor, file, target, (GrTypeDefinition)grand);
+    }
+    else if (type == GroovyTokenTypes.kRETURN || type == GroovyTokenTypes.kTHROW) {
+      return new GrHighlightExitPointHandler(editor, file, target);
     }
     return null;
   }
