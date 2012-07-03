@@ -62,17 +62,14 @@ public class QuickDocOnMouseOverManager {
     }
     QUICK_DOC_DELAY_MILLIS = delay;
   }
-  
-  @NotNull private final EditorMouseMotionListener myEditorListener    = new MyEditorMouseListener();
-  @NotNull private final Alarm                     myAlarm             = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  @NotNull private final Runnable                  myRequest           = new MyShowQuickDocRequest();
-  @NotNull private final Runnable                  myHintCloseCallback = new Runnable() {
-    @Override
-    public void run() {
-      myActiveElements.clear();
-      myDocumentationManager = null;
-    }
-  };
+
+  @NotNull private final EditorMouseMotionListener myMouseListener       = new MyEditorMouseListener();
+  @NotNull private final VisibleAreaListener       myVisibleAreaListener = new MyVisibleAreaListener();
+  @NotNull private final CaretListener             myCaretListener       = new MyCaretListener();
+  @NotNull private final DocumentListener          myDocumentListener    = new MyDocumentListener();
+  @NotNull private final Alarm                     myAlarm               = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final Runnable                  myRequest             = new MyShowQuickDocRequest();
+  @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
 
   private final Map<Editor, PsiElement /** PSI element which is located under the current mouse position */> myActiveElements
     = new HashMap<Editor, PsiElement>();

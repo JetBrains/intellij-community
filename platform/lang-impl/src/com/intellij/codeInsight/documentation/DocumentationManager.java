@@ -121,7 +121,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return ServiceManager.getService(project, DocumentationManager.class);
   }
 
-  public DocumentationManager(Project project, ActionManagerEx managerEx) {
+  public DocumentationManager(final Project project, ActionManagerEx managerEx) {
     super(project);
     myActionManagerEx = managerEx;
     final AnActionListener actionListener = new AnActionListener() {
@@ -135,7 +135,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
           if (action == ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
           if (ActionPlaces.JAVADOC_INPLACE_SETTINGS.equals(event.getPlace())) return;
+          Component toFocus = myPreviouslyFocused;
           hint.cancel();
+          if (toFocus != null) {
+            IdeFocusManager.getInstance(project).requestFocus(toFocus, true);
+          }
         }
       }
 
@@ -341,18 +345,19 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-                                       .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
-                                       .setProject(project)
-                                       .addListener(updateProcessor)
-                                       .addUserData(updateProcessor)
-                                       .setKeyboardActions(actions)
-                                       .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
-                                       .setResizable(true)
-                                       .setMovable(true)
-                                       .setRequestFocus(requestFocus)
+      .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
+      .setProject(project)
+      .addListener(updateProcessor)
+      .addUserData(updateProcessor)
+      .setKeyboardActions(actions)
+      .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
+      .setResizable(true)
+      .setMovable(true)
+      .setRequestFocus(requestFocus)
       .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
       .setTitle(getTitle(element, false))
       .setCouldPin(pinCallback)
+      .setModalContext(false)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
           if (closeCallback != null) {
