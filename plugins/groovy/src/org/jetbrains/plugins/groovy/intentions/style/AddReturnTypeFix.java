@@ -26,7 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.GroovyAnnotator;
+import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -82,7 +82,7 @@ public class AddReturnTypeFix implements IntentionAction {
     }
 
     final GrMethod method = PsiTreeUtil.getParentOfType(at, GrMethod.class, false, GrTypeDefinition.class, GrClosableBlock.class);
-    if (method != null && GroovyAnnotator.getMethodHeaderTextRange(method).contains(offset)) {
+    if (method != null && GrHighlightUtil.getMethodHeaderTextRange(method).contains(offset)) {
       if (method.getReturnTypeElementGroovy() == null) {
         return method;
       }

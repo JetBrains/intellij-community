@@ -65,6 +65,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/afterNewThrowable";
 
     configureByFile(path + "/before1.java");
+    myFixture.type('\n');
     checkResultByFile(path + "/after1.java");
   }
 
@@ -81,6 +82,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/afterNewThrowable";
 
     configureByFile(path + "/before2.java");
+    myFixture.type('\n');
     checkResultByFile(path + "/after2.java");
   }
 

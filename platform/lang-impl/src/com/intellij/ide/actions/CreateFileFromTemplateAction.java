@@ -20,6 +20,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -42,23 +43,24 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
   protected PsiFile createFileFromTemplate(String name, FileTemplate template, PsiDirectory dir) {
 
     PsiElement element;
+    Project project = dir.getProject();
     try {
       element = FileTemplateUtil
-        .createFromTemplate(template, name, FileTemplateManager.getInstance().getDefaultProperties(), dir);
+        .createFromTemplate(template, name, FileTemplateManager.getInstance().getDefaultProperties(project), dir);
       final PsiFile psiFile = element.getContainingFile();
 
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
-        FileEditorManager.getInstance(dir.getProject()).openFile(virtualFile, true);
+        FileEditorManager.getInstance(project).openFile(virtualFile, true);
         String property = getDefaultTemplateProperty();
         if (property != null) {
-          PropertiesComponent.getInstance(dir.getProject()).setValue(property, template.getName());
+          PropertiesComponent.getInstance(project).setValue(property, template.getName());
         }
         return psiFile;
       }
     }
     catch (ParseException e) {
-      Messages.showErrorDialog(dir.getProject(), "Error parsing Velocity template: " + e.getMessage(), "Create File from Template");
+      Messages.showErrorDialog(project, "Error parsing Velocity template: " + e.getMessage(), "Create File from Template");
       return null;
     }
     catch (IncorrectOperationException e) {

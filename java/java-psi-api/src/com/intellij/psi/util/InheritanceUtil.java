@@ -53,7 +53,7 @@ public class InheritanceUtil {
     return isInheritorOrSelf(aClass, baseClass, checkDeep);
   }
 
-  public static boolean processSupers(@Nullable PsiClass aClass, boolean includeSelf, Processor<PsiClass> superProcessor) {
+  public static boolean processSupers(@Nullable PsiClass aClass, boolean includeSelf, @NotNull Processor<PsiClass> superProcessor) {
     if (aClass == null) return true;
 
     if (includeSelf && !superProcessor.process(aClass)) return false;
@@ -61,7 +61,7 @@ public class InheritanceUtil {
     return processSupers(aClass, superProcessor, new THashSet<PsiClass>());
   }
 
-  private static boolean processSupers(@NotNull PsiClass aClass, Processor<PsiClass> superProcessor, Set<PsiClass> visited) {
+  private static boolean processSupers(@NotNull PsiClass aClass, @NotNull Processor<PsiClass> superProcessor, @NotNull Set<PsiClass> visited) {
     if (!visited.add(aClass)) return true;
 
     for (final PsiClass intf : aClass.getInterfaces()) {
@@ -82,11 +82,11 @@ public class InheritanceUtil {
     return false;
   }
 
-  public static boolean isInheritor(@Nullable PsiClass psiClass, final String baseClassName) {
+  public static boolean isInheritor(@Nullable PsiClass psiClass, @NotNull final String baseClassName) {
     return isInheritor(psiClass, false, baseClassName);
   }
 
-  public static boolean isInheritor(@Nullable PsiClass psiClass, final boolean strict, final String baseClassName) {
+  public static boolean isInheritor(@Nullable PsiClass psiClass, final boolean strict, @NotNull final String baseClassName) {
     if (psiClass == null) {
       return false;
     }
@@ -105,21 +105,22 @@ public class InheritanceUtil {
    * @param results
    * @param includeNonProject
    */
-  public static void getSuperClasses(PsiClass aClass, Set<PsiClass> results, boolean includeNonProject) {
-    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject);
+  public static void getSuperClasses(@NotNull PsiClass aClass, @NotNull Set<PsiClass> results, boolean includeNonProject) {
+    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new THashSet<PsiClass>(), aClass.getManager());
   }
 
-  public static void getSuperClassesOfList(PsiClassType[] types, Set<PsiClass> results,
-                                                     boolean includeNonProject) {
+  private static void getSuperClassesOfList(@NotNull PsiClassType[] types,
+                                            @NotNull Set<PsiClass> results,
+                                            boolean includeNonProject,
+                                            @NotNull Set<PsiClass> visited,
+                                            @NotNull PsiManager manager) {
     for (PsiClassType type : types) {
       PsiClass resolved = type.resolve();
-      if (resolved != null) {
-        if (!results.contains(resolved)) {
-          if (includeNonProject || resolved.getManager().isInProject(resolved)) {
-            results.add(resolved);
-          }
-          getSuperClasses(resolved, results, includeNonProject);
+      if (resolved != null && visited.add(resolved)) {
+        if (includeNonProject || manager.isInProject(resolved)) {
+          results.add(resolved);
         }
+        getSuperClassesOfList(resolved.getSuperTypes(), results, includeNonProject, visited, manager);
       }
     }
   }

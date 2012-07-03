@@ -50,7 +50,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public PsiType getType() {
-    final IElementType type = getFirstChildNode().getElementType();
+    final IElementType type = getLiteralElementType();
     if (type == JavaTokenType.INTEGER_LITERAL) {
       return PsiType.INT;
     }
@@ -80,6 +80,10 @@ public class PsiLiteralExpressionImpl
     return null;
   }
 
+  public IElementType getLiteralElementType() {
+    return getFirstChildNode().getElementType();
+  }
+
   public String getCanonicalText() {
     final TreeElement literal = getFirstChildNode();
     final IElementType type = literal.getElementType();
@@ -88,8 +92,7 @@ public class PsiLiteralExpressionImpl
 
   @Override
   public Object getValue() {
-    final TreeElement literal = getFirstChildNode();
-    final IElementType type = literal.getElementType();
+    final IElementType type = getLiteralElementType();
     String text = NUMERIC_LITERALS.contains(type) ? getCanonicalText().toLowerCase() : getCanonicalText();
     final int textLength = text.length();
 
@@ -172,19 +175,8 @@ public class PsiLiteralExpressionImpl
       return Character.valueOf(chars.charAt(0));
     }
     if (type == JavaTokenType.STRING_LITERAL) {
-      if (StringUtil.endsWithChar(text, '\"')) {
-        if (textLength == 1) return null;
-        text = text.substring(1, textLength - 1);
-      }
-      else {
-        if (text.startsWith(QUOT) && text.endsWith(QUOT) && textLength > QUOT.length()) {
-          text = text.substring(QUOT.length(), textLength - QUOT.length());
-        }
-        else {
-          return null;
-        }
-      }
-      return internedParseStringCharacters(text);
+      String innerText = getInnerText();
+      return innerText == null ? null : internedParseStringCharacters(innerText);
     }
     if (type == JavaTokenType.TRUE_KEYWORD) {
       return Boolean.TRUE;
@@ -194,6 +186,25 @@ public class PsiLiteralExpressionImpl
     }
 
     return null;
+  }
+
+  @Nullable
+  public String getInnerText() {
+    String text = getCanonicalText();
+    int textLength = text.length();
+    if (StringUtil.endsWithChar(text, '\"')) {
+      if (textLength == 1) return null;
+      text = text.substring(1, textLength - 1);
+    }
+    else {
+      if (text.startsWith(QUOT) && text.endsWith(QUOT) && textLength > QUOT.length()) {
+        text = text.substring(QUOT.length(), textLength - QUOT.length());
+      }
+      else {
+        return null;
+      }
+    }
+    return text;
   }
 
   // convert text to number according to radix specified

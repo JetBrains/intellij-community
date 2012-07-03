@@ -187,14 +187,14 @@ public class CreateClassUtil {
   }
 
   @Nullable
-  public static PsiClass createClassNamed(String newClassName, String templateName, PsiDirectory directory) throws IncorrectOperationException {
-    return createClassNamed(newClassName, new Properties(FileTemplateManager.getInstance().getDefaultProperties()), templateName, directory);
+  public static PsiClass createClassNamed(String newClassName, String templateName, @NotNull PsiDirectory directory) throws IncorrectOperationException {
+    return createClassNamed(newClassName, FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()), templateName, directory);
   }
 
   @Nullable
-  public static PsiClass createClassNamed(String newClassName, Map classProperties, String templateName, PsiDirectory directory)
+  public static PsiClass createClassNamed(String newClassName, Map classProperties, String templateName, @NotNull PsiDirectory directory)
     throws IncorrectOperationException {
-    Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties();
+    Properties defaultProperties = FileTemplateManager.getInstance().getDefaultProperties(directory.getProject());
     Properties properties = new Properties(defaultProperties);
     properties.putAll(classProperties);
 
@@ -235,7 +235,7 @@ public class CreateClassUtil {
     try {
       final Properties properties = ApplicationManager.getApplication().isUnitTestMode() ?
                                     new Properties() :
-                                    FileTemplateManager.getInstance().getDefaultProperties();
+                                    FileTemplateManager.getInstance().getDefaultProperties(classDirectory.getProject());
       return createClassNamed(className, new Properties(properties), templateName, classDirectory);
     }
     catch (IncorrectOperationException e) {
