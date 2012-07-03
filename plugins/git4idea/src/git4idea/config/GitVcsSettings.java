@@ -69,7 +69,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public SshExecutable SSH_EXECUTABLE = SshExecutable.IDEA_SSH;
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
-    public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.CONVERT;
+    public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.ASK;
     public boolean PUSH_AUTO_UPDATE = false;
     public GitBranchSyncSetting SYNC_SETTING = GitBranchSyncSetting.NOT_DECIDED;
     public String RECENT_GIT_ROOT_PATH = null;
