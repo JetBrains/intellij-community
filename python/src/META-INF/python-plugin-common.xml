@@ -482,6 +482,10 @@
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.LocaleLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.django.annotator.LocaleLineMarkerProvider"/>
 
+    <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.DjangoBlockInheritorsLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoBlockInheritorsLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoBlockInheritorsLineMarkerProvider"/>
+
     <languageInjector implementation="com.jetbrains.django.codeInsight.DjangoRegexpInjector"/>
 
     <liveTemplateContext implementation="com.jetbrains.django.lang.template.DjangoTemplateContextType"/>
@@ -610,6 +614,9 @@
 
     <projectService serviceInterface="org.jetbrains.yaml.YAMLElementGenerator"
                     serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
+
+    <fileBasedIndex implementation="com.jetbrains.django.lang.template.DjangoBlockInheritanceIndex"/>
+    <definitionsSearch implementation="com.jetbrains.django.lang.template.DjangoBlockInheritorsSearchExecutor"/>
 
     <!-- Buildout -->
     <facetType implementation="com.jetbrains.python.buildout.BuildoutFacetType"/>
@@ -800,6 +807,7 @@
     <knownDecoratorProvider implementation="com.jetbrains.django.codeInsight.DjangoKnownDecoratorProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.django.codeInsight.DjangoDocumentationLinkProvider"/>
     <templateLanguageCoreTags language="DjangoTemplate" implementationClass="com.jetbrains.django.model.DjangoTagLibrary"/>
+
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
