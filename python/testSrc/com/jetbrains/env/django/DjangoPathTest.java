@@ -8,7 +8,6 @@ import com.jetbrains.django.run.DjangoServerRunConfigurationType;
 import com.jetbrains.django.testRunner.DjangoTestsConfigurationType;
 import com.jetbrains.django.testRunner.DjangoTestsRunConfiguration;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
@@ -54,17 +53,11 @@ public class DjangoPathTest extends PyEnvTestCase {
       outputList.add(norm(s));
     }
 
-    String helpersRoot = PythonHelpersLocator.getHelpersRoot().getPath();
-    helpersRoot = norm(helpersRoot);
-
     testDataPath = norm(testDataPath);
 
 
     Assert.assertEquals(testDataPath, outputList.get(1));
 
-    assertTrue(outputList.contains(helpersRoot));
-    assertEquals(outputList.indexOf(helpersRoot),
-                 outputList.lastIndexOf(helpersRoot));
     assertEquals(outputList.indexOf(testDataPath),
                  outputList.lastIndexOf(testDataPath));
   }
@@ -115,9 +108,6 @@ public class DjangoPathTest extends PyEnvTestCase {
         }
 
         assertEquals(getTestDataPath(), outputList.get(1));
-        assertTrue(outputList.contains(PythonHelpersLocator.getHelperPath("pycharm/")));
-        assertEquals(outputList.indexOf(PythonHelpersLocator.getHelperPath("pycharm/")),
-                     outputList.lastIndexOf(PythonHelpersLocator.getHelperPath("pycharm/")));
         assertEquals(outputList.indexOf(getTestDataPath()),
                      outputList.lastIndexOf(getTestDataPath()));
       }
