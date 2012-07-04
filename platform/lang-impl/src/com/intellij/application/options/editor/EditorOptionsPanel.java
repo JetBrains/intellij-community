@@ -380,7 +380,7 @@ public class EditorOptionsPanel {
     isModified |= isModified(myCbEnsureBlankLineBeforeCheckBox, editorSettings.isEnsureNewLineAtEOF());
     isModified |= isModified(myCbShowQuickDocOnCheckBox, editorSettings.isShowQuickDocOnMouseOverElement());
     Long quickDocDelay = getQuickDocDelayFromGui();
-    if (quickDocDelay != null && quickDocDelay.equals(Long.valueOf(editorSettings.getQuickDocOnMouseOverElementDelayMillis()))) {
+    if (quickDocDelay != null && !quickDocDelay.equals(Long.valueOf(editorSettings.getQuickDocOnMouseOverElementDelayMillis()))) {
       return true;
     }
 
