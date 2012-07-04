@@ -25,6 +25,12 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl,
     super(original);
   }
 
+  @Override
+  @NotNull
+  public JpsLibraryType<?> getType() {
+    return myContainer.getChild(TYPED_DATA_KIND).getType();
+  }
+
   @NotNull
   @Override
   public List<JpsLibraryRoot> getRoots(@NotNull JpsOrderRootType rootType) {

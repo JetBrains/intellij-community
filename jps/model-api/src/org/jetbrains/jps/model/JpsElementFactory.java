@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -27,6 +28,9 @@ public abstract class JpsElementFactory {
   @NotNull
   public abstract JpsLibraryReference createLibraryReference(@NotNull String libraryName,
                                                              @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference);
+
+  @NotNull
+  public abstract JpsLibraryReference createSdkReference(@NotNull String sdkName, @NotNull JpsSdkType<?> sdkType);
 
   @NotNull
   public abstract JpsElementReference<JpsProject> createProjectReference();

@@ -31,7 +31,10 @@ public class JpsLibraryTableLoader {
   }
 
   public static JpsLibrary loadLibrary(Element libraryElement) {
-    String name = libraryElement.getAttributeValue("name");
+    return loadLibrary(libraryElement, libraryElement.getAttributeValue("name"));
+  }
+
+  public static JpsLibrary loadLibrary(Element libraryElement, String name) {
     String typeId = libraryElement.getAttributeValue("type");
     JpsLibrary library = JpsElementFactory.getInstance().createLibrary(name, getLibraryType(typeId));
 

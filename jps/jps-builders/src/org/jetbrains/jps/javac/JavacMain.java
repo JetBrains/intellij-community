@@ -22,6 +22,7 @@ public class JavacMain {
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-verbose", "-proc:only", "-implicit:class", "-implicit:none"
   ));
+  private static final JavaCompiler SYSTEM_JAVA_COMPILER = ToolProvider.getSystemJavaCompiler();
 
   public static boolean compile(Collection<String> options,
                                 final Collection<File> sources,
@@ -31,8 +32,28 @@ public class JavacMain {
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer outConsumer,
                                 final OutputFileConsumer outputSink,
-                                CanceledStatus canceledStatus) {
-    final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+                                CanceledStatus canceledStatus, boolean useEclipseCompiler) {
+    JavaCompiler compiler = null;
+    if (useEclipseCompiler) {
+      for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) {
+        compiler = javaCompiler;
+        break;
+      }
+      if (compiler == null) {
+        compiler = SYSTEM_JAVA_COMPILER;
+      }
+    }
+    else {
+      compiler = SYSTEM_JAVA_COMPILER;
+    }
+
+    final boolean nowUsingJavac = compiler == SYSTEM_JAVA_COMPILER;
+
+    if (nowUsingJavac && useEclipseCompiler) {
+      final String message = "Eclipse Batch Compiler was not found in classpath";
+      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
+      return false;
+    }
 
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
@@ -81,12 +102,17 @@ public class JavacMain {
     //noinspection IOResourceOpenedButNotSafelyClosed
     final LineOutputWriter out = new LineOutputWriter() {
       protected void lineAvailable(String line) {
-        outConsumer.outputLineAvailable(line);
+        if (nowUsingJavac) {
+          outConsumer.outputLineAvailable(line);
+        }
+        else {
+          // todo: filter too verbose eclipse output?
+        }
       }
     };
 
     try {
-      final Collection<String> _options = prepareOptions(options);
+      final Collection<String> _options = prepareOptions(options, compiler);
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, outConsumer, _options, null, fileManager.toJavaFileObjects(sources)
       );
@@ -117,9 +143,11 @@ public class JavacMain {
     return true;
   }
 
-  private static Collection<String> prepareOptions(final Collection<String> options) {
+  private static Collection<String> prepareOptions(final Collection<String> options, JavaCompiler compiler) {
     final List<String> result = new ArrayList<String>();
-    result.add("-implicit:class");
+    if (compiler == SYSTEM_JAVA_COMPILER) {
+      result.add("-implicit:class"); // the option supported by javac only
+    }
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {

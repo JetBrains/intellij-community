@@ -37,11 +37,15 @@ public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Se
 
     final List<? extends T> elements = parent.getContainer().getChild(myCollectionKind).getElements();
     for (T element : elements) {
-      if (element.getName().equals(myElementName)) {
+      if (resolvesTo(element)) {
         return element;
       }
     }
     return null;
+  }
+
+  protected boolean resolvesTo(T element) {
+    return element.getName().equals(myElementName);
   }
 
   public JpsElementReference<? extends JpsCompositeElement> getParentReference() {

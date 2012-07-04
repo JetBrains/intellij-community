@@ -12,8 +12,10 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryKind;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleKind;
+import org.jetbrains.jps.model.module.impl.JpsSdkReferencesTableImpl;
 
 import java.util.List;
 
@@ -29,6 +31,7 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
     super(model, eventDispatcher);
     myContainer.setChild(JpsModuleKind.MODULE_COLLECTION_KIND);
     myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_KIND);
+    myContainer.setChild(JpsSdkReferencesTableImpl.KIND);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
   }
 
@@ -69,6 +72,12 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   @Override
   public JpsLibraryCollection getLibraryCollection() {
     return myLibraryCollection;
+  }
+
+  @Override
+  @NotNull
+  public JpsSdkReferencesTable getSdkReferencesTable() {
+    return myContainer.getChild(JpsSdkReferencesTableImpl.KIND);
   }
 
   @NotNull

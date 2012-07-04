@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
 
@@ -58,6 +59,7 @@ public class JpsProjectLoader {
 
   private void loadFromDirectory(File dir) {
     initMacroMap(dir.getParentFile());
+    loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
     loadModules(loadRootElement(new File(dir, "modules.xml")));
     final File[] libraryFiles = new File(dir, "libraries").listFiles();
     if (libraryFiles != null) {
@@ -72,8 +74,21 @@ public class JpsProjectLoader {
   private void loadFromIpr(File iprFile) {
     initMacroMap(iprFile.getParentFile());
     final Element root = loadRootElement(iprFile);
+    loadProjectRoot(root);
     loadModules(root);
     loadProjectLibraries(findComponent(root, "libraryTable"));
+  }
+
+  private void loadProjectRoot(Element root) {
+    Element rootManagerElement = findComponent(root, "ProjectRootManager");
+    if (rootManagerElement != null) {
+      String sdkName = rootManagerElement.getAttributeValue("project-jdk-name");
+      String sdkTypeId = rootManagerElement.getAttributeValue("project-jdk-type");
+      if (sdkName != null && sdkTypeId != null) {
+        JpsSdkType<?> sdkType = JpsModuleLoader.getSdkType(sdkTypeId);
+        myProject.getSdkReferencesTable().setSdkReference(sdkType, JpsElementFactory.getInstance().createSdkReference(sdkName, sdkType));
+      }
+    }
   }
 
   private void initMacroMap(File projectBaseDir) {

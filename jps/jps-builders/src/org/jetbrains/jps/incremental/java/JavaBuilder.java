@@ -419,8 +419,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     try {
       final boolean rc;
       if (USE_EMBEDDED_JAVAC) {
+        final boolean useEclipse = useEclipseCompiler(context);
         rc = JavacMain.compile(
-          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus()
+          options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), useEclipse
         );
       }
       else {
@@ -440,6 +441,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     finally {
       ensurePendingTasksCompleted();
     }
+  }
+
+  private static boolean useEclipseCompiler(CompileContext context) {
+    return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase(context.getProject().getCompilerConfiguration().getOptions().get("DEFAULT_COMPILER"));
   }
 
   private void ensurePendingTasksCompleted() {
@@ -563,8 +568,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static int getJavacServerHeapSize(CompileContext context) {
     int heapSize = 512;
     final Project project = context.getProject();
-    final Map<String, String> javacOpts = project.getCompilerConfiguration().getJavacOptions();
-    final String hSize = javacOpts.get("MAXIMUM_HEAP_SIZE");
+    final CompilerConfiguration config = project.getCompilerConfiguration();
+    final Map<String, String> opts = useEclipseCompiler(context)? config.getEclipseOptions() : config.getJavacOptions();
+    final String hSize = opts.get("MAXIMUM_HEAP_SIZE");
     if (hSize != null) {
       try {
         heapSize = Integer.parseInt(hSize);
@@ -765,10 +771,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     //options.add("-verbose");
     final Project project = context.getProject();
     final CompilerConfiguration compilerConfig = project.getCompilerConfiguration();
-    final Map<String, String> javacOpts = compilerConfig.getJavacOptions();
-    final boolean debugInfo = !"false".equals(javacOpts.get("DEBUGGING_INFO"));
-    final boolean nowarn = "true".equals(javacOpts.get("GENERATE_NO_WARNINGS"));
-    final boolean deprecation = !"false".equals(javacOpts.get("DEPRECATION"));
+    final Map<String, String> opts = useEclipseCompiler(context)? compilerConfig.getEclipseOptions() : compilerConfig.getJavacOptions();
+    final boolean debugInfo = !"false".equals(opts.get("DEBUGGING_INFO"));
+    final boolean nowarn = "true".equals(opts.get("GENERATE_NO_WARNINGS"));
+    final boolean deprecation = !"false".equals(opts.get("DEPRECATION"));
     if (debugInfo) {
       options.add("-g");
     }
@@ -779,7 +785,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add("-nowarn");
     }
 
-    final String customArgs = javacOpts.get("ADDITIONAL_OPTIONS_STRING");
+    final String customArgs = opts.get("ADDITIONAL_OPTIONS_STRING");
     if (customArgs != null) {
       final StringTokenizer customOptsTokenizer = new StringTokenizer(customArgs, " \t\r\n");
       boolean skip = false;

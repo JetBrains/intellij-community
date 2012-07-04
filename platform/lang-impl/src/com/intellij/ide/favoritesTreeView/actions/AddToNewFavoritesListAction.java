@@ -35,7 +35,7 @@ import java.util.Collection;
 class AddToNewFavoritesListAction extends AnAction {
  public AddToNewFavoritesListAction() {
    super(IdeBundle.message("action.add.to.new.favorites.list"),
-         IdeBundle.message("action.add.to.new.favorites.list"), AllIcons.General.AddFavoritesList);
+         "Add To New Favorites List", AllIcons.General.AddFavoritesList);
  }
 
  public void actionPerformed(AnActionEvent e) {

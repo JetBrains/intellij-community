@@ -66,3 +66,18 @@ class X {
         l.add("c");
     }
 }
+
+class InnerClassTest {
+  public static int foo = 0;
+
+  public static void bar() {
+    System.out.println();
+  }
+
+  public static class Inner {
+    public void test1() {
+      InnerClassTest.bar();                     // (1)
+      System.out.println(InnerClassTest.foo);   // (2)
+    }
+  }
+}

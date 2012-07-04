@@ -96,9 +96,12 @@ public class AbstractRerunFailedTestsAction extends AnAction {
       final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
       assert runner != null;
-      runner.execute(executor, new ExecutionEnvironment(runner, myEnvironment.getExecutionTarget(),
-                                                        myEnvironment.getRunnerAndConfigurationSettings(),
-                                                        myEnvironment.getProject()));
+      runner.execute(executor, new ExecutionEnvironment(profile,
+                                                        myEnvironment.getExecutionTarget(),
+                                                        profile.getProject(),
+                                                        myEnvironment.getRunnerSettings(),
+                                                        myEnvironment.getConfigurationSettings(),
+                                                        null));
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

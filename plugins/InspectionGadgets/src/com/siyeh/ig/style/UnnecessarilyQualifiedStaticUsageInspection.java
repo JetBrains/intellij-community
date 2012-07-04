@@ -182,7 +182,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                                     PsiClass.class);
       final PsiClass qualifyingClass = (PsiClass)resolvedQualifier;
       if (containingClass == null ||
-          !containingClass.equals(qualifyingClass)) {
+          !PsiTreeUtil.isAncestor(qualifyingClass, containingClass, false)) {
         return false;
       }
       final Project project = referenceElement.getProject();

@@ -45,5 +45,15 @@ class SpockTest {
 '''
     checkTypos()
   }
-  
+
+  public void testStringEscapes() {
+    myFixture.configureByText 'a.groovy', '''
+def foo = "\\ntest \\n<TYPO descr="Typo: In word 'dddd'">dddd</TYPO>"
+def foo1 = '\\ntest \\n<TYPO descr="Typo: In word 'dddd'">dddd</TYPO>'
+def bar = """\\ntest \\n<TYPO descr="Typo: In word 'dddd'">dddd</TYPO>"""
+def bar1 = \'''\\ntest \\n<TYPO descr="Typo: In word 'dddd'">dddd</TYPO>\'''
+'''
+    checkTypos()
+  }
+
 }
