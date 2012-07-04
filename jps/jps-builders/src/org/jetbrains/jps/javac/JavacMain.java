@@ -16,6 +16,7 @@ import java.util.*;
  */
 public class JavacMain {
   private static final boolean IS_VM_6_VERSION = System.getProperty("java.version", "1.6").contains("1.6");
+  private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
@@ -58,7 +59,8 @@ public class JavacMain {
     for (File outputDir : outputDirToRoots.keySet()) {
       outputDir.mkdirs();
     }
-    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink, canceledStatus));
+    final boolean canUseOptimizedmanager = nowUsingJavac || ECLIPSE_COMPILER_SINGLE_THREADED_MODE;
+    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, outConsumer, outputSink, canceledStatus, canUseOptimizedmanager));
 
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
@@ -173,19 +175,21 @@ public class JavacMain {
     public ContextImpl(@NotNull JavaCompiler compiler,
                        @NotNull DiagnosticOutputConsumer outConsumer,
                        @NotNull OutputFileConsumer sink,
-                       CanceledStatus canceledStatus) {
+                       CanceledStatus canceledStatus, boolean canUseOptimizedmanager) {
       myOutConsumer = outConsumer;
       myOutputFileSink = sink;
       myCanceledStatus = canceledStatus;
       StandardJavaFileManager stdManager = null;
-      final Class<StandardJavaFileManager> optimizedManagerClass = ClasspathBootstrap.getOptimizedFileManagerClass();
-      if (optimizedManagerClass != null) {
-        try {
-          stdManager = optimizedManagerClass.newInstance();
-        }
-        catch (Throwable e) {
-          if (SystemInfo.isWindows) {
-            System.err.println("Failed to load JPS optimized file manager for javac: " + e.getMessage());
+      if (canUseOptimizedmanager) {
+        final Class<StandardJavaFileManager> optimizedManagerClass = ClasspathBootstrap.getOptimizedFileManagerClass();
+        if (optimizedManagerClass != null) {
+          try {
+            stdManager = optimizedManagerClass.newInstance();
+          }
+          catch (Throwable e) {
+            if (SystemInfo.isWindows) {
+              System.err.println("Failed to load JPS optimized file manager for javac: " + e.getMessage());
+            }
           }
         }
       }
