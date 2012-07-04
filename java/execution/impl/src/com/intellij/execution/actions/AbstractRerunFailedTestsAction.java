@@ -78,8 +78,11 @@ public class AbstractRerunFailedTestsAction extends AnAction {
     if (project == null) return false;
     TestFrameworkRunningModel model = getModel();
     if (model == null || model.getRoot() == null) return false;
-    List<AbstractTestProxy> failed = getFailedTests(project);
-    return !failed.isEmpty();
+    final List<? extends AbstractTestProxy> myAllTests = getModel().getRoot().getAllTests();
+    for (Object test : myAllTests) {
+      if (Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project)).shouldAccept((AbstractTestProxy)test)) return true;
+    }
+    return false;
   }
 
   @NotNull
