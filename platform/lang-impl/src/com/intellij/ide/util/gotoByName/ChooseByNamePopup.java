@@ -46,13 +46,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
   private final boolean myMayRequestCurrentWindow;
+  private final ChooseByNamePopup myOldPopup;
 
   protected ChooseByNamePopup(@Nullable final Project project, final ChooseByNameModel model, ChooseByNameItemProvider provider, final ChooseByNamePopup oldPopup,
                             @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWindow, int initialIndex) {
     super(project, model, provider, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, initialIndex);
-    if (oldPopup == null && predefinedText != null) {
-      setPreselectInitialText(true);
-    }
+    myOldPopup = oldPopup;
     if (oldPopup != null) { //inherit old focus owner
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
@@ -69,8 +68,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
-    //LaterInvocator.enterModal(myTextFieldPanel);
+    if (myOldPopup != null) {
+      myTextField.setCaretPosition(myOldPopup.myTextField.getCaretPosition());
+    }
     if (myInitialText != null) {
+      int selStart = myOldPopup == null ? 0 : myOldPopup.myTextField.getSelectionStart();
+      int selEnd = myOldPopup == null ? myInitialText.length() : myOldPopup.myTextField.getSelectionEnd();
+      if (selEnd > selStart) {
+        myTextField.select(selStart, selEnd);
+      }
       rebuildList(myInitialIndex, 0, null, ModalityState.current(), null);
     }
     if (myOldFocusOwner != null){

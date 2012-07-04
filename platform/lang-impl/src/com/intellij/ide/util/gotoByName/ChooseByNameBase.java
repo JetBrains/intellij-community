@@ -182,14 +182,6 @@ public abstract class ChooseByNameBase {
     mySearchInAnyPlace = Registry.is("ide.goto.middle.matching");
   }
 
-  public boolean isPreselectInitialText() {
-    return myPreselectInitialText;
-  }
-
-  public void setPreselectInitialText(boolean preselectInitialText) {
-    myPreselectInitialText = preselectInitialText;
-  }
-
   public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
     myShowListAfterCompletionKeyStroke = showListAfterCompletionKeyStroke;
   }
