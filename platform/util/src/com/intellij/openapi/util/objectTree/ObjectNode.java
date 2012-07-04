@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.objectTree;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
@@ -36,7 +37,7 @@ public final class ObjectNode<T> {
   private ObjectNode<T> myParent;
   private final T myObject;
 
-  LinkedHashSet<ObjectNode<T>> myChildren;
+  private LinkedHashSet<ObjectNode<T>> myChildren;
   private final Throwable myTrace;
 
   private final long myOwnModification;
@@ -202,5 +203,18 @@ public final class ObjectNode<T> {
 
   public long getModification() {
     return Math.max(getOwnModification(), getChildModification());
+  }
+
+  public <D extends Disposable> D findChildEqualTo(@NotNull D object) {
+    LinkedHashSet<ObjectNode<T>> children = myChildren;
+    if (children != null) {
+      for (ObjectNode<T> node : children) {
+        T nodeObject = node.getObject();
+        if (nodeObject.equals(object)) {
+          return (D)nodeObject;
+        }
+      }
+    }
+    return null;
   }
 }
