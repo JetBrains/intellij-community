@@ -35,13 +35,24 @@ import java.io.IOException;
  * @author spleaner
  */
 public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfoIndex.ImageInfo> {
+  private static final int ourMaxImageSize;
+  static {
+    int maxImageSize = 200;
+    try {
+      maxImageSize = Integer.parseInt(System.getProperty("idea.max.image.filesize", Integer.toString(maxImageSize)), 10);
+    } catch (NumberFormatException ex) {}
+    ourMaxImageSize = maxImageSize;
+  }
+
   public static final ID<Integer, ImageInfo> INDEX_ID = ID.create("ImageFileInfoIndex");
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
-             file.getFileType() == ImageFileTypeManager.getInstance().getImageFileType();
+             file.getFileType() == ImageFileTypeManager.getInstance().getImageFileType() &&
+             (file.getLength() / 1024) < ourMaxImageSize
+        ;
     }
   };
 
@@ -62,16 +73,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   private final SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
     @Override
     protected ImageInfo computeValue(@NotNull FileContent inputData) {
-      VirtualFile file = inputData.getFile();
-      final ImageInfoReader.Info info;
-      if (file.getFileSystem() == TempFileSystem.getInstance()) {    // for tests load content directly as we are now not requiring content index
-        try {
-          info = ImageInfoReader.getInfo(file.contentsToByteArray());
-        } catch (IOException ex) { return null; }
-      }
-      else {
-        info = ImageInfoReader.getInfo(file.getPath());
-      }
+      final ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent());
       return info != null? new ImageInfo(info.width, info.height, info.bpp) : null;
     }
   };
@@ -104,13 +106,8 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   }
 
   @Override
-  public boolean dependsOnFileContent() {
-    return false;
-  }
-
-  @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   public static class ImageInfo {

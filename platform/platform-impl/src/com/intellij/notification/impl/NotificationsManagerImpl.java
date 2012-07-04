@@ -89,7 +89,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   @Override
   public <T extends Notification> T[] getNotificationsOfType(Class<T> klass, @Nullable final Project project) {
     final List<T> result = new ArrayList<T>();
-    if (project == null || !project.isDefault()) {
+    if (project == null || !project.isDefault() && !project.isDisposed()) {
       for (Notification notification : EventLog.getLogModel(project).getNotifications()) {
         if (klass.isInstance(notification)) {
           //noinspection unchecked

@@ -24,4 +24,7 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
 
   @NotNull
   JpsLibraryReference createReference();
+
+  @NotNull
+  JpsLibraryType<?> getType();
 }

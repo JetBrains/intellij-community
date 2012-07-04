@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
-  public static final String COMPILE_SERVER_NAME = "COMPILE SERVER";
+  public static final String BUILD_NAME = "EXTERNAL BUILD";
   private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
   private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION));
 
@@ -111,7 +111,7 @@ public class IncProjectBuilder {
           cause instanceof MappingFailedException ||
           cause instanceof IOException) {
         myMessageDispatcher.processMessage(new CompilerMessage(
-          COMPILE_SERVER_NAME, BuildMessage.Kind.INFO,
+          BUILD_NAME, BuildMessage.Kind.INFO,
           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
           e.getMessage())
         );
@@ -125,7 +125,7 @@ public class IncProjectBuilder {
           }
         }
         else {
-          myMessageDispatcher.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, cause));
+          myMessageDispatcher.processMessage(new CompilerMessage(BUILD_NAME, cause));
         }
       }
     }
@@ -302,7 +302,7 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
+  private void clearOutputs(CompileContext context) throws ProjectBuildException, IOException {
     final Collection<Module> modulesToClean = context.getProject().getModules().values();
     final Map<File, Set<Pair<String, Boolean>>> rootsToDelete = new HashMap<File, Set<Pair<String, Boolean>>>(); // map: outputRoot-> setOfPairs([module, isTest])
     final Set<File> annotationOutputs = new HashSet<File>(); // separate collection because no root intersection checks needed for annotation generated sources
@@ -366,7 +366,7 @@ public class IncProjectBuilder {
         }
       }
       else {
-        context.processMessage(new CompilerMessage(COMPILE_SERVER_NAME, BuildMessage.Kind.WARNING, "Output path " +
+        context.processMessage(new CompilerMessage(BUILD_NAME, BuildMessage.Kind.WARNING, "Output path " +
                                                                                                    outputRoot.getPath() +
                                                                                                    " intersects with a source root. The output cannot be cleaned."));
         // clean only those files we are aware of
@@ -385,7 +385,9 @@ public class IncProjectBuilder {
     }
 
     context.processMessage(new ProgressMessage("Cleaning output directories..."));
-    FileUtil.asyncDelete(filesToDelete);
+    myAsyncTasks.add(
+      FileUtil.asyncDelete(filesToDelete)
+    );
   }
 
   private static void appendRootInfo(Map<File, Set<Pair<String, Boolean>>> rootsToDelete, File out, Module module, boolean isTest) {
@@ -458,7 +460,9 @@ public class IncProjectBuilder {
               rootFiles.add(rd.root);
               context.getProjectDescriptor().fsState.clearRecompile(rd);
             }
-            FileUtil.asyncDelete(rootFiles);
+            myAsyncTasks.add(
+              FileUtil.asyncDelete(rootFiles)
+            );
           }
 
           try {

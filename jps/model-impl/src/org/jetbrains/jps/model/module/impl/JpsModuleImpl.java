@@ -1,10 +1,8 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementCollection;
-import org.jetbrains.jps.model.JpsElementKind;
-import org.jetbrains.jps.model.JpsElementProperties;
-import org.jetbrains.jps.model.JpsUrlList;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
@@ -34,7 +32,7 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
     myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl());
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
     myContainer.setChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
-    myContainer.setChild(JpsSdkReferencesTableImpl.KIND, new JpsSdkReferencesTableImpl());
+    myContainer.setChild(JpsSdkReferencesTableImpl.KIND);
   }
 
   private JpsModuleImpl(JpsModuleImpl original) {
@@ -133,5 +131,11 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
   @Override
   public JpsLibraryCollection getLibraryCollection() {
     return myLibraryCollection;
+  }
+
+  @Nullable
+  public JpsProject getProject() {
+    JpsModel model = getModel();
+    return model != null ? model.getProject() : null;
   }
 }

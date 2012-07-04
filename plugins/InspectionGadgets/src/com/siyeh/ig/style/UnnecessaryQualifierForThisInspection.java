@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -91,7 +92,7 @@ public class UnnecessaryQualifierForThisInspection
       if (!containingClass.equals(referent)) {
         return;
       }
-      registerError(qualifier);
+      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }
   }
 }

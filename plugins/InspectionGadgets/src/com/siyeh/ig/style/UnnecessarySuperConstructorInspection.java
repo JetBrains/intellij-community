@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -89,7 +90,7 @@ public class UnnecessarySuperConstructorInspection
       if (args.length != 0) {
         return;
       }
-      registerError(call);
+      registerError(call, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }
   }
 }

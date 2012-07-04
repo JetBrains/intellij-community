@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -103,7 +104,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
           return;
         }
       }
-      registerError(expression);
+      registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }
 
     private static boolean hasUnnecessarySuperQualifier(

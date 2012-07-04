@@ -24,13 +24,13 @@ import com.intellij.spellchecker.inspections.PlainTextSplitter;
  */
 public class EscapeSequenceTokenizer {
   public static void processTextWithOffsets(PsiElement element, TokenConsumer consumer, StringBuilder unescapedText,
-                                            int[] offsets) {
+                                            int[] offsets, int startOffset) {
     StringBuilder currentToken = new StringBuilder();
-    int currentTokenStart = 0;
+    int currentTokenStart = startOffset;
     for (int i = 0; i < unescapedText.length(); i++) {
       if (offsets[i+1]-offsets[i] == 1) {
         if (currentToken.length() == 0) {
-          currentTokenStart = offsets[i];
+          currentTokenStart = offsets[i] + startOffset;
         }
         currentToken.append(unescapedText.charAt(i));
       }
@@ -51,6 +51,6 @@ public class EscapeSequenceTokenizer {
                                           int currentTokenStart, TokenConsumer consumer) {
     final String token = currentToken.toString();
     // +1 for the starting quote of the string literal
-    consumer.consumeToken(element, token, false, currentTokenStart+1, TextRange.allOf(token), PlainTextSplitter.getInstance());
+    consumer.consumeToken(element, token, false, currentTokenStart, TextRange.allOf(token), PlainTextSplitter.getInstance());
   }
 }

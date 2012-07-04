@@ -101,12 +101,7 @@ public class DuplicatesImpl {
 
   private static boolean replaceMatch(final Project project, final MatchProvider provider, final Match match, @NotNull final Editor editor,
                                       final int idx, final int size, Ref<Boolean> showAll, final String confirmDuplicatePrompt) {
-    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    highlightMatch(project, editor, match, highlighters);
-    final TextRange textRange = match.getTextRange();
-    final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
-    expandAllRegionsCoveringRange(project, editor, textRange);
-    editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
+    final ArrayList<RangeHighlighter> highlighters = previewMatch(project, match, editor);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       if (size > 1 && (showAll.get() == null || !showAll.get())) {
         final String prompt = provider.getConfirmDuplicatePrompt(match);
@@ -145,6 +140,16 @@ public class DuplicatesImpl {
     return false;
   }
 
+  public static ArrayList<RangeHighlighter> previewMatch(Project project, Match match, Editor editor) {
+    final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    highlightMatch(project, editor, match, highlighters);
+    final TextRange textRange = match.getTextRange();
+    final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(textRange.getStartOffset());
+    expandAllRegionsCoveringRange(project, editor, textRange);
+    editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
+    return highlighters;
+  }
+
   private static void expandAllRegionsCoveringRange(final Project project, Editor editor, final TextRange textRange) {
     final FoldRegion[] foldRegions = CodeFoldingManager.getInstance(project).getFoldRegionsAtOffset(editor, textRange.getStartOffset());
     boolean anyCollapsed = false;
@@ -177,9 +182,13 @@ public class DuplicatesImpl {
   public static void processDuplicates(@NotNull MatchProvider provider, @NotNull Project project, @NotNull Editor editor) {
     boolean hasDuplicates = provider.hasDuplicates();
     if (hasDuplicates) {
+      List<Match> duplicates = provider.getDuplicates();
+      if (duplicates.size() == 1) {
+        previewMatch(project, duplicates.get(0), editor);
+      }
       final int answer = Messages.showYesNoDialog(project,
         RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
-        ApplicationNamesInfo.getInstance().getProductName(), provider.getDuplicates().size()),
+        ApplicationNamesInfo.getInstance().getProductName(), duplicates.size()),
         "Process Duplicates", Messages.getQuestionIcon());
       if (answer == 0) {
         invoke(project, editor, provider);

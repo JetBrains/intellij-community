@@ -16,6 +16,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -117,7 +118,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
       if (!isReferenceCorrectWithoutQualifier(reference, member)) {
         return;
       }
-      registerError(qualifier, member);
+      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, member);
     }
 
     private static boolean isReferenceCorrectWithoutQualifier(

@@ -40,6 +40,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
@@ -289,15 +290,17 @@ public class FileUtil extends FileUtilRt {
     return result;
   }
 
-  public static void asyncDelete(@NotNull File file) {
+  @NotNull
+  public static Future<Void> asyncDelete(@NotNull File file) {
     final File tempFile = renameToTempFileOrDelete(file);
     if (tempFile == null) {
-      return;
+      return new CompletedFuture<Void>();
     }
-    startDeletionThread(tempFile);
+    return startDeletionThread(tempFile);
   }
 
-  public static void asyncDelete(@NotNull Collection<File> files) {
+  @NotNull
+  public static Future<Void> asyncDelete(@NotNull Collection<File> files) {
     List<File> tempFiles = new ArrayList<File>();
     for (File file : files) {
       final File tempFile = renameToTempFileOrDelete(file);
@@ -306,12 +309,13 @@ public class FileUtil extends FileUtilRt {
       }
     }
     if (!tempFiles.isEmpty()) {
-      startDeletionThread(tempFiles.toArray(new File[tempFiles.size()]));
+      return startDeletionThread(tempFiles.toArray(new File[tempFiles.size()]));
     }
+    return new CompletedFuture<Void>();
   }
 
-  private static void startDeletionThread(@NotNull final File... tempFiles) {
-    final Runnable deleteFilesTask = new Runnable() {
+  private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
+    final RunnableFuture<Void> deleteFilesTask = new FutureTask<Void>(new Runnable() {
       public void run() {
         final Thread currentThread = Thread.currentThread();
         final int priority = currentThread.getPriority();
@@ -325,7 +329,7 @@ public class FileUtil extends FileUtilRt {
           currentThread.setPriority(priority);
         }
       }
-    };
+    }, null);
 
     try {
 // Attempt to execute on pooled thread
@@ -340,6 +344,7 @@ public class FileUtil extends FileUtilRt {
       Thread t = new Thread(deleteFilesTask, "File deletion thread");
       t.start();
     }
+    return deleteFilesTask;
   }
 
   private static File renameToTempFileOrDelete(@NotNull File file) {
@@ -1278,5 +1283,23 @@ public class FileUtil extends FileUtilRt {
     }
     JAVA_IO_FILESYSTEM = fs;
     JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD = getBooleanAttributes;
+  }
+
+  private static final class CompletedFuture<T> implements Future<T> {
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      return false;
+    }
+    public boolean isCancelled() {
+      return false;
+    }
+    public boolean isDone() {
+      return true;
+    }
+    public T get() throws InterruptedException, ExecutionException {
+      return null;
+    }
+    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      return null;
+    }
   }
 }

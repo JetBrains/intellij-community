@@ -33,12 +33,11 @@ import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -112,6 +111,14 @@ public class ClasspathBootstrap {
       cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
     }
     catch (Throwable ignored) {
+    }
+
+    for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) { // Eclipse compiler
+      final File compilerResource = getResourcePath(javaCompiler.getClass());
+      final String name = compilerResource.getName();
+      if (name.startsWith("ecj-") && name.endsWith(".jar")) {
+        cp.add(compilerResource);
+      }
     }
 
     return new ArrayList<File>(cp);

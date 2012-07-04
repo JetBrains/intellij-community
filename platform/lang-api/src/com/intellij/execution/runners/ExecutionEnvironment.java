@@ -76,6 +76,15 @@ public class ExecutionEnvironment {
   }
 
   public ExecutionEnvironment(@NotNull RunProfile runProfile,
+                              @NotNull ExecutionTarget target,
+                              @Nullable Project project,
+                              @Nullable RunnerSettings runnerSettings,
+                              @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                              @Nullable RunContentDescriptor contentToReuse) {
+    this(runProfile, target, project, runnerSettings, configurationSettings, contentToReuse, null);
+  }
+
+  public ExecutionEnvironment(@NotNull RunProfile runProfile,
                               @Nullable Project project,
                               @Nullable RunnerSettings runnerSettings,
                               @Nullable ConfigurationPerRunnerSettings configurationSettings,

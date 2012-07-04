@@ -29,7 +29,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
   private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
-  private final Map<File, SoftReference<File[]>> myDirectoryCache = new HashMap<File, SoftReference<File[]>>();
+  private final Map<File, File[]> myDirectoryCache = new ConcurrentHashMap<File, File[]>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
 
   public OptimizedFileManager17() throws Throwable {
@@ -170,11 +170,10 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     if (!canUseCache) {
       return file.listFiles();
     }
-    final SoftReference<File[]> ref = myDirectoryCache.get(file);
-    File[] cached = ref != null? ref.get() : null;
+    File[] cached = myDirectoryCache.get(file);
     if (cached == null) {
       cached = file.listFiles();
-      myDirectoryCache.put(file, new SoftReference<File[]>(cached != null? cached : NULL_FILE_ARRAY));
+      myDirectoryCache.put(file, cached != null? cached : NULL_FILE_ARRAY);
     }
     return cached == NULL_FILE_ARRAY ? null : cached;
   }
