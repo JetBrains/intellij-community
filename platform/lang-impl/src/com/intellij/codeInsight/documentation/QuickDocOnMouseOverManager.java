@@ -114,6 +114,11 @@ public class QuickDocOnMouseOverManager {
     }
     
     Editor editor = e.getEditor();
+    if (editor.isOneLineMode()) {
+      // Don't want auto quick doc to mess at, say, editor used for debugger condition.
+      return;
+    }
+    
     Project project = editor.getProject();
     if (project == null) {
       return;
