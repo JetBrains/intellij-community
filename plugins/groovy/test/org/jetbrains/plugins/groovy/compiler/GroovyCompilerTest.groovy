@@ -254,7 +254,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
       @Override
       void after(List<? extends VFileEvent> events) {
-        println Thread.currentThread() + " " + events
+        println ("" + Thread.currentThread() + " " + events)
       }
     })
     myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
@@ -270,7 +270,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       "}");
 
     def javaFile = myFixture.addFileToProject("tests/Java.java", "public class Java {}");
-    println 'before second make'
+    edt { println 'before second make' }
 
     assertEmpty(make());
     assertOutput("Sub", "hello");
