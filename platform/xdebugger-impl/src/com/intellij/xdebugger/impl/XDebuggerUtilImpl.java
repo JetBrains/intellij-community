@@ -158,9 +158,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     if (editor == null) return null;
 
     final Document document = editor.getDocument();
-    final int offset = editor.getCaretModel().getOffset();
-    int line = document.getLineNumber(offset);
-
+    final int line = editor.getCaretModel().getLogicalPosition().line;
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     return XSourcePositionImpl.create(file, line);
   }
