@@ -262,6 +262,17 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:STATEMENT_BREAK");
   }
 
+  // PY-6722
+  public void testSingleBackslashLineInsideSquareBrackets() {
+    doTest("xs = [\n" +
+           "\\\n" +
+           "]\n",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LBRACKET", "Py:LINE_BREAK",
+           "Py:SPACE", "Py:LINE_BREAK",
+           "Py:RBRACKET", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:STATEMENT_BREAK");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }

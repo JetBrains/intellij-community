@@ -50,7 +50,10 @@ except:
 
 try:
     try:
-        import _pydev_xmlrpclib as xmlrpclib
+        if USE_LIB_COPY:
+            import _pydev_xmlrpclib as xmlrpclib
+        else:
+            import xmlrpclib
     except ImportError:
         import xmlrpc.client as xmlrpclib
 except ImportError:

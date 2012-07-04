@@ -91,7 +91,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         }
         if (PyNames.INIT_DOT_PY.equals(getName())) {
           final PyQualifiedName qName = fromImportStatement.getImportSourceQName();
-          if (qName != null) {
+          if (qName != null && !localDeclarations.containsKey(qName.toString())) {
             localDeclarations.put(qName.getLastComponent(), fromImportStatement);
           }
         }

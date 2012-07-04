@@ -16,9 +16,6 @@ except:
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
-USE_LIB_COPY = 1
-
-
 class DebugInfoHolder:
     #we have to put it here because it can be set through the command line (so, the 
     #already imported references would not have it).
@@ -42,14 +39,7 @@ except AttributeError:
 #this value was raised from 200 to 1000.
 MAXIMUM_VARIABLE_REPRESENTATION_SIZE = 1000
 
-if USE_LIB_COPY:
-    import _pydev_threading as threading
-else:
-    import threading
-
 import os
-
-_nextThreadIdLock = threading.Lock()
 
 #=======================================================================================================================
 # Python 3?
@@ -75,6 +65,15 @@ except AttributeError:
         IS_64_BITS = struct.calcsize("P") * 8 > 32
     except:
         IS_64_BITS = False
+
+USE_LIB_COPY = not IS_PY3K and sys.version_info[1] >= 6
+
+if USE_LIB_COPY:
+    import _pydev_threading as threading
+else:
+    import threading
+
+_nextThreadIdLock = threading.Lock()
 
 #=======================================================================================================================
 # Jython?
