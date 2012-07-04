@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +47,7 @@ import java.util.Map;
  * @since 7/2/12 9:09 AM
  */
 public class QuickDocOnMouseOverManager {
-  
+
   @NotNull private final EditorMouseMotionListener myMouseListener       = new MyEditorMouseListener();
   @NotNull private final VisibleAreaListener       myVisibleAreaListener = new MyVisibleAreaListener();
   @NotNull private final CaretListener             myCaretListener       = new MyCaretListener();
@@ -55,7 +57,7 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
 
   private final Map<Editor, PsiElement /** PSI element which is located under the current mouse position */> myActiveElements
-    = new HashMap<Editor, PsiElement>();
+    = new WeakHashMap<Editor, PsiElement>();
 
   /** Holds a reference (if any) to the documentation manager used last time to show an 'auto quick doc' popup. */
   @Nullable private WeakReference<DocumentationManager> myDocumentationManager;
@@ -204,12 +206,22 @@ public class QuickDocOnMouseOverManager {
   }
 
   private class MyShowQuickDocRequest implements Runnable {
+    
+    private final HintManager myHintManager = HintManager.getInstance();
+    
     @Override
     public void run() {
       myAlarm.cancelAllRequests();
       
       DelayedQuickDocInfo info = myDelayedQuickDocInfo;
       if (info == null || !info.targetElement.equals(myActiveElements.get(info.editor))) {
+        return;
+      }
+
+      if (myHintManager.hasShownHintsThatWillHideByOtherHint(true)) {
+        // We don't want to show a quick doc control if there is an active hint (e.g. the mouse is under an invalid element
+        // and corresponding error info is shown).
+        myAlarm.addRequest(this, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
         return;
       }
       
