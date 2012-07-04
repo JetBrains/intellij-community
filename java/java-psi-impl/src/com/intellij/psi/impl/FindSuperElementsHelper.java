@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiSuperMethodUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,17 +31,16 @@ import java.util.List;
 public class FindSuperElementsHelper {
   @Nullable
   public static PsiElement[] findSuperElements(@NotNull PsiElement element) {
-    PsiMember e = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
-    if (e instanceof PsiClass) {
-      PsiClass aClass = (PsiClass) e;
+    if (element instanceof PsiClass) {
+      PsiClass aClass = (PsiClass) element;
       List<PsiClass> allSupers = new ArrayList<PsiClass>(Arrays.asList(aClass.getSupers()));
       for (Iterator<PsiClass> iterator = allSupers.iterator(); iterator.hasNext();) {
         PsiClass superClass = iterator.next();
         if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) iterator.remove();
       }
       return allSupers.toArray(new PsiClass[allSupers.size()]);
-    } else if (e instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) e;
+    } else if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod) element;
       if (method.isConstructor()) {
         PsiMethod constructorInSuper = PsiSuperMethodUtil.findConstructorInSuper(method);
         if (constructorInSuper != null) {
