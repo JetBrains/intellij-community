@@ -844,15 +844,15 @@
   </project-components>
 
   <actions>
-    <action id="Devmode.AnalyzeReturns" class="com.jetbrains.python.devmode.AnalyzeReturnsAction" text="Analyze return types"
-            internal="true">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-    </action>
+    <group id="PyProjectViewGroup" internal="true" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true" text="Python">
+      <action id="Devmode.AnalyzeReturns" class="com.jetbrains.python.devmode.AnalyzeReturnsAction" text="Analyze return types"
+              internal="true"/>
 
-    <action id="Devmode.AnalyzeTypeParser" class="com.jetbrains.python.devmode.AnalyzeTypeParserAction" text="Analyze type parser"
-            internal="true">
+      <action id="Devmode.AnalyzeTypeParser" class="com.jetbrains.python.devmode.AnalyzeTypeParserAction" text="Analyze type parser"
+              internal="true"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
-    </action>
+
+    </group>
 
     <group id="PyTypeHierarchyPopupMenu">
       <reference ref="TypeHierarchyBase.BaseOnThisType"/>

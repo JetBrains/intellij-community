@@ -944,7 +944,7 @@ class InternalGetCompletions(InternalThreadCommand):
                 
                 
                 def makeValid(s):
-                    return makeValidXmlValue(pydevd_vars.quote(s, '/>_= \t'))
+                    return pydevd_vars.makeValidXmlValue(pydevd_vars.quote(s, '/>_= \t'))
                 
                 msg = "<xml>"
                 
