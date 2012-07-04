@@ -95,6 +95,14 @@ public class PsiUtil {
   }
 
   @Nullable
+  public static PsiElement findModifierInList(@NotNull GrModifierList list, @NotNull String modifier) {
+    for (PsiElement element : list.getModifiers()) {
+      if (modifier.equals(element.getText())) return element;
+    }
+    return null;
+  }
+
+  @Nullable
   public static String getMethodName(GrMethodCall methodCall) {
     GrExpression invokedExpression = methodCall.getInvokedExpression();
     if (!(invokedExpression instanceof GrReferenceExpression)) return null;

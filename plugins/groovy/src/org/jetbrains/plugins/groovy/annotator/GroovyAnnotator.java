@@ -607,7 +607,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     PsiElement typeDef = parent.getParent();
     if (typeDef != null && typeDef instanceof GrTypeDefinition) {
-      PsiModifierList modifiersList = variableDeclaration.getModifierList();
+      GrModifierList modifiersList = variableDeclaration.getModifierList();
       final GrMember[] members = variableDeclaration.getMembers();
       if (members.length == 0) return;
       final GrMember member = members[0];
@@ -1459,7 +1459,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkAccessModifiers(AnnotationHolder holder, @NotNull PsiModifierList modifierList, PsiMember member) {
+  private static void checkAccessModifiers(AnnotationHolder holder, @NotNull GrModifierList modifierList, PsiMember member) {
     boolean hasPrivate = modifierList.hasExplicitModifier(PsiModifier.PRIVATE);
     boolean hasPublic = modifierList.hasExplicitModifier(PsiModifier.PUBLIC);
     boolean hasProtected = modifierList.hasExplicitModifier(PsiModifier.PROTECTED);
@@ -1479,8 +1479,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     else if (member instanceof PsiMethod &&
              member.getContainingClass() instanceof GrInterfaceDefinition &&
              hasPublic &&
-             !GroovyConfigUtils.getInstance().isVersionAtLeast(member, GroovyConfigUtils.GROOVY1_9)) {
-      final PsiElement publicModifier = ObjectUtils.assertNotNull(com.intellij.psi.util.PsiUtil.findModifierInList(modifierList, PsiModifier.PUBLIC));
+             !GroovyConfigUtils.getInstance().isVersionAtLeast(member, "1.8.4")) {
+      final PsiElement publicModifier = ObjectUtils.assertNotNull(PsiUtil.findModifierInList(modifierList, PsiModifier.PUBLIC));
       holder.createErrorAnnotation(publicModifier, GroovyBundle.message("public.modifier.is.not.allowed.in.interfaces"))
         .registerFix(new GrModifierFix(member, modifierList, PsiModifier.PUBLIC, false, false));
     }
