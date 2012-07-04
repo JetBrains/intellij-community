@@ -27,12 +27,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
-import com.intellij.testFramework.TestLoggerFactory
-import junit.framework.AssertionFailedError
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.TestLoggerFactory
+import junit.framework.AssertionFailedError
 
 /**
  * @author peter
@@ -231,8 +231,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     }
     catch (Throwable e) {
       if (ideaLog.exists()) {
-        //println "Idea Log:"
-        //println ideaLog.text
+        println "Idea Log:"
+        println ideaLog.text
       }
       if (makeLog.exists()) {
         println "Server Log:"
