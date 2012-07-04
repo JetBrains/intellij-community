@@ -38,7 +38,7 @@ public class NavigationItemFileStatus {
     }
     if (item instanceof PsiElementNavigationItem) {
       PsiElement target = ((PsiElementNavigationItem) item).getTargetElement();
-      return getPsiElementFileStatus(target);
+      if (target != null) return getPsiElementFileStatus(target);
     }
     return FileStatus.NOT_CHANGED;
   }
