@@ -57,7 +57,7 @@ LINE =                          .*
 COMMENT =                       "#"{LINE}
 
 ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
-KEY =                           [^\n\-\ {}\[\]#]!(!([^\n{}>:]*)|{LINE}" #"{LINE})":"
+KEY =                           [^\n\-\ {}\[\]#]!(!([^\n{}>:]*)|{LINE}{WHITE_SPACE_CHAR}"#"{LINE})":"
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
 ESCAPE_SEQUENCE=                \\[^\n]
