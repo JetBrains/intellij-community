@@ -213,6 +213,7 @@ public class QuickDocOnMouseOverManager {
     }
     
     hint.cancel();
+    myDocumentationManager = null;
   }
 
   private static class DelayedQuickDocInfo {
