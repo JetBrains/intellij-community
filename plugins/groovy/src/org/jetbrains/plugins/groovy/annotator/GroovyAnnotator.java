@@ -46,6 +46,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -1474,6 +1475,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (hasPublic) {
         annotation.registerFix(new GrModifierFix(member, modifierList, PsiModifier.PUBLIC, false, false));
       }
+    }
+    else if (member instanceof PsiMethod &&
+             member.getContainingClass() instanceof GrInterfaceDefinition &&
+             hasPublic &&
+             !GroovyConfigUtils.getInstance().isVersionAtLeast(member, GroovyConfigUtils.GROOVY1_9)) {
+      final PsiElement publicModifier = ObjectUtils.assertNotNull(com.intellij.psi.util.PsiUtil.findModifierInList(modifierList, PsiModifier.PUBLIC));
+      holder.createErrorAnnotation(publicModifier, GroovyBundle.message("public.modifier.is.not.allowed.in.interfaces"))
+        .registerFix(new GrModifierFix(member, modifierList, PsiModifier.PUBLIC, false, false));
     }
   }
 

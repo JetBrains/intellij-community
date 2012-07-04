@@ -480,11 +480,12 @@ public class OverrideImplementUtil {
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(originalMethod.getProject()).getElementFactory();
+    JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
+    if (factory == null) factory = JavaPsiFacade.getInstance(originalMethod.getProject()).getElementFactory();
     @NonNls String methodText;
     try {
       String bodyText = template.getText(properties);
-      if (!"".equals(bodyText)) bodyText += "\n";
+      if (bodyText != null && !bodyText.isEmpty()) bodyText += "\n";
       methodText = "void foo () {\n" + bodyText + "}";
       methodText = FileTemplateUtil.indent(methodText, result.getProject(), fileType);
     } catch (Exception e) {
@@ -767,14 +768,6 @@ public class OverrideImplementUtil {
     final PsiClass aClass = (PsiClass)element;
     if (aClass instanceof JspClass) return null;
     return aClass == null || !allowInterface && aClass.isInterface() ? null : aClass;
-  }
-
-  private static PsiSubstitutor getContextSubstitutor(PsiClass aClass) {
-    if (aClass instanceof PsiAnonymousClass) {
-      return ((PsiAnonymousClass)aClass).getBaseClassType().resolveGenerics().getSubstitutor();
-    }
-
-    return PsiSubstitutor.EMPTY;
   }
 
   public static void overrideOrImplementMethodsInRightPlace(Editor editor1, PsiClass aClass, Collection<PsiMethodMember> members, boolean copyJavadoc) {

@@ -122,7 +122,7 @@ public class JavaTestGenerator implements TestGenerator {
                                      PsiClass targetClass,
                                      Editor editor,
                                      @Nullable String name) {
-    PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass.getProject()));
+    PsiMethod method = (PsiMethod)targetClass.add(TestIntegrationUtils.createDummyMethod(targetClass));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, method, name, true);
   }
