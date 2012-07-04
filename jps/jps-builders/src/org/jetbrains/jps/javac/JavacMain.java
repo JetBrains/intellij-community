@@ -21,7 +21,8 @@ public class JavacMain {
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
   private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
-    "-verbose", "-proc:only", "-implicit:class", "-implicit:none"
+    /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none",
+    /*eclipse options*/"-noExit"
   ));
   private static final JavaCompiler SYSTEM_JAVA_COMPILER = ToolProvider.getSystemJavaCompiler();
 
@@ -148,6 +149,9 @@ public class JavacMain {
     final List<String> result = new ArrayList<String>();
     if (compiler == SYSTEM_JAVA_COMPILER) {
       result.add("-implicit:class"); // the option supported by javac only
+    }
+    else { // is Eclipse
+      result.add("-noExit");
     }
     boolean skip = false;
     for (String option : options) {
