@@ -103,6 +103,12 @@ public class QuickDocOnMouseOverManager {
       closeAutoQuickDocComponentIfNecessary();
       return;
     }
+
+    if (e.getMouseEvent().getModifiers() != 0) {
+      // Don't show the control when any modifier is active (e.g. Ctrl or Alt is hold). There is a common situation that a user
+      // wants to navigate via Ctrl+click or perform quick evaluate by Alt+click.
+      return;
+    }
     
     Editor editor = e.getEditor();
     Project project = editor.getProject();
@@ -218,7 +224,7 @@ public class QuickDocOnMouseOverManager {
         return;
       }
 
-      if (myHintManager.hasShownHintsThatWillHideByOtherHint(true)) {
+      if (!info.docManager.hasDockedDocWindow() && myHintManager.hasShownHintsThatWillHideByOtherHint(false)) {
         // We don't want to show a quick doc control if there is an active hint (e.g. the mouse is under an invalid element
         // and corresponding error info is shown).
         myAlarm.addRequest(this, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
@@ -228,7 +234,7 @@ public class QuickDocOnMouseOverManager {
       info.editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
                               info.editor.offsetToVisualPosition(info.originalElement.getTextRange().getStartOffset()));
       try {
-        info.docManager.showJavaDocInfo(info.editor, info.targetElement, info.originalElement, myHintCloseCallback);
+        info.docManager.showJavaDocInfo(info.editor, info.targetElement, info.originalElement, myHintCloseCallback, true);
         myDocumentationManager = new WeakReference<DocumentationManager>(info.docManager);
       }
       finally {
