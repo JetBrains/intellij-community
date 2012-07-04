@@ -17,13 +17,15 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,10 +36,8 @@ import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -57,7 +57,6 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final Alarm                     myAlarm               = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   @NotNull private final Runnable                  myRequest             = new MyShowQuickDocRequest();
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
-  @NotNull private final WindowManager             myWindowManager       = WindowManager.getInstance();
 
   private final Map<Editor, PsiElement /** PSI element which is located under the current mouse position */> myActiveElements
     = new WeakHashMap<Editor, PsiElement>();
@@ -67,12 +66,27 @@ public class QuickDocOnMouseOverManager {
 
   @Nullable private DelayedQuickDocInfo myDelayedQuickDocInfo;
   private           boolean             myEnabled;
+  private           boolean             myApplicationActive;
 
   public QuickDocOnMouseOverManager(@NotNull Application application) {
     EditorFactory factory = EditorFactory.getInstance();
     if (factory != null) {
       factory.addEditorFactoryListener(new MyEditorFactoryListener(), application);
     }
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(
+      ApplicationActivationListener.TOPIC,
+      new ApplicationActivationListener() {
+        @Override
+        public void applicationActivated(IdeFrame ideFrame) {
+          myApplicationActive = true;
+        }
+
+        @Override
+        public void applicationDeactivated(IdeFrame ideFrame) {
+          myApplicationActive = false;
+        }
+      });
   }
 
   /**
@@ -101,7 +115,7 @@ public class QuickDocOnMouseOverManager {
   }
 
   private void processMouseMove(@NotNull EditorMouseEvent e) {
-    if (e.getArea() != EditorMouseEventArea.EDITING_AREA) {
+    if (!myApplicationActive || e.getArea() != EditorMouseEventArea.EDITING_AREA) {
       // Skip if the mouse is not at the editing area.
       closeAutoQuickDocComponentIfNecessary();
       return;
@@ -121,11 +135,6 @@ public class QuickDocOnMouseOverManager {
     
     Project project = editor.getProject();
     if (project == null) {
-      return;
-    }
-
-    JFrame frame = myWindowManager.getFrame(project);
-    if (frame != null && !frame.isFocused()) {
       return;
     }
 
