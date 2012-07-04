@@ -301,7 +301,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
           }
         }
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.defaultModalityState());
     return pw.get();
   }
 }
