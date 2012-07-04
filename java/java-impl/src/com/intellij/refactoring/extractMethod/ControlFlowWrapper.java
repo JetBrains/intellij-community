@@ -46,7 +46,7 @@ public class ControlFlowWrapper {
   public ControlFlowWrapper(Project project, PsiElement codeFragment, PsiElement[] elements) throws PrepareFailedException {
     try {
       myControlFlow =
-        ControlFlowFactory.getInstance(project).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, true);
+        ControlFlowFactory.getInstance(project).getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), false, false);
     }
     catch (AnalysisCanceledException e) {
       throw new PrepareFailedException(RefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.getErrorElement());
@@ -232,7 +232,7 @@ public class ControlFlowWrapper {
     return true;
   }
 
-  public List<PsiVariable> getInputVariables(final PsiElement codeFragment) {
+  public List<PsiVariable> getInputVariables(final PsiElement codeFragment, PsiElement[] elements) {
     final List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     List<PsiVariable> myInputVariables;
     if (myGenerateConditionalExit) {
@@ -241,7 +241,17 @@ public class ControlFlowWrapper {
       myInputVariables = inputVariableList;
     }
     else {
-      myInputVariables = inputVariables;
+      List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(inputVariables);
+      for (Iterator<PsiVariable> iterator = inputVariableList.iterator(); iterator.hasNext(); ) {
+        PsiVariable variable = iterator.next();
+        for (PsiElement element : elements) {
+          if (PsiTreeUtil.isAncestor(element, variable, false)) {
+            iterator.remove();
+            break;
+          }
+        }
+      }
+      myInputVariables = inputVariableList;
     }
     //varargs variables go last, otherwise order is induced by original ordering
     Collections.sort(myInputVariables, new Comparator<PsiVariable>() {

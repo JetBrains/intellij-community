@@ -1073,7 +1073,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean chooseTargetClass(PsiElement codeFragment, final Pass<ExtractMethodProcessor> extractPass) throws PrepareFailedException {
-    final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment);
+    final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements);
 
     myNeedChangeContext = false;
     myTargetClass = myCodeFragmentMember instanceof PsiMember
