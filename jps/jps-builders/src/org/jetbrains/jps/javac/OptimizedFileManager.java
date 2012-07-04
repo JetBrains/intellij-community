@@ -18,6 +18,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * WARNING: Loaded via reflection, do not delete
@@ -337,7 +338,7 @@ class OptimizedFileManager extends DefaultFileManager {
       if (cb == null) {
         InputStream in = new FileInputStream(f);
         try {
-          ByteBuffer bb = makeByteBuffer(in);
+          final ByteBuffer bb = makeByteBuffer(in);
           JavaFileObject prev = log.useSource(this);
           try {
             cb = decode(bb, ignoreEncodingErrors);
@@ -507,20 +508,18 @@ class OptimizedFileManager extends DefaultFileManager {
   }
 
   private static class ByteBufferCache {
-    private ByteBuffer cached;
+    private AtomicReference<ByteBuffer> myCached = new AtomicReference<ByteBuffer>(null);
 
     ByteBuffer get(int capacity) {
       if (capacity < 20480) {
         capacity = 20480;
       }
-      ByteBuffer result = (cached != null && cached.capacity() >= capacity) ?
-                          (ByteBuffer)cached.clear() :
-                          ByteBuffer.allocate(capacity + capacity>>1);
-      cached = null;
-      return result;
+      final ByteBuffer cached = myCached.getAndSet(null);
+      return (cached != null && cached.capacity() >= capacity) ? (ByteBuffer)cached.clear() : ByteBuffer.allocate(capacity + capacity>>1);
     }
+
     void put(ByteBuffer x) {
-      cached = x;
+      myCached.set(x);
     }
   }
   private final ByteBufferCache myByteBufferCache = new ByteBufferCache();

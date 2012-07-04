@@ -696,7 +696,6 @@ public class BuildManager implements ApplicationComponent{
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
-    cmdLine.addParameter("-Djdt.compiler.useSingleThread=true");
 
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
     if (shouldGenerateIndex != null) {
