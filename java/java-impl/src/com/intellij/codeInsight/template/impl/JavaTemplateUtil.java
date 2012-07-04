@@ -29,6 +29,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class JavaTemplateUtil {
@@ -38,42 +40,71 @@ public class JavaTemplateUtil {
   }
 
   public static void updateTypeBindings(Object item, PsiFile file, final Document document, final int segmentStart, final int segmentEnd) {
+    updateTypeBindings(item, file, document, segmentStart, segmentEnd, false);
+  }
+
+  public static void updateTypeBindings(Object item,
+                                        PsiFile file,
+                                        final Document document,
+                                        final int segmentStart,
+                                        final int segmentEnd,
+                                        boolean noImport) {
     final Project project = file.getProject();
-    PsiClass aClass = null;
+    List<PsiClass> classes = new ArrayList<PsiClass>();
     if (item instanceof PsiClass) {
-      aClass = (PsiClass)item;
+      classes.add((PsiClass)item);
     }
-    else if (item instanceof PsiType) {
-      aClass = PsiUtil.resolveClassInType((PsiType)item);
+    else if (item instanceof PsiClassType) {
+      PsiClass aClass = PsiUtil.resolveClassInType((PsiType)item);
+      if (aClass != null) {
+        classes.add(aClass);
+      }
+      collectClassParams((PsiType)item, classes);
     }
 
-    if (aClass != null) {
-      if (aClass instanceof PsiTypeParameter) {
-        if (((PsiTypeParameter)aClass).getOwner() instanceof PsiMethod) {
-          PsiElement element = file.findElementAt(segmentStart);
-          PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-          if (method != null) {
-            PsiTypeParameterList paramList = method.getTypeParameterList();
-            PsiTypeParameter[] params = paramList != null ? paramList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
-            for (PsiTypeParameter param : params) {
-              if (param.getName().equals(aClass.getName())) return;
-            }
-            try {
-              if (paramList == null) {
-                final PsiTypeParameterList newList = JVMElementFactories.getFactory(method.getLanguage(), project).createTypeParameterList();
-                paramList = (PsiTypeParameterList)method.addAfter(newList, method.getModifierList());
+    if (!classes.isEmpty()) {
+      for (PsiClass aClass : classes) {
+        if (aClass instanceof PsiTypeParameter) {
+          if (((PsiTypeParameter)aClass).getOwner() instanceof PsiMethod) {
+            PsiElement element = file.findElementAt(segmentStart);
+            PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+            if (method != null) {
+              PsiTypeParameterList paramList = method.getTypeParameterList();
+              PsiTypeParameter[] params = paramList != null ? paramList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
+              for (PsiTypeParameter param : params) {
+                if (param.getName().equals(aClass.getName())) return;
               }
-              paramList.add(aClass.copy());
-              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
+              try {
+                if (paramList == null) {
+                  final PsiTypeParameterList newList = JVMElementFactories.getFactory(method.getLanguage(), project).createTypeParameterList();
+                  paramList = (PsiTypeParameterList)method.addAfter(newList, method.getModifierList());
+                }
+                paramList.add(aClass.copy());
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+              }
+              catch (IncorrectOperationException e) {
+                LOG.error(e);
+              }
             }
           }
+        } else if (!noImport) {
+          addImportForClass(document, aClass, segmentStart, segmentEnd);
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
         }
-      }  else {
-        addImportForClass(document, aClass, segmentStart, segmentEnd);
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+      }
+    }
+  }
+
+  private static void collectClassParams(PsiType item, List<PsiClass> classes) {
+    PsiClass aClass = PsiUtil.resolveClassInType(item);
+    if (aClass instanceof PsiTypeParameter) {
+      classes.add(aClass);
+    }
+
+    if (item instanceof PsiClassType) {
+      PsiType[] parameters = ((PsiClassType)item).getParameters();
+      for (PsiType parameter : parameters) {
+        collectClassParams(parameter, classes);
       }
     }
   }
