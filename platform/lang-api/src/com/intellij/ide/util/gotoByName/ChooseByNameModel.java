@@ -61,4 +61,6 @@ public interface ChooseByNameModel {
   String getHelpId();
 
   boolean willOpenEditor();
+
+  boolean useMiddleMatching();
 }

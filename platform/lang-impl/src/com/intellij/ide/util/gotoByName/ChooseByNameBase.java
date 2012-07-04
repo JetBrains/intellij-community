@@ -179,7 +179,7 @@ public abstract class ChooseByNameBase {
     myInitialText = initialText;
     myProvider = provider;
     myInitialIndex = initialIndex;
-    mySearchInAnyPlace = Registry.is("ide.goto.middle.matching");
+    mySearchInAnyPlace = Registry.is("ide.goto.middle.matching") && model.useMiddleMatching();
   }
 
   public void setShowListAfterCompletionKeyStroke(boolean showListAfterCompletionKeyStroke) {
