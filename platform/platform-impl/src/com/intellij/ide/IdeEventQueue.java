@@ -512,7 +512,7 @@ public class IdeEventQueue extends EventQueue {
         return;
       }
     }
-    if (e instanceof InputEvent && Patches.SPECIAL_WINPUT_METHOD_PROCESSING) {
+    if (e instanceof InputEvent && Patches.SPECIAL_INPUT_METHOD_PROCESSING) {
       final InputEvent inputEvent = (InputEvent)e;
       if (!inputEvent.getComponent().isShowing()) {
         return;

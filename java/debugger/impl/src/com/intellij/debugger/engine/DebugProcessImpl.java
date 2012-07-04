@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -554,7 +554,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
         myDebugProcessDispatcher.getMulticaster().connectorIsReady();
         try {
-          if(SOCKET_ATTACHING_CONNECTOR_NAME.equals(connector.name()) && Patches.SUN_BUG_338675) {
+          if (SOCKET_ATTACHING_CONNECTOR_NAME.equals(connector.name()) && Patches.SUN_JDI_CONNECTOR_HANGUP_BUG) {
             String portString = myConnection.getAddress();
             String hostString = myConnection.getHostName();
 

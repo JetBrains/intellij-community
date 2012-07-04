@@ -146,7 +146,7 @@ public abstract class ChooseByNameBase {
     if (myDisposedFlag && myPostponedOkAction != null && !myPostponedOkAction.isProcessed()) {
       myPostponedOkAction.setRejected();
     }
-    
+
     return myDisposedFlag;
   }
 
@@ -315,7 +315,7 @@ public abstract class ChooseByNameBase {
         updateProcessor.updatePopup(element);
       }
     }
-    
+
     public void repositionHint() {
       if (myHint == null || !myHint.isVisible()) return;
       PopupPositionManager.positionPopupInBestPosition(myHint, null, null);
@@ -356,11 +356,11 @@ public abstract class ChooseByNameBase {
     final String checkBoxName = myModel.getCheckBoxName();
     myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName + (myCheckBoxShortcut != null ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")" : "") : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
-    
+
     if (!SystemInfo.isMac) {
       myCheckBox.setBorder(null);
     }
-    
+
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
     if (checkBoxName == null) {
@@ -504,7 +504,7 @@ public abstract class ChooseByNameBase {
                 hideHint();
               }
             }
-                                 }, 5);
+          }, 5);
         }
       });
     }
@@ -540,7 +540,7 @@ public abstract class ChooseByNameBase {
           return;
         }
         final int keyCode;
-        
+
         // Add support for user-defined 'caret up/down' shortcuts.
         KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
         if (upShortcuts.contains(stroke)) {
@@ -685,7 +685,7 @@ public abstract class ChooseByNameBase {
     }
     return result;
   }
-  
+
   private void hideHint() {
     if (!myTextFieldPanel.focusRequested()) {
       doClose(false);
@@ -712,7 +712,7 @@ public abstract class ChooseByNameBase {
       });
     }
   }
-  
+
   private void updateDocumentation() {
     final JBPopup hint = myTextFieldPanel.getHint();
     final Object element = getChosenElement();
@@ -923,7 +923,7 @@ public abstract class ChooseByNameBase {
                   if (elements.isEmpty() && myTextFieldPanel != null) {
                     myTextFieldPanel.hideHint();
                   }
-                  
+
                   if (postRunnable != null) {
                     postRunnable.run();
                   }
@@ -1266,7 +1266,7 @@ public abstract class ChooseByNameBase {
     @Override
     protected void processKeyEvent(@NotNull KeyEvent e) {
       final KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-      
+
       if (myCompletionKeyStroke != null && keyStroke.equals(myCompletionKeyStroke)) {
         completionKeyStrokeHappened = true;
         e.consume();
@@ -1311,7 +1311,7 @@ public abstract class ChooseByNameBase {
         super.processKeyEvent(e);
       }
       catch (NullPointerException e1) {
-        if (!Patches.SUN_BUG_6322854) {
+        if (!Patches.SUN_BUG_ID_6322854) {
           throw e1;
         }
       }
@@ -1547,7 +1547,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected boolean lastKeyStrokeIsCompletion() {
-     return myTextField.isCompletionKeyStroke();
+    return myTextField.isCompletionKeyStroke();
   }
 
   private static Matcher buildPatternMatcher(@NotNull String pattern) {
