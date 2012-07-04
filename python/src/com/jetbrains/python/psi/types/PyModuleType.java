@@ -259,7 +259,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         result.addAll(processor.getResultList());
       }
     }
-    if (PyNames.INIT_DOT_PY.equals(myModule.getName())) { // our module is a dir, not a single file
+    if (PyUtil.isPackage(myModule)) { // our module is a dir, not a single file
       if (point == ResolveImportUtil.PointInImport.AS_MODULE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when imported from somehow, add submodules
         result.addAll(getSubModuleVariants(myModule.getContainingDirectory(), location, names_already));
       }
@@ -274,10 +274,13 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     PsiFile file = location.getContainingFile();
     if (file instanceof PyFile) {
       PyFile pyFile = (PyFile)file;
-      PsiElement moduleBase = myModule.getName().equals(PyNames.INIT_DOT_PY) ? myModule.getContainingDirectory() : myModule;
+      PsiElement moduleBase = PyUtil.isPackage(myModule) ? myModule.getContainingDirectory() : myModule;
       for (PyImportElement importElement : pyFile.getImportTargets()) {
         PsiElement target = ResolveImportUtil.resolveImportElement(importElement);
         if (target != null && PsiTreeUtil.isAncestor(moduleBase, target, true)) {
+          if (target instanceof PsiFile && PyUtil.isPackage((PsiFile)target)) {
+            continue;
+          }
           LookupElement element = null;
           if (target instanceof PsiFileSystemItem) {
             element = buildFileLookupElement(location, names_already, (PsiFileSystemItem) target);
