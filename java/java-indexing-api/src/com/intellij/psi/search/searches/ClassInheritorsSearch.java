@@ -17,8 +17,9 @@ package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -43,6 +44,7 @@ import java.util.Set;
  * @author max
  */
 public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, ClassInheritorsSearch.SearchParameters> {
+  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.searches.ClassInheritorsSearch");
 
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
@@ -56,7 +58,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
 
         LOG.assertTrue(searchScope != null);
 
-        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        ProgressIndicator progress = ProgressIndicatorProvider.getInstance().getProgressIndicator();
         if (progress != null) {
           progress.pushState();
           String className = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -171,7 +173,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       return AllClassesSearch.search(searchScope, baseClass.getProject(), parameters.getNameCondition()).forEach(new Processor<PsiClass>() {
         @Override
         public boolean process(final PsiClass aClass) {
-          ProgressManager.checkCanceled();
+          ProgressIndicatorProvider.checkCanceled();
           final String qname1 = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
             @Override
             @Nullable
@@ -193,7 +195,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     final Processor<PsiClass> processor = new Processor<PsiClass>() {
       @Override
       public boolean process(final PsiClass candidate) {
-        ProgressManager.checkCanceled();
+        ProgressIndicatorProvider.checkCanceled();
 
         final Ref<Boolean> result = new Ref<Boolean>();
         final String[] fqn = new String[1];
@@ -233,7 +235,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(baseClass.getProject());
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(projectScope.getProject());
     while (!stack.isEmpty()) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
 
       Pair<Reference<PsiClass>, String> pair = stack.pop();
       PsiClass psiClass = pair.getFirst().get();

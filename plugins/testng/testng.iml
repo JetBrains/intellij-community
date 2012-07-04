@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="library" name="TestNG" level="project" />
+    <orderEntry type="module" module-name="java-indexing-api" />
   </component>
   <component name="copyright">
     <Base>

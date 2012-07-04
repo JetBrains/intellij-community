@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -22,11 +23,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Query;
+import com.intellij.util.QueryExecutor;
 
 /**
  * @author max
  */
 public class DirectClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.directClassInheritorsSearch");
   public static DirectClassInheritorsSearch INSTANCE = new DirectClassInheritorsSearch();
 
   public static class SearchParameters {

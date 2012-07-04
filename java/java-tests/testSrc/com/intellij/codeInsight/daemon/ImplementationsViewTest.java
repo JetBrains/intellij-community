@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;

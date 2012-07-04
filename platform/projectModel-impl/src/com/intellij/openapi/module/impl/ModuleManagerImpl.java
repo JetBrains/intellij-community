@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.module.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -42,6 +43,7 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -61,6 +63,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   public static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
   private static final String IML_EXTENSION = ".iml";
   protected final Project myProject;
+  protected final MessageBus myMessageBus;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl();
 
   @NonNls public static final String COMPONENT_NAME = "ProjectModuleManager";
@@ -83,8 +86,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     myCachedSortedModules = null;
   }
 
-  public ModuleManagerImpl(Project project) {
+  public ModuleManagerImpl(Project project, MessageBus messageBus) {
     myProject = project;
+    myMessageBus = messageBus;
   }
 
 
@@ -244,6 +248,24 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   protected void showUnknownModuleTypeNotification(List<Module> types) {
   }
 
+  protected void fireModuleAdded(Module module) {
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleAdded(myProject, module);
+  }
+
+  protected void fireModuleRemoved(Module module) {
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).moduleRemoved(myProject, module);
+  }
+
+  protected void fireBeforeModuleRemoved(Module module) {
+    myMessageBus.syncPublisher(ProjectTopics.MODULES).beforeModuleRemoved(myProject, module);
+  }
+
+  protected void fireModulesRenamed(List<Module> modules) {
+    if (!modules.isEmpty()) {
+      myMessageBus.syncPublisher(ProjectTopics.MODULES).modulesRenamed(myProject, modules);
+    }
+  }
+
   private void fireErrors(final List<ModuleLoadingErrorDescription> errors) {
     if (errors.isEmpty()) return;
 
@@ -372,15 +394,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
 
     element.addContent(modules);
-  }
-
-  protected void fireModuleAdded(Module module) {
-  }
-
-  protected void fireModuleRemoved(Module module) {
-  }
-
-  protected void fireBeforeModuleRemoved(Module module) {
   }
 
   @NotNull
@@ -904,9 +917,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
         cleanCachedStuff();
       }
     }, false, true);
-  }
-
-  protected void fireModulesRenamed(List<Module> modules) {
   }
 
   void fireModuleRenamedByVfsEvent(@NotNull final Module module) {

@@ -40,16 +40,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -434,6 +432,27 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         if (!processor.process(element, injector)) return;
       }
     }
+  }
+
+  @Override
+  @Nullable
+  public List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull final PsiElement host) {
+    if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
+      return null;
+    }
+    final PsiElement inTree = InjectedLanguageUtil.loadTree(host, host.getContainingFile());
+    final List<Pair<PsiElement, TextRange>> result = new SmartList<Pair<PsiElement, TextRange>>();
+    InjectedLanguageUtil.enumerate(inTree, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      @Override
+      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
+        for (PsiLanguageInjectionHost.Shred place : places) {
+          if (place.getHost() == inTree) {
+            result.add(new Pair<PsiElement, TextRange>(injectedPsi, place.getRangeInsideHost()));
+          }
+        }
+      }
+    });
+    return result.isEmpty() ? null : result;
   }
 
   private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {

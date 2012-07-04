@@ -3,8 +3,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,8 +52,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     });
 
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) {
-      final SearchScope scope = useScope.intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(
-          GlobalSearchScope.allScope(psiManager.getProject()), StdFileTypes.JSP, StdFileTypes.JSPX)));
+      //[pasynkov]: WTF?
+      //final SearchScope scope = useScope.intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(
+      //    GlobalSearchScope.allScope(psiManager.getProject()), StdFileTypes.JSP, StdFileTypes.JSPX)));
+      final SearchScope scope = useScope;
 
       return AllClassesSearch.search(scope, aClass.getProject()).forEach(new Processor<PsiClass>() {
         @Override
@@ -96,7 +97,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     Map<String, List<PsiClass>> classes = new HashMap<String, List<PsiClass>>();
 
     for (PsiReferenceList referenceList : candidates) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       final PsiClass candidate = (PsiClass)referenceList.getParent();
       if (!checkInheritance(p, aClass, candidate)) continue;
 
@@ -127,7 +128,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       });
 
       for (PsiAnonymousClass candidate : anonymousCandidates) {
-        ProgressManager.checkCanceled();
+        ProgressIndicatorProvider.checkCanceled();
         if (!checkInheritance(p, aClass, candidate)) continue;
 
         if (!consumer.process(candidate)) return false;

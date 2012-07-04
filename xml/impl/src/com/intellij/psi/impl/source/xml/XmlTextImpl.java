@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -365,7 +366,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
 
   @Nullable
   public List<Pair<PsiElement, TextRange>> getInjectedPsi() {
-    return InjectedLanguageUtil.getInstance().getInjectedPsiFiles(this);
+    return InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(this);
   }
 
   public TextRange getCDATAInterior() {

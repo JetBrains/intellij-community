@@ -23,6 +23,8 @@ import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
@@ -53,7 +55,7 @@ public class CoreProjectLoader {
     }
   }
 
-  private static void loadDirectoryProject(Project project, VirtualFile projectDir) throws IOException, JDOMException,
+  private static void loadDirectoryProject(MockProject project, VirtualFile projectDir) throws IOException, JDOMException,
                                                                                            InvalidDataException {
     VirtualFile dotIdea = projectDir.findChild(Project.DIRECTORY_STORE_FOLDER);
     VirtualFile modulesXml = dotIdea.findChild("modules.xml");
@@ -82,7 +84,8 @@ public class CoreProjectLoader {
     }
 
     moduleManager.loadModules();
-    //((DirectoryIndexImpl) DirectoryIndex.getInstance(project)).initialize();
+    project.projectOpened();
+    ((DirectoryIndexImpl) DirectoryIndex.getInstance(project)).initialize();
   }
 
   public static StorageData loadStorageFile(ComponentManager componentManager, VirtualFile modulesXml) throws JDOMException, IOException {
