@@ -131,7 +131,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
       builder.append("enumconst ");
     }
 
-    builder.append(getName()).append(':').append(TypeInfo.createTypeText(getType(true)));
+    builder.append(getName()).append(':').append(TypeInfo.createTypeText(getType(false)));
 
     if (myInitializer != null) {
       builder.append('=').append(myInitializer);
