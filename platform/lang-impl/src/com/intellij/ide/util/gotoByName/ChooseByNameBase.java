@@ -58,6 +58,7 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
@@ -1585,11 +1586,11 @@ public abstract class ChooseByNameBase {
       presentation.setTabName(prefixPattern);
       presentation.setTabText(prefixPattern);
       presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(prefixPattern.toLowerCase()));
-      final PsiElement[][] elements = getElements();
-      final Set<PsiElement> prefixEls = new LinkedHashSet<PsiElement>();
-      final Set<PsiElement> nonPrefixEls = new LinkedHashSet<PsiElement>();
-      Collections.addAll(prefixEls, elements[0]);
-      Collections.addAll(nonPrefixEls, elements[1]);
+      final Object[][] elements = getElements();
+      final List<PsiElement> targets = new ArrayList<PsiElement>();
+      final List<Usage> usages = new ArrayList<Usage>();
+      fillUsages(Arrays.asList(elements[0]), usages, targets, false);
+      fillUsages(Arrays.asList(elements[1]), usages, targets, true);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final String text = myTextField.getText();
         final boolean checkboxState = myCheckBox.isSelected();
@@ -1599,15 +1600,25 @@ public abstract class ChooseByNameBase {
         ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true){
           private ChooseByNameBase.CalcElementsThread myCalcElementsThread;
           @Override
-          public void run(@NotNull ProgressIndicator indicator) {
+          public void run(@NotNull final ProgressIndicator indicator) {
             ensureNamesLoaded(checkboxState);
+            indicator.setIndeterminate(true);
             ApplicationManager.getApplication().runReadAction(new Runnable() {
 
               @Override
               public void run() {
+                final boolean[] overFlow = new boolean[]{false};
                 myCalcElementsThread = new CalcElementsThread(text, checkboxState, null, ModalityState.NON_MODAL, true) {
                   @Override
                   protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
+                    if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit) {
+                      final int ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, UsageViewBundle
+                        .message("find.excessive.usage.count.prompt", elementsArray.size() + myMaximumListSizeLimit));
+                      if (ret != 0) {
+                        overFlow[0] = true;
+                        return true;
+                      }
+                    }
                     return false;
                   }
                 };
@@ -1623,7 +1634,7 @@ public abstract class ChooseByNameBase {
                 });
                 setSearchInAnyPlace(anyPlace);
 
-                if (anyPlace) {
+                if (anyPlace && !overFlow[0]) {
                   myCalcElementsThread.addElementsByPattern(text, nonPrefixMatchElementsArray, new Computable<Boolean>() {
                     @Override
                     @NotNull
@@ -1633,23 +1644,17 @@ public abstract class ChooseByNameBase {
                   });
                   nonPrefixMatchElementsArray.removeAll(prefixMatchElementsArray);
                 }
+
+                indicator.setText("Prepare...");
+                fillUsages(prefixMatchElementsArray, usages, targets, false);
+                fillUsages(nonPrefixMatchElementsArray, usages, targets, true);
               }
             });
           }
 
           @Override
           public void onSuccess() {
-            for (Object o : prefixMatchElementsArray) {
-              if (o instanceof PsiElement) {
-                prefixEls.add((PsiElement)o);
-              }
-            }
-            for (Object o : nonPrefixMatchElementsArray) {
-              if (o instanceof PsiElement) {
-                nonPrefixEls.add((PsiElement)o);
-              }
-            }
-            showUsageView(prefixEls, nonPrefixEls, presentation);
+            showUsageView(targets, usages, presentation);
           }
 
           @Override
@@ -1661,34 +1666,32 @@ public abstract class ChooseByNameBase {
         });
       } else {
         hideHint();
-        showUsageView(prefixEls, nonPrefixEls, presentation);
+        showUsageView(targets, usages, presentation);
       }
     }
 
-    private void showUsageView(@NotNull Set<PsiElement> prefixMatchElements,
-                               @NotNull Set<PsiElement> nonPrefixMatchElements,
+    private void fillUsages(Collection<Object> matchElementsArray, List<Usage> usages, List<PsiElement> targets, final boolean separateGroup) {
+      for (Object o : matchElementsArray) {
+        if (o instanceof PsiElement) {
+          PsiElement element = (PsiElement)o;
+          if (element.getTextRange() != null) {
+            usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element){
+              @Override
+              public boolean isDynamicUsage() {
+                return separateGroup || super.isDynamicUsage();
+              }
+            }));
+          }
+          else {
+            targets.add(element);
+          }
+        }
+      }
+    }
+
+    private void showUsageView(@NotNull List<PsiElement> targets,
+                               @NotNull List<Usage> usages,
                                @NotNull UsageViewPresentation presentation) {
-      final List<PsiElement> targets = new ArrayList<PsiElement>();
-      final List<Usage> usages = new ArrayList<Usage>();
-      for (PsiElement element : prefixMatchElements) {
-        if (element.getTextRange() != null) {
-          usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element)));
-        } else {
-          targets.add(element);
-        }
-      }
-      for (PsiElement element : nonPrefixMatchElements) {
-        if (element.getTextRange() != null) {
-          usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element) {
-            @Override
-            public boolean isDynamicUsage() {
-              return true;
-            }
-          }));
-        } else {
-          targets.add(element);
-        }
-      }
       UsageViewManager
         .getInstance(myProject).showUsages(targets.isEmpty() ? UsageTarget.EMPTY_ARRAY
                                                              : PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets)),
@@ -1701,10 +1704,10 @@ public abstract class ChooseByNameBase {
         e.getPresentation().setVisible(false);
         return;
       }
-      final PsiElement[][] elements = getElements();
+      final Object[][] elements = getElements();
       e.getPresentation().setEnabled(elements != null && elements[0].length + elements[1].length > 0);
     }
 
-    public abstract PsiElement[][] getElements();
+    public abstract Object[][] getElements();
   }
 }
