@@ -23,6 +23,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -917,8 +918,10 @@ public class JavaCompletionUtil {
       return false;
     }
 
-    context.getDocument().insertString(offset, "<>");
-    context.getEditor().getCaretModel().moveToOffset(offset + 1);
+    String open = escapeXmlIfNeeded(context, "<");
+    context.getDocument().insertString(offset, open);
+    context.getEditor().getCaretModel().moveToOffset(offset + open.length());
+    context.getDocument().insertString(offset + open.length(), escapeXmlIfNeeded(context, ">"));
     context.setAddCompletionChar(false);
     return true;
   }
@@ -938,5 +941,12 @@ public class JavaCompletionUtil {
         return place;
       }
     };
+  }
+
+  public static String escapeXmlIfNeeded(InsertionContext context, String generics) {
+    if (context.getFile().getFileType() instanceof XmlLikeFileType) {
+      generics = StringUtil.escapeXml(generics);
+    }
+    return generics;
   }
 }
