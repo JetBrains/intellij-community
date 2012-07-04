@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ public final class SwingCleanuper implements ApplicationComponent{
     Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
-        if (!SystemInfo.isMac || !Registry.is("jvmbugfix.mac.caccessibleLeak")) return;
+        if (!SystemInfo.isMac || !Registry.is("ide.mac.fix.accessibleLeak")) return;
 
         HierarchyEvent he = (HierarchyEvent)event;
         if ((he.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {

@@ -5508,7 +5508,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myMousePressedEvent != null && myMousePressedEvent.getComponent() == e.getComponent()) {
           Point lastPoint = myMousePressedEvent.getPoint();
           Point point = e.getPoint();
-          int deadZone = Registry.intValue("editor.mouseSelectionStateResetDeadzone");
+          int deadZone = Registry.intValue("editor.mouseSelectionStateResetDeadZone");
           if (Math.abs(lastPoint.x - point.x) >= deadZone || Math.abs(lastPoint.y - point.y) >= deadZone) {
             resetMouseSelectionState(e);
           }

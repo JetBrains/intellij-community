@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,11 +60,11 @@ public abstract class TypeCommand extends AbstractCommand {
 
     if (keyStroke.getKeyCode() > 0) {
       robot.keyPress(keyStroke.getKeyCode());
-      robot.delay(Registry.intValue("actionSystem.playback.autodelay"));
+      robot.delay(Registry.intValue("actionSystem.playback.delay"));
       robot.keyRelease(keyStroke.getKeyCode());
     } else {
       robot.keyPress(keyStroke.getKeyChar());
-      robot.delay(Registry.intValue("actionSystem.playback.autodelay"));
+      robot.delay(Registry.intValue("actionSystem.playback.delay"));
       robot.keyRelease(keyStroke.getKeyChar());
     }
 

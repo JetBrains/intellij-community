@@ -180,7 +180,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       }
 
       final Boolean showHidden = chooserDescriptor.getUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES);
-      if (Boolean.TRUE.equals(showHidden) || Registry.is("ide.mac.filechooser.showhidden.files")) {
+      if (Boolean.TRUE.equals(showHidden) || Registry.is("ide.mac.file.chooser.show.hidden.files")) {
         if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setShowsHiddenFiles:"))) {
           invoke(chooser, "setShowsHiddenFiles:", true);
         }

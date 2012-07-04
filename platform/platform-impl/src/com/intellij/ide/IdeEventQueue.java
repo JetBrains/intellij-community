@@ -924,7 +924,7 @@ public class IdeEventQueue extends EventQueue {
           Application app = ApplicationManager.getApplication();
           if (app == null ||
               !SystemInfo.isWindows ||
-              !Registry.is("actionSystem.win.supressAlt") ||
+              !Registry.is("actionSystem.win.suppressAlt") ||
               !UISettings.getInstance().HIDE_TOOL_STRIPES) {
             return !dispatch;
           }

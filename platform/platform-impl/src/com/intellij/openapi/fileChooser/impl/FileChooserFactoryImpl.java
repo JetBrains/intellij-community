@@ -69,7 +69,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     return SystemInfo.isMac &&
            !descriptor.isChooseJarContents() &&
            "true".equalsIgnoreCase(System.getProperty("native.mac.file.chooser.enabled", "true")) &&
-           Registry.is("ide.mac.filechooser.native");
+           Registry.is("ide.mac.file.chooser.native");
   }
 
   @NotNull
