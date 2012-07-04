@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   /**
    * Put the container window to front. May not execute of the app is inactive or under some other conditions. This
-   * is the preferred way to finding the container window and uncoditionally calling <code>window.toFront()</code>
+   * is the preferred way to finding the container window and unconditionally calling <code>window.toFront()</code>
    * @param c
    */
   public abstract void toFront(JComponent c);
