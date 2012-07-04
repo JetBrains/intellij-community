@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,6 +34,7 @@ import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -55,6 +57,7 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final Alarm                     myAlarm               = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   @NotNull private final Runnable                  myRequest             = new MyShowQuickDocRequest();
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
+  @NotNull private final WindowManager             myWindowManager       = WindowManager.getInstance();
 
   private final Map<Editor, PsiElement /** PSI element which is located under the current mouse position */> myActiveElements
     = new WeakHashMap<Editor, PsiElement>();
@@ -113,6 +116,11 @@ public class QuickDocOnMouseOverManager {
     Editor editor = e.getEditor();
     Project project = editor.getProject();
     if (project == null) {
+      return;
+    }
+
+    JFrame frame = myWindowManager.getFrame(project);
+    if (frame != null && !frame.isFocused()) {
       return;
     }
 
