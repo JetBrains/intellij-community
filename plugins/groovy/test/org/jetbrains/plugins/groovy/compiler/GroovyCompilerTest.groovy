@@ -270,6 +270,7 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       "}");
 
     def javaFile = myFixture.addFileToProject("tests/Java.java", "public class Java {}");
+    println 'before second make'
 
     assertEmpty(make());
     assertOutput("Sub", "hello");
