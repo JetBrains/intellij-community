@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -24,7 +25,7 @@ public class JpsModuleLoader {
       module.getContentRootsList().addUrl(url);
       for (Element sourceElement : getChildren(contentElement, "sourceFolder")) {
         final String sourceUrl = sourceElement.getAttributeValue(URL_ATTRIBUTE);
-        final String packagePrefix = sourceElement.getAttributeValue("packagePrefix");
+        final String packagePrefix = StringUtil.notNullize(sourceElement.getAttributeValue("packagePrefix"));
         final boolean testSource = Boolean.parseBoolean(sourceElement.getAttributeValue("isTestSource"));
         final JavaSourceRootType rootType = testSource ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
         module.addSourceRoot(rootType, sourceUrl, new JavaSourceRootProperties(packagePrefix));
@@ -47,8 +48,7 @@ public class JpsModuleLoader {
         String sdkTypeId = orderEntry.getAttributeValue("jskType");
         final JpsSdkType<?> sdkType = getSdkType(sdkTypeId);
         dependenciesList.addSdkDependency(sdkType);
-        module.getSdkReferencesTable()
-          .setSdkReference(sdkType, elementFactory.createLibraryReference(sdkName, elementFactory.createGlobalReference()));
+        module.getSdkReferencesTable().setSdkReference(sdkType, elementFactory.createSdkReference(sdkName, sdkType));
       }
       else if ("inheritedJdk".equals(type)) {
         dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
@@ -62,7 +62,11 @@ public class JpsModuleLoader {
       }
       else if ("module-library".equals(type)) {
         final Element moduleLibraryElement = orderEntry.getChild("library");
-        final JpsLibrary library = JpsLibraryTableLoader.loadLibrary(moduleLibraryElement);
+        String name = moduleLibraryElement.getAttributeValue("name");
+        if (name == null) {
+          name = "#" + (moduleLibraryNum++);
+        }
+        final JpsLibrary library = JpsLibraryTableLoader.loadLibrary(moduleLibraryElement, name);
         module.addModuleLibrary(library);
 
         final JpsLibraryDependency dependency = dependenciesList.addLibraryDependency(library);

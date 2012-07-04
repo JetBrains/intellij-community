@@ -1,9 +1,9 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementKind;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.JpsElementCreator;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
+import org.jetbrains.jps.model.impl.JpsElementKindBase;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
  * @author nik
  */
 public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkReferencesTableImpl> implements JpsSdkReferencesTable {
-  public static final JpsElementKind<JpsSdkReferencesTableImpl> KIND = new JpsElementKindBase<JpsSdkReferencesTableImpl>("sdk references");
+  public static final JpsSdkReferencesTableKind KIND = new JpsSdkReferencesTableKind();
 
   public JpsSdkReferencesTableImpl() {
     super();
@@ -54,6 +54,18 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
     @Override
     public boolean equals(Object obj) {
       return obj instanceof JpsSdkReferenceKind && myType.equals(((JpsSdkReferenceKind)obj).myType);
+    }
+  }
+
+  private static class JpsSdkReferencesTableKind extends JpsElementKindBase<JpsSdkReferencesTable> implements JpsElementCreator<JpsSdkReferencesTable> {
+    public JpsSdkReferencesTableKind() {
+      super("sdk references");
+    }
+
+    @NotNull
+    @Override
+    public JpsSdkReferencesTable create() {
+      return new JpsSdkReferencesTableImpl();
     }
   }
 }

@@ -5,8 +5,10 @@ import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl;
+import org.jetbrains.jps.model.library.impl.JpsSdkReferenceImpl;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -39,6 +41,12 @@ public class JpsElementFactoryImpl extends JpsElementFactory {
   public JpsLibraryReference createLibraryReference(@NotNull String libraryName,
                                                     @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference) {
     return new JpsLibraryReferenceImpl(libraryName, parentReference);
+  }
+
+  @NotNull
+  @Override
+  public JpsLibraryReference createSdkReference(@NotNull String sdkName, @NotNull JpsSdkType<?> sdkType) {
+    return new JpsSdkReferenceImpl(sdkName, sdkType, createGlobalReference());
   }
 
   @NotNull
