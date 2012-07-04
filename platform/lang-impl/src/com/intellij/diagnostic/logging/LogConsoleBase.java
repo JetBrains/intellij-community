@@ -397,7 +397,13 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       final Document document = editor.getDocument();
       final int caretOffset = editor.getCaretModel().getOffset();
       if (caretOffset > -1) {
-        int line = document.getLineNumber(caretOffset);
+        int line;
+        try {
+          line = document.getLineNumber(caretOffset);
+        }
+        catch (IllegalStateException e) {
+          throw new IllegalStateException("document.length=" + document.getTextLength() + ", caret offset = " + caretOffset + "; " + e.getMessage(), e);
+        }
         if (line > -1 && line < document.getLineCount()) {
           final int startOffset = document.getLineStartOffset(line);
           myLineUnderSelection = document.getText().substring(startOffset, document.getLineEndOffset(line));
