@@ -25,7 +25,7 @@ public interface ChangeListModification {
   void removeChangeList(final String name);
   void removeChangeList(final LocalChangeList list);
 
-  void moveChangesTo(final LocalChangeList list, final Change[] changes);
+  void moveChangesTo(final LocalChangeList list, final Change... changes);
 
   // added - since ChangeListManager wouldn't pass internal lists, only copies
   boolean setReadOnly(final String name, final boolean value);
