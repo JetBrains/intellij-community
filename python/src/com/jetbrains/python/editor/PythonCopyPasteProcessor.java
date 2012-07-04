@@ -53,9 +53,14 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
         //user already prepared place to paste to and we just want to indent right
         if (StringUtil.countChars(element.getText(), '\n') > 2) {
           newText = text + " ";
+          if (caretOffset == offset && !strings.isEmpty() && !(element.getParent() instanceof PyFile)) {
+            newText = strings.get(strings.size()-1) + newText;
+          }
         }
         else {
-          newText = text + "\n" + strings.get(strings.size()-1);
+          newText = text + "\n";
+          if (!strings.isEmpty())
+            newText += strings.get(strings.size()-1);
           //pasted text'll be the only one statement in block
           if (!element.getText().endsWith("\n"))
             caretModel.moveToOffset(element.getTextRange().getEndOffset());
