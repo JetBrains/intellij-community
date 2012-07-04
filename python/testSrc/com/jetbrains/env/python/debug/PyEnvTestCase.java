@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -118,7 +119,8 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     }
 
     if (!wasExecuted) {
-      throw new RuntimeException("test" + getTestName(false) + " was not executed.\n" + joinStrings(roots, "All roots: "));
+      throw new RuntimeException("test" + getTestName(false) + " was not executed.\n" + joinStrings(roots, "All roots: ") + "\n" +  joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
+
     }
   }
 
@@ -194,7 +196,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     return necessaryTags.isEmpty();
   }
 
-  public static String joinStrings(List<String> roots, String rootsName) {
+  public static String joinStrings(Collection<String> roots, String rootsName) {
     return roots.size() > 0 ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
   }
 
