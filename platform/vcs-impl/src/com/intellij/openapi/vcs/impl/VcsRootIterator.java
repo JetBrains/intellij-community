@@ -124,6 +124,7 @@ public class VcsRootIterator {
   }
 
   private static class MyRootIterator {
+    private final Project myProject;
     private final Processor<FilePath> myProcessor;
     private final Processor<VirtualFile> myVfProcessor;
     @Nullable private final PairProcessor<VirtualFile, VirtualFile[]> myDirectoryFilter;
@@ -133,6 +134,7 @@ public class VcsRootIterator {
 
     private MyRootIterator(final Project project, final VirtualFile root, final Processor<FilePath> processor, final Processor<VirtualFile> vfProcessor,
                            @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
+      myProject = project;
       myProcessor = processor;
       myVfProcessor = vfProcessor;
       myDirectoryFilter = directoryFilter;
@@ -149,7 +151,7 @@ public class VcsRootIterator {
     public boolean iterate() {
       while (! myQueue.isEmpty()) {
         final VirtualFile current = myQueue.removeFirst();
-        if (!process(current)) return false;
+        if (myProject.isDisposed() || !process(current)) return false;
 
         if (current.isDirectory()) {
           final VirtualFile[] files = current.getChildren();
