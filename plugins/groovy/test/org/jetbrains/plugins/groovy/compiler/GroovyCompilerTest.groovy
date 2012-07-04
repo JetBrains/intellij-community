@@ -254,13 +254,13 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
       @Override
       void after(List<? extends VFileEvent> events) {
-        println events
+        println Thread.currentThread() + " " + events
       }
     })
     myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
     assertEmpty(make());
 
-    println 'after first make'
+    println 'after first make ' + Thread.currentThread()
 
     def sub = myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
       "  Super xxx() {}\n" +
