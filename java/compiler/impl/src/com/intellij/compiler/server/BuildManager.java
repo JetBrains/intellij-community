@@ -81,8 +81,7 @@ import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -104,6 +103,7 @@ public class BuildManager implements ApplicationComponent{
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
   private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
+  private final boolean IS_UNIT_TEST_MODE;
 
   private final File mySystemDirectory;
   private final ProjectManager myProjectManager;
@@ -129,6 +129,7 @@ public class BuildManager implements ApplicationComponent{
   private volatile CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings myGlobals;
 
   public BuildManager(final ProjectManager projectManager) {
+    IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
     myProjectManager = projectManager;
     final String systemPath = PathManager.getSystemPath();
     File system = new File(systemPath);
@@ -190,6 +191,14 @@ public class BuildManager implements ApplicationComponent{
       @Override
       public void run() {
         synchronized (myProjectDataMap) {
+          if (IS_UNIT_TEST_MODE) {
+            if (notifyDeletion) {
+              LOG.info("Registering deleted paths: " + paths);
+            }
+            else {
+              LOG.info("Registering changed paths: " + paths);
+            }
+          }
           for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
             final ProjectData data = entry.getValue();
             if (notifyDeletion) {
@@ -245,7 +254,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private void scheduleAutoMake() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (IS_UNIT_TEST_MODE) {
       return;
     }
     if (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
@@ -359,6 +368,20 @@ public class BuildManager implements ApplicationComponent{
 
     final String projectPath = getProjectPath(project);
     final UUID sessionId = UUID.randomUUID();
+
+    // ensure server is listening
+    if (myListenPort < 0) {
+      try {
+        myListenPort = startListening();
+      }
+      catch (Exception e) {
+        myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+        handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), null));
+        handler.sessionTerminated();
+        return null;
+      }
+    }
+
     final CmdlineRemoteProto.Message.ControllerMessage params;
     CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = myGlobals;
     if (globals == null) {
@@ -377,6 +400,9 @@ public class BuildManager implements ApplicationComponent{
       if (isRebuild) {
         data.dropChanges();
       }
+      if (IS_UNIT_TEST_MODE) {
+        LOG.info("Scheduling build for " + projectPath + "; CHANGED: " + data.myChanged + "; DELETED: " + data.myDeleted);
+      }
       currentFSChanges = data.getAndResetRescanFlag() ? null : data.createNextEvent();
       projectTaskQueue = data.taskQueue;
     }
@@ -391,19 +417,6 @@ public class BuildManager implements ApplicationComponent{
     }
 
     myMessageDispatcher.registerBuildMessageHandler(sessionId, handler, params);
-
-    // ensure server is listening
-    if (myListenPort < 0) {
-      try {
-        myListenPort = startListening();
-      }
-      catch (Exception e) {
-        myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
-        handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), null));
-        handler.sessionTerminated();
-        return null;
-      }
-    }
 
     final RequestFuture<BuilderMessageHandler> future = new RequestFuture<BuilderMessageHandler>(handler, sessionId, new RequestFuture.CancelAction<BuilderMessageHandler>() {
       @Override
@@ -693,7 +706,7 @@ public class BuildManager implements ApplicationComponent{
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
 
