@@ -96,9 +96,4 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
     }
     return null;
   }
-
-  @Override
-  public boolean useMiddleMatching() {
-    return true;
-  }
 }
