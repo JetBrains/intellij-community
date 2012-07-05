@@ -73,6 +73,9 @@ public interface EditorEx extends Editor {
 
   void setVerticalScrollbarOrientation(@MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT}) int type);
 
+  @MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT})
+  int getVerticalScrollbarOrientation();
+
   void setVerticalScrollbarVisible(boolean b);
 
   void setHorizontalScrollbarVisible(boolean b);

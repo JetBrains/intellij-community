@@ -4622,7 +4622,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  int getVerticalScrollbarOrientation() {
+  public int getVerticalScrollbarOrientation() {
     return myScrollBarOrientation;
   }
 
