@@ -38,6 +38,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
   private static final long DAY = HOUR * 24;
   private long FIRST_RUN_TIME = 0;
   private CompletionStatistics myCompletionStats = new CompletionStatistics();
+  private CumulativeStatistics myFixesStats = new CumulativeStatistics();
   boolean HAVE_BEEN_SHOWN = false;
 
   private final ProductivityFeaturesRegistry myRegistry;
@@ -48,6 +49,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
   @NonNls private static final String ATT_ID = "id";
   @NonNls private static final String ATT_FIRST_RUN = "first-run";
   @NonNls private static final String COMPLETION_STATS_TAG = "completionStatsTag";
+  @NonNls private static final String FIXES_STATS_TAG = "fixesStatsTag";
   @NonNls private static final String ATT_HAVE_BEEN_SHOWN = "have-been-shown";
 
   public FeatureUsageTrackerImpl(ProductivityFeaturesRegistry productivityFeaturesRegistry) {
@@ -101,6 +103,10 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     return myCompletionStats;
   }
 
+  public CumulativeStatistics getFixesStats() {
+    return myFixesStats;
+  }
+
   public long getFirstRunTime() {
     if (FIRST_RUN_TIME == 0) {
       FIRST_RUN_TIME = System.currentTimeMillis();
@@ -131,6 +137,11 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
       myCompletionStats = XmlSerializer.deserialize(stats, CompletionStatistics.class);
     }
 
+    Element fStats = element.getChild(FIXES_STATS_TAG);
+    if (fStats != null) {
+      myCompletionStats = XmlSerializer.deserialize(fStats, CompletionStatistics.class);
+    }
+
     HAVE_BEEN_SHOWN = Boolean.valueOf(element.getAttributeValue(ATT_HAVE_BEEN_SHOWN)).booleanValue();
     SHOW_IN_OTHER_PROGRESS = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IN_OTHER, Boolean.toString(true))).booleanValue();
     SHOW_IN_COMPILATION_PROGRESS = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IN_COMPILATION, Boolean.toString(true))).booleanValue();
@@ -151,6 +162,10 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     Element statsTag = new Element(COMPLETION_STATS_TAG);
     XmlSerializer.serializeInto(myCompletionStats, statsTag);
     element.addContent(statsTag);
+
+    Element fstatsTag = new Element(FIXES_STATS_TAG);
+    XmlSerializer.serializeInto(myFixesStats, fstatsTag);
+    element.addContent(fstatsTag);
 
     element.setAttribute(ATT_FIRST_RUN, String.valueOf(getFirstRunTime()));
     element.setAttribute(ATT_HAVE_BEEN_SHOWN, String.valueOf(HAVE_BEEN_SHOWN));

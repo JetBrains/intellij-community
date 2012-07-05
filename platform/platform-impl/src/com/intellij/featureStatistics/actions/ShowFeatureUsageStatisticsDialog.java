@@ -162,8 +162,16 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       String total = formatCharacterCount(stats.sparedCharacters, true);
       String perDay = formatCharacterCount(stats.sparedCharacters / stats.dayCount, false);
       labelText += "<br>Code completion has saved you from typing at least " + total + " since " + DateFormatUtil.formatDate(stats.startDate) +
-                   " (\u2245" + perDay + " per working day)";
+                   " (~" + perDay + " per working day)";
     }
+
+    CumulativeStatistics fstats = ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats();
+    if (fstats.dayCount > 0 && fstats.invocations > 0) {
+      labelText +=
+        "<br>Quick fixes have saved you from " + fstats.invocations + " possible bugs since " + DateFormatUtil.formatDate(fstats.startDate) +
+        " (~" + fstats.invocations / fstats.dayCount + " per working day)";
+    }
+
     controlsPanel.add(new JLabel("<html><body>" + labelText + "</body></html>"), BorderLayout.NORTH);
 
     JPanel topPanel = new JPanel(new BorderLayout());

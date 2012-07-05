@@ -28,6 +28,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -142,6 +143,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   public static boolean chooseActionAndInvoke(PsiFile hostFile, final Editor hostEditor, final IntentionAction action, final String text) {
     final Project project = hostFile.getProject();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
+    ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
     Pair<PsiFile, Editor> pair = chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
       public boolean process(PsiFile psiFile, Editor editor) {
