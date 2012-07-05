@@ -188,23 +188,29 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    *                       two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
    *                       on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
    *                       at the first situation but don't want to do that at the second
+   * @param reuseControl   defines whether currently requested documentation should reuse existing doc control (if any)
    */
   public void showJavaDocInfo(@NotNull Editor editor,
                               @NotNull final PsiElement element,
                               @NotNull final PsiElement original,
                               @Nullable Runnable closeCallback,
-                              boolean closeOnSneeze)
+                              boolean closeOnSneeze,
+                              boolean reuseControl)
   {
     myEditor = editor;
     myCloseOnSneeze = closeOnSneeze;
-    showJavaDocInfo(element, original, closeCallback);
+    showJavaDocInfo(element, original, reuseControl, closeCallback);
   }
   
   public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
-    showJavaDocInfo(element, original, null);
+    showJavaDocInfo(element, original, false, null);
   }
-  
-  public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original, @Nullable Runnable closeCallback) {
+
+  public void showJavaDocInfo(@NotNull final PsiElement element,
+                              final PsiElement original,
+                              boolean autoUpdate,
+                              @Nullable Runnable closeCallback)
+  {
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
@@ -213,7 +219,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     };
 
-    doShowJavaDocInfo(element, false, updateProcessor, original, false, closeCallback);
+    doShowJavaDocInfo(element, false, updateProcessor, original, autoUpdate, closeCallback);
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
@@ -733,6 +739,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
             if(jbPopup==null){
               callback.setDone();
+              if (myToolWindow != null) {
+                IdeFocusManager.getInstance(myProject).toFront(myToolWindow.getComponent());
+              }
               return;
             }
             jbPopup.setCaption(getTitle(element, false));
