@@ -285,7 +285,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
           if (target instanceof PsiFileSystemItem) {
             element = buildFileLookupElement(location, names_already, (PsiFileSystemItem) target);
           }
-          if (element == null && target instanceof PsiNamedElement) {
+          else if (target instanceof PsiNamedElement) {
             element = LookupElementBuilder.create((PsiNamedElement)target).withIcon(target.getIcon(0));
           }
           if (element != null) {

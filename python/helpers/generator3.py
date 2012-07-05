@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.113" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.114" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
@@ -2047,6 +2047,10 @@ class ModuleRedeclarator(object):
 
             if self.doing_builtins and p_name == BUILTIN_MOD_NAME:
                 # Fake <type 'generator'>
+                if version[0] < 3:
+                    next_name = "next"
+                else:
+                    next_name = "__next__"
                 txt = """
 class __generator(object):
     '''A mock class representing the generator function type.'''
@@ -2059,12 +2063,15 @@ class __generator(object):
         '''Defined to support iteration over container.'''
         pass
 
+    def %s(self):
+        '''Return the next item from the container.'''
+        pass
+""" % (next_name,)
+
+                if version[0] >= 3 or (version[0] == 2 and version[1] >= 5):
+                    txt += """
     def close(self):
         '''Raises new GeneratorExit exception inside the generator to terminate the iteration.'''
-        pass
-
-    def next(self):
-        '''Return the next item from the container.'''
         pass
 
     def send(self, value):
@@ -2074,7 +2081,6 @@ class __generator(object):
     def throw(self, type, value=None, traceback=None):
         '''Used to raise an exception inside the generator.'''
         pass
-
 """
                 self.classes_buf.out(0, txt)
 
