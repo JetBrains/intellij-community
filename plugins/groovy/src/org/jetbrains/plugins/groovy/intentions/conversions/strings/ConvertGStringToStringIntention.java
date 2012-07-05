@@ -156,17 +156,11 @@ public class ConvertGStringToStringIntention extends Intention {
     final StringBuilder buffer = new StringBuilder();
     if (text.indexOf('\n') >= 0) {
       GrStringUtil.escapeAndUnescapeSymbols(text, "", "\"$", buffer);
-      fixAllTripleQuotes(buffer, 0);
+      GrStringUtil.fixAllTripleQuotes(buffer, 0);
     }
     else {
       GrStringUtil.escapeAndUnescapeSymbols(text, "'", "\"$", buffer);
     }
     return GrStringUtil.addQuotes(buffer.toString(), false);
-  }
-
-  private static void fixAllTripleQuotes(StringBuilder builder, int position) {
-    for (int i = builder.indexOf("'''", position); i >= 0; i = builder.indexOf("'''", i)) {
-      builder.replace(i + 2, i + 3, "\\'");
-    }
   }
 }

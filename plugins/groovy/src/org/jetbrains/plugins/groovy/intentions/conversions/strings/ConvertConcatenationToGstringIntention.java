@@ -135,7 +135,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       if (multiline) {
         final int position = builder.length();
         GrStringUtil.escapeAndUnescapeSymbols(text, "$", "'\"", builder);
-        fixAllTripleQuotes(builder, position);
+        GrStringUtil.fixAllTripleDoubleQuotes(builder, position);
       }
       else {
         GrStringUtil.escapeAndUnescapeSymbols(text, "$\"", "'", builder);
@@ -149,12 +149,6 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
     else {
       builder.append(START_BRACE).append(operand == null ? "" : operand.getText()).append(END_BRACE);
-    }
-  }
-
-  private static void fixAllTripleQuotes(StringBuilder builder, int position) {
-    for (int i = builder.indexOf("\"\"\"", position); i >= 0; i = builder.indexOf("\"\"\"", i)) {
-      builder.replace(i + 2, i + 3, "\\\"");
     }
   }
 

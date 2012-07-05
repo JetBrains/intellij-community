@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions.conversions;
+package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -93,17 +93,15 @@ public class ConvertStringToMultilineIntention extends Intention {
   }
 
   private static void appendSimpleStringValue(PsiElement element, StringBuilder buffer, String quote) {
-    final Object value = ((GrLiteralImpl)element).getValue();
-    if (value instanceof String) {
-      if ("'''".equals(quote)) {
-        GrStringUtil.escapeStringCharacters(((String)value).length(), (String)value, "", false, true, buffer);
-      }
-      else {
-        GrStringUtil.escapeSymbolsForGString((CharSequence)value, false, false, buffer);
-      }
+    final String text = GrStringUtil.removeQuotes(element.getText());
+    final int position = buffer.length();
+    if ("'''".equals(quote)) {
+      GrStringUtil.escapeAndUnescapeSymbols(text, "", "'n", buffer);
+      GrStringUtil.fixAllTripleQuotes(buffer, position);
     }
     else {
-      buffer.append(GrStringUtil.removeQuotes(element.getText()));
+      GrStringUtil.escapeAndUnescapeSymbols(text, "", "\"n", buffer);
+      GrStringUtil.fixAllTripleDoubleQuotes(buffer, position);
     }
   }
 

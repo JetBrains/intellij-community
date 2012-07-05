@@ -361,8 +361,15 @@ public class GrStringUtil {
       if (escaped) {
         if (toUnescape.indexOf(ch) < 0) {
           builder.append('\\');
+          builder.append(ch);
         }
-        builder.append(ch);
+        else {
+          if (ch=='n') builder.append('\n');
+          else if (ch=='b') builder.append('\b');
+          else if (ch=='t') builder.append('\t');
+          else if (ch=='f') builder.append('\r');
+          else builder.append(ch);
+        }
         escaped = false;
         continue;
       }
@@ -856,6 +863,18 @@ public class GrStringUtil {
       escapeStringCharacters(text.length(), text, "$", false, true, buffer);
       unescapeCharacters(buffer, containsLineFeeds?"'\"":"'", containsLineFeeds);
       builder.append(buffer);
+    }
+  }
+
+  public static void fixAllTripleQuotes(StringBuilder builder, int position) {
+    for (int i = builder.indexOf("'''", position); i >= 0; i = builder.indexOf("'''", i)) {
+      builder.replace(i + 2, i + 3, "\\'");
+    }
+  }
+
+  public static void fixAllTripleDoubleQuotes(StringBuilder builder, int position) {
+    for (int i = builder.indexOf("\"\"\"", position); i >= 0; i = builder.indexOf("\"\"\"", i)) {
+      builder.replace(i + 2, i + 3, "\\\"");
     }
   }
 }
