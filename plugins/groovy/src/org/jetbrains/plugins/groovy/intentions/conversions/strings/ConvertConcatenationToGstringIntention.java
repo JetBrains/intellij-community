@@ -16,12 +16,20 @@
 
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +53,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -59,10 +71,63 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     return new MyPredicate();
   }
 
+
+  private static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset) {
+    int correctedOffset = GrIntroduceHandlerBase.correctOffset(editor, offset);
+    final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
+    final List<GrExpression> expressions = new ArrayList<GrExpression>();
+
+    for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
+         expression != null;
+         expression = PsiTreeUtil.getParentOfType(expression, GrExpression.class)) {
+      if (MyPredicate.satisfied(expression)) expressions.add(expression);
+      else if (!expressions.isEmpty()) break;
+    }
+    return expressions;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    if (!(element instanceof GrExpression)) return;
+    final PsiFile file = element.getContainingFile();
+    final int offset = editor.getCaretModel().getOffset();
+    final AccessToken accessToken = ReadAction.start();
+    final List<GrExpression> expressions;
+    try {
+      expressions = collectExpressions(file, editor, offset);
+    }
+    finally {
+      accessToken.finish();
+    }
+    if (expressions.size() == 1) {
+      invokeImpl(expressions.get(0));
+    }
+    else if (expressions.size() > 0) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        invokeImpl(expressions.get(expressions.size() - 1));
+        return;
+      }
+      IntroduceTargetChooser.showChooser(editor, expressions,
+                                         new Pass<GrExpression>() {
+                                           public void pass(final GrExpression selectedValue) {
+                                             invokeImpl(selectedValue);
+                                           }
+                                         },
+                                         new Function<GrExpression, String>() {
+                                           @Override
+                                           public String fun(GrExpression grExpression) {
+                                             return grExpression.getText();
+                                           }
+                                         }
+      );
+    }
+  }
 
+  private static void invokeImpl(PsiElement element) {
     boolean isMultiline = containsMultilineStrings((GrExpression)element);
 
     StringBuilder builder = new StringBuilder(element.getTextLength());
@@ -79,9 +144,16 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     String text = builder.toString();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(text, true));
-    final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
-    if (expression instanceof GrString) {
-      GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
+
+    final AccessToken accessToken = WriteAction.start();
+    try {
+      final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
+      if (expression instanceof GrString) {
+        GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
+      }
+    }
+    finally {
+      accessToken.finish();
     }
   }
 
@@ -141,7 +213,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
         GrStringUtil.escapeAndUnescapeSymbols(text, "$\"", "'", builder);
       }
     }
-    else if (MyPredicate.satisfiedBy(operand, false)) {
+    else if (MyPredicate.satisfied(operand)) {
       performIntention((GrBinaryExpression)operand, builder, multiline);
     }
     else if (isToStringMethod(operand, builder)) {
@@ -203,10 +275,10 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
   private static class MyPredicate implements PsiElementPredicate {
     public boolean satisfiedBy(PsiElement element) {
-      return satisfiedBy(element, true);
+      return satisfied(element);
     }
 
-    public static boolean satisfiedBy(PsiElement element, boolean checkForParent) {
+    public static boolean satisfied(PsiElement element) {
       if (element instanceof GrLiteral &&
           ((GrLiteral)element).getValue() instanceof String &&
           GrLiteralImpl.getLiteralType((GrLiteral)element) != GroovyTokenTypes.mGSTRING_LITERAL) {
@@ -218,12 +290,6 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
       if (!GroovyTokenTypes.mPLUS.equals(binaryExpression.getOperationTokenType())) return false;
 
-      if (checkForParent) {
-        PsiElement parent = skipParentheses(binaryExpression, true);
-        if (parent instanceof GrBinaryExpression && GroovyTokenTypes.mPLUS.equals(((GrBinaryExpression)parent).getOperationTokenType())) {
-          return false;
-        }
-      }
       if (ErrorUtil.containsError(element)) return false;
 
       final PsiType type = binaryExpression.getType();
