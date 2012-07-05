@@ -35,8 +35,9 @@ import java.util.regex.Pattern;
  */
 public class AndroidLogcatReceiver extends AndroidOutputReceiver {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.logcat.AndroidLogcatReceiver");
-  private static final Pattern LOG_PATTERN =
-    Pattern.compile("^\\[\\s(\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+)\\s+(\\d*):(0x[0-9a-fA-F]+)\\s([VDIWE])/(.*)\\]$", Pattern.DOTALL);
+  private static Pattern LOG_PATTERN =
+    Pattern.compile("^\\[\\s(\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+)\\s+(\\d*):\\s*(\\S+)\\s([VDIWEAF])/(.*)\\]$", Pattern.DOTALL);
+
   private static final String SHIFT = "        ";
 
   private LogMessageHeader myLastMessageHeader;
