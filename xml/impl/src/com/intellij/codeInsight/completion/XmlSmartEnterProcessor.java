@@ -128,7 +128,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
           caretTo = insertionOffset + text2insert.length();
         }
 
-        commitChanges(project, editor, psiFile, caretTo, tagAtCaret);
+        commitChanges(project, editor, psiFile, caretTo, null);
 
         return true;
       }
