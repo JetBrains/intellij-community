@@ -53,7 +53,6 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
   private RunContentDescriptor myDescriptor;
   private ProcessHandler myProcessHandler;
   private ExecutionConsole myConsoleView;
-  private boolean mySetUp;
   private Sdk mySdk;
 
   @Override
@@ -66,8 +65,6 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
     super.setUp();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
-        if (myFixture == null)
-          mySetUp = true;
         Module module = myFixture.getModule();
         if (module != null && !DjangoFacet.isPresent(module)) {
           DjangoTestCase.addDjangoFacet(module);
@@ -84,18 +81,15 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         try {
-          if (mySetUp) {
-            DjangoPathTestTask.super.tearDown();
-            if (myConsoleView != null) {
-              Disposer.dispose(myConsoleView);
-              myConsoleView = null;
-            }
-            if (myDescriptor != null) {
-              myDescriptor.dispose();
-              myDescriptor = null;
-            }
-            mySetUp = false;
+          if (myConsoleView != null) {
+            Disposer.dispose(myConsoleView);
+            myConsoleView = null;
           }
+          if (myDescriptor != null) {
+            myDescriptor.dispose();
+            myDescriptor = null;
+          }
+          DjangoPathTestTask.super.tearDown();
         }
         catch (Exception e) {
           throw new RuntimeException(e);
@@ -110,7 +104,6 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         public void run() {
           mySdk = SdkConfigurationUtil.createAndAddSDK(sdkHome, PythonSdkType.getInstance());
-
         }
       });
     }
@@ -135,6 +128,7 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
 
     XDebuggerTestUtil.waitForSwing();
     after();
+
     disposeProcess(myProcessHandler);
   }
 
@@ -147,7 +141,7 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
       task.setWorkingDirectory(getWorkingFolder());
       task.setRunnerScript(PythonHelpersLocator.getHelperPath("pycharm/django_manage.py"));
       final ImmutableList.Builder<String> parametersString =
-          new ImmutableList.Builder<String>().add("validate").add(getTestDataPath());
+        new ImmutableList.Builder<String>().add("validate").add(getTestDataPath());
       task.setParameters(parametersString.build());
 
       myProcessHandler = task.createProcess();
@@ -162,8 +156,8 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
         public void run() {
           final Project project = myFixture.getProject();
           new RunContentExecutor(project, myProcessHandler)
-              .withFilter(new PythonTracebackFilter(project))
-              .run();
+            .withFilter(new PythonTracebackFilter(project))
+            .run();
         }
       });
       s.up();
@@ -171,7 +165,7 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
     else {      //run dango server and django test
       final Project project = getProject();
       final RunnerAndConfigurationSettings settings =
-          RunManager.getInstance(project).createRunConfiguration("test", factory);
+        RunManager.getInstance(project).createRunConfiguration("test", factory);
 
       final AbstractPythonRunConfiguration config = (AbstractPythonRunConfiguration)settings.getConfiguration();
       config.setSdkHome(sdkHome);
