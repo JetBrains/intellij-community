@@ -175,6 +175,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return myToolWindow != null;
   }
   
+  public void setAllowContentUpdateFromContext(boolean allow) {
+    myAutoUpdateDocumentation = allow;
+  }
+  
   /**
    * Asks to show quick doc for the target element.
    * 

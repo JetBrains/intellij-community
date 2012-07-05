@@ -150,7 +150,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
       if (myAutoUpdateRequest == null) {
         myAutoUpdateRequest = new Runnable() {
           public void run() {
-            if (myProject.isDisposed()) return;
+            if (!myAutoUpdateDocumentation || myProject.isDisposed()) return;
 
             AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
             DataContext dataContext = asyncResult.getResult();

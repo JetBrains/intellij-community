@@ -211,6 +211,7 @@ public class QuickDocOnMouseOverManager {
     { 
       return;
     }
+    allowUpdateFromContext(false);
     closeQuickDocIfPossible();
     myActiveElements.put(editor, targetElementUnderMouse);
     myDelayedQuickDocInfo = new DelayedQuickDocInfo(documentationManager, editor, targetElementUnderMouse, elementUnderMouse);
@@ -221,12 +222,7 @@ public class QuickDocOnMouseOverManager {
 
   private void closeQuickDocIfPossible() {
     myAlarm.cancelAllRequests();
-    WeakReference<DocumentationManager> ref = myDocumentationManager;
-    if (ref == null) {
-      return;
-    }
-
-    DocumentationManager docManager = ref.get();
+    DocumentationManager docManager = getDocManager();
     if (docManager == null) {
       return;
     }
@@ -240,6 +236,27 @@ public class QuickDocOnMouseOverManager {
     myDocumentationManager = null;
   }
 
+  private void allowUpdateFromContext(boolean allow) {
+    DocumentationManager documentationManager = getDocManager();
+    if (documentationManager != null) {
+      documentationManager.setAllowContentUpdateFromContext(allow);
+    }
+  }
+
+  @Nullable
+  private DocumentationManager getDocManager() {
+    WeakReference<DocumentationManager> ref = myDocumentationManager;
+    if (ref == null) {
+      return null;
+    }
+
+    DocumentationManager docManager = ref.get();
+    if (docManager == null) {
+      return null;
+    }
+    return docManager;
+  }
+  
   private static class DelayedQuickDocInfo {
 
     @NotNull public final DocumentationManager docManager;
@@ -333,6 +350,7 @@ public class QuickDocOnMouseOverManager {
   private class MyCaretListener implements CaretListener {
     @Override
     public void caretPositionChanged(CaretEvent e) {
+      allowUpdateFromContext(true);
       closeQuickDocIfPossible(); 
     }
   }
