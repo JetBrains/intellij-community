@@ -10,10 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
@@ -21,6 +18,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -35,6 +33,10 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.isExtendedCompletion()) {
+      final PsiElement parent = parameters.getPosition().getParent();
+      if (parent instanceof PyReferenceExpression && ((PyReferenceExpression)parent).getQualifier() != null) {
+        return;
+      }
       addVariantsFromIndex(result, parameters.getOriginalFile(), PyClassNameIndex.KEY, CLASS_INSERT_HANDLER, Conditions.<PyClass>alwaysTrue());
       addVariantsFromIndex(result, parameters.getOriginalFile(), PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, TOPLEVEL_FUNCTION);
     }
