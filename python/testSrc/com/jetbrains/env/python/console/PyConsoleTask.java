@@ -214,9 +214,26 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myProcessHandler = null;
   }
 
-  public void waitForOutput(String string) throws InterruptedException {
+  /**
+   * Waits until all passed strings appear in output.
+   * If they don't appear in timelimit, then exception is raised.
+   *
+   * @param string
+   * @throws InterruptedException
+   */
+  public void waitForOutput(String... string) throws InterruptedException {
     int count = 0;
-    while (!output().contains(string)) {
+    while (true) {
+      String out = output();
+      boolean flag = true;
+      for (String s : string) {
+        if (!out.contains(s)) {
+          flag = false;
+        }
+      }
+      if (flag) {
+        break;
+      }
       if (count > 10) {
         Assert.fail("'" + string + "'" + " is not present in output.\n" + output());
       }

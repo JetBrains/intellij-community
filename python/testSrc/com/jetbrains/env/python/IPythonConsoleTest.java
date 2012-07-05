@@ -19,7 +19,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
       public void testing() throws Exception {
         exec("import multiprocessing");
         exec("multiprocessing?");
-        waitForOutput("Base Class: <type 'module'>");
+        waitForOutput("Base Class:", "<type 'module'>");
       }
     });
   }
