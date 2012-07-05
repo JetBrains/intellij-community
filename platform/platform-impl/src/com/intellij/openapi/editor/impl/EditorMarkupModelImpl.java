@@ -777,6 +777,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myMinMarkHeight = minMarkHeight;
   }
 
+  @Override
+  public boolean isErrorStripeVisible() {
+    return getErrorPanel() != null;
+  }
+
   private static class BasicTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
     @Override
     public TooltipRenderer calcTooltipRenderer(@NotNull final Collection<RangeHighlighter> highlighters) {
