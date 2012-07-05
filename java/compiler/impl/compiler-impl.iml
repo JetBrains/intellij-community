@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="library" name="Netty" level="project" />
   </component>

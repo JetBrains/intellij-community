@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
-import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -489,7 +489,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       String[] namedParameters = stub.getNamedParameters();
       if (namedParameters.length == 0) return Collections.emptyMap();
 
-      Map<String, NamedArgumentDescriptor> result = Maps.newHashMap();
+      Map<String, NamedArgumentDescriptor> result = ContainerUtil.newHashMap();
 
       for (String parameter : namedParameters) {
         result.put(parameter, GrNamedArgumentSearchVisitor.CODE_NAMED_ARGUMENTS_DESCR);

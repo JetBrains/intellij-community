@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner.events;
 
-import com.google.common.base.Preconditions;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,8 @@ public class TestFailedEvent extends TreeNodeEvent {
 
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     super(testFailed.getTestName(), TreeNodeEvent.getNodeId(testFailed));
-    myLocalizedFailureMessage = Preconditions.checkNotNull(testFailed.getFailureMessage());
+    if (testFailed.getFailureMessage() == null) throw new NullPointerException();
+    myLocalizedFailureMessage = testFailed.getFailureMessage();
     myStacktrace = testFailed.getStacktrace();
     myTestError = testError;
     myComparisonFailureActualText = testFailed.getActual();
@@ -47,7 +47,7 @@ public class TestFailedEvent extends TreeNodeEvent {
                          @Nullable String comparisonFailureActualText,
                          @Nullable String comparisonFailureExpectedText) {
     super(testName, -1);
-    myLocalizedFailureMessage = Preconditions.checkNotNull(localizedFailureMessage);
+    myLocalizedFailureMessage = localizedFailureMessage;
     myStacktrace = stackTrace;
     myTestError = testError;
     myComparisonFailureActualText = comparisonFailureActualText;

@@ -1,6 +1,5 @@
 package com.intellij.execution.configuration;
 
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -14,6 +13,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   public void readExternal(@NotNull final U configuration,
                            @NotNull final Element parentNode) throws InvalidDataException {
     final List<Element> children = parentNode.getChildren(getExtensionRootAttr());
-    final Map<String, T> extensions = Maps.newHashMap();
+    final Map<String, T> extensions = ContainerUtil.newHashMap();
     for (T extension : getApplicableExtensions(configuration)) {
       extensions.put(extension.getSerializationId(), extension);
     }
@@ -73,7 +73,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
 
   public void writeExternal(@NotNull final U configuration,
                             @NotNull final Element parentNode) throws WriteExternalException {
-    final TreeMap<String, Element> map = Maps.newTreeMap();
+    final TreeMap<String, Element> map = ContainerUtil.newTreeMap();
     final List<Element> elements = configuration.getCopyableUserData(RUN_EXTENSIONS);
     if (elements != null) {
       for (Element el : elements) {

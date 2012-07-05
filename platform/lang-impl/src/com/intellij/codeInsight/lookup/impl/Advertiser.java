@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +28,6 @@ import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
@@ -70,7 +68,7 @@ public class Advertiser {
 
   public Advertiser() {
     myNextLabel = new JLabel(">>");
-    myNextLabel.setFont(adFont().deriveFont(ImmutableMap.<TextAttribute, Object>builder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
+    myNextLabel.setFont(adFont().deriveFont(ContainerUtil.<TextAttribute, Object>immutableMapBuilder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
     myNextLabel.setForeground(Color.blue);
     new ClickListener() {
       @Override

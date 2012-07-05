@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -305,7 +304,7 @@ public class EditorsSplitters extends JPanel {
     EditorWindow window = (panel == null) ? new EditorWindow(this) : findWindowWith(panel);
     LOG.assertTrue(window != null);
 
-    @SuppressWarnings("unchecked") final List<Element> children = Lists.newArrayList(leaf.getChildren("file"));
+    @SuppressWarnings("unchecked") final List<Element> children = ContainerUtil.newArrayList(leaf.getChildren("file"));
     if (UISettings.getInstance().ACTIVATE_RIGHT_EDITOR_ON_CLOSE) {
       Collections.reverse(children);
     }

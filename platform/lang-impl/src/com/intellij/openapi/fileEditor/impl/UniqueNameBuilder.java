@@ -1,7 +1,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
-import com.google.common.collect.Maps;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -81,7 +81,7 @@ public class UniqueNameBuilder<T> {
   private static final String NON_UNIQUE = "::::::";
 
   private void tryTruncateSegments(Map<T, List<String>> segmentLists, int index) {
-    Map<String, String> truncatedSegments = Maps.newHashMap();
+    Map<String, String> truncatedSegments = ContainerUtil.newHashMap();
     for (Map.Entry<T, List<String>> entry : segmentLists.entrySet()) {
       if (entry.getValue().size() <= index+1) {
         continue;
@@ -113,7 +113,7 @@ public class UniqueNameBuilder<T> {
         }
       }
     }
-    Map<String, String> inverted = Maps.newHashMap();
+    Map<String, String> inverted = ContainerUtil.newHashMap();
     for (Map.Entry<String, String> entry : truncatedSegments.entrySet()) {
       if (entry.getValue() != NON_UNIQUE) {
         inverted.put(entry.getValue(), entry.getKey());

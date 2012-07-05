@@ -27,7 +27,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="projectModel-api" exported="" />
   </component>
 </module>

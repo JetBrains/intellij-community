@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.google.common.base.Predicate;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -31,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -15,13 +15,11 @@
  */
 package com.intellij.openapi.fileChooser;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ImmutableList;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * @author Konstantin Bulenkov
@@ -33,18 +31,16 @@ public class FileTypeDescriptor extends FileChooserDescriptor {
   public FileTypeDescriptor(String title, @NotNull String... extensions) {
     super(true, false, false, true, false, false);
     assert extensions.length > 0 : "There should be at least one extension";
-    myExtensions = ImmutableList.copyOf(Lists.transform(
-      Arrays.asList(extensions),
-      new Function<String, String>() {
-        @Override
-        public String apply(String ext) {
-          if (ext.startsWith(".")) {
-            return ext;
-          }
-          return "." + ext;
+    myExtensions = ContainerUtil.immutableList(ContainerUtil.map(extensions, new Function<String, String>() {
+      @Override
+      public String fun(String ext) {
+        if (ext.startsWith(".")) {
+          return ext;
         }
+        return "." + ext;
       }
-    ));
+    }));
+
     setTitle(title);
   }
 
