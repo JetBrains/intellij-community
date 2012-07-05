@@ -25,10 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,94 +54,142 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
     try {
       final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tagAtCaret.getNode());
       final ASTNode endTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tagAtCaret.getNode());
-      if (emptyTagEnd != null || endTagEnd != null) {
-        return false;
-      }
+      final Document doc = editor.getDocument();
+      if (emptyTagEnd == null && endTagEnd == null) {
+        int insertionOffset = tagAtCaret.getTextRange().getEndOffset();
+        int caretAt = editor.getCaretModel().getOffset();
+        final CharSequence text = doc.getCharsSequence();
+        final int probableCommaOffset = CharArrayUtil.shiftForward(text, insertionOffset, " \t");
+        final PsiElement siebling = tagAtCaret.getNextSibling();
+        int caretTo = caretAt;
+        char ch;
 
-      int insertionOffset = tagAtCaret.getTextRange().getEndOffset();
-      Document doc = editor.getDocument();
-      int caretAt = editor.getCaretModel().getOffset();
-      final CharSequence text = doc.getCharsSequence();
-      final int probableCommaOffset = CharArrayUtil.shiftForward(text, insertionOffset, " \t");
-      final PsiElement siebling = tagAtCaret.getNextSibling();
-      int caretTo = caretAt;
-      char ch;
+        if (caretAt < probableCommaOffset) {
+          final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
 
-      if (caretAt < probableCommaOffset) {
-        final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
-
-        CharSequence tagNameText = null;
-        if (xmlAttribute != null) {
-          final ASTNode node = tagAtCaret.getNode();
-          if (node != null) {
-            final ASTNode tagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
-            if (tagName != null) {
-              tagNameText = tagName.getText();
+          CharSequence tagNameText = null;
+          if (xmlAttribute != null) {
+            final ASTNode node = tagAtCaret.getNode();
+            if (node != null) {
+              final ASTNode tagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(node);
+              if (tagName != null) {
+                tagNameText = tagName.getText();
+              }
             }
+
+            final XmlAttributeValue valueElement = xmlAttribute.getValueElement();
+            final TextRange textRange = xmlAttribute.getTextRange();
+            caretAt = valueElement == null
+                      ? textRange.getStartOffset()
+                      : getClosingQuote(xmlAttribute).length() == 0 ? textRange.getEndOffset() : caretAt;
           }
 
-          final XmlAttributeValue valueElement = xmlAttribute.getValueElement();
-          final TextRange textRange = xmlAttribute.getTextRange();
-          caretAt = valueElement == null ? textRange.getStartOffset() : getClosingQuote(xmlAttribute).length() == 0 ? textRange.getEndOffset() : caretAt;
+          if (tagNameText == null) {
+            tagNameText = text.subSequence(tagAtCaret.getTextRange().getStartOffset() + 1, caretAt);
+          }
+
+          final PsiElement element = psiFile.findElementAt(probableCommaOffset);
+          final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
+
+          if (tag != null && tag.getTextRange().getStartOffset() == probableCommaOffset) {
+            doc.insertString(caretAt, text2insert);
+            if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+              doc.insertString(tag.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+            }
+
+            caretTo = tag.getTextRange().getEndOffset() + text2insert.length();
+          }
+          else {
+            doc.insertString(caretAt, text2insert);
+            if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
+              doc.insertString(probableCommaOffset + text2insert.length(), "</" + tagNameText + ">");
+            }
+
+            caretTo = probableCommaOffset + text2insert.length();
+          }
         }
+        else if (siebling instanceof XmlTag && siebling.getTextRange().getStartOffset() == caretAt) {
+          final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
+          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
 
-        if (tagNameText == null) {
-          tagNameText = text.subSequence(tagAtCaret.getTextRange().getStartOffset() + 1, caretAt);
-        }
-
-        final PsiElement element = psiFile.findElementAt(probableCommaOffset);
-        final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-        final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
-
-        if (tag != null && tag.getTextRange().getStartOffset() == probableCommaOffset) {
           doc.insertString(caretAt, text2insert);
           if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
-            doc.insertString(tag.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+            doc.insertString(siebling.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
           }
 
-          caretTo = tag.getTextRange().getEndOffset() + text2insert.length();
+          caretTo = siebling.getTextRange().getEndOffset() + text2insert.length();
         }
-        else {
-          doc.insertString(caretAt, text2insert);
-          if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
-            doc.insertString(probableCommaOffset + text2insert.length(), "</" + tagNameText + ">");
-          }
+        else if (probableCommaOffset >= text.length() || ((ch = text.charAt(probableCommaOffset)) != '/' && ch != '>')) {
+          final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
+          final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, true);
 
-          caretTo = probableCommaOffset + text2insert.length();
-        }
-      }
-      else if (siebling instanceof XmlTag && siebling.getTextRange().getStartOffset() == caretAt) {
-        final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
-        final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, false);
-
-        doc.insertString(caretAt, text2insert);
-        if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
-          doc.insertString(siebling.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
+          doc.insertString(insertionOffset, text2insert);
+          caretTo = insertionOffset + text2insert.length();
         }
 
-        caretTo = siebling.getTextRange().getEndOffset() + text2insert.length();
-      }
-      else if (probableCommaOffset >= text.length() || ((ch = text.charAt(probableCommaOffset)) != '/' && ch != '>')) {
-        final XmlAttribute xmlAttribute = PsiTreeUtil.getParentOfType(atCaret, XmlAttribute.class, false, XmlTag.class);
-        final CharSequence text2insert = getClosingPart(xmlAttribute, tagAtCaret, true);
+        commitChanges(project, editor, psiFile, caretTo, tagAtCaret);
 
-        doc.insertString(insertionOffset, text2insert);
-        caretTo = insertionOffset + text2insert.length();
+        return true;
       }
+      else {
+        final XmlTag unclosedTag = findClosestUnclosedTag(tagAtCaret);
+        if (unclosedTag == null) {
+          return false;
+        }
 
-      if (isUncommited(project)) {
-        commit(editor);
-        tagAtCaret = PsiTreeUtil.getParentOfType(getStatementAtCaret(editor, psiFile), XmlTag.class);
-        editor.getCaretModel().moveToOffset(caretTo);
+        final String closingTagString = "</" + unclosedTag.getName() + ">";
+
+        final XmlTag parentTag = unclosedTag.getParentTag();
+        final ASTNode parentEndTagNode = parentTag != null ? XmlChildRole.CLOSING_TAG_START_FINDER.findChild(parentTag.getNode()) : null;
+        final int offset = parentEndTagNode != null
+                           ? parentEndTagNode.getTextRange().getStartOffset()
+                           : unclosedTag.getTextRange().getEndOffset();
+
+        doc.insertString(offset, closingTagString);
+        commitChanges(project, editor, psiFile, offset, parentTag != null ? parentTag : unclosedTag);
+        return true;
       }
-
-      reformat(tagAtCaret);
-      commit(editor);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-    return true;
+    return false;
+  }
+
+  private void commitChanges(Project project, Editor editor, PsiFile psiFile, int caretOffset, @Nullable XmlTag tagToReformat) {
+    if (isUncommited(project)) {
+      commit(editor);
+      if (tagToReformat == null) {
+        tagToReformat = PsiTreeUtil.getParentOfType(getStatementAtCaret(editor, psiFile), XmlTag.class);
+      }
+      editor.getCaretModel().moveToOffset(caretOffset);
+    }
+    if (tagToReformat != null) {
+      reformat(tagToReformat);
+    }
+    commit(editor);
+  }
+
+  @Nullable
+  private static XmlTag findClosestUnclosedTag(final XmlTag tag) {
+    XmlTag unclosedTag = tag;
+    while (unclosedTag != null) {
+      final PsiElement lastChild = unclosedTag.getLastChild();
+      if (isTagUnclosed(lastChild)) {
+        return unclosedTag;
+      }
+      final XmlTag prevTag = PsiTreeUtil.getPrevSiblingOfType(unclosedTag, XmlTag.class);
+      unclosedTag = prevTag != null ? prevTag : PsiTreeUtil.getParentOfType(unclosedTag, XmlTag.class);
+    }
+    return null;
+  }
+
+  protected static boolean isTagUnclosed(PsiElement lastChild) {
+  //strange approach, but it's universal for xml and html
+    return lastChild != null &&
+           lastChild.getNode().getElementType() != XmlTokenType.XML_TAG_END &&
+           lastChild.getNode().getElementType() != XmlTokenType.XML_EMPTY_ELEMENT_END;
   }
 
   protected boolean shouldInsertClosingTag(final XmlAttribute xmlAttribute, final XmlTag tagAtCaret) {
