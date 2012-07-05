@@ -1,8 +1,11 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.AnchorableComponent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.ButtonUI;
+import javax.swing.plaf.basic.BasicRadioButtonUI;
 import java.awt.*;
 
 /**
@@ -65,4 +68,57 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
   public Dimension getMinimumSize() {
     return myAnchor == null ? super.getMinimumSize() : myAnchor.getMinimumSize();
   }
+
+  /**
+   * Sets given icon to display between checkbox icon and text.
+   *
+   * @return true in case of success and false otherwise
+   */
+  public boolean setTextIcon(@NotNull Icon icon) {
+    ButtonUI ui = getUI();
+    if (ui instanceof BasicRadioButtonUI) {
+      Icon defaultIcon = ((BasicRadioButtonUI) ui).getDefaultIcon();
+      if (defaultIcon != null) {
+        MergedIcon mergedIcon = new MergedIcon(defaultIcon, 10, icon);
+        setIcon(mergedIcon);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static class MergedIcon implements Icon {
+
+    private final Icon myLeftIcon;
+    private final int myHorizontalStrut;
+    private final Icon myRightIcon;
+
+    public MergedIcon(@NotNull Icon leftIcon, int horizontalStrut, @NotNull Icon rightIcon) {
+      myLeftIcon = leftIcon;
+      myHorizontalStrut = horizontalStrut;
+      myRightIcon = rightIcon;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      paintIconAlignedCenter(c, g, x, y, myLeftIcon);
+      paintIconAlignedCenter(c, g, x + myLeftIcon.getIconWidth() + myHorizontalStrut, y, myRightIcon);
+    }
+
+    private void paintIconAlignedCenter(Component c, Graphics g, int x, int y, @NotNull Icon icon) {
+      int iconHeight = getIconHeight();
+      icon.paintIcon(c, g, x, y + (iconHeight - icon.getIconHeight()) / 2);
+    }
+
+    @Override
+    public int getIconWidth() {
+      return myLeftIcon.getIconWidth() + myHorizontalStrut + myRightIcon.getIconWidth();
+    }
+
+    @Override
+    public int getIconHeight() {
+      return Math.max(myLeftIcon.getIconHeight(), myRightIcon.getIconHeight());
+    }
+  }
+
 }
