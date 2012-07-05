@@ -27,6 +27,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -156,9 +157,11 @@ public class BuildManager implements ApplicationComponent{
       }
 
       private boolean shouldTriggerMake(List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event.isFromRefresh() || event.getRequestor() instanceof SavingRequestor) {
-            return true;
+        if (!PowerSaveMode.isEnabled()) {
+          for (VFileEvent event : events) {
+            if (event.isFromRefresh() || event.getRequestor() instanceof SavingRequestor) {
+              return true;
+            }
           }
         }
         return false;
@@ -254,7 +257,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   private void scheduleAutoMake() {
-    if (IS_UNIT_TEST_MODE) {
+    if (IS_UNIT_TEST_MODE || PowerSaveMode.isEnabled()) {
       return;
     }
     if (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
