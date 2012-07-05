@@ -55,6 +55,32 @@ class PyDevFrontEnd(PrefilterFrontEnd):
         
     def getNamespace(self):
         return self.shell.user_ns
+
+
+    def is_complete(self, string):
+        #Based on IPython 0.10.1
+
+        if string in ('', '\n'):
+            # Prefiltering, eg through ipython0, may return an empty
+            # string although some operations have been accomplished. We
+            # thus want to consider an empty string as a complete
+            # statement.
+            return True
+        else:
+            try:
+                # Add line returns here, to make sure that the statement is
+                # complete (except if '\' was used).
+                # This should probably be done in a different place (like
+                # maybe 'prefilter_input' method? For now, this works.
+                clean_string = string.rstrip('\n')
+                if not clean_string.endswith('\\'): clean_string += '\n\n'
+                is_complete = codeop.compile_command(clean_string,
+                                                     "<string>", "exec")
+            except Exception:
+                # XXX: Hack: return True so that the
+                # code gets executed and the error captured.
+                is_complete = True
+            return is_complete
     
     
     def addExec(self, line):
