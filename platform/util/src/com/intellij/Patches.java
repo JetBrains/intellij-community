@@ -98,7 +98,7 @@ public class Patches {
 
   /**
    * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143.
-   * The is marked as fixed but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
+   * The bug is marked as fixed but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
    * for up to 10 seconds if clipboard owner is not responding.
    */
   public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfo.isUnix;
