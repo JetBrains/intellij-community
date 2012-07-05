@@ -348,15 +348,26 @@ public class AndroidAutogenerator {
     }
   }
 
-  private static void removeAllFilesWithSameName(@NotNull final Module module, @NotNull File file, @NotNull String directoryPath) {
+  private static void removeAllFilesWithSameName(@NotNull final Module module, @NotNull final File file, @NotNull String directoryPath) {
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     final VirtualFile genDir = LocalFileSystem.getInstance().findFileByPath(directoryPath);
 
     if (vFile == null || genDir == null) {
       return;
     }
-    final Collection<VirtualFile> files =
-      FilenameIndex.getVirtualFilesByName(module.getProject(), file.getName(), module.getModuleScope(false));
+    final Collection<VirtualFile> files = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+      @Nullable
+      @Override
+      public Collection<VirtualFile> compute() {
+        if (module.isDisposed() || module.getProject().isDisposed()) {
+          return null;
+        }
+        return FilenameIndex.getVirtualFilesByName(module.getProject(), file.getName(), module.getModuleScope(false));
+      }
+    });
+    if (files == null) {
+      return;
+    }
 
     final List<VirtualFile> filesToDelete = new ArrayList<VirtualFile>();
 
