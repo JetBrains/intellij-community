@@ -50,6 +50,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private float myDone = -1.0f;
   private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
   private Map<Module, AnnotationProcessingProfile> myAnnotationProcessingProfileMap;
+  private boolean myIsProceedOnErrors = false;
 
   public CompileContext(CompileScope scope,
                         ProjectDescriptor pd, boolean isMake,
@@ -80,6 +81,14 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public ProjectPaths getProjectPaths() {
     return myProjectPaths;
+  }
+
+  public boolean isProceedOnErrors() {
+    return myIsProceedOnErrors;
+  }
+
+  public void setProceedOnErrors(boolean isProceedOnErrors) {
+    myIsProceedOnErrors = isProceedOnErrors;
   }
 
   public boolean isMake() {
