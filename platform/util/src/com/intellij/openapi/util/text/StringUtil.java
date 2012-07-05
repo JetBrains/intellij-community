@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.util.text;
 
-import com.google.common.collect.Lists;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.LineReader;
@@ -2021,7 +2021,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static List<Pair<String, Integer>> getWordsWithOffset(String s) {
-    List<Pair<String, Integer>> res = Lists.newArrayList();
+    List<Pair<String, Integer>> res = ContainerUtil.newArrayList();
     s += " ";
     StringBuilder name = new StringBuilder();
     int startInd = -1;

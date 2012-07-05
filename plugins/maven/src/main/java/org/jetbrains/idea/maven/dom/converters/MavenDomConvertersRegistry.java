@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.converters.values.GenericDomValueConvertersRegistry;
 import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
 
@@ -11,7 +11,7 @@ import java.util.Set;
 public class MavenDomConvertersRegistry {
   protected GenericDomValueConvertersRegistry myConvertersRegistry;
 
-  private final Set<String> mySoftConverterTypes = ImmutableSet.of(File.class.getCanonicalName());
+  private final Set<String> mySoftConverterTypes = ContainerUtil.immutableSet(File.class.getCanonicalName());
 
   public static MavenDomConvertersRegistry getInstance() {
     return ServiceManager.getService(MavenDomConvertersRegistry.class);

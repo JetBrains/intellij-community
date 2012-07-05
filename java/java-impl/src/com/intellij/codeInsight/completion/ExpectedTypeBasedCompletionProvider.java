@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -33,7 +33,7 @@ public abstract class ExpectedTypeBasedCompletionProvider extends CompletionProv
     final PsiElement position = params.getPosition();
     if (position.getParent() instanceof PsiLiteralExpression) return;
 
-    addCompletions(params, result, Sets.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(params)));
+    addCompletions(params, result, ContainerUtil.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(params)));
   }
 
   protected abstract void addCompletions(CompletionParameters params, CompletionResultSet result, Collection<ExpectedTypeInfo> infos);

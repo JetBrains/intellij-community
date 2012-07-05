@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.wizard;
 
-import com.google.common.collect.Lists;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -26,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -148,7 +148,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       final GroupLayout.SequentialGroup hGroup = layout.createSequentialGroup();
       final GroupLayout.ParallelGroup vGroup = layout.createParallelGroup();
-      final Collection<Component> buttons = Lists.newArrayListWithExpectedSize(5);
+      final Collection<Component> buttons = ContainerUtil.newArrayListWithExpectedSize(5);
       final boolean helpAvailable = ApplicationInfo.contextHelpAvailable();
 
       if (helpAvailable && UIUtil.isUnderGTKLookAndFeel()) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -46,6 +45,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -367,7 +367,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     final TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return Collections.emptyList();
 
-    final List<T> elements = Lists.newArrayList();
+    final List<T> elements = ContainerUtil.newArrayList();
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       final Object userObject = node.getUserObject();

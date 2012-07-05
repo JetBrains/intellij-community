@@ -15,13 +15,13 @@
  */
 package com.intellij.spellchecker;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.spellchecker.inspections.CommentSplitter;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -32,7 +32,7 @@ import java.util.Set;
  * @author shkate@jetbrains.com
  */
 public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
-  private static final Set<String> excludedTags = ImmutableSet.of("author", "see", "by", "link");
+  private static final Set<String> excludedTags = ContainerUtil.immutableSet("author", "see", "by", "link");
 
   @Override
   public void tokenize(@NotNull PsiDocComment comment, TokenConsumer consumer) {

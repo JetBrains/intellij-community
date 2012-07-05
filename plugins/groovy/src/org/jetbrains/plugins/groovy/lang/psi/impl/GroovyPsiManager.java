@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.google.common.collect.Sets;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +35,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -57,12 +57,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  */
 public class GroovyPsiManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
-  private static final Set<String> ourPopularClasses = Sets.newHashSet(GROOVY_LANG_CLOSURE,
-                                                                       DEFAULT_BASE_CLASS_NAME,
-                                                                       GROOVY_OBJECT_SUPPORT,
-                                                                       JAVA_UTIL_LIST,
-                                                                       JAVA_UTIL_COLLECTION,
-                                                                       JAVA_LANG_STRING);
+  private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GROOVY_LANG_CLOSURE,
+                                                                                DEFAULT_BASE_CLASS_NAME,
+                                                                                GROOVY_OBJECT_SUPPORT,
+                                                                                JAVA_UTIL_LIST,
+                                                                                JAVA_UTIL_COLLECTION,
+                                                                                JAVA_LANG_STRING);
   private final Project myProject;
 
   private volatile GrTypeDefinition myArrayClass;

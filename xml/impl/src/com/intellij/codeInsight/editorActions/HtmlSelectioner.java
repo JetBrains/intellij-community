@@ -24,7 +24,6 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -33,13 +32,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 
 import java.util.List;
@@ -66,7 +65,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       result = super.select(e, editorText, cursorOffset, editor);
     }
     else {
-      result = Lists.newArrayList();
+      result = ContainerUtil.newArrayList();
     }
 
     final PsiElement parent = e.getParent();

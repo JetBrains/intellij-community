@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.google.common.collect.Maps;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -31,6 +30,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,7 +123,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
       return place;
     }
 
-    Map<String, PsiType> requiredNames = Maps.newHashMap();
+    Map<String, PsiType> requiredNames = ContainerUtil.newHashMap();
     final PsiParameter[] parameters = place.getParameterList().getParameters();
     final PsiParameter[] callParams = invoked.getParameterList().getParameters();
     if (callParams.length > parameters.length) {

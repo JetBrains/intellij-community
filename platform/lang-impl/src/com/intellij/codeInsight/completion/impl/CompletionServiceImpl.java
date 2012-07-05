@@ -27,8 +27,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * @author peter
@@ -62,7 +59,8 @@ public class CompletionServiceImpl extends CompletionService{
         if (indicator != null && indicator.getProject() == project) {
           LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
           setCompletionPhase(CompletionPhase.NoCompletion);
-        } else if (indicator == null) {
+        }
+        else if (indicator == null) {
           setCompletionPhase(CompletionPhase.NoCompletion);
         }
       }
@@ -139,23 +137,6 @@ public class CompletionServiceImpl extends CompletionService{
     return matcher;
   }
 
-  private static boolean isMiddleMatch(LookupElement element, CompletionLocation location) {
-    String prefix = location.getCompletionParameters().getLookup().itemPattern(element);
-    if (StringUtil.isNotEmpty(prefix)) {
-      MinusculeMatcher matcher = getMinusculeMatcher(prefix);
-      for (String ls : element.getAllLookupStrings()) {
-        Iterable<TextRange> fragments = matcher.matchingFragments(ls);
-        if (fragments != null) {
-          Iterator<TextRange> iterator = fragments.iterator();
-          if (!iterator.hasNext() || MinusculeMatcher.isStartMatch(ls, iterator.next().getStartOffset())) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
-  }
-
   private static class CompletionResultSetImpl extends CompletionResultSet {
     private final String myTextBeforePosition;
     private final CompletionParameters myParameters;
@@ -169,7 +150,7 @@ public class CompletionServiceImpl extends CompletionService{
                                    CompletionParameters parameters,
                                    @NotNull CompletionSorterImpl sorter,
                                    @NotNull CompletionProgressIndicator process,
-                                   CompletionResultSetImpl original) {
+                                   @Nullable CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
       myTextBeforePosition = textBeforePosition;
       myParameters = parameters;
@@ -290,34 +271,12 @@ public class CompletionServiceImpl extends CompletionService{
     final CompletionLocation location = new CompletionLocation(parameters);
 
     CompletionSorterImpl sorter = emptySorter();
-    sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("startMatching") {
-      @Override
-      public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-        return new ComparingClassifier<LookupElement>(next, "startMatching") {
-          @NotNull
-          @Override
-          public Comparable getWeight(LookupElement element) {
-            return isMiddleMatch(element, location);
-          }
-        };
-      }
-    });
+    sorter = sorter.withClassifier(new PreferStartMatching(location));
 
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
       final String id = weigher.toString();
       if ("prefix".equals(id)) {
-        sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>(id) {
-          @Override
-          public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-            return new ComparingClassifier<LookupElement>(next, id) {
-              @NotNull
-              @Override
-              public Comparable getWeight(LookupElement element) {
-                return -getPrefixMatchingDegree(element, location);
-              }
-            };
-          }
-        });
+        sorter = sorter.withClassifier(new PrefixMatchingClassifier(id, location));
       }
       else {
         sorter = sorter.weigh(new LookupElementWeigher(id) {
@@ -345,5 +304,53 @@ public class CompletionServiceImpl extends CompletionService{
 
   public CompletionSorterImpl emptySorter() {
     return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
+  }
+
+  private static class PreferStartMatching extends ClassifierFactory<LookupElement> {
+    private final CompletionLocation myLocation;
+
+    public PreferStartMatching(CompletionLocation location) {
+      super("startMatching");
+      myLocation = location;
+    }
+
+    @Override
+    public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+      return new ComparingClassifier<LookupElement>(next, "startMatching") {
+        @NotNull
+        @Override
+        public Comparable getWeight(LookupElement element) {
+          PrefixMatcher itemMatcher = myLocation.getCompletionParameters().getLookup().itemMatcher(element);
+          for (String ls : element.getAllLookupStrings()) {
+            if (itemMatcher.isStartMatch(ls)) {
+              return false;
+            }
+          }
+          return true;
+        }
+      };
+    }
+  }
+
+  private static class PrefixMatchingClassifier extends ClassifierFactory<LookupElement> {
+    private final String myId;
+    private final CompletionLocation myLocation;
+
+    public PrefixMatchingClassifier(String id, CompletionLocation location) {
+      super(id);
+      myId = id;
+      myLocation = location;
+    }
+
+    @Override
+    public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+      return new ComparingClassifier<LookupElement>(next, myId) {
+        @NotNull
+        @Override
+        public Comparable getWeight(LookupElement element) {
+          return -getPrefixMatchingDegree(element, myLocation);
+        }
+      };
+    }
   }
 }

@@ -23,6 +23,10 @@ public abstract class PrefixMatcher {
     return false;
   }
 
+  public boolean isStartMatch(String name) {
+    return prefixMatches(name);
+  }
+
   public abstract boolean prefixMatches(@NotNull String name);
 
   @NotNull

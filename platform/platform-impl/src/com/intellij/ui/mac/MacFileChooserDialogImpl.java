@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.mac;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
@@ -29,6 +28,7 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,7 +146,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     if (paths == null || paths.size() == 0) return Collections.emptyList();
 
     final LocalFileSystem fs = LocalFileSystem.getInstance();
-    final List<VirtualFile> files = Lists.newArrayListWithExpectedSize(paths.size());
+    final List<VirtualFile> files = ContainerUtil.newArrayListWithExpectedSize(paths.size());
     for (String path : paths) {
       final String vfsPath = FileUtil.toSystemIndependentName(path);
       final VirtualFile file = fs.refreshAndFindFileByPath(vfsPath);

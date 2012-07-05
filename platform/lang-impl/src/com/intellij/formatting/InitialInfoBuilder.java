@@ -16,7 +16,6 @@
 
 package com.intellij.formatting;
 
-import com.google.common.collect.ImmutableCollection;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -27,7 +26,6 @@ import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
-import org.apache.commons.collections.Unmodifiable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -234,8 +232,10 @@ class InitialInfoBuilder {
     if (wrapper.getIndent() == null) {
       wrapper.setIndent((IndentImpl)block.getIndent());
     }
-    if (!state.readOnly && !(subBlocks instanceof Unmodifiable) && !(subBlocks instanceof ImmutableCollection)) {
-      subBlocks.set(childBlockIndex, null); // to prevent extra strong refs during model building
+    if (!state.readOnly) {
+      try {
+        subBlocks.set(childBlockIndex, null); // to prevent extra strong refs during model building
+      } catch (Throwable ex) {} // read-only blocks
     }
     
     if (state.childBlockProcessed(block, wrapper)) {

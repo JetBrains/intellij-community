@@ -25,12 +25,13 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
@@ -64,7 +66,8 @@ public class CopyReferenceAction extends AnAction {
 
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    boolean enabled = isEnabled(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    boolean enabled = editor != null && (FileDocumentManager.getInstance().getFile(editor.getDocument()) != null || getElementToCopy(editor, dataContext) != null);
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(enabled);
@@ -74,24 +77,28 @@ public class CopyReferenceAction extends AnAction {
     }
   }
 
-  private static boolean isEnabled(final DataContext dataContext) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    PsiElement element = getElementToCopy(editor, dataContext);
-    return elementToFqn(element, editor) != null;
-  }
-
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    assert editor != null;
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
 
-    if (!doCopy(element, project, editor)) return;
+    if (!doCopy(element, project, editor)) {
+      Document document = editor.getDocument();
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      if (file != null) {
+        String toCopy = FileUtil.toSystemDependentName(file.getPath()) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
+        CopyPasteManager.getInstance().setContents(new StringSelection(toCopy));
+        setStatusBarText(project, toCopy + " has been copied");
+      }
+      return;
+    }
 
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (editor != null && element != null) {
+    if (element != null) {
       PsiElement nameIdentifier = HighlightUsagesHandler.getNameIdentifier(element);
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
@@ -134,17 +141,23 @@ public class CopyReferenceAction extends AnAction {
     return doCopy(element, project, null);
   }
 
-  public static boolean doCopy(final PsiElement element, @Nullable final Project project, @Nullable Editor editor) {
+  private static boolean doCopy(final PsiElement element, @Nullable final Project project, @Nullable Editor editor) {
     String fqn = elementToFqn(element, editor);
     if (fqn == null) return false;
 
     CopyPasteManager.getInstance().setContents(new MyTransferable(fqn));
 
+    setStatusBarText(project, IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
+    return true;
+  }
+
+  private static void setStatusBarText(Project project, String message) {
     if (project != null) {
       final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
-      statusBar.setInfo(IdeBundle.message("message.reference.to.fqn.has.been.copied", fqn));
+      if (statusBar != null) {
+        statusBar.setInfo(message);
+      }
     }
-    return true;
   }
 
   private static class MyTransferable implements Transferable {

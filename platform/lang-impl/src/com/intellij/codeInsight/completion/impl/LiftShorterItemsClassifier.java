@@ -22,8 +22,10 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -31,22 +33,24 @@ import java.util.*;
 * @author peter
 */
 public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
-  private final TreeSet<String> mySortedStrings;
-  private final MultiMap<String, LookupElement> myElements;
-  private final MultiMap<String, String> myPrefixes;
+  private final TreeSet<String> mySortedStrings = new TreeSet<String>();
+  private final MultiMap<String, LookupElement> myElements = new MultiMap<String, LookupElement>();
+  private final Map<LookupElement, Set<LookupElement>> myToLiftForSorting = new THashMap<LookupElement, Set<LookupElement>>(TObjectHashingStrategy.IDENTITY);
+  private final Map<LookupElement, Set<LookupElement>> myToLiftForPreselection = new THashMap<LookupElement, Set<LookupElement>>(TObjectHashingStrategy.IDENTITY);
+  private final MultiMap<String, String> myPrefixes = new MultiMap<String, String>();
   private final Classifier<LookupElement> myNext;
   private final LiftingCondition myCondition;
 
   public LiftShorterItemsClassifier(Classifier<LookupElement> next, LiftingCondition condition) {
     myNext = next;
     myCondition = condition;
-    mySortedStrings = new TreeSet<String>();
-    myElements = new MultiMap<String, LookupElement>();
-    myPrefixes = new MultiMap<String, String>();
   }
 
   @Override
   public void addElement(LookupElement element) {
+    final Set<LookupElement> toUpdate = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    toUpdate.add(element);
+
     final Set<String> strings = getAllLookupStrings(element);
     for (String string : strings) {
       if (string.length() == 0) continue;
@@ -59,6 +63,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
           break;
         }
         myPrefixes.putValue(s, string);
+        toUpdate.addAll(myElements.get(s));
       }
 
       final char first = string.charAt(0);
@@ -74,6 +79,39 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       }
     }
     myNext.addElement(element);
+
+    for (LookupElement lookupElement : toUpdate) {
+      recalculateToLift(lookupElement);
+    }
+  }
+
+  private void recalculateToLift(LookupElement element) {
+    final Set<LookupElement> forPreselection = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    final Set<LookupElement> forSorting = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    final List<String> prefixes = new SmartList<String>();
+    for (String string : getAllLookupStrings(element)) {
+      prefixes.addAll(myPrefixes.get(string));
+    }
+    Collections.sort(prefixes);
+    for (String prefix : prefixes) {
+      for (LookupElement shorterElement : myElements.get(prefix)) {
+        if (myCondition.shouldLift(shorterElement, element)) {
+          forPreselection.add(shorterElement);
+        } else {
+          forSorting.add(shorterElement);
+        }
+      }
+    }
+
+    myToLiftForPreselection.remove(element);
+    myToLiftForSorting.remove(element);
+
+    if (!forPreselection.isEmpty()) {
+      myToLiftForPreselection.put(element, forPreselection);
+    }
+    if (!forSorting.isEmpty()) {
+      myToLiftForSorting.put(element, forSorting);
+    }
   }
 
   @Override
@@ -86,34 +124,41 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     ContainerUtil.addAll(srcSet, source);
     final Set<LookupElement> processed = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
 
+    boolean forSorting = context.get(CompletionLookupArranger.PURE_RELEVANCE) != Boolean.TRUE;
     final List<LookupElement> result = new ArrayList<LookupElement>();
     for (LookupElement element : myNext.classify(source, context)) {
       assert srcSet.contains(element) : myNext;
       if (processed.add(element)) {
-        final List<String> prefixes = new SmartList<String>();
-        for (String string : getAllLookupStrings(element)) {
-          prefixes.addAll(myPrefixes.get(string));
+        //System.out.println("element = " + element);
+        List<LookupElement> shorter = addShorterElements(srcSet, processed, null, myToLiftForPreselection.get(element));
+        if (forSorting) {
+          shorter = addShorterElements(srcSet, processed, shorter, myToLiftForSorting.get(element));
         }
-        Collections.sort(prefixes);
-        for (String prefix : prefixes) {
-          List<LookupElement> shorter = new SmartList<LookupElement>();
-          for (LookupElement shorterElement : myElements.get(prefix)) {
-            if (srcSet.contains(shorterElement) &&
-                myCondition.shouldLift(shorterElement, element, context) &&
-                processed.add(shorterElement)) {
-              shorter.add(shorterElement);
-            }
-          }
-
-          if (!shorter.isEmpty()) {
-            lifted.addAll(shorter);
-            ContainerUtil.addAll(result, myNext.classify(shorter, context));
-          }
+        if (shorter != null) {
+          lifted.addAll(shorter);
+          ContainerUtil.addAll(result, myNext.classify(shorter, context));
         }
         result.add(element);
       }
     }
     return result;
+  }
+
+  @Nullable
+  private static List<LookupElement> addShorterElements(Set<LookupElement> srcSet,
+                                                        Set<LookupElement> processed,
+                                                        @Nullable List<LookupElement> toLift,
+                                                        @Nullable Set<LookupElement> from) {
+    if (from != null) {
+      for (LookupElement shorterElement : from) {
+        //System.out.println("shorterElement = " + shorterElement);
+        if (srcSet.contains(shorterElement) && processed.add(shorterElement)) {
+          if (toLift == null) toLift = new SmartList<LookupElement>();
+          toLift.add(shorterElement);
+        }
+      }
+    }
+    return toLift;
   }
 
   private static Set<String> getAllLookupStrings(LookupElement element) {
@@ -138,8 +183,8 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   public static class LiftingCondition {
-    public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement, ProcessingContext context) {
-      return context.get(CompletionLookupArranger.PURE_RELEVANCE) != Boolean.TRUE;
+    public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
+      return false;
     }
   }
 }

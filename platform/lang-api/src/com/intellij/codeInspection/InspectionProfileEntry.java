@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -23,6 +22,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
@@ -180,7 +180,7 @@ public abstract class InspectionProfileEntry {
   }
 
   private static void loadBlackList() {
-    myBlackList = Sets.newHashSet();
+    myBlackList = ContainerUtil.newHashSet();
 
     final URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
     if (url == null) {

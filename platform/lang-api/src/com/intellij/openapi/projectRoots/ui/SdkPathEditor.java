@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.projectRoots.ui;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class SdkPathEditor extends PathEditor {
@@ -50,7 +50,7 @@ public class SdkPathEditor extends PathEditor {
 
   public void reset(@Nullable SdkModificator modificator) {
     if (modificator != null) {
-      resetPath(Lists.newArrayList(modificator.getRoots(myOrderRootType)));
+      resetPath(ContainerUtil.newArrayList(modificator.getRoots(myOrderRootType)));
     }
     else {
       setEnabled(false);

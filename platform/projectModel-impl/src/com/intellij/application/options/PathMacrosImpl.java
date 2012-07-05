@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PathManager;
@@ -80,7 +79,7 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
     SYSTEM_MACROS.add(USER_HOME_MACRO_NAME);
   }
 
-  private static final Set<String> ourToolsMacros = ImmutableSet.of(
+  private static final Set<String> ourToolsMacros = ContainerUtil.immutableSet(
     "ClasspathEntry",
     "Classpath",
     "ColumnNumber",

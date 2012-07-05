@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.template.impl;
 
-import com.google.common.collect.Sets;
 import com.intellij.application.options.ExportSchemeAction;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -40,6 +39,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -157,7 +157,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   public void apply() throws ConfigurationException {
     List<TemplateGroup> templateGroups = getTemplateGroups();
     for (TemplateGroup templateGroup : templateGroups) {
-      Set<String> names = Sets.newHashSet();
+      Set<String> names = ContainerUtil.newHashSet();
 
       for (TemplateImpl template : templateGroup.getElements()) {
         if (StringUtil.isEmptyOrSpaces(template.getKey())) {

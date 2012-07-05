@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.util;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -26,6 +25,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +101,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());
     PsiClass[] classes =
       cache.getClassesByName(name, checkBoxState ? searchScope : GlobalSearchScope.projectScope(getProject()).intersectWith(searchScope));
-    return Lists.newArrayList(classes);
+    return ContainerUtil.newArrayList(classes);
   }
 
   @NotNull

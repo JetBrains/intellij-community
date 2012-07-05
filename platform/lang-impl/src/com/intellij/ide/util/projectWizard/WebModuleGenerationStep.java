@@ -15,8 +15,6 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.google.common.collect.Maps;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
@@ -28,8 +26,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.WebProjectGenerator;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
   private final ModuleBuilder myModuleBuilder;
   private final Icon myIcon;
   private final String myHelpId;
-  private final Map<WebProjectGenerator, WebProjectGenerator.GeneratorPeer> myGeneratorPeers = Maps.newHashMap();
+  private final Map<WebProjectGenerator, WebProjectGenerator.GeneratorPeer> myGeneratorPeers = ContainerUtil.newHashMap();
   private JComponent myRootComponent;
   private WebProjectGenerator myCurrentGenerator;
   private JPanel myRightPanel;

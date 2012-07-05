@@ -23,6 +23,7 @@ import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Iterator;
 
 /**
 * @author peter
@@ -287,7 +288,18 @@ public class MinusculeMatcher implements Matcher {
     return -fragmentCount + matchingCase * 10 + commonStart - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
   }
 
-  public static boolean isStartMatch(String name, int startIndex) {
+  public boolean isStartMatch(String name) {
+    Iterable<TextRange> fragments = matchingFragments(name);
+    if (fragments != null) {
+      Iterator<TextRange> iterator = fragments.iterator();
+      if (!iterator.hasNext() || isStartMatch(name, iterator.next().getStartOffset())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isStartMatch(String name, int startIndex) {
     for (int i = 0; i < startIndex; i++) {
       if (!NameUtil.isWordSeparator(name.charAt(i))) {
         return false;
