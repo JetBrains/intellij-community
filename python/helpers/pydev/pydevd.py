@@ -154,7 +154,10 @@ class PyDBCommandThread(PyDBDaemonThread):
             #PydevdLog(0, 'Finishing debug communication...(3)')
 
 if USE_LIB_COPY:
-    import _pydev_thread as thread
+    try:
+        import _pydev_thread as thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
 else:
     try:
         import thread
@@ -191,12 +194,10 @@ def _pydev_start_new_thread(function, args, kwargs={}):
     We need to replace the original thread.start_new_thread with this function so that threads started through
     it and not through the threading module are properly traced.
     '''
-    if USE_LIB_COPY:
-    else:
-        try:
-            import thread
-        except ImportError:
-            import _thread as thread #Py3K changed it.
+    try:
+        import _pydev_thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
 
     return thread._original_start_new_thread(thread.NewThreadStartup(function, args, kwargs), ())
 
