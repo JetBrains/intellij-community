@@ -498,9 +498,15 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                                     PsiSubstitutor classSubstitutor2,
                                                     PsiType type1,
                                                     PsiType type2) {
+    final PsiClass aClass1 = PsiUtil.resolveClassInClassTypeOnly(type1);
+    final PsiClass aClass2 = PsiUtil.resolveClassInClassTypeOnly(type2);
+    if (aClass1 instanceof PsiTypeParameter && aClass2 instanceof PsiTypeParameter) {
+      return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, (PsiTypeParameter)aClass1, (PsiTypeParameter)aClass2);
+    }
+    if (aClass1 instanceof PsiTypeParameter || aClass2 instanceof PsiTypeParameter) return null;
+
     final Map<PsiTypeParameter, PsiType> map1 = classSubstitutor1.getSubstitutionMap();
     final Map<PsiTypeParameter, PsiType> map2 = classSubstitutor2.getSubstitutionMap();
-
     if (map1.size() == 1 && map2.size() == 1) {
       final PsiType t1 = map1.values().iterator().next();
       final PsiType t2 = map2.values().iterator().next();
@@ -516,12 +522,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         final PsiTypeParameter p1 = map1.keySet().iterator().next();
         final PsiTypeParameter p2 = map2.keySet().iterator().next();
         return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, p1, p2);
-      }
-    } else {
-      final PsiClass aClass1 = PsiUtil.resolveClassInClassTypeOnly(type1);
-      final PsiClass aClass2 = PsiUtil.resolveClassInClassTypeOnly(type2);
-      if (aClass1 instanceof PsiTypeParameter && aClass2 instanceof PsiTypeParameter) {
-        return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, (PsiTypeParameter)aClass1, (PsiTypeParameter)aClass2);
       }
     }
     return null;
