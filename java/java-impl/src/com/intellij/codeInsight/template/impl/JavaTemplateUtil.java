@@ -65,10 +65,10 @@ public class JavaTemplateUtil {
     if (!classes.isEmpty()) {
       for (PsiClass aClass : classes) {
         if (aClass instanceof PsiTypeParameter) {
-          if (((PsiTypeParameter)aClass).getOwner() instanceof PsiMethod) {
-            PsiElement element = file.findElementAt(segmentStart);
-            PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-            if (method != null) {
+          PsiElement element = file.findElementAt(segmentStart);
+          PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+          if (method != null) {
+            if (((PsiTypeParameter)aClass).getOwner() instanceof PsiMethod || method.hasModifierProperty(PsiModifier.STATIC)) {
               PsiTypeParameterList paramList = method.getTypeParameterList();
               PsiTypeParameter[] params = paramList != null ? paramList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
               for (PsiTypeParameter param : params) {
@@ -76,7 +76,8 @@ public class JavaTemplateUtil {
               }
               try {
                 if (paramList == null) {
-                  final PsiTypeParameterList newList = JVMElementFactories.getFactory(method.getLanguage(), project).createTypeParameterList();
+                  final PsiTypeParameterList newList =
+                    JVMElementFactories.getFactory(method.getLanguage(), project).createTypeParameterList();
                   paramList = (PsiTypeParameterList)method.addAfter(newList, method.getModifierList());
                 }
                 paramList.add(aClass.copy());
