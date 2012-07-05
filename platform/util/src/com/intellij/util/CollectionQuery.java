@@ -32,24 +32,29 @@ public class CollectionQuery<T> implements Query<T> {
     myCollection = collection;
   }
 
+  @Override
   @NotNull
   public Collection<T> findAll() {
     return myCollection;
   }
 
+  @Override
   public T findFirst() {
     final Iterator<T> i = iterator();
     return i.hasNext() ? i.next() : null;
   }
 
+  @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
     return ContainerUtil.process(myCollection, consumer);
   }
 
+  @Override
   public T[] toArray(final T[] a) {
     return findAll().toArray(a);
   }
 
+  @Override
   public Iterator<T> iterator() {
     return myCollection.iterator();
   }

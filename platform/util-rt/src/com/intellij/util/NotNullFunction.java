@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public interface NotNullFunction<Param, Result> extends NullableFunction<Param, Result> {
+  @Override
   @NotNull
   Result fun(final Param dom);
 }
