@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions.conversions;
+package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -154,9 +154,19 @@ public class ConvertGStringToStringIntention extends Intention {
 
 
     final StringBuilder buffer = new StringBuilder();
-    boolean containsLineFeeds = text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0;
-    GrStringUtil.escapeStringCharacters(text.length(), text, "'", false, false, buffer);
-    GrStringUtil.unescapeCharacters(buffer, containsLineFeeds ? "$'\"" : "$\"", true);
+    if (text.indexOf('\n') >= 0) {
+      GrStringUtil.escapeAndUnescapeSymbols(text, "", "\"$", buffer);
+      fixAllTripleQuotes(buffer, 0);
+    }
+    else {
+      GrStringUtil.escapeAndUnescapeSymbols(text, "'", "\"$", buffer);
+    }
     return GrStringUtil.addQuotes(buffer.toString(), false);
+  }
+
+  private static void fixAllTripleQuotes(StringBuilder builder, int position) {
+    for (int i = builder.indexOf("'''", position); i >= 0; i = builder.indexOf("'''", i)) {
+      builder.replace(i + 2, i + 3, "\\'");
+    }
   }
 }

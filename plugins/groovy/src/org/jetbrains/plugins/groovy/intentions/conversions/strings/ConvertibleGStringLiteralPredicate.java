@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.intentions.conversions;
+package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;

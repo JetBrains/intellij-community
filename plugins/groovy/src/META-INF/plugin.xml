@@ -1065,7 +1065,7 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertGStringToStringIntention</className>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
