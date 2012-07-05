@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
@@ -57,6 +58,7 @@ public class QuickDocOnMouseOverManager {
   @NotNull private final Alarm                     myAlarm               = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   @NotNull private final Runnable                  myRequest             = new MyShowQuickDocRequest();
   @NotNull private final Runnable                  myHintCloseCallback   = new MyCloseDocCallback();
+  @NotNull private final Map<Document, Boolean>    myMonitoredDocuments  = new WeakHashMap<Document, Boolean>();
 
   private final Map<Editor, PsiElement /** PSI element which is located under the current mouse position */> myActiveElements
     = new WeakHashMap<Editor, PsiElement>();
@@ -118,14 +120,22 @@ public class QuickDocOnMouseOverManager {
     editor.addEditorMouseMotionListener(myMouseListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     editor.getCaretModel().addCaretListener(myCaretListener);
-    editor.getDocument().addDocumentListener(myDocumentListener);
+
+    Document document = editor.getDocument();
+    if (myMonitoredDocuments.put(document, Boolean.TRUE) == null) {
+      document.addDocumentListener(myDocumentListener);
+    }
   }
 
   private void unRegisterListeners(@NotNull Editor editor) {
     editor.removeEditorMouseMotionListener(myMouseListener);
     editor.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
     editor.getCaretModel().removeCaretListener(myCaretListener);
-    editor.getDocument().removeDocumentListener(myDocumentListener);
+
+    Document document = editor.getDocument();
+    if (myMonitoredDocuments.remove(document) != null) {
+      document.removeDocumentListener(myDocumentListener);
+    }
   }
   
   private void processMouseMove(@NotNull EditorMouseEvent e) {
@@ -227,6 +237,7 @@ public class QuickDocOnMouseOverManager {
     }
     
     hint.cancel();
+    myDocumentationManager = null;
   }
 
   private static class DelayedQuickDocInfo {
