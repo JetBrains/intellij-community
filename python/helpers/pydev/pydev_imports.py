@@ -14,7 +14,7 @@ try:
         if USE_LIB_COPY:
             from _pydev_SimpleXMLRPCServer import SimpleXMLRPCServer
         else:
-            import SimpleXMLRPCServer
+            from SimpleXMLRPCServer import SimpleXMLRPCServer
     except ImportError:
         from xmlrpc.server import SimpleXMLRPCServer
 except ImportError:
