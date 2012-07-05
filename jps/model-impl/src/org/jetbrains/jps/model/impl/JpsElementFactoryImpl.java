@@ -19,15 +19,17 @@ import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
  * @author nik
  */
 public class JpsElementFactoryImpl extends JpsElementFactory {
-
   @Override
-  public JpsModule createModule(String name, JpsModuleType<?> type) {
-    return new JpsModuleImpl(type, name);
+  public <P extends JpsElementProperties> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties) {
+    return new JpsModuleImpl(type, name, properties);
   }
 
+
   @Override
-  public JpsLibrary createLibrary(@NotNull String name, @NotNull JpsLibraryType<?> type) {
-    return new JpsLibraryImpl(name, type);
+  public <P extends JpsElementProperties> JpsLibrary createLibrary(@NotNull String name,
+                                                                   @NotNull JpsLibraryType<P> type,
+                                                                   @NotNull P properties) {
+    return new JpsLibraryImpl(name, type, properties);
   }
 
   @NotNull

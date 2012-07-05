@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.module.JpsModule;
  */
 public class JpsJavaExtensionTest extends JpsModelTestCase {
   public void testModule() {
-    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
+    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     final JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module);
     extension.setOutputUrl("file://path");
     assertEquals("file://path",
@@ -20,8 +20,8 @@ public class JpsJavaExtensionTest extends JpsModelTestCase {
 
   public void testDependency() {
     final JpsModel model = myModel.createModifiableModel(new TestJpsEventDispatcher());
-    final JpsModule module = model.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
-    final JpsLibrary library = model.getProject().addLibrary(JpsJavaLibraryType.INSTANCE, "l");
+    final JpsModule module = model.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
+    final JpsLibrary library = model.getProject().addLibrary("l", JpsJavaLibraryType.INSTANCE);
     final JpsLibraryDependency dependency = module.getDependenciesList().addLibraryDependency(library);
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).setScope(JpsJavaDependencyScope.TEST);
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).setExported(true);

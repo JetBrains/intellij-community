@@ -2,6 +2,7 @@ package org.jetbrains.jps.model;
 
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsSdkProperties;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
@@ -11,8 +12,8 @@ import java.util.List;
  */
 public class JpsModuleTest extends JpsModelTestCase {
   public void testAddSourceRoot() {
-    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
-    final JpsModuleSourceRoot sourceRoot = module.addSourceRoot(JavaSourceRootType.SOURCE, "file://url", new JavaSourceRootProperties("com.xxx"));
+    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
+    final JpsModuleSourceRoot sourceRoot = module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, new JavaSourceRootProperties("com.xxx"));
 
     assertSameElements(myDispatcher.retrieveAdded(JpsModule.class), module);
     assertSameElements(myDispatcher.retrieveAdded(JpsModuleSourceRoot.class), sourceRoot);
@@ -25,13 +26,13 @@ public class JpsModuleTest extends JpsModelTestCase {
   }
 
   public void testModifiableModel() {
-    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
-    final JpsModuleSourceRoot root0 = module.addSourceRoot(JavaSourceRootType.SOURCE, "url1");
+    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
+    final JpsModuleSourceRoot root0 = module.addSourceRoot("url1", JavaSourceRootType.SOURCE);
     myDispatcher.clear();
 
     final JpsModel modifiableModel = myModel.createModifiableModel(new TestJpsEventDispatcher());
     final JpsModule modifiableModule = assertOneElement(modifiableModel.getProject().getModules());
-    modifiableModule.addSourceRoot(JavaSourceRootType.TEST_SOURCE, "url2");
+    modifiableModule.addSourceRoot("url2", JavaSourceRootType.TEST_SOURCE);
     modifiableModel.commit();
 
     assertEmpty(myDispatcher.retrieveAdded(JpsModule.class));
@@ -47,9 +48,9 @@ public class JpsModuleTest extends JpsModelTestCase {
   }
 
   public void testAddDependency() {
-    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
-    final JpsLibrary library = myModel.getProject().addLibrary(JpsJavaLibraryType.INSTANCE, "l");
-    final JpsModule dep = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "dep");
+    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
+    final JpsLibrary library = myModel.getProject().addLibrary("l", JpsJavaLibraryType.INSTANCE);
+    final JpsModule dep = myModel.getProject().addModule("dep", JpsJavaModuleType.INSTANCE);
     module.getDependenciesList().addLibraryDependency(library);
     module.getDependenciesList().addModuleDependency(dep);
 
@@ -60,9 +61,9 @@ public class JpsModuleTest extends JpsModelTestCase {
   }
 
   public void testChangeElementInModifiableModel() {
-    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
-    final JpsModule dep = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "dep");
-    final JpsLibrary library = myModel.getProject().addLibrary(JpsJavaLibraryType.INSTANCE, "l");
+    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
+    final JpsModule dep = myModel.getProject().addModule("dep", JpsJavaModuleType.INSTANCE);
+    final JpsLibrary library = myModel.getProject().addLibrary("l", JpsJavaLibraryType.INSTANCE);
     module.getDependenciesList().addLibraryDependency(library);
     myDispatcher.clear();
 
@@ -78,7 +79,7 @@ public class JpsModuleTest extends JpsModelTestCase {
   }
 
   public void testCreateReferenceByModule() {
-    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
+    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     final JpsModuleReference reference = module.createReference().asExternal(myModel);
     assertEquals("m", reference.getModuleName());
     assertSame(module, reference.resolve());
@@ -89,13 +90,13 @@ public class JpsModuleTest extends JpsModelTestCase {
     assertEquals("m", reference.getModuleName());
     assertNull(reference.resolve());
 
-    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
+    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     assertSame(module, reference.resolve());
   }
 
   public void testSdkDependency() {
-    JpsLibrary sdk = myModel.getGlobal().addLibrary(JpsJavaSdkType.INSTANCE, "sdk");
-    final JpsModule module = myModel.getProject().addModule(JpsJavaModuleType.INSTANCE, "m");
+    JpsLibrary sdk = myModel.getGlobal().getLibraryCollection().addLibrary("sdk", JpsJavaSdkType.INSTANCE, new JpsSdkProperties("", ""));
+    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
 

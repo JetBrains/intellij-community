@@ -10,7 +10,8 @@ import org.jetbrains.jps.model.library.JpsLibraryType;
  */
 public interface JpsGlobal extends JpsCompositeElement, JpsReferenceableElement<JpsGlobal> {
   @NotNull
-  JpsLibrary addLibrary(@NotNull JpsLibraryType libraryType, final @NotNull String name);
+  <P extends JpsElementProperties, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  JpsLibrary addLibrary(@NotNull LibraryType libraryType, final @NotNull String name);
 
   @NotNull
   JpsLibraryCollection getLibraryCollection();

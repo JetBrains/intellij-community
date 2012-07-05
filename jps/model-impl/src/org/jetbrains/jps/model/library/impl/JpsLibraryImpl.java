@@ -15,9 +15,9 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl,
     new JpsElementCollectionKind<JpsLibraryRoot>(JpsLibraryRootKind.INSTANCE);
   private static final JpsTypedDataKind<JpsLibraryType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsLibraryType<?>>();
 
-  public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<?> type) {
+  public <P extends JpsElementProperties> JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties) {
     super(name);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsLibraryType<?>>(type));
+    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsLibraryType<?>>(type, properties));
     myContainer.setChild(LIBRARY_ROOTS_COLLECTION);
   }
 

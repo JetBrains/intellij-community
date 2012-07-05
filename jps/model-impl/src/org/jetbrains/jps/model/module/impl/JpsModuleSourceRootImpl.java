@@ -15,10 +15,9 @@ public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSo
   private static final JpsTypedDataKind<JpsModuleSourceRootType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleSourceRootType<?>>();
   private String myUrl;
 
-  public JpsModuleSourceRootImpl(String url,
-                                 JpsModuleSourceRootType type) {
+  public <P extends JpsElementProperties> JpsModuleSourceRootImpl(String url, JpsModuleSourceRootType<P> type, P properties) {
     super();
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleSourceRootType<?>>(type));
+    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleSourceRootType<?>>(type, properties));
     myUrl = url;
   }
 

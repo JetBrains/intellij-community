@@ -1,10 +1,7 @@
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -46,15 +43,18 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
 
   @NotNull
   @Override
-  public JpsModule addModule(@NotNull JpsModuleType<?> moduleType, @NotNull final String name) {
+  public
+  <P extends JpsElementProperties, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
+  JpsModule addModule(@NotNull final String name, @NotNull ModuleType moduleType) {
     final JpsElementCollectionImpl<JpsModule> collection = myContainer.getChild(JpsModuleKind.MODULE_COLLECTION_KIND);
-    return collection.addChild(new JpsModuleImpl(moduleType, name));
+    return collection.addChild(new JpsModuleImpl(moduleType, name, moduleType.createDefaultProperties()));
   }
 
   @NotNull
   @Override
-  public JpsLibrary addLibrary(@NotNull JpsLibraryType<?> libraryType, @NotNull final String name) {
-    return myLibraryCollection.addLibrary(libraryType, name);
+  public <P extends JpsElementProperties, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  JpsLibrary addLibrary(@NotNull String name, @NotNull LibraryType libraryType) {
+    return myLibraryCollection.addLibrary(name, libraryType);
   }
 
   @NotNull

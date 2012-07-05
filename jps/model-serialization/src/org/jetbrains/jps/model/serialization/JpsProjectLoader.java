@@ -8,14 +8,13 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsGlobal;
-import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -138,9 +137,24 @@ public class JpsProjectLoader {
     String name = FileUtil.getNameWithoutExtension(file);
     final Element moduleRoot = loadRootElement(file);
     final String typeId = moduleRoot.getAttributeValue("type");
-    final JpsModule module = JpsElementFactory.getInstance().createModule(name, getModuleType(typeId));
+    final JpsModuleType<?> moduleType = getModuleType(typeId);
+    final JpsModule module = createModule(name, moduleRoot, moduleType);
     JpsModuleLoader.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"));
     return module;
+  }
+
+  private static <P extends JpsElementProperties> JpsModule createModule(String name, Element moduleRoot, JpsModuleType<P> moduleType) {
+    return JpsElementFactory.getInstance().createModule(name, moduleType, loadModuleProperties(moduleType, moduleRoot));
+  }
+
+  private static <P extends JpsElementProperties> P loadModuleProperties(JpsModuleType<P> type, Element moduleRoot) {
+    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+      P properties = extension.loadModuleProperties(type, moduleRoot);
+      if (properties != null) {
+        return properties;
+      }
+    }
+    return (P)DummyJpsElementProperties.INSTANCE;
   }
 
   @Nullable
@@ -154,6 +168,12 @@ public class JpsProjectLoader {
   }
 
   private static JpsModuleType<?> getModuleType(@NotNull String typeId) {
+    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+      final JpsModuleType<?> type = extension.getModuleType(typeId);
+      if (type != null) {
+        return type;
+      }
+    }
     return JpsJavaModuleType.INSTANCE;
   }
 }
