@@ -273,6 +273,24 @@ public class UIUtil {
     g.drawLine(x1, y1, x2, y2);
   }
 
+  public static void drawLine(Graphics2D g, int x1, int y1, int x2, int y2, @Nullable Color bgColor, @Nullable Color fgColor) {
+    Color oldFg = g.getColor();
+    Color oldBg = g.getBackground();
+    if (fgColor != null) {
+      g.setColor(fgColor);
+    }
+    if (bgColor != null) {
+      g.setBackground(bgColor);
+    }
+    drawLine(g, x1, y1, x2, y2);
+    if (fgColor != null) {
+      g.setColor(oldFg);
+    }
+    if (bgColor != null) {
+      g.setBackground(oldBg);
+    }
+  }
+
   @NotNull
   public static String[] splitText(String text, FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<String>();
