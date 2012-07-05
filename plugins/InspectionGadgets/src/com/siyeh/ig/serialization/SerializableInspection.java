@@ -103,4 +103,9 @@ public abstract class SerializableInspection extends BaseInspection {
     }
     return false;
   }
+
+  @Override
+  public String getAlternativeID() {
+    return "serial";
+  }
 }
