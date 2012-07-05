@@ -1,6 +1,10 @@
 package org.jetbrains.android.util;
 
-import com.android.io.*;
+import com.android.io.FolderWrapper;
+import com.android.io.IAbstractFile;
+import com.android.io.IAbstractFolder;
+import com.android.io.IAbstractResource;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,5 +86,20 @@ public class BufferingFolderWrapper implements IAbstractFolder {
   @Override
   public boolean delete() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BufferingFolderWrapper wrapper = (BufferingFolderWrapper)o;
+
+    return FileUtil.filesEqual(myFile, wrapper.myFile);
+  }
+
+  @Override
+  public int hashCode() {
+    return FileUtil.pathHashCode(myFile.getPath());
   }
 }
