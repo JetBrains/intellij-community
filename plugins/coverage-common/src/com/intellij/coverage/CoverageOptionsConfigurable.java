@@ -1,11 +1,11 @@
 package com.intellij.coverage;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +64,7 @@ public class CoverageOptionsConfigurable implements SearchableConfigurable, Conf
   }
 
   private List<JComponent> collectExtensionOptionsComponents() {
-    List<JComponent> additionalPanels = Lists.newArrayList();
+    List<JComponent> additionalPanels = ContainerUtil.newArrayList();
     for (CoverageOptions coverageOptions : getExtensions()) {
       additionalPanels.add(coverageOptions.getComponent());
     }

@@ -1,7 +1,5 @@
 package com.intellij.coverage;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -15,6 +13,7 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -266,7 +265,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
 
     @SuppressWarnings("unchecked") final Set<String> files = data.getClasses().keySet();
-    final Map<String, String> normalizedFiles2Files = Maps.newHashMap();
+    final Map<String, String> normalizedFiles2Files = ContainerUtil.newHashMap();
     for (final String file : files) {
       normalizedFiles2Files.put(normalizeFilePath(file), file);
     }
@@ -274,7 +273,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
                           suite.isTrackTestFolders(),
                           index,
                           suite.getCoverageEngine(),
-                          Sets.<VirtualFile>newHashSet(),
+                          ContainerUtil.<VirtualFile>newHashSet(),
                           Collections.unmodifiableMap(normalizedFiles2Files));
   }
 
