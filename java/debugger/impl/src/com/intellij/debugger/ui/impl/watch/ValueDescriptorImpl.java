@@ -93,8 +93,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public boolean isNull() { 
     return myValue == null; 
   }
-  
-  public boolean isPrimitive() { 
+
+  @Override
+  public boolean isString() {
+    return myValue instanceof StringReference;
+  }
+
+  public boolean isPrimitive() {
     return myValue instanceof PrimitiveValue; 
   }
   

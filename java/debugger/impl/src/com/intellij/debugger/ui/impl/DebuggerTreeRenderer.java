@@ -21,6 +21,9 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.RowIcon;
@@ -194,16 +197,30 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
           valueLabel =  DebuggerUtilsEx.truncateString(valueLabel);
 
+          final SimpleTextAttributes valueLabelAttribs;
+          if (valueDescriptor.isDirty()) {
+            valueLabelAttribs = XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES;
+          }
+          else {
+            TextAttributes highlightingAttribs = null;
+            if (valueDescriptor.isNull()){
+              highlightingAttribs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.KEYWORD);
+            }
+            else if (valueDescriptor.isString()) {
+              highlightingAttribs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.STRING);
+            }
+            valueLabelAttribs = highlightingAttribs != null? SimpleTextAttributes.fromTextAttributes(highlightingAttribs) : DEFAULT_ATTRIBUTES;
+          }
+
           final EvaluateException exception = descriptor.getEvaluateException();
           if(exception != null) {
             final String errorMessage = exception.getMessage();
-
             if(valueLabel.endsWith(errorMessage)) {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), DEFAULT_ATTRIBUTES);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel.substring(0, valueLabel.length() - errorMessage.length()), valueLabelAttribs);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
             else {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
           }
@@ -212,7 +229,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
               descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {
-              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
+              appendValueTextWithEscapesRendering(descriptorText, valueLabel, valueLabelAttribs);
             }
           }
         }
@@ -226,7 +243,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   }
 
   private static void appendValueTextWithEscapesRendering(SimpleColoredText descriptorText, String valueText, final SimpleTextAttributes attribs) {
-    final SimpleTextAttributes boldAttribs = attribs.derive(SimpleTextAttributes.STYLE_BOLD, null, Color.lightGray, null);
+    SimpleTextAttributes escapeAttribs = null;
     final StringBuilder buf = new StringBuilder();
     boolean slashFound = false;
     for (int idx= 0; idx < valueText.length(); idx++) {
@@ -238,10 +255,21 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             descriptorText.append(buf.toString(), attribs);
             buf.setLength(0);
           }
-          if (ch != '\\' && ch != '\"') {
-            descriptorText.append("\\", boldAttribs);
+
+          if (escapeAttribs == null) { // lazy init
+            final TextAttributes fromHighlighter = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(SyntaxHighlighterColors.VALID_STRING_ESCAPE);
+            if (fromHighlighter != null) {
+              escapeAttribs = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
+            }
+            else {
+              escapeAttribs = DEFAULT_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, Color.gray, null, null);
+            }
           }
-          descriptorText.append(String.valueOf(ch), boldAttribs);
+
+          if (ch != '\\' && ch != '\"') {
+            descriptorText.append("\\", escapeAttribs);
+          }
+          descriptorText.append(String.valueOf(ch), escapeAttribs);
         }
         else {
           buf.append('\\').append(ch);
