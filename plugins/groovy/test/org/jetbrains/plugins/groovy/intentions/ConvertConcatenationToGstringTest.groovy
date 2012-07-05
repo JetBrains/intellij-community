@@ -71,10 +71,10 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
     doTest(CONVERT_TO_GSTRING, true);
   }
 
-  public void _testQuotesInMultilineString() throws Exception {
+  public void testQuotesInMultilineString() throws Exception {
     doTest(CONVERT_TO_GSTRING, true);
   }
-  
+
   public void testDot() {
     doTest(CONVERT_TO_GSTRING, true);
   }

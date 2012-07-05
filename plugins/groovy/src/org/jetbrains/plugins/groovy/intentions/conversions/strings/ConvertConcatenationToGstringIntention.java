@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.intentions.conversions;
+package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -28,7 +29,9 @@ import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -58,21 +61,22 @@ public class ConvertConcatenationToGstringIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+    if (!(element instanceof GrExpression)) return;
+
+    boolean isMultiline = containsMultilineStrings((GrExpression)element);
+
     StringBuilder builder = new StringBuilder(element.getTextLength());
     if (element instanceof GrBinaryExpression) {
-      performIntention((GrBinaryExpression)element, builder);
+      performIntention((GrBinaryExpression)element, builder, isMultiline);
     }
     else if (element instanceof GrLiteral) {
-      getOperandText((GrExpression)element, builder);
+      getOperandText((GrExpression)element, builder, isMultiline);
     }
     else {
       return;
     }
 
     String text = builder.toString();
-    if (builder.indexOf("\n") < 0 && builder.indexOf("\r") < 0) {
-      text = GrStringUtil.escapeSymbols(builder.toString(), "\"");
-    }
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(text, true));
     final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
@@ -81,43 +85,76 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
   }
 
-  private static void performIntention(GrBinaryExpression expr, StringBuilder builder) {
-    GrExpression left = (GrExpression)skipParentheses(expr.getLeftOperand(), false);
-    GrExpression right = (GrExpression)skipParentheses(expr.getRightOperand(), false);
-    getOperandText(left, builder);
-    getOperandText(right, builder);
+  private static boolean containsMultilineStrings(GrExpression expr) {
+    final Ref<Boolean> result = Ref.create(false);
+    expr.accept(new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitLiteralExpression(GrLiteral literal) {
+        final String quote = GrStringUtil.getStartQuote(literal.getText());
+        if ("'''".equals(quote) || "\"\"\"".equals(quote)) {
+          result.set(true);
+        }
+      }
+
+      @Override
+      public void visitElement(GroovyPsiElement element) {
+        if (!result.get()) {
+          super.visitElement(element);
+        }
+      }
+    });
+    return result.get();
   }
 
-  private static void getOperandText(@Nullable GrExpression operand, StringBuilder builder) {
+  private static void performIntention(GrBinaryExpression expr, StringBuilder builder, boolean multiline) {
+    GrExpression left = (GrExpression)skipParentheses(expr.getLeftOperand(), false);
+    GrExpression right = (GrExpression)skipParentheses(expr.getRightOperand(), false);
+    getOperandText(left, builder, multiline);
+    getOperandText(right, builder, multiline);
+  }
+
+  private static void getOperandText(@Nullable GrExpression operand, StringBuilder builder, boolean multiline) {
     if (operand instanceof GrRegex) {
       StringBuilder b = new StringBuilder();
       GrStringUtil.parseRegexCharacters(GrStringUtil.removeQuotes(operand.getText()), b, null, operand.getText().startsWith("/"));
-      GrStringUtil.escapeSymbolsForGString(b, false, false);
+      GrStringUtil.escapeSymbolsForGString(b, !multiline, false);
     }
     else if (operand instanceof GrString) {
-      builder.append(GrStringUtil.removeQuotes(operand.getText()));
+      final String text = GrStringUtil.removeQuotes(operand.getText());
+      if (multiline && ((GrString)operand).isPlainString()) {
+        final StringBuilder buffer = new StringBuilder(text);
+        GrStringUtil.unescapeCharacters(buffer, "\"", true);
+        builder.append(buffer);
+      }
+      else {
+        builder.append(text);
+      }
     }
     else if (operand instanceof GrLiteral) {
-      Object value = ((GrLiteral)operand).getValue();
-      if (value == null) {
-        value = GrStringUtil.removeQuotes(operand.getText());
+      String text = GrStringUtil.removeQuotes(operand.getText());
+      if (multiline) {
+        final int position = builder.length();
+        GrStringUtil.escapeAndUnescapeSymbols(text, "$", "'\"", builder);
+        fixAllTripleQuotes(builder, position);
       }
-
-      String text = value.toString();
-      StringBuilder buffer = new StringBuilder(text.length());
-      boolean containsLineFeeds = text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0;
-      GrStringUtil.escapeStringCharacters(text.length(), text, "$", false, true, buffer);
-      GrStringUtil.unescapeCharacters(buffer, containsLineFeeds?"'\"":"'", containsLineFeeds);
-      builder.append(buffer);
+      else {
+        GrStringUtil.escapeAndUnescapeSymbols(text, "$\"", "'", builder);
+      }
     }
     else if (MyPredicate.satisfiedBy(operand, false)) {
-      performIntention((GrBinaryExpression)operand, builder);
+      performIntention((GrBinaryExpression)operand, builder, multiline);
     }
     else if (isToStringMethod(operand, builder)) {
       //nothing to do
     }
     else {
       builder.append(START_BRACE).append(operand == null ? "" : operand.getText()).append(END_BRACE);
+    }
+  }
+
+  private static void fixAllTripleQuotes(StringBuilder builder, int position) {
+    for (int i = builder.indexOf("\"\"\"", position); i >= 0; i = builder.indexOf("\"\"\"", i)) {
+      builder.replace(i + 2, i + 3, "\\\"");
     }
   }
 

@@ -328,6 +328,8 @@ public class GrStringUtil {
     return buffer;
   }
 
+
+
   public static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
     for (int i = 0; i < builder.length(); i++) {
       if (builder.charAt(i) != '\\') continue;
@@ -352,19 +354,23 @@ public class GrStringUtil {
     }
   }
 
-  public static String escapeSymbols(String s, String toEscape) {
-    StringBuilder builder = new StringBuilder();
+  public static String escapeAndUnescapeSymbols(String s, String toEscape, String toUnescape, StringBuilder builder) {
     boolean escaped = false;
     for (int i = 0; i < s.length(); i++) {
       final char ch = s.charAt(i);
       if (escaped) {
+        if (toUnescape.indexOf(ch) < 0) {
+          builder.append('\\');
+        }
         builder.append(ch);
         escaped = false;
         continue;
       }
       if (ch == '\\') {
         escaped = true;
+        continue;
       }
+
       if (toEscape.indexOf(ch) >= 0) {
         builder.append('\\');
       }
