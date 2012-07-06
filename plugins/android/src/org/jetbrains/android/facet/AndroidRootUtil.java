@@ -472,20 +472,22 @@ public class AndroidRootUtil {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   @Nullable
-  public static String getPropertyValue(@NotNull Module module, @NotNull String propertyFileName, @NotNull String propertyKey) {
+  public static Pair<String, VirtualFile> getPropertyValue(@NotNull Module module,
+                                                           @NotNull String propertyFileName,
+                                                           @NotNull String propertyKey) {
     final Pair<Properties, VirtualFile> pair = readPropertyFile(module, propertyFileName);
     if (pair != null) {
       final String value = pair.first.getProperty(propertyKey);
       if (value != null) {
-        return value;
+        return Pair.create(value, pair.second);
       }
     }
     return null;
   }
 
   @Nullable
-  public static String getProjectPropertyValue(Module module, String propertyName) {
-    final String result = getPropertyValue(module, SdkConstants.FN_PROJECT_PROPERTIES, propertyName);
+  public static Pair<String, VirtualFile> getProjectPropertyValue(Module module, String propertyName) {
+    Pair<String, VirtualFile> result = getPropertyValue(module, SdkConstants.FN_PROJECT_PROPERTIES, propertyName);
     return result != null
            ? result
            : getPropertyValue(module, DEFAULT_PROPERTIES_FILE_NAME, propertyName);

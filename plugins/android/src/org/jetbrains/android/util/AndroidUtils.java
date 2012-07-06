@@ -124,6 +124,7 @@ public class AndroidUtils {
 
   // Properties
   @NonNls public static final String ANDROID_LIBRARY_PROPERTY = "android.library";
+  @NonNls public static final String ANDROID_MANIFEST_MERGER_PROPERTY = "manifestmerger.enabled";
   @NonNls public static final String ANDROID_TARGET_PROPERTY = "target";
   @NonNls public static final String ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX = "android.library.reference.";
 

@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +42,9 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -116,8 +119,19 @@ public class AndroidPrecompileTask implements CompileTask {
   private static void checkAndroidDependencies(@NotNull CompileContext context) {
     for (Module module : context.getCompileScope().getAffectedModules()) {
       final AndroidFacet facet = AndroidFacet.getInstance(module);
+      if (facet == null) {
+        continue;
+      }
 
-      if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
+      final Pair<String, VirtualFile> manifestMergerProp =
+        AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_MANIFEST_MERGER_PROPERTY);
+      if (manifestMergerProp != null && Boolean.parseBoolean(manifestMergerProp.getFirst())) {
+        context.addMessage(CompilerMessageCategory.WARNING,
+                           "[" + module.getName() + "] " + AndroidBundle.message("android.manifest.merger.not.supported.error"),
+                           manifestMergerProp.getSecond().getUrl(), -1, -1);
+      }
+
+      if (!facet.getConfiguration().LIBRARY_PROJECT) {
 
         for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
           if (entry instanceof ModuleOrderEntry) {

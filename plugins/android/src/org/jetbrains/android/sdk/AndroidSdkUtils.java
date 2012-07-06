@@ -43,6 +43,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -347,12 +348,14 @@ public class AndroidSdkUtils {
   }
 
   private static boolean tryToImportSdkFromPropertyFiles(@NotNull Module module) {
-    final String targetHashString = AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_TARGET_PROPERTY);
+    final Pair<String, VirtualFile> targetProp = AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_TARGET_PROPERTY);
+    final String targetHashString = targetProp != null ? targetProp.getFirst() : null;
     if (targetHashString == null) {
       return false;
     }
 
-    String sdkDir = AndroidRootUtil.getPropertyValue(module, SdkConstants.FN_LOCAL_PROPERTIES, "sdk.dir");
+    final Pair<String, VirtualFile> sdkDirProperty = AndroidRootUtil.getPropertyValue(module, SdkConstants.FN_LOCAL_PROPERTIES, "sdk.dir");
+    String sdkDir = sdkDirProperty != null ? sdkDirProperty.getFirst() : null;
     if (sdkDir != null) {
       sdkDir = FileUtil.toSystemIndependentName(sdkDir);
     }
