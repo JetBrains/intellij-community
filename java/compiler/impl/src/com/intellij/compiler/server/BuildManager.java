@@ -511,6 +511,7 @@ public class BuildManager implements ApplicationComponent{
           }
           catch (Throwable e) {
             myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+            handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
             handler.sessionTerminated();
             future.setDone();
           }
@@ -520,7 +521,7 @@ public class BuildManager implements ApplicationComponent{
       return future;
     }
     catch (Throwable e) {
-      handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), null));
+      handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
       handler.sessionTerminated();
     }
 
