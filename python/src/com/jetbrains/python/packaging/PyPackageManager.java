@@ -589,12 +589,14 @@ public class PyPackageManager {
       }
       final List<String> cmdline = new ArrayList<String>();
       cmdline.add(homePath);
-      cmdline.add(helperPath);
+
       cmdline.addAll(args);
 
       final boolean canCreate = FileUtil.ensureCanCreateFile(new File(mySdk.getHomePath()));
       if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
         try {
+          helperPath = StringUtil.replace(helperPath, " ", "\\ ");
+          cmdline.add(1, helperPath);
           final ProcessOutput result = ExecUtil.sudoAndGetOutput(StringUtil.join(cmdline, " "),
                                                                  "Please enter your password to make changes in system packages: ",
                                                                  parentDir);
@@ -623,6 +625,7 @@ public class PyPackageManager {
       }
       else                 //vEnv interpreter
       {
+        cmdline.add(1, helperPath);
         return PySdkUtil.getProcessOutput(parentDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
       }
     }
