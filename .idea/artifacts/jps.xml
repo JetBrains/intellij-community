@@ -21,7 +21,6 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/asm-commons.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/oromatcher.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jgoodies-forms.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/guava-r09.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
