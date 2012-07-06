@@ -551,6 +551,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
       myFileSystemTree.select(vFile, new Runnable() {
         public void run() {
+          if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
+            myFileSystemTree.showHiddens(true);
+            selectInTree(vFile, requestFocus);
+            return;
+          }
+
           myTreeIsUpdating = false;
           setErrorText(null);
           if (requestFocus) {
