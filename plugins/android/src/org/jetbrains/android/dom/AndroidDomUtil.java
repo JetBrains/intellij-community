@@ -302,8 +302,8 @@ public class AndroidDomUtil {
       return new String[]{"attr"};
     }
     if (element instanceof Resources) {
-      return new String[]{"string", "drawable", "dimen", "color", "style", "string-array", "integer-array", "array", "declare-styleable",
-        "integer", "bool", "attr", "item", "eat-comment"};
+      return new String[]{"string", "drawable", "dimen", "color", "style", "string-array", "integer-array", "array", "plurals",
+        "declare-styleable", "integer", "bool", "attr", "item", "eat-comment"};
     }
     if (element instanceof StyledText) {
       return new String[]{"b", "i", "u"};

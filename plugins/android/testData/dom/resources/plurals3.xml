@@ -1,0 +1,8 @@
+<resources>
+  <plurals name="plural1">
+    <<error>item</error>/>
+
+    <item quantity="<error>aba</error>"/>
+    <item quantity="zero"></item>
+  </plurals>
+</resources>
