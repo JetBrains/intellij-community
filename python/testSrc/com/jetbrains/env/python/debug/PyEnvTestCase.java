@@ -73,7 +73,12 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     List<String> roots = getPythonRoots();
 
     if (roots.size() == 0) {
-      String msg = getTestName(false) + ": environments are not defined. Skipping. \nSpecify either " + PYCHARM_PYTHON_ENVS + " or " + PYCHARM_PYTHON_VIRTUAL_ENVS + " environment variable.";
+      String msg = getTestName(false) +
+                   ": environments are not defined. Skipping. \nSpecify either " +
+                   PYCHARM_PYTHON_ENVS +
+                   " or " +
+                   PYCHARM_PYTHON_VIRTUAL_ENVS +
+                   " environment variable.";
       LOG.warn(msg);
       System.out.println(msg);
       return;
@@ -113,19 +118,23 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
           testTask.tearDown();
         }
         catch (Exception e) {
-          e.printStackTrace();
+          throw new RuntimeException("Couldn't tear down task", e);
         }
       }
     }
 
     if (!wasExecuted) {
-      throw new RuntimeException("test" + getTestName(false) + " was not executed.\n" + joinStrings(roots, "All roots: ") + "\n" +  joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
-
+      throw new RuntimeException("test" +
+                                 getTestName(false) +
+                                 " was not executed.\n" +
+                                 joinStrings(roots, "All roots: ") +
+                                 "\n" +
+                                 joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
     }
   }
 
   public static boolean notEnvConfiguration() {
-    return IS_UNDER_TEAMCITY && ! IS_ENV_CONFIGURATION;
+    return IS_UNDER_TEAMCITY && !IS_ENV_CONFIGURATION;
   }
 
   public static List<String> getPythonRoots() {

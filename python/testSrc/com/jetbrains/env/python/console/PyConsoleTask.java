@@ -103,6 +103,16 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   private void disposeConsole() throws InterruptedException {
+    if (myCommunication != null) {
+      try {
+        myCommunication.close();
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+      myCommunication = null;
+    }
+
     disposeConsoleProcess();
 
     if (myConsoleView != null) {
@@ -110,7 +120,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         protected void run(Result result) throws Throwable {
           Disposer.dispose(myConsoleView);
           myConsoleView = null;
-          myCommunication = null;
+
         }
       }.execute();
     }
