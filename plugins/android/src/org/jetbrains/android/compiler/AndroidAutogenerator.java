@@ -11,6 +11,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -355,6 +356,8 @@ public class AndroidAutogenerator {
     if (vFile == null || genDir == null) {
       return;
     }
+    DumbService.getInstance(module.getProject()).waitForSmartMode();
+
     final Collection<VirtualFile> files = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
       @Nullable
       @Override
