@@ -30,6 +30,8 @@ import java.util.List;
  */
 public class PyPackagingTest extends PyTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
+  public static final String PIP_VERSION = "1.1";
+  public static final String DISTRIBUTE_VERSION = "0.6.27";
 
   public void testGetPackages() {
     forAllPythonEnvs(getTestName(false), new Processor<Sdk>() {
@@ -70,11 +72,11 @@ public class PyPackagingTest extends PyTestCase {
           final PyPackage distribute = findPackage("distribute", packages);
           assertNotNull(distribute);
           assertEquals("distribute", distribute.getName());
-          assertEquals("0.6.24", distribute.getVersion());
+          assertEquals(DISTRIBUTE_VERSION, distribute.getVersion());
           final PyPackage pip = findPackage("pip", packages);
           assertNotNull(pip);
           assertEquals("pip", pip.getName());
-          assertEquals("1.0.2", pip.getVersion());
+          assertEquals(PIP_VERSION, pip.getVersion());
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -108,7 +110,7 @@ public class PyPackagingTest extends PyTestCase {
           final PyPackage pip1 = findPackage("pip", packages1);
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
-          assertEquals("1.0.2", pip1.getVersion());
+          assertEquals(PIP_VERSION, pip1.getVersion());
           manager.uninstall(list(pip1));
           final List<PyPackage> packages3 = manager.getPackages();
           final PyPackage pip2 = findPackage("pip", packages3);
