@@ -122,7 +122,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
         }
       }
     }
-    return false;
+    return true;
   }
 
   public static boolean isElementWithSomeEmbeddedType(XmlTagImpl xml) {

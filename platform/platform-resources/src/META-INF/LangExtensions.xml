@@ -728,7 +728,6 @@
 
   <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider"/>
 
-  <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
   <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
   <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
 
