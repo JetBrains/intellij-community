@@ -120,7 +120,7 @@ public class CoverageListNode extends AbstractTreeNode {
   public boolean contains(VirtualFile file) {
     final Object value = getValue();
     if (value instanceof PsiElement) {
-      final boolean equalContainingFile = PsiUtilCore.getVirtualFile((PsiElement)value) == file;
+      final boolean equalContainingFile = Comparing.equal(PsiUtilCore.getVirtualFile((PsiElement)value), file);
       if (equalContainingFile) return true;
     }
     if (value instanceof PsiDirectory) {
