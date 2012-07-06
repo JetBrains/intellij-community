@@ -93,13 +93,9 @@ public abstract class SuiteFinishedState extends AbstractState {
   };
 
   /**
-   * Finished empty test suite
+   * Finished empty leaf test suite
    */
-  public static SuiteFinishedState EMPTY_SUITE = new SuiteFinishedState() {
-    @Override
-    public boolean isDefect() {
-      return false;
-    }
+  public static SuiteFinishedState EMPTY_LEAF_SUITE = new EmptySuite() {
 
     @Override
     public void printOn(final Printer printer) {
@@ -109,6 +105,21 @@ public abstract class SuiteFinishedState extends AbstractState {
       printer.print(msg, ConsoleViewContentType.SYSTEM_OUTPUT);
     }
 
+  };
+
+  /**
+   * Finished empty test suite
+   */
+  public static SuiteFinishedState EMPTY_SUITE = new EmptySuite();
+
+  /**
+   * Finished byt tests reporter wasn't attached
+   */
+  public static SuiteFinishedState TESTS_REPORTER_NOT_ATTACHED = new SuiteFinishedState() {
+    @Override
+    public boolean isDefect() {
+      return false;
+    }
 
     public Magnitude getMagnitude() {
       return Magnitude.COMPLETE_INDEX;
@@ -117,29 +128,9 @@ public abstract class SuiteFinishedState extends AbstractState {
     @Override
     public String toString() {
       //noinspection HardCodedStringLiteral
-      return "EMPTY FINISHED SUITE";
+      return "TESTS REPORTER NOT ATTACHED";
     }
   };
-
-    /**
-   * Finished byt tests reporter wasn't attached
-   */
-    public static SuiteFinishedState TESTS_REPORTER_NOT_ATTACHED = new SuiteFinishedState() {
-      @Override
-      public boolean isDefect() {
-        return false;
-      }
-
-      public Magnitude getMagnitude() {
-        return Magnitude.COMPLETE_INDEX;
-      }
-
-      @Override
-      public String toString() {
-        //noinspection HardCodedStringLiteral
-        return "TESTS REPORTER NOT ATTACHED";
-      }
-    };
 
   private SuiteFinishedState() {
   }
@@ -163,4 +154,23 @@ public abstract class SuiteFinishedState extends AbstractState {
   public boolean wasTerminated() {
     return false;
   }
+
+  private static class EmptySuite extends SuiteFinishedState {
+
+    @Override
+    public boolean isDefect() {
+      return false;
+    }
+
+    public Magnitude getMagnitude() {
+      return Magnitude.COMPLETE_INDEX;
+    }
+
+    @Override
+    public String toString() {
+      //noinspection HardCodedStringLiteral
+      return "EMPTY FINISHED SUITE";
+    }
+  }
+
 }
