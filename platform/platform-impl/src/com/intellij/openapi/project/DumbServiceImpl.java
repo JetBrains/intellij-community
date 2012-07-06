@@ -221,9 +221,13 @@ public class DumbServiceImpl extends DumbService {
 
   @Override
   public void showDumbModeNotification(final String message) {
-    final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-    StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-    statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
+        StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
+        statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
+      }
+    });
   }
 
   private static final Ref<CacheUpdateRunner> NULL_ACTION = new Ref<CacheUpdateRunner>(null);
