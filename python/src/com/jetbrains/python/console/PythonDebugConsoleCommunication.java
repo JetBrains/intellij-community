@@ -8,7 +8,6 @@ import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebuggerException;
-import org.apache.commons.lang.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -75,6 +74,6 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
 
   @Override
   public void interrupt() {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 }
