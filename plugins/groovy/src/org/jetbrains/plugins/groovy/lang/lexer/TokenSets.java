@@ -49,7 +49,8 @@ public abstract class TokenSets {
       TokenType.WHITE_SPACE
   );
 
-  public static final TokenSet NUMBERS = TokenSet.create(mNUM_INT,
+  public static final TokenSet NUMBERS = TokenSet.create(
+      mNUM_INT,
       mNUM_BIG_DECIMAL,
       mNUM_BIG_INT,
       mNUM_DOUBLE,

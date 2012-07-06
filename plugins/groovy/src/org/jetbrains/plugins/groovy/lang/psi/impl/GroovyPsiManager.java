@@ -16,7 +16,10 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.google.common.collect.Sets;
 import com.intellij.ProjectTopics;
+import com.intellij.application.options.editor.EditorOptionsPanel;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,6 +39,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -87,10 +91,20 @@ public class GroovyPsiManager {
       }
     });
 
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    final MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       public void rootsChanged(ModuleRootEvent event) {
         dropTypesCache();
         myClassCache.clear();
+      }
+    });
+
+    // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
+    // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
+    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
+        EditorOptionsPanel.reinitAllEditors();
       }
     });
   }
