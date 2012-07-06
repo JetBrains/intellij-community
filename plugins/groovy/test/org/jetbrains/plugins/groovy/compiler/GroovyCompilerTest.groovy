@@ -288,11 +288,18 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   }
 
   public void testStubForGroovyExtendingJava() throws Exception {
-    myFixture.addClass("public class Foo {}");
-    myFixture.addFileToProject("Bar.groovy", "class Bar extends Foo {}");
-    myFixture.addClass("public class Goo extends Bar {}");
+    def foo = myFixture.addFileToProject("Foo.groovy", "class Foo extends Goo { }");
+    myFixture.addFileToProject("Goo.groovy", "class Goo extends Main { void bar() { println 'hello' } }");
+    def main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }");
 
     assertEmpty(make());
+    assertOutput 'Main', 'hello'
+
+    touch(foo.virtualFile)
+    touch(main.containingFile.virtualFile)
+    assertEmpty(make());
+
+    assertOutput 'Main', 'hello'
   }
 
   public void testDontApplyTransformsFromSameModule() throws Exception {

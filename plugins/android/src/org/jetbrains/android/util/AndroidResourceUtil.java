@@ -70,7 +70,8 @@ public class AndroidResourceUtil {
 
   public static final Set<ResourceType> VALUE_RESOURCE_TYPES = EnumSet.of(ResourceType.DRAWABLE, ResourceType.COLOR, ResourceType.DIMEN,
                                                                           ResourceType.STRING, ResourceType.STYLE, ResourceType.ARRAY,
-                                                                          ResourceType.ID, ResourceType.BOOL, ResourceType.INTEGER);
+                                                                          ResourceType.PLURALS, ResourceType.ID, ResourceType.BOOL,
+                                                                          ResourceType.INTEGER);
 
   public static final Set<ResourceType> ALL_VALUE_RESOURCE_TYPES = EnumSet.noneOf(ResourceType.class);
 
@@ -383,6 +384,8 @@ public class AndroidResourceUtil {
     switch (resType) {
       case STRING:
         return resources.addString();
+      case PLURALS:
+        return resources.addPlurals();
       case DIMEN:
         return resources.addDimen();
       case COLOR:
@@ -437,6 +440,9 @@ public class AndroidResourceUtil {
 
   @Nullable
   public static String getDefaultResourceFileName(@NotNull ResourceType type) {
+    if (ResourceType.PLURALS == type) {
+      return "strings.xml";
+    }
     if (VALUE_RESOURCE_TYPES.contains(type)) {
       return type.getName() + "s.xml";
     }
@@ -453,6 +459,9 @@ public class AndroidResourceUtil {
 
     if (resourceType.equals("string")) {
       result.addAll(resources.getStrings());
+    }
+    else if (resourceType.equals(ResourceType.PLURALS.getName())) {
+      result.addAll(resources.getPluralss());
     }
     else if (resourceType.equals("drawable")) {
       result.addAll(resources.getDrawables());

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
@@ -42,6 +43,9 @@ import java.util.*;
 
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ModificationTracker, BulkFileListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
+  private static final TempFileSystem TEMP_FILE_SYSTEM = TempFileSystem.getInstance();
+  private static final LocalFileSystem LOCAL_FILE_SYSTEM = LocalFileSystem.getInstance();
+  private static final JarFileSystem JAR_FILE_SYSTEM = JarFileSystem.getInstance();
   private long myVfsModificationCounter;
   // guarded by this
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = new LinkedHashMap<VirtualFilePointerListener, FilePointerPartNode>();
@@ -144,12 +148,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       protocol = null;
       fileSystem = file.getFileSystem();
     }
-    if (fileSystem == TempFileSystem.getInstance()) {
+    if (fileSystem == TEMP_FILE_SYSTEM) {
       // for tests, recreate always
       VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
       return new IdentityVirtualFilePointer(found, url);
     }
-    if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
+    if (fileSystem != LOCAL_FILE_SYSTEM && fileSystem != JAR_FILE_SYSTEM) {
       // we are unable to track alien file systems for now
       VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
       // if file is null, this pointer will never be alive
@@ -186,13 +190,28 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private static void register(@NotNull Disposable parentDisposable, @NotNull VirtualFilePointerImpl pointer) {
-    DelegatingDisposable delegating = new DelegatingDisposable(pointer);
-    DelegatingDisposable registered = Disposer.findRegisteredObject(parentDisposable, delegating);
-    if (registered == null) {
-      Disposer.register(parentDisposable, delegating);
+    ObjectNode<Disposable> node = Disposer.getTree().getNode(pointer);
+    if (node == null) {
+      Disposer.register(parentDisposable, pointer);
+    }
+    else if (node.getParent().getObject() == parentDisposable) {
+      // already registered, just do not inc the usage count
+      pointer.myNode.incrementUsageCount(-1);
     }
     else {
-      registered.disposeCount++;
+      // already registered but under different parent
+      DelegatingDisposable delegating = new DelegatingDisposable(pointer);
+      DelegatingDisposable registered = Disposer.findRegisteredObject(parentDisposable, delegating);
+      if (registered == null) {
+        Disposer.register(parentDisposable, delegating);
+      }
+      else {
+        registered.disposeCount++;
+      }
+    }
+    if (node != null && !node.getChildren().isEmpty()) {
+      // VFP is registered in Disposable in a very eccentric way (custom refcounts etc) so it's not a good idea to have it as a Disposable parent
+      LOG.error("You must not register disposable having VirtualFilePointer as a parent: "+node.getChildren());
     }
   }
 

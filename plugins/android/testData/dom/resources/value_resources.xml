@@ -7,4 +7,6 @@
     <attr name="android:text"/>
   </declare-styleable>
   <attr name="myAttr2" format="string"/>
+  <plurals name="plural1">
+  </plurals>
 </resources>

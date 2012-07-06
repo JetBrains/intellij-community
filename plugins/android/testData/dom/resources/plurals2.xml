@@ -1,0 +1,5 @@
+<resources>
+  <plurals name="plural1">
+    <item quantity="<caret>"/>
+  </plurals>
+</resources>

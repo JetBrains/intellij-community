@@ -145,7 +145,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
      * subclasses from ReentrantLock opportunistically, just to
      * simplify some locking and avoid separate construction.
      **/
-    final static class Segment<K,V> extends ReentrantLock implements Serializable {
+    static final class Segment<K,V> extends ReentrantLock implements Serializable {
         /*
          * Segments maintain a table of entry lists that are ALWAYS
          * kept in a consistent state, so can be read without locking.

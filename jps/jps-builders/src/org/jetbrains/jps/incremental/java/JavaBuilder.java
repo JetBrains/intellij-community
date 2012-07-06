@@ -81,13 +81,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private final Executor myTaskRunner;
   private int myTasksInProgress = 0;
   private final Object myCounterLock = new Object();
-  private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
+  private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
 
-  public JavaBuilder(Executor tasksExecutor) {
-    super(BuilderCategory.TRANSLATOR);
-    myTaskRunner = tasksExecutor;
-    //add here class processors in the sequence they should be executed
-    myClassProcessors.add(new ClassPostProcessor() {
+  static {
+    registerClassPostProcessor(new ClassPostProcessor() {
       public void process(CompileContext context, OutputFileObject out) {
         final OutputFileObject.Content content = out.getContent();
         final File srcFile = out.getSourceFile();
@@ -119,6 +116,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
     });
+  }
+
+  public static void registerClassPostProcessor(ClassPostProcessor processor) {
+    ourClassProcessors.add(processor);
+  }
+
+  public JavaBuilder(Executor tasksExecutor) {
+    super(BuilderCategory.TRANSLATOR);
+    myTaskRunner = tasksExecutor;
+    //add here class processors in the sequence they should be executed
   }
 
   @Override
@@ -1193,7 +1200,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       submitAsyncTask(new Runnable() {
         public void run() {
           try {
-            for (ClassPostProcessor processor : myClassProcessors) {
+            for (ClassPostProcessor processor : ourClassProcessors) {
               processor.process(myCompileContext, fileObject);
             }
           }

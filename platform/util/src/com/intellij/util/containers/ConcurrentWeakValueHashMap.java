@@ -38,8 +38,8 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
   public ConcurrentWeakValueHashMap() {
     myMap = new ConcurrentHashMap<K, MyReference<K,V>>();
   }
-  public ConcurrentWeakValueHashMap(int initialCapaciy, float loadFactor, int concurrenycLevel) {
-    myMap = new ConcurrentHashMap<K, MyReference<K,V>>(initialCapaciy, loadFactor, concurrenycLevel);
+  public ConcurrentWeakValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
+    myMap = new ConcurrentHashMap<K, MyReference<K,V>>(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   private static class MyReference<K,T> extends WeakReference<T> {
@@ -75,12 +75,14 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     }
   }
 
+  @Override
   public V get(Object key) {
     MyReference<K,V> ref = myMap.get(key);
     if (ref == null) return null;
     return ref.get();
   }
 
+  @Override
   public V put(K key, V value) {
     processQueue();
     MyReference<K,V> oldRef = myMap.put(key, createRef(key, value));
@@ -91,6 +93,7 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     return new MyReference<K,V>(key, value, myQueue);
   }
 
+  @Override
   public V putIfAbsent(@NotNull K key, V value) {
     while (true) {
       processQueue();
@@ -107,28 +110,33 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     }
   }
 
+  @Override
   public boolean remove(@NotNull final Object key, final Object value) {
     processQueue();
     return myMap.remove(key, createRef((K)key, (V)value));
   }
 
+  @Override
   public boolean replace(@NotNull final K key, @NotNull final V oldValue, @NotNull final V newValue) {
     processQueue();
     return myMap.replace(key, createRef(key, oldValue), createRef(key, newValue));
   }
 
+  @Override
   public V replace(@NotNull final K key, @NotNull final V value) {
     processQueue();
     MyReference<K, V> ref = myMap.replace(key, createRef(key, value));
     return ref == null ? null : ref.get();
   }
 
+  @Override
   public V remove(Object key) {
     processQueue();
     MyReference<K,V> ref = myMap.remove(key);
     return ref != null ? ref.get() : null;
   }
 
+  @Override
   public void putAll(Map<? extends K, ? extends V> t) {
     processQueue();
     for (K k : t.keySet()) {
@@ -139,31 +147,38 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     }
   }
 
+  @Override
   public void clear() {
     myMap.clear();
     processQueue();
   }
 
+  @Override
   public int size() {
     return myMap.size(); //?
   }
 
+  @Override
   public boolean isEmpty() {
     return myMap.isEmpty(); //?
   }
 
+  @Override
   public boolean containsKey(Object key) {
     return get(key) != null;
   }
 
+  @Override
   public boolean containsValue(Object value) {
     throw new RuntimeException("method not implemented");
   }
 
+  @Override
   public Set<K> keySet() {
     return myMap.keySet();
   }
 
+  @Override
   public Collection<V> values() {
     List<V> result = new ArrayList<V>();
     final Collection<MyReference<K, V>> refs = myMap.values();
@@ -176,6 +191,7 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
     return result;
   }
 
+  @Override
   public Set<Entry<K, V>> entrySet() {
     final Set<K> keys = keySet();
     Set<Entry<K, V>> entries = new HashSet<Entry<K, V>>();
@@ -184,14 +200,17 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
       final V value = get(key);
       if (value != null) {
         entries.add(new Entry<K, V>() {
+          @Override
           public K getKey() {
             return key;
           }
 
+          @Override
           public V getValue() {
             return value;
           }
 
+          @Override
           public V setValue(V value) {
             throw new UnsupportedOperationException("setValue is not implemented");
           }

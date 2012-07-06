@@ -511,6 +511,7 @@ public class BuildManager implements ApplicationComponent{
           }
           catch (Throwable e) {
             myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+            handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
             handler.sessionTerminated();
             future.setDone();
           }
@@ -520,7 +521,7 @@ public class BuildManager implements ApplicationComponent{
       return future;
     }
     catch (Throwable e) {
-      handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), null));
+      handler.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
       handler.sessionTerminated();
     }
 
@@ -669,26 +670,30 @@ public class BuildManager implements ApplicationComponent{
 
   private Process launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {
     // choosing sdk with which the build process should be run
-    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    Sdk projectJdk = internalJdk;
-    final String versionString = projectJdk.getVersionString();
-    JavaSdkVersion sdkVersion = versionString != null? ((JavaSdk)projectJdk.getSdkType()).getVersion(versionString) : null;
-    int sdkMinorVersion = getMinorVersion(versionString);
-    if (sdkVersion != null) {
-      final Set<Sdk> candidates = new HashSet<Sdk>();
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-          candidates.add(sdk);
-        }
+    Sdk projectJdk = null;
+    JavaSdkVersion sdkVersion = null;
+    int sdkMinorVersion = 0;
+
+    final Set<Sdk> candidates = new HashSet<Sdk>();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+        candidates.add(sdk);
       }
-      // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
-      for (Sdk candidate : candidates) {
-        final String vs = candidate.getVersionString();
-        if (vs != null) {
-          final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
-          if (candidateVersion != null) {
-            final int candidateMinorVersion = getMinorVersion(vs);
+    }
+    // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
+    for (Sdk candidate : candidates) {
+      final String vs = candidate.getVersionString();
+      if (vs != null) {
+        final JavaSdkVersion candidateVersion = ((JavaSdk)candidate.getSdkType()).getVersion(vs);
+        if (candidateVersion != null) {
+          final int candidateMinorVersion = getMinorVersion(vs);
+          if (projectJdk == null) {
+            sdkVersion = candidateVersion;
+            sdkMinorVersion = candidateMinorVersion;
+            projectJdk = candidate;
+          }
+          else {
             final int result = candidateVersion.compareTo(sdkVersion);
             if (result > 0 || (result == 0 && candidateMinorVersion > sdkMinorVersion)) {
               sdkVersion = candidateVersion;
@@ -698,6 +703,11 @@ public class BuildManager implements ApplicationComponent{
           }
         }
       }
+    }
+
+    final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    if (projectJdk == null || sdkVersion == null || !sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+      projectJdk = internalJdk;
     }
 
     // validate tools.jar presence

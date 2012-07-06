@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -32,10 +31,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.ui.CollectionComboBoxModel;
-import com.intellij.ui.ComboboxSpeedSearch;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.EditorComboBox;
+import com.intellij.ui.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -260,7 +256,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                                               final ArrayList<DirectoryChooser.ItemWrapper> items,
                                                               final DirectoryChooser.ItemWrapper initial,
                                                               final DirectoryChooser.ItemWrapper oldOne) {
-    if (initial != null || items.contains(NULL_WRAPPER) || items.isEmpty()) {
+    if (initial != null || (items.size() > 2 && items.contains(NULL_WRAPPER)) || items.isEmpty()) {
       return initial;
     }
     else {

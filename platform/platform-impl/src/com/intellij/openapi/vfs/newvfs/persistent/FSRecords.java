@@ -626,10 +626,9 @@ public class FSRecords implements Forceable {
       final DataInputStream input = readAttribute(1, CHILDREN_ATT);
       if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
-      int[] result;
       try {
         final int count = DataInputOutputUtil.readINT(input);
-        result = ArrayUtil.newIntArray(count);
+        int[] result = ArrayUtil.newIntArray(count);
         for (int i = 0; i < count; i++) {
           DataInputOutputUtil.readINT(input); // Name
           result[i] = DataInputOutputUtil.readINT(input); // Id

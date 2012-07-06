@@ -183,19 +183,22 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
   }
 
   private static VirtualFile[] getIdeaLibrary(String home) {
+    String plugins = home + File.separator + PLUGINS_DIR + File.separator;
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    appendIdeaLibrary(home + File.separator + LIB_DIR_NAME, result, "junit.jar");
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JAVAEE_DIR + File.separator + LIB_DIR_NAME, result, "javaee-impl.jar");
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JSF_DIR + File.separator + LIB_DIR_NAME, result, "jsf-impl.jar");
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + PERSISTENCE_SUPPORT + File.separator + LIB_DIR_NAME, result, "persistence-impl.jar");
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + DATABASE_DIR + File.separator + LIB_DIR_NAME, result, "database-impl.jar");
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + CSS_DIR + File.separator + LIB_DIR_NAME, result, "css.jar");
+    appendIdeaLibrary(home, result, "junit.jar");
+    appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-console.jar");
+    appendIdeaLibrary(plugins + "JSF", result, "jsf-impl.jar");
+    appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
+    appendIdeaLibrary(plugins + "DatabaseSupport", result, "database-impl.jar", "jdbc-console.jar");
+    appendIdeaLibrary(plugins + "css", result, "css.jar");
+    appendIdeaLibrary(plugins + "uml", result, "uml-support.jar");
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  private static void appendIdeaLibrary(final String path,
+  private static void appendIdeaLibrary(final String libDirPath,
                                         final ArrayList<VirtualFile> result,
                                         @NonNls final String... forbidden) {
+    final String path = libDirPath + File.separator + LIB_DIR_NAME;
     final JarFileSystem jfs = JarFileSystem.getInstance();
     final File lib = new File(path);
     if (lib.isDirectory()) {

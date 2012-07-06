@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -550,6 +551,21 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
           // simulate VFS refresh events since launching the actual refresh is too slow
           myVirtualFilePointerManager.before(events);
           myVirtualFilePointerManager.after(events);
+        }
+      }
+    }).assertTiming();
+  }
+  public void testMultipleCreationOfTheSamePointerPerformance() throws IOException {
+    FilePointerPartNode.pushDebug(false, disposable);
+    final LoggingListener listener = new LoggingListener();
+    final VirtualFilePointer thePointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/e"), disposable, listener);
+    TempFileSystem.getInstance();
+    PlatformTestUtil.startPerformanceTest("same url vfp create", 500, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        for (int i=0; i<1000000; i++) {
+          VirtualFilePointer pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/e"), disposable, listener);
+          assertSame(pointer, thePointer);
         }
       }
     }).assertTiming();

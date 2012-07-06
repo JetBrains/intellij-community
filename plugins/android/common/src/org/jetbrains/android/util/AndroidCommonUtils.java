@@ -95,6 +95,7 @@ public class AndroidCommonUtils {
   @NonNls public static final String PACKAGE_MANIFEST_ATTRIBUTE = "package";
 
   @NonNls public static final String ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX = ".afp";
+  @NonNls public static final String ANDROID_MANIFEST_MERGER_PROPERTY = "manifestmerger.enabled";
 
   private AndroidCommonUtils() {
   }

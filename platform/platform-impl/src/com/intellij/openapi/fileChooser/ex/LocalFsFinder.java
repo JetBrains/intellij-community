@@ -17,6 +17,8 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,17 +82,26 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
   public static class FileChooserFilter implements LookupFilter {
 
     private final FileChooserDescriptor myDescriptor;
-    private final boolean myShowHidden;
+    private final Computable<Boolean> myShowHidden;
 
     public FileChooserFilter(final FileChooserDescriptor descriptor, boolean showHidden) {
+      myShowHidden = new Computable.PredefinedValueComputable<Boolean>(showHidden);
       myDescriptor = descriptor;
-      myShowHidden = showHidden;
+    }
+    public FileChooserFilter(final FileChooserDescriptor descriptor, final FileSystemTree tree) {
+      myDescriptor = descriptor;
+      myShowHidden = new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return tree.areHiddensShown();
+        }
+      };
     }
 
     public boolean isAccepted(final LookupFile file) {
       VirtualFile vFile = ((VfsFile)file).getFile();
       if (vFile == null) return false;
-      return myDescriptor.isFileVisible(vFile, myShowHidden);
+      return myDescriptor.isFileVisible(vFile, myShowHidden.compute());
     }
   }
 

@@ -31,7 +31,6 @@
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="TestNG" level="project" />
     <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="git4idea-rt" />
@@ -72,6 +71,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="Velocity" level="project" />
   </component>
 </module>
 

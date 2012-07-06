@@ -560,7 +560,9 @@ public class SMTestProxy extends AbstractTestProxy {
    */
   protected AbstractState determineSuiteStateOnFinished() {
     final AbstractState state;
-    if (isLeaf() || isEmptySuite()) {
+    if (isLeaf()) {
+      state = SuiteFinishedState.EMPTY_LEAF_SUITE;
+    } else if (isEmptySuite()) {
       state = SuiteFinishedState.EMPTY_SUITE;
     } else {
       if (isDefect()) {

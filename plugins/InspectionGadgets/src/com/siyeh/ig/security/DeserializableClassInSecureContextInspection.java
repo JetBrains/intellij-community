@@ -67,4 +67,9 @@ public class DeserializableClassInSecureContextInspection
       registerClassError(aClass);
     }
   }
+
+  @Override
+  public String getAlternativeID() {
+    return "serial";
+  }
 }
