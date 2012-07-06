@@ -20,7 +20,6 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -285,71 +284,26 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static int getCurrentParameterIndex(GroovyPsiElement place, int offset) {
     if (place instanceof GrArgumentList) {
       GrArgumentList list = (GrArgumentList)place;
-      final GrNamedArgument[] namedArguments = list.getNamedArguments();
-      for (GrNamedArgument namedArgument : namedArguments) {
-        if (getArgRange(namedArgument).contains(offset)) return 0; //first Map parameter
-      }
 
-      int idx = namedArguments.length > 0 ? 1 : 0;
+      int idx = (list.getNamedArguments().length > 0) ? 1 : 0;
+      for (PsiElement child = list.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child.getTextRange().contains(offset)) {
+          if (child instanceof GrNamedArgument) return 0;
+          return idx;
+        }
 
-      final GrExpression[] exprs = list.getExpressionArguments();
-      for (GrExpression expr : exprs) {
-        if (getArgRange(expr).contains(offset)) return idx;
-        idx++;
-      }
-
-      if (exprs.length == 0 || getArgRange(exprs[exprs.length - 1]).getEndOffset() <= offset) {
-        return idx;
-      }
-      else {
-        return 0;
+        if (child.getNode().getElementType() == GroovyTokenTypes.mCOMMA) idx++;
+        if (isNamedArgWithPriorComma(child)) idx--;
       }
     }
-
     return -1;
   }
 
-  private static TextRange getArgRange(PsiElement arg) {
-    PsiElement cur = arg;
-    int end;
-    int start;
-    do {
-      PsiElement sibling = cur.getNextSibling();
-      if (sibling == null) {
-        end = cur.getTextRange().getEndOffset();
-        break;
-      }
-      else {
-        cur = sibling;
-      }
-      IElementType type = cur.getNode().getElementType();
-      if (GroovyTokenTypes.mCOMMA.equals(type) || GroovyTokenTypes.mRPAREN.equals(type)) {
-        end = cur.getTextRange().getStartOffset();
-        break;
-      }
-    }
-    while (true);
-
-    do {
-      PsiElement sibling = cur.getPrevSibling();
-      if (sibling == null) {
-        start = cur.getTextRange().getStartOffset();
-        break;
-      }
-      else {
-        cur = sibling;
-      }
-      IElementType type = cur.getNode().getElementType();
-      if (GroovyTokenTypes.mCOMMA.equals(type) || GroovyTokenTypes.mLPAREN.equals(type)) {
-        start = cur.getTextRange().getEndOffset();
-        break;
-      }
-    }
-    while (true);
-
-    return new TextRange(start, end + 1);
+  private static boolean isNamedArgWithPriorComma(PsiElement child) {
+    if (!(child instanceof GrNamedArgument)) return false;
+    final PsiElement element = PsiUtil.skipWhitespaces(child.getPrevSibling(), false);
+    return element != null && element.getNode().getElementType() == GroovyTokenTypes.mCOMMA;
   }
-
 
   public String getParameterCloseChars() {
     return ",){}";
