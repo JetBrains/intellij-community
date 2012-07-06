@@ -28,7 +28,6 @@
     <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="commons-lang" level="project" />
-    <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="python-pydev" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="css-api" />
