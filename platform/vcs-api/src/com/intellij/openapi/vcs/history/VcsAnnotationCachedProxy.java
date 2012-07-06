@@ -93,6 +93,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
     if (vcsAnnotation != null) {
       final VcsHistoryProvider historyProvider = myVcs.getVcsHistoryProvider();
       final VcsAbstractHistorySession history = getHistory(revisionNumber, filePath, historyProvider, vcsAnnotation.getFirstRevision());
+      if (history == null) return null;
       // question is whether we need "not moved" path here?
       final ContentRevision fileContent = myVcs.getDiffProvider().createFileContent(revisionNumber, file);
       final FileAnnotation restored = cacheableAnnotationProvider.restore(vcsAnnotation, history, fileContent.getContent(), currentRevision,
@@ -154,7 +155,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
     } else {
       sessionFor = (VcsAbstractHistorySession) historyProvider.createSessionFor(filePath);
     }
-    if (historyCacheSupported) {
+    if (sessionFor != null && historyCacheSupported) {
       final VcsCacheableHistorySessionFactory cacheableHistorySessionFactory = (VcsCacheableHistorySessionFactory)historyProvider;
       final FilePath correctedPath = cacheableHistorySessionFactory.getUsedFilePath(sessionFor);
       myCache.put(filePath, correctedPath, myVcs.getKeyInstanceMethod(), sessionFor, cacheableHistorySessionFactory, firstRevision == null);
