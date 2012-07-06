@@ -215,13 +215,13 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testMiddleMatching() {
-    assertTrue(caseInsensitiveMatcher("*OLD").matches("folder"));
     assertTrue(caseInsensitiveMatcher("*old").matches("folder"));
     assertMatches("SWU*H*7", "SWUpgradeHdlrFSPR7Test");
     assertMatches("SWU*H*R", "SWUpgradeHdlrFSPR7Test");
     assertMatches("SWU*H*R", "SWUPGRADEHDLRFSPR7TEST");
     assertMatches("*git", "GitBlaBla");
     assertMatches("*Git", "GitBlaBla");
+    assertDoesntMatch("*get*A", "getClass");
     assertMatches("*git", "BlaGitBla");
     assertMatches("*Git", "BlaGitBla");
     assertFalse(firstLetterMatcher("*Git").matches("BlagitBla"));
