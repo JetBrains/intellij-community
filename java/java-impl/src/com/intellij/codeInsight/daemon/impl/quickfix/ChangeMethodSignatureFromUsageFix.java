@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Nov 13, 2002
- * Time: 3:26:50 PM
- * To change this template use Options | File Templates.
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -65,6 +57,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @author cdr
+ * @since Nov 13, 2002
+ */
 public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighPriorityAction {
   final PsiMethod myTargetMethod;
   final PsiExpression[] myExpressions;
@@ -125,23 +121,22 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
     return "<html> Change signature of " + targetMethodName + "(" + buf.toString() + ")</html>";
   }
 
+  @Nullable
   private static String formatTypesList(ParameterInfoImpl[] infos, PsiElement context) {
     if (infos == null) return null;
-    String result = "";
+    StringBuilder result = new StringBuilder();
     try {
       for (ParameterInfoImpl info : infos) {
         PsiType type = info.createType(context, context.getManager());
-        if (result.length() != 0) {
-          result += ", ";
-        }
-        LOG.assertTrue(type != null, "old idx: " + info.getOldIndex() + "; " + info.getClass().getName());
-        result += type.getPresentableText();
+        if (type == null) return null;
+        if (result.length() != 0) result.append(", ");
+        result.append(type.getPresentableText());
       }
+      return result.toString();
     }
     catch (IncorrectOperationException e) {
       return null;
     }
-    return result;
   }
 
   @Override
