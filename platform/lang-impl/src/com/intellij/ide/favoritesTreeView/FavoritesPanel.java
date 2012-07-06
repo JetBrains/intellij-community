@@ -134,9 +134,8 @@ public class FavoritesPanel {
             final String listFrom = getListNodeFromPath(path).getValue();
             if (listTo.equals(listFrom)) return;
             if (path.getPathCount() == 3) {
-              final AbstractTreeNode element = (AbstractTreeNode)((FavoritesTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject())
-                .getElement().getValue();
-              mgr.removeRoot(listFrom, Collections.singletonList(element));
+              final Object element = ((FavoritesTreeNodeDescriptor)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject()).getElement().getValue();
+              mgr.removeRootByElements(listFrom, Collections.singletonList(element));
               mgr.addRoots(listTo, null, element);
             }
           }
