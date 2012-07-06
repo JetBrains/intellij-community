@@ -15,15 +15,19 @@ import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
+import org.jetbrains.jps.incremental.java.ClassPostProcessor;
+import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
+import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Eugene Zhuravlev
@@ -33,6 +37,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.GroovyBuilder");
   public static final String BUILDER_NAME = "groovy";
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
+  private static final Key<Map<String, String>> STUB_TO_SRC = Key.create("STUB_TO_SRC");
   private final boolean myForStubs;
   private final String myBuilderName;
 
@@ -40,6 +45,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     super(forStubs ? BuilderCategory.SOURCE_GENERATOR : BuilderCategory.OVERWRITING_TRANSLATOR);
     myForStubs = forStubs;
     myBuilderName = BUILDER_NAME + (forStubs ? "-stubs" : "-classes");
+  }
+
+  static {
+    JavaBuilder.registerClassPostProcessor(new RecompileStubSources());
   }
 
   public String getName() {
@@ -125,6 +134,16 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         compiled.add(ensureCorrectOutput(context, chunk, item, generationOutputs, compilerOutput));
       }
 
+      if (myForStubs) {
+        Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
+        if (stubToSrc == null) {
+          STUB_TO_SRC.set(context, stubToSrc = new ConcurrentHashMap<String, String>());
+        }
+        for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
+          stubToSrc.put(FileUtil.toSystemIndependentName(item.outputPath), item.sourcePath);
+        }
+      }
+
       if (!myForStubs && updateDependencies(context, chunk, toCompile, generationOutputs, compiled)) {
         return ExitCode.ADDITIONAL_PASS_REQUIRED;
       }
@@ -133,6 +152,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     catch (Exception e) {
       throw new ProjectBuildException(e);
     }
+  }
+
+  @Override
+  public void cleanupResources(CompileContext context, ModuleChunk chunk) {
+    super.cleanupResources(context, chunk);
+    STUB_TO_SRC.set(context, null);
   }
 
   private Map<Module, String> getGenerationOutputs(ModuleChunk chunk, Map<Module, String> finalOutputs) throws IOException {
@@ -290,4 +315,29 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return "Groovy builder";
   }
 
+  private static class RecompileStubSources implements ClassPostProcessor {
+
+    public void process(CompileContext context, OutputFileObject out) {
+      Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
+      if (stubToSrc == null) {
+        return;
+      }
+
+      File src = out.getSourceFile();
+      if (src == null) {
+        return;
+      }
+      String groovy = stubToSrc.get(FileUtil.toSystemIndependentName(src.getPath()));
+      if (groovy == null) {
+        return;
+      }
+
+      try {
+        context.markDirty(new File(groovy));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
 }
