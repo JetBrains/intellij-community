@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -916,17 +915,15 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   public static class Vfs extends FileTextFieldImpl {
 
-
-    public Vfs(final LookupFilter filter, Map<String, String> macroMap) {
-      super(new LocalFsFinder(), filter, macroMap);
+    public Vfs(JTextField field,
+               Map<String, String> macroMap,
+               Disposable parent, final LookupFilter chooserFilter) {
+      super(field, new LocalFsFinder(), chooserFilter, macroMap, parent);
     }
 
-    public Vfs(FileChooserDescriptor filter, boolean showHidden, JTextField field, Map<String, String> macroMap, Disposable parent) {
-      super(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), macroMap, parent);
-    }
-
-    public Vfs(FileChooserDescriptor filter, boolean showHidden, Map<String, String> macroMap, Disposable parent) {
-      super(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(filter, showHidden), macroMap, parent);
+    public Vfs(Map<String, String> macroMap,
+               Disposable parent, final LookupFilter chooserFilter) {
+      this(new JTextField(), macroMap, parent, chooserFilter);
     }
 
     public VirtualFile getSelectedFile() {
