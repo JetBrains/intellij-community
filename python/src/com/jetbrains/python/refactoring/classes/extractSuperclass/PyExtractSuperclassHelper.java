@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -89,7 +90,7 @@ public class PyExtractSuperclassHelper {
   private static PyClass placeNewClass(Project project, PyClass newClass, @NotNull PyClass clazz, String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(ApplicationManagerEx.getApplicationEx().isUnitTestMode() ? targetFile : VfsUtil.pathToUrl(targetFile));
     // file is the same as the source
-    if (file == clazz.getContainingFile().getVirtualFile()) {
+    if (Comparing.equal(file, clazz.getContainingFile().getVirtualFile())) {
       return (PyClass)clazz.getParent().addBefore(newClass, clazz);
     }
 

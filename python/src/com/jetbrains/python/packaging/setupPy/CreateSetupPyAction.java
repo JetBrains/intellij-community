@@ -14,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,7 +77,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
         for (VirtualFile sourceRoot : sourceRoots) {
           // TODO notify if we have multiple source roots and can't build mapping automatically
           final VirtualFile contentRoot = ProjectFileIndex.SERVICE.getInstance(module.getProject()).getContentRootForFile(sourceRoot);
-          if (contentRoot != null && contentRoot != sourceRoot) {
+          if (contentRoot != null && !Comparing.equal(contentRoot, sourceRoot)) {
             final String relativePath = VfsUtilCore.getRelativePath(sourceRoot, contentRoot, '/');
             return "\n    package_dir={'': '" + relativePath + "'},";
           }
