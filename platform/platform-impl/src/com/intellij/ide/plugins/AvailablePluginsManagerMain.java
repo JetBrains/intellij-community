@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.net.HTTPProxySettingsDialog;
@@ -147,6 +148,13 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       actionGroup.add(new MyFilterCategoryAction());
     }
     return actionGroup;
+  }
+
+  @Override
+  protected boolean acceptHost(String host) {
+    final String repository = ((AvailablePluginsTableModel)pluginsModel).getRepository();
+    if (AvailablePluginsTableModel.ALL.equals(repository)) return true;
+    return Comparing.equal(host, repository);
   }
 
   @Override
