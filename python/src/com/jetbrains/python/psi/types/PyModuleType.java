@@ -84,6 +84,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         if (owner != null) {
           importElements.addAll(getVisibleImports(owner));
         }
+        if (!inSameFile(location, myModule)) {
+          importElements.addAll(myModule.getImportTargets());
+        }
       }
       final List<? extends RatedResolveResult> implicitMembers = resolveImplicitPackageMember(name, importElements);
       if (implicitMembers != null) {
@@ -98,8 +101,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                           @NotNull List<PyImportElement> importElements) {
     final PyQualifiedName packageQName = ResolveImportUtil.findCanonicalImportPath(myModule, null);
     if (packageQName != null) {
+      final PyQualifiedName resolvingQName = packageQName.append(name);
       for (PyImportElement importElement : importElements) {
-        final PyQualifiedName resolvingQName = packageQName.append(name);
         for (PyQualifiedName qName : getCanonicalImportedQNames(importElement)) {
           if (qName.matchesPrefix(resolvingQName)) {
             final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true);

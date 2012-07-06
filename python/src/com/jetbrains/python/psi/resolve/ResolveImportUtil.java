@@ -202,24 +202,39 @@ public class ResolveImportUtil {
           visitor.withRelative(0);
         }
       }
-      final List<PsiFileSystemItem> results = visitor.resultsAsList();
+      List<PsiFileSystemItem> results = visitor.resultsAsList();
       if (results.isEmpty() && relativeLevel == 0 && !importIsAbsolute) {
-        // Try to resolve relative import as absolute in roots, not in its parent directory
-        final PsiDirectory containingDirectory = sourceFile.getContainingDirectory();
-        if (containingDirectory != null) {
-          final PyQualifiedName containingPath = findCanonicalImportPath(containingDirectory, null);
-          if (containingPath != null && containingPath.getComponentCount() > 0) {
-            final PyQualifiedName absolutePath = containingPath.append(qualifiedName.toString());
-            final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolver(absolutePath).fromElement(sourceFile);
-            return absoluteVisitor.resultsAsList();
-          }
-        }
+        results = resolveRelativeImportAsAbsolute(sourceFile, qualifiedName);
       }
       return results;
     }
     finally {
       beingImported.remove(marker);
     }
+  }
+
+  /**
+   * Try to resolve relative import as absolute in roots, not in its parent directory.
+   *
+   * This may be useful for resolving to child skeleton modules located in other directories.
+   *
+   * @param foothold        foothold file.
+   * @param qualifiedName   relative import name.
+   * @return                list of resolved elements.
+   */
+  @NotNull
+  private static List<PsiFileSystemItem> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
+                                                                         @NotNull PyQualifiedName qualifiedName) {
+    final PsiDirectory containingDirectory = foothold.getContainingDirectory();
+    if (containingDirectory != null) {
+      final PyQualifiedName containingPath = findCanonicalImportPath(containingDirectory, null);
+      if (containingPath != null && containingPath.getComponentCount() > 0) {
+        final PyQualifiedName absolutePath = containingPath.append(qualifiedName.toString());
+        final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolver(absolutePath).fromElement(foothold);
+        return absoluteVisitor.resultsAsList();
+      }
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -314,6 +329,13 @@ public class ResolveImportUtil {
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       if (result != null) {
         return result;
+      }
+      if (parent instanceof PsiFile) {
+        final List<PsiFileSystemItem> items = resolveRelativeImportAsAbsolute((PsiFile)parent,
+                                                                              PyQualifiedName.fromComponents(referencedName));
+        if (!items.isEmpty()) {
+          return items.get(0);
+        }
       }
     }
     return ret;
