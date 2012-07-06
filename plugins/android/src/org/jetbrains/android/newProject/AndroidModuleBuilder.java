@@ -44,6 +44,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -206,7 +207,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
     if (sourceRoot != null &&
         sourceRoot.getChildren().length == 0 &&
-        (sourceRoot.getParent() != contentRoot || !SdkConstants.FD_SOURCES.equals(sourceRoot.getName()))) {
+        (!Comparing.equal(sourceRoot.getParent(), contentRoot) || !SdkConstants.FD_SOURCES.equals(sourceRoot.getName()))) {
       try {
         tempContentRoot = FileUtil.createTempDirectory("android_temp_content_root", "tmp");
       }
@@ -509,7 +510,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   private static VirtualFile findSourceRoot(ModifiableRootModel model) {
     VirtualFile genSourceRoot = AndroidRootUtil.getStandartGenDir(model.getModule());
     for (VirtualFile root : model.getSourceRoots()) {
-      if (root != genSourceRoot) {
+      if (!Comparing.equal(root, genSourceRoot)) {
         return root;
       }
     }

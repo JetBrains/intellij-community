@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -431,7 +432,7 @@ public class FileTreeModelBuilder {
           else if (node instanceof FileNode) { //non java files
             psiFile = ((PsiFile)node.getPsiElement());
           }
-          if (psiFile != null && psiFile.getVirtualFile() == ((PsiFile)element).getVirtualFile()) {
+          if (psiFile != null && Comparing.equal(psiFile.getVirtualFile(), ((PsiFile)element).getVirtualFile())) {
             result.add(node);
           }
         }
@@ -497,7 +498,7 @@ public class FileTreeModelBuilder {
 
     final VirtualFile directory = virtualFile.getParent();
     if (!myFlattenPackages && directory != null) {
-      if (myCompactEmptyMiddlePackages && sourceRoot != virtualFile && contentRoot != virtualFile) {//compact
+      if (myCompactEmptyMiddlePackages && !Comparing.equal(sourceRoot, virtualFile) && !Comparing.equal(contentRoot, virtualFile)) {//compact
         ((DirectoryNode)directoryNode).setCompactedDirNode(childNode);
       }
       if (fileIndex.getModuleForFile(directory) == module) {
@@ -505,7 +506,7 @@ public class FileTreeModelBuilder {
         if (parentDirectoryNode != null
             || !myCompactEmptyMiddlePackages
             || (sourceRoot != null && VfsUtil.isAncestor(directory, sourceRoot, false) && fileIndex.getSourceRootForFile(directory) != null)
-            || directory == contentRoot) {
+            || Comparing.equal(directory, contentRoot)) {
           getModuleDirNode(directory, module, (DirectoryNode)directoryNode).add(directoryNode);
         }
         else {
@@ -517,15 +518,18 @@ public class FileTreeModelBuilder {
       }
     }
     else {
-      if (contentRoot == virtualFile) {
+      if (Comparing.equal(contentRoot, virtualFile)) {
         getModuleNode(module).add(directoryNode);
-      } else {
+      }
+      else {
         final VirtualFile root;
-        if (sourceRoot != virtualFile && sourceRoot != null) {
+        if (!Comparing.equal(sourceRoot, virtualFile) && sourceRoot != null) {
           root = sourceRoot;
-        } else if (contentRoot != null) {
+        }
+        else if (contentRoot != null) {
           root = contentRoot;
-        } else {
+        }
+        else {
           root = null;
         }
         if (root != null) {
@@ -586,7 +590,7 @@ public class FileTreeModelBuilder {
 
     public boolean processFile(VirtualFile fileOrDir) {
       if (!fileOrDir.isDirectory()) {
-        if (lastParent != null && dir != fileOrDir.getParent()) {
+        if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
           lastParent = null;
         }
         lastParent = buildFileNode(fileOrDir, lastParent);

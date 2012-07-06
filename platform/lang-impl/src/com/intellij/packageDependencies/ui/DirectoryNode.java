@@ -21,6 +21,7 @@ import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -61,12 +62,12 @@ public class DirectoryNode extends PackageDependenciesNode {
     if (showFQName) {
       final VirtualFile contentRoot = index.getContentRootForFile(myVDirectory);
       if (contentRoot != null) {
-        if (myVDirectory == contentRoot) {
+        if (Comparing.equal(myVDirectory, contentRoot)) {
           myFQName = dirName;
         }
         else {
           final VirtualFile sourceRoot = index.getSourceRootForFile(myVDirectory);
-          if (myVDirectory == sourceRoot) {
+          if (Comparing.equal(myVDirectory, sourceRoot)) {
             myFQName = VfsUtilCore.getRelativePath(myVDirectory, contentRoot, '/');
           }
           else if (sourceRoot != null) {
@@ -96,10 +97,11 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   private String getContentRootName(final VirtualFile baseDir, final String dirName) {
     if (baseDir != null) {
-      if (myVDirectory != baseDir) {
+      if (!Comparing.equal(myVDirectory, baseDir)) {
         if (VfsUtil.isAncestor(baseDir, myVDirectory, false)) {
           return VfsUtilCore.getRelativePath(myVDirectory, baseDir, '/');
-        } else {
+        }
+        else {
           return myVDirectory.getPresentableUrl();
         }
       }
@@ -140,7 +142,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     VirtualFile directory = myVDirectory;
     VirtualFile contentRoot = index.getContentRootForFile(directory);
-    if (directory == contentRoot) {
+    if (Comparing.equal(directory, contentRoot)) {
       return "";
     }
     if (contentRoot == null) {

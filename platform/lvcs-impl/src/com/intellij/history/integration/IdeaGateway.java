@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
@@ -60,7 +61,7 @@ public class IdeaGateway {
     for (Project each : openProjects) {
       if (each.isDefault()) continue;
       if (!each.isInitialized()) continue;
-      if (each.getWorkspaceFile() == f) return false;
+      if (Comparing.equal(each.getWorkspaceFile(), f)) return false;
       if (ProjectRootManager.getInstance(each).getFileIndex().isIgnored(f)) return false;
     }
 

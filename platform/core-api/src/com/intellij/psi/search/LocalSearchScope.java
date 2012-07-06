@@ -216,7 +216,7 @@ public class LocalSearchScope extends SearchScope {
     for (PsiElement element : myScope) {
       PsiFile containingFile = element.getContainingFile();
       if (containingFile == null) continue;
-      if (containingFile.getVirtualFile() == file) return true;
+      if (Comparing.equal(containingFile.getVirtualFile(), file)) return true;
     }
     return false;
   }

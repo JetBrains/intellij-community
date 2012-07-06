@@ -31,6 +31,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -77,7 +78,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof PsiClass) {
       final PsiFile file = ((PsiClass)element).getContainingFile();
-      if (file != null && file.getVirtualFile() == vFile) return true;
+      if (file != null && Comparing.equal(file.getVirtualFile(), vFile)) return true;
     }
     return false;
   }

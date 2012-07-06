@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -144,8 +145,8 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     final VirtualFile r1 = getFileRoot(file1);
     final VirtualFile r2 = getFileRoot(file2);
     for (VirtualFile root : myEntries) {
-      if (r1 == root) return 1;
-      if (r2 == root) return -1;
+      if (Comparing.equal(r1, root)) return 1;
+      if (Comparing.equal(r2, root)) return -1;
     }
     return 0;
   }

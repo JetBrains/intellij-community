@@ -1367,7 +1367,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
           VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, oldData.first);
 
-          if (associatedFile == newData.first) {
+          if (Comparing.equal(associatedFile, newData.first)) {
             return;
           }
         }

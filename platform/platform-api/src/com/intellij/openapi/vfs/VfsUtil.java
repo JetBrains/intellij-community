@@ -20,6 +20,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -473,8 +474,8 @@ public class VfsUtil extends VfsUtilCore {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
     if (commonAncestor != null) {
       StringBuilder buffer = new StringBuilder();
-      if (src != commonAncestor) {
-        while (src.getParent() != commonAncestor) {
+      if (!Comparing.equal(src, commonAncestor)) {
+        while (!Comparing.equal(src.getParent(), commonAncestor)) {
           buffer.append("..").append(separatorChar);
           src = src.getParent();
         }

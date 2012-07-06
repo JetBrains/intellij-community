@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -193,7 +194,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       VirtualFile jarFile = PsiUtil.getJarFile(this);
       if (jarFile != null) {
         for (PsiClass aClass : classes) {
-          if (PsiUtil.getJarFile(aClass) == jarFile) return aClass;
+          if (Comparing.equal(PsiUtil.getJarFile(aClass), jarFile)) return aClass;
         }
       }
     }

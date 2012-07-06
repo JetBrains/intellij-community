@@ -51,10 +51,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -583,7 +580,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(FileEditorManager source, VirtualFile file) {
-        if (file != myFile.getVirtualFile()) return;
+        if (!Comparing.equal(file, myFile.getVirtualFile())) return;
         if (myConsoleEditor != null) {
           Editor selectedTextEditor = source.getSelectedTextEditor();
           for (FileEditor fileEditor : source.getAllEditors(file)) {
@@ -608,7 +605,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
       @Override
       public void fileClosed(FileEditorManager source, VirtualFile file) {
-        if (file != myFile.getVirtualFile()) return;
+        if (!Comparing.equal(file, myFile.getVirtualFile())) return;
         if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
           if (myCurrentEditor.isDisposed()) myCurrentEditor = null;
           ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);

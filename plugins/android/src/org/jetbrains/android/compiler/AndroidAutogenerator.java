@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -375,7 +376,7 @@ public class AndroidAutogenerator {
     final List<VirtualFile> filesToDelete = new ArrayList<VirtualFile>();
 
     for (final VirtualFile f : files) {
-      if (f != vFile && VfsUtilCore.isAncestor(genDir, f, true)) {
+      if (!Comparing.equal(f, vFile) && VfsUtilCore.isAncestor(genDir, f, true)) {
         filesToDelete.add(f);
       }
     }

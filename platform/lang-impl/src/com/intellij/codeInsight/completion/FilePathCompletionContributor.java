@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -150,7 +151,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
                     ProgressManager.checkCanceled();
 
                     final VirtualFile virtualFile = file.getVirtualFile();
-                    if (virtualFile != null && virtualFile.isValid() && virtualFile != contextFile) {
+                    if (virtualFile != null && virtualFile.isValid() && !Comparing.equal(virtualFile, contextFile)) {
                       if (contextHelper.isMine(project, virtualFile)) {
                         if (pathPrefixParts == null ||
                             fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts)) {

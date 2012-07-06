@@ -17,6 +17,7 @@ package git4idea.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -308,7 +309,7 @@ public class GitRefspecPanel extends JPanel {
    * @param gitRoot a git root
    */
   public void setGitRoot(final VirtualFile gitRoot) {
-    if (gitRoot == myGitRoot) {
+    if (Comparing.equal(gitRoot, myGitRoot)) {
       return;
     }
     myGitRoot = gitRoot;

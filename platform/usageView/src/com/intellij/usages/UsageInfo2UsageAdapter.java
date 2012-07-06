@@ -308,7 +308,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (!(other instanceof UsageInfo2UsageAdapter)) return false;
     UsageInfo2UsageAdapter u2 = (UsageInfo2UsageAdapter)other;
     assert u2 != this;
-    if (myLineNumber != u2.myLineNumber || getFile() != u2.getFile()) return false;
+    if (myLineNumber != u2.myLineNumber || !Comparing.equal(getFile(), u2.getFile())) return false;
     myMergedUsageInfos.addAll(u2.myMergedUsageInfos);
     Collections.sort(myMergedUsageInfos, new Comparator<UsageInfo>() {
       @Override

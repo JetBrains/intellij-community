@@ -113,7 +113,7 @@ public class ProjectViewDirectoryHelper {
   public boolean canRepresent(Object element, PsiDirectory directory) {
     if (element instanceof VirtualFile) {
       VirtualFile vFile = (VirtualFile) element;
-      return directory.getVirtualFile() == vFile;
+      return Comparing.equal(directory.getVirtualFile(), vFile);
     }
     return false;
   }
@@ -180,7 +180,7 @@ public class ProjectViewDirectoryHelper {
       while (current != null) {
         VirtualFile parent = current.getParent();
 
-        if (parent == dir) {
+        if (Comparing.equal(parent, dir)) {
           final PsiDirectory psi = manager.findDirectory(current);
           if (psi != null) {
             directoriesOnTheWayToContentRoots.add(psi);

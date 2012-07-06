@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
@@ -53,7 +54,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
   private void initModifiableModel() {
     myModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
     for (ContentEntry e : myModel.getContentEntries()) {
-      if (e.getFile() == root) entry = e;
+      if (Comparing.equal(e.getFile(), root)) entry = e;
     }
   }
 

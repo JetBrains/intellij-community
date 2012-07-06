@@ -21,6 +21,7 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -75,7 +76,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
         List<VirtualFile> files = f.getUserData(DELETED_FILES);
         f.putUserData(DELETED_FILES, null);
 
-        assert files != null;
+        assert files != null : f;
         for (VirtualFile each : files) {
           Reference<VirtualFile> r = new WeakReferenceWithEquals<VirtualFile>(each);
           DocumentReference ref = myFileToRef.remove(r);
@@ -159,7 +160,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     @Override
     public boolean equals(Object obj) {
       T doc = get();
-      return doc != null && obj instanceof Reference && ((Reference)obj).get() == doc;
+      return doc != null && obj instanceof Reference && Comparing.equal(doc, ((Reference)obj).get());
     }
   }
 }

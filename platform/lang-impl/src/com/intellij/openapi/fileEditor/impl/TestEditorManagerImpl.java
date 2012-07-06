@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -331,7 +332,7 @@ import java.util.Map;
     if (editor != null){
       EditorFactory.getInstance().releaseEditor(editor);
     }
-    if (file == myActiveFile) myActiveFile = null;
+    if (Comparing.equal(file, myActiveFile)) myActiveFile = null;
   }
 
   @Override

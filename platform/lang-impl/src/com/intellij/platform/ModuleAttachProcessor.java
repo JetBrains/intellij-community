@@ -29,6 +29,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -160,7 +161,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile root : roots) {
-        if (root == project.getBaseDir()) {
+        if (Comparing.equal(root, project.getBaseDir())) {
           return module;
         }
       }

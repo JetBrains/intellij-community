@@ -286,12 +286,12 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     if (other instanceof SelfElementInfo) {
       SelfElementInfo otherInfo = (SelfElementInfo)other;
-      return myVirtualFile == otherInfo.myVirtualFile
-        && myType == otherInfo.myType
-        && mySyncMarkerIsValid
-        && otherInfo.mySyncMarkerIsValid
-        && mySyncStartOffset == otherInfo.mySyncStartOffset
-        && mySyncEndOffset == otherInfo.mySyncEndOffset
+      return Comparing.equal(myVirtualFile, otherInfo.myVirtualFile)
+             && myType == otherInfo.myType
+             && mySyncMarkerIsValid
+             && otherInfo.mySyncMarkerIsValid
+             && mySyncStartOffset == otherInfo.mySyncStartOffset
+             && mySyncEndOffset == otherInfo.mySyncEndOffset
         ;
     }
     return Comparing.equal(restoreElement(), other.restoreElement());
