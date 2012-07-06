@@ -26,10 +26,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,11 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
-    return FindSuperElementsHelper.findSuperElements(element);
+    PsiNameIdentifierOwner parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
+    if (parent == null)
+      return null;
+
+    return FindSuperElementsHelper.findSuperElements(parent);
   }
 
   public boolean startInWriteAction() {
