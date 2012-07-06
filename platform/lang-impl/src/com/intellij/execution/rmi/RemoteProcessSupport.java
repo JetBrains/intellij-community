@@ -312,7 +312,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     Info info;
     synchronized (myProcMap) {
       info = myProcMap.get(key);
-      if (info != null && info.handler != null && info.handler == handler) {
+      if (info != null && (handler == null || info.handler == handler)) {
         myProcMap.remove(key);
         myProcMap.notifyAll();
       }
