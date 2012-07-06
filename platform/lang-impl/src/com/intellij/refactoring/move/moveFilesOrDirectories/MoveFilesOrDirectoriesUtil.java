@@ -137,7 +137,7 @@ public class MoveFilesOrDirectoriesUtil {
 
             PsiManager manager = PsiManager.getInstance(project);
             try {
-              final int[] choice = elements.length > 1 ? new int[]{-1} : null;
+              final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
               final List<PsiElement> els = new ArrayList<PsiElement>();
               for (int i = 0, newElementsLength = newElements.length; i < newElementsLength; i++) {
                 final PsiElement psiElement = newElements[i];
