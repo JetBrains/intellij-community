@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityAction {
   private final PsiMethod myTargetMethod;
@@ -135,7 +136,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
 
   public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
                                         @NotNull PsiExpressionList list,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @Nullable HighlightInfo highlightInfo,
                                         PsiClass psiClass) {
     if (candidates.length == 0) return;
     PsiExpression[] expressions = list.getExpressions();
@@ -145,13 +146,12 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
   }
 
   private static void registerIntention(@NotNull PsiExpression[] expressions,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @Nullable HighlightInfo highlightInfo,
                                         PsiClass psiClass,
                                         @NotNull JavaResolveResult candidate,
                                         @NotNull PsiElement context) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
-    PsiSubstitutor substitutor = candidate.getSubstitutor();
     if (method != null && context.getManager().isInProject(method)) {
       final ChangeTypeArgumentsFix fix = new ChangeTypeArgumentsFix(method, psiClass, expressions, context);
       QuickFixAction.registerQuickFixAction(highlightInfo, null, fix);

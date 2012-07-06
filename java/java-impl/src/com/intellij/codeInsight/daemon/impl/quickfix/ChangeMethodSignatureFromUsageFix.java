@@ -453,7 +453,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
 
   public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
                                         @NotNull PsiExpressionList list,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange) {
     if (candidates.length == 0) return;
     PsiExpression[] expressions = list.getExpressions();
@@ -463,7 +463,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
   }
 
   private static void registerIntention(@NotNull PsiExpression[] expressions,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange,
                                         @NotNull JavaResolveResult candidate,
                                         @NotNull PsiElement context) {

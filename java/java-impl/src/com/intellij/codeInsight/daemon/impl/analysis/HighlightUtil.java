@@ -244,8 +244,9 @@ public class HighlightUtil {
    */
   static void registerAccessQuickFixAction(@NotNull PsiMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
-                                           @NotNull HighlightInfo errorResult,
+                                           @Nullable HighlightInfo errorResult,
                                            final PsiElement fileResolveScope) {
+    if (errorResult == null) return;
     PsiClass accessObjectClass = null;
     PsiElement qualifier = place.getQualifier();
     if (qualifier instanceof PsiExpression) {
@@ -434,16 +435,11 @@ public class HighlightUtil {
 
   private static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,
                                                       @NotNull PsiType type,
-                                                      @NotNull HighlightInfo highlightInfo) {
-    if (!(expression instanceof  PsiReferenceExpression)){
-      return;
-    }
+                                                      @Nullable HighlightInfo highlightInfo) {
+    if (highlightInfo == null || !(expression instanceof  PsiReferenceExpression)) return;
 
     final PsiElement element = ((PsiReferenceExpression)expression).resolve();
-
-    if (element == null || !(element instanceof PsiVariable)){
-      return;
-    }
+    if (element == null || !(element instanceof PsiVariable)) return;
 
     registerChangeVariableTypeFixes((PsiVariable)element, type, highlightInfo);
   }
