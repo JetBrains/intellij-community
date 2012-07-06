@@ -5,6 +5,7 @@ import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.internal.build.BuildConfigGenerator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -228,6 +229,14 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final Module module = entry.getKey();
       final MyModuleData moduleData = entry.getValue();
       final AndroidFacet facet = moduleData.getFacet();
+
+      final Pair<String, File> manifestMergerProp =
+        AndroidJpsUtil.getProjectPropertyValue(facet, AndroidCommonUtils.ANDROID_MANIFEST_MERGER_PROPERTY);
+      if (manifestMergerProp != null && Boolean.parseBoolean(manifestMergerProp.getFirst())) {
+        final String message = "[" + module.getName() + "] Manifest merging is not supported. Please, reconfigure your manifest files";
+        final String propFilePath = manifestMergerProp.getSecond().getPath();
+        context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.WARNING, message, propFilePath));
+      }
 
       if (facet.isLibrary()) {
         continue;

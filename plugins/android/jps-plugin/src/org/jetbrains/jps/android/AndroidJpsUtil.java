@@ -1,9 +1,11 @@
 package org.jetbrains.jps.android;
 
 import com.android.sdklib.IAndroidTarget;
+import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
@@ -23,10 +25,7 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -582,5 +581,47 @@ class AndroidJpsUtil {
   @NotNull
   public static File getStorageFile(@NotNull File dataStorageRoot, @NotNull String storageName) {
     return new File(new File(new File(dataStorageRoot, ANDROID_STORAGE_DIR), storageName), storageName);
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  @Nullable
+  private static Properties readPropertyFile(@NotNull File file) {
+    final Properties properties = new Properties();
+    try {
+      properties.load(new FileInputStream(file));
+      return properties;
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Pair<String, File> getProjectPropertyValue(@NotNull AndroidFacet facet, @NotNull String propertyKey) {
+    final File root;
+    try {
+      root = getMainContentRoot(facet);
+    }
+    catch (IOException e) {
+      return null;
+    }
+    if (root == null) {
+      return null;
+    }
+    final File projectProperties = new File(root, SdkConstants.FN_PROJECT_PROPERTIES);
+
+    if (projectProperties.exists()) {
+      final Properties properties = readPropertyFile(projectProperties);
+
+      if (properties != null) {
+        final String value = properties.getProperty(propertyKey);
+
+        if (value != null) {
+          return Pair.create(value, projectProperties);
+        }
+      }
+    }
+    return null;
   }
 }
