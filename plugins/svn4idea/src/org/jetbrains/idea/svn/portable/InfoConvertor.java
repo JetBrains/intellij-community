@@ -24,8 +24,8 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperty;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.wc.SVNConflictVersion;
-import org.tmatesoft.svn.core.wc.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
 import java.util.Set;
@@ -40,7 +40,7 @@ public class InfoConvertor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.portable.InfoConvertor");
 
   public static Info convert(SVNInfo info) {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   public static SVNInfo convert(Info info) throws SVNException {
