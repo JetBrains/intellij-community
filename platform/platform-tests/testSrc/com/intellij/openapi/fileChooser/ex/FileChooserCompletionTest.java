@@ -88,6 +88,14 @@ public class FileChooserCompletionTest extends FlyIdeaTestCase {
     }, "child.txt");
   }
 
+  public void testMiddleMatching() throws Exception {
+    basicSetup();
+
+    assertComplete("/old", new String[] {
+      "folder1"
+    }, "folder1");
+  }
+
   public void testComplete() throws Exception {
     basicSetup();
     
