@@ -393,6 +393,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testConstantConditionsAffectingControlFlow() throws Exception {
     doTest();
   }
+
+  public void testConstantConditionsAffectingControlFlow1() throws Exception {
+    doTest();
+  }
   public void testNotInitializedInsideFinally() throws Exception {
     doTest();
   }

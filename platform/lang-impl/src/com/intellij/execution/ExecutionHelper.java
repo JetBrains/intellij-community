@@ -16,14 +16,12 @@
 
 package com.intellij.execution;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -42,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -51,6 +50,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
@@ -262,7 +262,7 @@ public class ExecutionHelper {
       }
     }
 
-    final ArrayList<RunContentDescriptor> result = Lists.newArrayList();
+    final ArrayList<RunContentDescriptor> result = ContainerUtil.newArrayList();
     for (RunContentDescriptor runContentDescriptor : executionManager.getContentManager().getAllDescriptors()) {
       if (descriptorMatcher.fun(runContentDescriptor)) {
         result.add(runContentDescriptor);
@@ -273,7 +273,7 @@ public class ExecutionHelper {
 
   public static List<RunContentDescriptor> collectConsolesByDisplayName(final Project project,
                                                                         @NotNull NotNullFunction<String, Boolean> titleMatcher) {
-    List<RunContentDescriptor> result = Lists.newArrayList();
+    List<RunContentDescriptor> result = ContainerUtil.newArrayList();
     final ExecutionManager executionManager = ExecutionManager.getInstance(project);
     for (RunContentDescriptor runContentDescriptor : executionManager.getContentManager().getAllDescriptors()) {
       if (titleMatcher.fun(runContentDescriptor.getDisplayName())) {

@@ -63,12 +63,8 @@ public abstract class ModuleLevelBuilder extends Builder {
    * @return true if additional compilation pass is required, false otherwise
    * @throws Exception
    */
-  public final boolean updateMappings(CompileContext context,
-                                      final Mappings delta,
-                                      ModuleChunk chunk,
-                                      Collection<File> filesToCompile,
-                                      Collection<File> successfullyCompiled) throws IOException {
-    if (context.errorsDetected()) {
+  public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws IOException {
+    if (context.errorsDetectedInCurrentChunk()) {
       return false;
     }
     try {

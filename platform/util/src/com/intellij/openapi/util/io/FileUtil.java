@@ -16,9 +16,9 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
-import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -70,9 +70,6 @@ public class FileUtil extends FileUtilRt {
     };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
-
-  // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
-  private static final long CHANNELS_COPYING_LIMIT = 5L * MEGABYTE;
 
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
 
@@ -447,47 +444,30 @@ public class FileUtil extends FileUtilRt {
     performCopy(fromFile, toFile, false);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
-    FileOutputStream fos;
+    final FileOutputStream fos;
     try {
-      fos = new FileOutputStream(toFile);
+      fos = openOutputStream(toFile);
     }
-    catch (FileNotFoundException e) {
-      File parentFile = toFile.getParentFile();
-      if (parentFile == null) {
-        final IOException ioException = new IOException("parent file is null for " + toFile.getPath());
-        ioException.initCause(e);
-        throw ioException;
-      }
-      else if (SystemInfo.isWindows && e.getMessage() != null && e.getMessage().contains("denied") &&
-               WinUACTemporaryFix.nativeCopy(fromFile, toFile, syncTimestamp)) {
+    catch (IOException e) {
+      if (SystemInfo.isWindows && e.getMessage() != null && e.getMessage().contains("denied") &&
+          WinUACTemporaryFix.nativeCopy(fromFile, toFile, syncTimestamp)) {
         return;
       }
-      createParentDirs(toFile);
-      fos = new FileOutputStream(toFile);
+      throw e;
     }
 
-    if (Patches.FILE_CHANNEL_TRANSFER_BROKEN || fromFile.length() > CHANNELS_COPYING_LIMIT) {
-      FileInputStream fis = new FileInputStream(fromFile);
+    try {
+      final FileInputStream fis = new FileInputStream(fromFile);
       try {
         copy(fis, fos);
       }
       finally {
         fis.close();
-        fos.close();
       }
     }
-    else {
-      FileChannel fromChannel = new FileInputStream(fromFile).getChannel();
-      FileChannel toChannel = fos.getChannel();
-      try {
-        fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
-      }
-      finally {
-        fromChannel.close();
-        toChannel.close();
-      }
+    finally {
+      fos.close();
     }
 
     if (syncTimestamp) {
@@ -509,12 +489,43 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
+  private static FileOutputStream openOutputStream(@NotNull final File file) throws IOException {
+    try {
+      return new FileOutputStream(file);
+    }
+    catch (FileNotFoundException e) {
+      final File parentFile = file.getParentFile();
+      if (parentFile == null) {
+        throw new IOException("Parent file is null for " + file.getPath(), e);
+      }
+      createParentDirs(file);
+      return new FileOutputStream(file);
+    }
+  }
+
   public static void copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
-    final byte[] buffer = BUFFER.get();
-    while (true) {
-      int read = inputStream.read(buffer);
-      if (read < 0) break;
-      outputStream.write(buffer, 0, read);
+    if (Registry.is("filesystem.useChannels") && inputStream instanceof FileInputStream && outputStream instanceof FileOutputStream) {
+      final FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
+      try {
+        final FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
+        try {
+          fromChannel.transferTo(0, Long.MAX_VALUE, toChannel);
+        }
+        finally {
+          toChannel.close();
+        }
+      }
+      finally {
+        fromChannel.close();
+      }
+    }
+    else {
+      final byte[] buffer = BUFFER.get();
+      while (true) {
+        int read = inputStream.read(buffer);
+        if (read < 0) break;
+        outputStream.write(buffer, 0, read);
+      }
     }
   }
 

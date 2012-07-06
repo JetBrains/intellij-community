@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -1108,7 +1106,7 @@ public class HighlightUtil {
 
   @NotNull
   static Set<PsiClassType> collectUnhandledExceptions(@NotNull final PsiTryStatement statement) {
-    final Set<PsiClassType> thrownTypes = Sets.newHashSet();
+    final Set<PsiClassType> thrownTypes = ContainerUtil.newHashSet();
 
     final PsiCodeBlock tryBlock = statement.getTryBlock();
     if (tryBlock != null) {
@@ -1159,7 +1157,7 @@ public class HighlightUtil {
   private static Collection<HighlightInfo> checkMultiCatchParameter(@NotNull final PsiParameter parameter,
                                                                     @NotNull final Collection<PsiClassType> thrownTypes) {
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
-    final Collection<HighlightInfo> highlights = Lists.newArrayListWithCapacity(typeElements.size());
+    final Collection<HighlightInfo> highlights = ContainerUtil.newArrayListWithCapacity(typeElements.size());
 
     for (final PsiTypeElement typeElement : typeElements) {
       final PsiType catchType = typeElement.getType();
@@ -1195,10 +1193,10 @@ public class HighlightUtil {
     final int idx = ArrayUtil.find(allCatchSections, catchSection);
     if (idx <= 0) return null;
 
-    final Collection<PsiClassType> thrownTypes = Sets.newHashSet(thrownInTryStatement);
+    final Collection<PsiClassType> thrownTypes = ContainerUtil.newHashSet(thrownInTryStatement);
     thrownTypes.add(PsiType.getJavaLangError(parameter.getManager(), parameter.getResolveScope()));
     thrownTypes.add(PsiType.getJavaLangRuntimeException(parameter.getManager(), parameter.getResolveScope()));
-    final Collection<HighlightInfo> result = Lists.newArrayList();
+    final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
 
     final List<PsiTypeElement> parameterTypeElements = PsiUtil.getParameterTypeElements(parameter);
     final boolean isMultiCatch = parameterTypeElements.size() > 1;
@@ -1214,7 +1212,7 @@ public class HighlightUtil {
         }
       });
       if (caught.isEmpty()) continue;
-      final Collection<PsiClassType> caughtCopy = Sets.newHashSet(caught);
+      final Collection<PsiClassType> caughtCopy = ContainerUtil.newHashSet(caught);
 
       // exclude all which are caught by previous catch sections
       for (int i = 0; i < idx; i++) {
@@ -1505,7 +1503,7 @@ public class HighlightUtil {
     boolean arrayTypeFixChecked = false;
     VariableArrayTypeFix fix = null;
 
-    final Collection<HighlightInfo> result = Lists.newArrayList();
+    final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
     final PsiExpression[] initializers = arrayInitializer.getInitializers();
     for (PsiExpression expression : initializers) {
       final HighlightInfo info = checkArrayInitializerCompatibleTypes(expression, componentType);
@@ -2057,7 +2055,7 @@ public class HighlightUtil {
   static Collection<HighlightInfo> checkCatchTypeIsDisjoint(@NotNull final PsiParameter parameter) {
     if (!(parameter.getType() instanceof PsiDisjunctionType)) return null;
 
-    final Collection<HighlightInfo> result = Lists.newArrayList();
+    final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
     for (int i = 0, size = typeElements.size(); i < size; i++) {
       final PsiClass class1 = PsiUtil.resolveClassInClassTypeOnly(typeElements.get(i).getType());
@@ -2093,7 +2091,7 @@ public class HighlightUtil {
 
     final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
     final boolean isInMultiCatch = typeElements.size() > 1;
-    final Collection<HighlightInfo> result = Lists.newArrayList();
+    final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
 
     for (PsiTypeElement typeElement : typeElements) {
       final PsiClass catchClass = PsiUtil.resolveClassInClassTypeOnly(typeElement.getType());

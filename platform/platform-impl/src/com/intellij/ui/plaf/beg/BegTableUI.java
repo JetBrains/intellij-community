@@ -53,6 +53,8 @@ public class BegTableUI extends BasicTableUI {
   public void installUI(JComponent c) {
     super.installUI(c);
     c.getActionMap().put(START_EDITING_ACTION_KEY, new StartEditingAction());
+    // fix missing escape shortcut
+    c.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("pressed ESCAPE"), "cancel");
   }
 
   protected KeyListener createKeyListener() {

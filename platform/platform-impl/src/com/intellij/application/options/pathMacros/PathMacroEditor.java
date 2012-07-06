@@ -104,11 +104,11 @@ public class PathMacroEditor extends DialogWrapper {
   }
 
   public String getName() {
-    return myNameField.getText();
+    return myNameField.getText().trim();
   }
 
   public String getValue() {
-    return myValueField.getText();
+    return myValueField.getText().trim();
   }
 
   protected JComponent createNorthPanel() {

@@ -15,13 +15,13 @@
  */
 package com.intellij.execution.util;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ import java.util.Observable;
  * @author traff
  */
 public abstract class ListTableWithButtons<T> extends Observable {
-  private final List<T> myElements = Lists.newArrayList();
+  private final List<T> myElements = ContainerUtil.newArrayList();
   private final JPanel myPanel;
   private final TableView myTableView;
   private boolean myIsEnabled = true;

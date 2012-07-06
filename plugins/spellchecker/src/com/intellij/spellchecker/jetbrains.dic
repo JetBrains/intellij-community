@@ -10,6 +10,7 @@ arial
 arity
 asensitive
 attr
+attlist
 auth
 authid
 autoboxing
@@ -165,6 +166,7 @@ javax
 jetbrains
 jndi
 jquery
+jsessionid
 json
 keepduplicates
 keychain

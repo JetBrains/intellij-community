@@ -180,4 +180,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
   protected boolean acceptItem(NavigationItem item) {
     return true;
   }
+
+  @Override
+  public boolean useMiddleMatching() {
+    return true;
+  }
 }

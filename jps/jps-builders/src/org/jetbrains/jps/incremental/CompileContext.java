@@ -41,7 +41,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private final Set<Pair<Module, DirtyMarkScope>> myNonIncrementalModules = new HashSet<Pair<Module, DirtyMarkScope>>();
 
   private final ProjectPaths myProjectPaths;
-  private volatile boolean myErrorsFound = false;
+  private volatile boolean myErrorsFoundInCurrentChunk = false;
   private final long myCompilationStartStamp;
   private final ProjectDescriptor myProjectDescriptor;
   private final Timestamps myTimestamps;
@@ -50,6 +50,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   private float myDone = -1.0f;
   private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
   private Map<Module, AnnotationProcessingProfile> myAnnotationProcessingProfileMap;
+  private boolean myIsProceedOnErrors = false;
 
   public CompileContext(CompileScope scope,
                         ProjectDescriptor pd, boolean isMake,
@@ -80,6 +81,14 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public ProjectPaths getProjectPaths() {
     return myProjectPaths;
+  }
+
+  public boolean isProceedOnErrors() {
+    return myIsProceedOnErrors;
+  }
+
+  public void setProceedOnErrors(boolean isProceedOnErrors) {
+    myIsProceedOnErrors = isProceedOnErrors;
   }
 
   public boolean isMake() {
@@ -272,6 +281,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public void onChunkBuildStart(ModuleChunk chunk) {
     myProjectDescriptor.fsState.setContextChunk(chunk);
+    myErrorsFoundInCurrentChunk = false;
   }
 
   void onChunkBuildComplete(@NotNull ModuleChunk chunk) throws IOException {
@@ -281,7 +291,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
     final BuildDataManager dataManager = getDataManager();
     try {
-      if (!myErrorsFound && !myCancelStatus.isCanceled()) {
+      if (!myErrorsFoundInCurrentChunk && !myCancelStatus.isCanceled()) {
         final DirtyMarkScope dirtyScope = compilingTests ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION;
         boolean marked = false;
         for (Module module : chunk.getModules()) {
@@ -325,7 +335,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
   public void processMessage(BuildMessage msg) {
     if (msg.getKind() == BuildMessage.Kind.ERROR) {
-      myErrorsFound = true;
+      myErrorsFoundInCurrentChunk = true;
     }
     if (msg instanceof ProgressMessage) {
       ((ProgressMessage)msg).setDone(myDone);
@@ -339,8 +349,8 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
-  public boolean errorsDetected() {
-    return myErrorsFound;
+  public boolean errorsDetectedInCurrentChunk() {
+    return myErrorsFoundInCurrentChunk;
   }
 
   public void processFilesToRecompile(ModuleChunk chunk, FileProcessor processor) throws IOException {
@@ -461,7 +471,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     return myProjectDescriptor;
   }
 
-  public static enum DirtyMarkScope{
+  public enum DirtyMarkScope{
     PRODUCTION, TESTS, BOTH
   }
 

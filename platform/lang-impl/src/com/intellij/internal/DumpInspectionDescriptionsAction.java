@@ -15,8 +15,6 @@
  */
 package com.intellij.internal;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -31,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -55,8 +54,8 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
     final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
     final InspectionProfileEntry[] tools = profile.getInspectionTools(null);
 
-    final Collection<String> classes = Sets.newTreeSet();
-    final Map<String, Collection<String>> groups = Maps.newTreeMap();
+    final Collection<String> classes = ContainerUtil.newTreeSet();
+    final Map<String, Collection<String>> groups = ContainerUtil.newTreeMap();
 
     final String tempDirectory = FileUtil.getTempDirectory();
     final File descDirectory = new File(tempDirectory, "inspections");
@@ -70,7 +69,7 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
 
       final String group = getGroupName(tool);
       Collection<String> names = groups.get(group);
-      if (names == null) groups.put(group, (names = Sets.newTreeSet()));
+      if (names == null) groups.put(group, (names = ContainerUtil.newTreeSet()));
       names.add(tool.getShortName());
 
       final URL url = getDescriptionUrl(tool);

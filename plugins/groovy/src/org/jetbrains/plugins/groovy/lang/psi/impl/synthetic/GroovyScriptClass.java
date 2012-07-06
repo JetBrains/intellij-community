@@ -107,6 +107,11 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return myFile.getTextRange();
   }
 
+  @Override
+  public int getTextOffset() {
+    return 0;
+  }
+
   public boolean isValid() {
     return myFile.isValid() && myFile.isScript();
   }

@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
@@ -50,6 +49,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +128,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       return null;
     }
 
-    Map<Surrounder, PsiElement[]> surrounders = Maps.newLinkedHashMap();
+    Map<Surrounder, PsiElement[]> surrounders = ContainerUtil.newLinkedHashMap();
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
       if (elements.length > 0) {

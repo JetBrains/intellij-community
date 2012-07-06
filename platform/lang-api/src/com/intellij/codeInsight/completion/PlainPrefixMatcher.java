@@ -1,5 +1,6 @@
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,10 +13,13 @@ public class PlainPrefixMatcher extends PrefixMatcher {
   }
 
   @Override
+  public boolean isStartMatch(String name) {
+    return StringUtil.startsWithIgnoreCase(name, getPrefix());
+  }
+
+  @Override
   public boolean prefixMatches(@NotNull String name) {
-    final String lowerPrefix = getPrefix().toLowerCase();
-    final String lowerName = name.toLowerCase();
-    return lowerName.contains(lowerPrefix);
+    return StringUtil.containsIgnoreCase(name, getPrefix());
   }
 
   @NotNull

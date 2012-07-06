@@ -6,6 +6,7 @@ import com.android.ide.common.resources.ResourceItem;
 import com.android.ide.common.resources.ResourceRepository;
 import com.android.resources.ResourceType;
 import com.android.util.Pair;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
@@ -120,42 +121,39 @@ public class ProjectResources extends ResourceRepository {
       return;
     }
 
-    List<ResourceItem> resources = mResourceMap.get(ResourceType.ID);
+    Map<String, ResourceItem> resources = mResourceMap.get(ResourceType.ID);
     final TObjectIntHashMap<String> name2id = myResourceValueMap.get(ResourceType.ID);
 
     if (name2id != null) {
       final TObjectIntHashMap<String> copy;
 
       if (resources == null) {
-        resources = new ArrayList<ResourceItem>(name2id.size());
+        resources = new HashMap<String, ResourceItem>(name2id.size());
         mResourceMap.put(ResourceType.ID, resources);
         copy = name2id;
       }
       else {
         copy = new TObjectIntHashMap<String>(name2id);
 
-        int i = 0;
-        while (i < resources.size()) {
-          ResourceItem item = resources.get(i);
+        final List<ResourceItem> resList = new ArrayList<ResourceItem>(resources.values());
+        for (ResourceItem item : resList) {
           String name = item.getName();
           if (item.isDeclaredInline()) {
             if (copy.contains(name)) {
               copy.remove(name);
-              i++;
             }
             else {
-              resources.remove(i);
+              resources.remove(item.getName());
             }
           }
           else {
             copy.remove(name);
-            i++;
           }
         }
       }
 
       for (Object name : copy.keys()) {
-        resources.add(new InlineResourceItem((String)name));
+        resources.put((String)name, new InlineResourceItem((String)name));
       }
     }
   }

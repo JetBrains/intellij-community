@@ -233,9 +233,10 @@ public class TestIntegrationUtils {
     return template;
   }
 
-  public static PsiMethod createDummyMethod(Project project) {
-    PsiElementFactory f = JavaPsiFacade.getInstance(project).getElementFactory();
-    return f.createMethod("dummy", PsiType.VOID);
+  public static PsiMethod createDummyMethod(@NotNull PsiElement context) {
+    JVMElementFactory factory = JVMElementFactories.getFactory(context.getLanguage(), context.getProject());
+    if (factory == null) factory = JavaPsiFacade.getElementFactory(context.getProject());
+    return factory.createMethod("dummy", PsiType.VOID);
   }
 
   public static List<TestFramework> findSuitableFrameworks(PsiClass targetClass) {

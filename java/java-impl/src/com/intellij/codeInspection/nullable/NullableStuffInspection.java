@@ -119,7 +119,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           final String nullableSimpleName = StringUtil.getShortName(manager.getDefaultNullable());
           final String notNullSimpleName = StringUtil.getShortName(manager.getDefaultNotNull());
           final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
-          if (nameIdentifier != null) {
+          if (nameIdentifier != null && nameIdentifier.isPhysical()) {
             if (PropertyUtils.isSimpleGetter(getter)) {
               if (REPORT_NOT_ANNOTATED_GETTER) {
                 if (!AnnotationUtil.isAnnotated(getter, manager.getAllAnnotations()) &&
@@ -218,7 +218,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       }
 
       private void assertValidElement(PsiMethod setter, PsiParameter parameter, PsiIdentifier nameIdentifier1) {
-        LOG.assertTrue(nameIdentifier1 != null, setter.getText());
+        LOG.assertTrue(nameIdentifier1 != null && nameIdentifier1.isPhysical(), setter.getText());
         LOG.assertTrue(parameter.isPhysical(), setter.getText());
       }
 

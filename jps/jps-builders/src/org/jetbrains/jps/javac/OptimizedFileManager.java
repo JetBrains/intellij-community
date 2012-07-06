@@ -6,8 +6,7 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.FileObject;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
@@ -17,7 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * WARNING: Loaded via reflection, do not delete
@@ -28,9 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
 class OptimizedFileManager extends DefaultFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
-  private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
-  private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = new ConcurrentHashMap<InputFileObject, SoftReference<CharBuffer>>();
-  private final Map<File, File[]> myDirectoryCache = new ConcurrentHashMap<File, File[]>();
+  private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
+  private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = new HashMap<InputFileObject, SoftReference<CharBuffer>>();
+  private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
 
   public OptimizedFileManager() throws Throwable {
@@ -337,7 +336,7 @@ class OptimizedFileManager extends DefaultFileManager {
       if (cb == null) {
         InputStream in = new FileInputStream(f);
         try {
-          ByteBuffer bb = makeByteBuffer(in);
+          final ByteBuffer bb = makeByteBuffer(in);
           JavaFileObject prev = log.useSource(this);
           try {
             cb = decode(bb, ignoreEncodingErrors);
@@ -507,20 +506,18 @@ class OptimizedFileManager extends DefaultFileManager {
   }
 
   private static class ByteBufferCache {
-    private ByteBuffer cached;
+    private AtomicReference<ByteBuffer> myCached = new AtomicReference<ByteBuffer>(null);
 
     ByteBuffer get(int capacity) {
       if (capacity < 20480) {
         capacity = 20480;
       }
-      ByteBuffer result = (cached != null && cached.capacity() >= capacity) ?
-                          (ByteBuffer)cached.clear() :
-                          ByteBuffer.allocate(capacity + capacity>>1);
-      cached = null;
-      return result;
+      final ByteBuffer cached = myCached.getAndSet(null);
+      return (cached != null && cached.capacity() >= capacity) ? (ByteBuffer)cached.clear() : ByteBuffer.allocate(capacity + capacity>>1);
     }
+
     void put(ByteBuffer x) {
-      cached = x;
+      myCached.set(x);
     }
   }
   private final ByteBufferCache myByteBufferCache = new ByteBufferCache();

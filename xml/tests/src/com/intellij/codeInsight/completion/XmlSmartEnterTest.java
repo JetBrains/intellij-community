@@ -68,6 +68,20 @@ public class XmlSmartEnterTest extends LightCodeInsightTestCase {
     _doTestCompletion(baseName + ".xml", baseName + "_after.xml");
   }
 
+  public void testSmartCloseTag() throws Exception {
+    configureByFile(BASE_PATH + "/" + "CompleteMissingTag.xml");
+    performSmartEnterAction();
+    checkResultByFile("", BASE_PATH + "/" + "CompleteMissingTag_after_1.xml", true);
+    performSmartEnterAction();
+    checkResultByFile("", BASE_PATH + "/" + "CompleteMissingTag_after_2.xml", true);
+    performSmartEnterAction();
+    checkResultByFile("", BASE_PATH + "/" + "CompleteMissingTag_after_3.xml", true);
+    performSmartEnterAction();
+    checkResultByFile("", BASE_PATH + "/" + "CompleteMissingTag_after_4.xml", true);
+    performSmartEnterAction();
+    checkResultByFile("", BASE_PATH + "/" + "CompleteMissingTag_after_5.xml", true);
+  }
+
   private void _doTestCompletion(final String name, final String after_name) throws Exception {
     configureByFile(BASE_PATH + "/" + name);
     performCompletionAction();
@@ -81,14 +95,16 @@ public class XmlSmartEnterTest extends LightCodeInsightTestCase {
 
   private void _doTest(String filename, String filename_after) throws Exception {
     configureByFile(BASE_PATH + "/" + filename);
+    performSmartEnterAction();
+    checkResultByFile("", BASE_PATH + "/" + filename_after, true);
+  }
 
+  private void performSmartEnterAction() {
     new WriteCommandAction(getProject()) {
       protected void run(final Result result) throws Throwable {
         new XmlSmartEnterProcessor().process(getProject(), getEditor(), getFile());
       }
     }.execute();
-
-    checkResultByFile("", BASE_PATH + "/" + filename_after, true);
   }
 
   private void performCompletionAction() {

@@ -40,6 +40,7 @@ public interface ValueDescriptor extends NodeDescriptor{
   boolean isLvalue();
   boolean isNull();
   boolean isPrimitive();
+  boolean isString();
   
   @Nullable
   ValueMarkup getMarkup(final DebugProcess debugProcess);

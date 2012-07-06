@@ -25,7 +25,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
@@ -34,14 +33,12 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
@@ -73,6 +70,17 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     }
     return false;
   }
+
+  @Override
+  protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
+    if (file instanceof PsiCompiledElement) return false;
+
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    PsiClass targetClass = getTargetClass(editor, file);
+    return targetClass != null && isValidForClass(targetClass);
+  }
+
 
   protected boolean isValidFor(PsiClass targetClass, TestFramework framework) {
     return true;
@@ -145,13 +153,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
             PsiMethod method = generateDummyMethod(editor, file);
             if (method == null) return;
 
-            TestIntegrationUtils.runTestMethodTemplate(myMethodKind,
-                                                       framework,
-                                                       editor,
-                                                       targetClass,
-                                                       method,
-                                                       "name",
-                                                       false);
+            TestIntegrationUtils.runTestMethodTemplate(myMethodKind, framework, editor, targetClass, method, "name", false);
           }
           catch (IncorrectOperationException e) {
             HintManager.getInstance().showErrorHint(editor, "Cannot generate method: " + e.getMessage());
@@ -165,7 +167,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     private PsiMethod generateDummyMethod(Editor editor, PsiFile file) throws IncorrectOperationException {
       List<GenerationInfo> members = new ArrayList<GenerationInfo>();
 
-      final PsiMethod method = TestIntegrationUtils.createDummyMethod(file.getProject());
+      final PsiMethod method = TestIntegrationUtils.createDummyMethod(file);
       final PsiMethod[] result = new PsiMethod[1];
 
       members.add(new GenerationInfoBase() {

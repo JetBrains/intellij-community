@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
@@ -121,6 +122,11 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
+        if (editor.isDisposed()) return;
+
+        final Document document = editor.getDocument();
+        if (document.getTextLength() < elementStart) return;
+
         HintHint hintHint = HintManagerImpl.createHintHint(editor, pos.getFirst(), hint, pos.getSecond());
         hintHint.setExplicitClose(true);
 

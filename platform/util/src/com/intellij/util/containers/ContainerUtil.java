@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.*;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +30,102 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked", "MethodOverridesStaticMethodOfSuperclass"})
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
+
+  public static <K, V> ConcurrentMap<K, V> newConcurrentMap() {
+    return new ConcurrentHashMap<K, V>();
+  }
+
+  public static <E> List<E> reverse(final List<E> elements) {
+    return new AbstractList<E>() {
+      @Override
+      public E get(int index) {
+        return elements.get(elements.size() - 1 - index);
+      }
+
+      @Override
+      public int size() {
+        return elements.size();
+      }
+    };
+  }
+
+  public static <T> Set<T> union(@NotNull Set<T> set, @NotNull Set<T> set2) {
+    THashSet<T> result = new THashSet<T>(set.size() + set2.size());
+    result.addAll(set);
+    result.addAll(set2);
+    return result;
+  }
+
+  public static <E> Set<E> immutableSet(final E ... elements) {
+    return Collections.unmodifiableSet(new THashSet<E>(Arrays.asList(elements)));
+  }
+
+  public static <E> ImmutableList<E> immutableList(E ... array) {
+    return new ImmutableListBackedByArray<E>(array);
+  }
+
+  public static <E> ImmutableList<E> immutableList(List<E> list) {
+    return new ImmutableListBackedByList<E>(list);
+  }
+
+  public static <K, V> ImmutableMapBuilder<K, V> immutableMapBuilder() {
+    return new ImmutableMapBuilder<K, V>();
+  }
+
+  public static class ImmutableMapBuilder<K, V> {
+    private THashMap<K, V> myMap = new THashMap<K, V>();
+
+    public ImmutableMapBuilder<K, V> put(K key, V value) {
+      myMap.put(key, value);
+      return this;
+    }
+
+    public Map<K, V> build() {
+      return Collections.unmodifiableMap(myMap);
+    }
+  }
+
+  private static class ImmutableListBackedByList<E> extends ImmutableList<E> {
+    private final List<E> myStore;
+
+    private ImmutableListBackedByList(List<E> list) {
+      myStore = list;
+    }
+
+    @Override
+    public E get(int index) {
+      return myStore.get(index);
+    }
+
+    @Override
+    public int size() {
+      return myStore.size();
+    }
+  }
+
+  private static class ImmutableListBackedByArray<E> extends ImmutableList<E> {
+    private final E[] myStore;
+
+    private ImmutableListBackedByArray(E[] array) {
+      myStore = array;
+    }
+
+    @Override
+    public E get(int index) {
+      return myStore[index];
+    }
+
+    @Override
+    public int size() {
+      return myStore.length;
+    }
+  }
 
   public static <K, V> Map<K, V> intersection(Map<K, V> map1, Map<K, V> map2) {
     final Map<K, V> res = new HashMap<K, V>();

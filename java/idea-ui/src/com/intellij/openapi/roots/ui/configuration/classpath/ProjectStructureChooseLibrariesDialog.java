@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.google.common.base.Predicate;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.Application;
@@ -28,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

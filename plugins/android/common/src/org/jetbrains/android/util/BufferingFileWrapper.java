@@ -3,6 +3,7 @@ package org.jetbrains.android.util;
 import com.android.io.IAbstractFile;
 import com.android.io.IAbstractFolder;
 import com.android.io.StreamException;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public class BufferingFileWrapper implements IAbstractFile {
       return new ByteArrayInputStream(content);
     }
     catch (IOException e) {
-      throw new StreamException(e);
+      throw new StreamException(e, this);
     }
   }
 
@@ -88,5 +89,20 @@ public class BufferingFileWrapper implements IAbstractFile {
   @Override
   public boolean delete() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    BufferingFileWrapper wrapper = (BufferingFileWrapper)o;
+
+    return FileUtil.filesEqual(myFile, wrapper.myFile);
+  }
+
+  @Override
+  public int hashCode() {
+    return FileUtil.fileHashCode(myFile);
   }
 }

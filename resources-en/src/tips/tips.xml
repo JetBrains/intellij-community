@@ -33,15 +33,11 @@
   <!--covered-->
   <tip file="SmartTypeAfterNew.html"/>
   <!--covered-->
-  <tip file="SmartTypeAnonymous.html"/>
-  <!--covered-->
   <tip file="GoToImplementation.html"/>
   <!--covered-->
   <tip file="CtrlW.html"/>
   <!--covered-->
   <tip file="IntroduceVariable.html"/>
-  <!--covered-->
-  <tip file="ClassNameCompletion.html"/>
   <!--covered-->
   <tip file="CommentCode.html"/>
   <!--covered-->

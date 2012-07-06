@@ -94,7 +94,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
       @Override
       public Result<String> compute() {
         final String path = LibrariesUtil.getGroovyHomePath(module);
-        if (path == null) return null;
+        if (path == null) return Result.create(null, ProjectRootManager.getInstance(module.getProject()));
         return Result.create(getSDKVersion(path), ProjectRootManager.getInstance(module.getProject()));
       }
     });
@@ -103,6 +103,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public boolean isVersionAtLeast(PsiElement psiElement, String version) {
     return isVersionAtLeast(psiElement, version, true);
   }
+
   public boolean isVersionAtLeast(PsiElement psiElement, String version, boolean unknownResult) {
     Module module = ModuleUtil.findModuleForPsiElement(psiElement);
     if (module == null) return unknownResult;

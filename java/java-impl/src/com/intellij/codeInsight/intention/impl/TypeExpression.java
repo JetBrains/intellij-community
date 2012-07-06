@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -50,7 +51,11 @@ public class TypeExpression extends Expression {
     return type == null? null : new PsiTypeResult(type, project) {
       @Override
       public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {
-        if (myItems.size() <= 1) super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
+        if (myItems.size() <= 1) {
+          super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
+        } else {
+          JavaTemplateUtil.updateTypeBindings(getType(), psiFile, document, segmentStart, segmentEnd, true);
+        }
       }
 
       @Override

@@ -24,6 +24,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
+import java.util.Arrays;
+
 /**
  * @author Hani Suleiman
  *         Date: Jul 21, 2005
@@ -32,6 +34,7 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 public class TestClassFilter implements ClassFilter.ClassFilterWithScope
 {
     public static final String GUICE_INJECTION = "com.google.inject.Inject";
+    public static final String FACTORY_INJECTION = "org.testng.annotations.Factory";
 
     private final GlobalSearchScope scope;
     private final Project project;
@@ -72,7 +75,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope
                 canBeInstantiated = true;
                 break;
               }
-              if (AnnotationUtil.isAnnotated(constructor, GUICE_INJECTION, true)) {
+              if (AnnotationUtil.isAnnotated(constructor, Arrays.asList(GUICE_INJECTION, FACTORY_INJECTION), true)) {
                 canBeInstantiated = true;
                 break;
               }

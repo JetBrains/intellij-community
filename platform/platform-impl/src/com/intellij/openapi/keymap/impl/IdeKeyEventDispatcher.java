@@ -437,7 +437,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       StatusBar.Info.set(message.toString(), project);
 
       mySecondStrokeTimeout.cancelAllRequests();
-      mySecondStrokeTimeout.addRequest(mySecondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimout"));
+      mySecondStrokeTimeout.addRequest(mySecondStrokeTimeoutRunnable, Registry.intValue("actionSystem.secondKeystrokeTimeout"));
 
       if (Registry.is("actionSystem.secondKeystrokeAutoPopupEnabled")) {
         mySecondKeystrokePopupTimeout.cancelAllRequests();

@@ -70,8 +70,12 @@ public class NanoXmlUtil {
   }
 
   public static void parse(final Reader reader, final IXMLBuilder builder) {
+    parse(reader, builder, null);
+  }
+
+  public static void parse(final Reader reader, final IXMLBuilder builder, @Nullable final IXMLValidator validator) {
     try {
-      parse(new MyXMLReader(reader), builder);
+      parse(new MyXMLReader(reader), builder, validator);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -87,11 +91,15 @@ public class NanoXmlUtil {
   }
 
   public static void parse(final IXMLReader r, final IXMLBuilder builder) {
+    parse(r, builder, null);
+  }
+
+  public static void parse(final IXMLReader r, final IXMLBuilder builder, @Nullable final IXMLValidator validator) {
     try {
       final IXMLParser parser = XMLParserFactory.createDefaultXMLParser();
       parser.setReader(r);
       parser.setBuilder(builder);
-      parser.setValidator(new EmptyValidator());
+      parser.setValidator(validator == null ? new EmptyValidator() : validator);
       parser.setResolver(new EmptyEntityResolver());
       try {
         parser.parse();
@@ -239,7 +247,7 @@ public class NanoXmlUtil {
     }
   }
 
-  private static class EmptyValidator extends NonValidator {
+  public static class EmptyValidator extends NonValidator {
     private IXMLEntityResolver myParameterEntityResolver;
 
     public void setParameterEntityResolver(IXMLEntityResolver resolver) {

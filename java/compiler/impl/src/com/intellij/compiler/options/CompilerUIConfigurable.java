@@ -44,9 +44,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox myCbAssertNotNull;
   private JLabel myPatternLegendLabel;
   private JCheckBox myCbAutoShowFirstError;
-  private JCheckBox myCbUseCompileServer;
-  private JCheckBox myCbMakeProjectOnSave;
-  private JCheckBox myCbAllowAutomakeWhileRunningApplication;
+  private JCheckBox myCbUseExternalBuild;
+  private JCheckBox myCbEnableAutomake;
 
   public CompilerUIConfigurable(final Project project) {
     myProject = project;
@@ -57,13 +56,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                                  "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
                                  "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name" +
                                  "</html>");
-    myCbAllowAutomakeWhileRunningApplication.setVisible(false);
-    myCbUseCompileServer.addItemListener(new ItemListener() {
+    myCbUseExternalBuild.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        final boolean enabled = myCbUseCompileServer.isSelected();
-        myCbMakeProjectOnSave.setEnabled(enabled);
-        myCbAllowAutomakeWhileRunningApplication.setEnabled(enabled);
+        myCbEnableAutomake.setEnabled(myCbUseExternalBuild.isSelected());
       }
     });
   }
@@ -75,9 +71,9 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
-    myCbUseCompileServer.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
-    myCbMakeProjectOnSave.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    myCbAllowAutomakeWhileRunningApplication.setEnabled(workspaceConfiguration.USE_COMPILE_SERVER);
+    myCbUseExternalBuild.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
+    myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
+    myCbEnableAutomake.setEnabled(myCbUseExternalBuild.isSelected());
 
     configuration.convertPatterns();
 
@@ -85,7 +81,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   }
 
   private static String patternsToString(final String[] patterns) {
-    final StringBuffer extensionsString = new StringBuffer();
+    final StringBuilder extensionsString = new StringBuilder();
     for (int idx = 0; idx < patterns.length; idx++) {
       if (idx > 0) {
         extensionsString.append(";");
@@ -102,9 +98,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
     boolean wasUsingExternalMake = workspaceConfiguration.USE_COMPILE_SERVER;
-    workspaceConfiguration.USE_COMPILE_SERVER = myCbUseCompileServer.isSelected();
-    workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbMakeProjectOnSave.isSelected();
-    workspaceConfiguration.ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION = myCbAllowAutomakeWhileRunningApplication.isSelected();
+    workspaceConfiguration.USE_COMPILE_SERVER = myCbUseExternalBuild.isSelected();
+    workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbEnableAutomake.isSelected();
 
     configuration.setAddNotNullAssertions(myCbAssertNotNull.isSelected());
     configuration.removeResourceFilePatterns();
@@ -115,6 +110,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
     if (workspaceConfiguration.USE_COMPILE_SERVER) {
       monitor.suspendProject(myProject);
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           CompileServerManager.getInstance().sendReloadRequest(myProject);
@@ -160,7 +156,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     }
 
     if (errors.size() > 0) {
-      final StringBuffer pattersnsWithErrors = new StringBuffer();
+      final StringBuilder pattersnsWithErrors = new StringBuilder();
       for (final Object error : errors) {
         String[] pair = (String[])error;
         pattersnsWithErrors.append("\n");
@@ -179,9 +175,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     boolean isModified = false;
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
-    isModified |= ComparingUtils.isModified(myCbUseCompileServer, workspaceConfiguration.USE_COMPILE_SERVER);
-    isModified |= ComparingUtils.isModified(myCbMakeProjectOnSave, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    isModified |= ComparingUtils.isModified(myCbAllowAutomakeWhileRunningApplication, workspaceConfiguration.allowAutoMakeWhileRunningApplication());
+    isModified |= ComparingUtils.isModified(myCbUseExternalBuild, workspaceConfiguration.USE_COMPILE_SERVER);
+    isModified |= ComparingUtils.isModified(myCbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbAssertNotNull, compilerConfiguration.isAddNotNullAssertions());

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -97,7 +96,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     final MethodSignature methodSignature;
     if (signature != null) {
-      final List<PsiType> types = Lists.newArrayListWithCapacity(signature.length);
+      final List<PsiType> types = ContainerUtil.newArrayListWithCapacity(signature.length);
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
       for (String s : signature) {
         try {

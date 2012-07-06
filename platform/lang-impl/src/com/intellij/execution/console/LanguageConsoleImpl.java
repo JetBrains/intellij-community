@@ -15,8 +15,6 @@
  */
 package com.intellij.execution.console;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -67,6 +65,8 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -680,11 +680,11 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     @NotNull final ConsoleViewContentType mainType,
     @NotNull final List<Pair<String, ConsoleViewContentType>> textToPrint)
   {
-    final List<Pair<String, TextAttributes>> attributedText = Lists.transform(
+    final List<Pair<String, TextAttributes>> attributedText = ContainerUtil.map(
       textToPrint,
       new Function<Pair<String, ConsoleViewContentType>, Pair<String, TextAttributes>>() {
         @Override
-        public Pair<String, TextAttributes> apply(final Pair<String, ConsoleViewContentType> input) {
+        public Pair<String, TextAttributes> fun(Pair<String, ConsoleViewContentType> input) {
           final TextAttributes mainAttributes = mainType.getAttributes();
           final TextAttributes attributes;
           if (input.getSecond() == null) {

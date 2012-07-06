@@ -36,12 +36,11 @@ class ToolSelectDialog extends DialogWrapper {
   protected ToolSelectDialog(@Nullable Project project, ToolBeforeRunTask task) {
     super(project);
     myToolsPanel.reset();
+    setOKActionEnabled(myToolsPanel.getSingleSelectedTool() != null);
     myToolsPanel.addSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        final Tool selectedTool = myToolsPanel.getSingleSelectedTool();
-        boolean isOk = selectedTool != null;
-        setOKActionEnabled(isOk);
+        setOKActionEnabled(myToolsPanel.getSingleSelectedTool() != null);
       }
     });
     init();

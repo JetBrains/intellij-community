@@ -15,8 +15,6 @@
  */
 package com.intellij.internal.psiView;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.formatting.ASTBlock;
@@ -80,6 +78,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -139,7 +138,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private RangeHighlighter myIntersectHighlighter;
   private HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
 
-  private final Set<SourceWrapper> mySourceWrappers = Sets.newTreeSet();
+  private final Set<SourceWrapper> mySourceWrappers = ContainerUtil.newTreeSet();
   private final EditorEx myEditor;
   private final EditorListener myEditorListener = new EditorListener();
   private String myLastParsedText = null;
@@ -318,7 +317,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       final SourceWrapper wrapper = new SourceWrapper(extension);
       mySourceWrappers.add(wrapper);
     }
-    final Set<FileType> allFileTypes = Sets.newHashSet();
+    final Set<FileType> allFileTypes = ContainerUtil.newHashSet();
     Collections.addAll(allFileTypes, FileTypeManager.getInstance().getRegisteredFileTypes());
     for (Language language : Language.getRegisteredLanguages()) {
       final FileType fileType = language.getAssociatedFileType();
@@ -347,7 +346,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         }
       }
     }
-    myFileTypeComboBox.setModel(new CollectionComboBoxModel(Lists.newArrayList(mySourceWrappers), lastUsed));
+    myFileTypeComboBox.setModel(new CollectionComboBoxModel(ContainerUtil.newArrayList(mySourceWrappers), lastUsed));
     myFileTypeComboBox.setRenderer(new ListCellRendererWrapper<SourceWrapper>(myFileTypeComboBox.getRenderer()) {
       @Override
       public void customize(JList list, SourceWrapper value, int index, boolean selected, boolean hasFocus) {

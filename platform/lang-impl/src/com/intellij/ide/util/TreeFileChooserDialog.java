@@ -419,6 +419,11 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     public String[] getSeparators() {
       return new String[] {"/", "\\"};
     }
+
+    @Override
+    public boolean useMiddleMatching() {
+      return false;
+    }
   }
 
   private final class MyCallback extends ChooseByNamePopupComponent.Callback {

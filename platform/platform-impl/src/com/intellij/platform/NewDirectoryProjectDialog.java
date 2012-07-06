@@ -15,19 +15,19 @@
  */
 package com.intellij.platform;
 
-import com.google.common.collect.Lists;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,8 +76,8 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     else {
       DefaultComboBoxModel model = new DefaultComboBoxModel();
       model.addElement(getEmptyProjectGenerator());
-      List<DirectoryProjectGenerator> primaryGenerators = Lists.newArrayList();
-      List<DirectoryProjectGenerator> otherGenerators = Lists.newArrayList();
+      List<DirectoryProjectGenerator> primaryGenerators = ContainerUtil.newArrayList();
+      List<DirectoryProjectGenerator> otherGenerators = ContainerUtil.newArrayList();
       for (DirectoryProjectGenerator generator : generators) {
         boolean primary = true;
         if (generator instanceof WebProjectGenerator) {

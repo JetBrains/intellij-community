@@ -52,7 +52,7 @@ public class TipUIUtil {
       URL url = ResourceUtil.getResource(providerClass, "/tips/", tipPath);
 
       if (url == null) {
-        setCantReadText(browser);
+        setCantReadText(browser, tipPath);
         return;
       }
 
@@ -64,17 +64,16 @@ public class TipUIUtil {
       browser.read(new StringReader(replaced), url);
     }
     catch (IOException e) {
-      setCantReadText(browser);
+      setCantReadText(browser, tipPath);
     }
   }
 
-  private static void setCantReadText(JEditorPane browser) {
+  private static void setCantReadText(JEditorPane browser, String missingFile) {
     try {
       browser.read(new StringReader(
-        IdeBundle.message("error.unable.to.read.tip.of.the.day", ApplicationNamesInfo.getInstance().getFullProductName())), null);
+        IdeBundle.message("error.unable.to.read.tip.of.the.day", missingFile, ApplicationNamesInfo.getInstance().getFullProductName())), null);
     }
-    catch (IOException e1) {
-      // Can't be
+    catch (IOException ignored) {
     }
   }
 

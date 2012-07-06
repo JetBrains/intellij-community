@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.Patches;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.module.Module;
@@ -84,9 +83,7 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     }
 
     final ProgressWindow progressWindow = new ProgressWindow(true, project);
-    final ProgressIndicator progressIndicator = Patches.MAC_HIDE_QUIT_HACK
-                                                ? progressWindow
-                                                : new SmoothProgressAdapter(progressWindow, project);
+    final ProgressIndicator progressIndicator = new SmoothProgressAdapter(progressWindow, project);
 
     final Runnable searchRunnable = new Runnable() {
       public void run() {

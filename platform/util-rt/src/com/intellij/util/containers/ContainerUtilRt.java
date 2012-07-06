@@ -33,6 +33,85 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
 
+  public static <K, V> HashMap<K,V> newHashMap() {
+    return new HashMap<K, V>();
+  }
+
+  public static <K, V> HashMap<K,V> newHashMap(Map<K, V> map) {
+    return new HashMap<K, V>(map);
+  }
+
+  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
+    return new TreeMap<K, V>();
+  }
+
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
+    return new LinkedHashMap<K, V>();
+  }
+
+  public static <T> LinkedList<T> newLinkedList() {
+    return new LinkedList<T>();
+  }
+
+  public static <T> ArrayList<T> newArrayList() {
+    return new ArrayList<T>();
+  }
+
+  public static <E> ArrayList<E> newArrayList(E ... array) {
+    ArrayList<E> list = new ArrayList<E>(computeArrayListCapacity(array.length));
+    Collections.addAll(list, array);
+    return list;
+  }
+
+  public static <E> ArrayList<E> newArrayList(Iterable<? extends E> iterable) {
+    ArrayList<E> list = newArrayList();
+    Iterator<? extends E> elements = iterable.iterator();
+    while (elements.hasNext()) {
+      list.add(elements.next());
+    }
+    return list;
+  }
+
+  public static <T> HashSet<T> newHashSet() {
+    return new HashSet<T>();
+  }
+
+  public static <T> HashSet<T> newHashSet(T ... elements) {
+    HashSet<T> set = newHashSet();
+    Collections.addAll(set, elements);
+    return set;
+  }
+
+  public static <T> HashSet<T> newHashSet(Iterable<? extends T> iterable) {
+    return newHashSet(iterable.iterator());
+  }
+
+  public static <T> HashSet<T> newHashSet(Iterator<? extends T> iterator) {
+    HashSet<T> set = newHashSet();
+    while(iterator.hasNext()) set.add(iterator.next());
+    return set;
+  }
+
+  public static <T> TreeSet<T> newTreeSet() {
+    return new TreeSet<T>();
+  }
+
+  public static <T> TreeSet<T> newTreeSet(Comparator<? super T> comparator) {
+    return new TreeSet<T>(comparator);
+  }
+
+  public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
+    return new ArrayList<T>(size);
+  }
+
+  public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
+    return new ArrayList<T>(computeArrayListCapacity(size));
+  }
+
+  private static int computeArrayListCapacity(int size) {
+    return 5 + size + size / 5;
+  }
+
   /**
    * Optimized toArray() as opposed to the {@link java.util.Collections#emptyList()}.
    */

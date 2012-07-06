@@ -150,7 +150,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                                            hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
       dialog.show();
       if (!dialog.isOK()) return;
-      final boolean showDialogAtFuture = dir == null ? !dialog.isDoNotAskMe() : processChangedTextOnly;
+      final boolean showDialogAtFuture = !dialog.isDoNotAskMe();
       EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = showDialogAtFuture;
       updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
       optimizeImports = dialog.isOptimizeImports();

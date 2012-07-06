@@ -492,4 +492,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public boolean willOpenEditor() {
     return false;
   }
+
+  @Override
+  public boolean useMiddleMatching() {
+    return false;
+  }
 }

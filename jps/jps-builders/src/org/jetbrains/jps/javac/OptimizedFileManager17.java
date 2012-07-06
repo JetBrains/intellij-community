@@ -8,7 +8,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -18,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * WARNING: Loaded via reflection, do not delete
@@ -28,8 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
-  private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
-  private final Map<File, File[]> myDirectoryCache = new ConcurrentHashMap<File, File[]>();
+  private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
+  private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
 
   public OptimizedFileManager17() throws Throwable {

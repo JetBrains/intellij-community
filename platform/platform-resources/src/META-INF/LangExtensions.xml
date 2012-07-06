@@ -500,6 +500,7 @@
                      order="before completion"/>
 
   <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
+  <gotoTargetRendererProvider implementation="com.intellij.xml.impl.schema.GotoXmlSchemaTypeRendererProvider"/>
   <gotoRelatedProvider implementation="com.intellij.ide.actions.RelatedItemLineMarkerGotoAdapter"/>
 
   <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInGroupTarget"/>
@@ -727,7 +728,9 @@
 
   <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider"/>
 
+  <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
   <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
+  <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
 
   <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
                       serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>

@@ -15,41 +15,16 @@
  */
 package com.intellij.featureStatistics;
 
-import java.util.Calendar;
-
 /**
  * @author peter
  */
-public class CompletionStatistics {
+public class CompletionStatistics extends CumulativeStatistics {
   public int sparedCharacters = 0;
-  public int invocations = 0;
-  public long startDate = 0;
-  public int dayCount = 0;
-  public long lastDate = 0;
 
   public void registerInvocation(int spared) {
-    invocations++;
+    registerInvocation();
     if (spared > 0) {
       sparedCharacters += spared;
     }
-
-    Calendar cal = Calendar.getInstance();
-    cal.set(Calendar.HOUR_OF_DAY, 0);
-    cal.set(Calendar.MINUTE, 0);
-    cal.set(Calendar.SECOND, 0);
-    cal.set(Calendar.MILLISECOND, 0);
-    long today = cal.getTimeInMillis();
-
-    if (startDate == 0) {
-      startDate = today;
-    }
-    if (lastDate == 0) {
-      lastDate = today;
-      dayCount = 1;
-    } else if (today != lastDate) {
-      lastDate = today;
-      dayCount++;
-    }
-
   }
 }

@@ -66,7 +66,7 @@ public class DuplicatesImpl {
     final String confirmDuplicatePrompt = getConfirmationPrompt(provider, duplicates);
     for (final Match match : duplicates) {
       if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
-      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size(), showAll, confirmDuplicatePrompt)) return;
+      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size(), showAll, confirmDuplicatePrompt, true)) return;
     }
   }
 
@@ -83,7 +83,7 @@ public class DuplicatesImpl {
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
       LOG.assertTrue(editor != null);
       if (!match.getMatchStart().isValid() || !match.getMatchEnd().isValid()) continue;
-      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size(), showAll, confirmDuplicatePrompt)) return;
+      if (replaceMatch(project, provider, match, editor, ++idx, duplicates.size(), showAll, confirmDuplicatePrompt, false)) return;
     }
   }
 
@@ -99,11 +99,18 @@ public class DuplicatesImpl {
     return confirmDuplicatePrompt;
   }
 
-  private static boolean replaceMatch(final Project project, final MatchProvider provider, final Match match, @NotNull final Editor editor,
-                                      final int idx, final int size, Ref<Boolean> showAll, final String confirmDuplicatePrompt) {
+  private static boolean replaceMatch(final Project project,
+                                      final MatchProvider provider,
+                                      final Match match,
+                                      @NotNull final Editor editor,
+                                      final int idx,
+                                      final int size,
+                                      Ref<Boolean> showAll,
+                                      final String confirmDuplicatePrompt,
+                                      boolean skipPromptWhenOne) {
     final ArrayList<RangeHighlighter> highlighters = previewMatch(project, match, editor);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (size > 1 && (showAll.get() == null || !showAll.get())) {
+      if ((!skipPromptWhenOne || size > 1) && (showAll.get() == null || !showAll.get())) {
         final String prompt = provider.getConfirmDuplicatePrompt(match);
         final ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, provider.getReplaceDuplicatesTitle(idx, size), project){
           @Override

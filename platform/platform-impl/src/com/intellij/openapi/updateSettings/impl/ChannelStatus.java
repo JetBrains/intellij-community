@@ -19,10 +19,9 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
-import com.google.common.collect.ImmutableList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Collection;
 import java.util.List;
 
 public class ChannelStatus implements Comparable<ChannelStatus> {
@@ -34,7 +33,7 @@ public class ChannelStatus implements Comparable<ChannelStatus> {
   public static final ChannelStatus BETA = new ChannelStatus(2, "beta", "Beta Releases or Public Previews");
   public static final ChannelStatus RELEASE = new ChannelStatus(3, RELEASE_CODE, "New Major Version Releases");
 
-  private static final List<ChannelStatus> ALL_TYPES = ImmutableList.of(RELEASE, BETA, MILESTONE, EAP);
+  private static final List<ChannelStatus> ALL_TYPES = ContainerUtil.immutableList(RELEASE, BETA, MILESTONE, EAP);
 
   private final int myOrder;
   private final String myCode;

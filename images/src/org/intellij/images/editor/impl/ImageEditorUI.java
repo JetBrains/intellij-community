@@ -277,7 +277,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
                 // Micro
                 double minFactor = getMinimumZoomFactor();
                 double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
-                int step = (int) Math.ceil((1.0d - factor) / stepSize);
+                double step = (1.0d - factor) / stepSize;
 
                 setZoomFactor(1.0d - stepSize * (step - 1));
             }

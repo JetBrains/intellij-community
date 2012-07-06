@@ -512,7 +512,7 @@ public class IdeEventQueue extends EventQueue {
         return;
       }
     }
-    if (e instanceof InputEvent && Patches.SPECIAL_WINPUT_METHOD_PROCESSING) {
+    if (e instanceof InputEvent && Patches.SPECIAL_INPUT_METHOD_PROCESSING) {
       final InputEvent inputEvent = (InputEvent)e;
       if (!inputEvent.getComponent().isShowing()) {
         return;
@@ -924,7 +924,7 @@ public class IdeEventQueue extends EventQueue {
           Application app = ApplicationManager.getApplication();
           if (app == null ||
               !SystemInfo.isWindows ||
-              !Registry.is("actionSystem.win.supressAlt") ||
+              !Registry.is("actionSystem.win.suppressAlt") ||
               !UISettings.getInstance().HIDE_TOOL_STRIPES) {
             return !dispatch;
           }

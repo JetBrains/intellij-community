@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1954,7 +1954,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     public void run() {
       try {
-        if (Patches.SPECIAL_WINPUT_METHOD_PROCESSING) {
+        if (Patches.SPECIAL_INPUT_METHOD_PROCESSING) {
           myFloatingDecorator.remove(myFloatingDecorator.getRootPane());
         }
         myFloatingDecorator.dispose();

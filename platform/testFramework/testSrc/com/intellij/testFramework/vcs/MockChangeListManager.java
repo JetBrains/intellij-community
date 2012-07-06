@@ -127,7 +127,7 @@ public class MockChangeListManager extends ChangeListManager {
   }
 
   @Override
-  public LocalChangeList getChangeList(Change change) {
+  public LocalChangeList getChangeList(@NotNull Change change) {
     throw new UnsupportedOperationException();
   }
 
