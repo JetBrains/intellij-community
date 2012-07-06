@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.google.common.collect.Sets;
 import com.intellij.ProjectTopics;
 import com.intellij.application.options.editor.EditorOptionsPanel;
 import com.intellij.ide.PowerSaveMode;

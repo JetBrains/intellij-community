@@ -102,7 +102,7 @@ public class ClassRepr extends Proto {
     return new Diff() {
       @Override
       public boolean extendsAdded() {
-        final String pastSuperName = myContext.getValue(((TypeRepr.ClassType)((ClassRepr)past).mySuperClass).className);
+        final String pastSuperName = myContext.getValue(((TypeRepr.ClassType)((ClassRepr)past).mySuperClass).myClassName);
         return (d & Difference.SUPERCLASS) > 0 && pastSuperName.equals("java/lang/Object");
       }
 
@@ -168,11 +168,11 @@ public class ClassRepr extends Proto {
   public int[] getSupers() {
     final int[] result = new int[myInterfaces.size() + 1];
 
-    result[0] = ((TypeRepr.ClassType)mySuperClass).className;
+    result[0] = ((TypeRepr.ClassType)mySuperClass).myClassName;
 
     int i = 1;
     for (TypeRepr.AbstractType t : myInterfaces) {
-      result[i++] = ((TypeRepr.ClassType)t).className;
+      result[i++] = ((TypeRepr.ClassType)t).myClassName;
     }
 
     return result;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 12-Aug-2008
  */
 package com.intellij.rt.execution;
 
@@ -31,12 +26,15 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author anna
+ * @since 12-Aug-2008
+ */
 public class CommandLineWrapper {
   private static final String PREFIX = "-D";
 
   public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
                                                 IllegalAccessException, IOException, InstantiationException {
-
     final List urls = new ArrayList();
     final File file = new File(args[0]);
     final BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -44,9 +42,11 @@ public class CommandLineWrapper {
       while(reader.ready()) {
         final String fileName = reader.readLine();
         try {
+          //noinspection Since15
           urls.add(new File(fileName).toURI().toURL());
         }
         catch (NoSuchMethodError e) {
+          //noinspection deprecation
           urls.add(new File(fileName).toURL());
         }
       }
@@ -54,7 +54,7 @@ public class CommandLineWrapper {
     finally {
       reader.close();
     }
-    file.delete();
+    if (!file.delete()) file.deleteOnExit();
 
     int startArgsIdx = 2;
     if (args[1].equals("@vm_params")) {
@@ -85,27 +85,31 @@ public class CommandLineWrapper {
       finally {
         vmParamsReader.close();
       }
-      vmParamsFile.delete();
+      if (!vmParamsFile.delete()) vmParamsFile.deleteOnExit();
     }
-    String progClass = args[startArgsIdx - 1];
-    String[] progArgs = new String[args.length - startArgsIdx];
-    System.arraycopy(args, startArgsIdx, progArgs, 0, progArgs.length);
+
+    String mainClassName = args[startArgsIdx - 1];
+    String[] mainArgs = new String[args.length - startArgsIdx];
+    System.arraycopy(args, startArgsIdx, mainArgs, 0, mainArgs.length);
+
     ClassLoader loader = new URLClassLoader((URL[])urls.toArray(new URL[urls.size()]), null);
-    final String classloader = System.getProperty("java.system.class.loader");
-    if (classloader != null) {
+    final String classLoader = System.getProperty("java.system.class.loader");
+    if (classLoader != null) {
       try {
-        loader = (ClassLoader)Class.forName(classloader).getConstructor(new Class[]{ClassLoader.class}).newInstance(new Object[]{loader});
+        loader = (ClassLoader)Class.forName(classLoader).getConstructor(new Class[]{ClassLoader.class}).newInstance(new Object[]{loader});
       }
       catch (Exception e) {
         //leave URL class loader
       }
     }
-    Class mainClass = loader.loadClass(progClass);
+
+    Class mainClass = loader.loadClass(mainClassName);
     Thread.currentThread().setContextClassLoader(loader);
+    //noinspection SSBasedInspection
     Class mainArgType = (new String[0]).getClass();
     Method main = mainClass.getMethod("main", new Class[]{mainArgType});
     ensureAccess(main);
-    main.invoke(null, new Object[]{progArgs});
+    main.invoke(null, new Object[]{mainArgs});
   }
 
    private static void ensureAccess(Object reflectionObject) {

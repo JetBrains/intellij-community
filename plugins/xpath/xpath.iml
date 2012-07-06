@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml" />
-    <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="xslt-rt" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="annotations" />

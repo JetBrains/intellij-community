@@ -65,6 +65,8 @@ public class Mappings {
   private IntIntMaplet myClassToSourceFile;
 
   private IntIntTransientMultiMaplet myRemovedSuperClasses;
+  private IntIntTransientMultiMaplet myAddedSuperClasses;
+
   private Collection<String> myRemovedFiles;
 
   private Mappings(final Mappings base) throws IOException {
@@ -105,6 +107,7 @@ public class Mappings {
     }
 
     myRemovedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
+    myAddedSuperClasses = myIsDelta ? new IntIntTransientMultiMaplet() : null;
 
     if (myIsDelta && myDeltaIsTransient) {
       myClassToSubclasses = new IntIntTransientMultiMaplet();
@@ -138,7 +141,7 @@ public class Mappings {
 
   private void compensateRemovedContent(final Collection<File> compiled) {
     if (compiled != null) {
-      for (File file : compiled) {
+      for (final File file : compiled) {
         final int fileName = myContext.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
         if (!mySourceFileToClasses.containsKey(fileName)) {
           mySourceFileToClasses.put(fileName, new HashSet<ClassRepr>());
@@ -178,6 +181,10 @@ public class Mappings {
 
   public IntIntTransientMultiMaplet getRemovedSuperClasses() {
     return myRemovedSuperClasses;
+  }
+
+  public IntIntTransientMultiMaplet getAddedSuperClasses() {
+    return myAddedSuperClasses;
   }
 
   private static class Option<X> {
@@ -492,7 +499,7 @@ public class Mappings {
 
       if (who instanceof TypeRepr.ArrayType) {
         if (whom instanceof TypeRepr.ArrayType) {
-          return isSubtypeOf(((TypeRepr.ArrayType)who).elementType, ((TypeRepr.ArrayType)whom).elementType);
+          return isSubtypeOf(((TypeRepr.ArrayType)who).myElementType, ((TypeRepr.ArrayType)whom).myElementType);
         }
 
         final String descr = whom.getDescr(myContext);
@@ -505,7 +512,7 @@ public class Mappings {
       }
 
       if (whom instanceof TypeRepr.ClassType) {
-        return isInheritorOf(((TypeRepr.ClassType)who).className, ((TypeRepr.ClassType)whom).className);
+        return isInheritorOf(((TypeRepr.ClassType)who).myClassName, ((TypeRepr.ClassType)whom).myClassName);
       }
 
       return new Option<Boolean>(false);
@@ -1007,7 +1014,7 @@ public class Mappings {
       final Collection<String> removed = myDelta.getRemovedFiles();
 
       if (removed != null) {
-        for (String file : removed) {
+        for (final String file : removed) {
           final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.get(file));
 
           if (classes != null) {
@@ -1068,7 +1075,8 @@ public class Mappings {
           for (final MethodRepr mm : lessSpecific) {
             if (!mm.equals(m)) {
               debug("Found less specific method, affecting method usages");
-              myUpdated.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.myName), state.myAffectedUsages, state.myDependants);
+              myUpdated
+                .affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.myName), state.myAffectedUsages, state.myDependants);
             }
           }
 
@@ -1110,7 +1118,8 @@ public class Mappings {
                   }
 
                   myUpdated
-                    .affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.myName), state.myAffectedUsages, state.myDependants);
+                    .affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.myName), state.myAffectedUsages,
+                                        state.myDependants);
                 }
 
                 debug("Affecting method usages for that found");
@@ -1561,12 +1570,22 @@ public class Mappings {
         final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
 
         if (superClassChanged) {
-          myDelta.registerRemovedSuperClass(it.myName, ((TypeRepr.ClassType)it.getSuperClass()).className);
+          myDelta.registerRemovedSuperClass(it.myName, ((TypeRepr.ClassType)it.getSuperClass()).myClassName);
+
+          final ClassRepr newClass = myDelta.getReprByName(it.myName);
+
+          assert (newClass != null);
+
+          myDelta.registerAddedSuperClass(it.myName, ((TypeRepr.ClassType)newClass.getSuperClass()).myClassName);
         }
 
         if (interfacesChanged) {
           for (final TypeRepr.AbstractType typ : diff.interfaces().removed()) {
-            myDelta.registerRemovedSuperClass(it.myName, ((TypeRepr.ClassType)typ).className);
+            myDelta.registerRemovedSuperClass(it.myName, ((TypeRepr.ClassType)typ).myClassName);
+          }
+
+          for (final TypeRepr.AbstractType typ : diff.interfaces().added()) {
+            myDelta.registerAddedSuperClass(it.myName, ((TypeRepr.ClassType)typ).myClassName);
           }
         }
 
@@ -1713,6 +1732,10 @@ public class Mappings {
       for (final ClassRepr c : state.myClassDiff.added()) {
         debug("Class name: ", c.myName);
         myDelta.addChangedClass(c.myName);
+
+        for (final int sup : c.getSupers()) {
+          myDelta.registerAddedSuperClass(c.myName, sup);
+        }
 
         if (!myEasyMode) {
           final TIntHashSet depClasses = myClassToClassDependency.get(c.myName);
@@ -1950,63 +1973,39 @@ public class Mappings {
           }
         }
 
-        final TIntHashSet compiledClasses = new TIntHashSet();
-        final TIntHashSet compiledFiles = new TIntHashSet();
-
-        delta.myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
-          @Override
-          public boolean execute(final int key, final int file) {
-            compiledClasses.add(key);
-            compiledFiles.add(file);
-            return true;
-          }
-        });
-
         if (!delta.isRebuild()) {
           for (final ClassRepr repr : delta.getDeletedClasses()) {
             cleanupRemovedClass(delta, repr, repr.getUsages(), dependenciesTrashBin);
           }
 
-          delta.getRemovedSuperClasses().forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+          final TIntHashSet superClasses = new TIntHashSet();
+          final IntIntTransientMultiMaplet addedSuperClasses = delta.getAddedSuperClasses();
+          final IntIntTransientMultiMaplet removedSuperClasses = delta.getRemovedSuperClasses();
+
+          addAllKeys(superClasses, addedSuperClasses);
+          addAllKeys(superClasses, removedSuperClasses);
+
+          superClasses.forEach(new TIntProcedure() {
             @Override
-            public boolean execute(final int a, final TIntHashSet b) {
-              if (!compiledClasses.contains(a)) {
-                final TIntHashSet old = myClassToSubclasses.get(a);
+            public boolean execute(final int superClass) {
+              final TIntHashSet added = addedSuperClasses.get(superClass);
+              final TIntHashSet removed = removedSuperClasses.get(superClass);
 
-                if (old != null) {
-                  old.removeAll(b.toArray());
-                  myClassToSubclasses.replace(a, old);
-                }
-              }
+              final TIntHashSet old = myClassToSubclasses.get(superClass);
 
-              return true;
-            }
-          });
-
-          delta.myClassToSubclasses.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-            @Override
-            public boolean execute(final int className, final TIntHashSet newSubClasses) {
-              final TIntHashSet oldSubClasses = myClassToSubclasses.get(className);
-
-              if (oldSubClasses != null) {
-                oldSubClasses.forEach(new TIntProcedure() {
-                  @Override
-                  public boolean execute(final int value) {
-                    if (!compiledClasses.contains(value)) {
-                      newSubClasses.add(value);
-                    }
-
-                    return true;
-                  }
-                }
-                );
-              }
-
-              if (newSubClasses.size() == 0) {
-                myClassToSubclasses.remove(className);
+              if (old == null) {
+                myClassToSubclasses.replace(superClass, added);
               }
               else {
-                myClassToSubclasses.replace(className, newSubClasses);
+                if (removed != null) {
+                  old.removeAll(removed.toArray());
+                }
+
+                if (added != null) {
+                  old.addAll(added.toArray());
+                }
+
+                myClassToSubclasses.replace(superClass, old);
               }
 
               return true;
@@ -2167,9 +2166,10 @@ public class Mappings {
               final ClassRepr repr = getReprByName(rootClassName);
 
               if (repr != null && fileName != 0) {
-                if (repr.addUsage (UsageRepr.createClassUsage(myContext, iname))) {
+                if (repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
                   mySourceFileToClasses.put(fileName, repr);
-                };
+                }
+                ;
               }
             }
           }
@@ -2253,14 +2253,9 @@ public class Mappings {
     });
   }
 
-  private static void addAllKeys(final TIntHashSet whereToAdd, final IntIntMaplet maplet) {
-    maplet.forEachEntry(new TIntIntProcedure() {
-      @Override
-      public boolean execute(int key, int b) {
-        whereToAdd.add(key);
-        return true;
-      }
-    });
+  private void registerAddedSuperClass(final int aClass, final int superClass) {
+    assert (myAddedSuperClasses != null);
+    myAddedSuperClasses.put(superClass, aClass);
   }
 
   private void registerRemovedSuperClass(final int aClass, final int superClass) {

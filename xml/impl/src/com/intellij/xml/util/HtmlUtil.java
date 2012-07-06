@@ -54,8 +54,6 @@ import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.HtmlDescriptorsTable;
 import gnu.trove.THashSet;
-import org.apache.commons.collections.Bag;
-import org.apache.commons.collections.bag.HashBag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -494,7 +492,7 @@ public class HtmlUtil {
     final Ref<String> charsetNameRef = new Ref<String>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
-        @NonNls final Bag inTag = new HashBag();
+        @NonNls final Set<String> inTag = new THashSet<String>();
         boolean metHttpEquiv = false;
 
         public void doctype(@Nullable final CharSequence publicId, @Nullable final CharSequence systemId, final int startOffset, final int endOffset) {
