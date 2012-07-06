@@ -12,15 +12,21 @@ public class IndentTransferableData implements TextBlockTransferableData, Serial
   private static @NonNls DataFlavor ourFlavor;
 
   private final int myIndent;
+  private final int myMaxIndent;
   private final int myFirstLineLeadingSpaces;
 
-  public IndentTransferableData(int indent, int firstLineLeadingSpaces) {
+  public IndentTransferableData(int indent, int maxIndent, int firstLineLeadingSpaces) {
     myIndent = indent;
+    myMaxIndent = maxIndent;
     myFirstLineLeadingSpaces = firstLineLeadingSpaces;
   }
 
   public int getIndent() {
     return myIndent;
+  }
+
+  public int getMaxIndent() {
+    return myMaxIndent;
   }
 
   public int getFirstLineLeadingSpaces() {
@@ -60,6 +66,6 @@ public class IndentTransferableData implements TextBlockTransferableData, Serial
   }
 
   protected IndentTransferableData clone() {
-    return new IndentTransferableData(myIndent, myFirstLineLeadingSpaces);
+    return new IndentTransferableData(myIndent, myMaxIndent, myFirstLineLeadingSpaces);
   }
 }

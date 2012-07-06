@@ -52,6 +52,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
       }
     }
     int minIndent = Integer.MAX_VALUE;
+    int maxIndent = 0;
     int tabSize = CodeStyleFacade.getInstance(file.getProject()).getTabSize(file.getFileType());
     for (int line = selStartLine; line <= selEndLine; line++) {
       int start = document.getLineStartOffset(line);
@@ -59,11 +60,12 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
       int indent = getIndent(document.getCharsSequence(), start, end, tabSize);
       if (indent >= 0) {
         minIndent = Math.min(minIndent, indent);
+        maxIndent = Math.max(minIndent, indent);
       }
     }
     int firstNonSpaceChar = CharArrayUtil.shiftForward(document.getCharsSequence(), startOffsets[0], " \t");
     int firstLineLeadingSpaces = (firstNonSpaceChar <= document.getLineEndOffset(selStartLine)) ? firstNonSpaceChar - startOffsets[0] : 0;
-    return new IndentTransferableData(minIndent, firstLineLeadingSpaces);
+    return new IndentTransferableData(minIndent, maxIndent, firstLineLeadingSpaces);
   }
 
   private static boolean acceptFileType(FileType fileType) {
@@ -154,7 +156,9 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
             StringUtil.isEmptyOrSpaces(strings.get(strings.size()-1))) endLine -=1;
 
         for (int i = startLine+1; i <= endLine; i++) {
-          EditorActionUtil.indentLine(project, editor, i, value.getIndent());
+          int indent = value.getFirstLineLeadingSpaces() <= caretColumn ||
+                       value.getFirstLineLeadingSpaces() == value.getMaxIndent()? value.getIndent() : -value.getIndent();
+          EditorActionUtil.indentLine(project, editor, i, indent);
         }
         indented.set(Boolean.TRUE);
       }
