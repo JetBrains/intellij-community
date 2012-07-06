@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -299,6 +300,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public void paint(Graphics g) {
+      UIUtil.paintWithRetina(getSize(), g, UIUtil.isUnderDarcula(), new Consumer<Graphics2D>() {
+        @Override
+        public void consume(Graphics2D graphics) {
+          doPaint(graphics);
+        }
+      });
+    }
+
+    private void doPaint(Graphics g) {
       GraphicsUtil.setupAntialiasing(g);
 
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());

@@ -31,7 +31,6 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -132,9 +131,9 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   }
 
   @Override
-  protected BufferedImage createImage(int height, int width) {
+  protected Dimension getImageSize(int width, int height) {
     final TreeUI ui = myComponent.getUI();
-    return super.createImage(ui instanceof MacTreeUI && ((MacTreeUI)ui).isWideSelection() ? height - 1 : height, width);
+    return new Dimension(width, ui instanceof MacTreeUI && ((MacTreeUI)ui).isWideSelection() ? height - 1 : height);
   }
 
   @Override

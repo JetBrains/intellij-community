@@ -305,7 +305,8 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (cellBounds.y < visibleRect.y) return null;
     if (cellBounds.y + cellBounds.height > visibleRect.y + visibleRect.height) return null;
 
-    myImage = createImage(height, width);
+    Dimension size = getImageSize(width, height);
+    myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
 
     Graphics2D g = myImage.createGraphics();
     g.setClip(null);
@@ -338,8 +339,8 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return Color.GRAY;
   }
 
-  protected BufferedImage createImage(final int height, final int width) {
-    return new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+  protected Dimension getImageSize(final int width, final int height) {
+    return new Dimension(width, height);
   }
 
   protected void doFillBackground(int height, int width, Graphics2D g) {

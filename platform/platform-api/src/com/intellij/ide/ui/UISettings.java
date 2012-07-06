@@ -285,24 +285,29 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     UISettings uiSettings=getInstance();
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
-    if (uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR) {
-      Toolkit tk = Toolkit.getDefaultToolkit();
-      //noinspection HardCodedStringLiteral
-      Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
-      if (map != null) {
-        if (isRemoteDesktopConnected()) {
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
+    if (!isRemoteDesktopConnected() && UIUtil.isRetina()) {
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+    else {
+      if (uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR) {
+        Toolkit tk = Toolkit.getDefaultToolkit();
+        //noinspection HardCodedStringLiteral
+        Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
+        if (map != null) {
+          if (isRemoteDesktopConnected()) {
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
+          }
+          else {
+            g2d.addRenderingHints(map);
+          }
         }
         else {
-          g2d.addRenderingHints(map);
+          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         }
       }
       else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
       }
-    }
-    else {
-      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
   }
 

@@ -67,7 +67,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.GuiUtils;
@@ -4264,7 +4263,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       g.setColor(myScheme.getColor(EditorColors.CARET_COLOR));
 
-      if (myIsInsertMode != mySettings.isBlockCursor()) {
+      if (!paintBlockCaret()) {
         for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
           UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
         }
@@ -4279,6 +4278,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         g.setPaintMode();
       }
     }
+  }
+
+  boolean paintBlockCaret() {
+    return myIsInsertMode == mySettings.isBlockCursor();
   }
 
   private class ScrollingTimer {

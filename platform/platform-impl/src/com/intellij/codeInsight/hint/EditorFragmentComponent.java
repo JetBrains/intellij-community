@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -43,8 +44,8 @@ public class EditorFragmentComponent extends JPanel {
   private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
-    int textWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil.getScreenRectangle(1, 1).width);
-    LOG.assertTrue(textWidth > 0, "TextWidth: "+textWidth+"; startLine:" + startLine + "; endLine:" + endLine + ";");
+    final int textImageWidth = Math.min(editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset), ScreenUtil.getScreenRectangle(1, 1).width);
+    LOG.assertTrue(textImageWidth > 0, "TextWidth: "+textImageWidth+"; startLine:" + startLine + "; endLine:" + endLine + ";");
 
     FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
@@ -56,8 +57,8 @@ public class EditorFragmentComponent extends JPanel {
     Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
     int y1 = p1.y;
     int y2 = p2.y;
-    int height = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
-    LOG.assertTrue(height > 0, "Height: " + height + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
+    final int textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
+    LOG.assertTrue(textImageHeight > 0, "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
 
     int savedScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
     if (savedScrollOffset > 0) {
@@ -65,29 +66,36 @@ public class EditorFragmentComponent extends JPanel {
       editor.getScrollingModel().scrollHorizontally(0);
     }
 
-    final Image textImage = new BufferedImage(textWidth, height, BufferedImage.TYPE_INT_RGB);
+    final BufferedImage textImage = UIUtil.createImage(textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
     Graphics textGraphics = textImage.getGraphics();
+    UISettings.setupAntialiasing(textGraphics);
 
     final JComponent rowHeader;
-    final Image markersImage;
+    final BufferedImage markersImage;
+    final int markersImageWidth;
+
     if (showGutter) {
       rowHeader = editor.getGutterComponentEx();
-      markersImage = new BufferedImage(Math.max(1, rowHeader.getWidth()), height, BufferedImage.TYPE_INT_RGB);
+      markersImageWidth = Math.max(1, rowHeader.getWidth());
+
+      markersImage = UIUtil.createImage(markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
       Graphics markerGraphics = markersImage.getGraphics();
+      UISettings.setupAntialiasing(markerGraphics);
 
       markerGraphics.translate(0, -y1);
-      markerGraphics.setClip(0, y1, rowHeader.getWidth(), height);
+      markerGraphics.setClip(0, y1, rowHeader.getWidth(), textImageHeight);
       markerGraphics.setColor(getBackgroundColor(editor));
-      markerGraphics.fillRect(0, y1, rowHeader.getWidth(), height);
+      markerGraphics.fillRect(0, y1, rowHeader.getWidth(), textImageHeight);
       rowHeader.paint(markerGraphics);
     }
     else {
+      markersImageWidth = 0;
       rowHeader = null;
       markersImage = null;
     }
 
     textGraphics.translate(0, -y1);
-    textGraphics.setClip(0, y1, textWidth, height);
+    textGraphics.setClip(0, y1, textImageWidth, textImageHeight);
     final boolean wasVisible = editor.setCaretVisible(false);
     editor.setPurePaintingMode(true);
     try {
@@ -111,7 +119,7 @@ public class EditorFragmentComponent extends JPanel {
 
     JComponent component = new JComponent() {
       public Dimension getPreferredSize() {
-        return new Dimension(textImage.getWidth(null) +(markersImage == null ? 0 : markersImage.getWidth(null)), textImage.getHeight(null));
+        return new Dimension(textImageWidth + markersImageWidth, textImageHeight);
       }
 
       protected void paintComponent(Graphics graphics) {
