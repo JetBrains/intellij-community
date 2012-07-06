@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="xdebugger-impl" exported="" />
     <orderEntry type="module" module-name="dom-impl" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="CSS" exported="" scope="RUNTIME" />
-    <orderEntry type="library" exported="" name="commons-collections" level="project" />
     <orderEntry type="library" exported="" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="xdebugger-api" exported="" />
     <orderEntry type="library" exported="" name="Guava" level="project" />
