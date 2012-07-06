@@ -17,7 +17,7 @@ package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
-import org.apache.commons.collections.map.CompositeMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.ContextType;
 import org.intellij.lang.xpath.context.functions.*;
 import org.intellij.lang.xpath.psi.XPathType;
@@ -161,7 +161,7 @@ public class XsltFunctionContext extends DefaultFunctionContext {
 
   @Override
   protected Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType) {
-    return new CompositeMap(XSLT_FUNCTIONS, super.createFunctionMap(contextType));
+    return ContainerUtil.union(XSLT_FUNCTIONS, super.createFunctionMap(contextType));
   }
 
   public boolean allowsExtensions() {

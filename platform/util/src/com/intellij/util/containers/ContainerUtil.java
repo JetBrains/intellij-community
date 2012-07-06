@@ -55,6 +55,13 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
+  public static <K, V> Map<K, V> union(@NotNull Map<? extends K, ? extends V> map, @NotNull Map<? extends K, ? extends V> map2) {
+    THashMap<K, V> result = new THashMap<K, V>(map.size() + map2.size());
+    result.putAll(map);
+    result.putAll(map2);
+    return result;
+  }
+
   public static <T> Set<T> union(@NotNull Set<T> set, @NotNull Set<T> set2) {
     THashSet<T> result = new THashSet<T>(set.size() + set2.size());
     result.addAll(set);

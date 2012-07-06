@@ -17,12 +17,17 @@ package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
-import org.apache.commons.collections.map.CompositeMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.ContextType;
-import org.intellij.lang.xpath.context.functions.*;
+import org.intellij.lang.xpath.context.functions.DefaultFunctionContext;
+import org.intellij.lang.xpath.context.functions.Function;
+import org.intellij.lang.xpath.context.functions.FunctionContext;
+import org.intellij.lang.xpath.context.functions.FunctionDeclarationParsing;
 
 import javax.xml.namespace.QName;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
 * Created by IntelliJ IDEA.
@@ -110,7 +115,7 @@ public class Xslt2FunctionContext extends DefaultFunctionContext {
 
   @Override
   protected Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType) {
-    return new CompositeMap(XSLT2_FUNCTIONS, super.createFunctionMap(contextType));
+    return ContainerUtil.union(XSLT2_FUNCTIONS, super.createFunctionMap(contextType));
   }
 
   @Override

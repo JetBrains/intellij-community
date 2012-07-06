@@ -26,7 +26,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import org.apache.commons.collections.map.CompositeMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.ContextType;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.context.functions.Function;
@@ -97,7 +97,7 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
       return new FunctionContext() {
         @Override
         public Map<Pair<QName, Integer>, Function> getFunctions() {
-          return new CompositeMap(base.getFunctions(), getCustomFunctions(xmlFile));
+          return ContainerUtil.union(base.getFunctions(), getCustomFunctions(xmlFile));
         }
 
         @Override
