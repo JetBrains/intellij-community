@@ -12,7 +12,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiUtilCore;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatementList;
 
 import java.util.List;
 
@@ -48,7 +51,32 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       final int lineNumber = document.getLineNumber(caretOffset);
       final int offset = getLineStartSafeOffset(document, lineNumber);
       final PsiElement element1 = PsiUtilCore.getElementAtOffset(file, offset);
+      boolean moved = false;
       if (element instanceof PsiWhiteSpace && element == element1) {
+        final PsiElement prevSibling = element.getPrevSibling();
+        PyStatementList statementList = null;
+        if (prevSibling instanceof PyFunction) {
+          statementList = ((PyFunction)prevSibling).getStatementList();
+        }
+        else if (prevSibling instanceof PyClass) {
+          statementList = ((PyClass)prevSibling).getStatementList();
+        }
+        // Caret beyond actual indent -- move to the actual offset
+        if (statementList != null) {
+          final PsiElement lastChild = statementList.getLastChild();
+          if (lastChild != null) {
+            final PsiElement whiteSpace = lastChild.getPrevSibling();
+            if (whiteSpace instanceof PsiWhiteSpace) {
+              int relatedOffset = whiteSpace.getTextRange().getEndOffset();
+              final int indent = relatedOffset - getLineStartSafeOffset(document, document.getLineNumber(relatedOffset));
+              if (caretOffset > indent) {
+                caretModel.moveToOffset(offset + indent);
+                moved = true;
+              }
+            }
+          }
+        }
+
         final List<String> strings = StringUtil.split(element.getText(), "\n");
         //user already prepared place to paste to and we just want to indent right
         if (StringUtil.countChars(element.getText(), '\n') > 2) {
@@ -62,7 +90,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           if (!strings.isEmpty())
             newText += strings.get(strings.size()-1);
           //pasted text'll be the only one statement in block
-          if (!element.getText().endsWith("\n"))
+          if (!element.getText().endsWith("\n") && !moved)
             caretModel.moveToOffset(element.getTextRange().getEndOffset());
         }
       }
