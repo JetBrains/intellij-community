@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -30,7 +31,9 @@ import java.util.ArrayList;
  * A polygon, which is drawn between editors in merge or diff dialogs, and which indicates the change flow from one editor to another.
  */
 public class DividerPolygon {
-  public static final int OFFSET = 3;
+  public static final int TRANSPARENCY = 150;
+  public static final Color FRAMING_LINE_COLOR = Color.LIGHT_GRAY;
+
   private final Color myColor;
   private final int myStart1;
   private final int myStart2;
@@ -52,7 +55,7 @@ public class DividerPolygon {
   private void paint(Graphics2D g, int width) {
     g.setColor(myColor);
     g.fill(new Polygon(new int[]{0, 0, width, width}, new int[]{myStart1, myEnd1, myEnd2, myStart2}, 4));
-    g.setColor(Color.GRAY);
+    g.setColor(FRAMING_LINE_COLOR);
     UIUtil.drawLine(g, 0, myStart1, width, myStart2);
     UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
   }
@@ -74,8 +77,24 @@ public class DividerPolygon {
     return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
   }
 
-  Color getColor() {
+  public Color getColor() {
     return myColor;
+  }
+
+  public int getTopLeftY() {
+    return myStart1;
+  }
+
+  public int getTopRightY() {
+    return myStart2;
+  }
+
+  public int getBottomLeftY() {
+    return myEnd1;
+  }
+
+  public int getBottomRightY() {
+    return myEnd2;
   }
 
   public static void paintPolygons(ArrayList<DividerPolygon> polygons, Graphics2D g, int width) {

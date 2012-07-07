@@ -100,7 +100,7 @@ public class MergePanel2 implements DiffViewer {
       }
     };
     for (int i = 0; i < EDITORS_COUNT; i++) {
-      EditorPlace editorPlace = new EditorPlace(new DiffEditorState(i));
+      EditorPlace editorPlace = new EditorPlace(new DiffEditorState(i), indexToColumn(i), this);
       Disposer.register(parent, editorPlace);
       editorPlaces.add(editorPlace);
       editorPlace.addListener(placeListener);
@@ -114,6 +114,20 @@ public class MergePanel2 implements DiffViewer {
     myProvider = new MyDataProvider();
     myPanel.setDataProvider(myProvider);
     myBuilder = builder;
+  }
+
+  /**
+   * Convert legacy-style editor (or panel) number to the {@link MergePanelColumn}.
+   * @param i 0, 1 or 2
+   * @return  Left, base or right, respectively.
+   */
+  private static MergePanelColumn indexToColumn(int i) {
+    switch (i) {
+      case 0: return MergePanelColumn.LEFT;
+      case 1: return MergePanelColumn.BASE;
+      case 2: return MergePanelColumn.RIGHT;
+      default: throw new IllegalStateException("Incorrect value for a merge column: " + i);
+    }
   }
 
   @NotNull
@@ -159,6 +173,10 @@ public class MergePanel2 implements DiffViewer {
     myScrollToFirstDiff = scrollToFirstDiff;
   }
 
+  /**
+   * @deprecated Because it references by index.
+   */
+  @Deprecated
   public Editor getEditor(int index) {
     return getEditorPlace(index).getEditor();
   }
@@ -167,10 +185,18 @@ public class MergePanel2 implements DiffViewer {
     return myData == null ? FileTypes.PLAIN_TEXT : getContentType(myData);
   }
 
+  /**
+   * @deprecated Because it references by index.
+   */
+  @Deprecated
   public String getVersionTitle(int index) {
     return myEditorsPanels[index].getRawText();
   }
 
+  /**
+   * @deprecated Because it references by index.
+   */
+  @Deprecated
   public EditorPlace getEditorPlace(int index) {
     return (EditorPlace)myEditorsPanels[index].getComponent();
   }
@@ -198,7 +224,7 @@ public class MergePanel2 implements DiffViewer {
       Editor right = getEditor(2);
 
       myMergeList.setMarkups(left, base, right);
-      EditingSides[] sides = {new MyEditingSides(FragmentSide.SIDE1), new MyEditingSides(FragmentSide.SIDE2)};
+      EditingSides[] sides = {getFirstEditingSide(), getSecondEditingSide()};
       myScrollSupport.install(sides);
       for (int i = 0; i < myDividers.length; i++) {
         myDividers[i].listenEditors(sides[i]);
@@ -214,6 +240,16 @@ public class MergePanel2 implements DiffViewer {
         }
       });
     }
+  }
+
+  @NotNull
+  EditingSides getFirstEditingSide() {
+    return new MyEditingSides(FragmentSide.SIDE1);
+  }
+
+  @NotNull
+  EditingSides getSecondEditingSide() {
+    return new MyEditingSides(FragmentSide.SIDE2);
   }
 
   public void setHighlighterSettings(@Nullable EditorColorsScheme settings) {
@@ -418,6 +454,7 @@ public class MergePanel2 implements DiffViewer {
       editor.getSettings().setFoldingOutlineShown(false);
       editor.getFoldingModel().setFoldingEnabled(false);
       editor.getSettings().setLineMarkerAreaShown(false);
+      editor.getSettings().setFoldingOutlineShown(false);
       editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
       initEditorSettings(editor);
 
