@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
@@ -29,6 +29,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
@@ -44,15 +45,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class UndoManagerImpl extends UndoManager implements ProjectComponent, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
@@ -83,6 +86,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private static final int UNDO = 1;
   private static final int REDO = 2;
   private int myCurrentOperationState = NONE;
+
+  private Editor myOriginalEditor;
+
 
   public static int getGlobalUndoLimit() {
     return Registry.intValue("undo.globalUndoLimit", 10);
@@ -248,6 +254,18 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCurrentMerger.setBeforeState(getCurrentState());
     myCurrentMerger.mergeUndoConfirmationPolicy(undoConfirmationPolicy);
 
+    if (myProject != null) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        myOriginalEditor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+      }
+      else {
+        Component component = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+        if (component != null) {
+          myOriginalEditor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
+        }
+      }
+    }
+
     myCommandLevel++;
   }
 
@@ -256,9 +274,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCommandLevel--;
     if (myCommandLevel > 0) return;
 
-    if (myProject != null && !myCurrentMerger.isGlobal() && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent()) {
+    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent()) {
       addFocusedDocumentAsAffected();
     }
+
+    myOriginalEditor = null;
 
     myCurrentMerger.setAfterState(getCurrentState());
     myMerger.commandFinished(commandName, groupId, myCurrentMerger);
@@ -267,15 +287,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private void addFocusedDocumentAsAffected() {
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(DataManager.getInstance().getDataContext());
-    if (psiFile == null) return;
+    if (myOriginalEditor == null) return;
 
-
-    VirtualFile file = psiFile.getVirtualFile();
-    if (file == null) return;
-
-    final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(file)};
-    if (myCurrentMerger.hasChangesOf(refs[0])) return;
+    final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(myOriginalEditor.getDocument())};
+    if (myCurrentMerger.hasChangesOf(refs[0], true)) return;
 
     myCurrentMerger.addAction(new BasicUndoableAction() {
       @Override
