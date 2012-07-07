@@ -26,6 +26,9 @@ import com.intellij.util.ui.UIUtil;
 import java.awt.*;
 import java.util.ArrayList;
 
+/**
+ * A polygon, which is drawn between editors in merge or diff dialogs, and which indicates the change flow from one editor to another.
+ */
 public class DividerPolygon {
   public static final int OFFSET = 3;
   private final Color myColor;
@@ -86,7 +89,7 @@ public class DividerPolygon {
     //g.setComposite(composite);
   }
 
-  public static ArrayList<DividerPolygon> createVisiblePolygons(EditingSides sides, FragmentSide left) {
+  public static ArrayList<DividerPolygon> createVisiblePolygons(EditingSides sides, FragmentSide left, int diffDividerPolygonsOffset) {
     Editor editor1 = sides.getEditor(left);
     Editor editor2 = sides.getEditor(left.otherSide());
     LineBlocks lineBlocks = sides.getLineBlocks();
@@ -100,7 +103,7 @@ public class DividerPolygon {
       Trapezium trapezium = lineBlocks.getTrapezium(i);
       final TextDiffType type = lineBlocks.getType(i);
       Color color = type.getPolygonColor(editor1);
-      polygons.add(createPolygon(transformations, trapezium, color, left));
+      polygons.add(createPolygon(transformations, trapezium, color, left, diffDividerPolygonsOffset));
     }
     return polygons;
   }
@@ -110,7 +113,8 @@ public class DividerPolygon {
     return new FoldingTransformation(editor);
   }
 
-  private static DividerPolygon createPolygon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left) {
+  private static DividerPolygon createPolygon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left,
+                                              int diffDividerPolygonsOffset) {
     Interval base1 = trapezium.getBase(left);
     Interval base2 = trapezium.getBase(left.otherSide());
     Transformation leftTransform = transformations[left.getIndex()];
@@ -119,7 +123,9 @@ public class DividerPolygon {
     int end1 = leftTransform.transform(base1.getEnd());
     int start2 = rightTransform.transform(base2.getStart());
     int end2 = rightTransform.transform(base2.getEnd());
-    return new DividerPolygon(start1 - OFFSET, start2 - OFFSET, end1 - OFFSET, end2 - OFFSET, color);
+    return new DividerPolygon(start1 - diffDividerPolygonsOffset, start2 - diffDividerPolygonsOffset,
+                              end1 - diffDividerPolygonsOffset, end2 - diffDividerPolygonsOffset,
+                              ColorUtil.toAlpha(color, TRANSPARENCY));
   }
 
   static Interval getVisibleInterval(Editor editor) {
