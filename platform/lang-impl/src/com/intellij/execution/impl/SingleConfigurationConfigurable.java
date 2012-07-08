@@ -27,6 +27,7 @@ import com.intellij.openapi.options.SettingsEditorConfigurable;
 import com.intellij.openapi.options.SettingsEditorListener;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -41,6 +42,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.SingleConfigurationConfigurable");
   private final PlainDocument myNameDocument = new PlainDocument();
+  @Nullable private Executor myExecutor;
+
   private ValidationResult myLastValidationResult = null;
   private boolean myValidationResultValid = false;
   private MyValidatableComponent myComponent;
@@ -49,8 +52,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final Icon myIcon;
   private final boolean myBrokenConfiguration;
 
-  private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings) {
+
+  private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
+    myExecutor = executor;
 
     final Config configuration = (Config)getSettings().getConfiguration();
     myDisplayName = getSettings().getName();
@@ -73,15 +78,18 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     });
   }
 
-  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettings settings) {
-    SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<Config>(settings);
+  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettings settings,
+                                                                                                       @Nullable Executor executor) {
+    SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<Config>(settings, executor);
     configurable.reset();
     return configurable;
   }
 
   public void apply() throws ConfigurationException {
-    getSettings().setName(getNameText());
+    RunnerAndConfigurationSettings settings = getSettings();
+    settings.setName(getNameText());
     super.apply();
+    RunManagerImpl.getInstanceImpl(getConfiguration().getProject()).fireRunConfigurationChanged(settings);
   }
 
   public void reset() {
@@ -107,7 +115,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         RunnerAndConfigurationSettings snapshot = getSnapshot();
         if (snapshot != null) {
           snapshot.setName(getNameText());
-          snapshot.checkSettings();
+          snapshot.checkSettings(myExecutor);
           for (ProgramRunner runner : RunnerRegistry.getInstance().getRegisteredRunners()) {
             for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
               if (runner.canRun(executor.getId(), snapshot.getConfiguration())) {

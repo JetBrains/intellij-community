@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -98,15 +99,15 @@ public class RunDialog extends DialogWrapper implements RunConfigurable.RunDialo
   }
 
   public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title) {
-    return editConfiguration(project, configuration, title, null, null);
+    return editConfiguration(project, configuration, title, null);
   }
 
-  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title, final String okText, final Icon okIcon) {
-    final SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration);
+  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title, @Nullable final Executor executor) {
+    final SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration, executor);
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable) {
       {
-        if (okIcon != null) setOKButtonIcon(okIcon);
-        if (okText != null) setOKButtonText(okText);
+        if (executor != null) setOKButtonText(executor.getActionName());
+        if (executor != null) setOKButtonIcon(executor.getIcon());
       }
     };
     
