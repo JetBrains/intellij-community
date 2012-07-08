@@ -593,7 +593,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           tmpOutputDir = FileUtil.createTempDirectory("android_apt_output", "tmp");
           final Map<AndroidCompilerMessageKind, List<String>> messages =
             AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, tmpOutputDir.getPath(), resPaths,
-                               ArrayUtil.toStringArray(depLibPackagesSet), generateNonFinalFields);
+                               ArrayUtil.toStringArray(depLibPackagesSet), generateNonFinalFields, null);
 
           AndroidJpsUtil.addMessages(context, messages, ANDROID_APT_COMPILER, module.getName());
 

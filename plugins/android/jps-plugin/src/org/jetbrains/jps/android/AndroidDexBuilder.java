@@ -438,8 +438,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     final Map<AndroidCompilerMessageKind, List<String>> messages =
       AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getSdkToolsRevision(), platform.getSdk().getSdkPath(),
-                                        proguardCfgPath, includeSystemProguardCfg, inputJarOsPath, externalJarOsPaths, outputJarPath,
-                                        logsDirOsPath);
+                                        new String[]{proguardCfgPath}, includeSystemProguardCfg, inputJarOsPath,
+                                        externalJarOsPaths, outputJarPath, logsDirOsPath);
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
 
