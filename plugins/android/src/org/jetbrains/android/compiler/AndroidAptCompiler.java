@@ -25,6 +25,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.dom.manifest.Manifest;
@@ -124,6 +125,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                outputDirOsPath, aptItem.myResourcesPaths,
                                aptItem.myLibraryPackages, aptItem.myNonConstantFields,
                                aptItem.myProguardCfgOutputFileOsPath));
+
+          if (aptItem.myProguardCfgOutputFileOsPath != null) {
+            LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(aptItem.myProguardCfgOutputFileOsPath));
+          }
           toRefresh = true;
           AndroidCompileUtil.addMessages(context, messages, aptItem.myModule);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
