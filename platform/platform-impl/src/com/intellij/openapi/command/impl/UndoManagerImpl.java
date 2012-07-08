@@ -87,8 +87,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private static final int REDO = 2;
   private int myCurrentOperationState = NONE;
 
-  private Editor myOriginalEditor;
-
+  private DocumentReference myOriginatorReference;
 
   public static int getGlobalUndoLimit() {
     return Registry.intValue("undo.globalUndoLimit", 10);
@@ -249,24 +248,34 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy) {
     if (myCommandLevel == 0) {
       myCurrentMerger = new CommandMerger(this, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
+
+      if (myProject != null) {
+        Editor editor = null;
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+        }
+        else {
+          Component component = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+          if (component != null) {
+            editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
+          }
+        }
+
+        if (editor != null) {
+          Document document = editor.getDocument();
+          VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+          if (file != null && file.isValid()) {
+            myOriginatorReference = DocumentReferenceManager.getInstance().create(file);
+          }
+        }
+      }
     }
     LOG.assertTrue(myCurrentMerger != null, String.valueOf(myCommandLevel));
     myCurrentMerger.setBeforeState(getCurrentState());
     myCurrentMerger.mergeUndoConfirmationPolicy(undoConfirmationPolicy);
 
-    if (myProject != null) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        myOriginalEditor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-      }
-      else {
-        Component component = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-        if (component != null) {
-          myOriginalEditor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
-        }
-      }
-    }
-
     myCommandLevel++;
+
   }
 
   private void commandFinished(String commandName, Object groupId) {
@@ -277,8 +286,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent()) {
       addFocusedDocumentAsAffected();
     }
-
-    myOriginalEditor = null;
+    myOriginatorReference = null;
 
     myCurrentMerger.setAfterState(getCurrentState());
     myMerger.commandFinished(commandName, groupId, myCurrentMerger);
@@ -287,11 +295,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private void addFocusedDocumentAsAffected() {
-    if (myOriginalEditor == null) return;
+    if (myOriginatorReference == null || myCurrentMerger.hasChangesOf(myOriginatorReference, true)) return;
 
-    final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(myOriginalEditor.getDocument())};
-    if (myCurrentMerger.hasChangesOf(refs[0], true)) return;
-
+    final DocumentReference[] refs = new DocumentReference[]{myOriginatorReference};
     myCurrentMerger.addAction(new BasicUndoableAction() {
       @Override
       public void undo() throws UnexpectedUndoException {
