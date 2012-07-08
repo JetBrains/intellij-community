@@ -55,7 +55,8 @@ public final class AndroidApt {
                                                                       @NotNull String outDirOsPath,
                                                                       @NotNull String[] resourceDirsOsPaths,
                                                                       @NotNull String[] libPackages,
-                                                                      boolean nonConstantFields) throws IOException {
+                                                                      boolean nonConstantFields,
+                                                                      @Nullable String proguardCfgOutputFileOsPath) throws IOException {
     final Map<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>();
     messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
     messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
@@ -103,7 +104,8 @@ public final class AndroidApt {
 
     if (platformToolsRevision < 0 || platformToolsRevision > 7) {
       Map<AndroidCompilerMessageKind, List<String>> map =
-        doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, nonConstantFields);
+        doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, nonConstantFields,
+                  proguardCfgOutputFileOsPath);
 
       if (map.get(AndroidCompilerMessageKind.ERROR).isEmpty()) {
         makeFieldsNotFinal(libRJavaFiles);
@@ -115,11 +117,13 @@ public final class AndroidApt {
     else {
       Map<AndroidCompilerMessageKind, List<String>> map;
 
-      map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, null, false);
+      map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, null, false,
+                      proguardCfgOutputFileOsPath);
       AndroidExecutionUtil.addMessages(messages, map);
 
       for (String libPackage : libPackages) {
-        map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, libPackage, false);
+        map = doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, libPackage, false,
+                        proguardCfgOutputFileOsPath);
         AndroidExecutionUtil.addMessages(messages, map);
       }
       return messages;
@@ -141,7 +145,8 @@ public final class AndroidApt {
                                                                          @NotNull String[] resourceDirsOsPaths,
                                                                          @NotNull String[] extraPackages,
                                                                          @Nullable String customPackage,
-                                                                         boolean nonConstantIds)
+                                                                         boolean nonConstantIds,
+                                                                         @Nullable String proguardCfgOutputFileOsPath)
     throws IOException {
     final List<String> args = new ArrayList<String>();
 
@@ -180,6 +185,10 @@ public final class AndroidApt {
     args.add("-I");
     args.add(target.getPath(IAndroidTarget.ANDROID_JAR));
 
+    if (proguardCfgOutputFileOsPath != null) {
+      args.add("-G");
+      args.add(proguardCfgOutputFileOsPath);
+    }
     LOG.info(AndroidCommonUtils.command2string(args));
     return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
   }

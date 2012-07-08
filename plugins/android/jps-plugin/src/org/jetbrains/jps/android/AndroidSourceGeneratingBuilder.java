@@ -381,7 +381,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,
-                             ArrayUtil.toStringArray(depLibPackagesSet), facet.getLibrary());
+                             ArrayUtil.toStringArray(depLibPackagesSet), facet.getLibrary(), null);
 
         AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
 

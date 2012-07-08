@@ -36,6 +36,7 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,8 @@ import java.util.*;
 public class AndroidAptCompiler implements SourceGeneratingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidAptCompiler");
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
+
+  @NonNls public static final String PROGUARD_CFG_OUTPUT_FILE_NAME = "proguard.txt";
 
   @Nullable
   @Override
@@ -119,7 +122,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
             AndroidApt.compile(aptItem.myAndroidTarget, aptItem.myPlatformToolsRevision,
                                aptItem.myManifestFile.getPath(), aptItem.myPackage,
                                outputDirOsPath, aptItem.myResourcesPaths,
-                               aptItem.myLibraryPackages, aptItem.myNonConstantFields));
+                               aptItem.myLibraryPackages, aptItem.myNonConstantFields,
+                               aptItem.myProguardCfgOutputFileOsPath));
           toRefresh = true;
           AndroidCompileUtil.addMessages(context, messages, aptItem.myModule);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
@@ -176,6 +180,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
     final int myPlatformToolsRevision;
     private final MyValidityState myValidityState;
+    private final String myProguardCfgOutputFileOsPath;
 
     private AptGenerationItem(@NotNull Module module,
                               @NotNull VirtualFile manifestFile,
@@ -184,7 +189,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                               int platformToolsRevision,
                               @NotNull String aPackage,
                               @NotNull String[] libPackages,
-                              boolean nonConstantFields) {
+                              boolean nonConstantFields,
+                              @Nullable String proguardCfgOutputFileOsPath) {
       myModule = module;
       myManifestFile = manifestFile;
       myResourcesPaths = resourcesPaths;
@@ -193,7 +199,9 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myLibraryPackages = libPackages;
       myNonConstantFields = nonConstantFields;
       myPlatformToolsRevision = platformToolsRevision;
-      myValidityState = new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision, myNonConstantFields);
+      myProguardCfgOutputFileOsPath = proguardCfgOutputFileOsPath;
+      myValidityState = new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision, myNonConstantFields,
+                                            proguardCfgOutputFileOsPath != null ? proguardCfgOutputFileOsPath : "");
     }
 
     public String getPath() {
@@ -294,8 +302,15 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                                        circularDepLibWithSamePackage.getName()), null, -1, -1);
           }
           final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
+
+          final VirtualFile outputDirForDex = AndroidDexCompiler.getOutputDirectoryForDex(module);
+          final String proguardCfgOutputFileOsPath =
+            AndroidCompileUtil.getProguardConfigFilePathIfShouldRun(facet, myContext) != null
+            ? FileUtil.toSystemDependentName(outputDirForDex.getPath() + '/' + PROGUARD_CFG_OUTPUT_FILE_NAME)
+            : null;
+
           items.add(new AptGenerationItem(module, manifestFile, resPaths, target, platformToolsRevision, packageName, libPackages,
-                                          generateNonFinalFields));
+                                          generateNonFinalFields, proguardCfgOutputFileOsPath));
         }
       }
       return items.toArray(new GenerationItem[items.size()]);
@@ -307,12 +322,18 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     private final Set<String> myNonExistingFiles;
     private final int myPlatformToolsRevision;
     private final boolean myNonConstantFields;
+    private final String myProguardCfgOutputFileOsPath;
 
-    MyValidityState(@NotNull Module module, @NotNull Set<String> nonExistingFiles, int platformToolsRevision, boolean nonConstantFields) {
+    MyValidityState(@NotNull Module module,
+                    @NotNull Set<String> nonExistingFiles,
+                    int platformToolsRevision,
+                    boolean nonConstantFields,
+                    @NotNull String proguardCfgOutputFileOsPath) {
       super(module);
       myNonExistingFiles = nonExistingFiles;
       myPlatformToolsRevision = platformToolsRevision;
       myNonConstantFields = nonConstantFields;
+      myProguardCfgOutputFileOsPath = proguardCfgOutputFileOsPath;
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet == null) {
         myCustomGenPathR = "";
@@ -330,6 +351,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myNonExistingFiles = Collections.emptySet();
       myPlatformToolsRevision = is.readInt();
       myNonConstantFields = is.readBoolean();
+      myProguardCfgOutputFileOsPath = is.readUTF();
     }
 
     @Override
@@ -348,6 +370,9 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       if (myNonConstantFields != otherState1.myNonConstantFields) {
         return false;
       }
+      if (!Comparing.equal(myProguardCfgOutputFileOsPath, otherState1.myProguardCfgOutputFileOsPath)) {
+        return false;
+      }
       if (!super.equalsTo(otherState)) {
         return false;
       }
@@ -360,6 +385,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       os.writeUTF(myCustomGenPathR);
       os.writeInt(myPlatformToolsRevision);
       os.writeBoolean(myNonConstantFields);
+      os.writeUTF(myProguardCfgOutputFileOsPath);
     }
   }
 }

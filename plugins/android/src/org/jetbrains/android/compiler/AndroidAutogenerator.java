@@ -286,8 +286,9 @@ public class AndroidAutogenerator {
       tempOutDir = FileUtil.createTempDirectory("android_apt_autogeneration", "tmp");
 
       final Map<AndroidCompilerMessageKind, List<String>> messages =
-        AndroidApt.compile(item.myTarget, item.myPlatformToolsRevision, item.myManifestFileOsPath, item.myPackage,
-                           tempOutDir.getPath(), item.myResDirOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, item.myNonConstantFields);
+        AndroidApt.compile(item.myTarget, item.myPlatformToolsRevision, item.myManifestFileOsPath,
+                           item.myPackage, tempOutDir.getPath(), item.myResDirOsPaths, ArrayUtil.EMPTY_STRING_ARRAY,
+                           item.myNonConstantFields, null);
 
       if (messages.get(AndroidCompilerMessageKind.ERROR).size() == 0) {
         for (String genFileRelPath : item.myGenFileRelPath2package.keySet()) {
