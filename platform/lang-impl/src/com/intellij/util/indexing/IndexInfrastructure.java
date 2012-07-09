@@ -102,6 +102,7 @@ public class IndexInfrastructure {
 
   public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
     try {
+      ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
       final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
       try {
         final int savedIndexVersion = in.readInt();
