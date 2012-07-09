@@ -151,12 +151,15 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
         }
 
+        final int caretOffset = editor.getCaretModel().getOffset();
+        int realCaretColumn = caretOffset - document.getLineStartOffset(document.getLineNumber(caretOffset));
+
         final List<String> strings = StringUtil.split(pastedText, "\n");
-        if (caretColumn >= value.getIndent() && !strings.isEmpty() &&
+        if (realCaretColumn >= value.getIndent() && !strings.isEmpty() &&
             StringUtil.isEmptyOrSpaces(strings.get(strings.size()-1))) endLine -=1;
 
         for (int i = startLine+1; i <= endLine; i++) {
-          int indent = value.getFirstLineLeadingSpaces() <= caretColumn ||
+          int indent = value.getFirstLineLeadingSpaces() <= realCaretColumn ||
                        value.getFirstLineLeadingSpaces() == value.getMaxIndent()? value.getIndent() : -value.getIndent();
           EditorActionUtil.indentLine(project, editor, i, indent);
         }
