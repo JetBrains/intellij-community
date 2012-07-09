@@ -103,11 +103,18 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   protected void doOKAction() {
     if (doDownloadAndPrepare() && isShowConfirmation()) {
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      if (app.isRestartCapable()) {
-        app.restart();
-      } else {
-        app.exit(true);
-      }
+      // do not stack several modal dialogs (native & swing)
+      app.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (app.isRestartCapable()) {
+            app.restart();
+          }
+          else {
+            app.exit(true);
+          }
+        }
+      });
     }
     super.doOKAction();
   }
