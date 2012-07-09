@@ -288,10 +288,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitJavaToken(final PsiJavaToken token) {
-    final PsiJavaToken anotherToken = (PsiJavaToken)myMatchingVisitor.getElement();
+    PsiElement element = myMatchingVisitor.getElement();
+    boolean result;
 
-    myMatchingVisitor.setResult(token.getTokenType() == anotherToken.getTokenType() &&
-                                token.textMatches(anotherToken));
+    if (!(element instanceof PsiJavaToken)) {
+      result = token.textMatches(element);
+    } else {
+      final PsiJavaToken anotherToken = (PsiJavaToken)element;
+
+      result = token.getTokenType() == anotherToken.getTokenType() && token.textMatches(anotherToken);
+    }
+
+    myMatchingVisitor.setResult(result);
   }
 
   @Override

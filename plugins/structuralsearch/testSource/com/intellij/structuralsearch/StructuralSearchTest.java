@@ -2678,4 +2678,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
         
     assertEquals(1, findMatchesCount(s,s2));
   }
+
+  public void testFindDeclaration() throws Exception {
+    String s = "public class F {\n" +
+               "  static Category cat = Category.getInstance(F.class.getName());\n" +
+               "  Category cat2 = Category.getInstance(F.class.getName());\n" +
+               "  Category cat3 = Category.getInstance(F.class.getName());\n" +
+               "}";
+    String s2 = "static $Category$ $cat$ = $Category$.getInstance($Arg$);";
+
+    assertEquals(1, findMatchesCount(s,s2));
+  }
 }
