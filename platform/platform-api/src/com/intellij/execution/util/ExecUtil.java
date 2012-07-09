@@ -160,6 +160,10 @@ public class ExecUtil {
     return sudoAndGetOutput(scriptPath, prompt, null);
   }
 
+  /**
+   *
+   * @param scriptPath is already escaped filepath
+   */
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
                                                @NotNull final String prompt,
                                                @Nullable String workDir) throws IOException, ExecutionException {
