@@ -34,6 +34,8 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author irengrig
  *         Date: 3/16/11
@@ -60,6 +62,7 @@ public class ShowAllAffectedGenericAction extends AnAction {
   public static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile, final VcsKey vcsKey) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
+    if (! isInLocalFSHack(virtualFile) && ! canPresentNonLocal(project, vcsKey, virtualFile)) return;
 
     final String title = VcsBundle.message("paths.affected.in.revision",
                                            revision instanceof ShortVcsRevisionNumber
@@ -71,9 +74,20 @@ public class ShowAllAffectedGenericAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          final Pair<CommittedChangeList, FilePath> pair = vcs.getCommittedChangesProvider().getOneList(virtualFile, revision);
-          if (pair != null) {
-            list[0] = pair.getFirst();
+          final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+          if (isInLocalFSHack(virtualFile)) {
+            final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
+            if (pair != null) {
+              list[0] = pair.getFirst();
+            }
+          } else {
+            final RepositoryLocation local = provider.getForNonLocal(virtualFile);
+            if (local != null) {
+              final List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), local, 1);
+              if (changes != null && changes.size() == 1) {
+                list[0] = changes.get(0);
+              }
+            }
           }
         }
         catch (VcsException e) {
@@ -95,6 +109,12 @@ public class ShowAllAffectedGenericAction extends AnAction {
     });
   }
 
+  private static boolean isInLocalFSHack(final VirtualFile vf) {
+    if (vf.isInLocalFileSystem()) return true;
+    final String url = vf.getPresentableUrl();
+    return ! url.contains("://") && ! url.contains(":\\\\");
+  }
+
   private static String failedText(VirtualFile virtualFile, VcsRevisionNumber revision) {
     return "Show all affected files for " + virtualFile.getPath() + " at " + revision.asString() + " failed";
   }
@@ -108,6 +128,16 @@ public class ShowAllAffectedGenericAction extends AnAction {
       return;
     }
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-    e.getPresentation().setEnabled((e.getData(VcsDataKeys.VCS_FILE_REVISION) != null) && (revisionVirtualFile != null));
+    boolean enabled = (e.getData(VcsDataKeys.VCS_FILE_REVISION) != null) && (revisionVirtualFile != null);
+    enabled = enabled && (isInLocalFSHack(revisionVirtualFile) || canPresentNonLocal(project, vcsKey, revisionVirtualFile));
+    e.getPresentation().setEnabled(enabled);
+  }
+
+  private static boolean canPresentNonLocal(Project project, VcsKey key, final VirtualFile file) {
+    final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(key.getName());
+    if (vcs == null) return false;
+    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    if (provider == null) return false;
+    return provider.getForNonLocal(file) != null;
   }
 }

@@ -35,8 +35,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import git4idea.GitBranch;
-import git4idea.GitFileRevision;
 import git4idea.GitDeprecatedRemote;
+import git4idea.GitFileRevision;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
@@ -264,6 +264,11 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       return new Pair<CommittedChangeList, FilePath>(commit, filePath);
     }
     return new Pair<CommittedChangeList, FilePath>(commit, ((GitFileRevision) history.get(history.size() - 1)).getPath());
+  }
+
+  @Override
+  public RepositoryLocation getForNonLocal(VirtualFile file) {
+    return null;
   }
 
   public int getFormatVersion() {

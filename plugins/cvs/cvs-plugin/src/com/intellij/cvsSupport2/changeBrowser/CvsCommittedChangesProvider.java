@@ -207,6 +207,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return new Pair<CvsChangeList, FilePath>(result.get(), filePath);
   }
 
+  @Override
+  public RepositoryLocation getForNonLocal(VirtualFile file) {
+    return null;
+  }
+
   public List<CvsChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
     throws VcsException {
     final CvsRepositoryLocation cvsLocation = (CvsRepositoryLocation) location;
