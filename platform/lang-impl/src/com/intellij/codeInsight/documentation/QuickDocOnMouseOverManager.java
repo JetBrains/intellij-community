@@ -169,10 +169,14 @@ public class QuickDocOnMouseOverManager {
 
       // Skip the event if the control is shown because of explicit 'show quick doc' action call.
       WeakReference<DocumentationManager> ref = myDocumentationManager;
-      if (ref == null || ref.get() == null || !ref.get().isCloseOnSneeze()) {
+      if (ref == null) {
         return;
       }
-      
+      DocumentationManager manager = ref.get();
+      if (manager == null || !manager.isCloseOnSneeze()) {
+        return;
+      }
+
       // Skip the event if the mouse is under the opened quick doc control.
       Point hintLocation = hint.getLocationOnScreen();
       Dimension hintSize = hint.getSize();
