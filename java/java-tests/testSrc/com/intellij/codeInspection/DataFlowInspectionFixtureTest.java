@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -26,7 +27,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
+    moduleBuilder.setLanguageLevel(LanguageLevel.HIGHEST);
   }
 
   @Override
@@ -66,5 +67,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
 
   public void testBoxing128() throws Throwable { doTest(); }
   public void testFinalFieldsInitializedByAnnotatedParameters() throws Throwable { doTest(); }
+  public void testMultiCatch() throws Throwable { doTest(); }
 
 }

@@ -759,10 +759,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiCatchSection section = sections[i];
       PsiCodeBlock catchBlock = section.getCatchBlock();
       PsiParameter parameter = section.getParameter();
-      if (parameter != null && catchBlock != null && parameter.getType() instanceof PsiClassType &&
-          (!myHonorRuntimeExceptions || !ExceptionUtil.isUncheckedException((PsiClassType)parameter.getType()))) {
-        myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
-        catchesPushCount++;
+
+      if (parameter != null && catchBlock != null) {
+        for (PsiType type : section.getPreciseCatchTypes()) {
+          if (type instanceof PsiClassType &&
+              (!myHonorRuntimeExceptions || !ExceptionUtil.isUncheckedException((PsiClassType)type))) {
+            myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
+            catchesPushCount++;
+          }
+          else {
+            throw new CantAnalyzeException();
+          }
+        }
       }
       else {
         throw new CantAnalyzeException();
