@@ -29,6 +29,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman Chernyatchik
@@ -492,16 +493,17 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(myMockResetablePrinter, "stdout", "stderr", "system");
   }
 
-  public void assertStdOutput(final MockPrinter printer, final String out) {
+  public static void assertStdOutput(final MockPrinter printer, final String out) {
     assertAllOutputs(printer, out, "", "");
   }
 
-  public void assertStdErr(final MockPrinter printer, final String out) {
+  public static void assertStdErr(final MockPrinter printer, final String out) {
     assertAllOutputs(printer, "", out, "");
   }
 
-  public void assertAllOutputs(final MockPrinter printer,
-                              final String out, final String err, final String sys) {
+  public static void assertAllOutputs(final MockPrinter printer,
+                                      final String out, final String err, final String sys)
+  {
     assertTrue(printer.hasPrinted());
     assertEquals(out, printer.getStdOut());
     assertEquals(err, printer.getStdErr());
@@ -536,15 +538,17 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(myMockResetablePrinter, "preved", "","Empty test suite.\n");
   }
 
+  @NotNull
   private SMTestProxy startTestWithPrinter(final String testName) {
     myEventsProcessor.onTestStarted(new TestStartedEvent(testName, null));
     final SMTestProxy proxy =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName(testName));
+    assertNotNull(proxy);
     proxy.setPrinter(myMockResetablePrinter);
     return proxy;
   }
 
-  private void sendToTestProxyStdOut(final SMTestProxy proxy, final String text) {
+  private static void sendToTestProxyStdOut(final SMTestProxy proxy, final String text) {
     proxy.addLast(new Printable() {
       @Override
       public void printOn(final Printer printer) {

@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Roman Chernyatchik
@@ -131,37 +133,44 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
 
+    assertNotNull(proxy);
     assertTrue(proxy.isDefect());
     assertFalse(proxy.isInProgress());
   }
 
-  public void testOnTestComparisionFailure() {
+  public void testOnTestComparisonFailure() {
     onTestStarted("some_test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, "actual", "expected"));
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
 
+    assertNotNull(proxy);
     assertTrue(proxy.isDefect());
     assertFalse(proxy.isInProgress());
   }
 
   public void testOnTestFailure_Twice() {
     onTestStarted("some_test");
-    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, null, null));
-    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", false, null, null));
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "msg 1", "trace 1", false, null, null));
+    myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "msg 2", "trace 2", false, null, null));
 
     assertEquals(1, myEventsProcessor.getRunningTestsQuantity());
-    assertEquals(1, myEventsProcessor.getFailedTestsSet().size());
+    final Set<AbstractTestProxy> failedTests = myEventsProcessor.getFailedTestsSet();
+    assertEquals(1, failedTests.size());
+    for (final AbstractTestProxy test : failedTests) {
+      assertEquals("some_test", test.getName());
+    }
   }
 
-   public void testOnTestError() {
+  public void testOnTestError() {
     onTestStarted("some_test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "", "", true, null, null));
 
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
 
+    assertNotNull(proxy);
     assertTrue(proxy.isDefect());
     assertFalse(proxy.isInProgress());
   }
@@ -173,6 +182,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
 
+    assertNotNull(proxy);
     assertTrue(proxy.isDefect());
     assertFalse(proxy.isInProgress());
   }
@@ -186,7 +196,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals(0, myEventsProcessor.getRunningTestsQuantity());
     assertEquals(0, myEventsProcessor.getFailedTestsSet().size());
 
-
+    assertNotNull(proxy);
     assertFalse(proxy.isDefect());
     assertFalse(proxy.isInProgress());
 
@@ -292,6 +302,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("test1");
     final SMTestProxy test1 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test1"));
+    assertNotNull(test1);
     assertEquals("suite1", test1.getParent().getName());
 
     //lets check that new suits have righ parent
@@ -300,6 +311,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("test2");
     final SMTestProxy test2 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test2"));
+    assertNotNull(test2);
     assertEquals("suite3", test2.getParent().getName());
     assertEquals("suite2", test2.getParent().getParent().getName());
 
@@ -310,6 +322,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("test3");
     final SMTestProxy test3 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test3"));
+    assertNotNull(test3);
     assertEquals("suite2", test3.getParent().getName());
 
     //clean up
@@ -325,6 +338,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final SMTestProxy test1 =
         myEventsProcessor.getProxyByFullTestName(myEventsProcessor.getFullTestName("test1"));
 
+    assertNotNull(test1);
     assertEquals("file://some/file.rb:1", test1.getParent().getLocationUrl());
     assertEquals("file://some/file.rb:4", test1.getLocationUrl());
   }
@@ -349,6 +363,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onTestFinished(new TestFinishedEvent("suite2.test1", 10));
     myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite2"));
 
+    assertNotNull(test1);
     assertEquals("suite1", test1.getParent().getName());
 
     final List<? extends SMTestProxy> children =
