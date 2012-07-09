@@ -35,6 +35,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import java.io.File;
@@ -151,11 +152,13 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
       try {
         if (proguardCfgPath != null) {
+          final File proguardCfgOutputFile = new File(dexOutputDir, AndroidCommonUtils.PROGUARD_CFG_OUTPUT_FILE_NAME);
+          final String[] proguardCfgFilePaths = new String[] {proguardCfgPath, proguardCfgOutputFile.getPath()};
           final String outputJarPath =
             FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
 
-          if (!runProguardIfNecessary(facet, classesDir, platform, externalLibraries, context, outputJarPath, proguardCfgPath,
-                                      includeSystemProguardCfg, proguardStateStorage)) {
+          if (!runProguardIfNecessary(facet, classesDir, platform, externalLibraries, context, outputJarPath,
+                                      proguardCfgFilePaths, includeSystemProguardCfg, proguardStateStorage)) {
             success = false;
             continue;
           }
@@ -351,16 +354,20 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                                 @NotNull Set<String> externalJars,
                                                 @NotNull CompileContext context,
                                                 @NotNull String outputJarPath,
-                                                @NotNull String proguardCfgPath,
+                                                @NotNull String[] proguardCfgPaths,
                                                 boolean includeSystemProguardCfg,
                                                 @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
     final Module module = facet.getModule();
+    final File[] proguardCfgFiles = new File[proguardCfgPaths.length];
 
-    final File proguardCfgFile = new File(proguardCfgPath);
-    if (!proguardCfgFile.exists()) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
-                                                 AndroidJpsBundle.message("android.jps.cannot.find.file", proguardCfgPath)));
-      return false;
+    for (int i = 0; i < proguardCfgFiles.length; i++) {
+      proguardCfgFiles[i] = new File(proguardCfgPaths[i]);
+
+      if (!proguardCfgFiles[i].exists()) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                   AndroidJpsBundle.message("android.jps.cannot.find.file", proguardCfgPaths[i])));
+        return false;
+      }
     }
 
     final File mainContentRoot = AndroidJpsUtil.getMainContentRoot(facet);
@@ -404,9 +411,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     if (context.isMake()) {
       final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
-      if (context.getTimestamps().getStamp(proguardCfgFile) == proguardCfgFile.lastModified() &&
-          newState.equalsTo(oldState)) {
 
+      if (!areFilesChanged(proguardCfgFiles, context) && newState.equalsTo(oldState)) {
         final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
         assert dirtyOutputDirs != null;
         boolean outputDirsDirty = false;
@@ -438,16 +444,31 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     final Map<AndroidCompilerMessageKind, List<String>> messages =
       AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getSdkToolsRevision(), platform.getSdk().getSdkPath(),
-                                        new String[]{proguardCfgPath}, includeSystemProguardCfg, inputJarOsPath,
-                                        externalJarOsPaths, outputJarPath, logsDirOsPath);
+                                        proguardCfgPaths, includeSystemProguardCfg, inputJarOsPath, externalJarOsPaths,
+                                        outputJarPath, logsDirOsPath);
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
 
     proguardStateStorage.update(module.getName(), success ? newState : null);
 
     if (success) {
-      context.getTimestamps().saveStamp(proguardCfgFile, proguardCfgFile.lastModified());
+      final Timestamps timestamps = context.getTimestamps();
+
+      for (File file : proguardCfgFiles) {
+        timestamps.saveStamp(file, file.lastModified());
+      }
     }
     return success;
+  }
+
+  private static boolean areFilesChanged(@NotNull File[] files, @NotNull CompileContext context) throws IOException {
+    final Timestamps timestamps = context.getTimestamps();
+
+    for (File file : files) {
+      if (timestamps.getStamp(file) != file.lastModified()) {
+        return true;
+      }
+    }
+    return false;
   }
 }

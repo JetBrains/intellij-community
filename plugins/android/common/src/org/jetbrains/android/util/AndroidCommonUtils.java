@@ -96,6 +96,7 @@ public class AndroidCommonUtils {
 
   @NonNls public static final String ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX = ".afp";
   @NonNls public static final String ANDROID_MANIFEST_MERGER_PROPERTY = "manifestmerger.enabled";
+  @NonNls public static final String PROGUARD_CFG_OUTPUT_FILE_NAME = "proguard.txt";
 
   private AndroidCommonUtils() {
   }
