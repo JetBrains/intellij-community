@@ -139,7 +139,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
             try {
               final Pair<SvnChangeList, FilePath> pair = provider.getOneList(file, revision.getRevisionNumber());
               if (pair != null && info != null && pair.getSecond() != null && ! Comparing.equal(pair.getSecond().getIOFile(), ioFile)) {
-                annotation[0] = annotateNonExisting(pair, revision, info, file.getCharset());
+                annotation[0] = annotateNonExisting(pair, revision, info, file.getCharset(), file);
                 return;
               }
             }
@@ -173,7 +173,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return annotation[0];
   }
 
-  private File getCommonAncestor(final File file1, final File file2) throws IOException {
+  public static File getCommonAncestor(final File file1, final File file2) throws IOException {
     if (FileUtil.filesEqual(file1, file2)) return file1;
     final File can1 = file1.getCanonicalFile();
     final File can2 = file2.getCanonicalFile();
@@ -201,7 +201,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   private SvnRemoteFileAnnotation annotateNonExisting(Pair<SvnChangeList, FilePath> pair,
                                                       VcsFileRevision revision,
                                                       SVNInfo info,
-                                                      Charset charset) throws VcsException, SVNException, IOException {
+                                                      Charset charset, final VirtualFile current) throws VcsException, SVNException, IOException {
     final File wasFile = pair.getSecond().getIOFile();
     final File root = getCommonAncestor(wasFile, info.getFile());
 
@@ -228,7 +228,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                                                      charset == null ? CharsetToolkit.UTF8_CHARSET : charset).toString();
     SVNLogClient client = myVcs.createLogClient();
     setLogClientOptions(client);
-    final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), pair.getFirst(), pair.getSecond().getPath());
+    final SvnRemoteFileAnnotation result = new SvnRemoteFileAnnotation(myVcs, contents, revision.getRevisionNumber(), pair.getFirst(), pair.getSecond().getPath(), current);
     final ISVNAnnotateHandler annotateHandler = createAnnotationHandler(ProgressManager.getInstance().getProgressIndicator(), result);
 
     final boolean calculateMergeinfo = SvnConfiguration.getInstance(myVcs.getProject()).SHOW_MERGE_SOURCES_IN_ANNOTATE &&
