@@ -257,21 +257,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitCodeBlock(PsiCodeBlock block) {
     startElement(block);
 
-    PsiStatement[] statements = block.getStatements();
-    for (PsiStatement statement : statements) {
-      statement.accept(this);
-    }
-
-    for (PsiStatement statement : statements) {
+    for (PsiStatement statement : block.getStatements()) {
       if (statement instanceof PsiDeclarationStatement) {
-        PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
-        PsiElement[] declarations = declarationStatement.getDeclaredElements();
-        for (PsiElement declaration : declarations) {
+        for (PsiElement declaration : ((PsiDeclarationStatement)statement).getDeclaredElements()) {
           if (declaration instanceof PsiVariable) {
             myCurrentFlow.removeVariable((PsiVariable)declaration);
           }
         }
       }
+      statement.accept(this);
     }
 
     finishElement(block);
@@ -581,6 +575,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
               if (enumVals != null) {
                 if (caseValue instanceof PsiReferenceExpression) {
+                  //noinspection SuspiciousMethodCalls
                   enumVals.remove(((PsiReferenceExpression)caseValue).resolve());
                 }
               }
@@ -929,7 +924,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
-    PsiExpression rExpr = operands[1];
+    PsiExpression rExpr;
 
     for (int i = 1; i < operands.length; i++) {
       rExpr = operands[i];

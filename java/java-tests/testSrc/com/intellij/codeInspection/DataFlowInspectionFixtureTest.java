@@ -68,5 +68,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testBoxing128() throws Throwable { doTest(); }
   public void testFinalFieldsInitializedByAnnotatedParameters() throws Throwable { doTest(); }
   public void testMultiCatch() throws Throwable { doTest(); }
+  public void testContinueFlushesLoopVariable() throws Throwable { doTest(); }
 
 }
