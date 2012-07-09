@@ -229,7 +229,9 @@ public class HtmlParsing {
     // Done header, start content
 
     boolean isInlineTagContainer = HtmlUtil.isInlineTagContainerL(tagName);
-    boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(tagName);
+    boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(tagName) ||
+                               "body".equalsIgnoreCase(tagName) ||
+                               "html".equalsIgnoreCase(tagName);
 
     PsiBuilder.Marker firstBlockChild = null;
 
