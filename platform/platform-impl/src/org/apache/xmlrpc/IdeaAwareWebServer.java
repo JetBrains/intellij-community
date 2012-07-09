@@ -18,7 +18,6 @@ package org.apache.xmlrpc;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -113,14 +112,6 @@ public class IdeaAwareWebServer extends WebServer {
     }
     catch (IOException e) {
       //pass
-    }
-
-    List<Runnable> waitingForExecution = threadPool.shutdownNow();
-
-    for (Runnable r : waitingForExecution) {
-      if (r instanceof MyRunner) {
-        ((MyRunner)r).shutdown();
-      }
     }
   }
 }
