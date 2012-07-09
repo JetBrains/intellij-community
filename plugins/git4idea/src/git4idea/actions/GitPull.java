@@ -113,6 +113,7 @@ public class GitPull extends GitRepositoryAction {
         pullTask.execute(true, false, new GitTaskResultHandlerAdapter() {
           @Override
           protected void onSuccess() {
+            root.refresh(false, true);
             GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
             repositoryManager.updateRepository(root, GitRepository.TrackedTopic.ALL);
             runFinalTasks(project, GitVcs.getInstance(project), affectedRoots, getActionName(), exceptions);
