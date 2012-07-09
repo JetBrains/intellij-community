@@ -266,9 +266,12 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       else if (initialTargetDirectorySourceRoot != null) {
         final boolean inTest = fileIndex.isInTestSourceContent(initialTargetDirectorySourceRoot);
         for (DirectoryChooser.ItemWrapper item : items) {
-          final VirtualFile virtualFile = item.getDirectory().getVirtualFile();
-          if (fileIndex.isInTestSourceContent(virtualFile) == inTest) {
-            return item;
+          PsiDirectory directory = item.getDirectory();
+          if (directory != null) {
+            final VirtualFile virtualFile = directory.getVirtualFile();
+            if (fileIndex.isInTestSourceContent(virtualFile) == inTest) {
+              return item;
+            }
           }
         }
       }
