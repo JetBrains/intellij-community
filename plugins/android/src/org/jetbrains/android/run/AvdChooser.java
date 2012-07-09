@@ -22,6 +22,8 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
+import com.intellij.CommonBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,10 +32,7 @@ import com.intellij.ui.DoubleClickListener;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.BooleanCellRenderer;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +121,13 @@ public class AvdChooser extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         GeneralCommandLine commandLine = new GeneralCommandLine();
         commandLine.setExePath(androidToolPath);
-        AndroidUtils.runExternalToolInSeparateThread(commandLine, null);
+        try {
+          AndroidUtils.executeCommand(commandLine, new StringBuildingOutputProcessor(), WaitingStrategies.DoNotWait.getInstance());
+        }
+        catch (ExecutionException e1) {
+          final String message = e1.getMessage() != null ? e1.getMessage() : "Cannot launch AVD manager";
+          Messages.showErrorDialog(myPanel, message, CommonBundle.getErrorTitle());
+        }
       }
     });
     updateTable();

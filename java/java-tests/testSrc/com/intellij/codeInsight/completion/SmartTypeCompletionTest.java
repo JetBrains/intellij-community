@@ -923,6 +923,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("false", "true"); //todo don't suggest boolean literals in synchronized
   }
 
+  public void testSuggestNames() throws Exception {
+    configureByTestName();
+    assertStringItems("arrayList", "list");
+  }
+
   public void testOverloadedMethods() throws Throwable {
     doTest();
   }

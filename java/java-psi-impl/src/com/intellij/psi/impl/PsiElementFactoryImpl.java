@@ -20,9 +20,7 @@ import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -49,8 +47,6 @@ import java.util.Map;
 import static com.intellij.openapi.util.text.StringUtil.join;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiElementFactoryImpl");
-
   private PsiClass myArrayClass;
   private PsiClass myArrayClass15;
 
@@ -172,7 +168,9 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiTypeParameterList createTypeParameterList() {
-    return createMethodFromText("void foo()", null).getTypeParameterList();
+    final PsiTypeParameterList parameterList = createMethodFromText("void foo()", null).getTypeParameterList();
+    assert parameterList != null;
+    return parameterList;
   }
 
   @NotNull
@@ -733,7 +731,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (!(exceptionType instanceof PsiClassType || exceptionType instanceof PsiDisjunctionType)) {
       throw new IncorrectOperationException("Unexpected type:" + exceptionType);
     }
-    final String text = StringUtil.join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
+    final String text = join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCatchSection)) {

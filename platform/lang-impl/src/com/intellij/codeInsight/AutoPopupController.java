@@ -112,7 +112,7 @@ public class AutoPopupController implements Disposable {
     Runnable request = new Runnable() {
       @Override
       public void run() {
-        if (myProject.isDefault()) return;
+        if (myProject.isDisposed()) return;
         CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
           @Override
           public void run() {

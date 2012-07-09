@@ -16,10 +16,7 @@
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,9 +25,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PlatformIcons;
@@ -50,18 +47,13 @@ import java.util.Set;
  */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.references.PropertyReferenceBase");
-  private static final Function<IProperty,PsiElement> MAPPER = new Function<IProperty, PsiElement>() {
-    @Override
-    public PsiElement fun(IProperty iProperty) {
-      return iProperty.getPsiElement();
-    }
-  };
   private static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<LookupElement>() {
     @Override
     public void renderElement(LookupElement element, LookupElementPresentation presentation) {
       IProperty property = (IProperty)element.getObject();
       presentation.setIcon(PlatformIcons.PROPERTY_ICON);
-      presentation.setItemText(property.getUnescapedKey());
+      String key = StringUtil.notNullize(property.getUnescapedKey());
+      presentation.setItemText(key);
 
       PropertiesFile propertiesFile = property.getPropertiesFile();
       ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
@@ -69,19 +61,32 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       boolean hasBundle = resourceBundle != ResourceBundleImpl.NULL;
       if (hasBundle) {
         PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile(propertiesFile.getProject());
-        IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getUnescapedKey());
+        IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(key);
         if (defaultProperty != null) {
           value = defaultProperty.getValue();
         }
       }
 
-      if (presentation.isReal() && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
-
-      TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
-      presentation.setTailText("=" + value, attrs.getForegroundColor());
       if (hasBundle) {
         presentation.setTypeText(resourceBundle.getBaseName(), PropertiesFileType.FILE_ICON);
       }
+
+      if (presentation instanceof RealLookupElementPresentation && value != null) {
+        value = "=" + value;
+        int limit = 1000;
+        if (value.length() > limit || !((RealLookupElementPresentation)presentation).hasEnoughSpaceFor(value, false)) {
+          if (value.length() > limit) {
+            value = value.substring(0, limit);
+          }
+          while (value.length() > 0 && !((RealLookupElementPresentation)presentation).hasEnoughSpaceFor(value + "...", false)) {
+            value = value.substring(0, value.length() - 1);
+          }
+          value += "...";
+        }
+      }
+
+      TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
+      presentation.setTailText(value, attrs.getForegroundColor());
     }
   };
   protected final String myKey;

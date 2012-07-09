@@ -38,6 +38,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -406,6 +407,9 @@ public class FindUsagesManager implements JDOMExternalizable {
             for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
               try {
                 searcher.processElementUsages(element, processor, options);
+              }
+              catch (IndexNotReadyException e) {
+                DumbService.getInstance(element.getProject()).showDumbModeNotification("Find usages is not available during indexing");
               }
               catch (Exception e) {
                 LOG.error(e);

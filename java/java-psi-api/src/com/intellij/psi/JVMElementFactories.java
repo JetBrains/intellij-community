@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,8 +32,15 @@ public class JVMElementFactories extends LanguageExtension<JVMElementFactoryProv
   }
 
   @Nullable
-  public static JVMElementFactory getFactory(Language language, Project project) {
+  public static JVMElementFactory getFactory(@NotNull Language language, @NotNull Project project) {
     final JVMElementFactoryProvider provider = INSTANCE.forLanguage(language);
     return provider != null? provider.getFactory(project) : null;
+  }
+
+  @NotNull
+  public static JVMElementFactory requireFactory(@NotNull Language language, @NotNull Project project) {
+    final JVMElementFactory factory = getFactory(language, project);
+    assert factory != null : language;
+    return factory;
   }
 }

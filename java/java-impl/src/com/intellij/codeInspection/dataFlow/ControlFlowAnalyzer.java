@@ -257,21 +257,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitCodeBlock(PsiCodeBlock block) {
     startElement(block);
 
-    PsiStatement[] statements = block.getStatements();
-    for (PsiStatement statement : statements) {
-      statement.accept(this);
-    }
-
-    for (PsiStatement statement : statements) {
+    for (PsiStatement statement : block.getStatements()) {
       if (statement instanceof PsiDeclarationStatement) {
-        PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
-        PsiElement[] declarations = declarationStatement.getDeclaredElements();
-        for (PsiElement declaration : declarations) {
+        for (PsiElement declaration : ((PsiDeclarationStatement)statement).getDeclaredElements()) {
           if (declaration instanceof PsiVariable) {
             myCurrentFlow.removeVariable((PsiVariable)declaration);
           }
         }
       }
+      statement.accept(this);
     }
 
     finishElement(block);
@@ -581,6 +575,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
               if (enumVals != null) {
                 if (caseValue instanceof PsiReferenceExpression) {
+                  //noinspection SuspiciousMethodCalls
                   enumVals.remove(((PsiReferenceExpression)caseValue).resolve());
                 }
               }
@@ -759,10 +754,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiCatchSection section = sections[i];
       PsiCodeBlock catchBlock = section.getCatchBlock();
       PsiParameter parameter = section.getParameter();
-      if (parameter != null && catchBlock != null && parameter.getType() instanceof PsiClassType &&
-          (!myHonorRuntimeExceptions || !ExceptionUtil.isUncheckedException((PsiClassType)parameter.getType()))) {
-        myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
-        catchesPushCount++;
+
+      if (parameter != null && catchBlock != null) {
+        for (PsiType type : section.getPreciseCatchTypes()) {
+          if (type instanceof PsiClassType &&
+              (!myHonorRuntimeExceptions || !ExceptionUtil.isUncheckedException((PsiClassType)type))) {
+            myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
+            catchesPushCount++;
+          }
+          else {
+            throw new CantAnalyzeException();
+          }
+        }
       }
       else {
         throw new CantAnalyzeException();
@@ -921,7 +924,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
-    PsiExpression rExpr = operands[1];
+    PsiExpression rExpr;
 
     for (int i = 1; i < operands.length; i++) {
       rExpr = operands[i];

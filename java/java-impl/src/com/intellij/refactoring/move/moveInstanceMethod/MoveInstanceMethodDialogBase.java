@@ -89,10 +89,14 @@ public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
     list.setSelectedIndex(0);
     list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        getOKAction().setEnabled(!list.getSelectionModel().isSelectionEmpty());
+        updateOnChanged(list);
       }
     });
     return list;
+  }
+
+  protected void updateOnChanged(JList list) {
+    getOKAction().setEnabled(!list.getSelectionModel().isSelectionEmpty());
   }
 
   protected static JavaVisibilityPanel createVisibilityPanel() {

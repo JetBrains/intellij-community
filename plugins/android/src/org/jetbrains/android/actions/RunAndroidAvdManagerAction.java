@@ -21,10 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.ExecutionStatus;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,9 +50,10 @@ public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
         commandLine.setExePath(toolPath);
         commandLine.addParameter("avd");
 
-        final StringBuilder messageBuilder = new StringBuilder();
+        final StringBuildingOutputProcessor processor = new StringBuildingOutputProcessor();
         try {
-          if (AndroidUtils.executeCommand(commandLine, messageBuilder, 500) == ExecutionStatus.TIMEOUT) {
+          if (AndroidUtils.executeCommand(commandLine, processor, WaitingStrategies.WaitForTime.getInstance(500)) ==
+              ExecutionStatus.TIMEOUT) {
             return;
           }
         }
@@ -64,12 +62,12 @@ public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
           return;
         }
 
-        final String message = messageBuilder.toString();
+        final String message = processor.getMessage();
         if (message.contains("Error")) {
           commandLine = new GeneralCommandLine();
           commandLine.setExePath(toolPath);
           try {
-            AndroidUtils.executeCommand(commandLine, messageBuilder, 0);
+            AndroidUtils.executeCommand(commandLine, null, WaitingStrategies.DoNotWait.getInstance());
           }
           catch (ExecutionException e) {
             LOG.error(e);

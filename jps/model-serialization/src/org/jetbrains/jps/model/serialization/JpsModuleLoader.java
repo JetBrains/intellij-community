@@ -113,12 +113,6 @@ public class JpsModuleLoader {
   }
 
   public static JpsSdkType<?> getSdkType(String typeId) {
-    for (JpsModelLoaderExtension extension : getLoaderExtensions()) {
-      final JpsSdkType<?> type = extension.getSdkType(typeId);
-      if (type != null) {
-        return type;
-      }
-    }
-    return JpsJavaSdkType.INSTANCE;
+    return JpsSdkTableLoader.getSdkPropertiesLoader(typeId).getType();
   }
 }

@@ -137,7 +137,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
           final VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
           final String outputJarOsPath = FileUtil.toSystemDependentName(outputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
 
-          final VirtualFile proguardCfgGeneratedByAapt = outputDir.findChild(AndroidAptCompiler.PROGUARD_CFG_OUTPUT_FILE_NAME);
+          final VirtualFile proguardCfgGeneratedByAapt = outputDir.findChild(AndroidCommonUtils.PROGUARD_CFG_OUTPUT_FILE_NAME);
           if (proguardCfgGeneratedByAapt != null) {
             proguardConfigFiles.add(proguardCfgGeneratedByAapt);
           }

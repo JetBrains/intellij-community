@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
   public static PsiMethod generateConstructorPrototype(PsiClass aClass, PsiMethod baseConstructor, boolean copyJavaDoc, PsiField[] fields) throws IncorrectOperationException {
     PsiManager manager = aClass.getManager();
-    JVMElementFactory factory = JVMElementFactories.getFactory(aClass.getLanguage(), aClass.getProject());
+    JVMElementFactory factory = JVMElementFactories.requireFactory(aClass.getLanguage(), aClass.getProject());
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor();
@@ -242,13 +242,13 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       if (!CommonClassNames.JAVA_LANG_ENUM.equals(superClass.getQualifiedName())) {
         isNotEnum = true;
         if (baseConstructor instanceof PsiCompiledElement){ // to get some parameter names
-          PsiClass dummyClass = JVMElementFactories.getFactory(baseConstructor.getLanguage(), baseConstructor.getProject()).createClass("Dummy");
+          PsiClass dummyClass = JVMElementFactories.requireFactory(baseConstructor.getLanguage(), baseConstructor.getProject()).createClass("Dummy");
           baseConstructor = (PsiMethod)dummyClass.add(baseConstructor);
         }
-        PsiParameter[] parms = baseConstructor.getParameterList().getParameters();
-        for (PsiParameter parm : parms) {
-          PsiParameter newParam = factory.createParameter(parm.getName(), parm.getType());
-          replaceModifierList(parm, newParam);
+        PsiParameter[] params = baseConstructor.getParameterList().getParameters();
+        for (PsiParameter param : params) {
+          PsiParameter newParam = factory.createParameter(param.getName(), param.getType());
+          GenerateMembersUtil.copyOrReplaceModifierList(param, newParam);
           constructor.getParameterList().add(newParam);
         }
       }
@@ -289,27 +289,6 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
     constructor = (PsiMethod)codeStyleManager.reformat(constructor);
     return constructor;
-  }
-
-  static void copyModifierList(JVMElementFactory factory, PsiParameter parm, PsiParameter newParam) {
-    PsiModifierList modifierList = parm.getModifierList();
-    PsiModifierList newMList = newParam.getModifierList();
-    if (modifierList != null && newMList != null) {
-      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-        newMList.add(factory.createAnnotationFromText(annotation.getText(), newParam));
-      }
-      for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
-        newMList.setModifierProperty(m, parm.hasModifierProperty(m));
-      }
-    }
-  }
-
-  static void replaceModifierList(PsiParameter sourceParam, PsiParameter targetParam) {
-    PsiModifierList sourceModifierList = sourceParam.getModifierList();
-    PsiModifierList targetModifierList = targetParam.getModifierList();
-    if (sourceModifierList != null && targetModifierList != null) {
-      targetModifierList.replace(sourceModifierList);
-    }
   }
 
   @PsiModifier.ModifierConstant

@@ -17,11 +17,11 @@ package org.jetbrains.android.actions;
 
 import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.resources.ResourceFolderType;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.ui.EnumComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
 import org.jetbrains.android.uipreview.InvalidOptionValueException;
@@ -105,6 +105,11 @@ public abstract class CreateResourceDirectoryDialog extends DialogWrapper {
     if (myValidator.checkInput(dirName) && myValidator.canClose(dirName)) {
       super.doOKAction();
     }
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myResourceTypeComboBox;
   }
 
   public InputValidator getValidator() {

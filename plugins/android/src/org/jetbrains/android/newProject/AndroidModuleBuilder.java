@@ -281,7 +281,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       @Override
       public void run() {
         final Project project = module.getProject();
-        AndroidUtils.runExternalTool(commandLine, null, true, project);
+        AndroidUtils.runExternalTool(commandLine, project);
 
         if (finalTempContentRoot != null) {
           final File[] children = finalTempContentRoot.listFiles();

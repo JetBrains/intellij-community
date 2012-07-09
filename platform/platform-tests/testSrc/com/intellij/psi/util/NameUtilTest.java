@@ -245,6 +245,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertFalse(firstLetterMatcher(" a").matches("Aaa"));
     assertFalse(firstLetterMatcher(" a").matches("Aaa"));
     assertFalse(firstLetterMatcher(" _bl").matches("_top"));
+    assertFalse(firstLetterMatcher("*Ch").matches("char"));
   }
 
   private static Matcher firstLetterMatcher(String pattern) {

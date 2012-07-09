@@ -46,6 +46,9 @@ public abstract class VFileEvent {
   /**
    * Returns the VirtualFile which this event belongs to.
    * In some cases it may be null - it is not guaranteed that there is such file.
+   *
+   * NB: Use this method with caution, because {@link com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent#getFile()} needs
+   * {@link VirtualFile#findChild(String)} which may be a performance leak.
    */
   @Nullable
   public abstract VirtualFile getFile();

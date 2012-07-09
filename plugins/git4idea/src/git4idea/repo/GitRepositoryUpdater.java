@@ -112,11 +112,11 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     boolean rebaseFileChanged = false;
     boolean mergeFileChanged = false;
     for (VFileEvent event : events) {
-      final VirtualFile file = event.getFile();
-      if (file == null) {
+      String filePath = event.getPath();
+      if (filePath == null) {
         continue;
       }
-      String filePath = GitFileUtils.stripFileProtocolPrefix(file.getPath());
+      filePath = GitFileUtils.stripFileProtocolPrefix(filePath);
       if (myRepositoryFiles.isConfigFile(filePath)) {
         configChanged = true;
       } else if (myRepositoryFiles.isHeadFile(filePath)) {

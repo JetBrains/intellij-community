@@ -33,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.TreeSet;
@@ -100,29 +101,43 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
       protected boolean onDoubleClick(MouseEvent e) {
         if (pluginTable.columnAtPoint(e.getPoint()) < 0) return false;
         if (pluginTable.rowAtPoint(e.getPoint()) < 0) return false;
-        IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
-        if (selection != null) {
-          boolean enabled = true;
-          for (IdeaPluginDescriptor descr : selection) {
-            if (descr instanceof PluginNode) {
-              enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
-              if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
-                enabled &= InstalledPluginsTableModel.hasNewerVersion(descr.getPluginId());
-              }
-            }
-            else if (descr instanceof IdeaPluginDescriptorImpl) {
-              PluginId id = descr.getPluginId();
-              enabled &= InstalledPluginsTableModel.hasNewerVersion(id);
-            }
-          }
-          if (enabled) {
-            new ActionInstallPlugin(AvailablePluginsManagerMain.this, installed).install();
-          }
-          return true;
-        }
-        return false;
+        return installSelected(pluginTable);
       }
     }.installOn(pluginTable);
+    
+    pluginTable.registerKeyboardAction(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          installSelected(pluginTable);
+        }
+      },
+      KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0),
+      JComponent.WHEN_FOCUSED
+    );
+  }
+
+  private boolean installSelected(PluginTable pluginTable) {
+    IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
+    if (selection != null) {
+      boolean enabled = true;
+      for (IdeaPluginDescriptor descr : selection) {
+        if (descr instanceof PluginNode) {
+          enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
+          if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
+            enabled &= InstalledPluginsTableModel.hasNewerVersion(descr.getPluginId());
+          }
+        }
+        else if (descr instanceof IdeaPluginDescriptorImpl) {
+          PluginId id = descr.getPluginId();
+          enabled &= InstalledPluginsTableModel.hasNewerVersion(id);
+        }
+      }
+      if (enabled) {
+        new ActionInstallPlugin(this, installed).install();
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override

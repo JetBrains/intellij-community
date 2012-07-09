@@ -34,7 +34,7 @@ public class MultiMap<K, V> implements Serializable {
   };
   private static final long serialVersionUID = -2632269270151455493L;
 
-  private final Map<K, Collection<V>> myMap;
+  protected final Map<K, Collection<V>> myMap;
   private Collection<V> values;
 
   public MultiMap() {
@@ -49,8 +49,8 @@ public class MultiMap<K, V> implements Serializable {
     return new HashMap<K, Collection<V>>();
   }
 
-  protected Map<K, Collection<V>> createMap(int i, float v) {
-    return new HashMap<K, Collection<V>>(i, v);
+  protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+    return new HashMap<K, Collection<V>>(initialCapacity, loadFactor);
   }
 
   protected Collection<V> createCollection() {

@@ -16,6 +16,7 @@
 package com.intellij.core;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageASTFactory;
@@ -25,24 +26,20 @@ import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.roots.PackageIndex;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ClassFileViewProviderFactory;
+import com.intellij.psi.EmptySubstitutor;
+import com.intellij.psi.FileTypeFileViewProviders;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.augment.PsiAugmentProvider;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.EmptySubstitutorImpl;
+import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
+import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
 import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
-import com.intellij.psi.impl.source.resolve.JavaResolveCache;
-import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
-
-import java.io.File;
 
 /**
  * @author yole
@@ -52,10 +49,13 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     super(parentDisposable);
 
     registerFileType(JavaClassFileType.INSTANCE, "class");
+    registerFileType(JavaFileType.INSTANCE, "java");
+    registerFileType(ArchiveFileType.INSTANCE, "jar");
+    registerFileType(ArchiveFileType.INSTANCE, "zip");
+
     addExplicitExtension(FileTypeFileViewProviders.INSTANCE, JavaClassFileType.INSTANCE,  new ClassFileViewProviderFactory());
     addExplicitExtension(BinaryFileStubBuilders.INSTANCE, JavaClassFileType.INSTANCE, new ClassFileStubBuilder());
     
-    registerFileType(JavaFileType.INSTANCE, "java");
     addExplicitExtension(LanguageASTFactory.INSTANCE, JavaLanguage.INSTANCE, new CoreJavaASTFactory());
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, JavaLanguage.INSTANCE, new JavaParserDefinition());
     addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());

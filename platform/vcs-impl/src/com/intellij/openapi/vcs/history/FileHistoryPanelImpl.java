@@ -156,10 +156,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         return "123.4567";
       }
 
-      @Override
-      public String getMaxStringValue() {
-        return getMaxValue(getName());
-      }
     };
 
   private final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
@@ -178,10 +174,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return DateFormatUtil.formatPrettyDateTime(Clock.getTime());
     }
 
-    @Override
-    public String getMaxStringValue() {
-      return getMaxValue(getName());
-    }
   };
   private final Splitter myDetailsSplitter = new Splitter(false, 0.5f);
 
@@ -269,11 +261,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return "author_author";
     }
 
-    @Override
-    public String getMaxStringValue() {
-      return getMaxValue(getName());
-    }
-  };
+ };
 
   private Splitter mySplitter;
 
@@ -333,10 +321,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       return myRenderer;
     }
 
-    @Override
-    public String getMaxStringValue() {
-      return getMaxValue(getName());
-    }
   }
 
   private static int getSuitableIndex(int index10, int index13) {

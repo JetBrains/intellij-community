@@ -1,0 +1,6 @@
+class Util {
+  {
+    FooZoo<caret>
+  }
+
+}

@@ -38,7 +38,6 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.JavaFilesFilter;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +55,6 @@ import java.util.*;
 public class AndroidAptCompiler implements SourceGeneratingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidAptCompiler");
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
-
-  @NonNls public static final String PROGUARD_CFG_OUTPUT_FILE_NAME = "proguard.txt";
 
   @Nullable
   @Override
@@ -319,7 +316,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           final VirtualFile outputDirForDex = AndroidDexCompiler.getOutputDirectoryForDex(module);
           final String proguardCfgOutputFileOsPath =
             AndroidCompileUtil.getProguardConfigFilePathIfShouldRun(facet, myContext) != null
-            ? FileUtil.toSystemDependentName(outputDirForDex.getPath() + '/' + PROGUARD_CFG_OUTPUT_FILE_NAME)
+            ? FileUtil.toSystemDependentName(outputDirForDex.getPath() + '/' + AndroidCommonUtils.PROGUARD_CFG_OUTPUT_FILE_NAME)
             : null;
 
           items.add(new AptGenerationItem(module, manifestFile, resPaths, target, platformToolsRevision, packageName, libPackages,
