@@ -349,4 +349,9 @@ public class GitPullDialog extends DialogWrapper {
   public String getRemote() {
     return ((JTextField)myRemote.getEditor().getEditorComponent()).getText();
   }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myBranchChooser.getComponent();
+  }
 }
