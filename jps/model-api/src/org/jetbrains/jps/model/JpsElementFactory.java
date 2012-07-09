@@ -18,9 +18,9 @@ public abstract class JpsElementFactory {
     return JpsServiceManager.getInstance().getService(JpsElementFactory.class);
   }
 
-  public abstract JpsModule createModule(String name, JpsModuleType<?> type);
+  public abstract <P extends JpsElementProperties> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties);
 
-  public abstract JpsLibrary createLibrary(@NotNull String name, @NotNull JpsLibraryType<?> type);
+  public abstract <P extends JpsElementProperties> JpsLibrary createLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties);
 
   @NotNull
   public abstract JpsModuleReference createModuleReference(@NotNull String moduleName);

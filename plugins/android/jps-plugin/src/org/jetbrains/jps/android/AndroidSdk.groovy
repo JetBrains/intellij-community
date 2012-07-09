@@ -13,7 +13,7 @@ class AndroidSdk extends JavaSdk {
   final String javaSdkName;
 
   AndroidSdk(Project project, String name, String sdkPath, String javaSdkName, String buildTargetHashString) {
-    super(project, name, '', {})
+    super(project, name)
     this.sdkPath = sdkPath
     this.buildTargetHashString = buildTargetHashString
     this.javaSdkName = javaSdkName;

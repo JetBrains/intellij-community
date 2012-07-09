@@ -577,8 +577,22 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
         final Set<String> depLibPackagesSet = new HashSet<String>(packageMap.values());
         depLibPackagesSet.remove(packageName);
+        final String proguardOutputCfgFilePath;
 
-        final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
+        if (toLaunchProGuard(context, facet)) {
+          final File outputDirForArtifacts = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
+
+          if (AndroidJpsUtil.createDirIfNotExist(outputDirForArtifacts, context, BUILDER_NAME) == null) {
+            success = false;
+            continue;
+          }
+          proguardOutputCfgFilePath = new File(outputDirForArtifacts, AndroidCommonUtils.PROGUARD_CFG_OUTPUT_FILE_NAME).getPath();
+        }
+        else {
+          proguardOutputCfgFilePath = null;
+        }
+        final AndroidAptValidityState newState =
+          new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName, proguardOutputCfgFilePath);
 
         if (context.isMake()) {
           final AndroidAptValidityState oldState = storage.getState(module.getName());
@@ -593,7 +607,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           tmpOutputDir = FileUtil.createTempDirectory("android_apt_output", "tmp");
           final Map<AndroidCompilerMessageKind, List<String>> messages =
             AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, tmpOutputDir.getPath(), resPaths,
-                               ArrayUtil.toStringArray(depLibPackagesSet), generateNonFinalFields);
+                               ArrayUtil.toStringArray(depLibPackagesSet), generateNonFinalFields, proguardOutputCfgFilePath);
 
           AndroidJpsUtil.addMessages(context, messages, ANDROID_APT_COMPILER, module.getName());
 
@@ -1003,6 +1017,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         context.processMessage(new CompilerMessage(builderName, buildMessageKind, message, sourcePath));
       }
     }
+  }
+
+  private static boolean toLaunchProGuard(@NotNull CompileContext context, @NotNull AndroidFacet facet) {
+    return facet.isRunProguard() ||
+           context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION) != null;
   }
 
   @Nullable

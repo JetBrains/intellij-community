@@ -544,6 +544,7 @@ public class ScopeEditorPanel {
         final ProcessCanceledException [] ex = new ProcessCanceledException[1];
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
             try {
               myTreeExpansionMonitor.freeze();
               final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);

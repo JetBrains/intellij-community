@@ -217,7 +217,7 @@ class RunConfigurable extends BaseConfigurable {
           final Object userObject = node.getUserObject();
           if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
             final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable =
-                SingleConfigurationConfigurable.editSettings((RunnerAndConfigurationSettings)userObject);
+                SingleConfigurationConfigurable.editSettings((RunnerAndConfigurationSettings)userObject, null);
             installUpdateListeners(configurationConfigurable);
             node.setUserObject(configurationConfigurable);
             updateRightPanel(configurationConfigurable);
@@ -847,7 +847,7 @@ class RunConfigurable extends BaseConfigurable {
 
   private SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final RunnerAndConfigurationSettings settings, final DefaultMutableTreeNode node) {
     final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable =
-        SingleConfigurationConfigurable.editSettings(settings);
+        SingleConfigurationConfigurable.editSettings(settings, null);
     installUpdateListeners(configurationConfigurable);
     DefaultMutableTreeNode nodeToAdd = new DefaultMutableTreeNode(configurationConfigurable);
     node.add(nodeToAdd);

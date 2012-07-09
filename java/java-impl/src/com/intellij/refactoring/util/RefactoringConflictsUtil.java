@@ -119,10 +119,10 @@ public class RefactoringConflictsUtil {
         conflicts.putValue(targetClass, message);
       }
       // check for member accessibility
-      else if (!manager.getResolveHelper().isAccessible(member, modifierListCopy, ref, null, null)) {
+      else if (!manager.getResolveHelper().isAccessible(member, modifierListCopy, ref, targetClass, null)) {
         String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                    RefactoringUIUtil.getDescription(member, true),
-                                                   VisibilityUtil.getVisibilityStringToDisplay(member),
+                                                   VisibilityUtil.toPresentableText(VisibilityUtil.getVisibilityModifier(modifierListCopy)),
                                                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
         message = CommonRefactoringUtil.capitalize(message);
         conflicts.putValue(member, message);

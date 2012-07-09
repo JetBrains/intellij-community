@@ -8,13 +8,13 @@ import org.jetbrains.jps.model.library.*;
  */
 public class JpsLibraryTest extends JpsModelTestCase {
   public void testAddRoot() {
-    final JpsLibrary library = myModel.getProject().addLibrary(JpsJavaLibraryType.INSTANCE, "a");
+    final JpsLibrary library = myModel.getProject().addLibrary("a", JpsJavaLibraryType.INSTANCE);
     library.addRoot("file://my-url", JpsOrderRootType.COMPILED);
     assertEquals("file://my-url", assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
   }
 
   public void testModifiableCopy() {
-    myModel.getProject().addLibrary(JpsJavaLibraryType.INSTANCE, "a");
+    myModel.getProject().addLibrary("a", JpsJavaLibraryType.INSTANCE);
 
     final JpsModel modifiableModel = myModel.createModifiableModel(new TestJpsEventDispatcher());
     final JpsLibrary modifiable = assertOneElement(modifiableModel.getProject().getLibraryCollection().getLibraries());
@@ -26,7 +26,7 @@ public class JpsLibraryTest extends JpsModelTestCase {
   }
 
   public void testCreateReferenceByLibrary() {
-    final JpsLibrary library = myModel.getProject().addLibrary(JpsJavaLibraryType.INSTANCE, "l");
+    final JpsLibrary library = myModel.getProject().addLibrary("l", JpsJavaLibraryType.INSTANCE);
     final JpsLibraryReference reference = library.createReference().asExternal(myModel);
     assertEquals("l", reference.getLibraryName());
     assertSame(library, reference.resolve());
@@ -37,7 +37,7 @@ public class JpsLibraryTest extends JpsModelTestCase {
     assertEquals("l", reference.getLibraryName());
     assertNull(reference.resolve());
 
-    final JpsLibrary library = myModel.getProject().addLibrary(JpsJavaLibraryType.INSTANCE, "l");
+    final JpsLibrary library = myModel.getProject().addLibrary("l", JpsJavaLibraryType.INSTANCE);
     assertSame(library, reference.resolve());
   }
 }

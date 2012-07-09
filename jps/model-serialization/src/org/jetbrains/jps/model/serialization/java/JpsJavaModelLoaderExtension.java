@@ -42,6 +42,17 @@ public class JpsJavaModelLoaderExtension extends JpsModelLoaderExtension {
     return null;
   }
 
+  @Override
+  public JpsOrderRootType getSdkRootType(@NotNull String typeId) {
+    if (typeId.equals("javadocPath")) {
+      return JpsOrderRootType.DOCUMENTATION;
+    }
+    if (typeId.equals("annotationsPath")) {
+      return JpsAnnotationRootType.INSTANCE;
+    }
+    return null;
+  }
+
   private static void loadExplodedDirectoryExtension(JpsModule module, Element rootModelComponent) {
     final Element exploded = rootModelComponent.getChild("exploded");
     if (exploded != null) {

@@ -66,8 +66,10 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -188,7 +190,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintAnnotations(g, clip);
 
       Object hint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+      if (!UIUtil.isRetina()) g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
       try {
         int firstVisibleOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y - myEditor.getLineHeight())));
@@ -873,7 +875,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                int baseHeight,
                                boolean active, boolean paintBackground) {
     Object antialiasing = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1")) {
+    if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1") || UIUtil.isRetina()) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
 

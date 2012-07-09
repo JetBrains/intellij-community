@@ -199,7 +199,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
 public def layoutCommunityPlugins(String home) {
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "devkit", "eclipse", "hg4idea", "github", "ui-designer-new"]
+    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "eclipse", "hg4idea", "github", "ui-designer-new"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -354,6 +354,14 @@ public def layoutCommunityPlugins(String home) {
         jar("tasks-java.jar") { moduleOptional("tasks-java") }
         fileset(dir: "${home}/plugins/tasks/tasks-core/lib") {
           include(name: "**/*.jar")
+        }
+      }
+    }
+
+    layoutPlugin("devkit") {
+      dir("jps") {
+        jar("devkit-jps-plugin.jar") {
+          module("devkit-jps-plugin")
         }
       }
     }

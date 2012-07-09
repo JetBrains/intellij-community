@@ -17,8 +17,11 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +33,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @Deprecated
 public class ImageLoader implements Serializable {
-  private static final Component ourComponent = new Component() {};
+  private static final Component ourComponent = new Component() {
+  };
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
 
@@ -44,10 +51,23 @@ public class ImageLoader implements Serializable {
     mediatracker.addImage(image, 1);
     try {
       mediatracker.waitForID(1, 5000);
-    } catch (InterruptedException ex) {
+    }
+    catch (InterruptedException ex) {
       LOG.info(ex);
     }
     return !mediatracker.isErrorID(1);
+  }
+
+  @Nullable
+  public static Image loadFromUrl(URL url) {
+    for (Pair<String, Integer> each : getFileNames(url.toString())) {
+      try {
+        return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
+      }
+      catch (IOException ignore) {
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -64,14 +84,31 @@ public class ImageLoader implements Serializable {
   }
 
   @Nullable
-  public static Image loadFromResource(String s, Class aClass) {
-    final InputStream stream = aClass.getResourceAsStream(s);
-    return stream != null ? loadFromStream(stream) : null;
+  public static Image loadFromResource(String path, Class aClass) {
+    for (Pair<String, Integer> each : getFileNames(path)) {
+      InputStream stream = aClass.getResourceAsStream(each.first);
+      if (stream == null) continue;
+      Image image = loadFromStream(stream, each.second);
+      if (image != null) return image;
+    }
+    return null;
+  }
+
+  public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
+    if (UIUtil.isRetina()) {
+      return Arrays.asList(Pair.create(FileUtil.getNameWithoutExtension(file) + "@2x." + FileUtil.getExtension(file), 2),
+                           Pair.create(file, 1));
+    }
+    return Collections.singletonList(Pair.create(file, 1));
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream) {
-    try {
+    return loadFromStream(inputStream, 1);
+  }
 
+  public static Image loadFromStream(@NotNull final InputStream inputStream, final int scale) {
+    if (scale <= 0) throw new IllegalArgumentException("Scale must 1 or more");
+    try {
       BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
       try {
         byte[] buffer = new byte[1024];
@@ -86,24 +123,20 @@ public class ImageLoader implements Serializable {
       }
 
       Image image = Toolkit.getDefaultToolkit().createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
+
       waitForImage(image);
 
+      if (UIUtil.isRetina() && scale > 1) {
+        image = RetinaImage.createFrom(image, scale, ourComponent);
+      }
+
       return image;
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       LOG.error(ex);
     }
 
     return null;
-  }
-
-  public static Image loadFromUrl(URL url) {
-    try {
-      return loadFromStream(URLUtil.openStream(url));
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
   }
 
   public static boolean isGoodSize(final Icon icon) {

@@ -16,7 +16,8 @@ import java.util.List;
 public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement<JpsProject> {
 
   @NotNull
-  JpsModule addModule(@NotNull JpsModuleType<?> moduleType, @NotNull String name);
+  <P extends JpsElementProperties, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
+  JpsModule addModule(@NotNull String name, @NotNull ModuleType moduleType);
 
   void addModule(@NotNull JpsModule module);
 
@@ -25,7 +26,8 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
 
 
   @NotNull
-  JpsLibrary addLibrary(@NotNull JpsLibraryType<?> libraryType, @NotNull String name);
+  <P extends JpsElementProperties, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  JpsLibrary addLibrary(@NotNull String name, @NotNull LibraryType libraryType);
 
   @NotNull
   JpsLibraryCollection getLibraryCollection();

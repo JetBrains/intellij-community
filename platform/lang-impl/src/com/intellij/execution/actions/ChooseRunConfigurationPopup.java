@@ -216,7 +216,7 @@ public class ChooseRunConfigurationPopup {
     assert executor != null;
 
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
-    if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor.getActionName(), executor.getIcon())) {
+    if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor)) {
       RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
       ProgramRunnerUtil.executeConfiguration(project, configuration, executor, ExecutionTargetManager.getActiveTarget(project), false);
     }
