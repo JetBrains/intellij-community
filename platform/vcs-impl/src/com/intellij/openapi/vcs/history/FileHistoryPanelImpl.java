@@ -1128,8 +1128,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public void update(AnActionEvent e) {
       VirtualFile revVFile = e.getData( VcsDataKeys.VCS_VIRTUAL_FILE );
       VcsFileRevision revision = e.getData( VcsDataKeys.VCS_FILE_REVISION );
+      final Boolean nonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
+
       FileType fileType = revVFile == null ? null : revVFile.getFileType();
-      boolean enabled = revision != null && revVFile != null && !fileType.isBinary();
+      boolean enabled = revision != null && revVFile != null && !fileType.isBinary() && ! Boolean.TRUE.equals(nonLocal);
 
       if (enabled) {
         final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myVcs.getProject());
@@ -1147,7 +1149,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public void actionPerformed(AnActionEvent e) {
       final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
       final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-      if ((revision == null) || (revisionVirtualFile == null)) return;
+      final Boolean nonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
+
+      if ((revision == null) || (revisionVirtualFile == null) || Boolean.TRUE.equals(nonLocal)) return;
 
       final BackgroundableActionEnabledHandler handler = ((ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myVcs.getProject())).
         getBackgroundableActionHandler(VcsBackgroundableActions.ANNOTATE);
