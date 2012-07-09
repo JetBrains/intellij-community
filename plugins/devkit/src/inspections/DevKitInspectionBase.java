@@ -121,6 +121,7 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
     if (children.length == 3 && children[1] instanceof XmlToken) {
       return children[1];
     }
+    if (children.length == 1 && children[0] instanceof PsiErrorElement) return null;
     return valueElement;
   }
 
