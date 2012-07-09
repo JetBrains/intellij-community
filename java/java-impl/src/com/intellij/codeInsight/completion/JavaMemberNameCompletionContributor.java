@@ -35,10 +35,8 @@ import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -59,49 +57,38 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     psiElement().afterLeaf(psiElement().withText("?").afterLeaf("<", ","));
   static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
 
-  public JavaMemberNameCompletionContributor() {
-    extend(
-        CompletionType.BASIC,
-        psiElement(PsiIdentifier.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).withParent(
-            or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class))),
-        new CompletionProvider<CompletionParameters>() {
-          public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
-            final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
-                completeLocalVariableName(lookupSet, result.getPrefixMatcher(), (PsiVariable)parameters.getPosition().getParent(), parameters.getInvocationCount() >= 1);
-            for (final LookupElement item : lookupSet) {
-              if (item instanceof LookupItem) {
-                ((LookupItem)item).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
-              }
-              result.addElement(item);
-            }
-          }
-        });
-    extend(
-        CompletionType.BASIC,
-        psiElement(PsiIdentifier.class).withParent(PsiField.class).andNot(INSIDE_TYPE_PARAMS_PATTERN),
-        new CompletionProvider<CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
-        final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
-        final PsiField variable = (PsiField)parameters.getPosition().getParent();
-        completeMethodName(lookupSet, variable, result.getPrefixMatcher());
-        completeFieldName(lookupSet, variable, result.getPrefixMatcher(), parameters.getInvocationCount() >= 1);
-        for (final LookupElement item : lookupSet) {
-          result.addElement(item);
+  @Override
+  public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
+    if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) {
+      return;
+    }
+
+    PsiElement position = parameters.getPosition();
+    final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
+    if (psiElement(PsiIdentifier.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).withParent(
+      or(psiElement(PsiLocalVariable.class), psiElement(PsiParameter.class))).accepts(position)) {
+      completeLocalVariableName(lookupSet, result.getPrefixMatcher(), (PsiVariable)parameters.getPosition().getParent(),
+                                parameters.getInvocationCount() >= 1);
+      for (final LookupElement item : lookupSet) {
+        if (item instanceof LookupItem) {
+          ((LookupItem)item).setAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE);
         }
       }
-    });
-    extend(
-        CompletionType.BASIC, PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)),
-        new CompletionProvider<CompletionParameters>() {
-          public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
-            final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
-            completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
-            for (final LookupElement item : lookupSet) {
-              result.addElement(item);
-            }
-          }
-        });
+    }
 
+    if (psiElement(PsiIdentifier.class).withParent(PsiField.class).andNot(INSIDE_TYPE_PARAMS_PATTERN).accepts(position)) {
+      final PsiField variable = (PsiField)parameters.getPosition().getParent();
+      completeMethodName(lookupSet, variable, result.getPrefixMatcher());
+      completeFieldName(lookupSet, variable, result.getPrefixMatcher(), parameters.getInvocationCount() >= 1);
+    }
+
+    if (PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)).accepts(position)) {
+      completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
+    }
+
+    for (final LookupElement item : lookupSet) {
+      result.addElement(item);
+    }
   }
 
   private static void completeLocalVariableName(Set<LookupElement> set, PrefixMatcher matcher, PsiVariable var, boolean includeOverlapped) {
