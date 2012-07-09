@@ -70,7 +70,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
 
   @Nls
   public String getActionText() {
-    return VcsBundle.message("create.patch.commit.action.title");
+    return "Create Patch...";
   }
 
   @Override
