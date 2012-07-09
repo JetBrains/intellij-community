@@ -98,6 +98,7 @@ public class QuickDocOnMouseOverManager {
    */
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
+    myApplicationActive = enabled;
     if (!enabled) {
       closeQuickDocIfPossible();
       myAlarm.cancelAllRequests();
