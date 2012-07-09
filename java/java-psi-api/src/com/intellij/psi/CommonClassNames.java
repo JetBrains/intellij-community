@@ -25,6 +25,7 @@ public interface CommonClassNames {
 
   @NonNls String JAVA_LANG_OBJECT = "java.lang.Object";
   @NonNls String JAVA_LANG_CLASS = "java.lang.Class";
+  @NonNls String JAVA_LANG_OVERRIDE = "java.lang.Override";
   @NonNls String JAVA_LANG_ENUM = "java.lang.Enum";
 
   @NonNls String JAVA_LANG_THROWABLE = "java.lang.Throwable";

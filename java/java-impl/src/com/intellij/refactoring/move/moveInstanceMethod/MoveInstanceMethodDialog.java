@@ -27,6 +27,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparatorWithMnemonic;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +87,8 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
     separator.setLabelFor(myList);
     validateTextFields(myList.getSelectedIndex());
+
+    updateOnChanged(myList);
     return mainPanel;
   }
 
@@ -148,6 +151,17 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
                                                                                   parameterNames);
     if (!verifyTargetClass(processor.getTargetClass())) return;
     invokeRefactoring(processor);
+  }
+
+  @Override
+  protected void updateOnChanged(JList list) {
+    super.updateOnChanged(list);
+    final PsiVariable selectedValue = (PsiVariable)list.getSelectedValue();
+    if (selectedValue != null) {
+      final PsiClassType psiType = (PsiClassType)selectedValue.getType();
+      final PsiClass targetClass = psiType.resolve();
+      UIUtil.setEnabled(myVisibilityPanel, targetClass != null && !targetClass.isInterface(), true);
+    }
   }
 
   protected void doHelpAction() {
