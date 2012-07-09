@@ -18,7 +18,6 @@ package com.intellij.openapi.util.io;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -72,6 +71,8 @@ public class FileUtil extends FileUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
 
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
+
+  private static final boolean USE_FILE_CHANNELS = SystemProperties.getBooleanProperty("idea.fs.useChannels", false);
 
   @NotNull
   public static String join(@NotNull final String... parts) {
@@ -504,7 +505,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
-    if (Registry.is("filesystem.useChannels") && inputStream instanceof FileInputStream && outputStream instanceof FileOutputStream) {
+    if (USE_FILE_CHANNELS && inputStream instanceof FileInputStream && outputStream instanceof FileOutputStream) {
       final FileChannel fromChannel = ((FileInputStream)inputStream).getChannel();
       try {
         final FileChannel toChannel = ((FileOutputStream)outputStream).getChannel();
