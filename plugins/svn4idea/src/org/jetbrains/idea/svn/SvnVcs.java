@@ -32,8 +32,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
@@ -52,6 +50,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.SoftHashMap;
@@ -67,7 +66,6 @@ import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
 import org.jetbrains.idea.svn.commandLine.SvnExecutableChecker;
 import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
-import org.jetbrains.idea.svn.dialogs.SvnFormatWorker;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -76,6 +74,8 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
+import org.tmatesoft.sqljet.core.SqlJetErrorCode;
+import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
@@ -93,7 +93,6 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -159,6 +158,24 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
   private final SvnExecutableChecker myChecker;
+
+  public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
+    @Override
+    public boolean process(Exception e) {
+      if (e instanceof SVNException) {
+        final SVNErrorCode errorCode = ((SVNException)e).getErrorMessage().getErrorCode();
+        if (SVNErrorCode.WC_LOCKED.equals(errorCode)) {
+          return true;
+        } else if (SVNErrorCode.SQLITE_ERROR.equals(errorCode)) {
+          Throwable cause = ((SVNException)e).getErrorMessage().getCause();
+          if (cause instanceof SqlJetException) {
+            return SqlJetErrorCode.BUSY.equals(((SqlJetException)cause).getErrorCode());
+          }
+        }
+      }
+      return false;
+    }
+  };
 
   public void checkCommandLineVersion() {
     myChecker.checkExecutableAndNotifyIfNeeded();

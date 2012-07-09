@@ -24,7 +24,7 @@ import org.tmatesoft.svn.core.SVNException;
  * Time: 3:45 PM
  */
 public abstract class RepeatSvnActionThroughBusy {
-  public static final int REPEAT = 3;
+  public static final int REPEAT = 10;
   protected int myCnt = REPEAT;
   protected long myTimeout = 50;
   protected abstract void executeImpl() throws SVNException;
