@@ -28,6 +28,7 @@ public class VFileCreateEvent extends VFileEvent {
   private final boolean myDirectory;
   private final String myChildName;
   private final boolean myReCreation;
+  private VirtualFile myCreatedFile;
 
   public VFileCreateEvent(Object requestor,
                           @NotNull VirtualFile parent,
@@ -76,7 +77,8 @@ public class VFileCreateEvent extends VFileEvent {
 
   @Override
   public VirtualFile getFile() {
-    return myParent.findChild(myChildName);
+    if (myCreatedFile != null) return myCreatedFile;
+    return myCreatedFile = myParent.findChild(myChildName);
   }
 
   @NotNull
