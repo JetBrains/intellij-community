@@ -625,7 +625,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       String message = logEntry.getMessage();
       SVNRevision rev = SVNRevision.create(logEntry.getRevision());
 //      final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
-      final SVNURL url = myRepositoryRoot.appendPath(entryPath.getPath(), true);
+      final SVNURL url = entryPath != null ? myRepositoryRoot.appendPath(entryPath.getPath(), true) :
+                         myRepositoryRoot.appendPath(myLastPath, true);
       return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath, myCharset);
     }
   }
