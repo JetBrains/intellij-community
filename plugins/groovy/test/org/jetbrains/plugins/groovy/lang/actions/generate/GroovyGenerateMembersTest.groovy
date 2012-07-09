@@ -21,13 +21,13 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.codeInsight.generation.*
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
 
 /**
  * @author peter
@@ -43,6 +43,28 @@ public class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
 
   public void testLonelyConstructor() {
     doConstructorTest();
+  }
+
+
+  public void testConstructorInJavaInheritor() throws Exception {
+    myFixture.configureByText "GrBase.groovy", """
+abstract class GrBase {
+    GrBase(int i) { }
+}
+"""
+    myFixture.configureByText "Inheritor.java", """
+class Inheritor extends GrBase {
+    <caret>
+}
+"""
+    generateConstructor(true)
+    myFixture.checkResult """
+class Inheritor extends GrBase {
+    Inheritor(int i) {
+        super(i);
+    }
+}
+"""
   }
 
   public void testExplicitArgumentTypes() {
@@ -293,7 +315,7 @@ class Foo {
 }"""
   }
 
-  void generateGetter() {
+  private void generateGetter() {
     //noinspection GroovyResultOfObjectAllocationIgnored
     new GroovyGenerateGetterSetterAction() //don't remove it!!!
     new WriteCommandAction(project, new PsiFile[0]) {
@@ -309,7 +331,7 @@ class Foo {
     }.execute()
   }
 
-  void generateSetter() {
+  private void generateSetter() {
     //noinspection GroovyResultOfObjectAllocationIgnored
     new GroovyGenerateGetterSetterAction() //don't remove it!!!
     new WriteCommandAction(project, new PsiFile[0]) {
@@ -331,16 +353,28 @@ class Foo {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  RunResult generateConstructor() {
+  private RunResult generateConstructor(boolean javaHandler = false) {
+    GenerateMembersHandlerBase handler
+    if (javaHandler) {
+      handler = new GenerateConstructorHandler() {
+        @Override protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
+          return members;
+        }
+      }
+    }
+    else {
+      handler = new GroovyGenerateConstructorHandler() {
+        @Override protected ClassMember[] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
+          List<ClassMember> members = aClass.fields.collect { new PsiFieldMember(it) }
+          members << new PsiMethodMember(aClass.superClass.constructors[0])
+          return members as ClassMember[]
+        }
+      }
+    }
+
     return new WriteCommandAction(project, new PsiFile[0]) {
       protected void run(Result result) throws Throwable {
-        new GroovyGenerateConstructorHandler() {
-          @Override protected ClassMember[] chooseOriginalMembersImpl(PsiClass aClass, Project project) {
-            List<ClassMember> members = aClass.fields.collect { new PsiFieldMember(it) }
-            members << new PsiMethodMember(aClass.superClass.constructors[0])
-            return members as ClassMember[]
-          }
-        }.invoke(project, myFixture.editor, myFixture.file);
+        handler.invoke(project, myFixture.editor, myFixture.file);
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       }
     }.execute()

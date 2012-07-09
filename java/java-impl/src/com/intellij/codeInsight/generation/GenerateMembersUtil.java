@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,9 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -33,10 +29,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -48,7 +42,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
@@ -237,17 +233,14 @@ public class GenerateMembersUtil {
     final JVMElementFactory factory = getFactory(sourceMethod, target);
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
-    final Module module = target != null ? ModuleUtil.findModuleForPsiElement(target) : null;
-    final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
-
     try {
       final PsiMethod resultMethod = createMethod(factory, sourceMethod);
       copyDocComment(sourceMethod, resultMethod);
       copyModifiers(sourceMethod.getModifierList(), resultMethod.getModifierList());
       final PsiSubstitutor collisionResolvedSubstitutor =
-        substituteTypeParameters(factory, codeStyleManager, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor);
+        substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
-      substituteParameters(project, factory, codeStyleManager, moduleScope, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor);
+      substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor);
       substituteThrows(factory, sourceMethod.getThrowsList(), resultMethod.getThrowsList(), collisionResolvedSubstitutor);
       return resultMethod;
     }
@@ -264,7 +257,6 @@ public class GenerateMembersUtil {
 
   @NotNull
   private static PsiSubstitutor substituteTypeParameters(@NotNull JVMElementFactory factory,
-                                                         @NotNull JavaCodeStyleManager codeStyleManager,
                                                          @Nullable PsiElement target,
                                                          @Nullable PsiTypeParameterList sourceTypeParameterList,
                                                          @Nullable PsiTypeParameterList targetTypeParameterList,
@@ -347,10 +339,8 @@ public class GenerateMembersUtil {
     return (PsiTypeParameter)RefactoringUtil.replaceElementsWithMap(copy, replacementMap);
   }
 
-  private static void substituteParameters(@NotNull Project project,
-                                           @NotNull JVMElementFactory factory,
+  private static void substituteParameters(@NotNull JVMElementFactory factory,
                                            @NotNull JavaCodeStyleManager codeStyleManager,
-                                           @Nullable GlobalSearchScope moduleScope,
                                            @NotNull PsiParameterList sourceParameterList,
                                            @NotNull PsiParameterList targetParameterList,
                                            @NotNull PsiSubstitutor substitutor) {
@@ -388,16 +378,7 @@ public class GenerateMembersUtil {
 
       if (paramName == null) paramName = "p" + i;
       final PsiParameter newParameter = factory.createParameter(paramName, substituted);
-      if (parameter.getLanguage() == newParameter.getLanguage()) {
-        PsiModifierList modifierList = newParameter.getModifierList();
-        modifierList = (PsiModifierList)modifierList.replace(parameter.getModifierList());
-        if (parameter.getLanguage() == JavaLanguage.INSTANCE) {
-          processAnnotations(project, modifierList, moduleScope);
-        }
-      }
-      else {
-        GenerateConstructorHandler.copyModifierList(factory, parameter, newParameter);
-      }
+      copyOrReplaceModifierList(parameter, newParameter);
       targetParameterList.add(newParameter);
     }
   }
@@ -462,27 +443,6 @@ public class GenerateMembersUtil {
     return isBaseNameGenerated;
   }
 
-  private static void processAnnotations(Project project, PsiModifierList modifierList, GlobalSearchScope moduleScope) {
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final Set<String> toRemove = new HashSet<String>();
-    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-      final String qualifiedName = annotation.getQualifiedName();
-      for (OverrideImplementsAnnotationsHandler handler : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
-        final String[] annotations2Remove = handler.annotationsToRemove(project, qualifiedName);
-        Collections.addAll(toRemove, annotations2Remove);
-        if (moduleScope != null && psiFacade.findClass(qualifiedName, moduleScope) == null) {
-          toRemove.add(qualifiedName);
-        }
-      }
-    }
-    for (String fqn : toRemove) {
-      final PsiAnnotation psiAnnotation = modifierList.findAnnotation(fqn);
-      if (psiAnnotation != null) {
-        psiAnnotation.delete();
-      }
-    }
-  }
-
   private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type) {
     final PsiType psiType = substitutor.substitute(type);
     if (psiType != null) return psiType;
@@ -529,5 +489,24 @@ public class GenerateMembersUtil {
 
     OverrideImplementUtil.setupMethodBody(method, overridden, method.getContainingClass());
     OverrideImplementUtil.annotateOnOverrideImplement(method, base, overridden);
+  }
+
+  public static void copyOrReplaceModifierList(@NotNull PsiModifierListOwner sourceParam, @NotNull PsiModifierListOwner targetParam) {
+    PsiModifierList sourceModifierList = sourceParam.getModifierList();
+    PsiModifierList targetModifierList = targetParam.getModifierList();
+    if (sourceModifierList != null && targetModifierList != null) {
+      if (sourceParam.getLanguage() == targetParam.getLanguage()) {
+        targetModifierList.replace(sourceModifierList);
+      }
+      else {
+        JVMElementFactory factory = JVMElementFactories.requireFactory(targetParam.getLanguage(), targetParam.getProject());
+        for (PsiAnnotation annotation : sourceModifierList.getAnnotations()) {
+          targetModifierList.add(factory.createAnnotationFromText(annotation.getText(), targetParam));
+        }
+        for (@PsiModifier.ModifierConstant String m : PsiModifier.MODIFIERS) {
+          targetModifierList.setModifierProperty(m, sourceParam.hasModifierProperty(m));
+        }
+      }
+    }
   }
 }
