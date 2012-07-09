@@ -535,7 +535,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     //the string above doesn't update tree immediately so we should simulate update
     myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
 
-    assertAllOutputs(myMockResetablePrinter, "preved", "","Empty test suite.\nEmpty test suite.\n");
+    assertAllOutputs(myMockResetablePrinter, "preved", "","Empty test suite.\n");
   }
 
   @NotNull
