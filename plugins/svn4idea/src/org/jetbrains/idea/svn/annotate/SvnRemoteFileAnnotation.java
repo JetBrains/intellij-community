@@ -15,12 +15,9 @@
  */
 package org.jetbrains.idea.svn.annotate;
 
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -34,20 +31,19 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 public class SvnRemoteFileAnnotation extends BaseSvnFileAnnotation {
   private final SvnChangeList mySvnChangeList;
   private final String myPathToSelect;
+  private final VirtualFile myCurrentFile;
 
   public SvnRemoteFileAnnotation(SvnVcs vcs, String contents, VcsRevisionNumber baseRevision, SvnChangeList svnChangeList,
-                                 final String pathToSelect) {
+                                 final String pathToSelect, final VirtualFile currentFile) {
     super(vcs, contents, baseRevision);
     mySvnChangeList = svnChangeList;
     myPathToSelect = pathToSelect;
+    myCurrentFile = currentFile;
   }
 
   @Override
   protected void showAllAffectedPaths(SvnRevisionNumber number) {
-    final AbstractVcsHelper instance = AbstractVcsHelper.getInstance(myVcs.getProject());
-    final String title = VcsBundle.message("paths.affected.in.revision", myBaseRevision.asString());
-    instance.showChangesListBrowser(mySvnChangeList,
-      new VcsVirtualFile(myPathToSelect, myContents.getBytes(CharsetToolkit.UTF8_CHARSET), number.asString(), VcsFileSystem.getInstance()), title);
+    ShowAllAffectedGenericAction.showSubmittedFiles(myVcs.getProject(), number, myCurrentFile, SvnVcs.getKey(), null, false);
   }
 
   @Override

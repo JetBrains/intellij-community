@@ -589,6 +589,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
           if (myCurrentPath.equals(entryPath.getPath())) {
             myHadChanged = true;
             myCurrentPath = entryPath.getCopyPath();
+            return;
+          } else if (SVNPathUtil.isAncestor(entryPath.getPath(), myCurrentPath)) {
+            final String relativePath = SVNPathUtil.getRelativePath(entryPath.getPath(), myCurrentPath);
+            myCurrentPath = SVNPathUtil.append(entryPath.getCopyPath(), relativePath);
+            myHadChanged = true;
+            return;
           }
         }
       }
