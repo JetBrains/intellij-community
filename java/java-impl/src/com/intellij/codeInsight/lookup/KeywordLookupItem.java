@@ -30,7 +30,6 @@ public class KeywordLookupItem extends LookupItem<PsiKeyword> implements TypedLo
   public KeywordLookupItem(final PsiKeyword keyword, @NotNull PsiElement position) {
     super(keyword, keyword.getText());
     myPosition = position;
-    setBold();
   }
 
   @Override
@@ -41,6 +40,12 @@ public class KeywordLookupItem extends LookupItem<PsiKeyword> implements TypedLo
   @Override
   public int hashCode() {
     return getLookupString().hashCode();
+  }
+
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    presentation.setItemText(getLookupString());
+    presentation.setItemTextBold(true);
   }
 
   public PsiType getType() {
