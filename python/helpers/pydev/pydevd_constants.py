@@ -66,7 +66,9 @@ except AttributeError:
     except:
         IS_64_BITS = False
 
-USE_LIB_COPY = not IS_PY3K and sys.version_info[1] >= 6
+#USE_LIB_COPY = not IS_PY3K and sys.version_info[1] >= 6 TODO: revert
+
+USE_LIB_COPY = False
 
 if USE_LIB_COPY:
     import _pydev_threading as threading

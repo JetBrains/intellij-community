@@ -154,7 +154,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
         final PyExpression packageReferenceExpression = expressions.get(0);
         final String packageName = packageReferenceExpression.getName();
         if (packageName != null && !myIgnoredPackages.contains(packageName)) {
-          if (!PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
+          if (!ApplicationManager.getApplication().isUnitTestMode() && !PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
             return;
           }
           final Collection<String> stdlibPackages = PyStdlibUtil.getPackages();

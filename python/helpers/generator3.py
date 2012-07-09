@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.112" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.114" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
@@ -2043,6 +2043,45 @@ class ModuleRedeclarator(object):
                     "    __dict__ = {}" "\n"
                     "    __doc__ = ''" "\n"
                 )
+                self.classes_buf.out(0, txt)
+
+            if self.doing_builtins and p_name == BUILTIN_MOD_NAME:
+                # Fake <type 'generator'>
+                if version[0] < 3:
+                    next_name = "next"
+                else:
+                    next_name = "__next__"
+                txt = """
+class __generator(object):
+    '''A mock class representing the generator function type.'''
+    def __init__(self):
+        self.gi_code = None
+        self.gi_frame = None
+        self.gi_running = 0
+
+    def __iter__(self):
+        '''Defined to support iteration over container.'''
+        pass
+
+    def %s(self):
+        '''Return the next item from the container.'''
+        pass
+""" % (next_name,)
+
+                if version[0] >= 3 or (version[0] == 2 and version[1] >= 5):
+                    txt += """
+    def close(self):
+        '''Raises new GeneratorExit exception inside the generator to terminate the iteration.'''
+        pass
+
+    def send(self, value):
+        '''Resumes the generator and "sends" a value that becomes the result of the current yield-expression.'''
+        pass
+
+    def throw(self, type, value=None, traceback=None):
+        '''Used to raise an exception inside the generator.'''
+        pass
+"""
                 self.classes_buf.out(0, txt)
 
         else:

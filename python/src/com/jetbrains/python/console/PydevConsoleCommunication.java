@@ -1,6 +1,7 @@
 package com.jetbrains.python.console;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,9 +14,7 @@ import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PydevXmlUtils;
-import org.apache.xmlrpc.WebServer;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.XmlRpcHandler;
+import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.MalformedURLException;
@@ -79,7 +78,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     super(project);
 
     //start the server that'll handle input requests
-    webServer = new WebServer(clientPort);
+    webServer = new IdeaAwareWebServer(clientPort, null, new IdeaAwareXmlRpcServer());
     webServer.addHandler("$default", this);
     this.webServer.start();
 
@@ -155,7 +154,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   private Object execNotifyAboutMagic(Vector params) {
-    List<String> commands = (List<String>) params.get(0);
+    List<String> commands = (List<String>)params.get(0);
     boolean isAutoMagic = (Boolean)params.get(1);
 
     if (getConsoleFile() != null) {

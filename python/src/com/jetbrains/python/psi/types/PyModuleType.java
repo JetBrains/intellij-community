@@ -84,6 +84,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         if (owner != null) {
           importElements.addAll(getVisibleImports(owner));
         }
+        if (!inSameFile(location, myModule)) {
+          importElements.addAll(myModule.getImportTargets());
+        }
       }
       final List<? extends RatedResolveResult> implicitMembers = resolveImplicitPackageMember(name, importElements);
       if (implicitMembers != null) {
@@ -98,8 +101,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                           @NotNull List<PyImportElement> importElements) {
     final PyQualifiedName packageQName = ResolveImportUtil.findCanonicalImportPath(myModule, null);
     if (packageQName != null) {
+      final PyQualifiedName resolvingQName = packageQName.append(name);
       for (PyImportElement importElement : importElements) {
-        final PyQualifiedName resolvingQName = packageQName.append(name);
         for (PyQualifiedName qName : getCanonicalImportedQNames(importElement)) {
           if (qName.matchesPrefix(resolvingQName)) {
             final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true);
@@ -259,7 +262,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         result.addAll(processor.getResultList());
       }
     }
-    if (PyNames.INIT_DOT_PY.equals(myModule.getName())) { // our module is a dir, not a single file
+    if (PyUtil.isPackage(myModule)) { // our module is a dir, not a single file
       if (point == ResolveImportUtil.PointInImport.AS_MODULE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when imported from somehow, add submodules
         result.addAll(getSubModuleVariants(myModule.getContainingDirectory(), location, names_already));
       }
@@ -274,15 +277,18 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     PsiFile file = location.getContainingFile();
     if (file instanceof PyFile) {
       PyFile pyFile = (PyFile)file;
-      PsiElement moduleBase = myModule.getName().equals(PyNames.INIT_DOT_PY) ? myModule.getContainingDirectory() : myModule;
+      PsiElement moduleBase = PyUtil.isPackage(myModule) ? myModule.getContainingDirectory() : myModule;
       for (PyImportElement importElement : pyFile.getImportTargets()) {
         PsiElement target = ResolveImportUtil.resolveImportElement(importElement);
         if (target != null && PsiTreeUtil.isAncestor(moduleBase, target, true)) {
+          if (target instanceof PsiFile && PyUtil.isPackage((PsiFile)target)) {
+            continue;
+          }
           LookupElement element = null;
           if (target instanceof PsiFileSystemItem) {
             element = buildFileLookupElement(location, names_already, (PsiFileSystemItem) target);
           }
-          if (element == null && target instanceof PsiNamedElement) {
+          else if (target instanceof PsiNamedElement) {
             element = LookupElementBuilder.create((PsiNamedElement)target).withIcon(target.getIcon(0));
           }
           if (element != null) {

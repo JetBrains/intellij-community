@@ -32,9 +32,8 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_LOAD_SOURCE, \
                          CMD_ADD_DJANGO_EXCEPTION_BREAK, \
                          CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
-                         CMD_SMART_STEP_INTO, \
-                         GetGlobalDebugger, \
-                         InternalChangeVariable, \
+                         CMD_SMART_STEP_INTO,\
+    InternalChangeVariable, \
                          InternalGetCompletions, \
                          InternalEvaluateExpression, \
                          InternalConsoleExec, \
@@ -63,7 +62,6 @@ import traceback
 import pydevd_vm_type
 import pydevd_tracing
 import pydevd_io
-import pydev_log
 import pydev_monkey
 from pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 
@@ -155,10 +153,14 @@ class PyDBCommandThread(PyDBDaemonThread):
             #only got this error in interpreter shutdown
             #PydevdLog(0, 'Finishing debug communication...(3)')
 
-try:
+if USE_LIB_COPY:
     import _pydev_thread as thread
-except ImportError:
-    import _thread as thread #Py3K changed it.
+else:
+    try:
+        import thread
+    except ImportError:
+        import _thread as thread #Py3K changed it.
+
 _original_start_new_thread = thread.start_new_thread
 
 if getattr(thread, '_original_start_new_thread', None) is None:
@@ -189,10 +191,13 @@ def _pydev_start_new_thread(function, args, kwargs={}):
     We need to replace the original thread.start_new_thread with this function so that threads started through
     it and not through the threading module are properly traced.
     '''
-    try:
-        import _pydev_thread
-    except ImportError:
-        import _thread as thread #Py3K changed it.
+    if USE_LIB_COPY:
+        import _pydev_thread as thread
+    else:
+        try:
+            import thread
+        except ImportError:
+            import _thread as thread #Py3K changed it.
 
     return thread._original_start_new_thread(thread.NewThreadStartup(function, args, kwargs), ())
 

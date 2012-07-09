@@ -573,4 +573,9 @@ public class PythonCompletionTest extends PyTestCase {
   public void testFakeNameInQualifiedReference() {
     doTest();
   }
+
+  // PY-6603
+  public void testNoInitForSubmodules() {
+    doMultiFileTest();
+  }
 }
