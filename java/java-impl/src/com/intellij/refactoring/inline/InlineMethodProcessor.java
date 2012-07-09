@@ -1098,7 +1098,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
       }
       else {
-        LOG.assertTrue(resultUsage == null);
+        LOG.assertTrue(resultUsage == null, "old:" + resultUsage + "; new:" + ref);
         resultUsage = ref;
       }
     }
