@@ -110,14 +110,10 @@ public class RollbackChangesDialog extends DialogWrapper {
     }
 
     String operationName = RollbackUtil.getRollbackOperationName(affectedVcs);
-    int pos = operationName.indexOf(UIUtil.MNEMONIC);
-    if (pos >= 0) {
-      setOKButtonMnemonic(Character.toUpperCase(operationName.charAt(pos + 1)));
-      operationName = operationName.replace(Character.toString(UIUtil.MNEMONIC), "");
-    }
-
-    setTitle(VcsBundle.message("changes.action.rollback.custom.title", operationName).replace("_", ""));
     setOKButtonText(operationName);
+
+    operationName = UIUtil.removeMnemonic(operationName);
+    setTitle(VcsBundle.message("changes.action.rollback.custom.title", operationName));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     myBrowser.setToggleActionTitle("Include in " + operationName.toLowerCase());
 
