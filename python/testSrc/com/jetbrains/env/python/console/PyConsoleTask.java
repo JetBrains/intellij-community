@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.console;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -10,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
@@ -19,6 +21,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -234,18 +237,20 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   public void waitForOutput(String... string) throws InterruptedException {
     int count = 0;
     while (true) {
+      List<String> missing = Lists.newArrayList();
       String out = output();
       boolean flag = true;
       for (String s : string) {
         if (!out.contains(s)) {
           flag = false;
+          missing.add(s);
         }
       }
       if (flag) {
         break;
       }
       if (count > 10) {
-        Assert.fail("'" + string + "'" + " is not present in output.\n" + output());
+        Assert.fail("Strings: <--\n" + StringUtil.join(missing, "\n---\n") + "-->" + "are not present in output.\n" + output());
       }
       Thread.sleep(2000);
       count++;
