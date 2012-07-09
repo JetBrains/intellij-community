@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -338,10 +339,15 @@ public class SMTestProxy extends AbstractTestProxy {
                             @Nullable final String stackTrace,
                             final boolean testError) {
     setStacktraceIfNotSet(stackTrace);
-    myState = testError
-              ? new TestErrorState(localizedMessage, stackTrace)
-              : new TestFailedState(localizedMessage, stackTrace);
-    fireOnNewPrintable(myState);
+    if (myState instanceof TestFailedState) {
+      ((TestFailedState) myState).addError(localizedMessage, stackTrace, myPrinter);
+    }
+    else {
+      myState = testError
+                ? new TestErrorState(localizedMessage, stackTrace)
+                : new TestFailedState(localizedMessage, stackTrace);
+      fireOnNewPrintable(myState);
+    }
   }
 
   public void setTestComparisonFailed(@NotNull final String localizedMessage,
@@ -365,7 +371,7 @@ public class SMTestProxy extends AbstractTestProxy {
     myParent = parent;
   }
 
-  public List<? extends SMTestProxy> collectChildren(@Nullable final Filter filter) {
+  public List<? extends SMTestProxy> collectChildren(@Nullable final Filter<SMTestProxy> filter) {
     return filterChildren(filter, collectChildren());
   }
 
@@ -471,7 +477,7 @@ public class SMTestProxy extends AbstractTestProxy {
         final String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
         LOG.assertTrue(errorText != null);
 
-        TestFailedState.printError(printer, errorText);
+        TestFailedState.printError(printer, Arrays.asList(errorText));
       }
     });
   }
