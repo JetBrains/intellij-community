@@ -27,6 +27,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionStatus;
+import org.jetbrains.android.util.StringBuildingOutputProcessor;
+import org.jetbrains.android.util.WaitingStrategies;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
@@ -79,10 +81,11 @@ public class AndroidMavenExecutor {
       }
 
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParams);
-      StringBuilder messageBuilder = new StringBuilder();
-      boolean success = AndroidUtils.executeCommand(commandLine, messageBuilder, null) == ExecutionStatus.SUCCESS;
-      String message = messageBuilder.toString();
-      if (message != null && !success) {
+      final StringBuildingOutputProcessor processor = new StringBuildingOutputProcessor();
+      boolean success =
+        AndroidUtils.executeCommand(commandLine, processor, WaitingStrategies.WaitForever.getInstance()) == ExecutionStatus.SUCCESS;
+      String message = processor.getMessage();
+      if (!success) {
         LOG.info(message);
         String lcmessage = message.toLowerCase();
         int buildErrorIndex = lcmessage.indexOf(BUILD_ERROR_INDICATOR);

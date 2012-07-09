@@ -567,4 +567,17 @@ public class AndroidCommonUtils {
       }
     }
   }
+
+  @NotNull
+  public static String getStackTrace(@NotNull Throwable t) {
+    final StringWriter stringWriter = new StringWriter();
+    final PrintWriter writer = new PrintWriter(stringWriter);
+    try {
+      t.printStackTrace(writer);
+      return stringWriter.toString();
+    }
+    finally {
+      writer.close();
+    }
+  }
 }

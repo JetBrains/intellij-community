@@ -30,7 +30,9 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.facet.FacetManager;
@@ -339,27 +341,29 @@ public class AndroidUtils {
 
   @NotNull
   public static ExecutionStatus executeCommand(@NotNull GeneralCommandLine commandLine,
-                                               @NotNull final StringBuilder messageBuilder,
-                                               @Nullable Integer timeout) throws ExecutionException {
+                                               @Nullable final OutputProcessor processor,
+                                               @Nullable WaitingStrategies.Strategy strategy) throws ExecutionException {
     LOG.info(commandLine.getCommandLineString());
     OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), "");
 
-    final StringBuffer buffer = new StringBuffer();
     final ProcessAdapter listener = new ProcessAdapter() {
       public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        buffer.append(event.getText());
+        if (processor != null) {
+          final String message = event.getText();
+          processor.onTextAvailable(message);
+        }
       }
     };
 
-    if (timeout == null || timeout > 0) {
+    if (!(strategy instanceof WaitingStrategies.DoNotWait)) {
       handler.addProcessListener(listener);
     }
 
     handler.startNotify();
     try {
-      if (timeout != null) {
-        if (timeout > 0) {
-          handler.waitFor(timeout);
+      if (!(strategy instanceof WaitingStrategies.WaitForever)) {
+        if (strategy instanceof WaitingStrategies.WaitForTime) {
+          handler.waitFor(((WaitingStrategies.WaitForTime)strategy).getTimeMs());
         }
       }
       else {
@@ -374,58 +378,37 @@ public class AndroidUtils {
       return ExecutionStatus.TIMEOUT;
     }
 
-    if (timeout == null || timeout > 0) {
+    if (!(strategy instanceof WaitingStrategies.DoNotWait)) {
       handler.removeProcessListener(listener);
-      final String message = buffer.toString();
-      messageBuilder.append(message);
-      LOG.info(message);
     }
-
     int exitCode = handler.getProcess().exitValue();
     return exitCode == 0 ? ExecutionStatus.SUCCESS : ExecutionStatus.ERROR;
   }
 
-  public static void runExternalToolInSeparateThread(@NotNull final GeneralCommandLine commandLine,
-                                                     @Nullable final ProcessHandler processHandler) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        runExternalTool(commandLine, processHandler, false, null);
-      }
-    });
-  }
-
-  public static void runExternalTool(@NotNull GeneralCommandLine commandLine,
-                                     @Nullable ProcessHandler processHandler,
-                                     boolean printOutputToAndroidConsole,
-                                     @Nullable final Project project) {
-    StringBuilder messageBuilder = new StringBuilder();
+  public static void runExternalTool(@NotNull GeneralCommandLine commandLine, @Nullable final Project project) {
+    final StringBuildingOutputProcessor processor = new StringBuildingOutputProcessor();
     String result;
     boolean success = false;
     try {
-      success = executeCommand(commandLine, messageBuilder, null) == ExecutionStatus.SUCCESS;
-      result = messageBuilder.toString();
+      success = executeCommand(commandLine, processor, WaitingStrategies.WaitForever.getInstance()) == ExecutionStatus.SUCCESS;
+      result = processor.getMessage();
     }
     catch (ExecutionException e) {
       result = e.getMessage();
     }
 
     if (result != null) {
-      if (printOutputToAndroidConsole) {
-        final ConsoleViewContentType contentType = success ?
-                                                   ConsoleViewContentType.NORMAL_OUTPUT :
-                                                   ConsoleViewContentType.ERROR_OUTPUT;
-        final String finalResult = result;
-        assert project != null;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            printMessageToConsole(project, finalResult, contentType);
-          }
-        });
-      }
-      else if (processHandler != null) {
-        processHandler.notifyTextAvailable(result + '\n', ProcessOutputTypes.STDOUT);
-      }
+      final ConsoleViewContentType contentType = success ?
+                                                 ConsoleViewContentType.NORMAL_OUTPUT :
+                                                 ConsoleViewContentType.ERROR_OUTPUT;
+      final String finalResult = result;
+      assert project != null;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          printMessageToConsole(project, finalResult, contentType);
+        }
+      });
     }
   }
 

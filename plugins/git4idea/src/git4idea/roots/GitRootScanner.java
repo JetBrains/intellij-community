@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -79,8 +78,8 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
-      VirtualFile file = event.getFile();
-      if (file != null && file.getName().equalsIgnoreCase(GitUtil.DOT_GIT) && file.isDirectory()) {
+      String filePath = event.getPath();
+      if (filePath != null && filePath.toLowerCase().endsWith(GitUtil.DOT_GIT)) {
         scanIfReady();
       }
     }
