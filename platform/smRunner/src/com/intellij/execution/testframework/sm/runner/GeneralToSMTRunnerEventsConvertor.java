@@ -300,21 +300,20 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
           }
         }
 
-        // check if has been already processed
-        if (myFailedTestsSet.contains(testProxy)) {
-          // duplicate message
-          logProblem("Duplicate failure for test [" + fullTestName + "]: msg = " + localizedMessage + ", stacktrace = " + stackTrace);
-
-          if (inDebugMode) {
-            return;
-          }
-        }
-
         if (testProxy == null) {
           return;
         }
 
         if (comparisionFailureActualText != null && comparisionFailureExpectedText != null) {
+          if (myFailedTestsSet.contains(testProxy)) {
+            // duplicate message
+            logProblem("Duplicate failure for test [" + fullTestName + "]: msg = " + localizedMessage + ", stacktrace = " + stackTrace);
+
+            if (inDebugMode) {
+              return;
+            }
+          }
+
           testProxy.setTestComparisonFailed(localizedMessage, stackTrace,
                                             comparisionFailureActualText, comparisionFailureExpectedText);
         } else if (comparisionFailureActualText == null && comparisionFailureExpectedText == null) {

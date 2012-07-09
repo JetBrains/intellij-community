@@ -15,14 +15,19 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerTestTreeView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
+import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +45,28 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   private GeneralToSMTRunnerEventsConvertor myEventsProcessor;
   private TreeModel myTreeModel;
   private SMTestRunnerResultsForm myResultsViewer;
+  private MockPrinter myMockResettablePrinter;
+
+  private class MyConsoleView extends SMTRunnerConsoleView {
+    private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
+
+    private MyConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
+                          final ConfigurationPerRunnerSettings configurationPerRunnerSettings) {
+      super(consoleProperties, runnerSettings, configurationPerRunnerSettings);
+
+      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties, null) {
+        @Override
+        public void print(final String text, final ConsoleViewContentType contentType) {
+          myMockResettablePrinter.print(text, contentType);
+        }
+      };
+    }
+
+    @Override
+    public TestsOutputConsolePrinter getPrinter() {
+      return myTestsOutputConsolePrinter;
+    }
+  }
 
   @Override
   protected void setUp() throws Exception {
@@ -53,7 +80,8 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     TestConsoleProperties.TRACK_RUNNING_TEST.set(consoleProperties, false);
 
     final ExecutionEnvironment environment = new ExecutionEnvironment();
-    myConsole = new SMTRunnerConsoleView(consoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
+    myMockResettablePrinter = new MockPrinter(true);
+    myConsole = new MyConsoleView(consoleProperties, environment.getRunnerSettings(), environment.getConfigurationSettings());
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode(), "SMTestFramework");
@@ -151,6 +179,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   }
 
   public void testOnTestFailure_Twice() {
+    myMockResettablePrinter.resetIfNecessary();
     onTestStarted("some_test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "msg 1", "trace 1", false, null, null));
     myEventsProcessor.onTestFailure(new TestFailedEvent("some_test", "msg 2", "trace 2", false, null, null));
@@ -161,6 +190,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     for (final AbstractTestProxy test : failedTests) {
       assertEquals("some_test", test.getName());
     }
+    assertEquals("\nmsg 1\ntrace 1\n\nmsg 2\ntrace 2\n", myMockResettablePrinter.getStdErr());
   }
 
   public void testOnTestError() {

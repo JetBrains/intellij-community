@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
 
@@ -176,6 +177,39 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
   }
 
+  public void testTestFailedTwice() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("msg 1", "stack trace 1", false);
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+    final MockPrinter printer = new MockPrinter(true);
+    mySimpleTest.printOn(printer);
+    assertEquals("", printer.getStdOut());
+    assertEquals("\nmsg 1\nstack trace 1\n", printer.getStdErr());
+    assertEquals("", printer.getStdSys());
+
+    mySimpleTest.setTestFailed("msg 2", "stack trace 2", false);
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+    printer.resetIfNecessary();
+    mySimpleTest.printOn(printer);
+    assertEquals("", printer.getStdOut());
+    assertEquals("\nmsg 1\nstack trace 1\n\nmsg 2\nstack trace 2\n", printer.getStdErr());
+    assertEquals("", printer.getStdSys());
+
+    mySimpleTest.setFinished();
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+  }
 
   public void testTestFailed_ComparisonAssertion() {
     mySimpleTest.setStarted();
@@ -191,7 +225,6 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
-
     assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
   }
 
