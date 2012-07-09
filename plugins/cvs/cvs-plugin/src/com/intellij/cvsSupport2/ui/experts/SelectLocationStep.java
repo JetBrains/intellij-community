@@ -80,8 +80,9 @@ public abstract class SelectLocationStep extends WizardStep {
     myFileSystemTree = FileSystemTreeFactory.SERVICE.getInstance().createFileSystemTree(project, myChooserDescriptor);
     myFileSystemTree.updateTree();
 
-    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(),
-                                                FileChooserFactoryImpl.getMacroMap(), myFileSystemTree) {
+    myPathTextField = new FileTextFieldImpl.Vfs(
+      FileChooserFactoryImpl.getMacroMap(), myFileSystemTree,
+      new LocalFsFinder.FileChooserFilter(myChooserDescriptor, myFileSystemTree)) {
       protected void onTextChanged(final String newValue) {
         updateTreeFromPath(newValue);
       }

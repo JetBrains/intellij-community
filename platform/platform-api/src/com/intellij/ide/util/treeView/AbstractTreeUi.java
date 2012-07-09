@@ -136,7 +136,7 @@ public class AbstractTreeUi {
     }
   };
 
-  private final RegistryValue myYieldingUpdate = Registry.get("ide.tree.yeildingUiUpdate");
+  private final RegistryValue myYieldingUpdate = Registry.get("ide.tree.yieldingUiUpdate");
   private final RegistryValue myShowBusyIndicator = Registry.get("ide.tree.showBusyIndicator");
   private final RegistryValue myWaitForReadyTime = Registry.get("ide.tree.waitForReadyTimeout");
 

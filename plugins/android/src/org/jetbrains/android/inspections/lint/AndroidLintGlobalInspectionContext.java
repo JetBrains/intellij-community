@@ -193,7 +193,7 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
           final Position start = location.getStart();
           final Position end = location.getEnd();
           
-          if (start != null && end != null) {
+          if (start != null && end != null && start.getOffset() <= end.getOffset()) {
             textRange = new TextRange(start.getOffset(), end.getOffset());
           }
         }

@@ -26,6 +26,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -273,7 +274,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
       String[] namedParameters = stub.getNamedParameters();
       if (namedParameters.length == 0) return Collections.emptyMap();
 
-      Map<String, NamedArgumentDescriptor> result = Maps.newHashMap();
+      Map<String, NamedArgumentDescriptor> result = ContainerUtil.newHashMap();
       for (String parameter : namedParameters) {
         result.put(parameter, GrNamedArgumentSearchVisitor.CODE_NAMED_ARGUMENTS_DESCR);
       }

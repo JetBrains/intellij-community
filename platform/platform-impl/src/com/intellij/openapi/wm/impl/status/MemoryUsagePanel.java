@@ -49,7 +49,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   private long myLastTotal = -1;
   private long myLastUsed = -1;
   private ScheduledFuture<?> myFuture;
-  private BufferedImage myBufferedImage;
+  private Image myBufferedImage;
   private boolean myWasPressed;
 
   public MemoryUsagePanel() {
@@ -114,7 +114,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
     myWasPressed = pressed;
 
     if (myBufferedImage == null || forced) {
-      myBufferedImage = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+      myBufferedImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
       final Graphics bg = myBufferedImage.getGraphics().create();
 
       final Runtime runtime = Runtime.getRuntime();

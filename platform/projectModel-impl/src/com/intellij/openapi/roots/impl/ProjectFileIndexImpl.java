@@ -170,9 +170,9 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public boolean isInSource(@NotNull VirtualFile fileOrDir) {
-    if (fileOrDir.isDirectory()) {
-      DirectoryInfo info = getInfoForDirectory(fileOrDir);
-      return info != null && (info.isInModuleSource || info.isInLibrarySource);
+    DirectoryInfo info = getInfoForDirectory(fileOrDir);
+    if (info != null) {
+      return info.isInModuleSource || info.isInLibrarySource;
     }
     else {
       VirtualFile parent = fileOrDir.getParent();

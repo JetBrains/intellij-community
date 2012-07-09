@@ -49,9 +49,9 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected ToolWindow myToolWindow = null;
   protected boolean myAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(getAutoUpdateEnabledProperty());
   protected Runnable myAutoUpdateRequest;
-  protected final Project myProject;
+  @NotNull protected final Project myProject;
 
-  public DockablePopupManager(Project project) {
+  public DockablePopupManager(@NotNull Project project) {
     myProject = project;
   }
 
@@ -150,7 +150,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
       if (myAutoUpdateRequest == null) {
         myAutoUpdateRequest = new Runnable() {
           public void run() {
-            if (myProject.isDisposed()) return;
+            if (!myAutoUpdateDocumentation || myProject.isDisposed()) return;
 
             AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
             DataContext dataContext = asyncResult.getResult();

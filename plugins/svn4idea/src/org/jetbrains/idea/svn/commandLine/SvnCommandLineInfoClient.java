@@ -28,7 +28,6 @@ import org.tmatesoft.svn.core.wc.ISVNInfoHandler;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.xml.sax.SAXException;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -36,7 +35,6 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.StringBufferInputStream;
 import java.util.Collection;
 
 /**
@@ -150,7 +148,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
   @Override
   public void doInfo(SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, ISVNInfoHandler handler)
     throws SVNException {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override

@@ -16,14 +16,13 @@
 
 package com.intellij.util.xmlb;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
 import org.jdom.Element;
@@ -208,7 +207,7 @@ class BeanBinding implements Binding {
       return accessors;
     }
 
-    accessors = Lists.newArrayList();
+    accessors = ContainerUtil.newArrayList();
 
     if (aClass != Rectangle.class) {   // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
       collectPropertyAccessors(aClass, accessors);
@@ -221,7 +220,7 @@ class BeanBinding implements Binding {
   }
 
   private static void collectPropertyAccessors(Class<?> aClass, List<Accessor> accessors) {
-    final Map<String, Pair<Method, Method>> candidates = Maps.newTreeMap();  // (name,(getter,setter))
+    final Map<String, Pair<Method, Method>> candidates = ContainerUtil.newTreeMap();  // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) continue;
       final Pair<String, Boolean> propertyData = getPropertyData(method.getName());  // (name,isSetter)

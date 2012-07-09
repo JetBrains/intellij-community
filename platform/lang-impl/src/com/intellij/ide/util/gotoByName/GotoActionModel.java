@@ -62,7 +62,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   private Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
     @Override
     public int compare(AnAction o1, AnAction o2) {
-      return Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
+      int compare = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
+      if (compare == 0 && !o1.equals(o2)) {
+        return o1.hashCode() - o2.hashCode();
+      }
+      return compare;
     }
   });
   private final SearchableOptionsRegistrar myIndex;
@@ -312,7 +316,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           collectActions(result, actionGroup, StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName);
         } else {
           final String groupName = group.getTemplatePresentation().getText();
-          result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
+          if (result.containsKey(action)) {
+            result.put(action, null);
+          } else {
+            result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
+          }
         }
       }
     }
@@ -490,6 +498,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   @Override
   public boolean willOpenEditor() {
+    return false;
+  }
+
+  @Override
+  public boolean useMiddleMatching() {
     return false;
   }
 }

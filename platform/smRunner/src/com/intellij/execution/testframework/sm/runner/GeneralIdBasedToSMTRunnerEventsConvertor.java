@@ -15,8 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
@@ -27,6 +25,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.testIntegration.TestLocationProvider;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class.getName());
 
   private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
-  private final Set<Node> myRunningNodes = Sets.newHashSet();
+  private final Set<Node> myRunningNodes = ContainerUtil.newHashSet();
   private final List<SMTRunnerEventsListener> myEventsListeners = new ArrayList<SMTRunnerEventsListener>();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
@@ -488,7 +488,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
 
   @NotNull
   private Node findActiveNode() {
-    List<Node> runningLeaves = Lists.newArrayListWithExpectedSize(1);
+    List<Node> runningLeaves = ContainerUtilRt.newArrayListWithExpectedSize(1);
     for (Node node : myRunningNodes) {
       if (!node.hasRunningChildren()) {
         runningLeaves.add(node);
@@ -636,7 +636,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
 
     @NotNull
     public List<Node> getAncestorsFromParentToRoot() {
-      List<Node> ancestors = Lists.newArrayList();
+      List<Node> ancestors = ContainerUtilRt.newArrayList();
       Node parent = getParentNode();
       while (parent != null) {
         ancestors.add(parent);

@@ -16,15 +16,15 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -44,7 +44,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
       ranges = expandToWholeLine(editorText, originalRange, false);
     }
 
-    List<TextRange> result = Lists.newArrayList();
+    List<TextRange> result = ContainerUtil.newArrayList();
     result.addAll(ranges);
     return result;
   }

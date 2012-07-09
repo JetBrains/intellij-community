@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.util;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -955,7 +954,7 @@ public class PsiTreeUtil {
   public static List<PsiElement> getInjectedElements(@NotNull OuterLanguageElement outerLanguageElement) {
     PsiElement psi = outerLanguageElement.getContainingFile().getViewProvider().getPsi(outerLanguageElement.getLanguage());
     TextRange injectionRange = outerLanguageElement.getTextRange();
-    List<PsiElement> res = Lists.newArrayList();
+    List<PsiElement> res = ContainerUtil.newArrayList();
 
     assert psi != null : outerLanguageElement;
     for (PsiElement element = psi.findElementAt(injectionRange.getStartOffset());

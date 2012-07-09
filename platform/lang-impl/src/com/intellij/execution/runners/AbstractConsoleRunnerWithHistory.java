@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.runners;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.*;
@@ -36,6 +35,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,7 +207,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
                                               final Executor defaultExecutor,
                                               final RunContentDescriptor contentDescriptor) {
 
-    List<AnAction> actionList = Lists.newArrayList();
+    List<AnAction> actionList = ContainerUtil.newArrayList();
 
 //stop
     final AnAction stopAction = createStopAction();

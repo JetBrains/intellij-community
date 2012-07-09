@@ -16,10 +16,10 @@
 
 package com.intellij.openapi.updateSettings.impl;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +102,7 @@ public class BuildInfo implements Comparable<BuildInfo> {
   }
 
   public List<ButtonInfo> getButtons() {
-    return ImmutableList.copyOf(myButtons);
+    return ContainerUtil.immutableList(myButtons);
   }
 
   @Override

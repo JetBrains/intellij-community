@@ -38,8 +38,7 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -82,13 +81,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private final Executor myTaskRunner;
   private int myTasksInProgress = 0;
   private final Object myCounterLock = new Object();
-  private final List<ClassPostProcessor> myClassProcessors = new ArrayList<ClassPostProcessor>();
+  private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
 
-  public JavaBuilder(Executor tasksExecutor) {
-    super(BuilderCategory.TRANSLATOR);
-    myTaskRunner = tasksExecutor;
-    //add here class processors in the sequence they should be executed
-    myClassProcessors.add(new ClassPostProcessor() {
+  static {
+    registerClassPostProcessor(new ClassPostProcessor() {
       public void process(CompileContext context, OutputFileObject out) {
         final OutputFileObject.Content content = out.getContent();
         final File srcFile = out.getSourceFile();
@@ -120,6 +116,16 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
     });
+  }
+
+  public static void registerClassPostProcessor(ClassPostProcessor processor) {
+    ourClassProcessors.add(processor);
+  }
+
+  public JavaBuilder(Executor tasksExecutor) {
+    super(BuilderCategory.TRANSLATOR);
+    myTaskRunner = tasksExecutor;
+    //add here class processors in the sequence they should be executed
   }
 
   @Override
@@ -344,7 +350,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
         }
-        if (diagnosticSink.getErrorCount() > 0) {
+        if (!context.isProceedOnErrors() && diagnosticSink.getErrorCount() > 0) {
           if (!compiledOk) {
             diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Errors occurred while compiling module '" + chunkName + "'"));
           }
@@ -771,7 +777,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     //options.add("-verbose");
     final Project project = context.getProject();
     final CompilerConfiguration compilerConfig = project.getCompilerConfiguration();
-    final Map<String, String> opts = useEclipseCompiler(context)? compilerConfig.getEclipseOptions() : compilerConfig.getJavacOptions();
+    final boolean useEclipseCompiler = useEclipseCompiler(context);
+    final Map<String, String> opts = useEclipseCompiler ? compilerConfig.getEclipseOptions() : compilerConfig.getJavacOptions();
     final boolean debugInfo = !"false".equals(opts.get("DEBUGGING_INFO"));
     final boolean nowarn = "true".equals(opts.get("GENERATE_NO_WARNINGS"));
     final boolean deprecation = !"false".equals(opts.get("DEPRECATION"));
@@ -804,6 +811,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
               options.add(userOption);
             }
           }
+        }
+      }
+    }
+
+    if (useEclipseCompiler) {
+      for (String option : options) {
+        if (option.startsWith("-proceedOnError")) {
+          context.setProceedOnErrors(true);
+          break;
         }
       }
     }
@@ -1184,7 +1200,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       submitAsyncTask(new Runnable() {
         public void run() {
           try {
-            for (ClassPostProcessor processor : myClassProcessors) {
+            for (ClassPostProcessor processor : ourClassProcessors) {
               processor.process(myCompileContext, fileObject);
             }
           }

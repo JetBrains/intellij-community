@@ -61,6 +61,7 @@ import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -71,6 +72,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
@@ -94,6 +96,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @NonNls private static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
 
   private final ActionManagerEx myActionManagerEx;
+  private boolean myCloseOnSneeze;
 
   private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
 
@@ -121,7 +124,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return ServiceManager.getService(project, DocumentationManager.class);
   }
 
-  public DocumentationManager(Project project, ActionManagerEx managerEx) {
+  public DocumentationManager(final Project project, ActionManagerEx managerEx) {
     super(project);
     myActionManagerEx = managerEx;
     final AnActionListener actionListener = new AnActionListener() {
@@ -135,7 +138,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           if (action == myActionManagerEx.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP)) return;
           if (action == ActionManagerEx.getInstanceEx().getAction(IdeActions.ACTION_EDITOR_ESCAPE)) return;
           if (ActionPlaces.JAVADOC_INPLACE_SETTINGS.equals(event.getPlace())) return;
-          hint.cancel();
+          closeDocHint();
         }
       }
 
@@ -154,20 +157,64 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD,myProject);
   }
 
+  private void closeDocHint() {
+    JBPopup hint = getDocInfoHint();
+    if (hint == null) {
+      return;
+    }
+    myCloseOnSneeze = false;
+    hint.cancel();
+    Component toFocus = myPreviouslyFocused;
+    hint.cancel();
+    if (toFocus != null) {
+      IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true);
+    }
+  }
+
+  public boolean hasDockedDocWindow() {
+    return myToolWindow != null;
+  }
+  
+  public void setAllowContentUpdateFromContext(boolean allow) {
+    myAutoUpdateDocumentation = allow;
+  }
+  
+  /**
+   * Asks to show quick doc for the target element.
+   * 
+   * @param editor         editor with an element for which quick do should be shown
+   * @param element        target element which documentation should be shown
+   * @param original       element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
+   *                       A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
+   *                       declaration but <code>'element'</code> argument is a {@code Runnable} descriptor
+   * @param closeCallback  callback to be notified on target hint close (if any)
+   * @param closeOnSneeze  flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
+   *                       two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
+   *                       on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
+   *                       at the first situation but don't want to do that at the second
+   * @param allowReuse     defines whether currently requested documentation should reuse existing doc control (if any)
+   */
   public void showJavaDocInfo(@NotNull Editor editor,
                               @NotNull final PsiElement element,
                               @NotNull final PsiElement original,
-                              @Nullable Runnable closeCallback)
+                              @Nullable Runnable closeCallback,
+                              boolean closeOnSneeze,
+                              boolean allowReuse)
   {
     myEditor = editor;
-    showJavaDocInfo(element, original, closeCallback);
+    myCloseOnSneeze = closeOnSneeze;
+    showJavaDocInfo(element, original, allowReuse, closeCallback);
   }
   
   public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
-    showJavaDocInfo(element, original, null);
+    showJavaDocInfo(element, original, false, null);
   }
-  
-  public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original, @Nullable Runnable closeCallback) {
+
+  public void showJavaDocInfo(@NotNull final PsiElement element,
+                              final PsiElement original,
+                              boolean allowReuse,
+                              @Nullable Runnable closeCallback)
+  {
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(element.getProject()) {
       public void updatePopup(Object lookupItemObject) {
         if (lookupItemObject instanceof PsiElement) {
@@ -176,7 +223,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     };
 
-    doShowJavaDocInfo(element, false, updateProcessor, original, false, closeCallback);
+    doShowJavaDocInfo(element, false, updateProcessor, original, allowReuse, closeCallback);
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
@@ -273,7 +320,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                  boolean requestFocus,
                                  PopupUpdateProcessor updateProcessor,
                                  final PsiElement originalElement,
-                                 final boolean autoupdate,
+                                 final boolean allowReuse,
                                  @Nullable final Runnable closeCallback)
   {
     Project project = getProject(element);
@@ -293,7 +340,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return;
         }
         else {
-          if (element != null && !autoupdate) {
+          if (element != null && !allowReuse) {
             restorePopupBehavior();
           }
           else {
@@ -341,20 +388,22 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-                                       .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
-                                       .setProject(project)
-                                       .addListener(updateProcessor)
-                                       .addUserData(updateProcessor)
-                                       .setKeyboardActions(actions)
-                                       .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
-                                       .setResizable(true)
-                                       .setMovable(true)
-                                       .setRequestFocus(requestFocus)
+      .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
+      .setProject(project)
+      .addListener(updateProcessor)
+      .addUserData(updateProcessor)
+      .setKeyboardActions(actions)
+      .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
+      .setResizable(true)
+      .setMovable(true)
+      .setRequestFocus(requestFocus)
       .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
       .setTitle(getTitle(element, false))
       .setCouldPin(pinCallback)
+      .setModalContext(false)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
+          myCloseOnSneeze = false;
           if (closeCallback != null) {
             closeCallback.run();
           }
@@ -367,6 +416,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           myPreviouslyFocused = null;
           myParameterInfoController = null;
           return Boolean.TRUE;
+        }
+      })
+      .setKeyEventHandler(new BooleanFunction<KeyEvent>() {
+        @Override
+        public boolean fun(KeyEvent event) {
+          if (myCloseOnSneeze) {
+            closeDocHint();
+          }
+          return false;
         }
       })
       .createPopup();
@@ -904,7 +962,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   protected void doUpdateComponent(@NotNull PsiElement element) {
-    showJavaDocInfo(element, element);
+    showJavaDocInfo(element, element, true, null);
   }
 
   @Override

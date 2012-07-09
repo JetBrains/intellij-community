@@ -95,6 +95,7 @@ public class AndroidCommonUtils {
   @NonNls public static final String PACKAGE_MANIFEST_ATTRIBUTE = "package";
 
   @NonNls public static final String ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX = ".afp";
+  @NonNls public static final String ANDROID_MANIFEST_MERGER_PROPERTY = "manifestmerger.enabled";
 
   private AndroidCommonUtils() {
   }
@@ -327,7 +328,7 @@ public class AndroidCommonUtils {
   public static Map<AndroidCompilerMessageKind, List<String>> launchProguard(@NotNull IAndroidTarget target,
                                                                              int sdkToolsRevision,
                                                                              @NotNull String sdkOsPath,
-                                                                             @NotNull String proguardConfigFileOsPath,
+                                                                             @NotNull String[] proguardConfigFileOsPaths,
                                                                              boolean includeSystemProguardFile,
                                                                              @NotNull String inputJarOsPath,
                                                                              @NotNull String[] externalJarOsPaths,
@@ -346,11 +347,13 @@ public class AndroidCommonUtils {
         commands.add("-include");
         commands.add(quotePath(systemProguardCfgPath));
       }
-      commands.add("-include");
-      commands.add(quotePath(proguardConfigFileOsPath));
+      for (String proguardConfigFileOsPath : proguardConfigFileOsPaths) {
+        commands.add("-include");
+        commands.add(quotePath(proguardConfigFileOsPath));
+      }
     }
     else {
-      commands.add("@" + quotePath(proguardConfigFileOsPath));
+      commands.add("@" + quotePath(proguardConfigFileOsPaths[0]));
     }
 
     commands.add("-injars");

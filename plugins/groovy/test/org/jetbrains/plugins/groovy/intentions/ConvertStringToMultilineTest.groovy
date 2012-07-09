@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.intentions
 import com.intellij.openapi.application.WriteAction
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.intentions.conversions.ConvertStringToMultilineIntention
+import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertStringToMultilineIntention
 
 /**
  * @author Max Medvedev

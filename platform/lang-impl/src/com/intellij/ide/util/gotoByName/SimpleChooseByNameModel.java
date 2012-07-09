@@ -108,4 +108,9 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
   public boolean willOpenEditor() {
     return false;
   }
+
+  @Override
+  public boolean useMiddleMatching() {
+    return false;
+  }
 }

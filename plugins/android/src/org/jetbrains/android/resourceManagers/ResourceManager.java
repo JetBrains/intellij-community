@@ -327,6 +327,10 @@ public abstract class ResourceManager {
   @NotNull
   public Collection<String> getIds() {
     final Project project = myModule.getProject();
+
+    if (myModule.isDisposed() || project.isDisposed()) {
+      return Collections.emptyList();
+    }
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
 
     final FileBasedIndex index = FileBasedIndex.getInstance();

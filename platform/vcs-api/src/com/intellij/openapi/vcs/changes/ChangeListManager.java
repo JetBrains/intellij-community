@@ -81,7 +81,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract boolean isDefaultChangeList(ChangeList list);
 
   @Nullable
-  public abstract LocalChangeList getChangeList(Change change);
+  public abstract LocalChangeList getChangeList(@NotNull Change change);
 
   @Nullable
   public abstract String getChangeListNameIfOnlyOne(Change[] changes);

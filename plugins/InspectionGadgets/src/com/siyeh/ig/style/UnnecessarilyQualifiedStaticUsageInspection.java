@@ -191,10 +191,13 @@ public class UnnecessarilyQualifiedStaticUsageInspection
       final PsiMember member = (PsiMember)target;
       final PsiClass memberClass;
       if (target instanceof PsiField) {
-        final PsiVariable variable =
-          resolveHelper.resolveReferencedVariable(referenceName,
-                                                  referenceElement);
+        final PsiVariable variable = resolveHelper.resolveReferencedVariable(referenceName, referenceElement);
         if (variable == null || !variable.equals(member)) {
+          return false;
+        }
+
+        //illegal forward ref
+        if (referenceElement.getTextRange().getStartOffset() < variable.getTextRange().getEndOffset()) {
           return false;
         }
         final PsiMember memberVariable = (PsiMember)variable;

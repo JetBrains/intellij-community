@@ -917,6 +917,9 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
+          if (project.isDisposed()) {
+            return;
+          }
           final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
           final Set<Module> referredModules = new HashSet<Module>();
 

@@ -16,8 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.google.common.collect.Sets;
 import com.intellij.ProjectTopics;
+import com.intellij.application.options.editor.EditorOptionsPanel;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,6 +37,8 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -57,12 +60,12 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
  */
 public class GroovyPsiManager {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager");
-  private static final Set<String> ourPopularClasses = Sets.newHashSet(GROOVY_LANG_CLOSURE,
-                                                                       DEFAULT_BASE_CLASS_NAME,
-                                                                       GROOVY_OBJECT_SUPPORT,
-                                                                       JAVA_UTIL_LIST,
-                                                                       JAVA_UTIL_COLLECTION,
-                                                                       JAVA_LANG_STRING);
+  private static final Set<String> ourPopularClasses = ContainerUtil.newHashSet(GROOVY_LANG_CLOSURE,
+                                                                                DEFAULT_BASE_CLASS_NAME,
+                                                                                GROOVY_OBJECT_SUPPORT,
+                                                                                JAVA_UTIL_LIST,
+                                                                                JAVA_UTIL_COLLECTION,
+                                                                                JAVA_LANG_STRING);
   private final Project myProject;
 
   private volatile GrTypeDefinition myArrayClass;
@@ -87,10 +90,20 @@ public class GroovyPsiManager {
       }
     });
 
-    myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    final MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       public void rootsChanged(ModuleRootEvent event) {
         dropTypesCache();
         myClassCache.clear();
+      }
+    });
+
+    // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
+    // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
+    connection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
+        EditorOptionsPanel.reinitAllEditors();
       }
     });
   }

@@ -7,15 +7,15 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class CamelHumpMatcher extends PrefixMatcher {
-  private final Matcher myMatcher;
+  private final MinusculeMatcher myMatcher;
   private final boolean myCaseSensitive;
 
   public CamelHumpMatcher(@NotNull final String prefix) {
@@ -26,6 +26,11 @@ public class CamelHumpMatcher extends PrefixMatcher {
     super(prefix);
     myCaseSensitive = caseSensitive;
     myMatcher = createMatcher(myCaseSensitive);
+  }
+
+  @Override
+  public boolean isStartMatch(String name) {
+    return myMatcher.isStartMatch(name);
   }
 
   public boolean prefixMatches(@NotNull final String name) {
@@ -55,7 +60,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return new CamelHumpMatcher(prefix, myCaseSensitive);
   }
 
-  private Matcher createMatcher(final boolean caseSensitive) {
+  private MinusculeMatcher createMatcher(final boolean caseSensitive) {
     String prefix = applyMiddleMatching(myPrefix);
 
     if (!caseSensitive) {

@@ -24,11 +24,9 @@ package com.intellij.compiler;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
-import com.intellij.compiler.impl.javaCompiler.api.CompilerAPICompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
-import com.intellij.compiler.impl.javaCompiler.jikes.JikesCompiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -271,8 +269,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myRegisteredCompilers.add(JAVAC_EXTERNAL_BACKEND);
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final BackendCompiler JIKES_BACKEND = new JikesCompiler(myProject);
-      myRegisteredCompilers.add(JIKES_BACKEND);
+      //final BackendCompiler JIKES_BACKEND = new JikesCompiler(myProject);
+      //myRegisteredCompilers.add(JIKES_BACKEND);
 
       if (EclipseCompiler.isInitialized()) {
         final EclipseCompiler eclipse = new EclipseCompiler(myProject);
@@ -289,13 +287,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         }
       }
 
-      try {
-        CompilerAPICompiler inProcessJavaCompiler = new CompilerAPICompiler(myProject);
-        myRegisteredCompilers.add(inProcessJavaCompiler);
-      }
-      catch (NoClassDefFoundError e) {
-        // wrong JDK
-      }
+      //try {
+      //  CompilerAPICompiler inProcessJavaCompiler = new CompilerAPICompiler(myProject);
+      //  myRegisteredCompilers.add(inProcessJavaCompiler);
+      //}
+      //catch (NoClassDefFoundError e) {
+      //  // wrong JDK
+      //}
     }
 
     final BackendCompiler[] compilers = Extensions.getExtensions(BackendCompiler.EP_NAME, myProject);

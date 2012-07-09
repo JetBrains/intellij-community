@@ -27,7 +27,7 @@ public class MavenDomBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
-  private static final String BUNDLE = "DomBundle";
+  private static final String BUNDLE = "MavenDomBundle";
 
   private MavenDomBundle() {
   }

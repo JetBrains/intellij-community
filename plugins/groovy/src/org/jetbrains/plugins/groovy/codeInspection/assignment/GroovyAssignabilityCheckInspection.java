@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -57,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -65,7 +67,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -165,21 +166,38 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (!shouldProcess(method)) return;
 
       super.visitMethod(method);
-      final GrOpenBlock block = method.getBlock();
-      if (block == null) return;
-      final PsiType expectedType = method.getReturnType();
-      if (expectedType == null || PsiType.VOID.equals(expectedType)) return;
+    }
 
-      ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
-        @Override
-        public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-          if (returnValue != null &&
-              !isNewInstanceInitialingByTuple(returnValue)) {
-            checkAssignability(expectedType, returnValue);
-          }
-          return true;
+    @Override
+    public void visitReturnStatement(GrReturnStatement returnStatement) {
+      super.visitReturnStatement(returnStatement);
+      final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(returnStatement);
+      final GrExpression value = returnStatement.getReturnValue();
+      if (!(flowOwner instanceof GrOpenBlock && flowOwner.getParent() instanceof GrMethod)) return;
+      if (isNewInstanceInitialingByTuple(value)) return;
+      final GrMethod method = (GrMethod)flowOwner.getParent();
+      if (value != null && !method.isConstructor()) {
+        final PsiType returnType = method.getReturnType();
+        if (returnType != null) {
+          checkAssignability(returnType, value);
         }
-      });
+      }
+    }
+
+    @Override
+    public void visitExpression(GrExpression expression) {
+      super.visitExpression(expression);
+      if (PsiUtil.isExpressionStatement(expression)) {
+        final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(expression);
+        if (!(flowOwner instanceof GrOpenBlock && flowOwner.getParent() instanceof GrMethod)) return;
+        final GrMethod method = (GrMethod)flowOwner.getParent();
+        final PsiType returnType = method.getReturnType();
+        if (returnType != null && returnType != PsiType.VOID) {
+          if (ControlFlowUtils.isReturnValue(expression, method) && !isNewInstanceInitialingByTuple(expression)) {
+            checkAssignability(returnType, expression);
+          }
+        }
+      }
     }
 
     protected boolean shouldProcess(GrMethod method) {

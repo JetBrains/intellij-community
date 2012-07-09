@@ -34,7 +34,6 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -88,8 +87,8 @@ public class JavaCompletionSorting {
         public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
           return new LiftShorterItemsClassifier(next, new LiftShorterItemsClassifier.LiftingCondition() {
             @Override
-            public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement, ProcessingContext context) {
-              if (super.shouldLift(shorterElement, longerElement, context)) {
+            public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
+              if (super.shouldLift(shorterElement, longerElement)) {
                 return true;
               }
               Object object = shorterElement.getObject();

@@ -189,11 +189,12 @@ public class SvnHistoryProvider
       logLoader.preliminary();
     }
     catch (SVNCancelException e) {
-      return;
+      throw new VcsException(e);
     }
     catch (SVNException e) {
       throw new VcsException(e);
     }
+    logLoader.check();
     logLoader.initSupports15();
 
     final SvnHistorySession historySession =

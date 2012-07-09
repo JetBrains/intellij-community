@@ -549,7 +549,7 @@ class UsageRepr {
 
     @Override
     public int getOwner() {
-      return myType.className;
+      return myType.myClassName;
     }
 
     @Override

@@ -16,8 +16,6 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.Notification;
@@ -223,8 +221,8 @@ public class InspectionToolRegistrar {
   public List<InspectionToolWrapper> createTools() {
     ensureInitialized();
 
-    final List<InspectionToolWrapper> tools = Lists.newArrayListWithCapacity(myInspectionToolFactories.size());
-    final Set<Factory<InspectionToolWrapper>> broken = Sets.newHashSet();
+    final List<InspectionToolWrapper> tools = ContainerUtil.newArrayListWithCapacity(myInspectionToolFactories.size());
+    final Set<Factory<InspectionToolWrapper>> broken = ContainerUtil.newHashSet();
     for (final Factory<InspectionToolWrapper> factory : myInspectionToolFactories) {
       ProgressManager.checkCanceled();
       final InspectionToolWrapper toolWrapper = factory.create();

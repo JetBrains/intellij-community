@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -107,8 +108,10 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
   }
 
-  public static void registerFixes(@NotNull final CandidateInfo[] candidates, @NotNull final PsiMethodCallExpression methodCall,
-                                        @NotNull final HighlightInfo info) {
+  public static void registerFixes(@NotNull final CandidateInfo[] candidates,
+                                   @NotNull final PsiMethodCallExpression methodCall,
+                                   @Nullable final HighlightInfo info) {
+    if (info == null) return;
     final Set<PsiLiteralExpression> literals = new HashSet<PsiLiteralExpression>();
     boolean exactMatch = false;
     for (CandidateInfo candidate : candidates) {
@@ -122,8 +125,9 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
   }
 
-  private static void processLiterals(@NotNull final Set<PsiLiteralExpression> literals, @NotNull final PsiCall call,
-                                        @NotNull final HighlightInfo info) {
+  private static void processLiterals(@NotNull final Set<PsiLiteralExpression> literals,
+                                      @NotNull final PsiCall call,
+                                      @NotNull final HighlightInfo info) {
     for (PsiLiteralExpression literal : literals) {
       final ChangeStringLiteralToCharInMethodCallFix fix = new ChangeStringLiteralToCharInMethodCallFix(literal, call);
       QuickFixAction.registerQuickFixAction(info, fix);

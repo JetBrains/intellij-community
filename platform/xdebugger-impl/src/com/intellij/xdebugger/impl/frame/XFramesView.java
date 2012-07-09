@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.google.common.collect.Sets;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -28,6 +27,7 @@ import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -54,7 +54,7 @@ public class XFramesView extends XDebugViewBase {
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
   private final JComboBox myThreadComboBox;
-  private final Set<XExecutionStack> myExecutionStacks = Sets.newHashSet();
+  private final Set<XExecutionStack> myExecutionStacks = ContainerUtil.newHashSet();
   private XExecutionStack mySelectedStack;
   private boolean myListenersEnabled;
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();

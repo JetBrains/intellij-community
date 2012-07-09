@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -82,7 +83,7 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
 
   public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
                                         @NotNull PsiExpressionList list,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange) {
     if (candidates.length == 0) return;
     PsiExpression[] expressions = list.getExpressions();
@@ -92,7 +93,7 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
   }
 
   private static void registerIntention(@NotNull PsiExpression[] expressions,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange,
                                         @NotNull JavaResolveResult candidate,
                                         @NotNull PsiElement context) {

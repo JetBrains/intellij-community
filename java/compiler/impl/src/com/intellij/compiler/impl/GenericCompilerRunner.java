@@ -15,14 +15,16 @@
  */
 package com.intellij.compiler.impl;
 
-import com.google.common.base.Throwables;
 import com.intellij.compiler.impl.generic.GenericCompilerCache;
 import com.intellij.compiler.impl.generic.GenericCompilerPersistentData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.generic.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -298,7 +300,9 @@ public class GenericCompilerRunner {
             }
           }
         }.executeSilently();
-        Throwables.propagateIfPossible(runResult.getThrowable(), IOException.class);
+        Throwable throwable = runResult.getThrowable();
+        if (throwable instanceof IOException) throw (IOException) throwable;
+        else if (throwable != null) throw new RuntimeException(throwable);
       }
     });
 

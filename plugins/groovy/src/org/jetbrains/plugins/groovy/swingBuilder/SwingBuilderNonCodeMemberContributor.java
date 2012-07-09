@@ -21,6 +21,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +184,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       methodObject("map", CommonClassNames.JAVA_UTIL_MAP, "groovy.swing.factory.MapFactory");
 
       methodObject("imageIcon", "javax.swing.ImageIcon", "groovy.swing.factory.ImageIconFactory",
-                   ImmutableMap.<String, NamedArgumentDescriptor>builder()
+                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("image", new NamedArgumentDescriptor.TypeCondition(type("java.awt.Image")))
                      .put("url", new NamedArgumentDescriptor.TypeCondition(type("java.net.URL")))
                      .put("file", NamedArgumentDescriptor.SIMPLE_ON_TOP)
@@ -201,7 +202,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
       // registerBinding()
       methodObject("bind", "org.codehaus.groovy.binding.FullBinding", "groovy.swing.factory.BindFactory",
-                   ImmutableMap.<String, NamedArgumentDescriptor>builder()
+                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("source", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("target", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("update", NamedArgumentDescriptor.SIMPLE_ON_TOP)
@@ -234,7 +235,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
       // registerWindows()
       methodObject("dialog", "javax.swing.JDialog", "groovy.swing.factory.DialogFactory",
-                   ImmutableMap.<String, NamedArgumentDescriptor>builder()
+                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("owner", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("defaultButtonProperty", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("pack", NamedArgumentDescriptor.SIMPLE_ON_TOP)
@@ -397,7 +398,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
       NamedArgumentDescriptor namedArgColor = new NamedArgumentDescriptor.TypeCondition(type("java.awt.Color"));
 
-      Map<String, NamedArgumentDescriptor> m = ImmutableMap.<String, NamedArgumentDescriptor>builder()
+      Map<String, NamedArgumentDescriptor> m = ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
         .put("parent", NamedArgumentDescriptor.SIMPLE_ON_TOP)
         .put("highlight", namedArgColor)
         .put("shadow", namedArgColor)
@@ -421,7 +422,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       methodObject("raisedEtchedBorder", "javax.swing.border.Border", "groovy.swing.factory.EtchedBorderFactory", m);
 
       methodObject("titledBorder", "javax.swing.border.TitledBorder", "groovy.swing.factory.TitledBorderFactory",
-                   ImmutableMap.<String, NamedArgumentDescriptor>builder()
+                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("parent", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("title", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("position", NamedArgumentDescriptor.SIMPLE_ON_TOP)
@@ -448,7 +449,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       ));
 
       methodObject("matteBorder", "javax.swing.border.Border", "groovy.swing.factory.MatteBorderFactory",
-                   ImmutableMap.<String, NamedArgumentDescriptor>builder()
+                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("parent", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("icon", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("color", NamedArgumentDescriptor.SIMPLE_ON_TOP)

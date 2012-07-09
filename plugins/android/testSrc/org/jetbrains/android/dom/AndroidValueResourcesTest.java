@@ -140,6 +140,22 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     toTestCompletion("array.xml", "array_after.xml");
   }
 
+  public void testPlurals() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testPlurals1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testPlurals2() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml", "zero", "one", "two", "few", "many", "other");
+  }
+
+  public void testPlurals3() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testIntResourceReference() throws Throwable {
     myFixture.copyFileToProject(testFolder + "/intResReference.xml", "res/layout/main.xml");
     myFixture.copyFileToProject(testFolder + "/intbool.xml", "res/values/values.xml");

@@ -17,7 +17,7 @@ package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
-import org.apache.commons.collections.map.CompositeMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.ContextType;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +43,7 @@ public abstract class AbstractFunctionContext implements FunctionContext {
 
     //noinspection AbstractMethodCallInConstructor
     myFunctions = Collections.unmodifiableMap(new HashMap<Pair<QName, Integer>, Function>(
-            new CompositeMap(
-                    createFunctionMap(contextType),
-                    getProvidedFunctions(contextType))));
+      ContainerUtil.union(createFunctionMap(contextType), getProvidedFunctions(contextType))));
 
     for (Map.Entry<Pair<QName, Integer>, Function> entry : myFunctions.entrySet()) {
       final Function function = entry.getValue();

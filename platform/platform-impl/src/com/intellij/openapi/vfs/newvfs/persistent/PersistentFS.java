@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -697,7 +696,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   @NotNull
   private static List<? extends VFileEvent> validateEvents(@NotNull List<? extends VFileEvent> events) {
-    final List<EventWrapper> deletionEvents = Lists.newArrayList();
+    final List<EventWrapper> deletionEvents = ContainerUtil.newArrayList();
     for (int i = 0, size = events.size(); i < size; i++) {
       final VFileEvent event = events.get(i);
       if (event instanceof VFileDeleteEvent && event.isValid()) {
@@ -724,7 +723,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
     }
 
-    final List<VFileEvent> filtered = Lists.newArrayListWithCapacity(events.size() - invalidIDs.size());
+    final List<VFileEvent> filtered = ContainerUtil.newArrayListWithCapacity(events.size() - invalidIDs.size());
     for (int i = 0, size = events.size(); i < size; i++) {
       final VFileEvent event = events.get(i);
       if (event.isValid() && !(event instanceof VFileDeleteEvent && invalidIDs.contains(i))) {

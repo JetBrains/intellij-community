@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -32,7 +31,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.text.CharArrayUtil;
 
 import java.util.List;
 
@@ -59,8 +57,6 @@ public class SmartEnterAction extends EditorAction {
     }
 
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-
-      final Document doc = editor.getDocument();
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null || editor.isOneLineMode()) {
         plainEnter(editor, dataContext);
@@ -70,12 +66,6 @@ public class SmartEnterAction extends EditorAction {
       LookupManager.getInstance(project).hideActiveLookup();
 
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (isInPreceedingBlanks(editor)) {
-        editor.getCaretModel().moveToOffset(doc.getLineEndOffset(doc.getLineNumber(caretOffset)));
-        EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER);
-        enterHandler.execute(editor, dataContext);
-        return;
-      }
 
       PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
       if (psiFile == null) {
@@ -105,16 +95,6 @@ public class SmartEnterAction extends EditorAction {
       if (!processed) {
         plainEnter(editor, dataContext);
       }
-    }
-
-    private static boolean isInPreceedingBlanks(Editor editor) {
-      int offset = editor.getCaretModel().getOffset();
-      final Document doc = editor.getDocument();
-      CharSequence chars = doc.getCharsSequence();
-      if (offset == doc.getTextLength() || chars.charAt(offset) == '\n') return false;
-
-      int newLineOffset = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
-      return newLineOffset < 0 || chars.charAt(newLineOffset) == '\n';
     }
   }
 

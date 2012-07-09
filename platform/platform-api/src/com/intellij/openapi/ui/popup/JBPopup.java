@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 /**
  * Base interface for popup windows.
@@ -190,4 +191,15 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void setAdText(String s, @JdkConstants.HorizontalAlignment int alignment);
 
   void setDataProvider(@NotNull DataProvider dataProvider);
+
+  /**
+   * This callback is called when new key event from the event queue is being processed.
+   * <p/>
+   * The popup has a right to decide if its further processing should be continued (method return value).
+   * 
+   * @param e  new key event being processed
+   * @return   <code>true</code> if the event is completely dispatched, i.e. no further processing is necessary;
+   *           <code>false</code> otherwise
+   */
+  boolean dispatchKeyEvent(@NotNull KeyEvent e);
 }

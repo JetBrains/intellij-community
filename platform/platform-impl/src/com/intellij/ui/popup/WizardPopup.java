@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingUtilities.LEFT, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null, false, true,
-         true);
+         true, null);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
       public void actionPerformed(ActionEvent e) {

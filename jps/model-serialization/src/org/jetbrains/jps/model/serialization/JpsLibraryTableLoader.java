@@ -3,7 +3,9 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
+import org.jetbrains.jps.model.DummyJpsElementProperties;
 import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -25,8 +27,7 @@ public class JpsLibraryTableLoader {
 
   public static void loadLibraries(Element libraryTableElement, List<JpsLibrary> result) {
     for (Element libraryElement : JDOMUtil.getChildren(libraryTableElement, "library")) {
-      JpsLibrary library = loadLibrary(libraryElement);
-      result.add(library);
+      result.add(loadLibrary(libraryElement));
     }
   }
 
@@ -36,7 +37,8 @@ public class JpsLibraryTableLoader {
 
   public static JpsLibrary loadLibrary(Element libraryElement, String name) {
     String typeId = libraryElement.getAttributeValue("type");
-    JpsLibrary library = JpsElementFactory.getInstance().createLibrary(name, getLibraryType(typeId));
+    final JpsLibraryType<?> type = getLibraryType(typeId);
+    JpsLibrary library = createLibrary(name, type, libraryElement.getChild("properties"));
 
     MultiMap<JpsOrderRootType, String> jarDirectories = new MultiMap<JpsOrderRootType, String>();
     MultiMap<JpsOrderRootType, String> recursiveJarDirectories = new MultiMap<JpsOrderRootType, String>();
@@ -70,6 +72,21 @@ public class JpsLibraryTableLoader {
     return library;
   }
 
+  private static <P extends JpsElementProperties> JpsLibrary createLibrary(String name,
+                                                                           JpsLibraryType<P> type, final Element propertiesElement) {
+    return JpsElementFactory.getInstance().createLibrary(name, type, loadProperties(type, propertiesElement));
+  }
+
+  private static <P extends JpsElementProperties> P loadProperties(JpsLibraryType<P> type, Element propertiesElement) {
+    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+      final P properties = extension.loadLibraryProperties(type, propertiesElement);
+      if (properties != null) {
+        return properties;
+      }
+    }
+    return (P)DummyJpsElementProperties.INSTANCE;
+  }
+
   private static JpsOrderRootType getRootType(String rootTypeId) {
     final JpsOrderRootType type = PREDEFINED_ROOT_TYPES.get(rootTypeId);
     if (type != null) {
@@ -85,6 +102,14 @@ public class JpsLibraryTableLoader {
   }
 
   private static JpsLibraryType<?> getLibraryType(String typeId) {
+    if (typeId != null) {
+      for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+        final JpsLibraryType<?> type = extension.getLibraryType(typeId);
+        if (type != null) {
+          return type;
+        }
+      }
+    }
     return JpsJavaLibraryType.INSTANCE;
   }
 }

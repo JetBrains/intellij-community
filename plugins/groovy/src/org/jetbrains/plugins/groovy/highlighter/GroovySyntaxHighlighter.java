@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.highlighter;
 
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.StringLiteralLexer;
@@ -27,6 +28,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,20 +39,11 @@ import java.util.Map;
 public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements GroovyTokenTypes {
 
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
+  private static final Map<IElementType, TextAttributesKey> POWER_SAVE_MODE_ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
 
 
   static final TokenSet tBLOCK_COMMENTS = TokenSet.create(
       mML_COMMENT, GROOVY_DOC_COMMENT
-  );
-
-  static final TokenSet tNUMBERS = TokenSet.create(
-      mNUM_INT,
-      mNUM_BIG_DECIMAL,
-      mNUM_BIG_INT,
-      mNUM_DOUBLE,
-      mNUM_FLOAT,
-      mNUM_LONG
-
   );
 
   static final TokenSet tLINE_COMMENTS = TokenSet.create(
@@ -86,115 +79,11 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     mRBRACK
   );
 
-  //public static final TokenSet tOPERATORS = TokenSet.create(
-  //    mQUESTION,
-  //    mCOMPARE_TO,
-  //    mEQUAL,
-  //    mBNOT,
-  //    mNOT_EQUAL,
-  //    mPLUS,
-  //    mPLUS_ASSIGN,
-  //    mINC,
-  //    mMINUS,
-  //    mMINUS_ASSIGN,
-  //    mDEC,
-  //    mSTAR,
-  //    mSTAR_ASSIGN,
-  //    mMOD,
-  //    mMOD_ASSIGN,
-  //    mSR_ASSIGN,
-  //    mBSR_ASSIGN,
-  //    mGE,
-  //    mGT,
-  //    mSL_ASSIGN,
-  //    mLE,
-  //    mLT,
-  //    mBXOR,
-  //    mBXOR_ASSIGN,
-  //    mBOR,
-  //    mBOR_ASSIGN,
-  //    mLOR,
-  //    mBAND,
-  //    mBAND_ASSIGN,
-  //    mLAND,
-  //    mDOLLAR,
-  //    mRANGE_INCLUSIVE,
-  //    mRANGE_EXCLUSIVE,
-  //    mTRIPLE_DOT,
-  //    mSPREAD_DOT,
-  //    mOPTIONAL_DOT,
-  //    mMEMBER_POINTER,
-  //    mREGEX_FIND,
-  //    mREGEX_MATCH,
-  //    mSTAR_STAR,
-  //    mSTAR_STAR_ASSIGN,
-  //    mCLOSABLE_BLOCK_OP,
-  //    mAT
-  //);
-  //
-  public static final TokenSet tKEYWORDS = TokenSet.create(
-      kPACKAGE,
-      kIMPORT,
-      kSTATIC,
-      kSTRICTFP,
-      kDEF,
-      kCLASS,
-      kINTERFACE,
-      kENUM,
-      kEXTENDS,
-      kSUPER,
-      kVOID,
-      kBOOLEAN,
-      kBYTE,
-      kCHAR,
-      kSHORT,
-      kINT,
-      kFLOAT,
-      kLONG,
-      kDOUBLE,
-      kAS,
-      kPRIVATE,
-      kPUBLIC,
-      kPROTECTED,
-      kABSTRACT,
-      kTRANSIENT,
-      kNATIVE,
-      kSYNCHRONIZED,
-      kVOLATILE,
-      kDEFAULT,
-      kDO,
-      kTHROWS,
-      kIMPLEMENTS,
-      kTHIS,
-      kIF,
-      kELSE,
-      kWHILE,
-      kSWITCH,
-      kFOR,
-      kIN,
-      kRETURN,
-      kBREAK,
-      kCONTINUE,
-      kTHROW,
-      kASSERT,
-      kCASE,
-      kTRY,
-      kFINALLY,
-      kFINAL,
-      kCATCH,
-      kINSTANCEOF,
-      kNEW,
-      kTRUE,
-      kFALSE,
-      kNULL
-  );
-
   static {
     fillMap(ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
     fillMap(ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
-    //fillMap(ATTRIBUTES, tKEYWORDS, DefaultHighlighter.KEYWORD);
-    fillMap(ATTRIBUTES, tNUMBERS, DefaultHighlighter.NUMBER);
+    fillMap(ATTRIBUTES, TokenSets.NUMBERS, DefaultHighlighter.NUMBER);
     fillMap(ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
     fillMap(ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
     fillMap(ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
@@ -204,6 +93,24 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(ATTRIBUTES, DefaultHighlighter.VALID_STRING_ESCAPE, StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN);
     fillMap(ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
     fillMap(ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
+  }
+
+  static {
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBAD_CHARACTERS, DefaultHighlighter.BAD_CHARACTER);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, TokenSets.NUMBERS, DefaultHighlighter.NUMBER);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, tGSTRINGS, DefaultHighlighter.GSTRING);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, tSTRINGS, DefaultHighlighter.STRING);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.STRING, mREGEX_BEGIN, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_BEGIN,
+            mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, tBRACKETS, DefaultHighlighter.BRACKETS);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, tPARENTHESES, DefaultHighlighter.PARENTHESES);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.VALID_STRING_ESCAPE, StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, DefaultHighlighter.INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
+    fillMap(POWER_SAVE_MODE_ATTRIBUTES, TokenSets.KEYWORDS, DefaultHighlighter.KEYWORD);
   }
 
   @NotNull
@@ -227,6 +134,6 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
 
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
-    return pack(ATTRIBUTES.get(tokenType));
+    return pack(PowerSaveMode.isEnabled() ? POWER_SAVE_MODE_ATTRIBUTES.get(tokenType) : ATTRIBUTES.get(tokenType));
   }
 }

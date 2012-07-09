@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="library" name="commons-collections" level="project" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="java-runtime" />
     <orderEntry type="module" module-name="lang-impl" exported="" />
@@ -27,7 +26,6 @@
     <orderEntry type="module" module-name="icons" />
     <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="java-psi-impl" exported="" />
     <orderEntry type="module" module-name="RegExpSupport" />

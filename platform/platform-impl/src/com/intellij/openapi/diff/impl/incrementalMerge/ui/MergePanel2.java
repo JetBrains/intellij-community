@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -525,9 +526,24 @@ public class MergePanel2 implements DiffViewer {
         text = DiffBundle.message("merge.dialog.all.conflicts.resolved.message.text");
       }
       else {
-        text = DiffBundle.message("merge.statistics.message", changes, conflicts);
+        // The Bundle doesn't support such complex formats. Until that is fixed, constructing manually
+        //text = DiffBundle.message("merge.statistics.message", changes, conflicts);
+        text = makeCountersText(changes, conflicts);
       }
       myPanel.setStatusBarText(text);
+    }
+
+    @NotNull
+    private static String makeCountersText(int changes, int conflicts) {
+      return makeCounterWord(changes, "change") + ". " + makeCounterWord(conflicts, "conflict");
+    }
+
+    @NotNull
+    private static String makeCounterWord(int number, @NotNull String word) {
+      if (number == 0) {
+        return "No " + StringUtil.pluralize(word);
+      }
+      return number + " " + StringUtil.pluralize(word, number);
     }
 
     public void dispose(@NotNull MergeList mergeList) {

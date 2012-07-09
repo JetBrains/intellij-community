@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.InplaceButton;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -81,6 +83,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Component mySettingsButtons;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingUtilities.LEFT;
+  private BooleanFunction<KeyEvent> myKeyEventHandler;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent preferredFocusedComponent) {
@@ -204,6 +207,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @NotNull
+  @Override
+  public ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<KeyEvent> handler) {
+    myKeyEventHandler = handler; 
+    return this;
+  }
+
+  @NotNull
   public ComponentPopupBuilder setProject(Project project) {
     myProject = project;
     return this;
@@ -218,7 +228,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
                                               myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
                                               myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
-                                              myShowShadow, myCancelOnWindowDeactivation);
+                                              myShowShadow, myCancelOnWindowDeactivation, myKeyEventHandler);
     if (myUserData != null) {
       popup.setUserData(myUserData);
     }

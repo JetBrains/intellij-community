@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
@@ -29,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
 import com.intellij.testIntegration.TestLocationProvider;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -372,7 +372,7 @@ public class SMTestProxy extends AbstractTestProxy {
   public List<? extends SMTestProxy> collectChildren() {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
-    final List<SMTestProxy> result = Lists.newArrayList();
+    final List<SMTestProxy> result = ContainerUtilRt.newArrayList();
 
     result.addAll(allChildren);
 
@@ -560,7 +560,9 @@ public class SMTestProxy extends AbstractTestProxy {
    */
   protected AbstractState determineSuiteStateOnFinished() {
     final AbstractState state;
-    if (isLeaf() || isEmptySuite()) {
+    if (isLeaf()) {
+      state = SuiteFinishedState.EMPTY_LEAF_SUITE;
+    } else if (isEmptySuite()) {
       state = SuiteFinishedState.EMPTY_SUITE;
     } else {
       if (isDefect()) {

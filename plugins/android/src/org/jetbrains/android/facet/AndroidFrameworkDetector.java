@@ -19,6 +19,9 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.facet.FacetType;
 import com.intellij.framework.detection.FacetBasedFrameworkDetector;
 import com.intellij.framework.detection.FileContentPattern;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -27,11 +30,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.importDependencies.ImportDependenciesUtil;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
+import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,9 +66,17 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
           model.setSdk(ModuleRootManager.getInstance(module).getSdk());
         }
 
-        final String androidLibraryPropValue = AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
+        final Pair<String,VirtualFile> manifestMergerProp =
+          AndroidRootUtil.getProjectPropertyValue(module, AndroidCommonUtils.ANDROID_MANIFEST_MERGER_PROPERTY);
+        if (manifestMergerProp != null && Boolean.parseBoolean(manifestMergerProp.getFirst())) {
+          Notifications.Bus.notify(new Notification("Android", "Error importing module " + module.getName(),
+                                                    AndroidBundle.message("android.manifest.merger.not.supported.error"),
+                                                    NotificationType.ERROR));
+        }
+        final Pair<String, VirtualFile> androidLibraryProp =
+          AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
 
-        if (androidLibraryPropValue != null && androidLibraryPropValue.equals("true")) {
+        if (androidLibraryProp != null && Boolean.parseBoolean(androidLibraryProp.getFirst())) {
           facet.getConfiguration().LIBRARY_PROJECT = true;
         }
         else {

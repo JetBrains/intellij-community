@@ -142,7 +142,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
 
   private SourceFolder addSourceFolder(final String url, boolean isTestSource, String packagePrefix) {
     final JavaSourceRootType rootType = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(rootType, url, new JavaSourceRootProperties(packagePrefix));
+    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, rootType, new JavaSourceRootProperties(packagePrefix));
     final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
     mySourceFolders.add(sourceFolder);
     return sourceFolder;
@@ -157,7 +157,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   public void removeSourceFolder(@NotNull SourceFolder sourceFolder) {
     final JpsSourceFolder folder = (JpsSourceFolder)sourceFolder;
     mySourceFolders.remove(folder);
-    myModule.removeSourceRoot(folder.getSourceRoot().getRootType(), folder.getSourceRoot().getUrl());
+    myModule.removeSourceRoot(folder.getSourceRoot().getUrl(), folder.getSourceRoot().getRootType());
     Disposer.dispose(folder);
   }
 
@@ -170,7 +170,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     }
     mySourceFolders.clear();
     for (JpsModuleSourceRoot root : toRemove) {
-      myModule.removeSourceRoot(root.getRootType(), root.getUrl());
+      myModule.removeSourceRoot(root.getUrl(), root.getRootType());
     }
   }
 

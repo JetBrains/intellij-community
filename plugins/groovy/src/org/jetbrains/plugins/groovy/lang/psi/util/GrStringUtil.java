@@ -328,6 +328,8 @@ public class GrStringUtil {
     return buffer;
   }
 
+
+
   public static void unescapeCharacters(StringBuilder builder, String toUnescape, boolean isMultiLine) {
     for (int i = 0; i < builder.length(); i++) {
       if (builder.charAt(i) != '\\') continue;
@@ -352,19 +354,30 @@ public class GrStringUtil {
     }
   }
 
-  public static String escapeSymbols(String s, String toEscape) {
-    StringBuilder builder = new StringBuilder();
+  public static String escapeAndUnescapeSymbols(String s, String toEscape, String toUnescape, StringBuilder builder) {
     boolean escaped = false;
     for (int i = 0; i < s.length(); i++) {
       final char ch = s.charAt(i);
       if (escaped) {
-        builder.append(ch);
+        if (toUnescape.indexOf(ch) < 0) {
+          builder.append('\\');
+          builder.append(ch);
+        }
+        else {
+          if (ch=='n') builder.append('\n');
+          else if (ch=='b') builder.append('\b');
+          else if (ch=='t') builder.append('\t');
+          else if (ch=='f') builder.append('\r');
+          else builder.append(ch);
+        }
         escaped = false;
         continue;
       }
       if (ch == '\\') {
         escaped = true;
+        continue;
       }
+
       if (toEscape.indexOf(ch) >= 0) {
         builder.append('\\');
       }
@@ -850,6 +863,18 @@ public class GrStringUtil {
       escapeStringCharacters(text.length(), text, "$", false, true, buffer);
       unescapeCharacters(buffer, containsLineFeeds?"'\"":"'", containsLineFeeds);
       builder.append(buffer);
+    }
+  }
+
+  public static void fixAllTripleQuotes(StringBuilder builder, int position) {
+    for (int i = builder.indexOf("'''", position); i >= 0; i = builder.indexOf("'''", i)) {
+      builder.replace(i + 2, i + 3, "\\'");
+    }
+  }
+
+  public static void fixAllTripleDoubleQuotes(StringBuilder builder, int position) {
+    for (int i = builder.indexOf("\"\"\"", position); i >= 0; i = builder.indexOf("\"\"\"", i)) {
+      builder.replace(i + 2, i + 3, "\\\"");
     }
   }
 }

@@ -300,6 +300,7 @@ public class HighlightMethodUtil {
     return false;
   }
 
+  @Nullable
   static HighlightInfo checkMethodCall(PsiMethodCallExpression methodCall, PsiResolveHelper resolveHelper) {
     PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
@@ -338,8 +339,10 @@ public class HighlightMethodUtil {
           String toolTip = parent instanceof PsiClass && !ApplicationManager.getApplication().isUnitTestMode() ?
                            createMismatchedArgumentsHtmlTooltip(candidateInfo, list) : description;
           highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, description, toolTip);
-          registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
-          highlightInfo.navigationShift = +1;
+          if (highlightInfo != null) {
+            registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
+            highlightInfo.navigationShift = +1;
+          }
         }
         else {
           PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
@@ -389,6 +392,7 @@ public class HighlightMethodUtil {
     return isDummy;
   }
 
+  @Nullable
   static HighlightInfo checkAmbiguousMethodCall(final PsiReferenceExpression referenceToMethod,
                                                         JavaResolveResult[] resolveResults,
                                                         final PsiExpressionList list,
@@ -483,9 +487,10 @@ public class HighlightMethodUtil {
     return candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
   }
 
-  private static void registerMethodCallIntentions(HighlightInfo highlightInfo,
+  private static void registerMethodCallIntentions(@Nullable HighlightInfo highlightInfo,
                                                    PsiMethodCallExpression methodCall,
-                                                   PsiExpressionList list, PsiResolveHelper resolveHelper) {
+                                                   PsiExpressionList list,
+                                                   PsiResolveHelper resolveHelper) {
     TextRange fixRange = getFixRange(methodCall);
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateMethodFromUsageFix(methodCall));
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateAbstractMethodFromUsageFix(methodCall));

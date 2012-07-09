@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.dom;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -23,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
@@ -48,10 +48,10 @@ import java.util.*;
 public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
   public static final Key<ParameterData> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
 
-  private static final Set<String> COLLECTIONS_TYPE_NAMES = ImmutableSet.of("java.util.Collection", CommonClassNames.JAVA_UTIL_SET,
-                                                                            CommonClassNames.JAVA_UTIL_LIST,
-                                                                            "java.util.ArrayList", "java.util.HashSet",
-                                                                            "java.util.LinkedList");
+  private static final Set<String> COLLECTIONS_TYPE_NAMES = ContainerUtil.immutableSet("java.util.Collection", CommonClassNames.JAVA_UTIL_SET,
+                                                                          CommonClassNames.JAVA_UTIL_LIST,
+                                                                          "java.util.ArrayList", "java.util.HashSet",
+                                                                          "java.util.LinkedList");
 
   @Override
   public void registerExtensions(@NotNull MavenDomConfiguration config, @NotNull DomExtensionsRegistrar r) {

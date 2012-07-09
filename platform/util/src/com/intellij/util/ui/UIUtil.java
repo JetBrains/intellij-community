@@ -20,15 +20,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairFunction;
-import com.intellij.util.Processor;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -157,6 +155,24 @@ public class UIUtil {
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
   private UIUtil() { }
+
+  private static final Ref<Boolean> ourRetina = Ref.create(SystemInfo.isMac ? null : false);
+
+  public static boolean isRetina() {
+    synchronized (ourRetina) {
+      if (ourRetina.isNull()) {
+        ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
+
+        String vendor = SystemProperties.getJavaVmVendor();
+        if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple")) {
+          if (!Registry.is("ide.mac.disableRetina", false)) {
+            ourRetina.set(IsRetina.isRetina());
+          }
+        }
+      }
+      return ourRetina.get();
+    }
+  }
 
   public static boolean hasLeakingAppleListeners() {
     // in version 1.6.0_29 Apple introduced a memory leak in JViewport class - they add a PropertyChangeListeners to the CToolkit
@@ -1255,6 +1271,42 @@ public class UIUtil {
     Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
     if (map != null) {
       ((Graphics2D)g).addRenderingHints(map);
+    }
+  }
+
+
+  public static BufferedImage createImage(int width, int height, int type) {
+    if (isRetina()) {
+      return RetinaImage.create(width, height, type);
+    }
+    return new BufferedImage(width, height, type);
+  }
+
+  public static void paintWithRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {
+    paintWithRetina(size, g, true, paintRoutine);
+  }
+
+  public static void paintWithRetina(@NotNull Dimension size, @NotNull Graphics g, boolean useRetinaCondition, Consumer<Graphics2D> paintRoutine) {
+    if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.disableRetinaDrawingFix", false)) {
+      paintRoutine.consume((Graphics2D)g);
+    }
+    else {
+      Rectangle rect = g.getClipBounds();
+      if (rect == null) rect = new Rectangle(size);
+
+      Image image = ((Graphics2D)g).getDeviceConfiguration().createCompatibleImage(rect.width * 2, rect.height * 2);
+      Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
+
+      imageGraphics.scale(2, 2);
+      imageGraphics.translate(-rect.x, -rect.y);
+      imageGraphics.setClip(rect.x, rect.y, rect.width, rect.height);
+
+      paintRoutine.consume(imageGraphics);
+      image.flush();
+      imageGraphics.dispose();
+
+      ((Graphics2D)g).scale(0.5, 0.5);
+      g.drawImage(image, rect.x * 2, rect.y * 2, null);
     }
   }
 

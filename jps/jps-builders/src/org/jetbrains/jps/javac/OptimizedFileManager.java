@@ -6,8 +6,7 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.FileObject;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
@@ -17,7 +16,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -29,9 +27,9 @@ import java.util.concurrent.atomic.AtomicReference;
 class OptimizedFileManager extends DefaultFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
-  private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
-  private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = new ConcurrentHashMap<InputFileObject, SoftReference<CharBuffer>>();
-  private final Map<File, File[]> myDirectoryCache = new ConcurrentHashMap<File, File[]>();
+  private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
+  private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = new HashMap<InputFileObject, SoftReference<CharBuffer>>();
+  private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
 
   public OptimizedFileManager() throws Throwable {

@@ -15,7 +15,6 @@
  */
 package git4idea.history;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -23,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.tests.GitTest;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ public class GitLogParserTest extends GitTest {
   private GitLogParser myParser;
   private GitTestLogRecord myRecord;
 
-  private static final GitTestLogRecord RECORD1 = new GitTestLogRecord(new ImmutableMap.Builder<GitTestLogRecordInfo, Object>()
+  private static final GitTestLogRecord RECORD1 = new GitTestLogRecord(ContainerUtil.<GitTestLogRecordInfo, Object>immutableMapBuilder()
     .put(GitTestLogRecordInfo.HASH,         "2c815939f45fbcfda9583f84b14fe9d393ada790")
     .put(GitTestLogRecordInfo.AUTHOR_TIME,  new Date(1317027817L * 1000))
     .put(GitTestLogRecordInfo.AUTHOR_NAME,  "John Doe")
@@ -76,7 +76,7 @@ public class GitLogParserTest extends GitTest {
                                               GitTestChange.deleted("src/ChildAClass.java")})
     .build());
 
-  private static final GitTestLogRecord RECORD2 = new GitTestLogRecord(new ImmutableMap.Builder<GitTestLogRecordInfo, Object>()
+  private static final GitTestLogRecord RECORD2 = new GitTestLogRecord(ContainerUtil.<GitTestLogRecordInfo, Object>immutableMapBuilder()
     .put(GitTestLogRecordInfo.HASH,         "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7")
     .put(GitTestLogRecordInfo.AUTHOR_TIME,  new Date(1317027817L * 1000))
     .put(GitTestLogRecordInfo.AUTHOR_NAME,  "John Doe")
@@ -90,7 +90,7 @@ public class GitLogParserTest extends GitTest {
     .put(GitTestLogRecordInfo.CHANGES,      new GitTestChange[] { GitTestChange.modified("src/CClass.java") })
     .build());
 
-  private static final GitTestLogRecord RECORD3 = new GitTestLogRecord(new ImmutableMap.Builder<GitTestLogRecordInfo, Object>()
+  private static final GitTestLogRecord RECORD3 = new GitTestLogRecord(ContainerUtil.<GitTestLogRecordInfo, Object>immutableMapBuilder()
     .put(GitTestLogRecordInfo.HASH,         "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7")
     .put(GitTestLogRecordInfo.AUTHOR_TIME, new Date(1317027817L * 1000))
     .put(GitTestLogRecordInfo.AUTHOR_NAME,  "John Doe")

@@ -67,10 +67,10 @@ public class EclipseCompiler extends ExternalCompiler {
     File dir = new File(PathManager.getLibPath());
     File[] jars = dir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, String name) {
-        return name.startsWith("org.eclipse.jdt.core") && name.endsWith(".jar");
+        return name.startsWith("ecj-") && name.endsWith(".jar");
       }
     });
-    return jars.length == 0 ? dir + "/org.eclipse.jdt.core*.jar" : jars[0].getPath();
+    return jars.length == 0 ? dir + "/ecj-*.jar" : jars[0].getPath();
   }
 
   public EclipseCompiler(Project project) {

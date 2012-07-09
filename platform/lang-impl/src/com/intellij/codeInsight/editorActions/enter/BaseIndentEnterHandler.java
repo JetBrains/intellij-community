@@ -95,7 +95,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    PsiDocumentManager.getInstance(project).commitDocument(document);
 
     int caret = editor.getCaretModel().getOffset();
     if (caret <= 0) {
@@ -110,7 +110,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     final HighlighterIterator iterator = highlighter.createIterator(caret - 1);
     final IElementType type = getNonWhitespaceElementType(iterator, previousLineStartOffset);
 
-    final CharSequence editorCharSequence = editor.getDocument().getCharsSequence();
+    final CharSequence editorCharSequence = document.getCharsSequence();
     final CharSequence lineIndent =
       editorCharSequence.subSequence(lineStartOffset, EditorActionUtil.findFirstNonSpaceOffsetOnTheLine(document, lineNumber));
 
@@ -133,7 +133,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     }
     else {
       if (myIndentTokens.contains(type)) {
-        final String newIndent = getNewIndent(file, lineIndent);
+        final String newIndent = getNewIndent(file, document, lineIndent);
         EditorModificationUtil.insertStringAtCaret(editor, "\n" + newIndent);
         return Result.Stop;
       }
@@ -144,12 +144,34 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     }
   }
 
-  protected String getNewIndent(final @NotNull PsiFile file, final @NotNull CharSequence oldIndent) {
-    if (oldIndent.length() > 0 && oldIndent.charAt(oldIndent.length() - 1) == '\t') {
-      return oldIndent + "\t";
+  protected String getNewIndent(
+    @NotNull final PsiFile file,
+    @NotNull final Document document,
+    @NotNull final CharSequence oldIndent)
+  {
+    CharSequence nonEmptyIndent = oldIndent;
+    final CharSequence editorCharSequence = document.getCharsSequence();
+    final int nLines = document.getLineCount();
+    for (int line = 0; line < nLines && nonEmptyIndent.length() == 0; ++line) {
+      final int lineStart = document.getLineStartOffset(line);
+      final int indentEnd = EditorActionUtil.findFirstNonSpaceOffsetOnTheLine(document, line);
+      if (lineStart < indentEnd) {
+        nonEmptyIndent = editorCharSequence.subSequence(lineStart, indentEnd);
+      }
     }
+
+    final boolean usesSpacesForIndentation = nonEmptyIndent.length() > 0 && nonEmptyIndent.charAt(nonEmptyIndent.length() - 1) == ' ';
+    final boolean firstIndent = nonEmptyIndent.length() == 0;
+
     final CodeStyleSettings currentSettings = CodeStyleSettingsManager.getSettings(file.getProject());
     final CommonCodeStyleSettings.IndentOptions indentOptions = currentSettings.getIndentOptions(file.getFileType());
+    if (firstIndent && indentOptions.USE_TAB_CHARACTER || !firstIndent && !usesSpacesForIndentation) {
+      int nTabsToIndent = indentOptions.INDENT_SIZE / indentOptions.TAB_SIZE;
+      if (indentOptions.INDENT_SIZE % indentOptions.TAB_SIZE != 0) {
+        ++nTabsToIndent;
+      }
+      return oldIndent + StringUtil.repeatSymbol('\t', nTabsToIndent);
+    }
     return oldIndent + StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
   }
 

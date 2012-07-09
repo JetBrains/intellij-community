@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.application;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -468,7 +467,6 @@ public class PathManager {
       Appender.class,               // log4j
       THashSet.class,               // trove4j
       PicoContainer.class,          // PicoContainer
-      Lists.class,                  // guava
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-utils)
       PatternMatcher.class          // OROMatcher

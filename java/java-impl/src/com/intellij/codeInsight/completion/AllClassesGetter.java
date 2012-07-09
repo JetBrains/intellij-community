@@ -139,34 +139,39 @@ public class AllClassesGetter {
     }
   };
 
-  public static void processJavaClasses(CompletionParameters parameters,
+  public static void processJavaClasses(final CompletionParameters parameters,
                                         final PrefixMatcher prefixMatcher, final boolean filterByScope,
                                         final Consumer<PsiClass> consumer) {
     final PsiElement context = parameters.getPosition();
-    final String packagePrefix = getPackagePrefix(context, parameters.getOffset());
-
-    final Set<String> qnames = new THashSet<String>();
-
     final Project project = context.getProject();
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
-    final boolean pkgContext = JavaCompletionUtil.inSomePackage(context);
 
-    AllClassesSearch.search(scope, project, new Condition<String>() {
-      public boolean value(String s) {
-        return prefixMatcher.prefixMatches(s);
-      }
-    }).forEach(new Processor<PsiClass>() {
+    Processor<PsiClass> processor = new Processor<PsiClass>() {
+      final Set<String> qNames = new THashSet<String>();
+      final boolean pkgContext = JavaCompletionUtil.inSomePackage(context);
+      final String packagePrefix = getPackagePrefix(context, parameters.getOffset());
+
       public boolean process(PsiClass psiClass) {
         assert psiClass != null;
         if (isAcceptableInContext(context, psiClass, filterByScope, pkgContext)) {
           String qName = psiClass.getQualifiedName();
-          if (qName != null && qName.startsWith(packagePrefix) && qnames.add(qName)) {
+          if (qName != null && qName.startsWith(packagePrefix) && qNames.add(qName)) {
             consumer.consume(psiClass);
           }
         }
         return true;
       }
-    });
+    };
+    AllClassesSearch.search(scope, project, new Condition<String>() {
+      public boolean value(String s) {
+        return prefixMatcher.isStartMatch(s);
+      }
+    }).forEach(processor);
+    AllClassesSearch.search(scope, project, new Condition<String>() {
+      public boolean value(String s) {
+        return prefixMatcher.prefixMatches(s);
+      }
+    }).forEach(processor);
   }
 
 

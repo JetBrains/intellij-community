@@ -35,8 +35,8 @@ public final class ObjectTree<T> {
   private final CopyOnWriteArraySet<ObjectTreeListener> myListeners = new CopyOnWriteArraySet<ObjectTreeListener>();
 
   // identity used here to prevent problems with hashCode/equals overridden by not very bright minds
-  private final THashSet<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
-  private final THashMap<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY);
+  private final Set<T> myRootObjects = new THashSet<T>(TObjectHashingStrategy.IDENTITY);
+  private final Map<T, ObjectNode<T>> myObject2NodeMap = new THashMap<T, ObjectNode<T>>(TObjectHashingStrategy.IDENTITY);
 
   private final List<ObjectNode<T>> myExecutedNodes = new ArrayList<ObjectNode<T>>();
   private final List<T> myExecutedUnregisteredNodes = new ArrayList<T>();
@@ -50,7 +50,7 @@ public final class ObjectTree<T> {
       return myObject2NodeMap.get(object);
     }
   }
-  public ObjectNode<T> putNode(@NotNull T object, ObjectNode<T> node) {
+  public ObjectNode<T> putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
     synchronized (treeLock) {
       return node == null ? myObject2NodeMap.remove(object) : myObject2NodeMap.put(object, node);
     }
@@ -264,16 +264,8 @@ public final class ObjectTree<T> {
     synchronized (treeLock) {
       ObjectNode<T> parentNode = getNode(parentDisposable);
       if (parentNode == null) return null;
-      LinkedHashSet<ObjectNode<T>> children = parentNode.myChildren;
-      if (children != null) {
-        for (ObjectNode<T> node : children) {
-          T nodeObject = node.getObject();
-          if (nodeObject.equals(object)) {
-            return (D)nodeObject;
-          }
-        }
-      }
-      return null;
+      D nodeObject = parentNode.findChildEqualTo(object);
+      return nodeObject;
     }
   }
 

@@ -110,7 +110,7 @@ public class RemoveRedundantArgumentsFix implements IntentionAction {
 
   public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
                                         @NotNull PsiExpressionList arguments,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange) {
     for (JavaResolveResult candidate : candidates) {
       registerIntention(arguments, highlightInfo, fixRange, candidate, arguments);
@@ -118,7 +118,7 @@ public class RemoveRedundantArgumentsFix implements IntentionAction {
   }
 
   private static void registerIntention(@NotNull PsiExpressionList arguments,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange,
                                         @NotNull JavaResolveResult candidate,
                                         @NotNull PsiElement context) {

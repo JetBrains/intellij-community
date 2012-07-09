@@ -32,13 +32,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
@@ -92,7 +92,7 @@ public class FileManagerImpl implements FileManager {
     Disposer.register(manager.getProject(), this);
   }
 
-  private static final VirtualFile NULL = new CoreLocalVirtualFile(null,null);
+  private static final VirtualFile NULL = new LightVirtualFile();
   public void processQueue() {
     // just to call processQueue()
     myVFileToViewProviderMap.remove(NULL);

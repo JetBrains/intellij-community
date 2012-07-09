@@ -198,8 +198,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
     myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
-    myPathTextField = new FileTextFieldImpl.Vfs(myChooserDescriptor, myFileSystemTree.areHiddensShown(),
-                                                FileChooserFactoryImpl.getMacroMap(), getDisposable()) {
+    myPathTextField = new FileTextFieldImpl.Vfs(
+      FileChooserFactoryImpl.getMacroMap(), getDisposable(),
+      new LocalFsFinder.FileChooserFilter(myChooserDescriptor, myFileSystemTree)) {
       protected void onTextChanged(final String newValue) {
         updateTreeFromPath(newValue);
       }
@@ -550,6 +551,12 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
       myFileSystemTree.select(vFile, new Runnable() {
         public void run() {
+          if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
+            myFileSystemTree.showHiddens(true);
+            selectInTree(vFile, requestFocus);
+            return;
+          }
+
           myTreeIsUpdating = false;
           setErrorText(null);
           if (requestFocus) {

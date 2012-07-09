@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.introduce.inplace;
 
-import com.google.common.collect.Maps;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -81,7 +81,7 @@ public abstract class OccurrencesChooser<T> {
       callback.pass(ReplaceChoice.ALL);
     }
     else {
-      Map<ReplaceChoice, List<T>> occurrencesMap = Maps.newLinkedHashMap();
+      Map<ReplaceChoice, List<T>> occurrencesMap = ContainerUtil.newLinkedHashMap();
       occurrencesMap.put(ReplaceChoice.NO, Collections.singletonList(selectedOccurrence));
       occurrencesMap.put(ReplaceChoice.ALL, allOccurrences);
       showChooser(callback, occurrencesMap);

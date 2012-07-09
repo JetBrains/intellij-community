@@ -26,7 +26,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.intentions.conversions.ConvertGStringToStringIntention;
+import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;

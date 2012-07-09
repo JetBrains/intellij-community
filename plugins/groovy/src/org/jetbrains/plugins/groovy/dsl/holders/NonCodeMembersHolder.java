@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.dsl.holders;
 
-import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -23,6 +22,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentSoftHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -81,7 +81,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
           method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place), false);
 
           if (isNamed) {
-            Map<String, NamedArgumentDescriptor> namedParams = Maps.newHashMap();
+            Map<String, NamedArgumentDescriptor> namedParams = ContainerUtil.newHashMap();
             for (Object o : (List)value) {
               if (o instanceof CustomMembersGenerator.ParameterDescriptor) {
                 namedParams.put(((CustomMembersGenerator.ParameterDescriptor)o).name,

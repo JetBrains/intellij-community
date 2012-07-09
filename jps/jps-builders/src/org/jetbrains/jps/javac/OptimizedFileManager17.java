@@ -8,7 +8,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -18,8 +18,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * WARNING: Loaded via reflection, do not delete
@@ -29,10 +27,9 @@ import java.util.concurrent.atomic.AtomicReference;
 class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
-  private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
-  private final Map<File, File[]> myDirectoryCache = new ConcurrentHashMap<File, File[]>();
+  private final Map<File, Boolean> myIsFile = new HashMap<File, Boolean>();
+  private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
-  private final Map<JavaFileObject, SoftReference<CharBuffer>> myContentCache = new ConcurrentHashMap<JavaFileObject, SoftReference<CharBuffer>>();
 
   public OptimizedFileManager17() throws Throwable {
     super(new Context(), true, null);
@@ -198,66 +195,6 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private static boolean isValidFile(String name, Set<JavaFileObject.Kind> fileKinds) {
     return fileKinds.contains(getKind(name));
   }
-
-  public CharBuffer getCachedContent(JavaFileObject file) {
-    final SoftReference<CharBuffer> r = myContentCache.get(file);
-    return r == null ? null : r.get();
-  }
-
-  public void cache(JavaFileObject file, CharBuffer cb) {
-    myContentCache.put(file, new SoftReference<CharBuffer>(cb));
-  }
-
-  public void flush() {
-    try {
-      super.flush();
-    }
-    finally {
-      myContentCache.clear();
-    }
-  }
-
-  public ByteBuffer makeByteBuffer(InputStream in) throws IOException {
-    int limit = in.available();
-    if (limit < 1024) {
-      limit = 1024;
-    }
-    ByteBuffer result = myByteBufferCache.get(limit);
-    int position = 0;
-    while (in.available() != 0) {
-      if (position >= limit) {
-        // expand buffer
-        result = ByteBuffer.allocate(limit <<= 1).put((ByteBuffer)result.flip());
-      }
-      final int count = in.read(result.array(), position, limit - position);
-      if (count < 0) {
-        break;
-      }
-      result.position(position += count);
-    }
-    return (ByteBuffer)result.flip();
-  }
-
-  public void recycleByteBuffer(ByteBuffer bb) {
-    myByteBufferCache.put(bb);
-  }
-
-  private static class ByteBufferCache {
-    private AtomicReference<ByteBuffer> myCached = new AtomicReference<ByteBuffer>(null);
-
-    ByteBuffer get(int capacity) {
-      if (capacity < 20480) {
-        capacity = 20480;
-      }
-      final ByteBuffer cached = myCached.getAndSet(null);
-      return (cached != null && cached.capacity() >= capacity) ? (ByteBuffer)cached.clear() : ByteBuffer.allocate(capacity + capacity>>1);
-    }
-
-    void put(ByteBuffer x) {
-      myCached.set(x);
-    }
-  }
-  private final ByteBufferCache myByteBufferCache = new ByteBufferCache();
 
   private class InputFileObject extends BaseFileObject {
     private String name;

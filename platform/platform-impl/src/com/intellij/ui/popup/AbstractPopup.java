@@ -43,6 +43,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.Alarm;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ChildFocusWatcher;
 import com.intellij.util.ui.EmptyIcon;
@@ -63,65 +64,66 @@ import java.util.Set;
 public class AbstractPopup implements JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
-  private static final Icon ourMacCorner = AllIcons.General.MacCorner;
+  private static final Icon   ourMacCorner        = AllIcons.General.MacCorner;
   private static final Object SUPPRESS_MAC_CORNER = new Object();
-  public static final String SHOW_HINTS = "ShowHints";
+  public static final  String SHOW_HINTS          = "ShowHints";
 
   private PopupComponent myPopup;
   private MyContentPanel myContent;
-  private JComponent myPreferredFocusedComponent;
-  private boolean myRequestFocus;
-  private boolean myFocusable;
-  private boolean myForcedHeavyweight;
-  private boolean myLocateWithinScreen;
+  private JComponent     myPreferredFocusedComponent;
+  private boolean        myRequestFocus;
+  private boolean        myFocusable;
+  private boolean        myForcedHeavyweight;
+  private boolean        myLocateWithinScreen;
   private boolean myResizable = false;
   private JPanel myHeaderPanel;
   private CaptionPanel myCaption = null;
   private JComponent myComponent;
-  private String myDimensionServiceKey = null;
-  private Computable<Boolean> myCallBack = null;
-  private Project myProject;
-  private boolean myCancelOnClickOutside;
+  private String              myDimensionServiceKey = null;
+  private Computable<Boolean> myCallBack            = null;
+  private Project              myProject;
+  private boolean              myCancelOnClickOutside;
   private Set<JBPopupListener> myListeners;
-  private boolean myUseDimServiceForXYLocation;
-  private MouseChecker myCancelOnMouseOutCallback;
-  private Canceller myMouseOutCanceller;
-  private boolean myCancelOnWindow;
+  private boolean              myUseDimServiceForXYLocation;
+  private MouseChecker         myCancelOnMouseOutCallback;
+  private Canceller            myMouseOutCanceller;
+  private boolean              myCancelOnWindow;
   private boolean myCancelOnWindowDeactivation = true;
-  private Dimension myForcedSize;
-  private Point myForcedLocation;
-  private ChildFocusWatcher myFocusWatcher;
-  private boolean myCancelKeyEnabled;
-  private boolean myLocateByContent;
-  protected FocusTrackback myFocusTrackback;
-  private Dimension myMinSize;
-  private ArrayList<Object> myUserData;
-  private boolean myShadowed;
-  private boolean myPaintShadow;
+  private   Dimension         myForcedSize;
+  private   Point             myForcedLocation;
+  private   ChildFocusWatcher myFocusWatcher;
+  private   boolean           myCancelKeyEnabled;
+  private   boolean           myLocateByContent;
+  protected FocusTrackback    myFocusTrackback;
+  private   Dimension         myMinSize;
+  private   ArrayList<Object> myUserData;
+  private   boolean           myShadowed;
+  private   boolean           myPaintShadow;
 
-  private float myAlpha = 0;
+  private float myAlpha     = 0;
   private float myLastAlpha = 0;
 
   private MaskProvider myMaskProvider;
 
-  private Window myWindow;
-  private boolean myInStack;
+  private Window           myWindow;
+  private boolean          myInStack;
   private MyWindowListener myWindowListener;
 
   private boolean myModalContext;
 
-  private Component[] myFocusOwners;
-  private PopupBorder myPopupBorder;
-  private Dimension myRestoreWindowSize;
-  protected Component myOwner;
-  protected Component myRequestorComponent;
-  private boolean myHeaderAlwaysFocusable;
-  private boolean myMovable;
-  private JComponent myHeaderComponent;
+  private   Component[] myFocusOwners;
+  private   PopupBorder myPopupBorder;
+  private   Dimension   myRestoreWindowSize;
+  protected Component   myOwner;
+  protected Component   myRequestorComponent;
+  private   boolean     myHeaderAlwaysFocusable;
+  private   boolean     myMovable;
+  private   JComponent  myHeaderComponent;
 
   protected InputEvent myDisposeEvent;
 
   private Runnable myFinalRunnable;
+  @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
 
@@ -197,7 +199,9 @@ public class AbstractPopup implements JBPopup {
                      @Nullable final Processor<JBPopup> pinCallback,
                      boolean mayBeParent,
                      boolean showShadow,
-                     boolean cancelOnWindowDeactivation) {
+                     boolean cancelOnWindowDeactivation,
+                     @Nullable BooleanFunction<KeyEvent> keyEventHandler)
+  {
     if (requestFocus && !focusable) {
       assert false : "Incorrect argument combination: requestFocus=" + requestFocus + " focusable=" + focusable;
     }
@@ -294,7 +298,8 @@ public class AbstractPopup implements JBPopup {
     if (settingsButtons != null) {
       myCaption.addSettingsComponent(settingsButtons);
     }
-
+    
+    myKeyEventHandler = keyEventHandler;
     return this;
   }
 
@@ -1568,6 +1573,12 @@ public class AbstractPopup implements JBPopup {
     if (myContent != null) {
       myContent.setDataProvider(dataProvider);
     }
+  }
+
+  @Override
+  public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
+    BooleanFunction<KeyEvent> handler = myKeyEventHandler;
+    return handler != null && handler.fun(e);
   }
 
   private class SpeedSearchKeyListener implements KeyListener {

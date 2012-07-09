@@ -81,3 +81,8 @@ class InnerClassTest {
     }
   }
 }
+
+class ForwardRefTest {
+  private static final String FOO = ForwardRefTest.BAR;
+  private static final String BAR = "BAR";
+}

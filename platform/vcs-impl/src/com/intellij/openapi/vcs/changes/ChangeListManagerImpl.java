@@ -906,7 +906,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Nullable
-  public LocalChangeList getChangeList(Change change) {
+  public LocalChangeList getChangeList(@NotNull Change change) {
     synchronized (myDataLock) {
       return myWorker.listForChange(change);
     }
@@ -1016,7 +1016,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public void moveChangesTo(final LocalChangeList list, final Change[] changes) {
+  public void moveChangesTo(final LocalChangeList list, final Change... changes) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {

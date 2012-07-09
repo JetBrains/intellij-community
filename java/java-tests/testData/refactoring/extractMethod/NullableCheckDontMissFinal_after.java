@@ -1,6 +1,7 @@
 class Test {
   void foo() {
       final String str = newMethod();
+      if (str == null) return;
     new Runnable() {
       public void run() {
         System.out.println(str);
@@ -11,7 +12,7 @@ class Test {
     private String newMethod() {
         final String str = "";
         if (str == "") {
-          return;
+            return null;
         }
         return str;
     }

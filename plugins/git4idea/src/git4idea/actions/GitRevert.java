@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -65,7 +66,7 @@ public class GitRevert extends BasicAction {
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("revert.action.name");
+    return UIUtil.removeMnemonic(GitBundle.getString("revert.action.name"));
   }
 
   @Override

@@ -41,15 +41,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/ecj-4.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" scope="RUNTIME" name="Eclipse" level="project" />
   </component>
 </module>
 

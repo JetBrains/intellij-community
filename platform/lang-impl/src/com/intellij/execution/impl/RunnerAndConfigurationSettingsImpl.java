@@ -292,6 +292,9 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
           runConfigurationBase.checkRunnerSettings(runner, myRunnerSettings.get(runner), myConfigurationPerRunnerSettings.get(runner));
         }
       }
+      if (executor != null) {
+        runConfigurationBase.checkSettingsBeforeRun();
+      }
     }
   }
 

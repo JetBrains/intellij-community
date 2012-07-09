@@ -60,7 +60,7 @@ class IntellijLintClient extends LintClient implements Disposable {
           final Position start = location.getStart();
           final Position end = location.getEnd();
 
-          final TextRange textRange = start != null && end != null
+          final TextRange textRange = start != null && end != null && start.getOffset() <= end.getOffset()
                                       ? new TextRange(start.getOffset(), end.getOffset())
                                       : TextRange.EMPTY_RANGE;
 

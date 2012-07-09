@@ -32,7 +32,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentFixTest extends IGQuickFixesT
   }
 
   private void doFixTest() {
-    doTest(getTestName(true), InspectionGadgetsBundle.message("to.array.call.with.zero.length.array.argument.quickfix"));
+    doTest(getTestName(false), InspectionGadgetsBundle.message("to.array.call.with.zero.length.array.argument.quickfix"));
   }
 
   @Override

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
@@ -50,7 +49,7 @@ public class MavenProject {
   @NotNull private final VirtualFile myFile;
   @NotNull private volatile State myState = new State();
 
-  private static Map<String, String> COMPILER_LEVEL_TABLE = ImmutableMap.<String,String>builder()
+  private static Map<String, String> COMPILER_LEVEL_TABLE = ContainerUtil.<String,String>immutableMapBuilder()
     .put("1.1", "1.1")
     .put("1.2", "1.2")
     .put("1.3", "1.3")

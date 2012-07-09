@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
@@ -80,11 +79,7 @@ public class PsiTypeLookupItem extends LookupItem {
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     assert position != null;
     int genericsStart = context.getTailOffset();
-    String generics = calcGenerics(position, context);
-    if (context.getFile().getFileType() instanceof XmlLikeFileType) {
-      generics = StringUtil.escapeXml(generics);
-    }
-    context.getDocument().insertString(genericsStart, generics);
+    context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
     JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
 
     int tail = context.getTailOffset();

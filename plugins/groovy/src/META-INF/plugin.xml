@@ -1065,12 +1065,22 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertGStringToStringIntention</className>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.conversions.GrConvertStringToCharIntention</className>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.GrConvertStringToCharIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.RemoveUnnecessaryEscapeCharactersIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.GrBreakStringOnLineBreaksIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
@@ -1095,7 +1105,7 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertConcatenationToGstringIntention</className>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertConcatenationToGstringIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
@@ -1115,7 +1125,7 @@
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.conversions</categoryKey>
-      <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertStringToMultilineIntention</className>
+      <className>org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertStringToMultilineIntention</className>
     </intentionAction>
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>

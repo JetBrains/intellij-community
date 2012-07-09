@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.introduceVariable;
 
-import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -65,6 +64,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.NotInSuperCallOccurrenceFilter;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -529,7 +529,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiExpression[] occurrences = occurenceManager.getOccurrences();
     final PsiElement anchorStatementIfAll = occurenceManager.getAnchorStatementForAll();
 
-    final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = Maps.newLinkedHashMap();
+    final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = ContainerUtil.newLinkedHashMap();
 
     final boolean hasWriteAccess = fillChoices(expr, occurrences, occurrencesMap);
 

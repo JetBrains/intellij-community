@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.configurations;
 
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -269,7 +269,7 @@ public class GeneralCommandLine implements UserDataHolder {
   @Override
   public <T> void putUserData(@NotNull final Key<T> key, @Nullable final T value) {
     if (myUserData == null) {
-      myUserData = Maps.newHashMap();
+      myUserData = ContainerUtil.newHashMap();
     }
     myUserData.put(key, value);
   }

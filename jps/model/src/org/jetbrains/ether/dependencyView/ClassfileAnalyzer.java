@@ -102,7 +102,7 @@ class ClassfileAnalyzer {
         else {
           targets.add(target);
         }
-        myUsages.add(UsageRepr.createClassUsage(myContext, type.className));
+        myUsages.add(UsageRepr.createClassUsage(myContext, type.myClassName));
       }
 
       private String getMethodDescr(final Object value) {
@@ -161,8 +161,8 @@ class ClassfileAnalyzer {
           }
         }
 
-        myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.className, methodDescr));
-        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className, methodDescr));
+        myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.myClassName, methodDescr));
+        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.myClassName, methodDescr));
 
         myUsedArguments.add(methodName);
       }
@@ -171,8 +171,8 @@ class ClassfileAnalyzer {
         final int methodName = myContext.get(name);
         final String methodDescr = "()" + desc;
 
-        myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.className, methodDescr));
-        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.className, methodDescr));
+        myUsages.add(UsageRepr.createMethodUsage(myContext, methodName, myType.myClassName, methodDescr));
+        myUsages.add(UsageRepr.createMetaMethodUsage(myContext, methodName, myType.myClassName, methodDescr));
 
         myUsedArguments.add(methodName);
       }
@@ -444,7 +444,7 @@ class ClassfileAnalyzer {
           final TypeRepr.AbstractType element = typ.getDeepElementType();
 
           if (element instanceof TypeRepr.ClassType) {
-            final int className = ((TypeRepr.ClassType)element).className;
+            final int className = ((TypeRepr.ClassType)element).myClassName;
             myUsages.add(UsageRepr.createClassUsage(myContext, className));
             myUsages.add(UsageRepr.createClassNewUsage(myContext, className));
           }
@@ -476,13 +476,13 @@ class ClassfileAnalyzer {
             myContext, myContext.get(type));
 
           if (opcode == Opcodes.NEW) {
-            myUsages.add(UsageRepr.createClassUsage(myContext, ((TypeRepr.ClassType)typ).className));
-            myUsages.add(UsageRepr.createClassNewUsage(myContext, ((TypeRepr.ClassType)typ).className));
+            myUsages.add(UsageRepr.createClassUsage(myContext, ((TypeRepr.ClassType)typ).myClassName));
+            myUsages.add(UsageRepr.createClassNewUsage(myContext, ((TypeRepr.ClassType)typ).myClassName));
           }
           else if (opcode == Opcodes.ANEWARRAY) {
             if (typ instanceof TypeRepr.ClassType) {
-              myUsages.add(UsageRepr.createClassUsage(myContext, ((TypeRepr.ClassType)typ).className));
-              myUsages.add(UsageRepr.createClassNewUsage(myContext, ((TypeRepr.ClassType)typ).className));
+              myUsages.add(UsageRepr.createClassUsage(myContext, ((TypeRepr.ClassType)typ).myClassName));
+              myUsages.add(UsageRepr.createClassNewUsage(myContext, ((TypeRepr.ClassType)typ).myClassName));
             }
           }
 

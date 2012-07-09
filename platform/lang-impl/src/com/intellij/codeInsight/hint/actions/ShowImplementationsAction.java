@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
@@ -281,7 +282,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
-  private static PsiElement[] filterElements(PsiElement[] targetElements) {
+  private static PsiElement[] filterElements(final PsiElement[] targetElements) {
     Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
     for (PsiElement elt : targetElements) {
       PsiFile psiFile = elt.getContainingFile().getOriginalFile();
@@ -290,7 +291,13 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     // special case for Python (PY-237)
     // if the definition is the tree parent of the target element, filter out the target element
     for (int i = 1; i < targetElements.length; i++) {
-      if (PsiTreeUtil.isAncestor(targetElements[i], targetElements[0], true)) {
+      final PsiElement targetElement = targetElements[i];
+      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return PsiTreeUtil.isAncestor(targetElement, targetElements[0], true);
+        }
+      })) {
         unique.remove(targetElements[0]);
         break;
       }

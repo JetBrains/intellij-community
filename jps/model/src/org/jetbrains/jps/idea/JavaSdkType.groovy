@@ -14,6 +14,6 @@ class JavaSdkType extends SdkTypeService {
 
   @Override
   Sdk createSdk(Project project, String name, String version, String homePath, Node additionalData) {
-    return new JavaSdkImpl(project, name, version, homePath, {})
+    return new JavaSdkImpl(project, name, version, homePath)
   }
 }
