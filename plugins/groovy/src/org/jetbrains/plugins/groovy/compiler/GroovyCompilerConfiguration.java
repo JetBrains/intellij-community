@@ -36,12 +36,14 @@ import org.jdom.Element;
 )
 public class GroovyCompilerConfiguration implements PersistentStateComponent<GroovyCompilerConfiguration.MyStateBean>, Disposable {
   private String myHeapSize = "400";
+  private boolean myInvokeDynamic = false;
   public boolean transformsOk = false;
   private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
 
   public MyStateBean getState() {
     final MyStateBean bean = new MyStateBean();
     bean.heapSize = myHeapSize;
+    bean.invokeDynamic = myInvokeDynamic;
     bean.transformsOk = transformsOk;
     myExcludeFromStubGeneration.writeExternal(bean.excludes);
     return bean;
@@ -57,6 +59,7 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
 
   public void loadState(MyStateBean state) {
     myHeapSize = state.heapSize;
+    myInvokeDynamic = state.invokeDynamic;
     transformsOk = state.transformsOk;
 
     myExcludeFromStubGeneration.readExternal(state.excludes);
@@ -70,8 +73,16 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
     return myHeapSize;
   }
 
+  public boolean isInvokeDynamic() {
+    return myInvokeDynamic;
+  }
+
   public void setHeapSize(String heapSize) {
     myHeapSize = heapSize;
+  }
+
+  public void setInvokeDynamic(boolean invokeDynamic) {
+    myInvokeDynamic = invokeDynamic;
   }
 
   public void dispose() {
@@ -80,6 +91,7 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Gro
 
   public static class MyStateBean {
     public String heapSize = "400";
+    public boolean invokeDynamic = false;
 
     @Tag("excludes") public Element excludes = new Element("aaa");
 

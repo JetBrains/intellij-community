@@ -147,7 +147,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       classPathBuilder.add(PathManager.findFileInLibDirectory("yjp-controller-api-redist.jar").getAbsolutePath());
     }
 
-    parameters.getVMParametersList().add("-Xmx" + GroovyCompilerConfiguration.getInstance(myProject).getHeapSize() + "m");
+    final GroovyCompilerConfiguration compilerConfiguration = GroovyCompilerConfiguration.getInstance(myProject);
+    parameters.getVMParametersList().add("-Xmx" + compilerConfiguration.getHeapSize() + "m");
     if (profileGroovyc) {
       parameters.getVMParametersList().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
@@ -199,6 +200,9 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
 
     parameters.getProgramParametersList().add(forStubs ? "stubs" : "groovyc");
     parameters.getProgramParametersList().add(fileWithParameters.getPath());
+    if (compilerConfiguration.isInvokeDynamic()) {
+      parameters.getProgramParametersList().add("--indy");
+    }
 
     try {
       Process process = JdkUtil.setupJVMCommandLine(exePath, parameters, true).createProcess();
