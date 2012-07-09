@@ -68,6 +68,8 @@ public class IndexInfrastructure {
     return indexDir;
   }
 
+  private static volatile long ourLastStamp; // ensure any file index stamp increases
+
   public static void rewriteVersion(final File file, final int version) throws IOException {
     final long prevLastModifiedValue = file.lastModified();
     if (file.exists()) {
@@ -82,7 +84,9 @@ public class IndexInfrastructure {
     finally {
       ourIndexIdToCreationStamp.clear();
       os.close();
-      file.setLastModified(Math.max(System.currentTimeMillis(), prevLastModifiedValue + 2000));
+      long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue + 2000, ourLastStamp));
+      ourLastStamp = max;
+      file.setLastModified(max);
     }
   }
 
