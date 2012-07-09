@@ -546,14 +546,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   // todo[r.sh] fix symlink selection
-  private void selectInTree(final VirtualFile[] vFile, final boolean requestFocus) {
+  private void selectInTree(final VirtualFile[] array, final boolean requestFocus) {
     myTreeIsUpdating = true;
-    if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
-      myFileSystemTree.select(vFile, new Runnable() {
+    final List<VirtualFile> fileList = Arrays.asList(array);
+    if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
+      myFileSystemTree.select(array, new Runnable() {
         public void run() {
-          if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).contains(vFile)) {
+          if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
             myFileSystemTree.showHiddens(true);
-            selectInTree(vFile, requestFocus);
+            selectInTree(array, requestFocus);
             return;
           }
 
