@@ -28,9 +28,9 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PlatformIcons;
@@ -50,18 +50,13 @@ import java.util.Set;
  */
 public abstract class PropertyReferenceBase implements PsiPolyVariantReference, EmptyResolveMessageProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.references.PropertyReferenceBase");
-  private static final Function<IProperty,PsiElement> MAPPER = new Function<IProperty, PsiElement>() {
-    @Override
-    public PsiElement fun(IProperty iProperty) {
-      return iProperty.getPsiElement();
-    }
-  };
   private static final LookupElementRenderer<LookupElement> LOOKUP_ELEMENT_RENDERER = new LookupElementRenderer<LookupElement>() {
     @Override
     public void renderElement(LookupElement element, LookupElementPresentation presentation) {
       IProperty property = (IProperty)element.getObject();
       presentation.setIcon(PlatformIcons.PROPERTY_ICON);
-      presentation.setItemText(property.getUnescapedKey());
+      String key = StringUtil.notNullize(property.getUnescapedKey());
+      presentation.setItemText(key);
 
       PropertiesFile propertiesFile = property.getPropertiesFile();
       ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
@@ -69,7 +64,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       boolean hasBundle = resourceBundle != ResourceBundleImpl.NULL;
       if (hasBundle) {
         PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile(propertiesFile.getProject());
-        IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(property.getUnescapedKey());
+        IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(key);
         if (defaultProperty != null) {
           value = defaultProperty.getValue();
         }
