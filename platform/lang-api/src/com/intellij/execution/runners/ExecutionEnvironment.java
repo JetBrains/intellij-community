@@ -25,13 +25,14 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 
-public class ExecutionEnvironment {
+public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private final Project myProject;
 
   @NotNull private RunProfile myRunProfile;

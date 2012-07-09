@@ -97,6 +97,9 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
                                   @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings) throws RuntimeConfigurationException {
   }
 
+  public void checkSettingsBeforeRun() throws RuntimeConfigurationException {
+  }
+
   public boolean canRunOn(@NotNull ExecutionTarget target) {
     return true;
   }

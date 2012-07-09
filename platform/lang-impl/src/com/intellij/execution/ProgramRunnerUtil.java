@@ -74,14 +74,14 @@ public class ProgramRunnerUtil {
     }
 
     if (!RunManagerImpl.canRunConfiguration(configuration, executor) || (showSettings && RunManagerImpl.isEditBeforeRun(configuration))) {
-      if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon())) {
+      if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor)) {
         return;
       }
 
       while (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
         if (0 == Messages.showYesNoDialog(project, "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
                                           "Edit", "Continue Anyway", Messages.getErrorIcon())) {
-          if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon())) {
+          if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor)) {
             return;
           }
         } else {

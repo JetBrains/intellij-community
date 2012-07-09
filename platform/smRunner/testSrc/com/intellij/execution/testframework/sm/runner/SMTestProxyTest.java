@@ -16,9 +16,9 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
-import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.*;
 
 /**
  * @author Roman Chernyatchik
@@ -177,8 +177,41 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
   }
 
+  public void testTestFailedTwice() {
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("msg 1", "stack trace 1", false);
 
-  public void testTestFailed_ComparisionAssertion() {
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+    final MockPrinter printer = new MockPrinter(true);
+    mySimpleTest.printOn(printer);
+    assertEquals("", printer.getStdOut());
+    assertEquals("\nmsg 1\nstack trace 1\n", printer.getStdErr());
+    assertEquals("", printer.getStdSys());
+
+    mySimpleTest.setTestFailed("msg 2", "stack trace 2", false);
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+    printer.resetIfNecessary();
+    mySimpleTest.printOn(printer);
+    assertEquals("", printer.getStdOut());
+    assertEquals("\nmsg 1\nstack trace 1\n\nmsg 2\nstack trace 2\n", printer.getStdErr());
+    assertEquals("", printer.getStdSys());
+
+    mySimpleTest.setFinished();
+
+    assertFalse(mySimpleTest.isInProgress());
+    assertTrue(mySimpleTest.wasLaunched());
+    assertTrue(mySimpleTest.isDefect());
+    assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
+  }
+
+  public void testTestFailed_ComparisonAssertion() {
     mySimpleTest.setStarted();
     mySimpleTest.setTestComparisonFailed("", "", "", "");
 
@@ -192,7 +225,6 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertFalse(mySimpleTest.isInProgress());
     assertTrue(mySimpleTest.wasLaunched());
     assertTrue(mySimpleTest.isDefect());
-
     assertTrue(mySimpleTest.getMagnitudeInfo() == Magnitude.FAILED_INDEX);
   }
 
@@ -458,50 +490,50 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   public void testMagnitude() {
-    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
 
     final SMTestProxy passedTest = createTestProxy("passed");
     final SMTestProxy failedTest = createTestProxy("failed");
     mySuite.addChild(passedTest);
     mySuite.addChild(failedTest);
 
-    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(NOT_RUN_INDEX.getValue(), passedTest.getMagnitude());
-    assertEquals(NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
 
     mySuite.setStarted();
-    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(NOT_RUN_INDEX.getValue(), passedTest.getMagnitude());
-    assertEquals(NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(Magnitude.RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
 
     passedTest.setStarted();
-    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(RUNNING_INDEX.getValue(), passedTest.getMagnitude());
-    assertEquals(NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(Magnitude.RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.RUNNING_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
 
     passedTest.setFinished();
-    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
-    assertEquals(NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(Magnitude.RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), failedTest.getMagnitude());
 
     failedTest.setStarted();
-    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
-    assertEquals(RUNNING_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(Magnitude.RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(Magnitude.RUNNING_INDEX.getValue(), failedTest.getMagnitude());
 
     failedTest.setTestFailed("", "", false);
-    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
-    assertEquals(FAILED_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(Magnitude.RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(Magnitude.FAILED_INDEX.getValue(), failedTest.getMagnitude());
 
     mySuite.setFinished();
-    assertEquals(FAILED_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
-    assertEquals(FAILED_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(Magnitude.FAILED_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(Magnitude.FAILED_INDEX.getValue(), failedTest.getMagnitude());
   }
 
   public void testMagnitude_Error() {
-    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
 
     final SMTestProxy passedTest = createTestProxy("passed");
     final SMTestProxy failedTest = createTestProxy("failed");
@@ -520,32 +552,32 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     errorTest.setTestFailed("", "", true);
     errorTest.setFinished();
 
-    assertEquals(RUNNING_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(PASSED_INDEX.getValue(), passedTest.getMagnitude());
-    assertEquals(FAILED_INDEX.getValue(), failedTest.getMagnitude());
-    assertEquals(ERROR_INDEX.getValue(), errorTest.getMagnitude());
+    assertEquals(Magnitude.RUNNING_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.PASSED_INDEX.getValue(), passedTest.getMagnitude());
+    assertEquals(Magnitude.FAILED_INDEX.getValue(), failedTest.getMagnitude());
+    assertEquals(Magnitude.ERROR_INDEX.getValue(), errorTest.getMagnitude());
   }
 
   public void testMagnitude_Terminated() {
-    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
 
     final SMTestProxy testProxy = createTestProxy("failed");
     mySuite.addChild(testProxy);
 
-    assertEquals(NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(NOT_RUN_INDEX.getValue(), testProxy.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.NOT_RUN_INDEX.getValue(), testProxy.getMagnitude());
 
     mySuite.setStarted();
     mySuite.setTerminated();
-    assertEquals(TERMINATED_INDEX.getValue(), mySuite.getMagnitude());
-    assertEquals(TERMINATED_INDEX.getValue(), testProxy.getMagnitude());
+    assertEquals(Magnitude.TERMINATED_INDEX.getValue(), mySuite.getMagnitude());
+    assertEquals(Magnitude.TERMINATED_INDEX.getValue(), testProxy.getMagnitude());
   }
 
   public void testMagnitude_suiteWithoutTests() {
     final SMTestProxy noTests = createSuiteProxy("emptySuite");
     noTests.setStarted();
     noTests.setFinished();
-    assertEquals(COMPLETE_INDEX.getValue(), noTests.getMagnitude());
+    assertEquals(Magnitude.COMPLETE_INDEX.getValue(), noTests.getMagnitude());
   }
 
   public void testMagnitude_PassedSuite() {
@@ -556,7 +588,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     passedSuiteTest.setStarted();
     passedSuiteTest.setFinished();
     passedSuite.setFinished();
-    assertEquals(PASSED_INDEX.getValue(), passedSuite.getMagnitude());
+    assertEquals(Magnitude.PASSED_INDEX.getValue(), passedSuite.getMagnitude());
   }
 
   public void testLocation() {
@@ -569,11 +601,14 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   public void testNavigatable() {
+    //noinspection NullableProblems
     assertNull(mySuite.getDescriptor(null, null));
 
     mySuite.addChild(mySimpleTest);
 
+    //noinspection NullableProblems
     assertNull(mySuite.getDescriptor(null, null));
+    //noinspection NullableProblems
     assertNull(mySimpleTest.getDescriptor(null, null));
   }
 
@@ -645,11 +680,13 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   public void testFilter() {
+    //noinspection unchecked
     assertEmpty(mySuite.getChildren(Filter.NO_FILTER));
     assertEmpty(mySuite.getChildren(null));
 
     mySuite.addChild(mySimpleTest);
 
+    //noinspection unchecked
     assertEquals(1, mySuite.getChildren(Filter.NO_FILTER).size());
     assertEquals(1, mySuite.getChildren(null).size());
   }
@@ -693,13 +730,19 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNull(mySimpleTest.getDuration());
 
     mySimpleTest.setDuration(0);
-    assertEquals(0, mySimpleTest.getDuration().intValue());
+    Integer duration = mySimpleTest.getDuration();
+    assertNotNull(duration);
+    assertEquals(0, duration.intValue());
 
     mySimpleTest.setDuration(10);
-    assertEquals(10, mySimpleTest.getDuration().intValue());
+    duration = mySimpleTest.getDuration();
+    assertNotNull(duration);
+    assertEquals(10, duration.intValue());
 
     mySimpleTest.setDuration(5);
-    assertEquals(5, mySimpleTest.getDuration().intValue());
+    duration = mySimpleTest.getDuration();
+    assertNotNull(duration);
+    assertEquals(5, duration.intValue());
 
     mySimpleTest.setDuration(-2);
     assertNull(mySimpleTest.getDuration());
@@ -717,7 +760,9 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     final SMTestProxy test = createTestProxy("test", mySuite);
     test.setDuration(2);
     mySuite.setDuration(5);
-    assertEquals(2, mySuite.getDuration().intValue());
+    final Integer duration = mySuite.getDuration();
+    assertNotNull(duration);
+    assertEquals(2, duration.intValue());
   }
 
   public void testDuration_ForSuiteWithTests() {
@@ -728,10 +773,14 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNull(suite.getDuration());
 
     test1.setDuration(5);
-    assertEquals(5, suite.getDuration().intValue());
+    Integer duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(5, duration.intValue());
 
     test2.setDuration(6);
-    assertEquals(11, suite.getDuration().intValue());
+    duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(11, duration.intValue());
   }
 
   public void testDuration_OnFinished() {
@@ -741,16 +790,24 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNull(suite.getDuration());
 
     test.setDuration(5);
-    assertEquals(5, suite.getDuration().intValue());
+    Integer duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(5, duration.intValue());
 
     test.setDuration(7);
-    assertEquals(7, suite.getDuration().intValue());
+    duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(7, duration.intValue());
 
     suite.setFinished();
-    assertEquals(7, suite.getDuration().intValue());
+    duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(7, duration.intValue());
 
     test.setDuration(8);
-    assertEquals(8, suite.getDuration().intValue());
+    duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(8, duration.intValue());
   }
 
   public void testDuration_OnTerminated() {
@@ -760,16 +817,24 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNull(suite.getDuration());
 
     test.setDuration(5);
-    assertEquals(5, suite.getDuration().intValue());
+    Integer duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(5, duration.intValue());
 
     test.setDuration(7);
-    assertEquals(7, suite.getDuration().intValue());
+    duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(7, duration.intValue());
 
     suite.setTerminated();
-    assertEquals(7, suite.getDuration().intValue());
+    duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(7, duration.intValue());
 
     test.setDuration(8);
-    assertEquals(8, suite.getDuration().intValue());
+    duration = suite.getDuration();
+    assertNotNull(duration);
+    assertEquals(8, duration.intValue());
   }
 
   public void testDuration_ForSuiteWithSuites() {
@@ -782,13 +847,19 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     final SMTestProxy test21 = createTestProxy("test21", suite2);
 
     test11.setDuration(5);
-    assertEquals(5, root.getDuration().intValue());
+    Integer duration = root.getDuration();
+    assertNotNull(duration);
+    assertEquals(5, duration.intValue());
 
     test12.setDuration(6);
-    assertEquals(11, root.getDuration().intValue());
+    duration = root.getDuration();
+    assertNotNull(duration);
+    assertEquals(11, duration.intValue());
 
     test21.setDuration(9);
-    assertEquals(20, root.getDuration().intValue());
+    duration = root.getDuration();
+    assertNotNull(duration);
+    assertEquals(20, duration.intValue());
   }
 
   public void testMagnitudeWeight() {
@@ -916,7 +987,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertFalse(root.isEmptySuite());
   }
 
-  protected void assertWeightsOrder(final Magnitude previous, final Magnitude next) {
+  protected static void assertWeightsOrder(final Magnitude previous, final Magnitude next) {
     assertTrue(previous.getSortWeight() < next.getSortWeight());
   }
 }

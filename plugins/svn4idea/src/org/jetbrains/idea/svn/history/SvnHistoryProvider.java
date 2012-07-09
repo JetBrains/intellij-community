@@ -189,11 +189,12 @@ public class SvnHistoryProvider
       logLoader.preliminary();
     }
     catch (SVNCancelException e) {
-      return;
+      throw new VcsException(e);
     }
     catch (SVNException e) {
       throw new VcsException(e);
     }
+    logLoader.check();
     logLoader.initSupports15();
 
     final SvnHistorySession historySession =
@@ -507,31 +508,18 @@ public class SvnHistoryProvider
           SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(myLastPath);
           if (entryPath != null) {
             copyPath = entryPath.getCopyPath();
+          } else {
+            // if there are no path with exact match, check whether parent or child paths had changed
+            // "entry path" is allowed to be null now; if it is null, last pa in th would be taken for revision construction
+            // if parent path was renamed, last path would be corrected below in correctLastPathAccordingToFolderRenames
+            if (! checkForChildChanges(logEntry) && ! checkForParentChanges(logEntry)) return;
           }
-          else {
-            String path = SVNPathUtil.removeTail(myLastPath);
-            while (path.length() > 0) {
-              entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(path);
-              if (entryPath != null && (entryPath.getType() == 'A' || entryPath.getType() == 'D')) {
-                String relativePath = myLastPath.substring(entryPath.getPath().length());
-                if (entryPath.getCopyPath() != null) {
-                  copyPath = entryPath.getCopyPath() + relativePath;
-                }
-                break;
-              }
-              path = SVNPathUtil.removeTail(path);
-            }
-          }
-          if (entryPath == null) {
-            if (! checkForChildChanges(logEntry)) return;
-          }
-          //if (entryPath == null) return;  // skip this revision: no our path in it
 
           final int mergeLevel = svnLogEntryIntegerPair.getSecond();
           final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
           if (copyPath != null) {
             myLastPath = copyPath;
-          } else {
+          } else if (entryPath == null) {
             myLastPath = correctLastPathAccordingToFolderRenames(myLastPath, logEntry);
           }
           if (mergeLevel >= 0) {
@@ -547,6 +535,23 @@ public class SvnHistoryProvider
         }
 
       });
+    }
+
+    private boolean checkForParentChanges(SVNLogEntry logEntry) {
+      String relativePath = null;
+      String path = SVNPathUtil.removeTail(myLastPath);
+      while (path.length() > 0) {
+        final SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(path);
+        if (entryPath != null && (entryPath.getType() == 'A' || entryPath.getType() == 'D')) {
+          relativePath = SVNPathUtil.getRelativePath(entryPath.getPath(), myLastPath);
+          if (entryPath.getCopyPath() != null) {
+            return true;
+          }
+          break;
+        }
+        path = SVNPathUtil.removeTail(path);
+      }
+      return false;
     }
 
     private boolean checkForChildChanges(SVNLogEntry logEntry) {

@@ -28,7 +28,7 @@ public class JpsModuleLoader {
         final String packagePrefix = StringUtil.notNullize(sourceElement.getAttributeValue("packagePrefix"));
         final boolean testSource = Boolean.parseBoolean(sourceElement.getAttributeValue("isTestSource"));
         final JavaSourceRootType rootType = testSource ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
-        module.addSourceRoot(rootType, sourceUrl, new JavaSourceRootProperties(packagePrefix));
+        module.addSourceRoot(sourceUrl, rootType, new JavaSourceRootProperties(packagePrefix));
       }
       for (Element excludeElement : getChildren(contentElement, "excludeFolder")) {
         module.getExcludeRootsList().addUrl(excludeElement.getAttributeValue(URL_ATTRIBUTE));
@@ -113,12 +113,6 @@ public class JpsModuleLoader {
   }
 
   public static JpsSdkType<?> getSdkType(String typeId) {
-    for (JpsModelLoaderExtension extension : getLoaderExtensions()) {
-      final JpsSdkType<?> type = extension.getSdkType(typeId);
-      if (type != null) {
-        return type;
-      }
-    }
-    return JpsJavaSdkType.INSTANCE;
+    return JpsSdkTableLoader.getSdkPropertiesLoader(typeId).getType();
   }
 }

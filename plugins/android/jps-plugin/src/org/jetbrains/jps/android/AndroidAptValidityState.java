@@ -5,6 +5,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.ResourceEntry;
 import org.jetbrains.android.util.ResourceFileData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.storage.ValidityState;
 
 import java.io.DataInput;
@@ -20,15 +21,18 @@ public class AndroidAptValidityState implements ValidityState {
   private final List<ResourceEntry> myManifestElements;
   private final String myPackageName;
   private final Set<String> myLibPackages;
+  private final String myProguardOutputCfgFile;
 
   public AndroidAptValidityState(@NotNull Map<String, ResourceFileData> resources,
                                  @NotNull List<ResourceEntry> manifestElements,
                                  @NotNull Collection<String> libPackages,
-                                 @NotNull String packageName) {
+                                 @NotNull String packageName,
+                                 @Nullable String proguardOutputCfgFile) {
     myResources = resources;
     myManifestElements = manifestElements;
     myLibPackages = new HashSet<String>(libPackages);
     myPackageName = packageName;
+    myProguardOutputCfgFile = proguardOutputCfgFile != null ? proguardOutputCfgFile : "";
   }
 
   public AndroidAptValidityState(@NotNull DataInput in) throws IOException {
@@ -70,6 +74,8 @@ public class AndroidAptValidityState implements ValidityState {
       final String libPackage = in.readUTF();
       myLibPackages.add(libPackage);
     }
+
+    myProguardOutputCfgFile = in.readUTF();
   }
 
   @Override
@@ -81,7 +87,8 @@ public class AndroidAptValidityState implements ValidityState {
     return otherAndroidState.myPackageName.equals(myPackageName) &&
            otherAndroidState.myResources.equals(myResources) &&
            otherAndroidState.myManifestElements.equals(myManifestElements) &&
-           otherAndroidState.myLibPackages.equals(myLibPackages);
+           otherAndroidState.myLibPackages.equals(myLibPackages) &&
+           otherAndroidState.myProguardOutputCfgFile.equals(myProguardOutputCfgFile);
   }
 
   @Override
@@ -115,5 +122,6 @@ public class AndroidAptValidityState implements ValidityState {
     for (String libPackage : myLibPackages) {
       out.writeUTF(libPackage);
     }
+    out.writeUTF(myProguardOutputCfgFile);
   }
 }

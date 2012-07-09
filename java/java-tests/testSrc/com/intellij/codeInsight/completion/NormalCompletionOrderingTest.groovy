@@ -378,6 +378,17 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, 'fooy', 'foox', 'fooAClass', 'fooBar');
   }
 
+  public void testChangePreselectionOnSecondInvocation() {
+    myFixture.addClass('package foo; public class FooZoo { }')
+    myFixture.addClass('public class FooZooImpl { }')
+    myFixture.addClass('public class FooZooGoo {}')
+    configureNoCompletion(getTestName(false) + ".java");
+    myFixture.complete(CompletionType.BASIC);
+    assertPreferredItems(0, 'FooZooGoo', 'FooZooImpl');
+    myFixture.complete(CompletionType.BASIC);
+    assertPreferredItems(0, 'FooZoo', 'FooZooGoo', 'FooZooImpl');
+  }
+
   public void testUnderscoresDontMakeMatchMiddle() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
     checkPreferredItems(0, '_fooBar', 'FooBar')

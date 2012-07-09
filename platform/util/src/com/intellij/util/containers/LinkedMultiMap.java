@@ -30,7 +30,7 @@ public class LinkedMultiMap<K, V> extends MultiMap<K, V> {
     }
 
     @Override
-    protected Map<K, Collection<V>> createMap(int i, float v) {
-        return new LinkedHashMap<K, Collection<V>>(i, v);
+    protected Map<K, Collection<V>> createMap(int initialCapacity, float loadFactor) {
+        return new LinkedHashMap<K, Collection<V>>(initialCapacity, loadFactor);
     }
 }

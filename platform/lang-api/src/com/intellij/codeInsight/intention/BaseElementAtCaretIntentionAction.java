@@ -35,6 +35,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!file.getManager().isInProject(file)) return false;
 
+    useElementToTheLeft = false;
     final PsiElement elementToTheRight = getElementToTheRight(editor, file);
     if (elementToTheRight == null) {
       return false;

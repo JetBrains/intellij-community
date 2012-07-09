@@ -23,14 +23,14 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   List<JpsModuleSourceRoot> getSourceRoots();
 
   @NotNull
-  <P extends JpsElementProperties>
-  JpsModuleSourceRoot addSourceRoot(@NotNull JpsModuleSourceRootType<P> rootType, @NotNull String url);
+  <P extends JpsElementProperties, Type extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
+  JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull Type rootType);
 
   @NotNull
   <P extends JpsElementProperties>
-  JpsModuleSourceRoot addSourceRoot(@NotNull JpsModuleSourceRootType<P> rootType, @NotNull String url, @NotNull P properties);
+  JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType, @NotNull P properties);
 
-  void removeSourceRoot(@NotNull JpsModuleSourceRootType rootType, @NotNull String url);
+  void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 
   JpsDependenciesList getDependenciesList();
 
@@ -41,7 +41,8 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   JpsModuleReference createReference();
 
   @NotNull
-  JpsLibrary addModuleLibrary(@NotNull JpsLibraryType<?> type, @NotNull String name);
+  <P extends JpsElementProperties, Type extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  JpsLibrary addModuleLibrary(@NotNull String name, @NotNull Type type);
 
   void addModuleLibrary(@NotNull JpsLibrary library);
 

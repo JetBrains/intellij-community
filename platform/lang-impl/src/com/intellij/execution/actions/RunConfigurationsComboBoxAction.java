@@ -99,6 +99,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       String name = settings.getName();
       if (target != DefaultExecutionTarget.INSTANCE) {
         name += " | " + target.getDisplayName();
+      } else {
+        if (!settings.canRunOn(target)) {
+          name += " | Nothing to run on";
+        }
       }
       presentation.setText(name, false);
       setConfigurationIcon(presentation, settings, project);

@@ -1373,12 +1373,12 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Nullable
-  public static <T> List<T> trimToSize(List<T> list) {
+  public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return Collections.emptyList();
 
     if (list instanceof ArrayList) {
-      list = new ArrayList(list);
+      ((ArrayList)list).trimToSize();
     }
 
     return list;

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -216,7 +217,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     for (UsageInfo usage : usages) {
       if (usage instanceof InheritorUsageInfo) {
         final PsiClass inheritor = ((InheritorUsageInfo)usage).getInheritor();
-        addMethodToClass(inheritor, patternMethod);
+        addMethodToClass(inheritor, patternMethod, true);
       }
       else if (usage instanceof MethodCallUsageInfo && !((MethodCallUsageInfo)usage).isInternal()) {
         correctMethodCall(((MethodCallUsageInfo)usage).getMethodCallExpression(), false);
@@ -229,7 +230,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     try {
       if (myTargetClass.isInterface()) patternMethod.getBody().delete();
 
-      final PsiMethod method = addMethodToClass(myTargetClass, patternMethod);
+      final PsiMethod method = addMethodToClass(myTargetClass, patternMethod, false);
       myMethod.delete();
       for (PsiReference reference : docRefs) {
         reference.bindToElement(method);
@@ -354,10 +355,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
-  private static PsiMethod addMethodToClass(final PsiClass aClass, final PsiMethod patternMethod) {
+  private static PsiMethod addMethodToClass(final PsiClass aClass, final PsiMethod patternMethod, boolean canAddOverride) {
     try {
       final PsiMethod method = (PsiMethod)aClass.add(patternMethod);
       ChangeContextUtil.decodeContextInfo(method, null, null);
+      if (canAddOverride && OverrideImplementUtil.isInsertOverride(method, aClass)) {
+        method.getModifierList().addAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+      }
       return method;
     }
     catch (IncorrectOperationException e) {

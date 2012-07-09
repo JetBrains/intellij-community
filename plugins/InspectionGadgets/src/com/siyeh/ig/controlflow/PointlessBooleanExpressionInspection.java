@@ -90,10 +90,13 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       final PsiPrefixExpression expression = (PsiPrefixExpression)infos[0];
       final PsiExpression e = removeRedundantNots(expression);
 
+      if (e == null) {
+        return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor", "");
+      }
+
       return InspectionGadgetsBundle.message(
         "boolean.expression.can.be.simplified.problem.descriptor",
-         e instanceof PsiPrefixExpression ? calculateSimplifiedPrefixExpression((PsiPrefixExpression)e) : e.getText()
-      );
+        e instanceof PsiPrefixExpression ? calculateSimplifiedPrefixExpression((PsiPrefixExpression)e) : e.getText());
     }
   }
 

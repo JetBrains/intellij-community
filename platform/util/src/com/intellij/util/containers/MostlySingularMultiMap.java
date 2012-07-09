@@ -35,7 +35,7 @@ import java.util.Set;
 public class MostlySingularMultiMap<K, V> implements Serializable {
   private static final long serialVersionUID = 2784448345881807109L;
 
-  private final Map<K, Object> myMap = new THashMap<K, Object>();
+  private final THashMap<K, Object> myMap = new THashMap<K, Object>();
 
   public void add(K key, V value) {
     Object current = myMap.get(key);
@@ -106,6 +106,10 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     }
 
     return Collections.singleton((V)value);
+  }
+
+  public void compact() {
+    myMap.compact();
   }
 
   @Override

@@ -246,7 +246,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myFixture.copyFileToProject(BASE_PATH + "LibR.java", "app/src/p1/p2/lib/R.java");
     myFixture.copyFileToProject(BASE_PATH + "LibR.java", "lib/src/p1/p2/lib/R.java");
     Collection<UsageInfo> references = findCodeUsages(getTestName(false) + "." + extension, dir);
-    assertEquals(6, references.size());
+    assertEquals(buildFileList(references), 6, references.size());
   }
 
   private List<UsageInfo> findCodeUsages(String path, String dir) throws Throwable {
@@ -260,5 +260,17 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
       }
     }
     return result;
+  }
+
+  private static String buildFileList(Collection<UsageInfo> infos) {
+    final StringBuilder result = new StringBuilder();
+
+    for (UsageInfo info : infos) {
+      final PsiFile file = info.getFile();
+      final VirtualFile vFile = file != null ? file.getVirtualFile() : null;
+      final String path = vFile != null ? vFile.getPath() : "null";
+      result.append(path).append('\n');
+    }
+    return result.toString();
   }
 }

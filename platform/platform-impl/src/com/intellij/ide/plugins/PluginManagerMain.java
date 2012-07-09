@@ -198,6 +198,10 @@ public abstract class PluginManagerMain implements Disposable {
     return main;
   }
 
+  protected boolean acceptHost(String host) {
+    return true;
+  }
+  
   /**
    * Start a new thread which downloads new list of plugins from the site in
    * the background and updates a list of plugins in the table.
@@ -218,6 +222,7 @@ public abstract class PluginManagerMain implements Disposable {
           errorMessages.add(e.getMessage());
         }
         for (String host : UpdateSettings.getInstance().myPluginHosts) {
+          if (!acceptHost(host)) continue;
           final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
           try {
             UpdateChecker.checkPluginsHost(host, downloaded, false, null);

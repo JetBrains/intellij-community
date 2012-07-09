@@ -1247,7 +1247,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     boolean selectionVisible = isSelectionVisible();
 
-    boolean itemsChanged = updateList(onExplicitAction);
+    boolean itemsChanged = updateList(onExplicitAction || reused);
 
     if (isVisible()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());

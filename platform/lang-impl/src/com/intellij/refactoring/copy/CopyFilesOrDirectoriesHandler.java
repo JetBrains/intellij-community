@@ -185,7 +185,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
           public void run() {
             try {
               PsiFile firstFile = null;
-              final int[] choice = elements.length > 1 ? new int[]{-1} : null;
+              final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
               for (PsiElement element : elements) {
                 PsiFile f = copyToDirectory((PsiFileSystemItem)element, newName, targetDirectory, choice);
                 if (firstFile == null) {

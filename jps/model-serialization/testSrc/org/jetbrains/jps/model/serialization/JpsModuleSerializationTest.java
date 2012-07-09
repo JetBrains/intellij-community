@@ -1,18 +1,17 @@
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.application.PathManager;
-import org.jetbrains.jps.model.JpsModelTestCase;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class JpsModuleSerializationTest extends JpsModelTestCase {
+public class JpsModuleSerializationTest extends JpsSerializationTestCase {
   public void test() {
     loadProject("iprProject/iprProject.ipr");
     final JpsModule module = assertOneElement(myModel.getProject().getModules());
@@ -32,8 +31,8 @@ public class JpsModuleSerializationTest extends JpsModelTestCase {
 
   private void loadProject(final String path) {
     try {
-      final String projectPath = PathManager.getHomePath() + "/community/jps/model-serialization/testData/" + path;
-      JpsProjectLoader.loadProject(myModel.getGlobal(), myModel.getProject(), projectPath);
+      final String projectPath = getTestDataPath(path);
+      JpsProjectLoader.loadProject(myModel.getProject(), Collections.<String, String>emptyMap(), projectPath);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

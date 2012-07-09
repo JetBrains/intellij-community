@@ -66,4 +66,9 @@ public class SerializableClassInSecureContextInspection extends BaseInspection {
       registerClassError(aClass);
     }
   }
+
+  @Override
+  public String getAlternativeID() {
+    return "serial";
+  }
 }

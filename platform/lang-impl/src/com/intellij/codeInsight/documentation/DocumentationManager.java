@@ -681,6 +681,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     if (component.isEmpty()) {
       component.setText(CodeInsightBundle.message("javadoc.fetching.progress"), null, clearHistory);
+      final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
+      if (jbPopup != null) {
+        jbPopup.setDimensionServiceKey(null);
+      }
     }
 
     myUpdateDocAlarm.addRequest(new Runnable() {
@@ -744,6 +748,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             if(jbPopup==null){
               callback.setDone();
               return;
+            }
+            else {
+              jbPopup.setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE);
             }
             jbPopup.setCaption(getTitle(element, false));
             callback.setDone();

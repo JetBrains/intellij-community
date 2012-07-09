@@ -35,6 +35,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -642,16 +643,27 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         @Override
         public void run() {
           if (property == null) {
-            propertiesFile.addProperty(AndroidUtils.ANDROID_TARGET_PROPERTY, targetPropertyValue);
+            propertiesFile.addProperty(createProperty(targetPropertyValue));
           }
           else {
             if (!Comparing.equal(property.getValue(), targetPropertyValue)) {
-              property.setValue(targetPropertyValue);
+              final PsiElement element = property.getPsiElement();
+              if (element != null) {
+                element.replace(createProperty(targetPropertyValue).getPsiElement());
+              }
             }
           }
         }
       });
     }
+  }
+
+  // workaround for behavior of Android SDK , which uses non-escaped ':' characters
+  @NotNull
+  private IProperty createProperty(String targetPropertyValue) {
+    final String text = AndroidUtils.ANDROID_TARGET_PROPERTY + "=" + targetPropertyValue;
+    final PropertiesFile dummyFile = PropertiesElementFactory.createPropertiesFile(getModule().getProject(), text);
+    return dummyFile.getProperties().get(0);
   }
 
   public void updateLibraryProperty(@NotNull final PropertiesFile propertiesFile) {

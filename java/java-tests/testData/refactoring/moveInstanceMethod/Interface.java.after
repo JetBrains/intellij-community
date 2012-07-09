@@ -3,6 +3,7 @@ interface Foreign {
 }
 
 class ForeignImpl implements Foreign {
+    @Override
     public void foo(Test1 test1) {
         test1.field++;
     }
