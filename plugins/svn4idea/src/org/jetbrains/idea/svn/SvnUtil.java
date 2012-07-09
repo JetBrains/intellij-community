@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -30,6 +31,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
@@ -711,5 +713,15 @@ public class SvnUtil {
     catch (SVNException e) {
       return false;
     }
+  }
+
+  public static SVNURL appendMultiParts(@NotNull final SVNURL base, @NotNull final String subPath) throws SVNException {
+    if (StringUtil.isEmpty(subPath)) return base;
+    final List<String> parts = StringUtil.split(subPath.replace('\\', '/'), "/", true);
+    SVNURL result = base;
+    for (String part : parts) {
+      result = result.appendPath(part, true);
+    }
+    return result;
   }
 }
