@@ -13,6 +13,9 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -56,6 +59,16 @@ public abstract class JpsModelLoaderExtension {
 
   @Nullable
   public <P extends JpsElementProperties> P loadLibraryProperties(JpsLibraryType<P> type, Element propertiesElement) {
+    return null;
+  }
+
+  @NotNull
+  public List<JpsSdkPropertiesLoader<?>> getSdkPropertiesLoaders() {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  public JpsOrderRootType getSdkRootType(@NotNull String typeId) {
     return null;
   }
 }

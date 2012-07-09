@@ -1,16 +1,14 @@
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.DummyJpsElementProperties;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsElementProperties;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
-import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -18,46 +16,46 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author nik
  */
-public class JpsProjectLoader {
-  private final JpsGlobal myGlobal;
+public class JpsProjectLoader extends JpsLoaderBase {
   private final JpsProject myProject;
-  private ExpandMacroToPathMap myMacroToPathMap;
 
-  public JpsProjectLoader(JpsGlobal global, JpsProject project) {
-    myGlobal = global;
+  public JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, File baseDir) {
+    super(createMacroExpander(pathVariables, baseDir));
     myProject = project;
   }
 
-  public static void loadProject(JpsGlobal global, final JpsProject project, String projectPath) throws IOException {
-    new JpsProjectLoader(global, project).loadFromPath(projectPath);
+  private static JpsMacroExpander createMacroExpander(Map<String, String> pathVariables, File baseDir) {
+    final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
+    expander.addFileHierarchyReplacements("PROJECT_DIR", baseDir);
+    return expander;
   }
 
-  public void loadFromPath(String path) throws IOException {
-    File file = new File(path).getCanonicalFile();
-    if (file.isFile() && path.endsWith(".ipr")) {
-      loadFromIpr(file);
-    }
-    else if (file.getName().equals(".idea")) {
-      loadFromDirectory(file);
+  public static void loadProject(final JpsProject project, Map<String, String> pathVariables, String projectPath) throws IOException {
+    File file = new File(projectPath).getCanonicalFile();
+    if (file.isFile() && projectPath.endsWith(".ipr")) {
+      new JpsProjectLoader(project, pathVariables, file.getParentFile()).loadFromIpr(file);
     }
     else {
-      File ideaDirectory = new File(file, ".idea");
-      if (ideaDirectory.exists()) {
-        loadFromDirectory(ideaDirectory);
+      File directory;
+      if (file.isDirectory() && file.getName().equals(".idea")) {
+        directory = file;
       }
       else {
-        throw new IOException("Cannot find IntelliJ IDEA project files at " + path);
+        directory = new File(file, ".idea");
+        if (!directory.isDirectory()) {
+          throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
+        }
       }
+      new JpsProjectLoader(project, pathVariables, directory.getParentFile()).loadFromDirectory(directory);
     }
   }
 
   private void loadFromDirectory(File dir) {
-    initMacroMap(dir.getParentFile());
     loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
     loadModules(loadRootElement(new File(dir, "modules.xml")));
     final File[] libraryFiles = new File(dir, "libraries").listFiles();
@@ -71,7 +69,6 @@ public class JpsProjectLoader {
   }
 
   private void loadFromIpr(File iprFile) {
-    initMacroMap(iprFile.getParentFile());
     final Element root = loadRootElement(iprFile);
     loadProjectRoot(root);
     loadModules(root);
@@ -90,35 +87,8 @@ public class JpsProjectLoader {
     }
   }
 
-  private void initMacroMap(File projectBaseDir) {
-    myMacroToPathMap = new ExpandMacroToPathMap();
-    myMacroToPathMap.addMacroExpand("PROJECT_DIR", FileUtil.toSystemIndependentName(projectBaseDir.getAbsolutePath()));
-  }
-
-  private Element loadRootElement(final File file) {
-    try {
-      final Element element = JDOMUtil.loadDocument(file).getRootElement();
-      myMacroToPathMap.substitute(element, SystemInfo.isFileSystemCaseSensitive);
-      return element;
-    }
-    catch (JDOMException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static boolean isXmlFile(File file) {
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).equalsIgnoreCase("xml");
-  }
-
   private void loadProjectLibraries(Element libraryTableElement) {
-    final ArrayList<JpsLibrary> libraries = new ArrayList<JpsLibrary>();
-    JpsLibraryTableLoader.loadLibraries(libraryTableElement, libraries);
-    for (JpsLibrary library : libraries) {
-      myProject.getLibraryCollection().addLibrary(library);
-    }
+    JpsLibraryTableLoader.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
   private void loadModules(Element root) {
@@ -155,16 +125,6 @@ public class JpsProjectLoader {
       }
     }
     return (P)DummyJpsElementProperties.INSTANCE;
-  }
-
-  @Nullable
-  private static Element findComponent(Element root, String componentName) {
-    for (Element element : JDOMUtil.getChildren(root, "component")) {
-      if (componentName.equals(element.getAttributeValue("name"))) {
-        return element;
-      }
-    }
-    return null;
   }
 
   private static JpsModuleType<?> getModuleType(@NotNull String typeId) {

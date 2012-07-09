@@ -11,7 +11,6 @@ import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,9 +24,9 @@ public class JpsLibraryTableLoader {
     PREDEFINED_ROOT_TYPES.put("SOURCES", JpsOrderRootType.SOURCES);
   }
 
-  public static void loadLibraries(Element libraryTableElement, List<JpsLibrary> result) {
+  public static void loadLibraries(Element libraryTableElement, JpsLibraryCollection result) {
     for (Element libraryElement : JDOMUtil.getChildren(libraryTableElement, "library")) {
-      result.add(loadLibrary(libraryElement));
+      result.addLibrary(loadLibrary(libraryElement));
     }
   }
 
