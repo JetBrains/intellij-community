@@ -16,10 +16,7 @@
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,13 +67,26 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
         }
       }
 
-      if (presentation.isReal() && value != null && value.length() > 10) value = value.substring(0, 10) + "...";
-
-      TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
-      presentation.setTailText("=" + value, attrs.getForegroundColor());
       if (hasBundle) {
         presentation.setTypeText(resourceBundle.getBaseName(), PropertiesFileType.FILE_ICON);
       }
+
+      if (presentation instanceof RealLookupElementPresentation && value != null) {
+        value = "=" + value;
+        int limit = 1000;
+        if (value.length() > limit || !((RealLookupElementPresentation)presentation).hasEnoughSpaceFor(value, false)) {
+          if (value.length() > limit) {
+            value = value.substring(0, limit);
+          }
+          while (value.length() > 0 && !((RealLookupElementPresentation)presentation).hasEnoughSpaceFor(value + "...", false)) {
+            value = value.substring(0, value.length() - 1);
+          }
+          value += "...";
+        }
+      }
+
+      TextAttributes attrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_VALUE);
+      presentation.setTailText(value, attrs.getForegroundColor());
     }
   };
   protected final String myKey;
