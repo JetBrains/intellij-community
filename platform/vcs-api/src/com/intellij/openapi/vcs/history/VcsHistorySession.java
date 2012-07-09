@@ -28,4 +28,6 @@ public interface VcsHistorySession {
   boolean isContentAvailable(VcsFileRevision revision);
   @Nullable
   HistoryAsTreeProvider getHistoryAsTreeProvider();
+  // i.e. is history for local file (opposite - history for some URL)
+  boolean hasLocalSource();
 }

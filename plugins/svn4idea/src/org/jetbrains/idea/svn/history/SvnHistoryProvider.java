@@ -60,7 +60,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistoryProvider.MyHistorySession> {
+public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistorySession> {
   private final SvnVcs myVcs;
 
   public SvnHistoryProvider(SvnVcs vcs) {
@@ -75,8 +75,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final ColumnInfo[] columns;
     final Consumer<VcsFileRevision> listener;
     final JComponent addComp;
-    if (((MyHistorySession) session).isSupports15()) {
-      final MergeSourceColumnInfo mergeSourceColumn = new MergeSourceColumnInfo((MyHistorySession)session);
+    if (((SvnHistorySession) session).isSupports15()) {
+      final MergeSourceColumnInfo mergeSourceColumn = new MergeSourceColumnInfo((SvnHistorySession)session);
       columns = new ColumnInfo[] {new CopyFromColumnInfo(), mergeSourceColumn};
 
       final JTextArea field = new JTextArea();
@@ -124,82 +124,21 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   @Override
-  public FilePath getUsedFilePath(MyHistorySession session) {
+  public FilePath getUsedFilePath(SvnHistorySession session) {
     return session.getCommittedPath();
   }
 
   @Override
-  public Boolean getAddinionallyCachedData(MyHistorySession session) {
+  public Boolean getAddinionallyCachedData(SvnHistorySession session) {
     return session.isSupports15();
   }
 
   @Override
-  public MyHistorySession createFromCachedData(Boolean aBoolean,
+  public SvnHistorySession createFromCachedData(Boolean aBoolean,
                                                @NotNull List<VcsFileRevision> revisions,
                                                @NotNull FilePath filePath,
                                                VcsRevisionNumber currentRevision) {
-    return new MyHistorySession(revisions, filePath, aBoolean, currentRevision, false);
-  }
-
-  class MyHistorySession extends VcsAbstractHistorySession {
-    private final FilePath myCommittedPath;
-    private final boolean mySupports15;
-
-    private MyHistorySession(final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean supports15,
-                             @Nullable final VcsRevisionNumber currentRevision, boolean skipRefreshOnStart) {
-      super(revisions, currentRevision);
-      myCommittedPath = committedPath;
-      mySupports15 = supports15;
-      if (! skipRefreshOnStart) {
-        shouldBeRefreshed();
-      }
-    }
-
-    public HistoryAsTreeProvider getHistoryAsTreeProvider() {
-      return null;
-    }
-
-    @Nullable
-    public VcsRevisionNumber calcCurrentRevisionNumber() {
-      if (myCommittedPath == null) {
-        return null;
-      }
-      if (myCommittedPath.isNonLocal()) {
-        // technically, it does not make sense, since there's no "current" revision for non-local history (if look how it's used)
-        // but ok, lets keep it for now
-        return new SvnRevisionNumber(SVNRevision.HEAD);
-      }
-      try {
-        SVNWCClient wcClient = myVcs.createWCClient();
-        SVNInfo info = wcClient.doInfo(new File(myCommittedPath.getPath()), SVNRevision.UNDEFINED);
-        if (info != null) {
-          return new SvnRevisionNumber(info.getCommittedRevision());
-        } else {
-          return null;
-        }
-      }
-      catch (SVNException e) {
-        return null;
-      }
-    }
-
-    public FilePath getCommittedPath() {
-      return myCommittedPath;
-    }
-
-    @Override
-    public boolean isContentAvailable(final VcsFileRevision revision) {
-      return ! myCommittedPath.isDirectory();
-    }
-
-    public boolean isSupports15() {
-      return mySupports15;
-    }
-
-    @Override
-    public VcsHistorySession copy() {
-      return new MyHistorySession(getRevisionList(), myCommittedPath, mySupports15, getCurrentRevisionNumber(), true);
-    }
+    return new SvnHistorySession(myVcs, revisions, filePath, aBoolean, currentRevision, false, ! filePath.isNonLocal());
   }
 
   @Nullable
@@ -230,8 +169,9 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
     logLoader.initSupports15();
 
-    final MyHistorySession historySession =
-      new MyHistorySession(Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null, false);
+    final SvnHistorySession historySession =
+      new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null, false,
+                            ! path.isNonLocal());
 
     final Ref<Boolean> sessionReported = new Ref<Boolean>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -652,7 +592,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, String> {
     private final MergeSourceRenderer myRenderer;
 
-    private MergeSourceColumnInfo(final MyHistorySession session) {
+    private MergeSourceColumnInfo(final SvnHistorySession session) {
       super("Merge Sources");
       myRenderer = new MergeSourceRenderer(session);
     }
@@ -733,7 +673,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private MergeSourceDetailsLinkListener myListener;
     private final VirtualFile myFile;
 
-    private MergeSourceRenderer(final MyHistorySession session) {
+    private MergeSourceRenderer(final SvnHistorySession session) {
       myFile = session.getCommittedPath().getVirtualFile();
     }
 
