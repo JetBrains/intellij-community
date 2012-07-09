@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,5 +82,10 @@ public class CurrentRevision implements VcsFileRevision {
 
   public String getBranchName() {
     return null;
+  }
+
+  @Override
+  public RepositoryLocation getChangedRepositoryPath() {
+    return null;  // use initial url..
   }
 }
