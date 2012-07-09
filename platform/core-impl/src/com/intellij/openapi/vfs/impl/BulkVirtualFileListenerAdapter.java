@@ -61,7 +61,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
     }
     else if (event instanceof VFileCreateEvent) {
       final VFileCreateEvent ce = (VFileCreateEvent)event;
-      final VirtualFile newChild = ce.getParent().findChild(ce.getChildName());
+      final VirtualFile newChild = ce.getFile();
       if (newChild != null) {
         myAdaptee.fileCreated(
         new VirtualFileEvent(event.getRequestor(), newChild, ce.getChildName(), ce.getParent()));
