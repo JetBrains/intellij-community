@@ -99,7 +99,8 @@ public class ShowAllAffectedGenericAction extends AnAction {
               }
               return;
             } else {
-              final RepositoryLocation local = provider.getForNonLocal(virtualFile);
+              list[0] = getRemoteList(vcs, revision, virtualFile);
+              /*final RepositoryLocation local = provider.getForNonLocal(virtualFile);
               if (local != null) {
                 final String number = revision.asString();
                 final ChangeBrowserSettings settings = provider.createDefaultSettings();
@@ -111,7 +112,7 @@ public class ShowAllAffectedGenericAction extends AnAction {
                     }
                   }
                 }
-              }
+              } */
             }
           }
         }
@@ -132,6 +133,25 @@ public class ShowAllAffectedGenericAction extends AnAction {
         }
       }
     });
+  }
+
+  public static CommittedChangeList getRemoteList(final AbstractVcs vcs, final VcsRevisionNumber revision, final VirtualFile nonLocal)
+    throws VcsException {
+    final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
+    final RepositoryLocation local = provider.getForNonLocal(nonLocal);
+    if (local != null) {
+      final String number = revision.asString();
+      final ChangeBrowserSettings settings = provider.createDefaultSettings();
+      final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
+      if (changes != null) {
+        for (CommittedChangeList change : changes) {
+          if (number.equals(String.valueOf(change.getNumber()))) {
+            return change;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private static String failedText(VirtualFile virtualFile, VcsRevisionNumber revision) {
