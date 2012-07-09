@@ -69,7 +69,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
             if (whiteSpace instanceof PsiWhiteSpace) {
               int relatedOffset = whiteSpace.getTextRange().getEndOffset();
               final int indent = relatedOffset - getLineStartSafeOffset(document, document.getLineNumber(relatedOffset));
-              if (caretOffset > indent) {
+              if (caretOffset > indent && document.getTextLength() > offset + indent) {
                 caretModel.moveToOffset(offset + indent);
                 moved = true;
               }
