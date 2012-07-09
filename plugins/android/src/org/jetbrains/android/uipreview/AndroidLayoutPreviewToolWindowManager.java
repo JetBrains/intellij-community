@@ -68,6 +68,7 @@ import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NonNls;
@@ -80,8 +81,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -454,7 +453,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       if (messageBuilder.length() > 0) {
         messageBuilder.append("\n\n");
       }
-      messageBuilder.append(getStackTrace(t));
+      messageBuilder.append(AndroidCommonUtils.getStackTrace(t));
     }
     
     final DialogWrapper wrapper = new DialogWrapper(myProject, false) {
@@ -476,19 +475,6 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     };
     wrapper.setTitle("Stack trace");
     wrapper.show();
-  }
-
-  @NotNull
-  private static String getStackTrace(@NotNull Throwable t) {
-    final StringWriter stringWriter = new StringWriter();
-    final PrintWriter writer = new PrintWriter(stringWriter);
-    try {
-      t.printStackTrace(writer);
-      return stringWriter.toString();
-    }
-    finally {
-      writer.close();
-    }
   }
 
   @Nullable

@@ -26,6 +26,7 @@ import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
@@ -84,9 +85,7 @@ import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.resourceManagers.SystemResourceManager;
 import org.jetbrains.android.sdk.*;
-import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -401,7 +400,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return myAvdManager;
   }
 
-  public void launchEmulator(@Nullable final String avdName, @NotNull final String commands, @Nullable ProcessHandler handler) {
+  public void launchEmulator(@Nullable final String avdName, @NotNull final String commands, @NotNull final ProcessHandler handler) {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();
     if (platform != null) {
       final String emulatorPath = platform.getSdkData().getLocation() + File.separator + AndroidCommonUtils
@@ -418,10 +417,25 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
           commandLine.addParameter(s);
         }
       }
-      if (handler != null) {
-        handler.notifyTextAvailable(commandLine.getCommandLineString() + '\n', ProcessOutputTypes.STDOUT);
-      }
-      AndroidUtils.runExternalToolInSeparateThread(commandLine, handler);
+      handler.notifyTextAvailable(commandLine.getCommandLineString() + '\n', ProcessOutputTypes.STDOUT);
+
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            AndroidUtils.executeCommand(commandLine, new OutputProcessor() {
+              @Override
+              public void onTextAvailable(@NotNull String text) {
+                handler.notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
+              }
+            }, WaitingStrategies.WaitForTime.getInstance(5000));
+          }
+          catch (ExecutionException e) {
+            final String stackTrace = AndroidCommonUtils.getStackTrace(e);
+            handler.notifyTextAvailable(stackTrace, ProcessOutputTypes.STDERR);
+          }
+        }
+      });
     }
   }
 
