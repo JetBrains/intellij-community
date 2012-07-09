@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -41,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationStub;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -148,14 +150,18 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
         return new String[]{"METHOD"};
       }
     }
-    if (owner instanceof GrField) {
-      return new String[]{"FIELD"};
+    if (owner instanceof GrVariableDeclaration) {
+      final GrVariable[] variables = ((GrVariableDeclaration)owner).getVariables();
+      if (variables.length == 0) return null;
+      if (variables[0] instanceof GrField || ResolveUtil.isScriptField(variables[0])) {
+        return new String[]{"FIELD"};
+      }
+      else {
+        return new String[]{"LOCAL_VARIABLE"};
+      }
     }
     if (owner instanceof GrParameter) {
       return new String[]{"PARAMETER"};
-    }
-    if (owner instanceof GrVariable) {
-      return new String[]{"LOCAL_VARIABLE"};
     }
     if (owner instanceof GrPackageDefinition) {
       return new String[]{"PACKAGE"};
