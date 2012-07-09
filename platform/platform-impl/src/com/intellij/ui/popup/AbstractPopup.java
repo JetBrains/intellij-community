@@ -28,7 +28,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -353,7 +352,7 @@ public class AbstractPopup implements JBPopup {
     return myDimensionServiceKey;
   }
 
-  public void setDimensionServiceKey(final String dimensionServiceKey) {
+  public void setDimensionServiceKey(@Nullable final String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
   }
 
@@ -363,7 +362,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public void setAdText(@NotNull final String s) {
-    setAdText(s, SwingUtilities.LEFT);
+    setAdText(s, SwingConstants.LEFT);
   }
 
   public void setAdText(@NotNull final String s, int alignment) {
