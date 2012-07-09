@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Function;
@@ -26,6 +27,7 @@ import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.ResolvingConverter;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +47,18 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
   @NotNull
   public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
-    return collectAllVisiblePlugins(context.getFile());
+    Collection<IdeaPlugin> plugins = collectAllVisiblePlugins(context.getFile());
+    return new THashSet<IdeaPlugin>(plugins, new TObjectHashingStrategy<IdeaPlugin>() {
+      @Override
+      public int computeHashCode(IdeaPlugin object) {
+        return StringUtil.notNullize(object.getPluginId()).hashCode();
+      }
+
+      @Override
+      public boolean equals(IdeaPlugin o1, IdeaPlugin o2) {
+        return StringUtil.notNullize(o1.getPluginId()).equals(o2.getPluginId());
+      }
+    });
   }
 
   @NotNull
