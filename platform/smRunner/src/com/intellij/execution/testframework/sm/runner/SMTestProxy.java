@@ -389,13 +389,13 @@ public class SMTestProxy extends AbstractTestProxy {
     return result;
   }
 
-  public List<? extends SMTestProxy> getChildren(@Nullable final Filter<SMTestProxy> filter) {
+  public List<? extends SMTestProxy> getChildren(@Nullable final Filter<? super SMTestProxy> filter) {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
     return filterChildren(filter, allChildren);
   }
 
-  private static List<? extends SMTestProxy> filterChildren(@Nullable Filter<SMTestProxy> filter,
+  private static List<? extends SMTestProxy> filterChildren(@Nullable Filter<? super SMTestProxy> filter,
                                                             List<? extends SMTestProxy> allChildren) {
     if (filter == Filter.NO_FILTER || filter == null) {
       return allChildren;
