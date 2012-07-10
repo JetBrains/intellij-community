@@ -349,6 +349,7 @@ public class AllIcons {
     public static final Icon ExpandAll = IconLoader.getIcon("/general/expandAll.png"); // 11x16
     public static final Icon ExpandAllHover = IconLoader.getIcon("/general/expandAllHover.png"); // 11x16
     public static final Icon ExternalTools = IconLoader.getIcon("/general/externalTools.png"); // 32x32
+    public static final Icon ExternalToolsSmall = IconLoader.getIcon("/general/externalToolsSmall.png"); // 16x16
     public static final Icon Floating = IconLoader.getIcon("/general/floating.png"); // 14x14
     public static final Icon Gear = IconLoader.getIcon("/general/gear.png"); // 21x16
     public static final Icon GearHover = IconLoader.getIcon("/general/gearHover.png"); // 21x16
