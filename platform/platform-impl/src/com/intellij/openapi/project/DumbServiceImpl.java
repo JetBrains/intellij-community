@@ -45,7 +45,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class DumbServiceImpl extends DumbService {
@@ -285,7 +286,7 @@ public class DumbServiceImpl extends DumbService {
 
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
 
-        private final ArrayBlockingQueue<Ref<CacheUpdateRunner>> myActionQueue = new ArrayBlockingQueue<Ref<CacheUpdateRunner>>(1);
+        private final BlockingQueue<Ref<CacheUpdateRunner>> myActionQueue = new LinkedBlockingQueue<Ref<CacheUpdateRunner>>();
 
         // /*no override for interfaces in jdk 1.5 */ @Override
         public void run(@NotNull final ProgressIndicator indicator) {
@@ -361,45 +362,50 @@ public class DumbServiceImpl extends DumbService {
               myProcessedItems += count;
               UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
                 public void run() {
-                  if (myUpdatesQueue.isEmpty()) {
-                    // really terminate the task
-                    myActionQueue.offer(NULL_ACTION);
-                    updateFinished();
+                  IndexUpdateRunnable nextUpdateRunnable = null;
+                  try {
+                    nextUpdateRunnable = myUpdatesQueue.pullFirst();
+                    if (nextUpdateRunnable == null) {
+                      // really terminate the task
+                      myActionQueue.offer(NULL_ACTION);
+                    }
+                    else {
+                      //run next dumb action
+                      // run next action under already existing progress indicator
+                      myActionQueue.offer(new Ref<CacheUpdateRunner>(nextUpdateRunnable.myAction));
+                    }
                   }
-                  else {
-                    //run next dumb action
-                    final IndexUpdateRunnable nextUpdateRunnable = myUpdatesQueue.pullFirst();
-                    // run next action under already existing progress indicator
-                    if (!myActionQueue.offer(new Ref<CacheUpdateRunner>(nextUpdateRunnable.myAction))) {
-                      LOG.error("Action queue rejected next updateRunnable!");
-                      nextUpdateRunnable.run();
+                  catch (Throwable e) {
+                    myActionQueue.offer(NULL_ACTION);
+                    LOG.info(e);
+                  }
+                  finally {
+                    if (nextUpdateRunnable == null) {
+                      updateFinished();
                     }
                   }
                 }
               });
 
               // try to obtain the next action or terminate if no actions left
-              try {
-                Ref<CacheUpdateRunner> ref;
-                do {
+              Ref<CacheUpdateRunner> ref = null;
+              do {
+                try {
                   ref = myActionQueue.poll(500, TimeUnit.MILLISECONDS);
-                  updateRunner = ref != null? ref.get() : null;
-                  if (myProject.isDisposed()) {
-                    // just terminate the progress task
-                    break;
-                  }
                 }
-                while (ref == null);
+                catch (InterruptedException e) {
+                  LOG.info(e);
+                }
+                updateRunner = ref != null? ref.get() : null;
+                if (myProject.isDisposed()) {
+                  // just terminate the progress task
+                  break;
+                }
               }
-              catch (InterruptedException ignored) {
-                LOG.info(ignored);
-                break;
-              }
+              while (ref == null);
             }
           }
           while (updateRunner != null);
-          // make it impossible to add actions to the queue anymore
-          myActionQueue.offer(NULL_ACTION);
         }
 
       });
