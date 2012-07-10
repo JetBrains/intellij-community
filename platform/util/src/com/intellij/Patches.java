@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,6 @@ public class Patches {
 
   /** BasicTreeUI.FocusHandler doesn't properly repaint JTree on focus changes */
   public static final boolean SUN_BUG_ID_4893787 = true;
-
-  public static final boolean FILE_CHANNEL_TRANSFER_BROKEN = SystemInfo.isLinux && SystemInfo.OS_VERSION.startsWith("2.6");
 
   private static final boolean BELOW_142DP2 = SystemInfo.isMac &&
                                               (SystemInfo.JAVA_RUNTIME_VERSION.startsWith("1.4.0") ||
