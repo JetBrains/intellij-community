@@ -197,8 +197,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     else {
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
-      // first focusGained is not triggered
-      myCurrentEditor = fileManager.openTextEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), true);
       myHistoryViewer.setHorizontalScrollbarVisible(true);
     }
   }
@@ -587,13 +585,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       public void fileOpened(FileEditorManager source, VirtualFile file) {
         if (file != myFile.getVirtualFile()) return;
         if (myConsoleEditor != null) {
-          queueUiUpdate(false);
+          Editor selectedTextEditor = source.getSelectedTextEditor();
           for (FileEditor fileEditor : source.getAllEditors(file)) {
             if (!(fileEditor instanceof TextEditor)) continue;
             final Editor editor = ((TextEditor)fileEditor).getEditor();
             configureFullEditor(editor);
             setConsoleFilePinned((FileEditorManagerEx)source, editor);
             ((EditorEx)editor).addFocusListener(myFocusListener);
+            if (selectedTextEditor == editor) { // already focused
+              myCurrentEditor = editor;
+            }
             EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
             editor.getCaretModel().addCaretListener(new CaretListener() {
               public void caretPositionChanged(CaretEvent e) {
@@ -601,6 +602,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
               }
             });
           }
+          queueUiUpdate(false);
         }
       }
 
@@ -608,6 +610,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       public void fileClosed(FileEditorManager source, VirtualFile file) {
         if (file != myFile.getVirtualFile()) return;
         if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
+          if (myCurrentEditor.isDisposed()) myCurrentEditor = null;
           ApplicationManager.getApplication().runReadAction(myUiUpdateRunnable);
         }
       }
