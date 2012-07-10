@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,9 +44,14 @@ public class FilePathImpl implements FilePath {
   private final String myName;
   @NotNull private final File myFile;
   private boolean myIsDirectory;
-  private boolean myNonLocal;
+  private final boolean myLocal;
 
-  private FilePathImpl(VirtualFile virtualParent, String name, final boolean isDirectory, VirtualFile child, final boolean forDeleted) {
+  private FilePathImpl(VirtualFile virtualParent,
+                       @NotNull String name,
+                       final boolean isDirectory,
+                       VirtualFile child,
+                       final boolean forDeleted) {
+    myLocal = true;
     myVirtualParent = virtualParent;
     myName = name;
     myIsDirectory = isDirectory;
@@ -55,13 +62,22 @@ public class FilePathImpl implements FilePath {
       myFile = new File(new File(myVirtualParent.getPath()), myName);
     }
 
-    if (! forDeleted) {
+    if (!forDeleted) {
       if (child == null) {
         refresh();
       }
       else {
         myVirtualFile = child;
       }
+    }
+  }
+
+  private void detectCharset() {
+    VirtualFile file = myVirtualFile;
+    if (file == null || !file.isValid() || file.isDirectory()) return;
+    FileType fileType = file.getFileType();
+    if (fileType == UnknownFileType.INSTANCE) {
+      FileTypeRegistry.getInstance().detectFileTypeFromContent(file);
     }
   }
 
@@ -76,9 +92,13 @@ public class FilePathImpl implements FilePath {
   }
 
   public FilePathImpl(@NotNull File file, final boolean isDirectory) {
+    this(file, isDirectory, true);
+  }
+  private FilePathImpl(@NotNull File file, final boolean isDirectory, boolean local) {
     myFile = file;
     myName = file.getName();
     myIsDirectory = isDirectory;
+    myLocal = local;
   }
 
   public FilePathImpl(@NotNull VirtualFile virtualFile) {
@@ -117,7 +137,7 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public void refresh() {
-    if (!myNonLocal) {
+    if (myLocal) {
       if (myVirtualParent == null) {
         myVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile);
       }
@@ -129,7 +149,7 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public void hardRefresh() {
-    if (! myNonLocal && (myVirtualFile == null || ! myVirtualFile.isValid())) {
+    if (myLocal && (myVirtualFile == null || ! myVirtualFile.isValid())) {
       myVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
     }
   }
@@ -190,6 +210,7 @@ public class FilePathImpl implements FilePath {
     if (myVirtualFile != null && !myVirtualFile.isValid()) {
       myVirtualFile = null;
     }
+    detectCharset();
     return myVirtualFile;
   }
 
@@ -351,9 +372,7 @@ public class FilePathImpl implements FilePath {
     if (file == null) {
       file = new File(path);
     }
-    FilePathImpl result = new FilePathImpl(file, directory);
-    result.myNonLocal = true;
-    return result;
+    return new FilePathImpl(file, directory, false);
   }
 
   @Override
@@ -364,6 +383,6 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public boolean isNonLocal() {
-    return myNonLocal;
+    return !myLocal;
   }
 }
