@@ -410,69 +410,88 @@ public class IncProjectBuilder {
 
   private void buildChunks(final CompileContextImpl context, ProjectChunks chunks) throws ProjectBuildException {
     final CompileScope scope = context.getScope();
-    if (PARALLEL_BUILD_ENABLED) {
-      final List<ChunkGroup> chunkGroups = buildChunkGroups(context, chunks);
-      for (ChunkGroup group : chunkGroups) {
-        final List<ModuleChunk> groupChunks = group.getChunks();
-        final int chunkCount = groupChunks.size();
-        if (chunkCount == 0) {
-          continue;
-        }
-        if (chunkCount == 1) {
-          _buildChunk(createContextWrapper(context), scope, groupChunks.iterator().next());
-        }
-        else {
-          final CountDownLatch latch = new CountDownLatch(chunkCount);
-          final Ref<Throwable> exRef = new Ref<Throwable>(null);
-          final StringBuilder logBuilder = new StringBuilder("Building chunks in parallel: ");
-          for (final ModuleChunk chunk : groupChunks) {
-            logBuilder.append(chunk.getName()).append("; ");
-            final CompileContext chunkLocalContext = createContextWrapper(context);
-            SharedThreadPool.INSTANCE.submitBuildTask(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  _buildChunk(chunkLocalContext, scope, chunk);
-                }
-                catch (Throwable e) {
-                  synchronized (exRef) {
-                    if (exRef.isNull()) {
-                      exRef.set(e);
-                    }
-                  }
-                  LOG.info(e);
-                }
-                finally {
-                  latch.countDown();
-                }
-              }
-            });
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    try {
+      if (PARALLEL_BUILD_ENABLED) {
+        final List<ChunkGroup> chunkGroups = buildChunkGroups(context, chunks);
+        for (ChunkGroup group : chunkGroups) {
+          final List<ModuleChunk> groupChunks = group.getChunks();
+          final int chunkCount = groupChunks.size();
+          if (chunkCount == 0) {
+            continue;
           }
-          LOG.info(logBuilder.toString());
-
           try {
-            latch.await();
-          }
-          catch (InterruptedException e) {
-            LOG.info(e);
-          }
-
-          final Throwable exception = exRef.get();
-          if (exception != null) {
-            if (exception instanceof ProjectBuildException) {
-              throw (ProjectBuildException)exception;
+            if (chunkCount == 1) {
+              _buildChunk(createContextWrapper(context), scope, groupChunks.iterator().next());
             }
             else {
-              throw new ProjectBuildException(exception);
+              final CountDownLatch latch = new CountDownLatch(chunkCount);
+              final Ref<Throwable> exRef = new Ref<Throwable>(null);
+              final StringBuilder logBuilder = new StringBuilder("Building chunks in parallel: ");
+              for (final ModuleChunk chunk : groupChunks) {
+                logBuilder.append(chunk.getName()).append("; ");
+                final CompileContext chunkLocalContext = createContextWrapper(context);
+                SharedThreadPool.INSTANCE.submitBuildTask(new Runnable() {
+                  @Override
+                  public void run() {
+                    try {
+                      _buildChunk(chunkLocalContext, scope, chunk);
+                    }
+                    catch (Throwable e) {
+                      synchronized (exRef) {
+                        if (exRef.isNull()) {
+                          exRef.set(e);
+                        }
+                      }
+                      LOG.info(e);
+                    }
+                    finally {
+                      latch.countDown();
+                    }
+                  }
+                });
+              }
+              LOG.info(logBuilder.toString());
+
+              try {
+                latch.await();
+              }
+              catch (InterruptedException e) {
+                LOG.info(e);
+              }
+
+              final Throwable exception = exRef.get();
+              if (exception != null) {
+                if (exception instanceof ProjectBuildException) {
+                  throw (ProjectBuildException)exception;
+                }
+                else {
+                  throw new ProjectBuildException(exception);
+                }
+              }
             }
+          }
+          finally {
+            pd.dataManager.closeSourceToOutputStorages(groupChunks, context.isCompilingTests());
+            pd.dataManager.flush(true);
+          }
+        }
+      }
+      else {
+        // non-parallel build
+        for (ModuleChunk chunk : chunks.getChunkList()) {
+          try {
+            _buildChunk(context, scope, chunk);
+          }
+          finally {
+            pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk), context.isCompilingTests());
+            pd.dataManager.flush(true);
           }
         }
       }
     }
-    else {
-      for (ModuleChunk chunk : chunks.getChunkList()) {
-        _buildChunk(context, scope, chunk);
-      }
+    catch (IOException e) {
+      throw new ProjectBuildException(e);
     }
   }
 
@@ -866,40 +885,34 @@ public class IncProjectBuilder {
     return false;
   }
 
-  public static void onChunkBuildComplete(CompileContext context, @NotNull ModuleChunk chunk) throws IOException {
+  private static void onChunkBuildComplete(CompileContext context, @NotNull ModuleChunk chunk) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final BuildFSState fsState = pd.fsState;
     fsState.clearContextRoundData(context);
     fsState.clearContextChunk(context);
 
-    try {
-      if (!Utils.ERRORS_DETECTED_KEY.get(context, Boolean.FALSE) && !context.getCancelStatus().isCanceled()) {
-        boolean marked = false;
-        for (Module module : chunk.getModules()) {
-          if (context.isMake()) {
-            // ensure non-incremental flag cleared
-            context.clearNonIncrementalMark(module);
-          }
-          if (context.isProjectRebuild()) {
-            fsState.markInitialScanPerformed(module.getName(), context.isCompilingTests());
-          }
-          final Timestamps timestamps = pd.timestamps.getStorage();
-          final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, module);
-          for (RootDescriptor rd : roots) {
-            if (context.isCompilingTests() ? rd.isTestRoot : !rd.isTestRoot) {
-              marked |= fsState.markAllUpToDate(context.getScope(), rd, timestamps, context.getCompilationStartStamp());
-            }
-          }
+    if (!Utils.ERRORS_DETECTED_KEY.get(context, Boolean.FALSE) && !context.getCancelStatus().isCanceled()) {
+      boolean marked = false;
+      for (Module module : chunk.getModules()) {
+        if (context.isMake()) {
+          // ensure non-incremental flag cleared
+          context.clearNonIncrementalMark(module);
         }
-
-        if (marked) {
-          context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
+        if (context.isProjectRebuild()) {
+          fsState.markInitialScanPerformed(module.getName(), context.isCompilingTests());
+        }
+        final Timestamps timestamps = pd.timestamps.getStorage();
+        final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, module);
+        for (RootDescriptor rd : roots) {
+          if (context.isCompilingTests() ? rd.isTestRoot : !rd.isTestRoot) {
+            marked |= fsState.markAllUpToDate(context.getScope(), rd, timestamps, context.getCompilationStartStamp());
+          }
         }
       }
-    }
-    finally {
-      pd.dataManager.closeSourceToOutputStorages(chunk, context.isCompilingTests());
-      pd.dataManager.flush(true);
+
+      if (marked) {
+        context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
+      }
     }
   }
 

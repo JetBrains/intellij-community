@@ -9,6 +9,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -178,14 +179,16 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  public void closeSourceToOutputStorages(ModuleChunk chunk, boolean testSources) throws IOException {
+  public void closeSourceToOutputStorages(Collection<ModuleChunk> chunks, boolean testSources) throws IOException {
     final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
     synchronized (mySourceToOutputLock) {
-      for (Module module : chunk.getModules()) {
-        final String moduleName = module.getName().toLowerCase(Locale.US);
-        final SourceToOutputMapping mapping = storageMap.remove(moduleName);
-        if (mapping != null) {
-          mapping.close();
+      for (ModuleChunk chunk : chunks) {
+        for (Module module : chunk.getModules()) {
+          final String moduleName = module.getName().toLowerCase(Locale.US);
+          final SourceToOutputMapping mapping = storageMap.remove(moduleName);
+          if (mapping != null) {
+            mapping.close();
+          }
         }
       }
     }
