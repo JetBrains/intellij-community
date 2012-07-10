@@ -139,14 +139,31 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
 
         int startLine = document.getLineNumber(bounds.getStartOffset());
         int endLine = document.getLineNumber(bounds.getEndOffset());
-        if (!pastedText.trim().contains("\n") && startLine == endLine) {
-          // don't indent single-line text
+
+        // don't indent single-line text
+        if (!StringUtil.startsWithWhitespace(pastedText) && !StringUtil.endsWithLineBreak(pastedText) &&
+             !(StringUtil.splitByLines(pastedText).length > 1))
           return;
-        }
 
         int startLineStart = document.getLineStartOffset(startLine);
         // don't indent first line if there's any text before it
         final String textBeforeFirstLine = document.getText(new TextRange(startLineStart, bounds.getStartOffset()));
+
+        //a lot of different indents inside selected
+        final String[] split = StringUtil.trimTrailing(pastedText).split("\n");
+        int firstIndent = 0;
+        int currentIndent;
+        for (String s : split) {
+          currentIndent = s.length() - s.trim().length();
+          if (split[0].equals(s) ) {
+            firstIndent = currentIndent;
+            if (currentIndent == 0)
+              currentIndent = textBeforeFirstLine.length();
+          }
+          if (!StringUtil.isEmptyOrSpaces(s) && firstIndent > currentIndent)
+            return;
+        }
+
         if (textBeforeFirstLine.trim().length() == 0) {
           EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
         }
