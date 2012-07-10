@@ -24,6 +24,7 @@ package com.intellij.compiler;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.compiler.impl.javaCompiler.api.CompilerAPICompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseEmbeddedCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
@@ -285,15 +286,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         catch (NoClassDefFoundError e) {
           // eclipse jar must be not in the classpath
         }
+        try {
+          CompilerAPICompiler inProcessJavaCompiler = new CompilerAPICompiler(myProject);
+          myRegisteredCompilers.add(inProcessJavaCompiler);
+        }
+        catch (NoClassDefFoundError e) {
+          // wrong JDK
+        }
       }
-
-      //try {
-      //  CompilerAPICompiler inProcessJavaCompiler = new CompilerAPICompiler(myProject);
-      //  myRegisteredCompilers.add(inProcessJavaCompiler);
-      //}
-      //catch (NoClassDefFoundError e) {
-      //  // wrong JDK
-      //}
     }
 
     final BackendCompiler[] compilers = Extensions.getExtensions(BackendCompiler.EP_NAME, myProject);
