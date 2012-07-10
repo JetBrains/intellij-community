@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.PropertiesComponent;
@@ -126,13 +127,21 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
         }
         else {
+          int selection;
+          PsiExpression expression = expressions.get(0);
+          if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiLocalVariable) {
+            selection = 1;
+          }
+          else {
+            selection = -1;
+          }
           IntroduceTargetChooser.showChooser(editor, expressions,
             new Pass<PsiExpression>(){
               public void pass(final PsiExpression selectedValue) {
                 invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
               }
             },
-            new PsiExpressionTrimRenderer.RenderFunction());
+            new PsiExpressionTrimRenderer.RenderFunction(), "Expressions", selection, ScopeHighlighter.NATURAL_RANGER);
           return;
         }
       }

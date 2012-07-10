@@ -1,0 +1,20 @@
+MSGID ('msgid')
+WHITE_SPACE (' ')
+STRING ('"str-to-translate"')
+WHITE_SPACE ('
+')
+MSGSTR ('msgstr')
+WHITE_SPACE (' ')
+STRING ('"translated str"')
+WHITE_SPACE ('
+')
+MSGID ('msgid')
+WHITE_SPACE (' ')
+STRING ('"one more"')
+WHITE_SPACE ('
+')
+MSGSTR ('msgstr')
+WHITE_SPACE (' ')
+STRING ('"one more translated str"')
+WHITE_SPACE ('
+')

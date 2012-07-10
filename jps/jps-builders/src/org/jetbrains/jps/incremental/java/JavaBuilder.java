@@ -37,6 +37,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
+import org.jetbrains.jps.server.ProjectDescriptor;
 
 import javax.tools.*;
 import java.io.*;
@@ -79,8 +80,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static final Key<Callbacks.Backend> DELTA_MAPPINGS_CALLBACK_KEY = Key.create("_dependency_data_");
   private final Executor myTaskRunner;
-  private int myTasksInProgress = 0;
-  private final Object myCounterLock = new Object();
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<ClassPostProcessor>();
 
   static {
@@ -91,8 +90,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (srcFile != null && content != null) {
           final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
           final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-          final RootDescriptor moduleAndRoot = context.getModuleAndRoot(srcFile);
-          final BuildDataManager dataManager = context.getDataManager();
+          final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, srcFile);
+          final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
           boolean isTemp = false;
           if (moduleAndRoot != null) {
             isTemp = moduleAndRoot.isTemp;
@@ -142,7 +141,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> filesToCompile = new HashSet<File>();
       final Set<File> formsToCompile = new HashSet<File>();
 
-      context.processFilesToRecompile(chunk, new FileProcessor() {
+      FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
         public boolean apply(Module module, File file, String sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
@@ -155,15 +154,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
-      final CompilerExcludes excludes = context.getProject().getCompilerConfiguration().getExcludes();
+      final CompilerExcludes excludes = context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes();
       if (!context.isProjectRebuild()) {
         for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
           final File form = formsIterator.next();
-          final RootDescriptor descriptor = context.getModuleAndRoot(form);
+          final RootDescriptor descriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, form);
           if (descriptor == null) {
             continue;
           }
-          for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
+          for (RootDescriptor rd : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, descriptor.module)) {
             final File boundSource = getBoundSource(rd.root, form);
             if (boundSource == null) {
               continue;
@@ -179,7 +178,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
 
         // form should be considered dirty if the class it is bound to is dirty
-        final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
+        final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
         for (File srcFile : filesToCompile) {
           final String srcPath = srcFile.getPath();
           final String formPath = sourceToFormMap.getState(srcPath);
@@ -189,7 +188,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           final File formFile = new File(formPath);
           if (!excludes.isExcluded(formFile)) {
             if (formFile.exists()) {
-              context.markDirty(formFile);
+              FSOperations.markDirty(context, formFile);
               formsToCompile.add(formFile);
             }
             sourceToFormMap.remove(srcPath);
@@ -262,13 +261,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
 
-    if (!hasSourcesToCompile && !context.hasRemovedSources()) {
+    if (!hasSourcesToCompile && !Utils.hasRemovedSources(context)) {
       return exitCode;
     }
 
     final ProjectPaths paths = context.getProjectPaths();
-
-    final boolean addNotNullAssertions = context.getProject().getCompilerConfiguration().isAddNotNullAssertions();
+    final ProjectDescriptor pd = context.getProjectDescriptor();
+    final boolean addNotNullAssertions = pd.project.getCompilerConfiguration().isAddNotNullAssertions();
 
     final Collection<File> classpath =
       paths.getCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
@@ -278,15 +277,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
     final OutputFilesSink outputSink = new OutputFilesSink(context);
-    final Mappings delta = context.createDelta();
+    final Mappings delta = pd.dataManager.getMappings().createDelta();
     DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
     try {
       if (hasSourcesToCompile) {
         exitCode = ExitCode.OK;
         final Set<File> tempRootsSourcePath = new HashSet<File>();
-        final ModuleRootsIndex index = context.getRootsIndex();
+        final ModuleRootsIndex index = pd.rootsIndex;
         for (Module module : chunk.getModules()) {
-          for (RootDescriptor rd : index.getModuleRoots(module)) {
+          for (RootDescriptor rd : index.getModuleRoots(context, module)) {
             if (rd.isTemp) {
               tempRootsSourcePath.add(rd.root);
             }
@@ -314,7 +313,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                if (context.getProject().getUiDesignerConfiguration().isCopyFormsRuntimeToOutput() && !context.isCompilingTests()) {
+                if (pd.project.getUiDesignerConfiguration().isCopyFormsRuntimeToOutput() && !context.isCompilingTests()) {
                   for (Module module : chunk.getModules()) {
                     final File outputDir = paths.getModuleOutputDir(module, false);
                     if (outputDir != null) {
@@ -350,7 +349,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
           diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
         }
-        if (!context.isProceedOnErrors() && diagnosticSink.getErrorCount() > 0) {
+        if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
           if (!compiledOk) {
             diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Errors occurred while compiling module '" + chunkName + "'"));
           }
@@ -393,7 +392,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private boolean compileJava(
-    CompileContext context,
+    final CompileContext context,
     ModuleChunk chunk,
     Collection<File> files,
     Collection<File> classpath,
@@ -401,6 +400,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     Collection<File> sourcePath,
     DiagnosticOutputConsumer diagnosticSink,
     final OutputFileConsumer outputSink) throws Exception {
+
+    final TasksCounter counter = new TasksCounter();
+    COUNTER_KEY.set(context, counter);
 
     final Set<Module> modules = chunk.getModules();
     AnnotationProcessingProfile profile = null;
@@ -436,7 +438,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer
         );
         while (!future.waitFor(100L, TimeUnit.MILLISECONDS)) {
-          if (context.isCanceled()) {
+          if (context.getCancelStatus().isCanceled()) {
             future.cancel(false);
           }
         }
@@ -445,48 +447,33 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return rc;
     }
     finally {
-      ensurePendingTasksCompleted();
+      counter.await();
     }
   }
 
   private static boolean useEclipseCompiler(CompileContext context) {
-    return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase(context.getProject().getCompilerConfiguration().getOptions().get("DEFAULT_COMPILER"));
+    return USE_EMBEDDED_JAVAC && "Eclipse".equalsIgnoreCase( context.getProjectDescriptor().project.getCompilerConfiguration().getOptions().get("DEFAULT_COMPILER"));
   }
 
-  private void ensurePendingTasksCompleted() {
-    synchronized (myCounterLock) {
-      while (myTasksInProgress > 0) {
-        try {
-          myCounterLock.wait();
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-    }
-  }
+  private void submitAsyncTask(CompileContext context, final Runnable taskRunnable) {
+    final TasksCounter counter = COUNTER_KEY.get(context);
 
-  private void submitAsyncTask(final Runnable taskRunnable) {
-    synchronized (myCounterLock) {
-      myTasksInProgress++;
-    }
+    assert counter != null;
+
+    counter.incTaskCount();
     myTaskRunner.execute(new Runnable() {
       public void run() {
         try {
           taskRunnable.run();
         }
         finally {
-          synchronized (myCounterLock) {
-            myTasksInProgress = Math.max(0, myTasksInProgress - 1);
-            if (myTasksInProgress == 0) {
-              myCounterLock.notifyAll();
-            }
-          }
+          counter.decTaskCounter();
         }
       }
     });
   }
 
-  private static JavacServerClient ensureJavacServerLaunched(CompileContext context) throws Exception {
+  private static synchronized JavacServerClient ensureJavacServerLaunched(CompileContext context) throws Exception {
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
     if (descriptor != null) {
       return descriptor.client;
@@ -573,7 +560,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static int getJavacServerHeapSize(CompileContext context) {
     int heapSize = 512;
-    final Project project = context.getProject();
+    final Project project = context.getProjectDescriptor().project;
     final CompilerConfiguration config = project.getCompilerConfiguration();
     final Map<String, String> opts = useEclipseCompiler(context)? config.getEclipseOptions() : config.getJavacOptions();
     final String hSize = opts.get("MAXIMUM_HEAP_SIZE");
@@ -660,7 +647,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add(langlevel);
     }
 
-    final BytecodeTargetConfiguration targetConfig = context.getProject().getCompilerConfiguration().getBytecodeTarget();
+    final BytecodeTargetConfiguration targetConfig = context.getProjectDescriptor().project.getCompilerConfiguration().getBytecodeTarget();
     String bytecodeTarget = null;
     int chunkSdkVersion = -1;
     for (Module module : chunk.getModules()) {
@@ -774,8 +761,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final List<String> options = new ArrayList<String>();
     final List<String> vmOptions = new ArrayList<String>();
 
-    //options.add("-verbose");
-    final Project project = context.getProject();
+    final Project project = context.getProjectDescriptor().project;
     final CompilerConfiguration compilerConfig = project.getCompilerConfiguration();
     final boolean useEclipseCompiler = useEclipseCompiler(context);
     final Map<String, String> opts = useEclipseCompiler ? compilerConfig.getEclipseOptions() : compilerConfig.getJavacOptions();
@@ -818,7 +804,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (useEclipseCompiler) {
       for (String option : options) {
         if (option.startsWith("-proceedOnError")) {
-          context.setProceedOnErrors(true);
+          Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
           break;
         }
       }
@@ -837,7 +823,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         continue;
       }
       final Set<File> roots = new LinkedHashSet<File>();
-      for (RootDescriptor descriptor : context.getModuleRoots(module)) {
+      for (RootDescriptor descriptor : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, module)) {
         if (descriptor.isTestRoot == compilingTests) {
           roots.add(descriptor.root);
         }
@@ -894,7 +880,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                       OutputFilesSink outputSink) throws ProjectBuildException {
 
     final Map<String, File> class2form = new HashMap<String, File>();
-    final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
+    final SourceToFormMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
 
     final Map<String, OutputFileObject> compiledClassNames = new HashMap<String, OutputFileObject>();
     for (OutputFileObject fileObject : outputSink.getFileObjects()) {
@@ -1035,7 +1021,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void registerImports(final String className, final Collection<String> imports, final Collection<String> staticImports) {
-      submitAsyncTask(new Runnable() {
+      submitAsyncTask(myContext, new Runnable() {
         public void run() {
           final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(myContext);
           if (callback != null) {
@@ -1047,18 +1033,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     public void outputLineAvailable(String line) {
       if (!StringUtil.isEmpty(line)) {
-        //if (line.startsWith("[") && line.endsWith("]")) {
-        //  final String message = line.substring(1, line.length() - 1);
-        //  if (message.startsWith("parsing")) {
-        //    myContext.processMessage(new ProgressMessage("Parsing sources..."));
-        //  }
-        //  else {
-        //    if (!message.startsWith("total ") && !message.startsWith("loading ") && !message.startsWith("wrote ")) {
-        //      myContext.processMessage(new ProgressMessage(FileUtil.toSystemDependentName(message)));
-        //    }
-        //  }
-        //}
-        //else
         if (line.contains("java.lang.OutOfMemoryError")) {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
         }
@@ -1184,11 +1158,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private class ClassProcessingConsumer implements OutputFileConsumer {
-    private final CompileContext myCompileContext;
+    private final CompileContext myContext;
     private final OutputFileConsumer myDelegateOutputFileSink;
 
-    public ClassProcessingConsumer(CompileContext compileContext, OutputFileConsumer sink) {
-      myCompileContext = compileContext;
+    public ClassProcessingConsumer(CompileContext context, OutputFileConsumer sink) {
+      myContext = context;
       myDelegateOutputFileSink = sink != null ? sink : new OutputFileConsumer() {
         public void save(@NotNull OutputFileObject fileObject) {
           throw new RuntimeException("Output sink for compiler was not specified");
@@ -1197,11 +1171,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void save(@NotNull final OutputFileObject fileObject) {
-      submitAsyncTask(new Runnable() {
+      submitAsyncTask(myContext, new Runnable() {
         public void run() {
           try {
             for (ClassPostProcessor processor : ourClassProcessors) {
-              processor.process(myCompileContext, fileObject);
+              processor.process(myContext, fileObject);
             }
           }
           finally {
@@ -1209,6 +1183,34 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
         }
       });
+    }
+  }
+
+
+  private static final Key<TasksCounter> COUNTER_KEY = Key.create("_async_task_counter_");
+
+  private static final class TasksCounter {
+    private int myCounter = 0;
+
+    public synchronized void incTaskCount() {
+      myCounter++;
+    }
+
+    public synchronized void decTaskCounter() {
+      myCounter = Math.max(0, myCounter - 1);
+      if (myCounter == 0) {
+        notifyAll();
+      }
+    }
+
+    public synchronized void await() {
+      while (myCounter > 0) {
+        try {
+          wait();
+        }
+        catch (InterruptedException e) {
+        }
+      }
     }
   }
 }

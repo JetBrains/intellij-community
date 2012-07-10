@@ -1,0 +1,15 @@
+GNU GetText File
+  MSG_BLOCK
+    HEADER
+      <empty list>
+    PsiErrorElement:Not enough commands
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiErrorElement:Unbounded string
+          PsiElement(STRING)('"\n')
+        PsiElement(STRING)('""')
+        PsiWhiteSpace('\n')
+        PsiErrorElement:Unbounded string
+          PsiElement(STRING)('"\n')
+        PsiElement(STRING)('"\n"')

@@ -18,12 +18,16 @@ package com.intellij.tools;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 
+import javax.swing.*;
+
 public class ToolBeforeRunTaskProvider extends BeforeRunTaskProvider<ToolBeforeRunTask> {
+  private static final Icon ICON = AllIcons.General.ExternalToolsSmall;
   static final Key<ToolBeforeRunTask> ID = Key.create("ToolBeforeRunTask");
   private static final Logger LOG = Logger.getInstance("#" + ToolBeforeRunTaskProvider.class.getName());
 
@@ -54,11 +58,10 @@ public class ToolBeforeRunTaskProvider extends BeforeRunTaskProvider<ToolBeforeR
       .message("tools.before.run.description", StringUtil.isEmpty(groupName) ? tool.getName() : groupName + "/" + tool.getName());
   }
 
-  /*
-  @Override     //todo[lene]
+  @Override
   public Icon getIcon() {
     return ICON;
-  }*/
+  }
 
   @Override
   public boolean isConfigurable() {

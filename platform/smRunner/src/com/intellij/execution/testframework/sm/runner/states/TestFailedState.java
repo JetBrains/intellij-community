@@ -69,22 +69,21 @@ public class TestFailedState extends AbstractState {
   {
     boolean addMark = setMark;
     for (final String errorText : errorPresentationText) {
-      printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-      if (addMark) {
-        printer.mark();
-        addMark = false;
+      if (errorText != null) {
+        printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+        if (addMark) {
+          printer.mark();
+          addMark = false;
+        }
+        printer.print(errorText, ConsoleViewContentType.ERROR_OUTPUT);
       }
-      printer.print(errorText, ConsoleViewContentType.ERROR_OUTPUT);
     }
   }
 
   @Override
   public void printOn(final Printer printer) {
     super.printOn(printer);
-
-    if (myPresentationText != null) {
-      printError(printer, myPresentationText);
-    }
+    printError(printer, myPresentationText);
   }
 
   public boolean isDefect() {

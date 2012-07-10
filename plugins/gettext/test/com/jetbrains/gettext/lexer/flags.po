@@ -1,0 +1,6 @@
+# test
+#. another
+#: ref
+#, fuzzy,
+msgid "new string to translate"
+msgstr "translated string"

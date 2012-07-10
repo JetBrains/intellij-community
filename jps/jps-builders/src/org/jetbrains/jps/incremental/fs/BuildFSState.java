@@ -1,7 +1,9 @@
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.CompilerExcludes;
 import org.jetbrains.jps.Module;
@@ -14,6 +16,7 @@ import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -25,9 +28,9 @@ import java.util.Set;
 public class BuildFSState extends FSState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.BuildFSState");
 
-  private final Set<String> myContextModules = new HashSet<String>();
-  private volatile FilesDelta myCurrentRoundDelta;
-  private volatile FilesDelta myLastRoundDelta;
+  private static final Key<Set<String>> CONTEXT_MODULES_KEY = Key.create("_fssfate_context_modules_");
+  private static final Key<FilesDelta> CURRENT_ROUND_DELTA_KEY = Key.create("_current_round_delta_");
+  private static final Key<FilesDelta> LAST_ROUND_DELTA_KEY = Key.create("_last_round_delta_");
 
   // when true, will always determine dirty files by scanning FS and comparing timestamps
   // alternatively, when false, after first scan will rely on extarnal notifications about changes
@@ -43,32 +46,32 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public Map<File, Set<File>> getSourcesToRecompile(final String moduleName, boolean forTests) {
-    final FilesDelta lastRoundDelta = myLastRoundDelta;
+  public Map<File, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, final String moduleName, boolean forTests) {
+    final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
     if (lastRoundDelta != null) {
       return lastRoundDelta.getSourcesToRecompile(forTests);
     }
-    return super.getSourcesToRecompile(moduleName, forTests);
+    return super.getSourcesToRecompile(context, moduleName, forTests);
   }
 
   @Override
-  public boolean markDirty(File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
-    final FilesDelta roundDelta = myCurrentRoundDelta;
+  public boolean markDirty(@Nullable CompileContext context, File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
+    final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null) {
-      if (myContextModules.contains(rd.module)) {
+      if (getContextModules(context).contains(rd.module)) {
         roundDelta.markRecompile(rd.root, rd.isTestRoot, file);
       }
     }
-    return super.markDirty(file, rd, tsStorage);
+    return super.markDirty(context, file, rd, tsStorage);
   }
 
   @Override
-  public boolean markDirtyIfNotDeleted(File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
-    final boolean marked = super.markDirtyIfNotDeleted(file, rd, tsStorage);
+  public boolean markDirtyIfNotDeleted(@Nullable CompileContext context, File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
+    final boolean marked = super.markDirtyIfNotDeleted(context, file, rd, tsStorage);
     if (marked) {
-      final FilesDelta roundDelta = myCurrentRoundDelta;
+      final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
       if (roundDelta != null) {
-        if (myContextModules.contains(rd.module)) {
+        if (getContextModules(context).contains(rd.module)) {
           roundDelta.markRecompile(rd.root, rd.isTestRoot, file);
         }
       }
@@ -77,38 +80,39 @@ public class BuildFSState extends FSState {
   }
 
   public void clearAll() {
-    clearContextRoundData();
-    clearContextChunk();
+    clearContextRoundData(null);
+    clearContextChunk(null);
     myInitialProductionScanPerformed.clear();
     myInitialTestsScanPerformed.clear();
     super.clearAll();
   }
 
-  public void clearContextRoundData() {
-    myCurrentRoundDelta = null;
-    myLastRoundDelta = null;
+  public void clearContextRoundData(@Nullable CompileContext context) {
+    setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, null);
+    setRoundDelta(LAST_ROUND_DELTA_KEY, context, null);
   }
 
-  public void clearContextChunk() {
-    myContextModules.clear();
+  public void clearContextChunk(@Nullable CompileContext context) {
+    setContextModules(context, null);
   }
 
-  public void setContextChunk(ModuleChunk chunk) {
-    myContextModules.clear();
+  public void beforeChunkBuildStart(@NotNull CompileContext context, ModuleChunk chunk) {
+    final Set<String> contextModules = new HashSet<String>();
     for (Module module : chunk.getModules()) {
-      myContextModules.add(module.getName());
+      contextModules.add(module.getName());
     }
+    setContextModules(context, contextModules);
   }
 
-  public void beforeNextRoundStart() {
-    myLastRoundDelta = myCurrentRoundDelta;
-    myCurrentRoundDelta = new FilesDelta();
+  public void beforeNextRoundStart(@NotNull CompileContext context, ModuleChunk chunk) {
+    setRoundDelta(LAST_ROUND_DELTA_KEY, context, getRoundDelta(CURRENT_ROUND_DELTA_KEY, context));
+    setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, new FilesDelta());
   }
 
   public boolean processFilesToRecompile(CompileContext context, final Module module, final FileProcessor processor) throws IOException {
     final String moduleName = module.getName();
-    final Map<File, Set<File>> data = getSourcesToRecompile(moduleName, context.isCompilingTests());
-    final CompilerExcludes excludes = context.getProject().getCompilerConfiguration().getExcludes();
+    final Map<File, Set<File>> data = getSourcesToRecompile(context, moduleName, context.isCompilingTests());
+    final CompilerExcludes excludes = context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes();
     final CompileScope scope = context.getScope();
     synchronized (data) {
       for (Map.Entry<File, Set<File>> entry : data.entrySet()) {
@@ -169,4 +173,27 @@ public class BuildFSState extends FSState {
     }
     return marked;
   }
+
+  @NotNull
+  private static Set<String> getContextModules(@Nullable CompileContext context) {
+    return context != null? CONTEXT_MODULES_KEY.get(context, Collections.<String>emptySet()) : Collections.<String>emptySet();
+  }
+
+  private static void setContextModules(@Nullable CompileContext context, @Nullable Set<String> modules) {
+    if (context != null) {
+      CONTEXT_MODULES_KEY.set(context, modules);
+    }
+  }
+
+  @Nullable
+  private static FilesDelta getRoundDelta(@NotNull Key<FilesDelta> key, @Nullable CompileContext context) {
+    return context != null? key.get(context) : null;
+  }
+
+  private static void setRoundDelta(@NotNull Key<FilesDelta> key, @Nullable CompileContext context, @Nullable FilesDelta delta) {
+    if (context != null) {
+      key.set(context, delta);
+    }
+  }
+
 }

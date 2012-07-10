@@ -302,7 +302,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
             File ioFile = VfsUtil.virtualToIoFile(myModule.getModuleFile());
             if (!ioFile.exists()) {
               getProject().save();
-              assert ioFile.exists();
+              assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
             }
           }
           runnable.consume(callback);

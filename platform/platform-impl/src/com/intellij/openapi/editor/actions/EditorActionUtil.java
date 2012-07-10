@@ -635,15 +635,16 @@ public class EditorActionUtil {
     if (prevPos != null) {
       int columnShift = pos.line == prevPos.line ? pos.column - prevPos.column : 0;
 
-      final FoldRegion collapsedUndeCaret = editor.getFoldingModel().getCollapsedRegionAtOffset(caretModel.getOffset());
-      if (collapsedUndeCaret != null && collapsedUndeCaret.shouldNeverExpand()) {
-        if (columnShift > 0) {
-          caretModel.moveToOffset(collapsedUndeCaret.getEndOffset());
+      int caret = caretModel.getOffset();
+      final FoldRegion collapsedUnderCaret = editor.getFoldingModel().getCollapsedRegionAtOffset(caret);
+      if (collapsedUnderCaret != null && collapsedUnderCaret.shouldNeverExpand()) {
+        if (caret > collapsedUnderCaret.getStartOffset() && columnShift > 0) {
+          caretModel.moveToOffset(collapsedUnderCaret.getEndOffset());
         }
-        else if (columnShift < 0) {
-          caretModel.moveToOffset(collapsedUndeCaret.getStartOffset());
+        else if (caret + 1 < collapsedUnderCaret.getEndOffset() && columnShift < 0) {
+          caretModel.moveToOffset(collapsedUnderCaret.getStartOffset());
         }
-        editor.getSelectionModel().setSelection(collapsedUndeCaret.getStartOffset(), collapsedUndeCaret.getEndOffset());
+        editor.getSelectionModel().setSelection(collapsedUnderCaret.getStartOffset(), collapsedUnderCaret.getEndOffset());
       }
     }
 

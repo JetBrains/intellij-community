@@ -64,7 +64,7 @@ public abstract class ModuleLevelBuilder extends Builder {
    * @throws Exception
    */
   public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws IOException {
-    if (context.errorsDetectedInCurrentChunk()) {
+    if (Utils.ERRORS_DETECTED_KEY.get(context, Boolean.FALSE)) {
       return false;
     }
     try {
@@ -72,7 +72,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
       final Set<String> removedPaths = getRemovedPaths(context, chunk);
 
-      final Mappings globalMappings = context.getDataManager().getMappings();
+      final Mappings globalMappings = context.getProjectDescriptor().dataManager.getMappings();
 
       if (!context.isProjectRebuild()) {
         if (context.shouldDifferentiate(chunk, context.isCompilingTests())) {
@@ -132,7 +132,7 @@ public abstract class ModuleLevelBuilder extends Builder {
               }
 
               for (File file : newlyAffectedFiles) {
-                context.markDirtyIfNotDeleted(file);
+                FSOperations.markDirtyIfNotDeleted(context, file);
               }
               additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
@@ -143,7 +143,7 @@ public abstract class ModuleLevelBuilder extends Builder {
             context.processMessage(new ProgressMessage(messageText));
 
             additionalPassRequired = context.isMake();
-            context.markDirtyRecursively(chunk);
+            FSOperations.markDirtyRecursively(context, chunk);
           }
         }
         else {
@@ -184,7 +184,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     final List<Pair<File, String>> result = new ArrayList<Pair<File, String>>();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
-        final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
+        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
         result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.module : null));
       }
     }
@@ -199,7 +199,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     }
     if (!chunkModules.isEmpty()) {
       for (File file : affected) {
-        final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
+        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
         if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.module)) {
           return true;
         }
@@ -247,7 +247,8 @@ public abstract class ModuleLevelBuilder extends Builder {
       for (Module module : chunk.getModules()) {
         final Collection<String> paths = map.remove(module.getName());
         if (paths != null) {
-          final SourceToOutputMapping storage = context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
+          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(),
+                                                                                                                context.isCompilingTests());
           for (String path : paths) {
             storage.remove(path);
           }
@@ -268,11 +269,11 @@ public abstract class ModuleLevelBuilder extends Builder {
 
     @Override
     public boolean accept(File file) {
-      final RootDescriptor rd = myContext.getModuleAndRoot(file);
+      final RootDescriptor rd = myContext.getProjectDescriptor().rootsIndex.getModuleAndRoot(myContext, file);
       if (rd == null) {
         return true;
       }
-      final Module moduleOfFile = myContext.getRootsIndex().getModuleByName(rd.module);
+      final Module moduleOfFile = myContext.getProjectDescriptor().rootsIndex.getModuleByName(rd.module);
       if (myChunkModules.contains(moduleOfFile)) {
         return true;
       }

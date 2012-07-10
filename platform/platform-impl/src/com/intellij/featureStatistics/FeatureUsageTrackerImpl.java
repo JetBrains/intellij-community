@@ -139,7 +139,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
 
     Element fStats = element.getChild(FIXES_STATS_TAG);
     if (fStats != null) {
-      myCompletionStats = XmlSerializer.deserialize(fStats, CompletionStatistics.class);
+      myFixesStats = XmlSerializer.deserialize(fStats, CumulativeStatistics.class);
     }
 
     HAVE_BEEN_SHOWN = Boolean.valueOf(element.getAttributeValue(ATT_HAVE_BEEN_SHOWN)).booleanValue();

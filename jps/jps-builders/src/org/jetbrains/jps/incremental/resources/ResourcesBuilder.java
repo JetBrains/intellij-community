@@ -31,26 +31,36 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     return BUILDER_NAME;
   }
 
-  public ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  @Override
+  public void buildStarted(CompileContext context) {
+    // init patterns
     ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
     if (patterns == null) {
-      ResourcePatterns.KEY.set(context, patterns = new ResourcePatterns(context.getProject()));
+      ResourcePatterns.KEY.set(context, new ResourcePatterns(context.getProjectDescriptor().project));
     }
+  }
+
+  public ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+    final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
+    assert patterns != null;
     try {
-      final ResourcePatterns finalPatterns = patterns;
       final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
-      context.processFilesToRecompile(chunk, new FileProcessor() {
+      FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
         public boolean apply(final Module module, final File file, final String sourceRoot) throws IOException {
-          if (finalPatterns.isResourceFile(file, sourceRoot)) {
+          if (patterns.isResourceFile(file, sourceRoot)) {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
               doneSomething.set(true);
-              copyResource(context, module, file, sourceRoot,
-                           context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests()));
+              copyResource(
+                context, module, file, sourceRoot,
+                context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), context.isCompilingTests())
+              );
             }
             catch (IOException e) {
               LOG.info(e);
-              context.processMessage(new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())));
+              context.processMessage(
+                new CompilerMessage("Resource Compiler", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath()))
+              );
               return false;
             }
           }
@@ -92,7 +102,6 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     catch (Exception e) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, e));
     }
-
   }
 
   public String getDescription() {

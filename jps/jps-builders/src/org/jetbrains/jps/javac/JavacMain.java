@@ -24,7 +24,6 @@ public class JavacMain {
     /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none",
     /*eclipse options*/"-noExit"
   ));
-  private static final JavaCompiler SYSTEM_JAVA_COMPILER = ToolProvider.getSystemJavaCompiler();
 
   public static boolean compile(Collection<String> options,
                                 final Collection<File> sources,
@@ -42,19 +41,19 @@ public class JavacMain {
         break;
       }
       if (compiler == null) {
-        compiler = SYSTEM_JAVA_COMPILER;
+        final String message = "Eclipse Batch Compiler was not found in classpath";
+        outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
+        return false;
       }
     }
-    else {
-      compiler = SYSTEM_JAVA_COMPILER;
+
+    final boolean nowUsingJavac;
+    if (compiler == null) {
+      compiler = ToolProvider.getSystemJavaCompiler();
+      nowUsingJavac = true;
     }
-
-    final boolean nowUsingJavac = compiler == SYSTEM_JAVA_COMPILER;
-
-    if (nowUsingJavac && useEclipseCompiler) {
-      final String message = "Eclipse Batch Compiler was not found in classpath";
-      outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
-      return false;
+    else {
+      nowUsingJavac = false;
     }
 
     for (File outputDir : outputDirToRoots.keySet()) {
@@ -114,7 +113,7 @@ public class JavacMain {
     };
 
     try {
-      final Collection<String> _options = prepareOptions(options, compiler);
+      final Collection<String> _options = prepareOptions(options, nowUsingJavac);
       final JavaCompiler.CompilationTask task = compiler.getTask(
         out, fileManager, outConsumer, _options, null, fileManager.toJavaFileObjects(sources)
       );
@@ -145,9 +144,9 @@ public class JavacMain {
     return true;
   }
 
-  private static Collection<String> prepareOptions(final Collection<String> options, JavaCompiler compiler) {
+  private static Collection<String> prepareOptions(final Collection<String> options, boolean usingJavac) {
     final List<String> result = new ArrayList<String>();
-    if (compiler == SYSTEM_JAVA_COMPILER) {
+    if (usingJavac) {
       result.add("-implicit:class"); // the option supported by javac only
     }
     else { // is Eclipse

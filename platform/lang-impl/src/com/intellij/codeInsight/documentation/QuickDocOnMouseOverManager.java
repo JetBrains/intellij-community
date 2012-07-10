@@ -169,7 +169,11 @@ public class QuickDocOnMouseOverManager {
 
       // Skip the event if the control is shown because of explicit 'show quick doc' action call.
       WeakReference<DocumentationManager> ref = myDocumentationManager;
-      if (ref == null || ref.get() == null) {
+      if (ref == null) {
+        return;
+      }
+      DocumentationManager manager = ref.get();
+      if (manager == null || !manager.isCloseOnSneeze()) {
         return;
       }
 
@@ -284,14 +288,20 @@ public class QuickDocOnMouseOverManager {
     public void run() {
       myAlarm.cancelAllRequests();
       
+      // Skip the request if it's outdated (the mouse is moved other another element).
       DelayedQuickDocInfo info = myDelayedQuickDocInfo;
       if (info == null || !info.targetElement.equals(myActiveElements.get(info.editor))) {
         return;
       }
 
+      // Skip the request if there is a control shown as a result of explicit 'show quick doc' (Ctrl + Q) invocation.
+      if (info.docManager.getDocInfoHint() != null && !info.docManager.isCloseOnSneeze()) {
+        return;
+      }
+      
+      // We don't want to show a quick doc control if there is an active hint (e.g. the mouse is under an invalid element
+      // and corresponding error info is shown).
       if (!info.docManager.hasDockedDocWindow() && myHintManager.hasShownHintsThatWillHideByOtherHint(false)) {
-        // We don't want to show a quick doc control if there is an active hint (e.g. the mouse is under an invalid element
-        // and corresponding error info is shown).
         myAlarm.addRequest(this, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
         return;
       }

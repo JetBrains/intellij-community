@@ -394,4 +394,15 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, '_fooBar', 'FooBar')
   }
 
+  public void testStatisticsMattersOnNextCompletion() {
+    configureByFile(getTestName(false) + ".java")
+    myFixture.completeBasic();
+    assert lookup
+    assert lookup.currentItem.lookupString != 'JComponent'
+    myFixture.type('ponent c;\nJCom')
+    myFixture.completeBasic();
+    assert lookup
+    assert lookup.currentItem.lookupString == 'JComponent'
+  }
+
 }

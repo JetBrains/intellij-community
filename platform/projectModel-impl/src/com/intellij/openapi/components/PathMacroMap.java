@@ -105,10 +105,6 @@ public abstract class PathMacroMap {
     return myMacroMap.size();
   }
 
-  protected Set<Map.Entry<String, String>> entries() {
-    return myMacroMap.entrySet();
-  }
-
   protected Set<String> keySet() {
     return myMacroMap.keySet();
   }

@@ -16,11 +16,13 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.components.PathMacroMap;
-import com.intellij.openapi.components.impl.BasePathMacroManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -31,49 +33,11 @@ import java.util.*;
 public class ReplacePathToMacroMap extends PathMacroMap {
   private List<String> myPathsIndex = null;
 
-  private static final Comparator<Map.Entry<String, String>> PATHS_COMPARATOR = new Comparator<Map.Entry<String, String>>() {
-    public int compare(final Map.Entry<String, String> o1, final Map.Entry<String, String> o2) {
-      int idx1 = getIndex(o1);
-      int idx2 = getIndex(o2);
-
-      if (idx1 != idx2) return idx1 - idx2;
-
-      return stripPrefix(o2.getKey()).length() - stripPrefix(o1.getKey()).length();
-    }
-
-    private int getIndex(final Map.Entry<String, String> s) {
-      final String replacement = s.getValue();
-      if (replacement.indexOf("..") >= 0) return 3;
-      if (replacement.indexOf("$" + PathMacrosImpl.USER_HOME_MACRO_NAME + "$") >= 0) return 3;
-
-      if (replacement.indexOf("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$") >= 0) return 1;
-      if (replacement.indexOf("$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$") >= 0) return 1;
-      return 2;
-    }
-
-    private String stripPrefix(String key) {
-      key = StringUtil.trimStart(key, "jar:");
-      key = StringUtil.trimStart(key, "file:");
-      while (key.startsWith("/")) {
-        key = key.substring(1);
-      }
-      return key;
-    }
-
-  };
-
   @NonNls private static final String[] PROTOCOLS = new String[]{"file", "jar"};
 
   public void addMacroReplacement(String path, String macroName) {
     final String p = quotePath(path);
     final String m = "$" + macroName + "$";
-
-    if (BasePathMacroManager.DEBUG) {
-      System.out.println("BasePathMacroManager.addFileHierarchyReplacements");
-      System.out.println("path = " + p);
-      System.out.println("macro = " + macroName);
-    }
-
 
     put(p, m);
     for (String protocol : PROTOCOLS) {
@@ -83,6 +47,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   }
 
+  @Nullable
   public String substitute(String text, boolean caseSensitive) {
     if (text == null) return null;
     for (final String path : getPathIndex()) {
@@ -192,17 +157,44 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   }
 
+  private static int getIndex(final Map.Entry<String, String> s) {
+    final String replacement = s.getValue();
+    if (replacement.contains("..")) return 1;
+    if (replacement.contains("$" + PathMacrosImpl.USER_HOME_MACRO_NAME + "$")) return 1;
+    if (replacement.contains("$" + PathMacrosImpl.MODULE_DIR_MACRO_NAME + "$")) return 3;
+    if (replacement.contains("$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$")) return 3;
+    return 2;
+  }
+
+  private static int stripPrefix(String key) {
+    key = StringUtil.trimStart(key, "jar:");
+    key = StringUtil.trimStart(key, "file:");
+    while (key.startsWith("/")) {
+      key = key.substring(1);
+    }
+    return key.length();
+  }
+
   public List<String> getPathIndex() {
     if (myPathsIndex == null || myPathsIndex.size() != size()) {
+      List<Map.Entry<String, String>> entries = new ArrayList<Map.Entry<String, String>>(myMacroMap.entrySet());
 
-      final Set<Map.Entry<String, String>> entrySet = entries();
-      Map.Entry<String, String>[] entries = entrySet.toArray(new Map.Entry[entrySet.size()]);
-      ContainerUtil.sort(entries, PATHS_COMPARATOR);
-      myPathsIndex = new ArrayList<String>(entries.length);
-
+      final TObjectIntHashMap<Map.Entry<String, String>> weights = new TObjectIntHashMap<Map.Entry<String, String>>();
       for (Map.Entry<String, String> entry : entries) {
-        myPathsIndex.add(entry.getKey());
+        weights.put(entry, getIndex(entry) * 512 + stripPrefix(entry.getKey()));
       }
+
+      ContainerUtil.sort(entries, new Comparator<Map.Entry<String, String>>() {
+        public int compare(final Map.Entry<String, String> o1, final Map.Entry<String, String> o2) {
+          return weights.get(o2) - weights.get(o1);
+        }
+      });
+      myPathsIndex = ContainerUtil.map2List(entries, new Function<Map.Entry<String, String>, String>() {
+        @Override
+        public String fun(Map.Entry<String, String> entry) {
+          return entry.getKey();
+        }
+      });
     }
     return myPathsIndex;
   }

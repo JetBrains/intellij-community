@@ -531,6 +531,12 @@ public class Mock {
   }
 
   public static class MyToolWindowManager extends ToolWindowManager {
+
+    @Override
+    public boolean canShowNotification(@NotNull String toolWindowId) {
+      return false;
+    }
+
     @Override
     public ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor) {
       return null;

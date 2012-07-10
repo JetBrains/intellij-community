@@ -46,7 +46,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -142,7 +141,7 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     NotificationDisplayType type = settings.getDisplayType();
     String toolWindowId = NotificationsConfigurationImpl.getNotificationsConfigurationImpl().getToolWindowId(groupId);
     if (type == NotificationDisplayType.TOOL_WINDOW &&
-        (toolWindowId == null || project == null || !Arrays.asList(ToolWindowManager.getInstance(project).getToolWindowIds()).contains(toolWindowId))) {
+        (toolWindowId == null || project == null || !ToolWindowManager.getInstance(project).canShowNotification(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;
     }
 

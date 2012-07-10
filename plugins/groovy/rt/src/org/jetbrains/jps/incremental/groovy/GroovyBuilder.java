@@ -112,9 +112,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
 
       if (myForStubs) {
+        final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
         for (Module module : generationOutputs.keySet()) {
           File root = new File(generationOutputs.get(module));
-          context.getRootsIndex().associateRoot(root, module, context.isCompilingTests(), true, true);
+          rootsIndex.associateRoot(context, root, module, context.isCompilingTests(), true, true);
         }
       }
 
@@ -184,9 +185,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                                                         ModuleChunk chunk,
                                                                         GroovycOSProcessHandler.OutputItem item, Map<Module, String> generationOutputs, String compilerOutput) throws IOException {
     if (chunk.getModules().size() > 1) {
-      RootDescriptor descriptor = context.getModuleAndRoot(new File(item.sourcePath));
+      RootDescriptor descriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, new File(item.sourcePath));
       if (descriptor != null) {
-        Module srcModule = context.getProject().getModules().get(descriptor.module);
+        Module srcModule = context.getProjectDescriptor().project.getModules().get(descriptor.module);
         if (srcModule != null && srcModule != chunk.representativeModule()) {
           File output = new File(item.outputPath);
 
@@ -217,7 +218,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws IOException {
     final List<File> toCompile = new ArrayList<File>();
-    context.processFilesToRecompile(chunk, new FileProcessor() {
+    FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
       public boolean apply(Module module, File file, String sourceRoot) throws IOException {
         final String path = file.getPath();
         if (isGroovyFile(path)) { //todo file type check
@@ -234,7 +235,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                                   List<File> toCompile,
                                   Map<Module, String> generationOutputs,
                                   List<GroovycOSProcessHandler.OutputItem> successfullyCompiled) throws IOException {
-    final Mappings delta = context.createDelta();
+    final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
     final List<File> successfullyCompiledFiles = new ArrayList<File>();
     if (!successfullyCompiled.isEmpty()) {
 
@@ -244,11 +245,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       for (GroovycOSProcessHandler.OutputItem item : successfullyCompiled) {
         final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
-        final RootDescriptor moduleAndRoot = context.getModuleAndRoot(new File(sourcePath));
+        final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, new File(sourcePath));
         if (moduleAndRoot != null) {
           final String moduleName = moduleAndRoot.module;
-          context.getDataManager().getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
-          String moduleOutputPath = generationOutputs.get(context.getProject().getModules().get(moduleName));
+          context.getProjectDescriptor().dataManager.getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
+          String moduleOutputPath = generationOutputs.get(context.getProjectDescriptor().project.getModules().get(moduleName));
           generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));
         }
         callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
@@ -285,10 +286,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     final Map<String, String> class2Src = new HashMap<String, String>();
     for (Module module : chunk.getModules()) {
       String moduleOutputPath = finalOutputs.get(module);
-      final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
+      final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), context.isCompilingTests());
       for (String src : srcToOut.getKeys()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
-            !context.getProject().getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {
+            !context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {
           final Collection<String> outs = srcToOut.getState(src);
           if (outs != null) {
             for (String out : outs) {
@@ -333,7 +334,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
 
       try {
-        context.markDirty(new File(groovy));
+        FSOperations.markDirty(context, new File(groovy));
       }
       catch (IOException e) {
         LOG.error(e);

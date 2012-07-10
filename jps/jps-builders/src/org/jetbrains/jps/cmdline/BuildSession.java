@@ -228,10 +228,8 @@ final class BuildSession implements Runnable, CanceledStatus {
           buildType = BuildType.PROJECT_REBUILD;
         }
 
-        final Timestamps timestamps = pd.timestamps.getStorage();
-
-        final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
-        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs, myConstantSearch);
+        final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
+        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs, myConstantSearch);
         builder.addMessageHandler(msgHandler);
         try {
           switch (buildType) {
@@ -327,7 +325,7 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       for (String deleted : event.getDeletedPathsList()) {
         final File file = new File(deleted);
-        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
         if (rd != null) {
           if (Utils.IS_TEST_MODE) {
             LOG.info("Applying deleted path from fs event: " + file.getPath());
@@ -342,12 +340,12 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       for (String changed : event.getChangedPathsList()) {
         final File file = new File(changed);
-        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
         if (rd != null) {
           if (Utils.IS_TEST_MODE) {
             LOG.info("Applying dirty path from fs event: " + file.getPath());
           }
-          pd.fsState.markDirty(file, rd, timestamps);
+          pd.fsState.markDirty(null, file, rd, timestamps);
         }
         else {
           if (Utils.IS_TEST_MODE) {
@@ -569,9 +567,10 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private static CompileScope createCompilationScope(BuildType buildType,
                                                      ProjectDescriptor pd,
-                                                     final Timestamps timestamps, Set<String> modules,
+                                                     Set<String> modules,
                                                      Collection<String> artifactNames,
                                                      Collection<String> paths) throws Exception {
+    final Timestamps timestamps = pd.timestamps.getStorage();
     Set<Artifact> artifacts = new HashSet<Artifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
       artifacts.addAll(pd.project.getArtifacts().values());
@@ -609,7 +608,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         filesToCompile = new HashMap<String, Set<File>>();
         for (String path : paths) {
           final File file = new File(path);
-          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
           if (rd != null) {
             Set<File> files = filesToCompile.get(rd.module);
             if (files == null) {
@@ -618,7 +617,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             }
             files.add(file);
             if (buildType == BuildType.FORCED_COMPILATION) {
-              pd.fsState.markDirty(file, rd, timestamps);
+              pd.fsState.markDirty(null, file, rd, timestamps);
             }
           }
         }
@@ -670,6 +669,10 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private class ConstantSearch implements Callbacks.ConstantAffectionResolver {
+
+    private ConstantSearch() {
+    }
+
     @Nullable @Override
     public Future<Callbacks.ConstantAffection> request(String ownerClassName, String fieldName, int accessFlags, boolean fieldRemoved, boolean accessChanged) {
       final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.Builder task =
@@ -679,7 +682,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       task.setAccessFlags(accessFlags);
       task.setIsAccessChanged(accessChanged);
       task.setIsFieldRemoved(fieldRemoved);
-      final ConstantSearchFuture future = new ConstantSearchFuture();
+      final ConstantSearchFuture future = new ConstantSearchFuture(BuildSession.this);
       final ConstantSearchFuture prev = mySearchTasks.put(new Pair<String, String>(ownerClassName, fieldName), future);
       if (prev != null) {
         prev.setDone();
@@ -695,8 +698,10 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private static class ConstantSearchFuture extends BasicFuture<Callbacks.ConstantAffection> {
     private volatile Callbacks.ConstantAffection myResult = Callbacks.ConstantAffection.EMPTY;
+    private final CanceledStatus myCanceledStatus;
 
-    private ConstantSearchFuture() {
+    private ConstantSearchFuture(CanceledStatus canceledStatus) {
+      myCanceledStatus = canceledStatus;
     }
 
     public void setResult(final Collection<File> affectedFiles) {
@@ -706,8 +711,16 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     @Override
     public Callbacks.ConstantAffection get() throws InterruptedException, ExecutionException {
-      super.get();
-      return myResult;
+      while (true) {
+        try {
+          return get(300L, TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException ignored) {
+        }
+        if (myCanceledStatus.isCanceled()) {
+          return myResult;
+        }
+      }
     }
 
     @Override

@@ -49,10 +49,10 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
-    if (!AndroidJpsUtil.containsAndroidFacet(context.getProject()) || AndroidJpsUtil.isLightBuild(context)) {
+    if (!AndroidJpsUtil.containsAndroidFacet(context.getProjectDescriptor().project) || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
-    final Collection<Module> modules = context.getProject().getModules().values();
+    final Collection<Module> modules = context.getProjectDescriptor().project.getModules().values();
     final Map<Module, AndroidFileSetState> resourcesStates = new HashMap<Module, AndroidFileSetState>();
     final Map<Module, AndroidFileSetState> assetsStates = new HashMap<Module, AndroidFileSetState>();
     final Map<Module, File> manifestFiles = new HashMap<Module, File>();
@@ -113,7 +113,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                    @NotNull Collection<Module> modules,
                                    @NotNull Map<Module, AndroidFileSetState> module2state) throws IOException {
     boolean success = true;
-    final File dataStorageRoot = context.getDataManager().getDataStorageRoot();
+    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
     final AndroidFileSetStorage storage = new AndroidFileSetStorage(dataStorageRoot, "resource_caching");
 
     try {
@@ -202,7 +202,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                              @NotNull Map<Module, File> manifestFiles) throws IOException {
     boolean success = true;
 
-    final File dataStorageRoot = context.getDataManager().getDataStorageRoot();
+    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
     final boolean releaseBuild = AndroidJpsUtil.isReleaseBuild(context);
     AndroidFileSetStorage resourcesStorage = null;
     AndroidFileSetStorage assetsStorage = null;
@@ -282,7 +282,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
   private static boolean doPackaging(@NotNull CompileContext context, @NotNull Collection<Module> modules) throws IOException {
     final boolean release = AndroidJpsUtil.isReleaseBuild(context);
-    final File dataStorageRoot = context.getDataManager().getDataStorageRoot();
+    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
 
     boolean success = true;
 
@@ -374,7 +374,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final List<AndroidNativeLibData> additionalNativeLibs = facet.getAdditionalNativeLibs();
 
     final AndroidFileSetState currentFileSetState =
-      buildCurrentApkBuilderState(context.getProject(), resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
+      buildCurrentApkBuilderState(context.getProjectDescriptor().project, resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
                                   externalJars, release);
 
     final AndroidApkBuilderConfigState currentApkBuilderConfigState =
@@ -394,7 +394,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
     final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApkBuilder
       .execute(resPackagePath, classesDexFilePath, sourceRoots, externalJars, nativeLibDirs, additionalNativeLibs,
-               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProject()));
+               outputApkPath, release, sdkPath, customKeyStorePath, new MyExcludedSourcesFilter(context.getProjectDescriptor().project));
 
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
     final boolean success = messages.get(AndroidCompilerMessageKind.ERROR).isEmpty();
@@ -517,7 +517,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                 ? outputFilePath + RELEASE_SUFFIX
                                 : outputFilePath;
 
-      final IgnoredFilePatterns ignoredFilePatterns = context.getProject().getIgnoredFilePatterns();
+      final IgnoredFilePatterns ignoredFilePatterns = context.getProjectDescriptor().project.getIgnoredFilePatterns();
 
       final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApt
         .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPaths, outputPath, null,

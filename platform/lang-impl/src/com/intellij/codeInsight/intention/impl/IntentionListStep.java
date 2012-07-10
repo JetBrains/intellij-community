@@ -205,8 +205,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
       return FINAL_CHOICE;
     }
 
-    //disable sub menu selection on enter (when no quick fix available)
-    if (!finalChoice && hasSubstep(action)) {
+    if (hasSubstep(action)) {
       return getSubStep(action, action.getToolName());
     }
 

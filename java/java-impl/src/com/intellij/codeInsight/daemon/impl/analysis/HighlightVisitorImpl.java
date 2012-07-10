@@ -970,13 +970,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitTryStatement(statement);
     if (!myHolder.hasErrorResults()) {
       final Set<PsiClassType> thrownTypes = HighlightUtil.collectUnhandledExceptions(statement);
-      final boolean improvedCheck = PsiUtil.isLanguageLevel7OrHigher(statement);
       for (PsiParameter parameter : statement.getCatchBlockParameters()) {
         boolean added = myHolder.addAll(HighlightUtil.checkExceptionAlreadyCaught(parameter));
         if (!added) {
           added = myHolder.addAll(HighlightUtil.checkExceptionThrownInTry(parameter, thrownTypes));
         }
-        if (!added && improvedCheck) {
+        if (!added) {
           myHolder.addAll(HighlightUtil.checkWithImprovedCatchAnalysis(parameter, thrownTypes));
         }
       }

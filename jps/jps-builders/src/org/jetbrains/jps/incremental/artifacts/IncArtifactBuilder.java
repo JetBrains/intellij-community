@@ -17,7 +17,7 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,18 +36,18 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
     Set<Artifact> affected = new HashSet<Artifact>();
-    for (Artifact artifact : context.getProject().getArtifacts().values()) {
+    for (Artifact artifact : context.getProjectDescriptor().project.getArtifacts().values()) {
       if (context.getScope().isAffected(artifact)) {
         affected.add(artifact);
       }
     }
-    final Set<Artifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected, context.getProject());
+    final Set<Artifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected, context.getProjectDescriptor().project);
     Map<String, Artifact> artifactsMap = new HashMap<String, Artifact>();
     for (Artifact artifact : toBuild) {
       artifactsMap.put(artifact.getName(), artifact);
     }
 
-    final ArtifactSorter sorter = new ArtifactSorter(context.getProject());
+    final ArtifactSorter sorter = new ArtifactSorter(context.getProjectDescriptor().project);
     final Map<String, String> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
     for (String artifactName : sorter.getArtifactsSortedByInclusion()) {
       context.checkCanceled();
@@ -69,11 +69,10 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
   }
 
   private static void buildArtifact(Artifact artifact, final CompileContext context) throws ProjectBuildException {
-    final BuildDataManager dataManager = context.getDataManager();
+    final ProjectDescriptor pd = context.getProjectDescriptor();
     try {
-      final ArtifactSourceFilesState state = dataManager.getArtifactsBuildData().getOrCreateState(artifact,
-                                                                                                  context.getProject(), context.getRootsIndex());
-      state.initState(dataManager);
+      final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(artifact, pd.project, pd.rootsIndex);
+      state.initState(pd.dataManager);
       final Set<String> deletedFiles = state.getDeletedFiles();
       final Map<String,IntArrayList> changedFiles = state.getChangedFiles();
       if (deletedFiles.isEmpty() && changedFiles.isEmpty()) {
@@ -136,13 +135,13 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       instructions.processRoots(new ArtifactRootProcessor() {
         @Override
         public boolean process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
-          if (context.isCanceled()) return false;
+          if (context.getCancelStatus().isCanceled()) return false;
 
           final Set<String> sourcePaths = filesToProcess.get(rootIndex);
           if (sourcePaths == null) return true;
 
           for (String sourcePath : sourcePaths) {
-            if (!root.containsFile(sourcePath, dataManager)) continue;//todo[nik] this seems to be unnecessary
+            if (!root.containsFile(sourcePath, pd.dataManager)) continue;//todo[nik] this seems to be unnecessary
 
             for (DestinationInfo destination : destinations) {
               if (destination instanceof ExplodedDestinationInfo) {

@@ -57,12 +57,23 @@ public class IntroduceTargetChooser {
                                                         final Function<T, String> renderer,
                                                         String title,
                                                         NotNullFunction<PsiElement, TextRange> ranger) {
+    showChooser(editor, expressions, callback, renderer, title, -1, ranger);
+  }
+
+  public static <T extends PsiElement> void showChooser(final Editor editor,
+                                                        final List<T> expressions,
+                                                        final Pass<T> callback,
+                                                        final Function<T, String> renderer,
+                                                        String title,
+                                                        int selection,
+                                                        NotNullFunction<PsiElement, TextRange> ranger) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor, ranger);
     final DefaultListModel model = new DefaultListModel();
     for (T expr : expressions) {
       model.addElement(expr);
     }
     final JList list = new JBList(model);
+    if (selection > -1) list.setSelectedIndex(selection);
     list.setCellRenderer(new DefaultListCellRenderer() {
 
       @Override

@@ -125,4 +125,8 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
   public String toString() {
     return getClass().getName() + " (" + getSize() + " elements)";
   }
+
+  public List<T> toList() {
+    return new ArrayList<T>(myItems);
+  }
 }

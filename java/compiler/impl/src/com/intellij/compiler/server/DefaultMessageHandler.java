@@ -94,66 +94,70 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     final int accessFlags = task.getAccessFlags();
     final boolean accessChanged = task.getIsAccessChanged();
     final boolean isRemoved = task.getIsFieldRemoved();
-    DumbService.getInstance(myProject).waitForSmartMode(); // ensure running in smart mode
-
     final Ref<Boolean> isSuccess = Ref.create(Boolean.TRUE);
     final Set<String> affectedPaths = new HashSet<String>();
     try {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          try {
-            final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(ownerClassName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
-            if (isRemoved) {
-              if (classes.length > 0) {
-                for (PsiClass aClass : classes) {
-                  final boolean sucess = performRemovedConstantSearch(aClass, fieldName, accessFlags, affectedPaths);
-                  if (!sucess) {
-                    isSuccess.set(Boolean.FALSE);
-                    break;
-                  }
-                }
-              }
-              else {
-                isSuccess.set(
-                  performRemovedConstantSearch(null, fieldName, accessFlags, affectedPaths)
-                );
-              }
-            }
-            else {
-              if (classes.length > 0) {
-                boolean foundAtLeastOne = false;
-                for (PsiClass aClass : classes) {
-                  PsiField changedField = null;
-                  for (PsiField psiField : aClass.getFields()) {
-                    if (fieldName.equals(psiField.getName())) {
-                      changedField = psiField;
+      if (DumbService.getInstance(myProject).isDumb()) {
+        // do not wait until dumb mode finishes
+        isSuccess.set(Boolean.FALSE);
+      }
+      else {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            try {
+              final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(ownerClassName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
+              if (isRemoved) {
+                if (classes.length > 0) {
+                  for (PsiClass aClass : classes) {
+                    final boolean sucess = performRemovedConstantSearch(aClass, fieldName, accessFlags, affectedPaths);
+                    if (!sucess) {
+                      isSuccess.set(Boolean.FALSE);
                       break;
                     }
                   }
-                  if (changedField == null) {
-                    continue;
-                  }
-                  foundAtLeastOne = true;
-                  final boolean sucess = performChangedConstantSearch(aClass, changedField, accessFlags, accessChanged, affectedPaths);
-                  if (!sucess) {
-                    isSuccess.set(Boolean.FALSE);
-                    break;
-                  }
                 }
-                if (!foundAtLeastOne) {
-                  isSuccess.set(Boolean.FALSE);
+                else {
+                  isSuccess.set(
+                    performRemovedConstantSearch(null, fieldName, accessFlags, affectedPaths)
+                  );
                 }
               }
               else {
-                isSuccess.set(Boolean.FALSE);
+                if (classes.length > 0) {
+                  boolean foundAtLeastOne = false;
+                  for (PsiClass aClass : classes) {
+                    PsiField changedField = null;
+                    for (PsiField psiField : aClass.getFields()) {
+                      if (fieldName.equals(psiField.getName())) {
+                        changedField = psiField;
+                        break;
+                      }
+                    }
+                    if (changedField == null) {
+                      continue;
+                    }
+                    foundAtLeastOne = true;
+                    final boolean sucess = performChangedConstantSearch(aClass, changedField, accessFlags, accessChanged, affectedPaths);
+                    if (!sucess) {
+                      isSuccess.set(Boolean.FALSE);
+                      break;
+                    }
+                  }
+                  if (!foundAtLeastOne) {
+                    isSuccess.set(Boolean.FALSE);
+                  }
+                }
+                else {
+                  isSuccess.set(Boolean.FALSE);
+                }
               }
             }
+            catch (Throwable e) {
+              isSuccess.set(Boolean.FALSE);
+            }
           }
-          catch (Throwable e) {
-            isSuccess.set(Boolean.FALSE);
-          }
-        }
-      });
+        });
+      }
     }
     finally {
       final CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.Builder builder = CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.newBuilder();

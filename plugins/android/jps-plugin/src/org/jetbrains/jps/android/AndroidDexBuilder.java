@@ -55,7 +55,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
-    if (!AndroidJpsUtil.containsAndroidFacet(context.getProject()) || AndroidJpsUtil.isLightBuild(context)) {
+    if (!AndroidJpsUtil.containsAndroidFacet(context.getProjectDescriptor().project) || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
 
@@ -71,7 +71,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
   }
 
   private static void doBuild(CompileContext context) throws IOException, ProjectBuildException {
-    final File root = context.getDataManager().getDataStorageRoot();
+    final File root = context.getProjectDescriptor().dataManager.getDataStorageRoot();
 
     AndroidFileSetStorage dexStateStorage = null;
     AndroidFileSetStorage proguardStateStorage = null;
@@ -98,7 +98,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                     @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
     boolean success = true;
 
-    for (Module module : context.getProject().getModules().values()) {
+    for (Module module : context.getProjectDescriptor().project.getModules().values()) {
       final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
       if (facet == null || facet.getLibrary()) {
         continue;
@@ -452,7 +452,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     proguardStateStorage.update(module.getName(), success ? newState : null);
 
     if (success) {
-      final Timestamps timestamps = context.getTimestamps();
+      final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
 
       for (File file : proguardCfgFiles) {
         timestamps.saveStamp(file, file.lastModified());
@@ -462,7 +462,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
   }
 
   private static boolean areFilesChanged(@NotNull File[] files, @NotNull CompileContext context) throws IOException {
-    final Timestamps timestamps = context.getTimestamps();
+    final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
 
     for (File file : files) {
       if (timestamps.getStamp(file) != file.lastModified()) {

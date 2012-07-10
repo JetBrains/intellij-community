@@ -1,0 +1,10 @@
+MSGID ('msgid')
+WHITE_SPACE (' ')
+STRING ('"
+')
+STRING ('""')
+WHITE_SPACE ('
+')
+STRING ('"
+')
+STRING ('"\n"')

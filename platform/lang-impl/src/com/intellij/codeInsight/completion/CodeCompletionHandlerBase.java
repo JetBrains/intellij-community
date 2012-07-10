@@ -127,6 +127,10 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
+    if (invokedExplicitly) {
+      CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+    }
+
     final Document document = editor.getDocument();
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
       return;

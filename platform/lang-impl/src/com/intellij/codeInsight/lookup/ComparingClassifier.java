@@ -27,7 +27,7 @@ import java.util.*;
  * @author peter
  */
 public abstract class ComparingClassifier<T> extends Classifier<T> {
-  private final Classifier<T> myNext;
+  protected final Classifier<T> myNext;
   protected final String myName;
 
   public ComparingClassifier(Classifier<T> next, String name) {
@@ -66,7 +66,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
 
   @Override
   public void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context) {
-    final TreeMap<Comparable, List<T>> treeMap = groupByWeights(new ArrayList<T>(map.keySet()));
+    final Map<Comparable, List<T>> treeMap = groupByWeights(new ArrayList<T>(map.keySet()));
     if (treeMap.size() > 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       for (Map.Entry<Comparable, List<T>> entry: treeMap.entrySet()){
         for (T t : entry.getValue()) {

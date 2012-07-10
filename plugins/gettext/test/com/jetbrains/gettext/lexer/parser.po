@@ -1,0 +1,2 @@
+msgid "string"
+msgstr "translated"
