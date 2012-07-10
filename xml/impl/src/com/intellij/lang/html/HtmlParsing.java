@@ -362,7 +362,7 @@ public class HtmlParsing {
 
     xmlText = terminateText(xmlText);
 
-    if (isOptionalTagEnd) {
+    if (isOptionalTagEnd || "body".equalsIgnoreCase(tagName) || "html".equalsIgnoreCase(tagName)) {
       if (firstBlockChild != null) {
         tag.doneBefore(XmlElementType.HTML_TAG, firstBlockChild);
       }
