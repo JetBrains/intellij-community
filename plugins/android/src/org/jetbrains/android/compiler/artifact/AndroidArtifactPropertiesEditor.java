@@ -51,7 +51,7 @@ public class AndroidArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JPasswordField myKeyStorePasswordField;
   private JTextField myKeyStorePathField;
   private JPasswordField myKeyPasswordField;
-  private TextFieldWithBrowseButton myKeyAliasField;
+  private TextFieldWithBrowseButton.NoPathCompletion myKeyAliasField;
   private JButton myLoadKeyStoreButton;
   private JButton myCreateKeyStoreButton;
   private JCheckBox myProGuardCheckBox;
