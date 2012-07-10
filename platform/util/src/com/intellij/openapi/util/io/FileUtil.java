@@ -60,7 +60,7 @@ public class FileUtil {
   public static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
   public static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
 
-  private static final boolean USE_FILE_CHANNELS = SystemProperties.getBooleanProperty("idea.fs.useChannels", false);
+  private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
 
   @NotNull
   public static String join(@NotNull final String... parts) {
