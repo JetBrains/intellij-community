@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,33 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeFieldStaticFinalFix;
-import com.siyeh.ig.ui.TextField;
+import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NonStaticFinalLoggerInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public String loggerClassName = "java.util.logging.Logger";
+  @SuppressWarnings("PublicField")
+  public String loggerClassName = "java.util.logging.Logger" + ',' +
+                                  "org.slf4j.Logger" + ',' +
+                                  "org.apache.commons.logging.Log" + ',' +
+                                  "org.apache.log4j.Logger";
+
+  private final List<String> loggerClassNames = new ArrayList();
 
   @Override
   @NotNull
@@ -43,15 +52,13 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.constant.logger.display.name");
+    return InspectionGadgetsBundle.message("non.constant.logger.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.constant.logger.problem.descriptor");
+    return InspectionGadgetsBundle.message("non.constant.logger.problem.descriptor");
   }
 
   @Override
@@ -60,34 +67,23 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
     return MakeFieldStaticFinalFix.buildFixUnconditional(field);
   }
 
+  @Override
+  public void readSettings(Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(loggerClassName, loggerClassNames);
+  }
+
+  @Override
+  public void writeSettings(Element element) throws WriteExternalException {
+    loggerClassName = formatString(loggerClassNames);
+    super.writeSettings(element);
+  }
 
   @Override
   public JComponent createOptionsPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    final JPanel panel = new JPanel(layout);
-
-    final JLabel classNameLabel = new JLabel(
-      InspectionGadgetsBundle.message("logger.name.option"));
-    classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-
-    final TextField loggerClassNameField =
-      new TextField(this, "loggerClassName");
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.ipady = 10;
-    constraints.weighty = 1.0;
-    constraints.anchor = GridBagConstraints.NORTHEAST;
-    panel.add(classNameLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.ipady = 0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.weightx = 1.0;
-    panel.add(loggerClassNameField, constraints);
-
-    return panel;
+    final ListTable table = new ListTable(
+      new ListWrappingTableModel(loggerClassNames, InspectionGadgetsBundle.message("logger.class.name")));
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.logger.class"));
   }
 
   @Override
@@ -99,9 +95,7 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      //no recursion to avoid drilldown
-      if (aClass.isInterface() || aClass.isEnum() ||
-          aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter) {
@@ -115,8 +109,7 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
         if (!isLogger(field)) {
           continue;
         }
-        if (field.hasModifierProperty(PsiModifier.STATIC) &&
-            field.hasModifierProperty(PsiModifier.FINAL)) {
+        if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL)) {
           continue;
         }
         registerFieldError(field, field);
@@ -126,7 +119,7 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
     private boolean isLogger(PsiVariable variable) {
       final PsiType type = variable.getType();
       final String text = type.getCanonicalText();
-      return text.equals(loggerClassName);
+      return loggerClassNames.contains(text);
     }
   }
 }

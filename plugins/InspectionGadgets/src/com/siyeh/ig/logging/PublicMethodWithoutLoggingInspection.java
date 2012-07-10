@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,32 @@
  */
 package com.siyeh.ig.logging;
 
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.refactoring.psi.PropertyUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ui.TextField;
+import com.siyeh.ig.ui.UiUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
-  public String loggerClassName = "java.util.logging.Logger";
+  @SuppressWarnings("PublicField")
+  public String loggerClassName = "java.util.logging.Logger" + ',' +
+                                  "org.slf4j.Logger" + ',' +
+                                  "org.apache.commons.logging.Log" + ',' +
+                                  "org.apache.log4j.Logger";
+
+  private final List<String> loggerClassNames = new ArrayList();
 
   @Override
   @NotNull
@@ -49,32 +58,21 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    final JPanel panel = new JPanel(layout);
+    final ListTable table = new ListTable(
+      new ListWrappingTableModel(loggerClassNames, InspectionGadgetsBundle.message("logger.class.name")));
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.logger.class"));
+  }
 
-    final JLabel classNameLabel = new JLabel(
-      InspectionGadgetsBundle.message("logger.name.option"));
-    classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+  @Override
+  public void readSettings(Element element) throws InvalidDataException {
+    super.readSettings(element);
+    parseString(loggerClassName, loggerClassNames);
+  }
 
-    final TextField loggerClassNameField =
-      new TextField(this, "loggerClassName");
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.ipady = 10;
-    constraints.weighty = 1.0;
-
-    constraints.anchor = GridBagConstraints.NORTHEAST;
-    panel.add(classNameLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.ipady = 0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.weightx = 1.0;
-    panel.add(loggerClassNameField, constraints);
-
-    return panel;
+  @Override
+  public void writeSettings(Element element) throws WriteExternalException {
+    loggerClassName = formatString(loggerClassNames);
+    super.writeSettings(element);
   }
 
   @Override
@@ -100,7 +98,7 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
       if (method.isConstructor()) {
         return;
       }
-      if (PropertyUtil.isSimplePropertyAccessor(method)) {
+      if (PropertyUtils.isSimpleGetter(method) || PropertyUtils.isSimpleSetter(method)) {
         return;
       }
       if (containsLoggingCall(method)) {
@@ -110,28 +108,26 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
     }
 
     private boolean containsLoggingCall(PsiMethod method) {
-      final ContainsLoggingCallVisitor visitor =
-        new ContainsLoggingCallVisitor();
+      final ContainsLoggingCallVisitor visitor = new ContainsLoggingCallVisitor();
       method.accept(visitor);
       return visitor.containsLoggingCall();
     }
   }
 
-  private class ContainsLoggingCallVisitor
-    extends JavaRecursiveElementVisitor {
+  private class ContainsLoggingCallVisitor extends JavaRecursiveElementVisitor {
 
     private boolean containsLoggingCall = false;
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
       if (containsLoggingCall) {
-        super.visitElement(element);
+        return;
       }
+      super.visitElement(element);
     }
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (containsLoggingCall) {
         return;
       }
@@ -144,12 +140,11 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      final String containingClassName =
-        containingClass.getQualifiedName();
+      final String containingClassName = containingClass.getQualifiedName();
       if (containingClassName == null) {
         return;
       }
-      if (containingClassName.equals(loggerClassName)) {
+      if (loggerClassNames.contains(containingClassName)) {
         containsLoggingCall = true;
       }
     }
