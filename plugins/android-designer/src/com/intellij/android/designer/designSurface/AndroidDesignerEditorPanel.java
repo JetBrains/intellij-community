@@ -64,6 +64,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.List;
 
 /**
@@ -168,7 +170,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
     final ModelParser parser = new ModelParser(getProject(), myXmlFile);
 
-    createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
+    createRenderer(parser.getLayoutXmlText(), new MyThrowable(), new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
         RootView rootView = new RootView(mySession.getImage(), 30, 20);
@@ -179,7 +181,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         newRootComponent.setClientProperty(ModelParser.MODULE_KEY, AndroidDesignerEditorPanel.this);
         newRootComponent.setClientProperty(TreeComponentDecorator.KEY, myTreeDecorator);
 
-        PropertyParser propertyParser = new PropertyParser(getModule(), myProfileAction.getProfileManager().getSelectedTarget());
+        PropertyParser propertyParser =
+          new PropertyParser(getModule(), myProfileAction.getProfileManager().getSelectedTarget());
         newRootComponent.setClientProperty(PropertyParser.KEY, propertyParser);
         propertyParser.loadRecursive(newRootComponent);
 
@@ -200,7 +203,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
   }
 
-  private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) {
+  private void createRenderer(final String layoutXmlText, final MyThrowable throwable, final ThrowableRunnable<Throwable> runnable) {
     disposeRenderer();
 
     ApplicationManager.getApplication().saveAll();
@@ -282,7 +285,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
               }
               catch (Throwable e) {
                 myPSIChangeListener.clear();
-                showError("Parsing error", e);
+                showError("Parsing error", throwable.wrap(e));
                 myParseTime = false;
               }
             }
@@ -296,7 +299,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             @Override
             public void run() {
               myPSIChangeListener.clear();
-              showError("Render error", e);
+              showError("Render error", throwable.wrap(e));
               myParseTime = false;
             }
           });
@@ -323,7 +326,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         return ModelParser.NO_ROOT_CONTENT;
       }
     });
-    createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
+    createRenderer(layoutXmlText, new MyThrowable(), new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
         RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
@@ -350,6 +353,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected void configureError(@NotNull ErrorInfo info) {
+    Throwable renderCreator = null;
+    if (info.myThrowable instanceof MyThrowable) {
+      renderCreator = info.myThrowable;
+      info.myThrowable = ((MyThrowable)info.myThrowable).original;
+    }
+
     if (info.myThrowable instanceof AndroidSdkNotConfiguredException) {
       info.myShowLog = false;
       info.myShowStack = false;
@@ -417,6 +426,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     }
     catch (Throwable e) {
       builder.append("<unknown>");
+    }
+
+    if (renderCreator != null) {
+      builder.append("\nCreateRendererStack:\n");
+      ByteArrayOutputStream stream = new ByteArrayOutputStream();
+      renderCreator.printStackTrace(new PrintStream(stream));
+      builder.append(stream.toString());
     }
 
     info.myMessage = builder.toString();
@@ -566,6 +582,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public void loadInspections(ProgressIndicator progress) {
     if (myRootComponent != null) {
       ErrorAnalyzer.load(getProject(), myXmlFile, myRootComponent, progress);
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  private static class MyThrowable extends Throwable {
+    public Throwable original;
+
+    public MyThrowable wrap(Throwable original) {
+      this.original = original;
+      return this;
     }
   }
 }
