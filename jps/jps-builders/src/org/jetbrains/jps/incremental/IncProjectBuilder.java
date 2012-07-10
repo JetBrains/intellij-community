@@ -433,7 +433,7 @@ public class IncProjectBuilder {
                 for (ModuleChunk chunk : groupChunks) {
                   logBuilder.append(chunk.getName()).append("; ");
                 }
-                LOG.info(logBuilder.toString());
+                LOG.debug(logBuilder.toString());
               }
 
               for (final ModuleChunk chunk : groupChunks) {
