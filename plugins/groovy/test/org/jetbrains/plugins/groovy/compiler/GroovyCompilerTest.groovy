@@ -27,9 +27,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.TestLoggerFactory
 import junit.framework.AssertionFailedError
@@ -247,20 +244,8 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
 
   public void testMakeInTests() throws Throwable {
     setupTestSources();
-    myFixture.project.messageBus.connect(testRootDisposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      void before(List<? extends VFileEvent> events) {
-      }
-
-      @Override
-      void after(List<? extends VFileEvent> events) {
-        println ("" + Thread.currentThread() + " " + events)
-      }
-    })
     myFixture.addFileToProject("tests/Super.groovy", "class Super {}");
     assertEmpty(make());
-
-    println 'after first make ' + Thread.currentThread()
 
     def sub = myFixture.addFileToProject("tests/Sub.groovy", "class Sub {\n" +
       "  Super xxx() {}\n" +
@@ -270,7 +255,6 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
       "}");
 
     def javaFile = myFixture.addFileToProject("tests/Java.java", "public class Java {}");
-    edt { println 'before second make' }
 
     assertEmpty(make());
     assertOutput("Sub", "hello");
@@ -646,10 +630,10 @@ class Main {
       assert !findClassFile('FooX', dep)
     }
 
-    println make().join('\n')
+    assertEmpty(make())
     checkClassFiles()
 
-    println make().join('\n')
+    assertEmpty(make())
     checkClassFiles()
 
     assertOutput('Foo', 'Hello from Foo', myModule)
