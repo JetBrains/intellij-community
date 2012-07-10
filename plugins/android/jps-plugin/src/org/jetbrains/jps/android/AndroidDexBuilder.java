@@ -410,9 +410,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     final AndroidFileSetState newState = new AndroidFileSetState(externalJars, AndroidJpsUtil.CLASSES_AND_JARS_FILTER, true);
 
     if (context.isMake()) {
-      final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
       final AndroidFileSetState oldState = proguardStateStorage.getState(module.getName());
-      if (timestamps.getStamp(proguardCfgFile) == proguardCfgFile.lastModified() && newState.equalsTo(oldState)) {
 
       if (!areFilesChanged(proguardCfgFiles, context) && newState.equalsTo(oldState)) {
         final Set<String> dirtyOutputDirs = context.getUserData(DIRTY_OUTPUT_DIRS);
