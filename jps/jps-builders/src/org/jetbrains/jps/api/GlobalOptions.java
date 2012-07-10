@@ -12,4 +12,5 @@ public interface GlobalOptions {
   String GENERATE_CLASSPATH_INDEX_OPTION = "generate.classpath.index";
   String MAX_SIMULTANEOUS_BUILDS_OPTION = "max.simultaneous.builds";
   String COMPILE_PARALLEL_OPTION = "compile.parallel";
+  String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";
 }
