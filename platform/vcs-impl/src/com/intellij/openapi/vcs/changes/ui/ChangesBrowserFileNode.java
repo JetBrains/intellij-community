@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -30,19 +31,20 @@ import com.intellij.util.PlatformIcons;
 public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> {
   private final Project myProject;
 
-  public ChangesBrowserFileNode(Project project, VirtualFile userObject) {
+  public ChangesBrowserFileNode(Project project, @NotNull VirtualFile userObject) {
     super(userObject);
     myProject = project;
-    if (!userObject.isDirectory()) {
-      myCount = 1;
-    } else {
+    if (userObject.isDirectory()) {
       myDirectoryCount = 1;
+    }
+    else {
+      myCount = 1;
     }
   }
 
   @Override
   protected boolean isDirectory() {
-    return (getUserObject()).isDirectory() &&
+    return getUserObject().isDirectory() &&
            FileStatusManager.getInstance(myProject).getStatus(getUserObject()) != FileStatus.NOT_CHANGED;
   }
 
