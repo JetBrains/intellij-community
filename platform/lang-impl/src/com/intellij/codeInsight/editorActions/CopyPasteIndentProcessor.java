@@ -156,9 +156,9 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
         for (String s : split) {
           currentIndent = s.length() - s.trim().length();
           if (split[0].equals(s) ) {
-            firstIndent = currentIndent;
             if (currentIndent == 0)
               currentIndent = textBeforeFirstLine.length();
+            firstIndent = currentIndent;
           }
           if (!StringUtil.isEmptyOrSpaces(s) && firstIndent > currentIndent)
             return;
