@@ -415,13 +415,18 @@ public class IncProjectBuilder {
       for (ChunkGroup group : chunkGroups) {
         final List<ModuleChunk> groupChunks = group.getChunks();
         final int chunkCount = groupChunks.size();
+        if (chunkCount == 0) {
+          continue;
+        }
         if (chunkCount == 1) {
           _buildChunk(createContextWrapper(context), scope, groupChunks.iterator().next());
         }
         else {
           final CountDownLatch latch = new CountDownLatch(chunkCount);
           final Ref<Throwable> exRef = new Ref<Throwable>(null);
+          final StringBuilder logBuilder = new StringBuilder("Building chunks in parallel: ");
           for (final ModuleChunk chunk : groupChunks) {
+            logBuilder.append(chunk.getName()).append("; ");
             final CompileContext chunkLocalContext = createContextWrapper(context);
             SharedThreadPool.INSTANCE.submitBuildTask(new Runnable() {
               @Override
@@ -434,10 +439,8 @@ public class IncProjectBuilder {
                     if (exRef.isNull()) {
                       exRef.set(e);
                     }
-                    else {
-                      LOG.info(exRef.get());
-                    }
                   }
+                  LOG.info(e);
                 }
                 finally {
                   latch.countDown();
@@ -445,6 +448,7 @@ public class IncProjectBuilder {
               }
             });
           }
+          LOG.info(logBuilder.toString());
 
           try {
             latch.await();
