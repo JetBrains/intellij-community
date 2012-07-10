@@ -80,13 +80,18 @@ import java.util.Collections;
 import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
-  private final TextAttributes ourReferenceAttributes;
-  private HighlightersSet myHighlighter;
-  @JdkConstants.InputEventMask private int myStoredModifiers = 0;
-  private TooltipProvider myTooltipProvider = null;
+
+  private static final int ourQuickDocRowsNumber         = getIntProperty("quick.doc.desired.rows.number", 2);
+  private static final int ourQuickDocSymbolsInRowNumber = getIntProperty("quick.doc.desired.symbols.in.row.number", 80);
+
+  private final TextAttributes  ourReferenceAttributes;
+  private       HighlightersSet myHighlighter;
+  @JdkConstants.InputEventMask private int             myStoredModifiers = 0;
+  private                              TooltipProvider myTooltipProvider = null;
   private final FileEditorManager myFileEditorManager;
 
   private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
+
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyPressed(final KeyEvent e) {
       handleKey(e);
@@ -204,6 +209,20 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return "CtrlMouseHandler";
   }
 
+  private static int getIntProperty(@NotNull String propertyName, int defaultValue) {
+    String valueAsString = System.getProperty(propertyName);
+    if (valueAsString == null) {
+      return defaultValue;
+    }
+
+    try {
+      return Integer.parseInt(valueAsString);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
   private static BrowseMode getBrowseMode(@JdkConstants.InputEventMask int modifiers) {
     if (modifiers != 0) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
@@ -228,6 +247,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return false;
   }
 
+  @Nullable
   @TestOnly
   public static String getInfo(PsiElement element, PsiElement atPointer) {
     return generateInfo(element, atPointer);
@@ -236,7 +256,20 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   @Nullable
   private static String generateInfo(PsiElement element, PsiElement atPointer) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
+    String result = doGenerateInfo(element, atPointer, documentationProvider);
+    if (result != null) {
+      String fullText = documentationProvider.generateDoc(element, atPointer);
+      String qName = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
+      return DocPreviewUtil.buildPreview(result, qName, fullText, ourQuickDocRowsNumber, ourQuickDocSymbolsInRowNumber);
+    }
+    return result;
+  }
 
+  @Nullable
+  private static String doGenerateInfo(@NotNull PsiElement element,
+                                       @NotNull PsiElement atPointer,
+                                       @NotNull DocumentationProvider documentationProvider)
+  {
     String info = documentationProvider.getQuickNavigateInfo(element, atPointer);
     if (info != null) {
       return info;
