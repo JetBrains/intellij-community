@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.psi.ForceableComparable;
+import com.intellij.util.ProcessingContext;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,8 @@ import java.util.Map;
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
   private final Map<LookupElement, Comparable> myWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
   private final LookupElementWeigher myWeigher;
+  private Comparable myFirstWeight;
+  private boolean myPrimitive = true;
 
   public CachingComparingClassifier(Classifier<LookupElement> next, LookupElementWeigher weigher) {
     super(next, weigher.toString());
@@ -45,10 +48,26 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
   }
 
   @Override
+  public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
+    if (myPrimitive) {
+      return myNext.classify(source, context);
+    }
+
+    return super.classify(source, context);
+  }
+
+  @Override
   public void addElement(LookupElement t) {
     Comparable weight = myWeigher.weigh(t);
     if (weight instanceof ForceableComparable) {
       ((ForceableComparable)weight).force();
+    }
+    if (myPrimitive) {
+      if (myFirstWeight == null) {
+        myFirstWeight = weight;
+      } else if (!myFirstWeight.equals(weight)) {
+        myPrimitive = false;
+      }
     }
     myWeights.put(t, weight);
     super.addElement(t);
