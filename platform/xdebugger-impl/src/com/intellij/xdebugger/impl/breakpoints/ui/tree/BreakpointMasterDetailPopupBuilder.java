@@ -114,7 +114,9 @@ public class BreakpointMasterDetailPopupBuilder {
 
   public JBPopup createPopup() {
     myPopupBuilder = new MasterDetailPopupBuilder(myProject);
-    myPopupBuilder.setDimensionServiceKey(getClass().getName());
+    if (!myPlainView) {
+      myPopupBuilder.setDimensionServiceKey(getClass().getName());
+    }
     myPopupBuilder.setCancelOnWindowDeactivation(false);
 
     if (myDetailView != null) {
