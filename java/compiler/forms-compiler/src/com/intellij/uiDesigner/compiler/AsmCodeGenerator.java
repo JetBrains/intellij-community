@@ -29,10 +29,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -51,7 +48,7 @@ public class AsmCodeGenerator {
 
   private static final Map myContainerLayoutCodeGenerators = new HashMap();
   private static final Map myComponentLayoutCodeGenerators = new HashMap();
-  private static final Map myPropertyCodeGenerators = new HashMap();
+  private static final Map myPropertyCodeGenerators = new LinkedHashMap();  // need LinkedHashMap for deterministic iteration
   public static final String SETUP_METHOD_NAME = "$$$setupUI$$$";
   public static final String GET_ROOT_COMPONENT_METHOD_NAME = "$$$getRootComponent$$$";
   public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";

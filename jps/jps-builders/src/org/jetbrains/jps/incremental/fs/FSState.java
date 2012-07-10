@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.fs;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 
 import java.io.DataInput;
@@ -54,12 +55,6 @@ public class FSState {
     myDeltas.clear();
   }
 
-  public Set<String> getInitializedModules() {
-    final HashSet<String> result = new HashSet<String>(myInitialProductionScanPerformed);
-    result.retainAll(myInitialTestsScanPerformed);
-    return result;
-  }
-
   public void init(String moduleName, final Collection<String> deleteProduction, final Collection<String> deletedTests, final Map<File, Set<File>> recompileProduction, final Map<File, Set<File>> recompileTests) {
     getDelta(moduleName).init(deleteProduction, deletedTests, recompileProduction, recompileTests);
     myInitialTestsScanPerformed.add(moduleName);
@@ -70,19 +65,22 @@ public class FSState {
     getDelta(rd.module).clearRecompile(rd.root, rd.isTestRoot);
   }
 
-  public boolean markDirty(final File file, final RootDescriptor rd, final @Nullable Timestamps marker) throws IOException {
+  public boolean markDirty(@Nullable CompileContext context, final File file, final RootDescriptor rd, final @Nullable Timestamps tsStorage) throws IOException {
     final FilesDelta mainDelta = getDelta(rd.module);
     final boolean marked = mainDelta.markRecompile(rd.root, rd.isTestRoot, file);
-    if (marked && marker != null) {
-      marker.removeStamp(file);
+    if (marked && tsStorage != null) {
+      tsStorage.removeStamp(file);
     }
     return marked;
   }
 
-  public boolean markDirtyIfNotDeleted(final File file, final RootDescriptor rd, final @Nullable Timestamps marker) throws IOException {
+  public boolean markDirtyIfNotDeleted(@Nullable CompileContext context,
+                                       final File file,
+                                       final RootDescriptor rd,
+                                       final @Nullable Timestamps tsStorage) throws IOException {
     final boolean marked = getDelta(rd.module).markRecompileIfNotDeleted(rd.root, rd.isTestRoot, file);
-    if (marked && marker != null) {
-      marker.removeStamp(file);
+    if (marked && tsStorage != null) {
+      tsStorage.removeStamp(file);
     }
     return marked;
   }
@@ -94,16 +92,8 @@ public class FSState {
     }
   }
 
-  public Map<File, Set<File>> getSourcesToRecompile(final String moduleName, boolean forTests) {
+  public Map<File, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, final String moduleName, boolean forTests) {
     return getDelta(moduleName).getSourcesToRecompile(forTests);
-  }
-
-  public Collection<String> getDeletedPaths(final String moduleName, final boolean isTest) {
-    final FilesDelta delta = myDeltas.get(moduleName);
-    if (delta == null) {
-      return Collections.emptyList();
-    }
-    return delta.getDeletedPaths(isTest);
   }
 
   public void clearDeletedPaths(final String moduleName, final boolean forTests) {

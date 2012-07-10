@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,11 +17,14 @@ import java.util.*;
  *         Date: 1/11/12
  */
 public class ModuleRootsIndex {
-  private final Map<File, RootDescriptor> myRootToModuleMap = new HashMap<File, RootDescriptor>();
+  private final Map<File, RootDescriptor> myRootToDescriptorMap = new HashMap<File, RootDescriptor>();
   private final Map<Module, List<RootDescriptor>> myModuleToRootsMap = new HashMap<Module, List<RootDescriptor>>();
   private final Map<String, Module> myNameToModuleMap = new HashMap<String, Module>();
   private final int myTotalModuleCount;
   private final Set<File> myExcludedRoots = new HashSet<File>();
+
+  private static final Key<Map<File, RootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
+  private static final Key<Map<Module, List<RootDescriptor>>> MODULE_ROOT_MAP = Key.create("_module_to_root_map");
 
   public ModuleRootsIndex(Project project) {
     final Collection<Module> allModules = project.getModules().values();
@@ -42,13 +46,13 @@ public class ModuleRootsIndex {
       for (String r : module.getSourceRoots()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
         final RootDescriptor descriptor = new RootDescriptor(moduleName, root, false, generatedRoots.contains(r), false);
-        myRootToModuleMap.put(root, descriptor);
+        myRootToDescriptorMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
       for (String r : module.getTestRoots()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
         final RootDescriptor descriptor = new RootDescriptor(moduleName, root, true, generatedRoots.contains(r), false);
-        myRootToModuleMap.put(root, descriptor);
+        myRootToDescriptorMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
       for (String r : module.getOwnExcludes()) {
@@ -68,55 +72,105 @@ public class ModuleRootsIndex {
   }
 
   @NotNull
-  public List<RootDescriptor> getModuleRoots(Module module) {
-    final List<RootDescriptor> descriptors = myModuleToRootsMap.get(module);
+  public List<RootDescriptor> getModuleRoots(@Nullable CompileContext context, String moduleName) {
+    final Module module = getModuleByName(moduleName);
+    if (module == null) {
+      return Collections.emptyList();
+    }
+    return getModuleRoots(context, module);
+  }
+
+  @NotNull
+  public List<RootDescriptor> getModuleRoots(@Nullable CompileContext context, Module module) {
+    List<RootDescriptor> descriptors = myModuleToRootsMap.get(module);
+    if (context != null) {
+      final Map<Module, List<RootDescriptor>> contextMap = MODULE_ROOT_MAP.get(context);
+      if (contextMap != null) {
+        final List<RootDescriptor> tempDescriptors = contextMap.get(module);
+        if (tempDescriptors != null) {
+          if (descriptors != null) {
+            descriptors = new ArrayList<RootDescriptor>(descriptors);
+            descriptors.addAll(tempDescriptors);
+          }
+          else {
+            descriptors = tempDescriptors;
+          }
+        }
+      }
+    }
     return descriptors != null? Collections.unmodifiableList(descriptors) : Collections.<RootDescriptor>emptyList();
   }
 
   @Nullable
-  public RootDescriptor getRootDescriptor(File root) {
-    return myRootToModuleMap.get(root);
+  public RootDescriptor getRootDescriptor(@Nullable CompileContext context, File root) {
+    final RootDescriptor descriptor = myRootToDescriptorMap.get(root);
+    if (descriptor != null) {
+      return descriptor;
+    }
+    if (context != null) {
+      final Map<File, RootDescriptor> contextMap = ROOT_DESCRIPTOR_MAP.get(context);
+      if (contextMap != null) {
+        return contextMap.get(root);
+      }
+    }
+    return null;
   }
 
   @NotNull
-  public RootDescriptor associateRoot(File root, Module module, boolean isTestRoot, final boolean isForGeneratedSources, final boolean isTemp) {
-    final RootDescriptor d = myRootToModuleMap.get(root);
+  public RootDescriptor associateRoot(@NotNull CompileContext context, File root, Module module, boolean isTestRoot, final boolean isForGeneratedSources, final boolean isTemp) {
+    Map<File, RootDescriptor> rootToDescriptorMap;
+    Map<Module, List<RootDescriptor>> moduleToRootMap;
+    if (isTemp) {
+      rootToDescriptorMap = ROOT_DESCRIPTOR_MAP.get(context);
+      if (rootToDescriptorMap == null) {
+        rootToDescriptorMap = new HashMap<File, RootDescriptor>();
+        ROOT_DESCRIPTOR_MAP.set(context, rootToDescriptorMap);
+      }
+
+      moduleToRootMap = MODULE_ROOT_MAP.get(context);
+      if (moduleToRootMap == null) {
+        moduleToRootMap = new HashMap<Module, List<RootDescriptor>>();
+        MODULE_ROOT_MAP.set(context, moduleToRootMap);
+      }
+    }
+    else {
+      rootToDescriptorMap = myRootToDescriptorMap;
+      moduleToRootMap = myModuleToRootsMap;
+    }
+
+    final RootDescriptor d = rootToDescriptorMap.get(root);
     if (d != null) {
       return d;
     }
-    List<RootDescriptor> moduleRoots = myModuleToRootsMap.get(module);
+
+    List<RootDescriptor> moduleRoots = moduleToRootMap.get(module);
     if (moduleRoots == null) {
       moduleRoots = new ArrayList<RootDescriptor>();
-      myModuleToRootsMap.put(module, moduleRoots);
+      moduleToRootMap.put(module, moduleRoots);
     }
     final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, isTestRoot, isForGeneratedSources, isTemp);
-    myRootToModuleMap.put(root, descriptor);
+    rootToDescriptorMap.put(root, descriptor);
     moduleRoots.add(descriptor);
     return descriptor;
   }
 
   @NotNull
-  public Collection<RootDescriptor> clearTempRoots() {
-    final Set<RootDescriptor> toRemove = new HashSet<RootDescriptor>();
-    for (Iterator<Map.Entry<File, RootDescriptor>> iterator = myRootToModuleMap.entrySet().iterator(); iterator.hasNext(); ) {
-      Map.Entry<File, RootDescriptor> entry = iterator.next();
-      final RootDescriptor rd = entry.getValue();
-      if (rd.isTemp) {
-        toRemove.add(rd);
-        iterator.remove();
-      }
+  public Collection<RootDescriptor> clearTempRoots(@NotNull CompileContext context) {
+    try {
+      final Map<File, RootDescriptor> map = ROOT_DESCRIPTOR_MAP.get(context);
+      return map != null? map.values() : Collections.<RootDescriptor>emptyList();
     }
-    for (Map.Entry<Module, List<RootDescriptor>> entry : myModuleToRootsMap.entrySet()) {
-      entry.getValue().removeAll(toRemove);
+    finally {
+      MODULE_ROOT_MAP.set(context, null);
+      ROOT_DESCRIPTOR_MAP.set(context, null);
     }
-    return toRemove;
   }
 
   @Nullable
-  public RootDescriptor getModuleAndRoot(File file) {
+  public RootDescriptor getModuleAndRoot(@Nullable CompileContext context, File file) {
     File current = file;
     while (current != null) {
-      final RootDescriptor descriptor = getRootDescriptor(current);
+      final RootDescriptor descriptor = getRootDescriptor(context, current);
       if (descriptor != null) {
         return descriptor;
       }

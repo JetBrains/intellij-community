@@ -100,7 +100,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     final Map<File, Module> idlFilesToCompile = new HashMap<File, Module>();
     final Map<File, Module> rsFilesToCompile = new HashMap<File, Module>();
 
-    context.processFilesToRecompile(chunk, new FileProcessor() {
+    FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
       @Override
       public boolean apply(Module module, File file, String sourceRoot) throws IOException {
         final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
@@ -150,7 +150,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       success = false;
     }
 
-    final File dataStorageRoot = context.getDataManager().getDataStorageRoot();
+    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
 
     final AndroidAptStateStorage aptStorage = new AndroidAptStateStorage(dataStorageRoot);
     try {
@@ -414,9 +414,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           success = false;
         }
         else {
-          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(module.getName(), false);
+          final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), false);
           sourceToOutputMap.update(filePath, outputFilePath);
-          context.markDirty(outputFile);
+          FSOperations.markDirty(context, outputFile);
         }
       }
       catch (final IOException e) {
@@ -496,11 +496,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           }
           final List<String> newFilePaths = Arrays.asList(AndroidJpsUtil.toPaths(newFiles.toArray(new File[newFiles.size()])));
 
-          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(module.getName(), false);
+          final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), false);
           sourceToOutputMap.update(filePath, newFilePaths);
 
           for (File newFile : newFiles) {
-            context.markDirty(newFile);
+            FSOperations.markDirty(context, newFile);
           }
         }
       }
@@ -690,7 +690,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
 
       for (File file : filesToDelete) {
-        context.markDeleted(file);
+        FSOperations.markDeleted(context, file);
       }
     }
     return true;
@@ -706,7 +706,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       public boolean process(File file) {
         if (file.isFile() && "java".equals(FileUtil.getExtension(file.getName()))) {
           try {
-            context.markDirty(file);
+            FSOperations.markDirty(context, file);
           }
           catch (IOException e) {
             AndroidJpsUtil.reportExceptionError(context, null, e, compilerName);
@@ -892,7 +892,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   @Nullable
   private static String getDependencyFolder(@NotNull CompileContext context, @NotNull File sourceFile, @NotNull File genFolder) {
-    final RootDescriptor descriptor = context.getRootsIndex().getModuleAndRoot(sourceFile);
+    final RootDescriptor descriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, sourceFile);
     if (descriptor == null) {
       return null;
     }
@@ -962,7 +962,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   @Nullable
   private static String computePackageForFile(@NotNull CompileContext context, @NotNull File file) throws IOException {
-    final RootDescriptor descriptor = context.getRootsIndex().getModuleAndRoot(file);
+    final RootDescriptor descriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
     if (descriptor == null) {
       return null;
     }

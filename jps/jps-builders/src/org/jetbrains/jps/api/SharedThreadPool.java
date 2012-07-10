@@ -10,7 +10,9 @@ import java.util.concurrent.Future;
  *         Date: 3/29/12
  */
 public class SharedThreadPool implements Executor {
+  private static final int MAX_BUILDER_THREADS = 4;
   private static final ExecutorService ourService = Executors.newCachedThreadPool();
+  private static final ExecutorService ourBuilderPool = Executors.newFixedThreadPool(Math.min(MAX_BUILDER_THREADS, Math.max(2, Runtime.getRuntime().availableProcessors())));
 
   public static final SharedThreadPool INSTANCE = new SharedThreadPool();
   private SharedThreadPool() {
@@ -18,7 +20,16 @@ public class SharedThreadPool implements Executor {
 
   /** @noinspection MethodMayBeStatic*/
   public Future<?> submit(final Runnable task) {
-    return ourService.submit(new Runnable() {
+    return _submit(task, ourService);
+  }
+
+  /** @noinspection MethodMayBeStatic*/
+  public Future<?> submitBuildTask(final Runnable task) {
+    return _submit(task, ourBuilderPool);
+  }
+
+  private static Future<?> _submit(final Runnable task, final ExecutorService service) {
+    return service.submit(new Runnable() {
       public void run() {
         try {
           task.run();

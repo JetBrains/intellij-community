@@ -228,10 +228,8 @@ final class BuildSession implements Runnable, CanceledStatus {
           buildType = BuildType.PROJECT_REBUILD;
         }
 
-        final Timestamps timestamps = pd.timestamps.getStorage();
-
-        final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
-        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs, myConstantSearch);
+        final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
+        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs, myConstantSearch);
         builder.addMessageHandler(msgHandler);
         try {
           switch (buildType) {
@@ -327,7 +325,7 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       for (String deleted : event.getDeletedPathsList()) {
         final File file = new File(deleted);
-        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
         if (rd != null) {
           if (Utils.IS_TEST_MODE) {
             LOG.info("Applying deleted path from fs event: " + file.getPath());
@@ -342,12 +340,12 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       for (String changed : event.getChangedPathsList()) {
         final File file = new File(changed);
-        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+        final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
         if (rd != null) {
           if (Utils.IS_TEST_MODE) {
             LOG.info("Applying dirty path from fs event: " + file.getPath());
           }
-          pd.fsState.markDirty(file, rd, timestamps);
+          pd.fsState.markDirty(null, file, rd, timestamps);
         }
         else {
           if (Utils.IS_TEST_MODE) {
@@ -569,9 +567,10 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private static CompileScope createCompilationScope(BuildType buildType,
                                                      ProjectDescriptor pd,
-                                                     final Timestamps timestamps, Set<String> modules,
+                                                     Set<String> modules,
                                                      Collection<String> artifactNames,
                                                      Collection<String> paths) throws Exception {
+    final Timestamps timestamps = pd.timestamps.getStorage();
     Set<Artifact> artifacts = new HashSet<Artifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
       artifacts.addAll(pd.project.getArtifacts().values());
@@ -609,7 +608,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         filesToCompile = new HashMap<String, Set<File>>();
         for (String path : paths) {
           final File file = new File(path);
-          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
           if (rd != null) {
             Set<File> files = filesToCompile.get(rd.module);
             if (files == null) {
@@ -618,7 +617,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             }
             files.add(file);
             if (buildType == BuildType.FORCED_COMPILATION) {
-              pd.fsState.markDirty(file, rd, timestamps);
+              pd.fsState.markDirty(null, file, rd, timestamps);
             }
           }
         }

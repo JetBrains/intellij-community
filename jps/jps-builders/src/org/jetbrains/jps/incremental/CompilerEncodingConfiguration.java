@@ -41,7 +41,7 @@ public class CompilerEncodingConfiguration {
       File file = new File(FileUtil.toSystemDependentName(filePath));
       if (charset == null || (!file.isDirectory() && !shouldHonorEncodingForCompilation(builders, file))) continue;
 
-      final RootDescriptor rootDescriptor = myRootsIndex.getModuleAndRoot(file);
+      final RootDescriptor rootDescriptor = myRootsIndex.getModuleAndRoot(null, file);
       if (rootDescriptor == null) continue;
 
       final String module = rootDescriptor.module;

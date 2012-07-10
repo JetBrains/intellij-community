@@ -18,14 +18,14 @@ import java.util.*;
 *         Date: 2/16/12
 */
 class OutputFilesSink implements OutputFileConsumer {
-  private final CompileContext myContext;
+  private final CompileContext myContextI;
   private final Set<File> mySuccessfullyCompiled = new LinkedHashSet<File>();
   private final Set<File> myProblematic = new HashSet<File>();
   private final List<OutputFileObject> myFileObjects = new ArrayList<OutputFileObject>();
   private final Map<String, OutputFileObject> myCompiledClasses = new HashMap<String, OutputFileObject>();
 
   public OutputFilesSink(CompileContext context) {
-    myContext = context;
+    myContextI = context;
   }
 
   public void save(final @NotNull OutputFileObject fileObject) {
@@ -70,12 +70,12 @@ class OutputFilesSink implements OutputFileConsumer {
               }
             }
             catch (IOException e) {
-              myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+              myContextI.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
             }
           }
         }
         finally {
-          myContext.processMessage(event);
+          myContextI.processMessage(event);
         }
       }
     }
@@ -117,7 +117,7 @@ class OutputFilesSink implements OutputFileConsumer {
       mySuccessfullyCompiled.add(source);
       final String className = fileObject.getClassName();
       if (className != null) {
-        myContext.processMessage(new ProgressMessage("Compiled " + className));
+        myContextI.processMessage(new ProgressMessage("Compiled " + className));
       }
     }
   }

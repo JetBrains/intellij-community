@@ -11,9 +11,9 @@ public abstract class Builder {
 
   public abstract String getDescription();
 
-  public void buildStarted(CompileContext compileContext) {
+  public void buildStarted(CompileContext context) {
   }
 
-  public void buildFinished(CompileContext compileContext) {
+  public void buildFinished(CompileContext ICompileContext) {
   }
 }

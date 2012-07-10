@@ -145,7 +145,7 @@ class AndroidJpsUtil {
   @NotNull
   public static File getDirectoryForIntermediateArtifacts(@NotNull CompileContext context,
                                                           @NotNull Module module) {
-    final File androidStorage = new File(context.getDataManager().getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    final File androidStorage = new File(context.getProjectDescriptor().dataManager.getDataStorageRoot(), ANDROID_STORAGE_DIR);
     return new File(new File(androidStorage, INTERMEDIATE_ARTIFACTS_STORAGE), module.getName());
   }
 
@@ -490,7 +490,7 @@ class AndroidJpsUtil {
 
   @NotNull
   public static File getResourcesCacheDir(@NotNull CompileContext context, @NotNull Module module) {
-    final File androidStorage = new File(context.getDataManager().getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    final File androidStorage = new File(context.getProjectDescriptor().dataManager.getDataStorageRoot(), ANDROID_STORAGE_DIR);
     return new File(new File(androidStorage, RESOURCE_CACHE_STORAGE), module.getName());
   }
 

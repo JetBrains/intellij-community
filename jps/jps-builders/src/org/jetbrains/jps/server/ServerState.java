@@ -82,9 +82,9 @@ class ServerState {
 
   public void notifyFileChanged(ProjectDescriptor pd, File file) {
     try {
-      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+      final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
       if (rd != null) {
-        pd.fsState.markDirty(file, rd, pd.timestamps.getStorage());
+        pd.fsState.markDirty(null, file, rd, pd.timestamps.getStorage());
       }
     }
     catch (Exception e) {
@@ -94,7 +94,7 @@ class ServerState {
 
   public void notifyFileDeleted(final ProjectDescriptor pd, File file) {
     try {
-      final RootDescriptor moduleAndRoot = pd.rootsIndex.getModuleAndRoot(file);
+      final RootDescriptor moduleAndRoot = pd.rootsIndex.getModuleAndRoot(null, file);
       if (moduleAndRoot != null) {
         pd.fsState.registerDeleted(moduleAndRoot.module, file, moduleAndRoot.isTestRoot, pd.timestamps.getStorage());
       }
@@ -181,7 +181,7 @@ class ServerState {
 
         final Timestamps timestamps = pd.timestamps.getStorage();
         final CompileScope compileScope = createCompilationScope(buildType, pd, timestamps, modules, artifacts, paths);
-        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), timestamps, builderParams, cs, null);
+        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs, null);
         builder.addMessageHandler(msgHandler);
         try {
           switch (buildType) {
@@ -264,7 +264,7 @@ class ServerState {
         filesToCompile = new HashMap<String, Set<File>>();
         for (String path : paths) {
           final File file = new File(path);
-          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(file);
+          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
           if (rd != null) {
             Set<File> files = filesToCompile.get(rd.module);
             if (files == null) {
@@ -273,7 +273,7 @@ class ServerState {
             }
             files.add(file);
             if (buildType == BuildType.FORCED_COMPILATION) {
-              pd.fsState.markDirty(file, rd, timestamps);
+              pd.fsState.markDirty(null, file, rd, timestamps);
             }
           }
         }
