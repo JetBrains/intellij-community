@@ -1,0 +1,8 @@
+# test
+#. another
+#: ref
+#| msgid test
+msgid_plural ""
+msgid "new string to translate"
+msgstr[0] "translated string"
+msgstr[01] "translated string"

@@ -1,0 +1,32 @@
+<idea-plugin version="2">
+  <name>GetText</name>
+  <id>com.jetbrains.gettext</id>
+
+  <description>GNU GetText language support</description>
+
+  <version>1.0</version>
+  <idea-version since-build="107.105"/>
+
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <depends>com.intellij.modules.lang</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="com.jetbrains.gettext.GetTextFileTypeFactory"/>
+    <syntaxHighlighter key="GetText" implementationClass="com.jetbrains.gettext.highlighter.GetTextSyntaxHighlighter"/>
+    <!--<colorSettingsPage implementation="com.jetbrains.typoscript.lang.highlighter.TypoScriptColorsAndFontsPage"/>-->
+
+    <lang.parserDefinition language="GetText" implementationClass="com.jetbrains.gettext.parser.GetTextParserDefinition"/>
+    <!--<lang.braceMatcher language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptBraceMatcher"/>-->
+
+    <!--<lang.foldingBuilder language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptFoldingBuilder"/>-->
+
+    <!--<lang.psiStructureViewFactory language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptStructureViewFactory"/>-->
+
+
+    <!--<lang.fileViewProviderFactory language="GetText"-->
+                                  <!--implementationClass="com.jetbrains.gettext.GetTextFileViewProviderFactory"/>-->
+    <!--<completion.contributor language="GetText" implementationClass="com.jetbrains.gettext.completion.GetTextCompletitionContributor"/>-->
+
+
+  </extensions>
+</idea-plugin>

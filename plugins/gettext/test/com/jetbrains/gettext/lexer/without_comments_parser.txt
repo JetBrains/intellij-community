@@ -1,0 +1,29 @@
+GNU GetText File
+  MSG_BLOCK
+    HEADER
+      <empty list>
+    MSG_CONTENT
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"str-to-translate"')
+      PsiWhiteSpace('\n')
+      MSGSTR
+        PsiElement(MSGSTR)('msgstr')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"translated str"')
+  PsiWhiteSpace('\n')
+  MSG_BLOCK
+    HEADER
+      <empty list>
+    MSG_CONTENT
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"one more"')
+      PsiWhiteSpace('\n')
+      MSGSTR
+        PsiElement(MSGSTR)('msgstr')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"one more translated str"')
+  PsiWhiteSpace('\n')
