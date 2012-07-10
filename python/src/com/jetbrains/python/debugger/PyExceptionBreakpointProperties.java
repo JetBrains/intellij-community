@@ -35,6 +35,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   public void loadState(final PyExceptionBreakpointProperties state) {
     myException = state.myException;
     myNotifyAlways = state.myNotifyAlways;
+    myNotifyOnlyOnFirst = state.myNotifyOnlyOnFirst;
     myNotifyOnTerminate = state.myNotifyOnTerminate;
   }
 
