@@ -27,6 +27,8 @@ import javax.swing.event.HyperlinkListener;
 
 public abstract class ToolWindowManager {
 
+  public abstract boolean canShowNotification(@NotNull String toolWindowId);
+
   public static ToolWindowManager getInstance(Project project){
     return project.getComponent(ToolWindowManager.class);
   }

@@ -1289,6 +1289,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
+  public boolean canShowNotification(@NotNull final String toolWindowId) {
+    if (!Arrays.asList(getToolWindowIds()).contains(toolWindowId)) {
+      return false;
+    }
+    final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
+    return stripe.getButtonFor(toolWindowId) != null;
+
+  }
+
+  @Override
   public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
     notifyByBalloon(toolWindowId, type, htmlBody, null, null);
   }

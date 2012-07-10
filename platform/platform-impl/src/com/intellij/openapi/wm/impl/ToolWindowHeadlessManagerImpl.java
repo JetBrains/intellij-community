@@ -56,6 +56,10 @@ import java.util.List;
 
 @SuppressWarnings({"ConstantConditions"})
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
+  @Override
+  public boolean canShowNotification(@NotNull String toolWindowId) {
+    return false;
+  }
 
   @Override
   public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
