@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * @author yole
@@ -59,17 +59,30 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                                                        final Condition<T> condition) {
     final Project project = targetFile.getProject();
     final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
-    final Collection<String> allNames = StubIndex.getInstance().getAllKeys(key, project);
-    for (final String elementName : allNames) {
-      if (resultSet.getPrefixMatcher().prefixMatches(elementName)) {
-        final Collection<T> elements = StubIndex.getInstance().get(key, elementName, project, scope);
-        for (T element : elements) {
-          if (condition.value(element)) {
-            resultSet.addElement(LookupElementBuilder.create(element)
-                                   .withIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED))
-                                   .withTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
-                                   .withInsertHandler(insertHandler));
-          }
+
+    Collection<String> keys = StubIndex.getInstance().getAllKeys(key, project);
+    final List<String> allNames = new ArrayList<String>();
+    for (String s : keys) {
+      if (resultSet.getPrefixMatcher().prefixMatches(s)) {
+        allNames.add(s);
+      }
+    }
+    Collections.sort(allNames);
+
+    final LinkedHashSet<String> matchingNames = new LinkedHashSet<String>();
+    for (String name : allNames) {
+      if (resultSet.getPrefixMatcher().isStartMatch(name)) {
+        matchingNames.add(name);
+      }
+    }
+    matchingNames.addAll(allNames);
+    for (final String elementName : matchingNames) {
+      for (T element : StubIndex.getInstance().get(key, elementName, project, scope)) {
+        if (condition.value(element)) {
+          resultSet.addElement(LookupElementBuilder.create(element)
+                                 .withIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED))
+                                 .withTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
+                                 .withInsertHandler(insertHandler));
         }
       }
     }
