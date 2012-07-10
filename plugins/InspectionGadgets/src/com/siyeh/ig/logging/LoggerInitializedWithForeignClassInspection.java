@@ -42,8 +42,9 @@ import java.util.List;
 
 public class LoggerInitializedWithForeignClassInspection extends BaseInspection {
 
-  @NonNls private static final String DEFAULT_LOGGER_CLASS_NAMES = "org.apache.log4j.Logger,org.slf4j.LoggerFactory";
-  @NonNls private static final String DEFAULT_FACTORY_METHOD_NAMES = "getLogger,getLogger";
+  @NonNls private static final String DEFAULT_LOGGER_CLASS_NAMES =
+    "org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger";
+  @NonNls private static final String DEFAULT_FACTORY_METHOD_NAMES = "getLogger,getLogger,getLog,getLogger";
 
   @SuppressWarnings({"PublicField"})
   public String loggerClassName = DEFAULT_LOGGER_CLASS_NAMES;
@@ -69,8 +70,8 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   public JComponent createOptionsPanel() {
     final ListTable table = new ListTable(
       new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
-                                 InspectionGadgetsBundle.message("logger.factory.class.names"),
-                                 InspectionGadgetsBundle.message("logger.factory.methods.name")));
+                                 InspectionGadgetsBundle.message("logger.factory.class.name"),
+                                 InspectionGadgetsBundle.message("logger.factory.method.name")));
     return UiUtils.createAddRemovePanel(table);
   }
 
@@ -117,7 +118,27 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     @Override
     public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
       super.visitClassObjectAccessExpression(expression);
-      final PsiElement parent = expression.getParent();
+      PsiElement parent = expression.getParent();
+      if (parent instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
+        if (!expression.equals(referenceExpression.getQualifierExpression())) {
+          return;
+        }
+        final String name = referenceExpression.getReferenceName();
+        if (!"getName".equals(name)) {
+          return;
+        }
+        final PsiElement grandParent = referenceExpression.getParent();
+        if (!(grandParent instanceof PsiMethodCallExpression)) {
+          return;
+        }
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        final PsiExpressionList list = methodCallExpression.getArgumentList();
+        if (list.getExpressions().length != 0) {
+          return;
+        }
+        parent = methodCallExpression.getParent();
+      }
       if (!(parent instanceof PsiExpressionList)) {
         return;
       }
