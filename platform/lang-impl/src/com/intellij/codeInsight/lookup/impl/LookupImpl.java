@@ -100,7 +100,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private boolean myStableStart;
   private RangeMarker myLookupStartMarker;
-  private final JBList myList = new JBList(new DefaultListModel()) {
+  private final JBList myList = new JBList(new CollectionListModel<LookupElement>()) {
     @Override
     protected void processKeyEvent(final KeyEvent e) {
       final char keyChar = e.getKeyChar();
@@ -214,8 +214,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     updateLookupStart(0);
 
-    final ListModel model = myList.getModel();
-    addEmptyItem((DefaultListModel)model);
+    final CollectionListModel<LookupElement> model = getListModel();
+    addEmptyItem(model);
     updateListHeight(model);
 
 
@@ -233,6 +233,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     }.installOn(mySortingLabel);
     updateSorting();
+  }
+
+  private CollectionListModel<LookupElement> getListModel() {
+    //noinspection unchecked
+    return (CollectionListModel<LookupElement>)myList.getModel();
   }
 
   //Yes, it's possible to move focus to the hint. It's inconvenient, it doesn't make sense, but it's possible.
@@ -319,7 +324,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     synchronized (myList) {
       myPresentableArranger.prefixChanged();
-      ((DefaultListModel)myList.getModel()).clear();
+      getListModel().removeAll();
     }
 
     if (addAgain) {
@@ -363,17 +368,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public List<LookupElement> getItems() {
-    final ArrayList<LookupElement> result = new ArrayList<LookupElement>();
-    final Object[] objects;
     synchronized (myList) {
-      objects = ((DefaultListModel)myList.getModel()).toArray();
-    }
-    for (final Object object : objects) {
-      if (!(object instanceof EmptyLookupItem)) {
-        result.add((LookupElement) object);
+      List<LookupElement> elements = getListModel().toList();
+      if (elements.size() == 1 && elements.get(0) instanceof EmptyLookupItem) {
+        return Collections.emptyList();
       }
+      return elements;
     }
-    return result;
   }
 
   public void setAdvertisementText(@Nullable String text) {
@@ -448,7 +449,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     checkValid();
 
-    DefaultListModel listModel = (DefaultListModel)myList.getModel();
+    CollectionListModel<LookupElement> listModel = getListModel();
     synchronized (myList) {
       Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction);
       List<LookupElement> items = pair.first;
@@ -458,13 +459,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
 
       checkMinPrefixLengthChanges(items);
-      Object[] oldModel = listModel.toArray();
+      List<LookupElement> oldModel = listModel.toList();
 
-      listModel.clear();
+      listModel.removeAll();
       if (!items.isEmpty()) {
-        for (LookupElement element : items) {
-          listModel.addElement(element);
-        }
+        listModel.add(items);
       }
       else {
         addEmptyItem(listModel);
@@ -473,7 +472,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       updateListHeight(listModel);
 
       myList.setSelectedIndex(toSelect);
-      return !Arrays.equals(oldModel, items.toArray());
+      return !oldModel.equals(items);
     }
 
   }
@@ -513,10 +512,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myList.setVisibleRowCount(Math.min(model.getSize(), UISettings.getInstance().MAX_LOOKUP_LIST_HEIGHT));
   }
 
-  private void addEmptyItem(DefaultListModel model) {
+  private void addEmptyItem(CollectionListModel<LookupElement> model) {
     LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
     myMatchers.put(item, new CamelHumpMatcher(""));
-    model.addElement(item);
+    model.add(item);
 
     updateLookupWidth(item);
     requestResize();
@@ -984,11 +983,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public Rectangle getCurrentItemBounds(){
     int index = myList.getSelectedIndex();
     if (index < 0) {
-      LOG.error("No selected element, size=" + myList.getModel().getSize() + "; items" + getItems());
+      LOG.error("No selected element, size=" + getListModel().getSize() + "; items" + getItems());
     }
     Rectangle itmBounds = myList.getCellBounds(index, index);
     if (itmBounds == null){
-      LOG.error("No bounds for " + index + "; size=" + myList.getModel().getSize());
+      LOG.error("No bounds for " + index + "; size=" + getListModel().getSize());
       return null;
     }
     Point layeredPanePoint=SwingUtilities.convertPoint(myList,itmBounds.x,itmBounds.y,getComponent());
@@ -1047,7 +1046,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (explicitlyInvoked && myCalculating) return false;
     if (!explicitlyInvoked && mySelectionTouched) return false;
 
-    ListModel listModel = myList.getModel();
+    ListModel listModel = getListModel();
     if (listModel.getSize() <= 1) return false;
 
     if (listModel.getSize() == 0) return false;
@@ -1283,7 +1282,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void updateScrollbarVisibility() {
-    boolean showSorting = isCompletion() && getList().getModel().getSize() >= 3;
+    boolean showSorting = isCompletion() && getListModel().getSize() >= 3;
     mySortingLabel.setVisible(showSorting);
     myScrollPane.setVerticalScrollBarPolicy(showSorting ? ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS : ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
   }
@@ -1359,7 +1358,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().MAX_LOOKUP_WIDTH2);
           int adWidth = myAdComponent.getAdComponent().getPreferredSize().width;
           int panelHeight = mainPanel.getPreferredSize().height;
-          if (myList.getModel().getSize() > myList.getVisibleRowCount() && myList.getVisibleRowCount() >= 5) {
+          if (getListModel().getSize() > myList.getVisibleRowCount() && myList.getVisibleRowCount() >= 5) {
             panelHeight -= myList.getFixedCellHeight() / 2;
           }
           return new Dimension(Math.max(listWidth, adWidth), Math.min(panelHeight, myMaximumHeight));
@@ -1378,7 +1377,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
             }
 
             int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
-            if (listHeight != myList.getModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
+            if (listHeight != getListModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
               UISettings.getInstance().MAX_LOOKUP_LIST_HEIGHT = Math.max(5, listHeight);
             }
           }
