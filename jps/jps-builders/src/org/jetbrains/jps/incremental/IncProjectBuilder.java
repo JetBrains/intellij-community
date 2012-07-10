@@ -191,7 +191,7 @@ public class IncProjectBuilder {
   private void runBuild(CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
-    LOG.info("Building project '" + context.getProjectDescriptor().project.getProjectName() + "'; isRebuild:" + context.isProjectRebuild() + "; isMake:" + context.isMake());
+    LOG.info("Building project '" + context.getProjectDescriptor().project.getProjectName() + "'; isRebuild:" + context.isProjectRebuild() + "; isMake:" + context.isMake() + " parallel compilation:" + PARALLEL_BUILD_ENABLED);
 
     for (ProjectLevelBuilder builder : myBuilderRegistry.getProjectLevelBuilders()) {
       builder.buildStarted(context);
@@ -427,9 +427,16 @@ public class IncProjectBuilder {
             else {
               final CountDownLatch latch = new CountDownLatch(chunkCount);
               final Ref<Throwable> exRef = new Ref<Throwable>(null);
-              final StringBuilder logBuilder = new StringBuilder("Building chunks in parallel: ");
+
+              if (LOG.isDebugEnabled()) {
+                final StringBuilder logBuilder = new StringBuilder("Building chunks in parallel: ");
+                for (ModuleChunk chunk : groupChunks) {
+                  logBuilder.append(chunk.getName()).append("; ");
+                }
+                LOG.info(logBuilder.toString());
+              }
+
               for (final ModuleChunk chunk : groupChunks) {
-                logBuilder.append(chunk.getName()).append("; ");
                 final CompileContext chunkLocalContext = createContextWrapper(context);
                 SharedThreadPool.INSTANCE.submitBuildTask(new Runnable() {
                   @Override
@@ -451,7 +458,6 @@ public class IncProjectBuilder {
                   }
                 });
               }
-              LOG.info(logBuilder.toString());
 
               try {
                 latch.await();
