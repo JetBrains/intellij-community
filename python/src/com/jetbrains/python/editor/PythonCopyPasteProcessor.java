@@ -11,10 +11,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatementList;
 
 import java.util.List;
@@ -54,14 +53,8 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       final PsiElement element1 = PsiUtilCore.getElementAtOffset(file, offset);
       boolean moved = false;
       if (element instanceof PsiWhiteSpace && element == element1) {
-        final PsiElement prevSibling = element.getPrevSibling();
-        PyStatementList statementList = null;
-        if (prevSibling instanceof PyFunction) {
-          statementList = ((PyFunction)prevSibling).getStatementList();
-        }
-        else if (prevSibling instanceof PyClass) {
-          statementList = ((PyClass)prevSibling).getStatementList();
-        }
+        PyStatementList statementList = PsiTreeUtil
+          .findElementOfClassAtOffset(file, element.getTextOffset() - 1, PyStatementList.class, false);
         // Caret beyond actual indent -- move to the actual offset
         if (statementList != null) {
           final PsiElement lastChild = statementList.getLastChild();
