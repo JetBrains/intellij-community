@@ -87,42 +87,61 @@ public class EditorPlace extends JComponent implements Disposable {
       }
 
       if (gutter) {
-        drawAboveGutter(g2, startY, height, polygon.getColor());
+        drawAboveGutter(g2, startY, height, polygon.getColor(), polygon.isApplied());
       }
       else {
-        drawAboveScrollBar(g2, startY, height, polygon.getColor());
+        drawAboveScrollBar(g2, startY, height, polygon.getColor(), polygon.isApplied());
       }
     }
   }
 
-  private void drawAboveGutter(@NotNull Graphics2D g, int startY, int height, @NotNull Color color) {
+  private void drawAboveGutter(@NotNull Graphics2D g, int startY, int height, @NotNull Color color, boolean applied) {
     EditorGutterComponentEx gutter = ((EditorEx)myEditor).getGutterComponentEx();
     g.setColor(color);
     if (((EditorEx)myEditor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT) {
       // scrollbar is at the right => the gutter is at the left (central editor case)
       int startX = gutter.getX();
-      g.fillRect(startX, startY, gutter.getWidth() + 1, height);
-
-      drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height);
+      if (!applied) {
+        g.fillRect(startX, startY, gutter.getWidth() + 1, height);
+        drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height);
+      }
+      else {
+        drawBoldDottedFramingLines(g, startX, gutter.getWidth() + 1, startY, height, color);
+      }
     }
     else {
       JComponent editorComponent = myEditor.getComponent();
       int startX = editorComponent.getX() + editorComponent.getWidth() - gutter.getWidth() - 1;
-      g.fillRect(startX, startY, gutter.getWidth() + 1, height);
-
-      drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height);
+      if (!applied) {
+        g.fillRect(startX, startY, gutter.getWidth() + 1, height);
+        drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height);
+      }
+      else {
+        int endX = startX + gutter.getWidth() + 1;
+        drawBoldDottedFramingLines(g, startX, endX, startY, height, color);
+      }
     }
   }
 
-  private void drawAboveScrollBar(@NotNull Graphics2D g, int startY, int height, @NotNull Color color) {
+  private static void drawBoldDottedFramingLines(Graphics2D g, int startX, int endX, int startY, int height, Color color) {
+    UIUtil.drawBoldDottedLine(g, startX, endX, startY, null, color, false);
+    UIUtil.drawBoldDottedLine(g, startX, endX, startY + height, null, color, false);
+  }
+
+  private void drawAboveScrollBar(@NotNull Graphics2D g, int startY, int height, @NotNull Color color, boolean applied) {
     // painting only above the central scrollbar, because painting on edge scrollbars is not needed, and there are error stripes
     if (myColumn == MergePanelColumn.BASE) {
       g.setColor(color);
       JScrollBar scrollBar = ((EditorEx)myEditor).getScrollPane().getVerticalScrollBar();
       int startX = scrollBar.getX();
-      g.fillRect(startX, startY, scrollBar.getWidth(), height);
-
-      drawFramingLines(g, startX, startY, startX + scrollBar.getWidth(), startY + height);
+      int endX = startX + scrollBar.getWidth();
+      if (!applied) {
+        g.fillRect(startX, startY, scrollBar.getWidth(), height);
+        drawFramingLines(g, startX, startY, endX, startY + height);
+      }
+      else {
+        drawBoldDottedFramingLines(g, startX, endX, startY, height, color);
+      }
     }
   }
 

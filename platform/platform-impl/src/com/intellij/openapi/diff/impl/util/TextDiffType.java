@@ -53,6 +53,10 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   private final String myDisplayName;
   private final boolean myApplied;
 
+  public boolean isApplied() {
+    return myApplied;
+  }
+
   public static TextDiffType create(@Nullable final TextDiffTypeEnum type) {
     if (TextDiffTypeEnum.INSERT.equals(type)) {
       return INSERT;

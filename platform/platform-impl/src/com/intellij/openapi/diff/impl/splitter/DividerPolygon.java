@@ -39,8 +39,10 @@ public class DividerPolygon {
   private final int myStart2;
   private final int myEnd1;
   private final int myEnd2;
+  private final boolean myApplied;
 
-  public DividerPolygon(int start1, int start2, int end1, int end2, Color color) {
+  public DividerPolygon(int start1, int start2, int end1, int end2, Color color, boolean applied) {
+    myApplied = applied;
     myStart1 = advance(start1);
     myStart2 = advance(start2);
     myEnd1 = advance(end1);
@@ -53,11 +55,18 @@ public class DividerPolygon {
   }
 
   private void paint(Graphics2D g, int width) {
-    g.setColor(myColor);
-    g.fill(new Polygon(new int[]{0, 0, width, width}, new int[]{myStart1, myEnd1, myEnd2, myStart2}, 4));
-    g.setColor(FRAMING_LINE_COLOR);
-    UIUtil.drawLine(g, 0, myStart1, width, myStart2);
-    UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
+    if (!myApplied) {
+      g.setColor(myColor);
+      g.fill(new Polygon(new int[]{0, 0, width, width}, new int[]{myStart1, myEnd1, myEnd2, myStart2}, 4));
+      g.setColor(FRAMING_LINE_COLOR);
+      UIUtil.drawLine(g, 0, myStart1, width, myStart2);
+      UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
+    }
+    else {
+      g.setColor(myColor);
+      UIUtil.drawLine(g, 0, myStart1 + 1, width, myStart2 + 1);
+      UIUtil.drawLine(g, 0, myEnd1 + 1, width, myEnd2 + 1);
+    }
   }
 
   public int hashCode() {
@@ -97,6 +106,10 @@ public class DividerPolygon {
     return myEnd2;
   }
 
+  public boolean isApplied() {
+    return myApplied;
+  }
+
   public static void paintPolygons(ArrayList<DividerPolygon> polygons, Graphics2D g, int width) {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -122,7 +135,7 @@ public class DividerPolygon {
       Trapezium trapezium = lineBlocks.getTrapezium(i);
       final TextDiffType type = lineBlocks.getType(i);
       Color color = type.getPolygonColor(editor1);
-      polygons.add(createPolygon(transformations, trapezium, color, left, diffDividerPolygonsOffset));
+      polygons.add(createPolygon(transformations, trapezium, color, left, diffDividerPolygonsOffset, type.isApplied()));
     }
     return polygons;
   }
@@ -133,7 +146,7 @@ public class DividerPolygon {
   }
 
   private static DividerPolygon createPolygon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left,
-                                              int diffDividerPolygonsOffset) {
+                                              int diffDividerPolygonsOffset, boolean applied) {
     Interval base1 = trapezium.getBase(left);
     Interval base2 = trapezium.getBase(left.otherSide());
     Transformation leftTransform = transformations[left.getIndex()];
@@ -144,7 +157,7 @@ public class DividerPolygon {
     int end2 = rightTransform.transform(base2.getEnd());
     return new DividerPolygon(start1 - diffDividerPolygonsOffset, start2 - diffDividerPolygonsOffset,
                               end1 - diffDividerPolygonsOffset, end2 - diffDividerPolygonsOffset,
-                              ColorUtil.toAlpha(color, TRANSPARENCY));
+                              applied ? color : ColorUtil.toAlpha(color, TRANSPARENCY), applied);
   }
 
   static Interval getVisibleInterval(Editor editor) {
