@@ -229,9 +229,7 @@ public class HtmlParsing {
     // Done header, start content
 
     boolean isInlineTagContainer = HtmlUtil.isInlineTagContainerL(tagName);
-    boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(tagName) ||
-                               "body".equalsIgnoreCase(tagName) ||
-                               "html".equalsIgnoreCase(tagName);
+    boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(tagName);
 
     PsiBuilder.Marker firstBlockChild = null;
 
@@ -364,7 +362,7 @@ public class HtmlParsing {
 
     xmlText = terminateText(xmlText);
 
-    if (isOptionalTagEnd) {
+    if (isOptionalTagEnd || "body".equalsIgnoreCase(tagName) || "html".equalsIgnoreCase(tagName)) {
       if (firstBlockChild != null) {
         tag.doneBefore(XmlElementType.HTML_TAG, firstBlockChild);
       }
