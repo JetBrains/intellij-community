@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
-  public static boolean DEBUG = false;
   private PathMacrosImpl myPathMacros;
 
   public BasePathMacroManager(@Nullable PathMacros pathMacros) {
@@ -66,18 +65,9 @@ public class BasePathMacroManager extends PathMacroManager {
     if (path == null) return;
 
     String macro = "$" + macroName + "$";
-    if (DEBUG) {
-      System.out.println("BasePathMacroManager.addFileHierarchyReplacements");
-      System.out.println("macroName = " + macroName);
-    }
     path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/");
     boolean check = false;
     while (StringUtil.isNotEmpty(path) && path.contains("/")) {
-      if (DEBUG) {
-        System.out.println("path = " + path);
-        System.out.println("macro = " + macro);
-      }
-
       putIfAbsent(result, "file:" + path, "file:" + macro, check);
       putIfAbsent(result, "file:/" + path, "file:/" + macro, check);
       putIfAbsent(result, "file://" + path, "file://" + macro, check);
