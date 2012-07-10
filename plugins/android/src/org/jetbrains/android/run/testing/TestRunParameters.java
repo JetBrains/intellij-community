@@ -24,14 +24,17 @@ import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
+import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.run.AndroidClassBrowser;
+import org.jetbrains.android.run.AndroidClassVisibilityChecker;
 import org.jetbrains.android.run.ConfigurationSpecificEditor;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -57,11 +60,11 @@ class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunCon
   private JRadioButton myClassButton;
   private JRadioButton myTestMethodButton;
   private JRadioButton myAllInModuleButton;
-  private LabeledComponent<TextFieldWithBrowseButton> myPackageComponent;
-  private LabeledComponent<TextFieldWithBrowseButton> myClassComponent;
+  private LabeledComponent<EditorTextFieldWithBrowseButton> myPackageComponent;
+  private LabeledComponent<EditorTextFieldWithBrowseButton> myClassComponent;
   private LabeledComponent<TextFieldWithBrowseButton> myMethodComponent;
   private JPanel myPanel;
-  private LabeledComponent<TextFieldWithBrowseButton> myRunnerComponent;
+  private LabeledComponent<EditorTextFieldWithBrowseButton> myRunnerComponent;
   private JBLabel myLabelTest;
   private final JRadioButton[] myTestingType2RadioButton = new JRadioButton[4];
 
@@ -72,13 +75,23 @@ class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunCon
   TestRunParameters(Project project, ConfigurationModuleSelector moduleSelector) {
     myProject = project;
     myModuleSelector = moduleSelector;
+
+    myPackageComponent.setComponent(new EditorTextFieldWithBrowseButton(project, false));
     bind(myPackageComponent, new MyPackageBrowser());
-    bind(myClassComponent, new AndroidClassBrowser(myProject, myModuleSelector, ANDROID_TEST_BASE_CLASS_NAME,
+
+    myClassComponent.setComponent(new EditorTextFieldWithBrowseButton(project, true,
+                                                                      new AndroidClassVisibilityChecker(myProject, moduleSelector,
+                                                                                                        ANDROID_TEST_BASE_CLASS_NAME)));
+    bind(myClassComponent, new AndroidClassBrowser(project, moduleSelector, ANDROID_TEST_BASE_CLASS_NAME,
                                                    AndroidBundle.message("android.browse.test.class.dialog.title"), false, null));
-    bind(myMethodComponent, new MyMethodBrowser());
-    bind(myRunnerComponent, new AndroidClassBrowser(myProject, myModuleSelector, AndroidUtils.INSTRUMENTATION_RUNNER_BASE_CLASS,
+
+    myRunnerComponent.setComponent(new EditorTextFieldWithBrowseButton(project, true,
+                                                                       new AndroidClassVisibilityChecker(myProject, moduleSelector,
+                                                                                                         AndroidUtils.INSTRUMENTATION_RUNNER_BASE_CLASS)));
+    bind(myRunnerComponent, new AndroidClassBrowser(project, moduleSelector, AndroidUtils.INSTRUMENTATION_RUNNER_BASE_CLASS,
                                                     AndroidBundle.message("android.browse.instrumentation.class.dialog.title"), true,
                                                     null));
+    bind(myMethodComponent, new MyMethodBrowser());
 
     addTestingType(TEST_ALL_IN_MODULE, myAllInModuleButton);
     addTestingType(TEST_ALL_IN_PACKAGE, myAllInPackageButton);
@@ -111,7 +124,8 @@ class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunCon
     myLabelTest.setAnchor(anchor);
   }
 
-  private static void bind(final LabeledComponent<TextFieldWithBrowseButton> labeledComponent, BrowseModuleValueActionListener browser) {
+  private static void bind(final LabeledComponent<? extends ComponentWithBrowseButton<?>> labeledComponent,
+                           BrowseModuleValueActionListener browser) {
     browser.setField(labeledComponent.getComponent());
   }
 
