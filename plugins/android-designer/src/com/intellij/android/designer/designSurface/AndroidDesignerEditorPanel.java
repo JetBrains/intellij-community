@@ -16,6 +16,7 @@
 package com.intellij.android.designer.designSurface;
 
 import com.android.ide.common.rendering.api.RenderSession;
+import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
@@ -175,7 +176,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       @Override
       public void consume(RenderSession session) throws Throwable {
         RootView rootView = new RootView(session.getImage(), 30, 20);
-        parser.updateRootComponent(session, rootView);
+        try {
+          parser.updateRootComponent(session, rootView);
+        }
+        catch (Throwable e) {
+          myRootComponent = parser.getRootComponent();
+          throw e;
+        }
         RadViewComponent newRootComponent = parser.getRootComponent();
 
         newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
@@ -350,7 +357,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   private void removeNativeRoot() {
     if (myRootComponent != null) {
-      myLayeredPane.remove(((RadViewComponent)myRootComponent).getNativeComponent().getParent());
+      Component component = ((RadViewComponent)myRootComponent).getNativeComponent();
+      if (component != null) {
+        myLayeredPane.remove(component.getParent());
+      }
     }
   }
 
@@ -436,6 +446,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
       renderCreator.printStackTrace(new PrintStream(stream));
       builder.append(stream.toString());
+    }
+
+    if (info.myThrowable instanceof IndexOutOfBoundsException && myRootComponent != null && mySession != null) {
+      builder.append("\n-------- RadTree --------\n");
+      ModelParser.printTree(builder, myRootComponent, 0);
+      builder.append("\n-------- ViewTree(").append(mySession.getRootViews().size()).append(") --------\n");
+      for (ViewInfo viewInfo : mySession.getRootViews()) {
+        ModelParser.printTree(builder, viewInfo, 0);
+      }
     }
 
     info.myMessage = builder.toString();

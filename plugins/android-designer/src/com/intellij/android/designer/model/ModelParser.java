@@ -416,4 +416,26 @@ public class ModelParser extends XmlRecursiveElementVisitor {
       }
     }
   }
+
+  public static void printTree(StringBuilder builder, RadComponent component, int level) {
+    for (int i = 0; i < level; i++) {
+      builder.append('\t');
+    }
+    builder.append(component).append(" | ").append(component.getLayout()).append(" | ").append(component.getMetaModel().getTag())
+      .append(" | ").append(component.getMetaModel().getTarget()).append(" = ").append(component.getChildren().size()).append("\n");
+    for (RadComponent childComponent : component.getChildren()) {
+      printTree(builder, childComponent, level + 1);
+    }
+  }
+
+  public static void printTree(StringBuilder builder, ViewInfo viewInfo, int level) {
+    for (int i = 0; i < level; i++) {
+      builder.append('\t');
+    }
+    builder.append(viewInfo.getClassName()).append(" | ").append(viewInfo.getViewObject()).append(" | ")
+      .append(viewInfo.getLayoutParamsObject()).append(" = ").append(viewInfo.getChildren().size()).append("\n");
+    for (ViewInfo childViewInfo : viewInfo.getChildren()) {
+      printTree(builder, childViewInfo, level + 1);
+    }
+  }
 }
