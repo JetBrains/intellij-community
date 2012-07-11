@@ -607,18 +607,6 @@
       <pattern>\c0</pattern>
       <expected>OK</expected>
     </test>
-    <test>
-      <pattern>\C-0</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\M-0</pattern>
-      <expected>OK</expected>
-    </test>
-    <test>
-      <pattern>\M-\C-0</pattern>
-      <expected>OK</expected>
-    </test>
   </escapes>
 
   <anchors>
