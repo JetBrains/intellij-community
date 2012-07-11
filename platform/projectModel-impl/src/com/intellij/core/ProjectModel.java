@@ -15,6 +15,7 @@
  */
 package com.intellij.core;
 
+import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.application.PathMacroFilter;
@@ -49,7 +50,7 @@ public class ProjectModel {
       Extensions.registerAreaClass(ExtensionAreas.IDEA_MODULE, null);
       CoreApplicationEnvironment.registerApplicationExtensionPoint(OrderRootType.EP_NAME, OrderRootType.class);
       CoreApplicationEnvironment.registerApplicationExtensionPoint(SdkFinder.EP_NAME, SdkFinder.class);
-      CoreApplicationEnvironment.registerApplicationExtensionPoint(PathMacroFilter.EP_NAME, PathMacroFilter.class);
+      CoreApplicationEnvironment.registerApplicationExtensionPoint(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME, PathMacroFilter.class);
       env.registerApplicationComponent(PathMacros.class, createPathMacros());
       env.getApplication().registerService(ProjectJdkTable.class, createProjectJdkTable());
       env.getApplication().registerService(ApplicationLibraryTable.class, createApplicationLibraryTable());

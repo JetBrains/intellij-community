@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jdom.Attribute;
 import org.jdom.Text;
 
@@ -25,7 +24,6 @@ import org.jdom.Text;
  * @author yole
  */
 public abstract class PathMacroFilter {
-  public static final ExtensionPointName<PathMacroFilter> EP_NAME = ExtensionPointName.create("com.intellij.pathMacroFilter");
 
   public boolean skipPathMacros(Text element) {
     return false;
