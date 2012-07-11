@@ -38,9 +38,17 @@ public class TestAllInPackage2 extends TestSuite {
       String classMethodName = classMethodNames[i];
       Test suite = TestRunnerUtil.createClassOrMethodSuite(runner, classMethodName);
       if (suite != null) {
-        final boolean isTestSuite = suite instanceof TestSuite;
-        if (!isTestSuite || allNames.contains(((TestSuite)suite).getName())) {
-          if (isTestSuite && ((TestSuite)suite).getName() == null) {
+        boolean skip;
+        if (suite instanceof TestSuite) {
+          skip = !allNames.contains(((TestSuite)suite).getName());
+        } else if (suite instanceof TestRunnerUtil.SuiteMethodWrapper) {
+          skip = !allNames.contains(((TestRunnerUtil.SuiteMethodWrapper)suite).getClassName());
+        } else {
+          skip = false;
+        }
+
+        if (!skip) {
+          if (suite instanceof TestSuite && ((TestSuite)suite).getName() == null) {
             attachSuiteInfo(suite, classMethodName);
           }
           addTest(suite);
@@ -56,13 +64,19 @@ public class TestAllInPackage2 extends TestSuite {
     if (suite instanceof TestRunnerUtil.SuiteMethodWrapper) {
       final Test test = ((TestRunnerUtil.SuiteMethodWrapper)suite).getSuite();
       final String currentSuiteName =  ((TestRunnerUtil.SuiteMethodWrapper)suite).getClassName();
-      if (test instanceof TestSuite) {
-        for (int idx = 0; idx < ((TestSuite)test).testCount(); idx++) {
-          final String testName = ((TestSuite)test).testAt(idx).toString();
-          if (!currentSuiteName.equals(testName)) {
-            allNames.remove(testName);
-          }
+      skipSubtests(allNames, test, currentSuiteName);
+    }
+  }
+
+  private static void skipSubtests(Set allNames, Test test, String currentSuiteName) {
+    if (test instanceof TestSuite) {
+      for (int idx = 0; idx < ((TestSuite)test).testCount(); idx++) {
+        Test childTest = ((TestSuite)test).testAt(idx);
+        final String testName = childTest.toString();
+        if (!currentSuiteName.equals(testName)) {
+          allNames.remove(testName);
         }
+        skipSubtests(allNames, childTest, currentSuiteName);
       }
     }
   }
