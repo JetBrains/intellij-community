@@ -17,17 +17,16 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.psi.ForceableComparable;
 import com.intellij.util.ProcessingContext;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
 * @author peter
 */
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
-  private final Map<LookupElement, Comparable> myWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
+  private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<LookupElement, Comparable>();
   private final LookupElementWeigher myWeigher;
   private Comparable myFirstWeight;
   private boolean myPrimitive = true;
