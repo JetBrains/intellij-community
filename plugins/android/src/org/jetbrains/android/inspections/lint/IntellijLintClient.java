@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -128,7 +129,7 @@ class IntellijLintClient extends LintClient implements Disposable {
 
   @Nullable
   private String getFileContent(final VirtualFile vFile) {
-    if (myState.getMainFile() == vFile) {
+    if (Comparing.equal(myState.getMainFile(), vFile)) {
       return myState.getMainFileContent();
     }
 

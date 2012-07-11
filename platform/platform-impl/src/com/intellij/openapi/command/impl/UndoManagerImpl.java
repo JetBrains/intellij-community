@@ -283,7 +283,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCommandLevel--;
     if (myCommandLevel > 0) return;
 
-    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent()) {
+    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent() && myCurrentMerger.isPhysical()) {
       addFocusedDocumentAsAffected();
     }
     myOriginatorReference = null;

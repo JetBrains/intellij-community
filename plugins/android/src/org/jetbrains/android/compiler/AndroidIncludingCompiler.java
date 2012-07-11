@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -64,7 +65,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
       VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
 
       for (VirtualFile depSourceRoot : srcRoots) {
-        if (depSourceRoot != genSrcRoot) {
+        if (!Comparing.equal(depSourceRoot, genSrcRoot)) {
           VirtualFile file = depSourceRoot.findFileByRelativePath(generatedFileRelativePath);
           if (file != null) {
             return file;
@@ -112,7 +113,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
             VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
 
             for (VirtualFile depSourceRoot : srcRoots) {
-              if (depSourceRoot != aptGenSrcRoot && depSourceRoot != aidlGenSrcRoot) {
+              if (!Comparing.equal(depSourceRoot, aptGenSrcRoot) && !Comparing.equal(depSourceRoot, aidlGenSrcRoot)) {
                 collectCompilableFiles(module, depFacet.getModule(), context, depSourceRoot, qName2Item);
               }
             }

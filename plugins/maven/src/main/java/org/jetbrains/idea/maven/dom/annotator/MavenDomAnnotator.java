@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.DomElement;
@@ -59,7 +60,7 @@ public class MavenDomAnnotator implements DomElementsAnnotator {
         VirtualFile problemFile = LocalFileSystem.getInstance().findFileByPath(each.getPath());
 
         LocalQuickFix[] fixes = LocalQuickFix.EMPTY_ARRAY;
-        if (problemFile != null && mavenProject.getFile() != problemFile) {
+        if (problemFile != null && !Comparing.equal(mavenProject.getFile(), problemFile)) {
           fixes = new LocalQuickFix[]{new OpenProblemFileFix(problemFile)};
         }
         holder.createProblem(element, HighlightSeverity.ERROR, each.getDescription(), fixes);

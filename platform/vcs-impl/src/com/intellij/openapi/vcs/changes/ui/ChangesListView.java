@@ -19,7 +19,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
@@ -59,8 +58,6 @@ import java.util.List;
  * @author max
  */
 public class ChangesListView extends Tree implements TypeSafeDataProvider, AdvancedDnDSource {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ui.ChangesListView");
-
   private ChangesListView.DropTarget myDropTarget;
   private DnDManager myDndManager;
   private ChangeListOwner myDragOwner;
@@ -92,6 +89,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).installOn(this);
   }
 
+  @Override
   public DefaultTreeModel getModel() {
     return (DefaultTreeModel)super.getModel();
   }
@@ -105,6 +103,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     myDndManager.registerTarget(myDropTarget, this);
   }
 
+  @Override
   public void dispose() {
     if (myDropTarget != null) {
       myDndManager.unregisterSource(this);
@@ -175,6 +174,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     }
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       sink.put(VcsDataKeys.CHANGES, getSelectedChanges());
@@ -233,7 +233,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
       final TreePath selectionPath = getSelectionPath();
       if (selectionPath != null && selectionPath.getPathCount() > 1) {
-        ChangesBrowserNode firstNode = (ChangesBrowserNode)selectionPath.getPathComponent(1);
+        ChangesBrowserNode<?> firstNode = (ChangesBrowserNode)selectionPath.getPathComponent(1);
         if (firstNode instanceof ChangesBrowserChangeListNode) {
           final List<Change> list = firstNode.getAllChangesUnder();
           sink.put(VcsDataKeys.CHANGES_IN_LIST_KEY, list);
@@ -262,7 +262,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
         if (path.getPathCount() > 1) {
           ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
           if (tag == null || firstNode.getUserObject() == tag) {
-            ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+            ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
             files.addAll(node.getAllFilesUnder());
           }
         }
@@ -279,7 +279,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
         if (path.getPathCount() > 1) {
           ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
           if (tag == null || firstNode.getUserObject() == tag) {
-            ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+            ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
             files.addAll(node.getAllFilePathsUnder());
           }
         }
@@ -296,7 +296,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
         if (path.getPathCount() > 1) {
           ChangesBrowserNode firstNode = (ChangesBrowserNode)path.getPathComponent(1);
           if (firstNode.getUserObject() == TreeModelBuilder.LOCALLY_DELETED_NODE) {
-            ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+            ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
             final List<LocallyDeletedChange> objectsUnder = node.getAllObjectsUnder(LocallyDeletedChange.class);
             files.addAll(objectsUnder);
           }
@@ -325,7 +325,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
     files.addAll(getSelectedVirtualFiles(null));
 
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   protected boolean haveSelectedFileType(final Object tag) {
@@ -395,13 +395,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     }
 
     for (TreePath path : paths) {
-      ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
+      ChangesBrowserNode<?> node = (ChangesBrowserNode)path.getLastPathComponent();
       changes.addAll(node.getAllChangesUnder());
     }
 
-    if (changes.size() == 0) {
+    if (changes.isEmpty()) {
       final List<VirtualFile> selectedModifiedWithoutEditing = getSelectedModifiedWithoutEditing();
-      if (selectedModifiedWithoutEditing != null && selectedModifiedWithoutEditing.size() > 0) {
+      if (selectedModifiedWithoutEditing != null && !selectedModifiedWithoutEditing.isEmpty()) {
         for(VirtualFile file: selectedModifiedWithoutEditing) {
           AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
           if (vcs == null) continue;
@@ -451,6 +451,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     PopupHandler.installPopupHandler(this, myMenuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
   }
 
+  @Override
   public void updateUI() {
     super.updateUI();
     if (myMenuGroup != null) {
@@ -577,6 +578,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   }
 
   public class DropTarget implements DnDTarget {
+    @Override
     public boolean update(DnDEvent aEvent) {
       aEvent.hideHighlighter();
       aEvent.setDropPossible(false, "");
@@ -614,6 +616,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       return false;
     }
 
+    @Override
     public void drop(DnDEvent aEvent) {
       Object attached = aEvent.getAttachedObject();
       if (!(attached instanceof ChangeListDragBean)) return;
@@ -625,9 +628,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
       }
     }
 
+    @Override
     public void cleanUpOnLeave() {
     }
 
+    @Override
     public void updateDraggedImage(Image image, Point dropPoint, Point imageOffset) {
     }
   }
@@ -645,39 +650,47 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   }
 
   private static class NodeToTextConvertor implements Convertor<TreePath, String> {
+    @Override
     public String convert(final TreePath path) {
       ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       return node.getTextPresentation();
     }
   }
 
+  @Override
   public boolean canStartDragging(DnDAction action, Point dragOrigin) {
     return action == DnDAction.MOVE && 
-           (getSelectedChanges().length > 0 || getSelectedUnversionedFiles().size() > 0 || getSelectedIgnoredFiles().size() > 0);
+           (getSelectedChanges().length > 0 || !getSelectedUnversionedFiles().isEmpty() || !getSelectedIgnoredFiles().isEmpty());
   }
 
+  @Override
   public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
     return new DnDDragStartBean(new ChangeListDragBean(this, getSelectedChanges(), getSelectedUnversionedFiles(),
                                                        getSelectedIgnoredFiles()));
   }
 
+  @Override
   @Nullable
   public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
     final Image image = DragImageFactory.createImage(this);
     return new Pair<Image, Point>(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }
 
+  @Override
   public void dragDropEnd() {
   }
 
+  @Override
   public void dropActionChanged(final int gestureModifiers) {
   }
 
+  @Override
   @NotNull
   public JComponent getComponent() {
     return this;
   }
 
+  @Override
   public void processMouseEvent(final MouseEvent e) {
     if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown() && !e.isControlDown()  &&
         !e.isMetaDown() && !e.isPopupTrigger()) {
@@ -694,10 +707,12 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     super.processMouseEvent(e);
   }
 
+  @Override
   public boolean isOverSelection(final Point point) {
     return TreeUtil.isOverSelection(this, point);
   }
 
+  @Override
   public void dropSelectionButUnderPoint(final Point point) {
     TreeUtil.dropSelectionButUnderPoint(this, point);
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,7 +54,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
         List<LazyMarker> markers = lazyMarkers.toStrongList();
         List<LazyMarker> markersToRemove = new ArrayList<LazyMarker>();
         for (final LazyMarker marker : markers) {
-          if (marker.getFile() == docFile) {
+          if (Comparing.equal(marker.getFile(), docFile)) {
             marker.ensureDelegate();
             markersToRemove.add(marker);
           }

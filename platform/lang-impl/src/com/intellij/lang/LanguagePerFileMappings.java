@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.LightVirtualFile;
@@ -76,7 +77,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       file = window.getDelegate();
     }
     VirtualFile originalFile = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : null;
-    if (originalFile == file) originalFile = null;
+    if (Comparing.equal(originalFile, file)) originalFile = null;
 
     if (file != null) {
       final FilePropertyPusher<T> pusher = getFilePropertyPusher();

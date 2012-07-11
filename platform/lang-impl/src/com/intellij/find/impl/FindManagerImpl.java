@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2012 JetBrains s.r.o.
  *
@@ -414,7 +413,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     if(lang == null) return NOT_FOUND_RESULT;
 
     CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
-    if (data == null || data.lastFile != file) {
+    if (data == null || !Comparing.equal(data.lastFile, file)) {
       Lexer lexer = getLexer(file, lang);
 
       TokenSet tokensOfInterest = TokenSet.EMPTY;

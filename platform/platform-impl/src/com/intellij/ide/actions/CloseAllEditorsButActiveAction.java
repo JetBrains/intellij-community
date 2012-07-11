@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -24,6 +23,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CloseAllEditorsButActiveAction extends AnAction implements DumbAware {
@@ -39,7 +39,7 @@ public class CloseAllEditorsButActiveAction extends AnAction implements DumbAwar
     selectedFile = fileEditorManager.getSelectedFiles()[0];
     final VirtualFile[] siblings = fileEditorManager.getSiblings(selectedFile);
     for (final VirtualFile sibling : siblings) {
-      if (selectedFile != sibling) {
+      if (!Comparing.equal(selectedFile, sibling)) {
         fileEditorManager.closeFile(sibling);
       }
     }

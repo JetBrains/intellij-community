@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.annotate;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -104,7 +105,7 @@ public class SvnFileAnnotation implements FileAnnotation {
   };
   private final SvnEntriesListener myListener = new SvnEntriesListener() {
     public void onEntriesChanged(VirtualFile directory) {
-      if (directory != myFile.getParent()) return;
+      if (!Comparing.equal(directory, myFile.getParent())) return;
       final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
       if (currentRevision != null && currentRevision.equals(myBaseRevision)) return;
 

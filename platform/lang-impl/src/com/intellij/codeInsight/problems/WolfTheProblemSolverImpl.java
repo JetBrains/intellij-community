@@ -33,10 +33,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -333,7 +330,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       Document document = ((TextEditor)editor).getEditor().getDocument();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
       if (psiFile == null) continue;
-      if (file == psiFile.getVirtualFile()) return true;
+      if (Comparing.equal(file, psiFile.getVirtualFile())) return true;
     }
     return false;
   }

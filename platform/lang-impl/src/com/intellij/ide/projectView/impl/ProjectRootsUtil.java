@@ -18,6 +18,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 
@@ -63,7 +64,7 @@ public class ProjectRootsUtil {
     for (ContentEntry contentEntry : contentEntries) {
       final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
-        if (virtualFile == sourceFolder.getFile()) return true;
+        if (Comparing.equal(virtualFile, sourceFolder.getFile())) return true;
       }
     }
     return false;

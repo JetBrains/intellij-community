@@ -298,7 +298,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     if (ProjectAttachProcessor.canAttachToProject()) {
       // primary module is always on top; attached modules are sorted alphabetically
       final VirtualFile file = getVirtualFile();
-      if (file == myProject.getBaseDir()) {
+      if (Comparing.equal(file, myProject.getBaseDir())) {
         return "";    // sorts before any other name
       }
       return getTitle();

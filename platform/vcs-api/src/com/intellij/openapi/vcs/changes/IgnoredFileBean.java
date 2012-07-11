@@ -23,6 +23,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -105,15 +106,15 @@ public class IgnoredFileBean {
     }
     else {
       VirtualFile selector = resolve();
-      if (selector == NullVirtualFile.INSTANCE) return false;
+      if (Comparing.equal(selector, NullVirtualFile.INSTANCE)) return false;
 
       if (myType == IgnoreSettingsType.FILE) {
-        return selector == file;
+        return Comparing.equal(selector, file);
       }
       else {
         if ("./".equals(myPath)) {
           // special case for ignoring the project base dir (IDEADEV-16056)
-          return !file.isDirectory() && file.getParent() == selector;
+          return !file.isDirectory() && Comparing.equal(file.getParent(), selector);
         }
         return VfsUtil.isAncestor(selector, file, false);
       }

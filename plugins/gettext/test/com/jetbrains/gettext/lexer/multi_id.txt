@@ -1,0 +1,27 @@
+MSGID ('msgid')
+WHITE_SPACE (' ')
+STRING ('""')
+WHITE_SPACE ('
+')
+MSGSTR ('msgstr')
+WHITE_SPACE (' ')
+STRING ('""')
+WHITE_SPACE ('
+')
+WHITE_SPACE ('
+')
+MSGID ('msgid')
+WHITE_SPACE (' ')
+STRING ('""')
+WHITE_SPACE ('
+')
+WHITE_SPACE ('
+')
+MSGID ('msgid')
+WHITE_SPACE (' ')
+STRING ('""')
+WHITE_SPACE ('
+')
+MSGSTR ('msgstr')
+WHITE_SPACE (' ')
+STRING ('""')

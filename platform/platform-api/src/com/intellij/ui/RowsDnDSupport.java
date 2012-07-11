@@ -47,6 +47,7 @@ public class RowsDnDSupport {
   }
 
   private static void installImpl(@NotNull final JComponent component, @NotNull final EditableModel model) {
+    component.setTransferHandler(new TransferHandler(null));
     DnDSupport.createBuilder(component)
       .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
         @Override
@@ -72,8 +73,10 @@ public class RowsDnDSupport {
             event.setHighlighting(rectangle, 2);
           }
           else {
-            event.setDropPossible(false);
+            if (oldIndex != newIndex) // Drag&Drop always starts with new==old and we shouldn't display 'rejecting' cursor in this case
+              event.setDropPossible(false, "");
             event.hideHighlighter();
+            return true;
           }
           return false;
         }
@@ -122,7 +125,7 @@ public class RowsDnDSupport {
     } else if (component instanceof JList) {
       return ((JList)component).locationToIndex(point);
     } else if (component instanceof JTree) {
-      return ((JTree)component).getRowForLocation(point.x, point.y);
+      return ((JTree)component).getClosestRowForLocation(point.x, point.y);
     } else {
       throw new IllegalArgumentException("Unsupported component: " + component);
     }

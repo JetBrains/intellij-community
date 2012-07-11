@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -224,7 +225,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         if (newcomer.isDirectory()) {
           final List<FilePath> files = new ArrayList<FilePath>(myDirtyFiles);
           for (FilePath oldBoy : files) {
-            if (!oldBoy.isDirectory() && oldBoy.getVirtualFileParent() == newcomer.getVirtualFile()) {
+            if (!oldBoy.isDirectory() && Comparing.equal(oldBoy.getVirtualFileParent(), newcomer.getVirtualFile())) {
               myDirtyFiles.remove(oldBoy);
             }
           }

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 
@@ -57,7 +58,7 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget impleme
         return true;
       }
 
-      return vFile.getParent() == myProject.getBaseDir();
+      return Comparing.equal(vFile.getParent(), myProject.getBaseDir());
     }
 
     return false;

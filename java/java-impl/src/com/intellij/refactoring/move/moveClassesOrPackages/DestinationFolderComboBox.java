@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -122,7 +124,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         final ComboBoxModel model = getComboBox().getModel();
         for (int i = 0; i < model.getSize(); i++) {
           DirectoryChooser.ItemWrapper item = (DirectoryChooser.ItemWrapper)model.getElementAt(i);
-          if (item != NULL_WRAPPER && fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()) == root) {
+          if (item != NULL_WRAPPER && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)) {
             getComboBox().setSelectedItem(item);
             getComboBox().repaint();
             return;
@@ -164,7 +166,9 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     }
     final PsiDirectory selectedPsiDirectory = selectedItem.getDirectory();
     VirtualFile selectedDestination = selectedPsiDirectory.getVirtualFile();
-    if (showChooserWhenDefault && selectedDestination == myInitialTargetDirectory.getVirtualFile() && mySourceRoots.length > 1) {
+    if (showChooserWhenDefault &&
+        Comparing.equal(selectedDestination, myInitialTargetDirectory.getVirtualFile()) &&
+        mySourceRoots.length > 1) {
       selectedDestination = MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, mySourceRoots, myInitialTargetDirectory);
     }
     if (selectedDestination == null) return null;
@@ -211,9 +215,10 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       DirectoryChooser.ItemWrapper itemWrapper = new DirectoryChooser.ItemWrapper(targetDirectory, pathsToCreate.get(targetDirectory));
       items.add(itemWrapper);
       final VirtualFile sourceRootForFile = fileIndex.getSourceRootForFile(targetDirectory.getVirtualFile());
-      if (sourceRootForFile == initialTargetDirectorySourceRoot) {
+      if (Comparing.equal(sourceRootForFile, initialTargetDirectorySourceRoot)) {
         initial = itemWrapper;
-      } else if (sourceRootForFile == oldSelection) {
+      }
+      else if (Comparing.equal(sourceRootForFile, oldSelection)) {
         oldOne = itemWrapper;
       }
     }

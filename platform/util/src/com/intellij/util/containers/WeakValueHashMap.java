@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -27,9 +28,9 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
   private static class MyReference<K,T> extends WeakReference<T> {
-    final K key;
+    private final K key;
 
-    public MyReference(K key, T referent, ReferenceQueue<? super T> q) {
+    private MyReference(K key, T referent, ReferenceQueue<? super T> q) {
       super(referent, q);
       this.key = key;
     }
@@ -39,7 +40,7 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
     myMap = new THashMap<K, MyReference<K,V>>();
   }
 
-  public WeakValueHashMap(TObjectHashingStrategy<K> strategy) {
+  public WeakValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
     myMap = new THashMap<K, MyReference<K,V>>(strategy);
   }
 
@@ -49,58 +50,71 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
       if (ref == null) {
         return;
       }
-      if (myMap.get(ref.key) == ref){
-        myMap.remove(ref.key);
+      @SuppressWarnings("unchecked")
+      K key = (K)ref.key;
+      if (myMap.get(key) == ref){
+        myMap.remove(key);
       }
     }
   }
 
+  @Override
   public V get(Object key) {
     MyReference<K,V> ref = myMap.get(key);
     if (ref == null) return null;
     return ref.get();
   }
 
+  @Override
   public V put(K key, V value) {
     processQueue();
     MyReference<K,V> oldRef = myMap.put(key, new MyReference<K,V>(key, value, myQueue));
     return oldRef != null ? oldRef.get() : null;
   }
 
+  @Override
   public V remove(Object key) {
     processQueue();
     MyReference<K,V> ref = myMap.remove(key);
     return ref != null ? ref.get() : null;
   }
 
+  @Override
   public void putAll(Map<? extends K, ? extends V> t) {
     throw new RuntimeException("method not implemented");
   }
 
+  @Override
   public void clear() {
     myMap.clear();
   }
 
+  @Override
   public int size() {
     return myMap.size(); //?
   }
 
+  @Override
   public boolean isEmpty() {
     return myMap.isEmpty(); //?
   }
 
+  @Override
   public boolean containsKey(Object key) {
     return get(key) != null;
   }
 
+  @Override
   public boolean containsValue(Object value) {
     throw new RuntimeException("method not implemented");
   }
 
+  @Override
   public Set<K> keySet() {
     return myMap.keySet();
   }
 
+  @Override
   public Collection<V> values() {
     List<V> result = new ArrayList<V>();
     final Collection<MyReference<K, V>> refs = myMap.values();
@@ -113,6 +127,7 @@ public final class WeakValueHashMap<K,V> implements Map<K,V>{
     return result;
   }
 
+  @Override
   public Set<Entry<K, V>> entrySet() {
     throw new RuntimeException("method not implemented");
   }

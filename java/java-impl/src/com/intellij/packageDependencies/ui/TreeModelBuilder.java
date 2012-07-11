@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -172,7 +173,7 @@ public class TreeModelBuilder {
           VirtualFile dir = null;
           public boolean processFile(VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
-              if (lastParent != null && dir != fileOrDir.getParent()) {
+              if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
                 lastParent = null;
               }
               lastParent = buildFileNode(fileOrDir, lastParent);

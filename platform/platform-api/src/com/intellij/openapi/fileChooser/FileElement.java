@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -84,7 +85,7 @@ public class FileElement {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof FileElement) {
-      if (((FileElement)obj).myFile == myFile) return true;
+      if (Comparing.equal(((FileElement)obj).myFile, myFile)) return true;
     }
     return false;
   }

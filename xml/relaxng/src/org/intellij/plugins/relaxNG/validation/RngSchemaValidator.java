@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -94,7 +95,7 @@ public class RngSchemaValidator extends ExternalAnnotator {
 
     if (systemId != null) {
       final VirtualFile virtualFile = findVirtualFile(systemId);
-      if (virtualFile != file.getVirtualFile()) {
+      if (!Comparing.equal(virtualFile, file.getVirtualFile())) {
         return;
       }
     }

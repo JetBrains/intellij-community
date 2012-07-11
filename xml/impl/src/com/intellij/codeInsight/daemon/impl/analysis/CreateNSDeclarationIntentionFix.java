@@ -37,6 +37,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiDocumentManager;
@@ -129,7 +130,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final PsiFile containingFile = descriptor.getPsiElement().getContainingFile();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     final PsiFile file = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()):null;
-    if (file == null || file.getVirtualFile() != containingFile.getVirtualFile()) return;
+    if (file == null || !Comparing.equal(file.getVirtualFile(), containingFile.getVirtualFile())) return;
 
     try { invoke(project, editor, containingFile); } catch (IncorrectOperationException ex) {
       LOG.error(ex);

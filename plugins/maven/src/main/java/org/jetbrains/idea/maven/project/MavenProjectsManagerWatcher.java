@@ -346,7 +346,7 @@ public class MavenProjectsManagerWatcher {
 
   private boolean isSettingsFile(VirtualFile f) {
     for (VirtualFilePointer each : mySettingsFilesPointers) {
-      if (each.getFile() == f) return true;
+      if (Comparing.equal(each.getFile(), f)) return true;
     }
     return false;
   }

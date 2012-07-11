@@ -200,7 +200,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     boolean unsplit = false;
     if (mySplittedWindow != null && !mySplittedWindow.isDisposed()) {
       final EditorWithProviderComposite[] editors = mySplittedWindow.getEditors();
-      if (editors.length == 1 && editors[0].getFile() == myNewVirtualFile) {
+      if (editors.length == 1 && Comparing.equal(editors[0].getFile(), myNewVirtualFile)) {
         unsplit = true;
       }
     }

@@ -17,6 +17,7 @@
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -46,7 +47,7 @@ public class XsltIncludeIndex {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < which.length; i++) {
       final VirtualFile file = which[i];
-      if (file == from) {
+      if (Comparing.equal(file, from)) {
         return true;
       }
     }

@@ -103,7 +103,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
     if (referred != null) {
       referred.accept(this);
     }
-    super.visitDomElement(element);
+    super.visitAntDomElement(element);
   }
 
   @Nullable

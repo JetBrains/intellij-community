@@ -30,6 +30,7 @@ import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntObjectHashMap;
 import junit.framework.TestCase;
 import org.jetbrains.asm4.ClassWriter;
 
@@ -65,6 +66,7 @@ public class AsmCodeGeneratorTest extends TestCase {
 
     java.util.List<URL> cp = new ArrayList<URL>();
     appendPath(cp, JBTabbedPane.class);
+    appendPath(cp, TIntObjectHashMap.class);
     appendPath(cp, UIUtil.class);
     appendPath(cp, SystemInfoRt.class);
     appendPath(cp, ApplicationManager.class);
@@ -319,7 +321,7 @@ public class AsmCodeGeneratorTest extends TestCase {
     assertTrue(panel.getBorder() instanceof TitledBorder);
     TitledBorder border = (TitledBorder) panel.getBorder();
     assertEquals("BorderTitle", border.getTitle());
-    assertTrue(border.getBorder() instanceof EtchedBorder);
+    assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
   }
 
   public void testMnemonic() throws Exception {
