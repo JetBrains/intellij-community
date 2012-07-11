@@ -85,6 +85,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
       final PsiElement element = elements[0];
 
+      if (element == null)
+        return;
+
       PsiElement navElement = element.getNavigationElement();
       navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
 
