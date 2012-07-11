@@ -193,8 +193,8 @@ public class FileSystemUtil {
 
     @Override
     public FileAttributes getAttributes(@NotNull final String path) throws Exception {
-      final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
       try {
+        final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
         if (SystemInfo.isWindows) {
           final Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "dos:*", myNoFollowLinkOptions);
           return new FileAttributes((Boolean)attributes.get("isDirectory"),
