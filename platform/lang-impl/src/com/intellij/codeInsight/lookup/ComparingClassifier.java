@@ -18,8 +18,7 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -29,50 +28,69 @@ import java.util.*;
 public abstract class ComparingClassifier<T> extends Classifier<T> {
   protected final Classifier<T> myNext;
   protected final String myName;
+  private final boolean myNegated;
 
   public ComparingClassifier(Classifier<T> next, String name) {
-    myNext = next;
-    myName = name;
+    this(next, name, false);
   }
 
-  @NotNull
+  protected ComparingClassifier(Classifier<T> next, String name, boolean negated) {
+    myNext = next;
+    myName = name;
+    myNegated = negated;
+  }
+
+  @Nullable
   public abstract Comparable getWeight(T t);
 
   public void addElement(T t) {
     myNext.addElement(t);
   }
 
-  private TreeMap<Comparable, List<T>> groupByWeights(Iterable<T> source) {
-    TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
-    for (T t : source) {
-      final Comparable weight = getWeight(t);
-      List<T> list = map.get(weight);
-      if (list == null) {
-        map.put(weight, list = new SmartList<T>());
-      }
-      list.add(t);
-    }
-    return map;
-  }
-
   @Override
   public Iterable<T> classify(Iterable<T> source, ProcessingContext context) {
-    return ContainerUtil.flatten(groupByWeights(myNext.classify(source, context)).values());
+    List<T> nulls = null;
+    TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
+    int count = 0;
+    for (T t : myNext.classify(source, context)) {
+      count++;
+      final Comparable weight = getWeight(t);
+      if (weight == null) {
+        if (nulls == null) nulls = new SmartList<T>();
+        nulls.add(t);
+      } else {
+        List<T> list = map.get(weight);
+        if (list == null) {
+          map.put(weight, list = new SmartList<T>());
+        }
+        list.add(t);
+      }
+    }
+
+    ArrayList<T> result = new ArrayList<T>(count);
+    Collection<List<T>> values = myNegated ? map.descendingMap().values() : map.values();
+    for (List<T> value : values) {
+      result.addAll(value);
+    }
+    if (nulls != null) {
+      result.addAll(nulls);
+    }
+    return result;
   }
 
   @Override
   public void describeItems(LinkedHashMap<T, StringBuilder> map, ProcessingContext context) {
-    final Map<Comparable, List<T>> treeMap = groupByWeights(new ArrayList<T>(map.keySet()));
-    if (treeMap.size() > 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      for (Map.Entry<Comparable, List<T>> entry: treeMap.entrySet()){
-        for (T t : entry.getValue()) {
-          final StringBuilder builder = map.get(t);
-          if (builder.length() > 0) {
-            builder.append(", ");
-          }
-
-          builder.append(myName).append("=").append(entry.getKey());
+    Map<T, String> weights = new IdentityHashMap<T, String>();
+    for (T t : map.keySet()) {
+      weights.put(t, String.valueOf(getWeight(t)));
+    }
+    if (new HashSet<String>(weights.values()).size() > 1 || ApplicationManager.getApplication().isUnitTestMode() || true) {
+      for (T t : map.keySet()) {
+        final StringBuilder builder = map.get(t);
+        if (builder.length() > 0) {
+          builder.append(", ");
         }
+        builder.append(myName).append("=").append(weights.get(t));
       }
     }
     myNext.describeItems(map, context);

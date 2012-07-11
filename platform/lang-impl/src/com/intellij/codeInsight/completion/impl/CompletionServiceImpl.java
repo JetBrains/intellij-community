@@ -279,11 +279,10 @@ public class CompletionServiceImpl extends CompletionService{
         sorter = sorter.withClassifier(new PrefixMatchingClassifier(id, location));
       }
       else {
-        sorter = sorter.weigh(new LookupElementWeigher(id) {
-          @NotNull
+        sorter = sorter.weigh(new LookupElementWeigher(id, true) {
           @Override
           public Comparable weigh(@NotNull LookupElement element) {
-            return new NegatingComparable(weigher.weigh(element, location));
+            return weigher.weigh(element, location);
           }
         });
       }

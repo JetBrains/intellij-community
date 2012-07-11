@@ -15,9 +15,10 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.ForceableComparable;
 import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -28,22 +29,17 @@ import java.util.Map;
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
   private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<LookupElement, Comparable>();
   private final LookupElementWeigher myWeigher;
-  private Comparable myFirstWeight;
+  private Ref<Comparable> myFirstWeight;
   private boolean myPrimitive = true;
 
   public CachingComparingClassifier(Classifier<LookupElement> next, LookupElementWeigher weigher) {
-    super(next, weigher.toString());
+    super(next, weigher.toString(), weigher.isNegated());
     myWeigher = weigher;
   }
 
-  @NotNull
   @Override
   public final Comparable getWeight(LookupElement t) {
-    final Comparable weight = myWeights.get(t);
-    if (weight == null) {
-      throw new AssertionError(myName + "; " + myWeights.containsKey(t) + "; element=" + t);
-    }
-    return weight;
+    return myWeights.get(t);
   }
 
   @Override
@@ -63,8 +59,8 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
     }
     if (myPrimitive) {
       if (myFirstWeight == null) {
-        myFirstWeight = weight;
-      } else if (!myFirstWeight.equals(weight)) {
+        myFirstWeight = Ref.create(weight);
+      } else if (!Comparing.equal(myFirstWeight.get(), weight)) {
         myPrimitive = false;
       }
     }
