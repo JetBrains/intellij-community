@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -131,7 +132,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myRefCountHolder = refCountHolder;
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
-        success = refCountHolder.analyze(file, dirtyScope, action);
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        success = indicator instanceof DaemonProgressIndicator && refCountHolder.analyze(file, dirtyScope, action, (DaemonProgressIndicator)indicator);
       }
       else {
         myRefCountHolder = null;
