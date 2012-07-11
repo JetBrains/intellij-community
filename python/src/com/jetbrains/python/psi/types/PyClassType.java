@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
@@ -150,7 +151,9 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
             if (base_it.hasNext()) {
               return new PyClassType(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
             }
-            else return null; // no base classes = super() cannot proxy anything meaningful from a base class
+            else {
+              return null; // no base classes = super() cannot proxy anything meaningful from a base class
+            }
           }
         }
       }
@@ -204,7 +207,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       if (metaclass instanceof PyReferenceExpression) {
         final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
         if (result.getElement() instanceof PyClass) {
-          return new PyClassType((PyClass) result.getElement(), false);
+          return new PyClassType((PyClass)result.getElement(), false);
         }
       }
     }
@@ -270,7 +273,12 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(this)) {
         final String name = member.getName();
-        ret.add(LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(getName()));
+        LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(getName());
+        if (member.isFunction()) {
+          lookupElementBuilder = lookupElementBuilder.withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS);
+          lookupElementBuilder.withTailText("()");
+        }
+        ret.add(lookupElementBuilder);
       }
     }
 
@@ -340,7 +348,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   private static boolean isInSuperCall(PyExpression hook) {
     if (hook instanceof PyReferenceExpression) {
       final PyExpression qualifier = ((PyReferenceExpression)hook).getQualifier();
-      return qualifier instanceof PyCallExpression && ((PyCallExpression) qualifier).isCalleeText(PyNames.SUPER);
+      return qualifier instanceof PyCallExpression && ((PyCallExpression)qualifier).isCalleeText(PyNames.SUPER);
     }
     return false;
   }

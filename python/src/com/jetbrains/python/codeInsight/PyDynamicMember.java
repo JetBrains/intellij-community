@@ -28,6 +28,8 @@ public class PyDynamicMember {
   private final PsiElement myTarget;
   private PyPsiPath myPsiPath;
 
+  boolean myFunction = false;
+
   public PyDynamicMember(@NotNull final String name, @NotNull final String type, final boolean resolveToInstance) {
     myName = name;
     myResolveToInstance = resolveToInstance;
@@ -101,6 +103,17 @@ public class PyDynamicMember {
     return this;
   }
 
+  public PyDynamicMember toPsiElement(final PsiElement psiElement) {
+    myPsiPath = new PyPsiPath() {
+
+      @Override
+      public PsiElement resolve(PsiElement module) {
+        return psiElement;
+      }
+    };
+    return this;
+  }
+
   public String getName() {
     return myName;
   }
@@ -117,7 +130,8 @@ public class PyDynamicMember {
     if (myTarget != null) {
       return myTarget;
     }
-    PyClass targetClass = myTypeName != null && myTypeName.indexOf('.') > 0 ? PyClassNameIndex.findClass(myTypeName, context.getProject()) : null;
+    PyClass targetClass =
+      myTypeName != null && myTypeName.indexOf('.') > 0 ? PyClassNameIndex.findClass(myTypeName, context.getProject()) : null;
     final PsiElement resolveTarget = findResolveTarget(context);
     if (resolveTarget instanceof PyFunction) {
       return resolveTarget;
@@ -143,6 +157,15 @@ public class PyDynamicMember {
     }
     int pos = myTypeName.lastIndexOf('.');
     return myTypeName.substring(pos + 1);
+  }
+
+  public PyDynamicMember asFunction() {
+    myFunction = true;
+    return this;
+  }
+
+  public boolean isFunction() {
+    return myFunction;
   }
 
   private class MyInstanceElement extends PyElementImpl implements PyExpression {
