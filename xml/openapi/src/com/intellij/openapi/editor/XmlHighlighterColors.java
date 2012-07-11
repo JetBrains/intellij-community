@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 
 /**
  * @author yole
@@ -41,5 +42,5 @@ public class XmlHighlighterColors {
   public static final TextAttributesKey HTML_ENTITY_REFERENCE = TextAttributesKey.createTextAttributesKey("HTML_ENTITY_REFERENCE");
 
   public static final TextAttributesKey HTML_CODE =
-    TextAttributesKey.createTextAttributesKey("HTML_CODE", HighlighterColors.TEXT.getDefaultAttributes());
+    TextAttributesKeyDefaults.createTextAttributesKey("HTML_CODE", TextAttributesKeyDefaults.getDefaultAttributes(HighlighterColors.TEXT));
 }

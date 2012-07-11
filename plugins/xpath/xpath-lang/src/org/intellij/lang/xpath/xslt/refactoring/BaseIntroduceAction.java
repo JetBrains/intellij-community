@@ -21,6 +21,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -110,10 +111,12 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>(matchingExpressions.size() + 1);
         if (matchingExpressions.size() > 0) {
             final SelectionModel selectionModel = editor.getSelectionModel();
-            highlightManager.addRangeHighlight(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
+            highlightManager.addRangeHighlight(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), TextAttributesKeyDefaults
+              .getDefaultAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES), false, highlighters);
             for (XPathExpression expr : matchingExpressions) {
                 final TextRange range = XsltCodeInsightUtil.getRangeInsideHostingFile(expr);
-                highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
+                highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), TextAttributesKeyDefaults
+                  .getDefaultAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES), false, highlighters);
 
                 final XmlTag tag = PsiTreeUtil.getContextOfType(expr, XmlTag.class, true);
                 assert tag != null;

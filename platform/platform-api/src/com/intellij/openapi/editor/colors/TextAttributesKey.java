@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.colors;
 
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -29,12 +28,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
  */
-
 public final class TextAttributesKey implements Comparable<TextAttributesKey>, JDOMExternalizable {
-  private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
-
   public String myExternalName;
-  public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
   private static final ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
 
   private TextAttributesKey(String externalName) {
@@ -59,46 +54,6 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
 
   public int compareTo(TextAttributesKey key) {
     return myExternalName.compareTo(key.myExternalName);
-  }
-
-  /**
-   * Returns the default text attributes associated with the key.
-   *
-   * @return the text attributes.
-   */
-
-  public TextAttributes getDefaultAttributes() {
-    if (myDefaultAttributes == NULL_ATTRIBUTES) {
-      // E.g. if one text key reuse default attributes of some other predefined key
-      myDefaultAttributes = null;
-      EditorColorsManager manager = EditorColorsManager.getInstance();
-
-      if (manager != null) { // Can be null in test mode
-
-        // It is reasonable to fetch attributes from Default color scheme. Otherwise if we launch IDE and then
-        // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
-        // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
-        final EditorColorsScheme defaultColorScheme = manager.getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
-        myDefaultAttributes = defaultColorScheme.getAttributes(this);
-      }
-    }
-    return myDefaultAttributes;
-  }
-
-  /**
-   * Registers a text attribute key with the specified identifier and default attributes.
-   *
-   * @param externalName      the unique identifier of the key.
-   * @param defaultAttributes the default text attributes associated with the key.
-   * @return the new key instance, or an existing instance if the key with the same
-   *         identifier was already registered.
-   */
-  @NotNull public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
-    TextAttributesKey key = find(externalName);
-    if (key.myDefaultAttributes == null || key.myDefaultAttributes == NULL_ATTRIBUTES) {
-      key.myDefaultAttributes = defaultAttributes;
-    }
-    return key;
   }
 
   /**

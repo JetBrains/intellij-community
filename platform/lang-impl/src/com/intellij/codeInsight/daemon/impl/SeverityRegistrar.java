@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -73,7 +74,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
         final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
         TextAttributes textAttributes = scheme.getAttributes(attributesKey);
         if (textAttributes == null) {
-          textAttributes = attributesKey.getDefaultAttributes();
+          textAttributes = TextAttributesKeyDefaults.getDefaultAttributes(attributesKey);
         }
         HighlightDisplayLevel.registerSeverity(highlightSeverity, provider.getTrafficRendererColor(textAttributes));
       }
