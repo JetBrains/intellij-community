@@ -328,6 +328,16 @@ public class VfsUtil extends VfsUtilCore {
     return virtualFileManager.findFileByUrl(vfUrl);
   }
 
+  @Nullable
+  public static VirtualFile findFileByIoFile(@NotNull File file, boolean refreshIfNeeded) {
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    VirtualFile virtualFile = fileSystem.findFileByIoFile(file);
+    if (virtualFile == null && refreshIfNeeded) {
+      virtualFile = fileSystem.refreshAndFindFileByIoFile(file);
+    }
+    return virtualFile;
+  }
+
   /**
    * Converts VsfUrl info java.net.URL. Does not support "jar:" protocol.
    *
