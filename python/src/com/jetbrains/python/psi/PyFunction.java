@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PyFunction
 extends
   PsiNamedElement, StubBasedPsiElement<PyFunctionStub>,
-  PsiNameIdentifierOwner, PyStatement, Callable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable {
+  PsiNameIdentifierOwner, PyStatement, Callable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = new ArrayFactory<PyFunction>() {

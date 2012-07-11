@@ -121,7 +121,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (qualifier != null) {
       qualifiers.add(qualifier);
     }
-    Set<PyExpression> visited = new HashSet<PyExpression>();
+    Set<PsiElement> visited = new HashSet<PsiElement>();
     visited.add(this);
     SEARCH:
     while (ret == null) {
@@ -129,10 +129,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       for (ResolveResult target : targets) {
         PsiElement elt = target.getElement();
         if (elt instanceof PyTargetExpression) {
-          if (!resolveContext.getTypeEvalContext().maySwitchToAST((PyTargetExpression)elt)) {
-            break;
+          PsiElement assigned_from = null;
+          final PyTargetExpression expr = (PyTargetExpression)elt;
+          if (resolveContext.getTypeEvalContext().maySwitchToAST(expr) || expr.getStub() == null) {
+            assigned_from = expr.findAssignedValue();
           }
-          PyExpression assigned_from = ((PyTargetExpression)elt).findAssignedValue();
+          // TODO: Maybe findAssignedValueByStub() should become a part of the PyTargetExpression interface
+          else if (elt instanceof PyTargetExpressionImpl) {
+            assigned_from = ((PyTargetExpressionImpl)elt).findAssignedValueByStub();
+          }
           if (assigned_from instanceof PyReferenceExpression) {
             if (visited.contains(assigned_from)) {
               break;
@@ -298,13 +303,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
     }
-    if (target instanceof PyTypedElement) {
-      return context.getType((PyTypedElement)target);
-    }
-    if (target instanceof PsiDirectory) {
-      PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
-      if (file != null) return getTypeFromTarget(file, context, anchor);
-    }
     if (target instanceof PyFunction) {
       final PyDecoratorList decoratorList = ((PyFunction)target).getDecoratorList();
       if (decoratorList != null) {
@@ -319,6 +317,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           }
         }
       }
+    }
+    if (target instanceof PyTypedElement) {
+      return context.getType((PyTypedElement)target);
+    }
+    if (target instanceof PsiDirectory) {
+      PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
+      if (file != null) return getTypeFromTarget(file, context, anchor);
     }
     return null;
   }
