@@ -42,6 +42,23 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final Document document = editor.getDocument();
     String newText = text;
 
+    //a lot of different indents inside selected
+    final String[] split = StringUtil.trimTrailing(text).split("\n");
+    int firstIndent = 0;
+    int currentIndent;
+    for (String s : split) {
+      currentIndent = s.length() - s.trim().length();
+      if (split[0].equals(s) ) {
+        firstIndent = currentIndent;
+      }
+      if (!StringUtil.isEmptyOrSpaces(s) && firstIndent > currentIndent) {
+        if (caretModel.getLogicalPosition().column > 0)
+          return StringUtil.trimLeading(text);
+        else
+          return text;
+      }
+    }
+
     if (file instanceof PyFile && (StringUtil.startsWithWhitespace(text) || StringUtil.endsWithLineBreak(text) ||
                                    StringUtil.splitByLines(text).length > 1)) {
       if (text.endsWith("\n")) text = text.substring(0, text.length() - 1);
