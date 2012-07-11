@@ -35,10 +35,9 @@ public class GetTextLexerTest extends UsefulTestCase {
   }
 
   private static void doTest(String fileName) throws IOException {
-    final String fullPath = GetTextUtils.getFullPath(fileName);
     final Lexer lexer = new GetTextLexer();
-    final String testText = getFileText(fullPath + ".po");
-    final String expected = fullPath + ".txt";
+    final String testText = getFileText(GetTextUtils.getFullSourcePath(fileName));
+    final String expected = GetTextUtils.getFullLexerPath(fileName);
     doFileLexerTest(lexer, testText, expected);
   }
 
@@ -53,7 +52,7 @@ public class GetTextLexerTest extends UsefulTestCase {
   }
 
   public void testLexer() throws Throwable {
-    doTest("string");
+    doTest("command_format");
   }
 
   public void testAllFiles() throws Throwable {

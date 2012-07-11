@@ -1,0 +1,6 @@
+MSGID ('msgid')
+WHITE_SPACE (' ')
+STRING ('""')
+WHITE_SPACE ('
+')
+MSGSTR ('msgstr')

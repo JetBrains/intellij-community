@@ -10,10 +10,7 @@ import com.jetbrains.gettext.GetTextTokenTypes;
  */
 public class MsgstrCommand extends MsgCommand {
 
-  private int count;
-
   public MsgstrCommand() {
-    count = 0;
   }
 
   @Override
@@ -22,27 +19,33 @@ public class MsgstrCommand extends MsgCommand {
   }
 
   @Override
-  public void parse(PsiBuilder builder) throws CommandFormatException {
-    try {
-      super.parse(builder);
-    }
-    catch (CommandFormatException e) {
-      parseBraces(builder);
-    }
-    //return super.parse(builder) || parseBraces(builder);
+  public boolean parse(PsiBuilder builder) {
+    return super.parse(builder) || parseBraces(builder);
   }
 
-  private boolean parseBraces(PsiBuilder builder) throws CommandFormatException {
+  private boolean parseBraces(PsiBuilder builder) {
     if (builder.getTokenType() == GetTextTokenTypes.LBRACE) {
       builder.advanceLexer();
       if (builder.getTokenType() == GetTextTokenTypes.NUMBER) {
-        builder.advanceLexer();
+        if (!checkNumber(builder)) {
+          PsiBuilder.Marker marker = builder.mark();
+          builder.advanceLexer();
+          marker.error("Wrong number format");
+        }
+        else {
+          builder.advanceLexer();
+        }
         if (builder.getTokenType() == GetTextTokenTypes.RBRACE) {
-          super.parse(builder);
+          return super.parse(builder);
         }
       }
     }
     return false;
+  }
+
+  private static boolean checkNumber(PsiBuilder builder) {
+    String number = builder.getTokenText();
+    return number != null && !number.isEmpty() && !(number.charAt(0) == '0' && !number.equals("0"));
   }
 
   @Override
@@ -58,19 +61,5 @@ public class MsgstrCommand extends MsgCommand {
   @Override
   public String getName() {
     return "msgstr";
-  }
-
-  @Override
-  public int getCount() {
-    return count;
-  }
-
-  @Override
-  public boolean register() {
-    boolean result = super.register();
-    if (result) {
-      count++;
-    }
-    return result;
   }
 }

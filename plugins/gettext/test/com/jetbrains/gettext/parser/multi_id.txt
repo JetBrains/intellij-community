@@ -1,0 +1,39 @@
+GNU GetText File
+  MSG_BLOCK
+    HEADER
+      <empty list>
+    MSG_CONTENT
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('""')
+      PsiWhiteSpace('\n')
+      MSGSTR
+        PsiElement(MSGSTR)('msgstr')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('""')
+  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n')
+  MSG_BLOCK
+    HEADER
+      <empty list>
+    PsiErrorElement:Not enough commands
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('""')
+      PsiWhiteSpace('\n')
+      PsiWhiteSpace('\n')
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('""')
+  PsiWhiteSpace('\n')
+  MSG_BLOCK
+    HEADER
+      <empty list>
+    PsiErrorElement:Not enough commands
+      MSGSTR
+        PsiElement(MSGSTR)('msgstr')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('""')
