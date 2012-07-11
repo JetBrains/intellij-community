@@ -128,6 +128,10 @@
       <add-to-group anchor="last" group-id="Internal"/>
     </action>
 
+    <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
+            id="ShowSerializedXml">
+      <add-to-group anchor="last" group-id="Internal"/>
+    </action>
   </actions>
 
 </idea-plugin>
