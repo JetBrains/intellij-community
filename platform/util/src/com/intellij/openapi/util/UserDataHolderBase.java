@@ -69,7 +69,6 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
         break;
       }
     }
-    T data = getUserData(key);
   }
 
   public <T> T getCopyableUserData(Key<T> key) {
