@@ -3,6 +3,7 @@ package org.jetbrains.yaml;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,14 +31,16 @@ public class YAMLHighlighter {
   static final String SIGN_ID = "YAML_SIGN";
 
   // Text default attrs
-  public static final TextAttributes SCALAR_KEY_DEFAULT_ATTRS = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes().clone();
-  public static final TextAttributes COMMENT_DEFAULT_ATTRS = SyntaxHighlighterColors.DOC_COMMENT.getDefaultAttributes().clone();
-  public static final TextAttributes SCALAR_TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes SCALAR_STRING_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes SCALAR_DSTRING_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes SCALAR_LIST_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes TEXT_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
-  public static final TextAttributes SIGN_DEFAULT_ATTRS = HighlighterColors.TEXT.getDefaultAttributes().clone();
+  public static final TextAttributes SCALAR_KEY_DEFAULT_ATTRS = TextAttributesKeyDefaults
+    .getDefaultAttributes(SyntaxHighlighterColors.KEYWORD).clone();
+  public static final TextAttributes COMMENT_DEFAULT_ATTRS = TextAttributesKeyDefaults
+    .getDefaultAttributes(SyntaxHighlighterColors.DOC_COMMENT).clone();
+  public static final TextAttributes SCALAR_TEXT_DEFAULT_ATTRS = TextAttributesKeyDefaults.getDefaultAttributes(HighlighterColors.TEXT).clone();
+  public static final TextAttributes SCALAR_STRING_DEFAULT_ATTRS = TextAttributesKeyDefaults.getDefaultAttributes(HighlighterColors.TEXT).clone();
+  public static final TextAttributes SCALAR_DSTRING_DEFAULT_ATTRS = TextAttributesKeyDefaults.getDefaultAttributes(HighlighterColors.TEXT).clone();
+  public static final TextAttributes SCALAR_LIST_DEFAULT_ATTRS = TextAttributesKeyDefaults.getDefaultAttributes(HighlighterColors.TEXT).clone();
+  public static final TextAttributes TEXT_DEFAULT_ATTRS = TextAttributesKeyDefaults.getDefaultAttributes(HighlighterColors.TEXT).clone();
+  public static final TextAttributes SIGN_DEFAULT_ATTRS = TextAttributesKeyDefaults.getDefaultAttributes(HighlighterColors.TEXT).clone();
 
   static {
     SCALAR_STRING_DEFAULT_ATTRS.setForegroundColor(new Color(0, 128, 128));
@@ -50,16 +53,19 @@ public class YAMLHighlighter {
   }
 
   // text attributes keys
-  public static final TextAttributesKey SCALAR_KEY = TextAttributesKey.createTextAttributesKey(SCALAR_KEY_ID, SCALAR_KEY_DEFAULT_ATTRS);
-  public static final TextAttributesKey SCALAR_TEXT = TextAttributesKey.createTextAttributesKey(SCALAR_TEXT_ID, SCALAR_TEXT_DEFAULT_ATTRS);
+  public static final TextAttributesKey SCALAR_KEY = TextAttributesKeyDefaults
+    .createTextAttributesKey(SCALAR_KEY_ID, SCALAR_KEY_DEFAULT_ATTRS);
+  public static final TextAttributesKey SCALAR_TEXT = TextAttributesKeyDefaults
+    .createTextAttributesKey(SCALAR_TEXT_ID, SCALAR_TEXT_DEFAULT_ATTRS);
   public static final TextAttributesKey SCALAR_STRING =
-      TextAttributesKey.createTextAttributesKey(SCALAR_STRING_ID, SCALAR_STRING_DEFAULT_ATTRS);
+      TextAttributesKeyDefaults.createTextAttributesKey(SCALAR_STRING_ID, SCALAR_STRING_DEFAULT_ATTRS);
   public static final TextAttributesKey SCALAR_DSTRING =
-      TextAttributesKey.createTextAttributesKey(SCALAR_DSTRING_ID, SCALAR_DSTRING_DEFAULT_ATTRS);
-  public static final TextAttributesKey SCALAR_LIST = TextAttributesKey.createTextAttributesKey(SCALAR_LIST_ID, SCALAR_LIST_DEFAULT_ATTRS);
-  public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(COMMENT_ID, COMMENT_DEFAULT_ATTRS);
-  public static final TextAttributesKey TEXT = TextAttributesKey.createTextAttributesKey(TEXT_ID, TEXT_DEFAULT_ATTRS);
-  public static final TextAttributesKey SIGN = TextAttributesKey.createTextAttributesKey(SIGN_ID, SIGN_DEFAULT_ATTRS);
+      TextAttributesKeyDefaults.createTextAttributesKey(SCALAR_DSTRING_ID, SCALAR_DSTRING_DEFAULT_ATTRS);
+  public static final TextAttributesKey SCALAR_LIST = TextAttributesKeyDefaults
+    .createTextAttributesKey(SCALAR_LIST_ID, SCALAR_LIST_DEFAULT_ATTRS);
+  public static final TextAttributesKey COMMENT = TextAttributesKeyDefaults.createTextAttributesKey(COMMENT_ID, COMMENT_DEFAULT_ATTRS);
+  public static final TextAttributesKey TEXT = TextAttributesKeyDefaults.createTextAttributesKey(TEXT_ID, TEXT_DEFAULT_ATTRS);
+  public static final TextAttributesKey SIGN = TextAttributesKeyDefaults.createTextAttributesKey(SIGN_ID, SIGN_DEFAULT_ATTRS);
 
   private YAMLHighlighter() {
   }
