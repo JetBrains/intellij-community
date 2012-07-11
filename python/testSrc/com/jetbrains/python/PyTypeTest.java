@@ -362,6 +362,15 @@ public class PyTypeTest extends PyTestCase {
     }
   }
 
+  public void testFunctionAssignment() {
+    doTest("int",
+           "def f():\n" +
+           "    return 1\n" +
+           "g = f\n" +
+           "h = g\n" +
+           "expr = h()\n");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);

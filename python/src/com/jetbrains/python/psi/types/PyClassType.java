@@ -227,8 +227,9 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     return PyBuiltinCache.getInstance(myClass).getObjectType("type");
   }
 
+  @Nullable
   @Override
-  public PyType getCallType() {
+  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
     if (isDefinition()) {
       return new PyClassType(getPyClass(), false);
     }

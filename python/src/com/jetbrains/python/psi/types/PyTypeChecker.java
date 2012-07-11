@@ -311,23 +311,27 @@ public class PyTypeChecker {
       AnalyzeCallResults firstResults = null;
       for (ResolveResult result : resolveResult) {
         final PsiElement resolved = result.getElement();
-        if (resolved instanceof PyFunction) {
-          final PyFunction function = (PyFunction)resolved;
-          final boolean isRight = PyNames.isRightOperatorName(function.getName());
-          final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
-          final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
-          final PyParameter[] parameters = function.getParameterList().getParameters();
-          if (parameters.length >= 2) {
-            final PyNamedParameter param = parameters[1].getAsNamed();
-            if (arg != null && param != null) {
-              final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
-              arguments.put(arg, param);
-              final AnalyzeCallResults resutls = new AnalyzeCallResults(function, receiver, arguments);
-              if (firstResults == null) {
-                firstResults = resutls;
-              }
-              if (match(param.getType(context), arg.getType(context), context)) {
-                return resutls;
+        if (resolved instanceof PyTypedElement) {
+          final PyTypedElement typedElement = (PyTypedElement)resolved;
+          final PyType type = typedElement.getType(context);
+          if (type instanceof PyFunctionType) {
+            final PyFunction function = ((PyFunctionType)type).getFunction();
+            final boolean isRight = PyNames.isRightOperatorName(typedElement.getName());
+            final PyExpression arg = isRight ? expr.getLeftExpression() : expr.getRightExpression();
+            final PyExpression receiver = isRight ? expr.getRightExpression() : expr.getLeftExpression();
+            final PyParameter[] parameters = function.getParameterList().getParameters();
+            if (parameters.length >= 2) {
+              final PyNamedParameter param = parameters[1].getAsNamed();
+              if (arg != null && param != null) {
+                final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
+                arguments.put(arg, param);
+                final AnalyzeCallResults results = new AnalyzeCallResults(function, receiver, arguments);
+                if (firstResults == null) {
+                  firstResults = results;
+                }
+                if (match(param.getType(context), arg.getType(context), context)) {
+                  return results;
+                }
               }
             }
           }
@@ -345,17 +349,20 @@ public class PyTypeChecker {
     final PsiReference ref = expr.getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     if (ref != null) {
       final PsiElement resolved = ref.resolve();
-      if (resolved instanceof PyFunction) {
-        final PyFunction function = (PyFunction)resolved;
-        final PyParameter[] parameters = function.getParameterList().getParameters();
-        if (parameters.length == 2) {
-          final PyNamedParameter param = parameters[1].getAsNamed();
-          if (param != null) {
-            final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
-            final PyExpression arg = expr.getIndexExpression();
-            if (arg != null) {
-              arguments.put(arg, param);
-              return new AnalyzeCallResults(function, expr.getOperand(), arguments);
+      if (resolved instanceof PyTypedElement) {
+        final PyType type = ((PyTypedElement)resolved).getType(context);
+        if (type instanceof PyFunctionType) {
+          final PyFunction function = ((PyFunctionType)type).getFunction();
+          final PyParameter[] parameters = function.getParameterList().getParameters();
+          if (parameters.length == 2) {
+            final PyNamedParameter param = parameters[1].getAsNamed();
+            if (param != null) {
+              final Map<PyExpression, PyNamedParameter> arguments = new LinkedHashMap<PyExpression, PyNamedParameter>();
+              final PyExpression arg = expr.getIndexExpression();
+              if (arg != null) {
+                arguments.put(arg, param);
+                return new AnalyzeCallResults(function, expr.getOperand(), arguments);
+              }
             }
           }
         }

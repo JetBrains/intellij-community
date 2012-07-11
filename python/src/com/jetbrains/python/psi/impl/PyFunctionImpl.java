@@ -304,6 +304,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
   }
 
+  @Override
+  public PyType getType(@NotNull TypeEvalContext context) {
+    return new PyFunctionType(this);
+  }
+
   @Nullable
   public static String extractDeprecationMessage(List<PyStatement> statements) {
     for (PyStatement statement : statements) {
