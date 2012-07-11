@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -72,12 +73,12 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    if (module == null) return;
+    if (module == null || virtualFile == null) return;
 
     final String className = ClassUtil.getJVMClassName(psiClass);
 
     final Project project = getEventProject(e);
-    CompilerManager.getInstance(project).compile(new VirtualFile[]{virtualFile}, new CompileStatusNotification() {
+    CompilerManager.getInstance(project).make(new FileSetCompileScope(Arrays.asList(virtualFile), new Module[]{module}), new CompileStatusNotification() {
       @Override
       public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
         if (aborted || errors > 0) return;
