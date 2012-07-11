@@ -70,7 +70,6 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
       }
     }
     T data = getUserData(key);
-    assert Comparing.equal(data, value) : key + " -> " + value + "; actual: " + data + "; " + myUserMap + ": " + myUserMap.getClass();
   }
 
   public <T> T getCopyableUserData(Key<T> key) {
