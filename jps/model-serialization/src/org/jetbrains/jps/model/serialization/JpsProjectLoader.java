@@ -4,6 +4,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.DummyJpsElementProperties;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsElementProperties;
@@ -11,7 +12,6 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
@@ -131,33 +131,29 @@ public class JpsProjectLoader extends JpsLoaderBase {
     expander.addFileHierarchyReplacements("MODULE_DIR", file.getParentFile());
     final Element moduleRoot = loadRootElement(file, expander);
     final String typeId = moduleRoot.getAttributeValue("type");
-    final JpsModuleType<?> moduleType = getModuleType(typeId);
-    final JpsModule module = createModule(name, moduleRoot, moduleType);
+    final JpsModulePropertiesLoader<?> loader = getModulePropertiesLoader(typeId);
+    final JpsModule module = createModule(name, moduleRoot, loader);
     JpsModuleLoader.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"));
     return module;
   }
 
-  private static <P extends JpsElementProperties> JpsModule createModule(String name, Element moduleRoot, JpsModuleType<P> moduleType) {
-    return JpsElementFactory.getInstance().createModule(name, moduleType, loadModuleProperties(moduleType, moduleRoot));
+  private static <P extends JpsElementProperties> JpsModule createModule(String name, Element moduleRoot, JpsModulePropertiesLoader<P> loader) {
+    return JpsElementFactory.getInstance().createModule(name, loader.getType(), loader.loadProperties(moduleRoot));
   }
 
-  private static <P extends JpsElementProperties> P loadModuleProperties(JpsModuleType<P> type, Element moduleRoot) {
+  private static JpsModulePropertiesLoader<?> getModulePropertiesLoader(@NotNull String typeId) {
     for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
-      P properties = extension.loadModuleProperties(type, moduleRoot);
-      if (properties != null) {
-        return properties;
+      for (JpsModulePropertiesLoader<?> loader : extension.getModulePropertiesLoaders()) {
+        if (loader.getTypeId().equals(typeId)) {
+          return loader;
+        }
       }
     }
-    return (P)DummyJpsElementProperties.INSTANCE;
-  }
-
-  private static JpsModuleType<?> getModuleType(@NotNull String typeId) {
-    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
-      final JpsModuleType<?> type = extension.getModuleType(typeId);
-      if (type != null) {
-        return type;
+    return new JpsModulePropertiesLoader<DummyJpsElementProperties>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE") {
+      @Override
+      public DummyJpsElementProperties loadProperties(@Nullable Element moduleRootElement) {
+        return DummyJpsElementProperties.INSTANCE;
       }
-    }
-    return JpsJavaModuleType.INSTANCE;
+    };
   }
 }

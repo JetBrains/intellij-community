@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -52,14 +51,14 @@ public abstract class JpsModelLoaderExtension {
     return null;
   }
 
-  @Nullable
-  public JpsLibraryType<?> getLibraryType(@NotNull String typeId) {
-    return null;
+  @NotNull
+  public List<JpsModulePropertiesLoader<?>> getModulePropertiesLoaders() {
+    return Collections.emptyList();
   }
 
-  @Nullable
-  public <P extends JpsElementProperties> P loadLibraryProperties(JpsLibraryType<P> type, Element propertiesElement) {
-    return null;
+  @NotNull
+  public List<JpsLibraryPropertiesLoader<?>> getLibraryPropertiesLoaders() {
+    return Collections.emptyList();
   }
 
   @NotNull
