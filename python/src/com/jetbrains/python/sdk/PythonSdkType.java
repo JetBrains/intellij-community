@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -769,7 +770,7 @@ public class PythonSdkType extends SdkType {
       }
       final VirtualFile skeletonsDir = findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&
-          vFile.getParent() == skeletonsDir) {   // note: this will pick up some of the binary libraries not in packages
+          Comparing.equal(vFile.getParent(), skeletonsDir)) {   // note: this will pick up some of the binary libraries not in packages
         return true;
       }
     }
