@@ -179,6 +179,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTestSingleLine();
   }
 
+  public void testIndentTopLevel() {    //PY-6889
+    doTestMultiLine();
+  }
+
   private void doTest() {
     String name = getTestName(false);
 
