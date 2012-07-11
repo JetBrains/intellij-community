@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.SimpleColoredComponent;
@@ -174,9 +175,9 @@ public class ImportFromExistingAction implements QuestionAction {
     VirtualFile vFile = directory.getVirtualFile();
     if (vFile == null) return true;
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return fileIndex.getClassRootForFile(vFile) == vFile ||
-           fileIndex.getContentRootForFile(vFile) == vFile ||
-           fileIndex.getSourceRootForFile(vFile) == vFile;
+    return Comparing.equal(fileIndex.getClassRootForFile(vFile), vFile) ||
+           Comparing.equal(fileIndex.getContentRootForFile(vFile), vFile) ||
+           Comparing.equal(fileIndex.getSourceRootForFile(vFile), vFile);
   }
 
   public static boolean isResolved(PsiReference reference) {

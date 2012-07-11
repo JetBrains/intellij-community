@@ -47,6 +47,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                    StringUtil.splitByLines(text).length > 1)) {
       if (text.endsWith("\n")) text = text.substring(0, text.length() - 1);
       final int caretOffset = caretModel.getOffset();
+      int caretColumn = caretModel.getLogicalPosition().column;
       final PsiElement element = PsiUtilCore.getElementAtOffset(file, caretOffset-1);
       final int lineNumber = document.getLineNumber(caretOffset);
       final int offset = getLineStartSafeOffset(document, lineNumber);
@@ -69,7 +70,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
             if (whiteSpace instanceof PsiWhiteSpace) {
               int relatedOffset = whiteSpace.getTextRange().getEndOffset();
               final int indent = relatedOffset - getLineStartSafeOffset(document, document.getLineNumber(relatedOffset));
-              if (caretOffset > indent && document.getTextLength() > offset + indent) {
+              if (caretColumn > indent && document.getTextLength() > offset + indent) {
                 caretModel.moveToOffset(offset + indent);
                 moved = true;
               }
