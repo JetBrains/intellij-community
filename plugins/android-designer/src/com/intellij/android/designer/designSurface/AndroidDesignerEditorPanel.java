@@ -52,6 +52,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
@@ -170,11 +171,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
     final ModelParser parser = new ModelParser(getProject(), myXmlFile);
 
-    createRenderer(parser.getLayoutXmlText(), new MyThrowable(), new ThrowableRunnable<Throwable>() {
+    createRenderer(parser.getLayoutXmlText(), new MyThrowable(), new ThrowableConsumer<RenderSession, Throwable>() {
       @Override
-      public void run() throws Throwable {
-        RootView rootView = new RootView(mySession.getImage(), 30, 20);
-        parser.updateRootComponent(mySession, rootView);
+      public void consume(RenderSession session) throws Throwable {
+        RootView rootView = new RootView(session.getImage(), 30, 20);
+        parser.updateRootComponent(session, rootView);
         RadViewComponent newRootComponent = parser.getRootComponent();
 
         newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
@@ -203,7 +204,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
   }
 
-  private void createRenderer(final String layoutXmlText, final MyThrowable throwable, final ThrowableRunnable<Throwable> runnable) {
+  private void createRenderer(final String layoutXmlText,
+                              final MyThrowable throwable,
+                              final ThrowableConsumer<RenderSession, Throwable> runnable) {
     disposeRenderer();
 
     ApplicationManager.getApplication().saveAll();
@@ -271,7 +274,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             throw new RenderingException();
           }
 
-          mySession = result.getSession();
+          final RenderSession session = mySession = result.getSession();
           mySessionAlarm.cancelAllRequests();
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -280,7 +283,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
               try {
                 if (!getProject().isDisposed()) {
                   hideProgress();
-                  runnable.run();
+                  runnable.consume(session);
                 }
               }
               catch (Throwable e) {
@@ -326,13 +329,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         return ModelParser.NO_ROOT_CONTENT;
       }
     });
-    createRenderer(layoutXmlText, new MyThrowable(), new ThrowableRunnable<Throwable>() {
+    createRenderer(layoutXmlText, new MyThrowable(), new ThrowableConsumer<RenderSession, Throwable>() {
       @Override
-      public void run() throws Throwable {
+      public void consume(RenderSession session) throws Throwable {
         RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
         RootView rootView = (RootView)rootComponent.getNativeComponent();
-        rootView.setImage(mySession.getImage());
-        ModelParser.updateRootComponent(rootComponent, mySession, rootView);
+        rootView.setImage(session.getImage());
+        ModelParser.updateRootComponent(rootComponent, session, rootView);
 
         myParseTime = false;
 
