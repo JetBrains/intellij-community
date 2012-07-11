@@ -163,6 +163,9 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           if (!StringUtil.isEmptyOrSpaces(s) && firstIndent > currentIndent)
             return;
         }
+        //insert on top level, doesn't need indent
+        if (caretColumn == 0 && !pastedText.startsWith(" "))
+          return;
 
         if (textBeforeFirstLine.trim().length() == 0) {
           EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
