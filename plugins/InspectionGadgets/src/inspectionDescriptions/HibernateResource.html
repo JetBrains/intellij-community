@@ -5,6 +5,7 @@ This inspection reports any Hibernate resource which is not opened in a <b>try</
 block and closed in the corresponding <b>finally</b> block. Such resources may
 be inadvertently leaked if an exception is thrown before the resource is closed. Hibernate resources reported
 by this inspection include <b>org.hibernate.Session</b>.
+<!-- tooltip end -->
 <p>
 Use the checkbox below to specify if a Hibernate resource is allowed to be opened inside a try
 block. This style is less desirable because it is more verbose than opening a resource
