@@ -93,7 +93,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private Component myPreviouslyFocused = null;
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
   @NonNls public static final String PSI_ELEMENT_PROTOCOL = "psi_element://";
-  @NonNls private static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
+  @NonNls public static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
 
   private final ActionManagerEx myActionManagerEx;
   private boolean myCloseOnSneeze;

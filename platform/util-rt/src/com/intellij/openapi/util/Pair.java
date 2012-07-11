@@ -22,7 +22,7 @@ public class Pair<A, B> {
   public final A first;
   public final B second;
 
-  public static <A, B> Pair<A, B> create(A first, B second) {
+  public static <A, B> Pair<A, B> create(@Nullable A first, @Nullable B second) {
     return new Pair<A, B>(first, second);
   }
 
@@ -52,15 +52,17 @@ public class Pair<A, B> {
     return EMPTY;
   }
 
-  public Pair(A first, B second) {
+  public Pair(@Nullable A first, @Nullable B second) {
     this.first = first;
     this.second = second;
   }
-
+  
+  @Nullable
   public final A getFirst() {
     return first;
   }
 
+  @Nullable
   public final B getSecond() {
     return second;
   }

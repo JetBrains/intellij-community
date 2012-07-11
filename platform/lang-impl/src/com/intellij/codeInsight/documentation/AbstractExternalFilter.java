@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -38,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Locale;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,8 +54,6 @@ public abstract class AbstractExternalFilter {
   protected static @NonNls final Pattern ourHTMLFilesuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
   private static @NonNls final Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
   private static @NonNls final Pattern ourIMGselector = Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*)\"", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
-  protected static @NonNls final String DOC_ELEMENT_PROTOCOL = "doc_element://";
-  protected static @NonNls final String PSI_ELEMENT_PROTOCOL = "psi_element://";
   private static @NonNls final String JAR_PROTOCOL = "jar:";
   @NonNls private static final String HR = "<HR>";
   @NonNls private static final String P = "<P>";
@@ -86,7 +80,7 @@ public abstract class AbstractExternalFilter {
 
     public String refFilter(final String root, String read) {
       String toMatch = StringUtilRt.toUpperCase(read);
-      StringBuffer ready = new StringBuffer();
+      StringBuilder ready = new StringBuilder();
       int prev = 0;
       Matcher matcher = mySelector.matcher(toMatch);
 
@@ -115,7 +109,7 @@ public abstract class AbstractExternalFilter {
   protected final RefConvertor myIMGConvertor = new RefConvertor(ourIMGselector) {
     protected String convertReference(String root, String href) {
       if (StringUtil.startsWithChar(href, '#')) {
-        return DOC_ELEMENT_PROTOCOL + root + href;
+        return DocumentationManager.DOC_ELEMENT_PROTOCOL + root + href;
       }
 
       if (Comparing.strEqual(VirtualFileManager.extractProtocol(root), LocalFileSystem.PROTOCOL)) {
@@ -160,7 +154,7 @@ public abstract class AbstractExternalFilter {
         return null;
       }
 
-      return new StringReader(VfsUtil.loadText(file));
+      return new StringReader(VfsUtilCore.loadText(file));
     }
 
     URL url = BrowserUtil.getURL(surl);
@@ -259,7 +253,7 @@ public abstract class AbstractExternalFilter {
         }
       }
     }
-    while (read != null && StringUtilRt.toUpperCase(read).indexOf(startSection) == -1);
+    while (read != null && !StringUtilRt.toUpperCase(read).contains(startSection));
 
     if (input instanceof MyReader && contentEncoding != null) {
       if (contentEncoding != null && !contentEncoding.equals("UTF-8") && !contentEncoding.equals(((MyReader)input).getEncoding())) { //restart page parsing with correct encoding
