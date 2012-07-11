@@ -613,6 +613,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project,diffBuilder);
         diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
         diffBuilder.setCenterPanel(diffPanel.getComponent());
+        diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
         diffPanel.setDiffRequest(request);
         diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
         diffBuilder.addCancelAction();
