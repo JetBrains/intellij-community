@@ -65,23 +65,31 @@ public class DocPreviewUtil {
     if (fullText == null) {
       return header;
     }
+    
+    int bodyStart = fullText.indexOf("<body>");
+    if (bodyStart < 0) {
+      return header;
+    }
+    bodyStart += "<body>".length();
+    
+    int bodyEnd = fullText.indexOf("</body>");
+    if (bodyEnd < 0) {
+      return header;
+    }
+
+    String body = fullText.substring(bodyStart, bodyEnd);
 
     // The algorithm is:
-    //   1. Prepare header to use;
-    //   2. Process full text body as follows:
-    //     2.1. Count non-markup symbols until desired row symbols number is exceeded;
-    //     2.2. Insert <br> after that to start a new row;
-    //     2.3. Stop processing as soon as the desired rows number is reached or the text is finished;
-    //   3. Add closing tags for all non-matched open tags;
+    //   1. Process full text body as follows:
+    //     1.1. Count non-markup symbols until desired row symbols number is exceeded;
+    //     1.2. Insert <br> after that to start a new row;
+    //     1.3. Stop processing as soon as the desired rows number is reached or the text is finished;
+    //   2. Add closing tags for all non-matched open tags;
 
     final Context context = new Context(desiredRowsNumber, desiredSymbolsInRowNumber);
     int startParseOffset = 0;
 
     //region 1. Prepare header to use
-
-    // Fill in HTML header.
-    startParseOffset = process(fullText, startParseOffset, fullText.length(), getHeadParser(context));
-    startParseOffset += "<body>".length();
     
     //  Include information about the library/module location.
     int bracket = header.indexOf(']');
@@ -91,15 +99,15 @@ public class DocPreviewUtil {
     }
     
     // Include information that is available at the given header (it's not count to the given rows/columns arguments).
-    startParseOffset = process(fullText, startParseOffset, fullText.length(), getHeaderParser(context, header));
+    startParseOffset = process(body, startParseOffset, body.length(), getHeaderParser(context, header));
     
     //endregion
 
     //region Parse body
-    startParseOffset = process(fullText, startParseOffset, fullText.length(), getBodyParser(context));
+    startParseOffset = process(body, startParseOffset, body.length(), getBodyParser(context));
     //endregion
 
-    if (qName != null && startParseOffset < fullText.length()) {
+    if (qName != null && startParseOffset < body.length()) {
       context.buffer.append(String.format("<a href='psi_element://%s'>&lt;more&gt;</a>", qName));
     }
     
@@ -184,17 +192,6 @@ public class DocPreviewUtil {
       }
     }
     return start;
-  }
-  
-  @NotNull
-  private static Callback getHeadParser(@NotNull Context context) {
-    return new AbstractCallback(context, false) {
-      @Override
-      public boolean onOpenTag(@NotNull String name, @NotNull String text) {
-        super.onOpenTag(name, text);
-        return !"body".equals(name);
-      }
-    };
   }
   
   @NotNull
