@@ -15,15 +15,38 @@
  */
 package com.intellij.psi.presentation.java;
 
-import com.intellij.ide.projectView.PresentationData;
+import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProvider;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.PlatformIcons;
+
+import javax.swing.*;
 
 public class PackagePresentationProvider implements ItemPresentationProvider<PsiPackage> {
   @Override
   public ItemPresentation getPresentation(final PsiPackage aPackage) {
-    return new PresentationData(aPackage.getName(), aPackage.getQualifiedName(), PlatformIcons.PACKAGE_OPEN_ICON, PlatformIcons.PACKAGE_ICON, null);
+    return new ColoredItemPresentation() {
+      @Override
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+
+      @Override
+      public String getPresentableText() {
+        return aPackage.getName();
+      }
+
+      @Override
+      public String getLocationString() {
+        return aPackage.getQualifiedName();
+      }
+
+      @Override
+      public Icon getIcon(boolean open) {
+        return open ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
+      }
+    };
   }
 }
