@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.morphing;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ComponentMorphingTool;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.relative.RadRelativeLayout;
@@ -35,16 +36,16 @@ public class AbsoluteLayout {
         for (RadComponent childComponent : myNewComponent.getChildren()) {
           XmlTag tag = ((RadViewComponent)childComponent).getTag();
 
-          XmlAttribute xAttribute = tag.getAttribute("android:layout_x");
+          XmlAttribute xAttribute = tag.getAttribute("layout_x", SdkConstants.NS_RESOURCES);
           if (xAttribute != null) {
-            tag.setAttribute("android:layout_alignParentLeft", "true");
-            xAttribute.setName("android:layout_marginLeft");
+            tag.setAttribute("layout_alignParentLeft", SdkConstants.NS_RESOURCES, "true");
+            xAttribute.setName(xAttribute.getNamespacePrefix() + ":layout_marginLeft");
           }
 
-          XmlAttribute yAttribute = tag.getAttribute("android:layout_y");
+          XmlAttribute yAttribute = tag.getAttribute("layout_y", SdkConstants.NS_RESOURCES);
           if (yAttribute != null) {
-            tag.setAttribute("android:layout_alignParentTop", "true");
-            yAttribute.setName("android:layout_marginTop");
+            tag.setAttribute("layout_alignParentTop", SdkConstants.NS_RESOURCES, "true");
+            yAttribute.setName(yAttribute.getNamespacePrefix() + ":layout_marginTop");
           }
         }
       }

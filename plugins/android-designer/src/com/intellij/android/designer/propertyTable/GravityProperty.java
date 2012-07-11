@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.propertyTable;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
 import com.intellij.designer.propertyTable.Property;
@@ -155,7 +156,7 @@ public class GravityProperty extends FlagProperty {
           }
         }
         else {
-          component.getTag().setAttribute("android:" + myDefinition.getName(), StringUtil.join(options, "|"));
+          component.getTag().setAttribute(myDefinition.getName(), SdkConstants.NS_RESOURCES, StringUtil.join(options, "|"));
         }
       }
     });

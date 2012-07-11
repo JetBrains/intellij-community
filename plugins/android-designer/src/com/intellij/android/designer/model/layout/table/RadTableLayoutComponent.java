@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model.layout.table;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
@@ -171,7 +172,7 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
 
   public static int getCellIndex(RadComponent component) {
     try {
-      String column = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_column");
+      String column = ((RadViewComponent)component).getTag().getAttributeValue("layout_column", SdkConstants.NS_RESOURCES);
       return Integer.parseInt(column);
     }
     catch (Throwable e) {
@@ -181,7 +182,7 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
 
   public static int getCellSpan(RadComponent component) {
     try {
-      String span = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_span");
+      String span = ((RadViewComponent)component).getTag().getAttributeValue("layout_span", SdkConstants.NS_RESOURCES);
       return Integer.parseInt(span);
     }
     catch (Throwable e) {
@@ -194,8 +195,8 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
-        tag.setAttribute("android:layout_column", Integer.toString(column));
-        ModelParser.deleteAttribute(tag, "android:layout_span");
+        tag.setAttribute("layout_column", SdkConstants.NS_RESOURCES, Integer.toString(column));
+        ModelParser.deleteAttribute(tag, "layout_span");
       }
     });
   }
@@ -205,7 +206,7 @@ public class RadTableLayoutComponent extends RadViewContainer implements IGridPr
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
-        tag.setAttribute("android:layout_span", Integer.toString(span));
+        tag.setAttribute("layout_span", SdkConstants.NS_RESOURCES, Integer.toString(span));
       }
     });
   }

@@ -16,6 +16,7 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.android.resources.ResourceType;
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
@@ -122,7 +123,7 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
           }
         }
         else {
-          component.getTag().setAttribute("android:" + myDefinition.getName(), (String)value);
+          component.getTag().setAttribute(myDefinition.getName(), SdkConstants.NS_RESOURCES, (String)value);
         }
       }
     });
@@ -142,7 +143,7 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
 
   @Nullable
   private XmlAttribute getAttribute(RadViewComponent component) {
-    return component.getTag().getAttribute("android:" + myDefinition.getName());
+    return component.getTag().getAttribute(myDefinition.getName(), SdkConstants.NS_RESOURCES);
   }
 
   @Override

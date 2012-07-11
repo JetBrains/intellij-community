@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.layout.actions;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.Gravity;
@@ -81,7 +82,7 @@ public class AllGravityAction extends AbstractGravityAction<Gravity> {
       public void run() {
         if (mySelection.isEmpty()) {
           for (RadComponent component : myComponents) {
-            ModelParser.deleteAttribute(component, "android:layout_gravity");
+            ModelParser.deleteAttribute(component, "layout_gravity");
           }
         }
         else {
@@ -94,7 +95,7 @@ public class AllGravityAction extends AbstractGravityAction<Gravity> {
 
           for (RadComponent component : myComponents) {
             XmlTag tag = ((RadViewComponent)component).getTag();
-            tag.setAttribute("android:layout_gravity", value);
+            tag.setAttribute("layout_gravity", SdkConstants.NS_RESOURCES, value);
           }
         }
       }

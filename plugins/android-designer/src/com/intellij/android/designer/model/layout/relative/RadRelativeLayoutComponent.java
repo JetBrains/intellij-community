@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model.layout.relative;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
 import com.intellij.designer.model.RadComponent;
@@ -52,25 +53,25 @@ public class RadRelativeLayoutComponent extends RadViewContainer {
 
       XmlTag tag = ((RadViewComponent)child).getTag();
 
-      info.alignTop = getComponent(idToComponent, tag, "android:layout_alignTop");
-      info.alignBottom = getComponent(idToComponent, tag, "android:layout_alignBottom");
-      info.alignLeft = getComponent(idToComponent, tag, "android:layout_alignLeft");
-      info.alignRight = getComponent(idToComponent, tag, "android:layout_alignRight");
-      info.alignBaseline = getComponent(idToComponent, tag, "android:layout_alignBaseline");
-      info.above = getComponent(idToComponent, tag, "android:layout_above");
-      info.below = getComponent(idToComponent, tag, "android:layout_below");
-      info.toLeftOf = getComponent(idToComponent, tag, "android:layout_toLeftOf");
-      info.toRightOf = getComponent(idToComponent, tag, "android:layout_toRightOf");
+      info.alignTop = getComponent(idToComponent, tag, "layout_alignTop");
+      info.alignBottom = getComponent(idToComponent, tag, "layout_alignBottom");
+      info.alignLeft = getComponent(idToComponent, tag, "layout_alignLeft");
+      info.alignRight = getComponent(idToComponent, tag, "layout_alignRight");
+      info.alignBaseline = getComponent(idToComponent, tag, "layout_alignBaseline");
+      info.above = getComponent(idToComponent, tag, "layout_above");
+      info.below = getComponent(idToComponent, tag, "layout_below");
+      info.toLeftOf = getComponent(idToComponent, tag, "layout_toLeftOf");
+      info.toRightOf = getComponent(idToComponent, tag, "layout_toRightOf");
 
-      info.parentTop = "true".equals(tag.getAttributeValue("android:layout_alignParentTop"));
-      info.parentBottom = "true".equals(tag.getAttributeValue("android:layout_alignParentBottom"));
-      info.parentLeft = "true".equals(tag.getAttributeValue("android:layout_alignParentLeft"));
-      info.parentRight = "true".equals(tag.getAttributeValue("android:layout_alignParentRight"));
+      info.parentTop = "true".equals(tag.getAttributeValue("layout_alignParentTop", SdkConstants.NS_RESOURCES));
+      info.parentBottom = "true".equals(tag.getAttributeValue("layout_alignParentBottom", SdkConstants.NS_RESOURCES));
+      info.parentLeft = "true".equals(tag.getAttributeValue("layout_alignParentLeft", SdkConstants.NS_RESOURCES));
+      info.parentRight = "true".equals(tag.getAttributeValue("layout_alignParentRight", SdkConstants.NS_RESOURCES));
 
-      info.parentCenterHorizontal = "true".equals(tag.getAttributeValue("android:layout_centerHorizontal"));
-      info.parentCenterVertical = "true".equals(tag.getAttributeValue("android:layout_centerVertical"));
+      info.parentCenterHorizontal = "true".equals(tag.getAttributeValue("layout_centerHorizontal", SdkConstants.NS_RESOURCES));
+      info.parentCenterVertical = "true".equals(tag.getAttributeValue("layout_centerVertical", SdkConstants.NS_RESOURCES));
 
-      String center = tag.getAttributeValue("android:layout_centerInParent");
+      String center = tag.getAttributeValue("layout_centerInParent", SdkConstants.NS_RESOURCES);
       if (!StringUtil.isEmpty(center)) {
         info.parentCenterHorizontal = info.parentCenterVertical = "true".equals(center);
       }
@@ -79,12 +80,12 @@ public class RadRelativeLayoutComponent extends RadViewContainer {
 
   @Nullable
   private static RadViewComponent getComponent(Map<String, RadViewComponent> idToComponent, XmlTag tag, String attribute) {
-    return idToComponent.get(parseIdValue(tag.getAttributeValue(attribute)));
+    return idToComponent.get(parseIdValue(tag.getAttributeValue(attribute, SdkConstants.NS_RESOURCES)));
   }
 
   private static String parseIdValue(String idValue) {
     if (!StringUtil.isEmpty(idValue)) {
-      if (idValue.startsWith("@android:id/")) {
+      if (idValue.startsWith("@id/")) {
         return idValue;
       }
       return idValue.substring(idValue.indexOf('/') + 1);

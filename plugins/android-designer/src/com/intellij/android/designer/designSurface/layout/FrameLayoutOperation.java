@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.Gravity;
@@ -178,7 +179,7 @@ public class FrameLayoutOperation extends AbstractEditOperation {
       @Override
       public void run() {
         for (RadComponent component : myComponents) {
-          ((RadViewComponent)component).getTag().setAttribute("android:layout_gravity", myGravity);
+          ((RadViewComponent)component).getTag().setAttribute("layout_gravity", SdkConstants.NS_RESOURCES, myGravity);
         }
       }
     });

@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
@@ -75,7 +76,7 @@ public class BaselineSnapPoint extends SnapPoint {
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
-        tag.setAttribute("android:layout_alignBaseline", myComponent.ensureId());
+        tag.setAttribute("layout_alignBaseline", SdkConstants.NS_RESOURCES, myComponent.ensureId());
       }
     });
   }

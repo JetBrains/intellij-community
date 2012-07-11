@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.layout.RelativeLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.relative.*;
 import com.intellij.android.designer.model.RadViewComponent;
@@ -100,8 +101,8 @@ public class RelativeLayoutResizeOperation implements EditOperation {
 
       if (direction == Position.EAST || direction == Position.SOUTH || direction == Position.SOUTH_EAST) {
         Rectangle bounds = myComponent.getBounds(myContext.getArea().getFeedbackLayer());
-        String width = myComponent.getTag().getAttributeValue("android:layout_width");
-        String height = myComponent.getTag().getAttributeValue("android:layout_height");
+        String width = myComponent.getTag().getAttributeValue("layout_width", SdkConstants.NS_RESOURCES);
+        String height = myComponent.getTag().getAttributeValue("layout_height", SdkConstants.NS_RESOURCES);
 
         Pair<Integer, Integer> widthInfo = ResizeOperation.getDefaultSize(width, bounds.width);
         Pair<Integer, Integer> heightInfo = ResizeOperation.getDefaultSize(height, bounds.height);

@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.layout.relative;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.IXmlAttributeLocator;
@@ -36,8 +37,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CenterProperty extends Property<RadViewComponent> implements IXmlAttributeLocator {
   private static final String[] COMBO_ITEMS = {"horizontal", "vertical", "both"};
-  private static final String[] ATTR_ITEMS =
-    {"android:layout_centerHorizontal", "android:layout_centerVertical", "android:layout_centerInParent"};
+  private static final String[] ATTR_ITEMS = {"layout_centerHorizontal", "layout_centerVertical", "layout_centerInParent"};
   private static final String JAVA_DOC =
     JavadocParser.build("layout:centerInParent", "Set centers this child horizontally or vertically within its parent.");
 
@@ -54,7 +54,7 @@ public class CenterProperty extends Property<RadViewComponent> implements IXmlAt
     XmlTag tag = component.getTag();
     boolean[] values = new boolean[3];
     for (int i = 0; i < ATTR_ITEMS.length; i++) {
-      values[i] = "true".equals(tag.getAttributeValue(ATTR_ITEMS[i]));
+      values[i] = "true".equals(tag.getAttributeValue(ATTR_ITEMS[i], SdkConstants.NS_RESOURCES));
     }
     if (values[2] || (values[0] && values[1])) {
       return COMBO_ITEMS[2];
@@ -77,7 +77,7 @@ public class CenterProperty extends Property<RadViewComponent> implements IXmlAt
         XmlTag tag = component.getTag();
         for (int i = 0; i < ATTR_ITEMS.length; i++) {
           if (i == index) {
-            tag.setAttribute(ATTR_ITEMS[i], "true");
+            tag.setAttribute(ATTR_ITEMS[i], SdkConstants.NS_RESOURCES, "true");
           }
           else {
             ModelParser.deleteAttribute(tag, ATTR_ITEMS[i]);
@@ -91,7 +91,7 @@ public class CenterProperty extends Property<RadViewComponent> implements IXmlAt
   public boolean isDefaultValue(RadViewComponent component) throws Exception {
     XmlTag tag = component.getTag();
     for (String attribute : ATTR_ITEMS) {
-      if (tag.getAttribute(attribute) != null) {
+      if (tag.getAttribute(attribute, SdkConstants.NS_RESOURCES) != null) {
         return false;
       }
     }
@@ -128,7 +128,7 @@ public class CenterProperty extends Property<RadViewComponent> implements IXmlAt
   public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
     XmlTag tag = component.getTag();
     for (String name : ATTR_ITEMS) {
-      if (tag.getAttribute(name) == attribute) {
+      if (tag.getAttribute(name, SdkConstants.NS_RESOURCES) == attribute) {
         return true;
       }
     }
