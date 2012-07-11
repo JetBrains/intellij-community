@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Store default TextAttributes by key
  */
-public class TextAttributesKeyDefaults {
+public abstract class TextAttributesKeyDefaults {
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
   private static final ConcurrentHashMap<TextAttributesKey, TextAttributes> ourMap = new ConcurrentHashMap<TextAttributesKey, TextAttributes>();
 
@@ -37,7 +37,7 @@ public class TextAttributesKeyDefaults {
   public static TextAttributes getDefaultAttributes(TextAttributesKey key) {
     if (!ourMap.containsKey(key)) {
       // E.g. if one text key reuse default attributes of some other predefined key
-      ourMap.put(key, null);
+      ourMap.put(key, NULL_ATTRIBUTES);
       EditorColorsManager manager = EditorColorsManager.getInstance();
 
       if (manager != null) { // Can be null in test mode
@@ -46,12 +46,12 @@ public class TextAttributesKeyDefaults {
         // try switch from custom colors scheme (e.g. with dark background) to default one. Editor will show
         // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
         final EditorColorsScheme defaultColorScheme = manager.getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
-        ourMap.put(key, defaultColorScheme.getAttributes(key));
+        final TextAttributes textAttributes = defaultColorScheme.getAttributes(key);
+        if (textAttributes != null)
+          ourMap.put(key, textAttributes);
       }
     }
 
-    if (!ourMap.containsKey(key))
-      return NULL_ATTRIBUTES;
     return ourMap.get(key);
   }
 
@@ -66,8 +66,8 @@ public class TextAttributesKeyDefaults {
   @NotNull
   public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
     TextAttributesKey key = TextAttributesKey.find(externalName);
-    if (!ourMap.containsKey(key) || ourMap.get(key) == null) {
-      ourMap.put(key, defaultAttributes);
+    if (!ourMap.containsKey(key) || ourMap.get(key) == NULL_ATTRIBUTES) {
+      ourMap.put(key, defaultAttributes == null ? NULL_ATTRIBUTES : defaultAttributes);
     }
     return key;
   }
