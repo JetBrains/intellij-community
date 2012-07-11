@@ -16,39 +16,37 @@
 package com.intellij.openapi.util;
 
 
-import com.intellij.util.SmartFMap;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Map;
-
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
-  private static final Key<SmartFMap<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+  public static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   /**
    * Concurrent writes to this field are via CASes only, using the {@link #updater}
    */
-  @NotNull private volatile SmartFMap<Key, Object> myUserMap = SmartFMap.emptyMap();
+  @NotNull private volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
 
+  @Override
   protected Object clone() {
     try {
       UserDataHolderBase clone = (UserDataHolderBase)super.clone();
-      clone.myUserMap = SmartFMap.emptyMap();
+      clone.myUserMap = KeyFMap.EMPTY_MAP;
       copyCopyableDataTo(clone);
       return clone;
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
-
     }
   }
 
   @TestOnly
   public String getUserDataString() {
-    final SmartFMap<Key, Object> userMap = myUserMap;
-    final Map copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
+    final KeyFMap userMap = myUserMap;
+    final KeyFMap copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     return userMap.toString() + (copyableMap == null ? "" : copyableMap.toString());
   }
 
@@ -56,64 +54,70 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     other.myUserMap = myUserMap;
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     //noinspection unchecked
-    return (T)myUserMap.get(key);
+    return myUserMap.get(key);
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     while (true) {
-      SmartFMap<Key, Object> map = myUserMap;
-      SmartFMap<Key, Object> newMap = value == null ? map.minus(key) : map.plus(key, value);
+      KeyFMap map = myUserMap;
+      KeyFMap newMap = value == null ? map.minus(key) : map.plus(key, value);
       if (newMap == map || updater.compareAndSet(this, map, newMap)) {
-        return;
+        break;
       }
     }
+    T data = getUserData(key);
+    assert Comparing.equal(data, value) : key + " -> " + value + "; actual: " + data + "; " + myUserMap + ": " + myUserMap.getClass();
   }
 
   public <T> T getCopyableUserData(Key<T> key) {
-    SmartFMap<Key, Object> map = getUserData(COPYABLE_USER_MAP_KEY);
+    KeyFMap map = getUserData(COPYABLE_USER_MAP_KEY);
     //noinspection unchecked,ConstantConditions
-    return map == null ? null : (T)map.get(key);
+    return map == null ? null : map.get(key);
   }
 
   public <T> void putCopyableUserData(Key<T> key, T value) {
     while (true) {
-      SmartFMap<Key, Object> map = myUserMap;
-      @SuppressWarnings("unchecked") SmartFMap<Key, Object> copyableMap = (SmartFMap<Key, Object>)map.get(COPYABLE_USER_MAP_KEY);
+      KeyFMap map = myUserMap;
+      KeyFMap copyableMap = map.get(COPYABLE_USER_MAP_KEY);
       if (copyableMap == null) {
-        copyableMap = SmartFMap.emptyMap();
+        copyableMap = KeyFMap.EMPTY_MAP;
       }
-      SmartFMap<Key, Object> newCopyableMap = value == null ? copyableMap.minus(key) : copyableMap.plus(key, value);
-      SmartFMap<Key, Object> newMap = newCopyableMap.isEmpty() ? map.minus(COPYABLE_USER_MAP_KEY) : map.plus(COPYABLE_USER_MAP_KEY, newCopyableMap);
+      KeyFMap newCopyableMap = value == null ? copyableMap.minus(key) : copyableMap.plus(key, value);
+      KeyFMap newMap = newCopyableMap.isEmpty() ? map.minus(COPYABLE_USER_MAP_KEY) : map.plus(COPYABLE_USER_MAP_KEY, newCopyableMap);
       if (newMap == map || updater.compareAndSet(this, map, newMap)) {
         return;
       }
     }
   }
 
+  @Override
   public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
     while (true) {
-      SmartFMap<Key, Object> map = myUserMap;
+      KeyFMap map = myUserMap;
       if (map.get(key) != oldValue) {
         return false;
       }
-      SmartFMap<Key, Object> newMap = newValue == null ? map.minus(key) : map.plus(key, newValue);
+      KeyFMap newMap = newValue == null ? map.minus(key) : map.plus(key, newValue);
       if (newMap == map || updater.compareAndSet(this, map, newMap)) {
         return true;
       }
     }
   }
                                                             
+  @Override
   @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
     while (true) {
-      SmartFMap<Key, Object> map = myUserMap;
-      @SuppressWarnings("unchecked") T oldValue = (T)map.get(key);
+      KeyFMap map = myUserMap;
+      T oldValue = map.get(key);
       if (oldValue != null) {
         return oldValue;
       }
-      SmartFMap<Key, Object> newMap = map.plus(key, value);
+      KeyFMap newMap = map.plus(key, value);
       if (newMap == map || updater.compareAndSet(this, map, newMap)) {
         return value;
       }
@@ -125,8 +129,12 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   }
 
   protected void clearUserData() {
-    myUserMap = SmartFMap.emptyMap();
+    myUserMap = KeyFMap.EMPTY_MAP;
   }
 
-  private static final AtomicFieldUpdater<UserDataHolderBase, SmartFMap> updater = AtomicFieldUpdater.forFieldOfType(UserDataHolderBase.class, SmartFMap.class);
+  public boolean isUserDataEmpty() {
+    return myUserMap.isEmpty();
+  }
+
+  private static final AtomicFieldUpdater<UserDataHolderBase, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(UserDataHolderBase.class, KeyFMap.class);
 }
