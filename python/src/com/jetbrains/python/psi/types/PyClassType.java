@@ -159,7 +159,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       }
     }
 
-    final PsiElement classMember = resolveClassMember(this, name, location);
+    PsiElement classMember = resolveClassMember(this, name, location);
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -168,6 +168,12 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       final PyClass pyClass = superClass.getPyClass();
       if (pyClass != null) {
         PsiElement superMember = resolveClassMember(new PyClassType(pyClass, isDefinition()), name, null);
+        if (superMember != null) {
+          return ResolveResultList.to(superMember);
+        }
+
+        superMember = resolveByMembersProviders(new PyClassType(pyClass, isDefinition()), name);
+
         if (superMember != null) {
           return ResolveResultList.to(superMember);
         }
@@ -193,6 +199,13 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
         }
       }
     }
+
+    classMember = resolveByMembersProviders(this, name);
+
+    if (classMember != null) {
+      return ResolveResultList.to(classMember);
+    }
+
     return Collections.emptyList();
   }
 
@@ -228,6 +241,12 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     if (result != null) {
       return result;
     }
+    return null;
+  }
+
+
+  @Nullable
+  private static PsiElement resolveByMembersProviders(PyClassType aClass, String name) {
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       final PsiElement resolveResult = provider.resolveMember(aClass, name);
       if (resolveResult != null) return resolveResult;
@@ -269,23 +288,26 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       namesAlready = new HashSet<String>();
     }
     List<Object> ret = new ArrayList<Object>();
-    // from providers
-    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      for (PyDynamicMember member : provider.getMembers(this)) {
-        final String name = member.getName();
-        LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(getName());
-        if (member.isFunction()) {
-          lookupElementBuilder = lookupElementBuilder.withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS);
-          lookupElementBuilder.withTailText("()");
-        }
-        ret.add(lookupElementBuilder);
-      }
-    }
 
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
     addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
 
-    addInheritedMembers(prefix, location, context, ret);
+    addInheritedMembers(prefix, location, namesAlready, context, ret);
+
+    // from providers
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      for (PyDynamicMember member : provider.getMembers(this)) {
+        final String name = member.getName();
+        if (!namesAlready.contains(name)) {
+          LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name).withIcon(member.getIcon()).withTypeText(getName());
+          if (member.isFunction()) {
+            lookupElementBuilder = lookupElementBuilder.withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS);
+            lookupElementBuilder.withTailText("()");
+          }
+          ret.add(lookupElementBuilder);
+        }
+      }
+    }
 
     if (!myClass.isNewStyleClass()) {
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(myClass);
@@ -353,14 +375,22 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     return false;
   }
 
-  private void addInheritedMembers(String name, PyExpression expressionHook, ProcessingContext context, List<Object> ret) {
+  private void addInheritedMembers(String name,
+                                   PyExpression expressionHook,
+                                   Set<String> namesAlready,
+                                   ProcessingContext context,
+                                   List<Object> ret) {
     if (myClass == null) {
       return;
     }
     for (PyClass ancestor : myClass.getSuperClasses()) {
       Object[] ancestry = (new PyClassType(ancestor, myIsDefinition)).getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
-        if (!isClassPrivate(ob.toString())) ret.add(ob);
+        String inheritedName = ob.toString();
+        if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
+          ret.add(ob);
+          namesAlready.add(inheritedName);
+        }
       }
       ContainerUtil.addAll(ret, ancestry);
     }
