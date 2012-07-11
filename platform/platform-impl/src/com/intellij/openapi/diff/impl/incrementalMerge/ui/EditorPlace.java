@@ -102,8 +102,13 @@ public class EditorPlace extends JComponent implements Disposable {
       // scrollbar is at the right => the gutter is at the left (central editor case)
       int startX = gutter.getX();
       if (!applied) {
-        g.fillRect(startX, startY, gutter.getWidth() + 1, height);
-        drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height);
+        if (height > 2) {
+          g.fillRect(startX, startY, gutter.getWidth() + 1, height);
+          drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height, DividerPolygon.FRAMING_LINE_COLOR);
+        }
+        else {
+          drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height, color);
+        }
       }
       else {
         drawBoldDottedFramingLines(g, startX, gutter.getWidth() + 1, startY, height, color);
@@ -114,7 +119,7 @@ public class EditorPlace extends JComponent implements Disposable {
       int startX = editorComponent.getX() + editorComponent.getWidth() - gutter.getWidth() - 1;
       if (!applied) {
         g.fillRect(startX, startY, gutter.getWidth() + 1, height);
-        drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height);
+        drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height, DividerPolygon.FRAMING_LINE_COLOR);
       }
       else {
         int endX = startX + gutter.getWidth() + 1;
@@ -136,8 +141,13 @@ public class EditorPlace extends JComponent implements Disposable {
       int startX = scrollBar.getX();
       int endX = startX + scrollBar.getWidth();
       if (!applied) {
-        g.fillRect(startX, startY, scrollBar.getWidth(), height);
-        drawFramingLines(g, startX, startY, endX, startY + height);
+        if (height > 2) {
+          g.fillRect(startX, startY, scrollBar.getWidth(), height);
+          drawFramingLines(g, startX, startY, endX, startY + height, DividerPolygon.FRAMING_LINE_COLOR);
+        }
+        else {
+          drawFramingLines(g, startX, startY, endX, startY + height, color);
+        }
       }
       else {
         drawBoldDottedFramingLines(g, startX, endX, startY, height, color);
@@ -145,9 +155,9 @@ public class EditorPlace extends JComponent implements Disposable {
     }
   }
 
-  private static void drawFramingLines(@NotNull Graphics2D g, int startX, int topY, int endX, int bottomY) {
-    UIUtil.drawLine(g, startX, topY, endX, topY, null, DividerPolygon.FRAMING_LINE_COLOR);
-    UIUtil.drawLine(g, startX, bottomY, endX, bottomY, null, DividerPolygon.FRAMING_LINE_COLOR);
+  private static void drawFramingLines(@NotNull Graphics2D g, int startX, int topY, int endX, int bottomY, @NotNull Color color) {
+    UIUtil.drawLine(g, startX, topY, endX, topY, null, color);
+    UIUtil.drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
   public void addNotify() {
