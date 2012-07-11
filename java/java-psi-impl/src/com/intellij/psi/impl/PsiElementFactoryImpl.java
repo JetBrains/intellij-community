@@ -731,14 +731,20 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (!(exceptionType instanceof PsiClassType || exceptionType instanceof PsiDisjunctionType)) {
       throw new IncorrectOperationException("Unexpected type:" + exceptionType);
     }
+
     final String text = join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCatchSection)) {
       throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: " + element);
     }
-    JavaPsiImplementationHelper.getInstance(myManager.getProject()).setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
-    final PsiCatchSection catchSection = (PsiCatchSection)CodeStyleManager.getInstance(myManager.getProject()).reformat(element);
+
+    final Project project = myManager.getProject();
+    final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(project);
+    helper.setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
+    final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+    final PsiCatchSection catchSection = (PsiCatchSection)styleManager.reformat(element);
+
     GeneratedMarkerVisitor.markGenerated(catchSection);
     return catchSection;
   }
