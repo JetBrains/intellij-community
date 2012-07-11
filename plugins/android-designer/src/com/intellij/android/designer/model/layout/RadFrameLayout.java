@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.layout;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.FrameLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.actions.LayoutMarginOperation;
@@ -172,7 +173,7 @@ public class RadFrameLayout extends RadViewLayoutWithData {
           execute(new Runnable() {
             @Override
             public void run() {
-              ((RadViewComponent)myComponents.get(0)).getTag().setAttribute("android:layout_gravity", gravity);
+              ((RadViewComponent)myComponents.get(0)).getTag().setAttribute("layout_gravity", SdkConstants.NS_RESOURCES, gravity);
             }
           });
         }

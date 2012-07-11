@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.morphing;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.*;
 import com.intellij.android.designer.model.layout.RadLinearLayout;
 import com.intellij.android.designer.model.layout.RadRadioGroupLayout;
@@ -39,10 +40,10 @@ public class LinearLayout {
       @Override
       protected void convertTag() {
         if (horizontal) {
-          myNewComponent.getTag().setAttribute("android:orientation", "horizontal");
+          myNewComponent.getTag().setAttribute("orientation", SdkConstants.NS_RESOURCES, "horizontal");
         }
         else {
-          ModelParser.deleteAttribute(myNewComponent, "android:orientation");
+          ModelParser.deleteAttribute(myNewComponent, "orientation");
         }
       }
     }.result();
@@ -84,7 +85,7 @@ public class LinearLayout {
 
       @Override
       protected void convertTag() {
-        ModelParser.deleteAttribute(myNewComponent, "android:orientation");
+        ModelParser.deleteAttribute(myNewComponent, "orientation");
       }
 
       @Override

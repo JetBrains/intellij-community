@@ -234,7 +234,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       assert colorAndFontOptions != null;
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);
-      optionsEditor.select(javaPage).doWhenDone(new Runnable() {
+      optionsEditor.clearSearchAndSelect(javaPage).doWhenDone(new Runnable() {
         @Override
         public void run() {
           final Runnable runnable = javaPage.enableSearch(toConfigure);

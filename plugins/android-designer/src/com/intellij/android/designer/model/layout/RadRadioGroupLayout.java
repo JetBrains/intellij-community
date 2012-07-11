@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.layout;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 
 /**
@@ -23,6 +24,6 @@ import com.intellij.android.designer.model.RadViewComponent;
 public class RadRadioGroupLayout extends RadLinearLayout {
   @Override
   public boolean isHorizontal() {
-    return "horizontal".equals(((RadViewComponent)myContainer).getTag().getAttributeValue("android:orientation"));
+    return "horizontal".equals(((RadViewComponent)myContainer).getTag().getAttributeValue("orientation", SdkConstants.NS_RESOURCES));
   }
 }

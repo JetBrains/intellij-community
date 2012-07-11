@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.layout;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.util.IconLoader;
@@ -92,7 +93,7 @@ public enum Gravity {
   }
 
   public static int getFlags(RadComponent component) {
-    String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
+    String value = ((RadViewComponent)component).getTag().getAttributeValue("layout_gravity", SdkConstants.NS_RESOURCES);
     int flags = NONE;
 
     if (!StringUtil.isEmpty(value)) {

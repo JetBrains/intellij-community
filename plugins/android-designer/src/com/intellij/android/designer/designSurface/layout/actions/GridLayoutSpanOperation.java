@@ -40,22 +40,22 @@ public class GridLayoutSpanOperation extends LayoutSpanOperation {
 
   @Override
   protected String getColumnAttribute(boolean asName) {
-    return asName ? "layout:column" : "android:layout_column";
+    return asName ? "layout:column" : "layout_column";
   }
 
   @Override
   protected String getColumnSpanAttribute(boolean asName) {
-    return asName ? "layout:columnSpan" : "android:layout_columnSpan";
+    return asName ? "layout:columnSpan" : "layout_columnSpan";
   }
 
   @Override
   protected String getRowAttribute(boolean asName) {
-    return asName ? "layout:row" : "android:layout_row";
+    return asName ? "layout:row" : "layout_row";
   }
 
   @Override
   protected String getRowSpanAttribute(boolean asName) {
-    return asName ? "layout:rowSpan" : "android:layout_rowSpan";
+    return asName ? "layout:rowSpan" : "layout_rowSpan";
   }
 
   @Override

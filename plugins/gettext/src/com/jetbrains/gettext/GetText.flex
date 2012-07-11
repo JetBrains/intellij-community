@@ -26,34 +26,25 @@ import com.jetbrains.gettext.GetTextElementType;
 %ignorecase
 
 EOL = (\r|\n|\r\n)
-NO_EOL = !(\r|\n|\r\n)
 SPACE = [ \t\f]
 WHITE_SPACE = {EOL} | {SPACE}
 
 STRING_TAIL = [^\r\n]*
 QUOTED_STRING = ("\"")~(\r|\n|\r\n|"\"")
-TMP_QUOTED_STRING = ("\"")~("\"")
 
 DOUBLEQUOTE = \"
-DOUBLEQUOTED_STRING = ([^\"] | \"\" | \\\")+
 
 LBRACE = "["
 RBRACE = "]"
 NUMBER = [0-9]*
+LETTERS = [a-zA-Z]*
 
 COMMENT_SYMBOL = "#"
 
-COMMENT_TYPE_SYMBOLS = ("#."|"#:"|"#,"|"#|")
-COMMENT = (" "|\t|\f)~{EOL}
-EXTRACTED_COMMENT = (".")~{EOL}
-REFERENCE_COMMENT = (":")~{EOL}
-PREVIOUS_COMMENT = ("|")~{EOL}
+EXTRACTED_COMMENT = ("."){STRING_TAIL}
+REFERENCE_COMMENT = (":"){STRING_TAIL}
+PREVIOUS_COMMENT = ("|"){STRING_TAIL}
 FLAG_GROUP = (",")
-
-DOT = "."
-COLON = ":"
-LINE = "|"
-COMMA = ","
 
 MSGCTXT = "msgctxt"
 MSGID = "msgid"
@@ -62,43 +53,17 @@ MSGSTR = "msgstr"
 
 
 FUZZY_FLAG = "fuzzy"
-NO = "no-"
 FORMAT = "-format"
-C = "c"
-OBJC = "objc"
-SH = "sh"
-PYTHON = "python"
-LISP = "lisp"
-ELISP = "elisp"
-LIBREP = "librep"
-SCHEME = "scheme"
-SMALLTALK = "smalltalk"
-JAVA = "java"
-CSHARP = "csharp"
-AWK = "awk"
-YCP = "ycp"
-TCL = "tcl"
-PERL = "perl-brace"
-PHP = "php"
-GCC = "gcc-internal"
-GFC = "gfc-internal"
-QT = "qt"
-KDE = "kde"
-BOOST = "boost"
-OBJECT_PASCAL = "object-pascal"
-QT_PLURAL = "qt-plural"
-
-PASCAL_FORMAT_FLAG = "object-pascal-format"
-NO_PASCAL_FORMAT_FLAG = "no-object-pascal-format"
-QT_FORMAT_FLAG = "qt-plural-format"
-NO_QT_FORMAT_FLAG = "no-qt-plural-format"
-FORMAT_FLAG = (C|OBJC|SH|PYTHON|LISP|EISP|LIBREP|SCHEME|SMALLTALK|JAVA|SCHARP|AWK|OBJECT_PASCAL|YCP|TCL|PERL|PHP|GCC|GFC|QT|QT_PLURAL|KDE|BOOST) {FORMAT}
+NO = "no-"
+FORMAT_FLAG = ("c"|"objc"|"sh"|"python"|"lisp"|"elisp"|"librep"|"scheme"|"smalltalk"|"java"|
+"csharp"|"awk"|"object-pascal"|"ycp"|"tcl"|"perl-brace"|"php"|"gcc-internal"|"gfc-internal"|
+"qt"|"qt-plural"|"kde"|"boost") {FORMAT}
 NO_FORMAT_FLAG = {NO} {FORMAT_FLAG}
-
 RANGE_FLAG = "range"
 DOTS = ".."
 
 FLAG_DELIVERY=","
+COLON = ":"
 
 %state START_COMMENT
 %state COMMENT
@@ -114,10 +79,10 @@ FLAG_DELIVERY=","
 
 <YYINITIAL> {COMMENT_SYMBOL} { yybegin(START_COMMENT); return GetTextTokenTypes.COMMENT_SYMBOLS;}
 <START_COMMENT> {SPACE} { yybegin(COMMENT); return GetTextTokenTypes.COMMENT_SYMBOLS;}
-<START_COMMENT> {DOT} { yybegin(EXTR_COMMENT); return GetTextTokenTypes.COMMENT_SYMBOLS;}
-<START_COMMENT> {COLON} { yybegin(REFERENCE_COMMENT); return GetTextTokenTypes.COMMENT_SYMBOLS;}
-<START_COMMENT> {LINE} { yybegin(PREVIOUS_COMMENT); return GetTextTokenTypes.COMMENT_SYMBOLS;}
-<START_COMMENT> {FLAG_GROUP} { yybegin(FLAG_COMMENT); return GetTextTokenTypes.COMMENT_SYMBOLS;}
+<START_COMMENT> {EXTRACTED_COMMENT} { yybegin(EXTR_COMMENT); return GetTextTokenTypes.EXTR_COMMENT;}
+<START_COMMENT> {REFERENCE_COMMENT} { yybegin(REFERENCE_COMMENT); return GetTextTokenTypes.REFERENCE;}
+<START_COMMENT> {PREVIOUS_COMMENT} { yybegin(PREVIOUS_COMMENT); return GetTextTokenTypes.PREVIOUS_COMMENT;}
+<START_COMMENT> {FLAG_GROUP} { yybegin(FLAG_COMMENT); return GetTextTokenTypes.FLAG_COMMENT;}
 
 <START_COMMENT> {EOL} { yybegin(YYINITIAL); return GetTextTokenTypes.WHITE_SPACE;}
 <COMMENT> {EOL} { yybegin(YYINITIAL); return GetTextTokenTypes.WHITE_SPACE;}
@@ -132,29 +97,31 @@ FLAG_DELIVERY=","
 <REFERENCE_COMMENT> {STRING_TAIL} { return GetTextTokenTypes.REFERENCE;}
 <PREVIOUS_COMMENT> {STRING_TAIL} { return GetTextTokenTypes.PREVIOUS_COMMENT;}
 
-<FLAG_COMMENT> {PASCAL_FORMAT_FLAG} { yybegin(FLAG_DEL); return GetTextTokenTypes.FORMAT_FLAG;}
-<FLAG_COMMENT> {NO_PASCAL_FORMAT_FLAG} { yybegin(FLAG_DEL); return GetTextTokenTypes.NO_FORMAT_FLAG;}
-<FLAG_COMMENT> {QT_FORMAT_FLAG} { yybegin(FLAG_DEL); return GetTextTokenTypes.FORMAT_FLAG;}
-<FLAG_COMMENT> {NO_QT_FORMAT_FLAG} { yybegin(FLAG_DEL); return GetTextTokenTypes.NO_FORMAT_FLAG;}
 <FLAG_COMMENT> {FORMAT_FLAG} { yybegin(FLAG_DEL); return GetTextTokenTypes.FORMAT_FLAG;}
 <FLAG_COMMENT> {NO_FORMAT_FLAG} { yybegin(FLAG_DEL); return GetTextTokenTypes.NO_FORMAT_FLAG;}
 <FLAG_COMMENT> {FUZZY_FLAG} { yybegin(FLAG_DEL); return GetTextTokenTypes.FUZZY_FLAG;}
 <FLAG_COMMENT> {RANGE_FLAG} { yybegin(FLAG_DEL); return GetTextTokenTypes.RANGE_FLAG;}
 
 <FLAG_DEL> {FLAG_DELIVERY} { yybegin(FLAG_COMMENT); return GetTextTokenTypes.FLAG_DELIVERY;}
+<FLAG_COMMENT, FLAG_DEL> {SPACE} { return GetTextTokenTypes.FLAG_DELIVERY;}
+<FLAG_COMMENT, FLAG_DEL> {NUMBER} { return GetTextTokenTypes.RANGE_NUMBER;}
+<FLAG_COMMENT, FLAG_DEL> {COLON} { return GetTextTokenTypes.COLON;}
+<FLAG_COMMENT, FLAG_DEL> {DOTS} { return GetTextTokenTypes.DOTS;}
+<FLAG_COMMENT, FLAG_DEL> [^] { return GetTextTokenTypes.BAD_FLAG_COMMENT; }
 
+{MSGCTXT} { return GetTextTokenTypes.MSGCTXT;}
 {MSGCTXT} { return GetTextTokenTypes.MSGCTXT;}
 {MSGID} { return GetTextTokenTypes.MSGID;}
 {MSGID_PLURAL} { return GetTextTokenTypes.MSGID_PLURAL;}
 {MSGSTR} { return GetTextTokenTypes.MSGSTR;}
 
+<YYINITIAL> {LETTERS} { return GetTextTokenTypes.COMMAND;}
 <YYINITIAL> {WHITE_SPACE} { return GetTextTokenTypes.WHITE_SPACE;}
-<FLAG_COMMENT, FLAG_DEL> {SPACE} { return GetTextTokenTypes.WHITE_SPACE;}
+
 {NUMBER} { return GetTextTokenTypes.NUMBER;}
 {LBRACE} { return GetTextTokenTypes.LBRACE;}
 {RBRACE} { return GetTextTokenTypes.RBRACE;}
-{COLON} { return GetTextTokenTypes.COLON;}
-{DOTS} { return GetTextTokenTypes.DOTS;}
+{DOUBLEQUOTE} { return GetTextTokenTypes.QUOTE;}
 
 {QUOTED_STRING} { return GetTextTokenTypes.STRING;}
 

@@ -36,7 +36,7 @@ public class GetTextParser implements PsiParser {
   private static void parseCommentHeader(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     while (GetTextTokenTypes.COMMENTS.contains(builder.getTokenType()) ||
-           GetTextTokenTypes.FLAGS.contains(builder.getTokenType())) {
+           GetTextTokenTypes.FLAG_LINE.contains(builder.getTokenType())) {
       builder.advanceLexer();
     }
     marker.done(GetTextCompositeElementTypes.HEADER);
@@ -48,8 +48,8 @@ public class GetTextParser implements PsiParser {
     while (!canTerminate(builder, container)) {
       try {
         IElementType token = builder.getTokenType();
-        if (container.parse(builder)) {
-          container.addCommand(token);
+        if (container.parse(builder) && !container.addCommand(token)) {
+          break;
         }
       }
       catch (UnknownCommandException e) {

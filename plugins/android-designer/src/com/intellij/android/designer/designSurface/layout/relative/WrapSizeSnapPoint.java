@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
@@ -68,8 +69,8 @@ public class WrapSizeSnapPoint extends ResizeSnapPoint {
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
-        ModelParser.deleteAttribute(tag, "android:layout_alignParent" + (myHorizontal ? "Right" : "Bottom"));
-        tag.setAttribute("android:layout_" + (myHorizontal ? "width" : "height"), "wrap_content");
+        ModelParser.deleteAttribute(tag, "layout_alignParent" + (myHorizontal ? "Right" : "Bottom"));
+        tag.setAttribute("layout_" + (myHorizontal ? "width" : "height"), SdkConstants.NS_RESOURCES, "wrap_content");
       }
     });
   }

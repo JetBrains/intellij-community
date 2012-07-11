@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
@@ -93,30 +94,30 @@ public class AutoResizeSnapPoint extends ResizeSnapPoint {
         XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
         if (myMargin > 0) {
           String attribute = myHorizontal ? "Left" : "Top";
-          tag.setAttribute("android:layout_alignParent" + attribute, "true");
-          tag.setAttribute("android:layout_margin" + attribute, Integer.toString(myMargin) + "dp");
-          ModelParser.deleteAttribute(tag, "android:layout_align" + attribute);
+          tag.setAttribute("layout_alignParent" + attribute, SdkConstants.NS_RESOURCES, "true");
+          tag.setAttribute("layout_margin" + attribute, SdkConstants.NS_RESOURCES, Integer.toString(myMargin) + "dp");
+          ModelParser.deleteAttribute(tag, "layout_align" + attribute);
 
           if (myHorizontal) {
-            ModelParser.deleteAttribute(tag, "android:layout_toRightOf");
+            ModelParser.deleteAttribute(tag, "layout_toRightOf");
           }
           else {
-            ModelParser.deleteAttribute(tag, "android:layout_below");
+            ModelParser.deleteAttribute(tag, "layout_below");
           }
         }
         else {
           String attribute = myHorizontal ? "Right" : "Bottom";
-          ModelParser.deleteAttribute(tag, "android:layout_alignParent" + attribute);
-          ModelParser.deleteAttribute(tag, "android:layout_align" + attribute);
+          ModelParser.deleteAttribute(tag, "layout_alignParent" + attribute);
+          ModelParser.deleteAttribute(tag, "layout_align" + attribute);
 
           if (myHorizontal) {
-            ModelParser.deleteAttribute(tag, "android:layout_toLeftOf");
+            ModelParser.deleteAttribute(tag, "layout_toLeftOf");
           }
           else {
-            ModelParser.deleteAttribute(tag, "android:layout_above");
+            ModelParser.deleteAttribute(tag, "layout_above");
           }
         }
-        tag.setAttribute("android:layout_" + (myHorizontal ? "width" : "height"), Integer.toString(mySize) + "dp");
+        tag.setAttribute("layout_" + (myHorizontal ? "width" : "height"), SdkConstants.NS_RESOURCES, Integer.toString(mySize) + "dp");
       }
     });
   }

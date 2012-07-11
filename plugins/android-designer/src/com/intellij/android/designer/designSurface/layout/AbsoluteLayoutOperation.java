@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.FeedbackLayer;
@@ -117,15 +118,15 @@ public class AbsoluteLayoutOperation extends AbstractEditOperation {
           for (RadComponent component : myComponents) {
             XmlTag tag = ((RadViewComponent)component).getTag();
 
-            tag.setAttribute("android:layout_x", Integer.toString(location.x - parentBounds.x) + "dp");
-            tag.setAttribute("android:layout_y", Integer.toString(location.y - parentBounds.y) + "dp");
+            tag.setAttribute("layout_x", SdkConstants.NS_RESOURCES, Integer.toString(location.x - parentBounds.x) + "dp");
+            tag.setAttribute("layout_y", SdkConstants.NS_RESOURCES, Integer.toString(location.y - parentBounds.y) + "dp");
 
             if (delta != null && myComponents.size() == 1) {
               if (delta.width > 0) {
-                tag.setAttribute("android:layout_width", Integer.toString(myBounds.width) + "dp");
+                tag.setAttribute("layout_width", SdkConstants.NS_RESOURCES, Integer.toString(myBounds.width) + "dp");
               }
               if (delta.height > 0) {
-                tag.setAttribute("android:layout_height", Integer.toString(myBounds.height) + "dp");
+                tag.setAttribute("layout_height", SdkConstants.NS_RESOURCES, Integer.toString(myBounds.height) + "dp");
               }
             }
           }
@@ -139,8 +140,8 @@ public class AbsoluteLayoutOperation extends AbstractEditOperation {
             Point location = component.convertPoint(layer, bounds.x + moveDeltaX, bounds.y + moveDeltaY);
             XmlTag tag = ((RadViewComponent)component).getTag();
 
-            tag.setAttribute("android:layout_x", Integer.toString(location.x - parentBounds.x) + "dp");
-            tag.setAttribute("android:layout_y", Integer.toString(location.y - parentBounds.y) + "dp");
+            tag.setAttribute("layout_x", SdkConstants.NS_RESOURCES, Integer.toString(location.x - parentBounds.x) + "dp");
+            tag.setAttribute("layout_y", SdkConstants.NS_RESOURCES, Integer.toString(location.y - parentBounds.y) + "dp");
           }
         }
       }

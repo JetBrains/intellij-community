@@ -1,0 +1,12 @@
+GNU GetText File
+  MSG_BLOCK
+    HEADER
+      <empty list>
+    PsiErrorElement:Not enough commands
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('""')
+      PsiWhiteSpace('\n')
+      PsiErrorElement:String for msgstr is not specified
+        PsiElement(MSGSTR)('msgstr')

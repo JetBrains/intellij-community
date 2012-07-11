@@ -2516,10 +2516,12 @@ public class CompileDriver {
           }
         }
       }
-      final Compiler[] allCompilers = compilerManager.getCompilers(Compiler.class);
-      for (Compiler compiler : allCompilers) {
-        if (!compiler.validateConfiguration(scope)) {
-          return false;
+      if (!useOutOfProcessBuild()) {
+        final Compiler[] allCompilers = compilerManager.getCompilers(Compiler.class);
+        for (Compiler compiler : allCompilers) {
+          if (!compiler.validateConfiguration(scope)) {
+            return false;
+          }
         }
       }
       return true;
