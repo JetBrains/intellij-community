@@ -41,10 +41,10 @@ public final class LookupElementBuilder extends LookupElement {
   @Nullable private final LookupElementPresentation myHardcodedPresentation;
   @NotNull private final Set<String> myAllLookupStrings;
 
-  private LookupElementBuilder(String lookupString, Object object, @Nullable InsertHandler<LookupElement> insertHandler,
+  private LookupElementBuilder(@NotNull String lookupString, @NotNull Object object, @Nullable InsertHandler<LookupElement> insertHandler,
                                @Nullable LookupElementRenderer<LookupElement> renderer,
                                @Nullable LookupElementPresentation hardcodedPresentation,
-                               Set<String> allLookupStrings,
+                               @NotNull Set<String> allLookupStrings,
                                boolean caseSensitive) {
     myLookupString = lookupString;
     myObject = object;
