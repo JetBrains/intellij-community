@@ -37,6 +37,9 @@ public class ChangeType {
   private final TextDiffType myDiffType;
   private final boolean myApplied;
 
+  private static final EmptyRangeLineSeparatorRenderer EMPTY_RANGE_LINE_SEPARATOR_RENDERER = new EmptyRangeLineSeparatorRenderer();
+  private final LineSeparatorRenderer myStandardLineSeparatorRenderer = new StandardLineSeparatorRenderer();
+
   private ChangeType(TextDiffType diffType, boolean applied) {
     myApplied = applied;
     if (applied) {
@@ -81,18 +84,6 @@ public class ChangeType {
   private RangeHighlighter addBlock(String text, ChangeSide changeSide, ChangeHighlighterHolder markup, TextDiffType diffType) {
     EditorColorsScheme colorScheme = markup.getEditor().getColorsScheme();
     Color separatorColor = getSeparatorColor(diffType.getLegendColor(colorScheme));
-    LineSeparatorRenderer separatorRenderer = new LineSeparatorRenderer() {
-      @Override
-      public void drawLine(Graphics g, int x1, int x2, int y) {
-        Graphics2D g2 = (Graphics2D) g;
-        if (myApplied) {
-          UIUtil.drawBoldDottedLine(g2, x1, x2, y, g2.getBackground(), g2.getColor(), false);
-        }
-        else {
-          UIUtil.drawDottedLine(g2, x1, y, x2, y, g2.getBackground(), g2.getColor());
-        }
-      }
-    };
 
     int length = text.length();
     int start = changeSide.getStart();
@@ -102,7 +93,7 @@ public class ChangeType {
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
       highlighter.setLineSeparatorColor(separatorColor);
-      highlighter.setLineSeparatorRenderer(separatorRenderer);
+      highlighter.setLineSeparatorRenderer(myStandardLineSeparatorRenderer);
     }
 
     if (text.charAt(length - 1) == '\n') {
@@ -113,7 +104,7 @@ public class ChangeType {
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
       highlighter.setLineSeparatorColor(separatorColor);
-      highlighter.setLineSeparatorRenderer(separatorRenderer);
+      highlighter.setLineSeparatorRenderer(myStandardLineSeparatorRenderer);
     }
     return highlighter;
   }
@@ -125,6 +116,7 @@ public class ChangeType {
       return null;
     }
     highlighter.setLineSeparatorPlacement(placement);
+    highlighter.setLineSeparatorRenderer(EMPTY_RANGE_LINE_SEPARATOR_RENDERER);
     return highlighter;
   }
 
@@ -153,4 +145,31 @@ public class ChangeType {
   }
 
 
+  /**
+   * Insertion or deletion change have an empty range on one of the sides (inserting to, deleting from).
+   * A solid line is used to indicate this change in the target/original editor.
+   */
+  private static class EmptyRangeLineSeparatorRenderer implements LineSeparatorRenderer {
+    @Override
+    public void drawLine(Graphics g, int x1, int x2, int y) {
+      g.drawLine(x1, y, x2, y);
+      g.drawLine(x1, y + 1, x2, y + 1);
+    }
+  }
+
+  /**
+   * Draws standard separators around an ordinary change which contains some non-empty text range.
+   */
+  private class StandardLineSeparatorRenderer implements LineSeparatorRenderer {
+    @Override
+    public void drawLine(Graphics g, int x1, int x2, int y) {
+      Graphics2D g2 = (Graphics2D) g;
+      if (myApplied) {
+        UIUtil.drawBoldDottedLine(g2, x1, x2, y, g2.getBackground(), g2.getColor(), false);
+      }
+      else {
+        UIUtil.drawDottedLine(g2, x1, y, x2, y, g2.getBackground(), g2.getColor());
+      }
+    }
+  }
 }
