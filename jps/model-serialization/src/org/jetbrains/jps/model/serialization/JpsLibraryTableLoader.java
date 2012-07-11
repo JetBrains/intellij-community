@@ -43,11 +43,12 @@ public class JpsLibraryTableLoader {
     MultiMap<JpsOrderRootType, String> recursiveJarDirectories = new MultiMap<JpsOrderRootType, String>();
     for (Element jarDirectory : JDOMUtil.getChildren(libraryElement, "jarDirectory")) {
       String url = jarDirectory.getAttributeValue("url");
-      String rootType = jarDirectory.getAttributeValue("type");
+      String rootTypeId = jarDirectory.getAttributeValue("type");
+      final JpsOrderRootType rootType = rootTypeId != null ? getRootType(rootTypeId) : JpsOrderRootType.COMPILED;
       boolean recursive = Boolean.parseBoolean(jarDirectory.getAttributeValue("recursive"));
-      jarDirectories.putValue(getRootType(rootType), url);
+      jarDirectories.putValue(rootType, url);
       if (recursive) {
-        recursiveJarDirectories.putValue(getRootType(rootType), url);
+        recursiveJarDirectories.putValue(rootType, url);
       }
     }
     for (Element rootsElement : JDOMUtil.getChildren(libraryElement)) {

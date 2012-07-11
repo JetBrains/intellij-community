@@ -20,6 +20,19 @@ import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
  */
 public class JpsElementFactoryImpl extends JpsElementFactory {
   @Override
+  public JpsModel createModel() {
+    return new JpsModelImpl(new JpsEventDispatcherBase() {
+      @Override
+      public void fireElementRenamed(@NotNull JpsNamedElement element, @NotNull String oldName, @NotNull String newName) {
+      }
+
+      @Override
+      public void fireElementChanged(@NotNull JpsElement element) {
+      }
+    });
+  }
+
+  @Override
   public <P extends JpsElementProperties> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties) {
     return new JpsModuleImpl(type, name, properties);
   }

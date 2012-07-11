@@ -16,17 +16,26 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author nik
  */
 public class JpsProjectLoader extends JpsLoaderBase {
+  private static final ExecutorService ourThreadPool = Executors.newFixedThreadPool(2 * Runtime.getRuntime().availableProcessors());
   private final JpsProject myProject;
+  private final Map<String, String> myPathVariables;
 
   public JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, File baseDir) {
     super(createMacroExpander(pathVariables, baseDir));
     myProject = project;
+    myPathVariables = pathVariables;
   }
 
   private static JpsMacroExpander createMacroExpander(Map<String, String> pathVariables, File baseDir) {
@@ -95,17 +104,32 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Element componentRoot = findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
+    List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
     for (Element moduleElement : JDOMUtil.getChildren(modules, "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
-      JpsModule module = loadModule(path);
-      myProject.addModule(module);
+      futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
+        @Override
+        public JpsModule call() throws Exception {
+          return loadModule(path);
+        }
+      }));
+    }
+    try {
+      for (Future<JpsModule> future : futures) {
+        myProject.addModule(future.get());
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
   private JpsModule loadModule(String path) {
     final File file = new File(path);
     String name = FileUtil.getNameWithoutExtension(file);
-    final Element moduleRoot = loadRootElement(file);
+    final JpsMacroExpander expander = new JpsMacroExpander(myPathVariables);
+    expander.addFileHierarchyReplacements("MODULE_DIR", file.getParentFile());
+    final Element moduleRoot = loadRootElement(file, expander);
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModuleType<?> moduleType = getModuleType(typeId);
     final JpsModule module = createModule(name, moduleRoot, moduleType);
