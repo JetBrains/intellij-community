@@ -121,10 +121,10 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private List<LookupElement> liftShorterElements(Iterable<LookupElement> source, THashSet<LookupElement> lifted, ProcessingContext context) {
     final Set<LookupElement> srcSet = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
     ContainerUtil.addAll(srcSet, source);
-    final Set<LookupElement> processed = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    final Set<LookupElement> processed = new THashSet<LookupElement>(srcSet.size(), TObjectHashingStrategy.IDENTITY);
 
     boolean forSorting = context.get(CompletionLookupArranger.PURE_RELEVANCE) != Boolean.TRUE;
-    final List<LookupElement> result = new ArrayList<LookupElement>();
+    final List<LookupElement> result = new ArrayList<LookupElement>(srcSet.size());
     for (LookupElement element : myNext.classify(source, context)) {
       if (processed.add(element)) {
         List<LookupElement> shorter = addShorterElements(srcSet, processed, null, myToLiftForPreselection.get(element));
