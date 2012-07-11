@@ -106,7 +106,10 @@ public class ProjectSettingsPanel {
           final DataContext dataContext = DataManager.getInstance().getDataContextFromFocus().getResult();
           final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(dataContext);
           if (optionsEditor != null) {
-            optionsEditor.select(ScopeChooserConfigurable.class);
+            ScopeChooserConfigurable configurable = optionsEditor.findConfigurable(ScopeChooserConfigurable.class);
+            if (configurable != null) {
+              optionsEditor.clearSearchAndSelect(configurable);
+            }
           }
         }
       }
