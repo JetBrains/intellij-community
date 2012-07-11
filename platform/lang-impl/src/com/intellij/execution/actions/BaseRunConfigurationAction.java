@@ -161,7 +161,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       }
       return;
     }
-    
+
     perform(context);
   }
 
@@ -211,7 +211,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   public static String suggestRunActionName(final LocatableConfiguration configuration) {
     if (!configuration.isGeneratedName()) {
-      return ProgramRunnerUtil.shortenName(configuration.getName(), 0);
+      return configuration.getName();
     } else return configuration.suggestedName();
   }
 
