@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -91,8 +92,9 @@ public class PyNamedTupleType extends PyClassType implements PyCallableType {
     return false;
   }
 
+  @Nullable
   @Override
-  public PyType getCallType() {
+  public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
     if (myDefinition) {
       return new PyNamedTupleType(myDeclaration, myName, myFields, false);
     }
