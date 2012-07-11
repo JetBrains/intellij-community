@@ -301,7 +301,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
             RemoteDeadHand.TwoMinutesTurkish.startCooking("localhost", result.port);
           }
           catch (Exception e) {
-            LOG.error(e);
+            LOG.warn("The cook failed to start due to " + ExceptionUtil.getRootCause(e));
           }
         }
       }
