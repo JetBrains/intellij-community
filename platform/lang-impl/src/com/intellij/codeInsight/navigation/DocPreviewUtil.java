@@ -290,8 +290,6 @@ public class DocPreviewUtil {
   private static abstract class AbstractCallback implements Callback {
 
     @NotNull protected final Context myContext;
-    private final Stack<String> myLfOpenTags = new Stack<String>();
-    private       String  myLfTagText;
     private final boolean myCountRows;
     private       boolean myScheduleNewLine;
     private boolean myInsidePre;
@@ -306,7 +304,7 @@ public class DocPreviewUtil {
       if ("pre".equals(name)) {
         myInsidePre = true;
       }
-      if (!processDelayedLfTag(name, text)) {
+      if (!processDelayedLfTag(name)) {
         return myContext.currentRow < myContext.rows;
       }
 
@@ -317,32 +315,15 @@ public class DocPreviewUtil {
       return true;
     }
 
-    private boolean processDelayedLfTag(@NotNull String name, @NotNull String text) {
+    private boolean processDelayedLfTag(@NotNull String name) {
       if (!TAGS_TO_ADD_LF.contains(name)) {
-        if (myLfTagText != null) {
-          myContext.buffer.append(myLfTagText);
-          myLfTagText = null;
+        if (myScheduleNewLine) {
+          newLine();
         }
         return true;
       }
 
-      myScheduleNewLine = false;
-      myContext.currentColumn = 0;
-      if (myLfTagText == null) {
-        if (myCountRows) {
-          myContext.currentRow++;
-        }
-        if (myContext.currentRow >= myContext.rows) {
-          return false;
-        }
-        myLfTagText = text;
-        myLfOpenTags.push(name);
-      }
-      else {
-        myLfOpenTags.pop();
-        myLfOpenTags.push(name);
-        myLfTagText = text;
-      }
+      myScheduleNewLine = true;
       return false;
     }
 
@@ -351,16 +332,11 @@ public class DocPreviewUtil {
       if ("pre".equals(name)) {
         myInsidePre = false;
       }
-      if (TAGS_TO_ADD_LF.contains(name)) {
-        if (!myLfOpenTags.isEmpty() && myLfOpenTags.peek().equals(name)) {
-          myContext.buffer.append(text);
-          myLfOpenTags.pop();
-          myContext.currentColumn = 0;
-          myContext.currentRow++;
-        }
-        return true;
-      }
 
+      if (!processDelayedLfTag(name)) {
+        return myContext.currentRow < myContext.rows;
+      }
+      
       if (!TAGS_TO_IGNORE.contains(name)) {
         myContext.buffer.append(text);
         myContext.openTags.remove(name);
@@ -370,7 +346,7 @@ public class DocPreviewUtil {
 
     @Override
     public boolean onStandaloneTag(@NotNull String name, @NotNull String text) {
-      if (!processDelayedLfTag(name, text)) {
+      if (!processDelayedLfTag(name)) {
         return true;
       }
 
@@ -391,23 +367,37 @@ public class DocPreviewUtil {
     }
 
     protected boolean addText(@NotNull String text) {
-      if (myLfTagText != null) {
-        myContext.buffer.append(myLfTagText);
-        myContext.currentColumn = 0;
-        myLfTagText = null;
-      }
-
       boolean addSpace = false;
       if (!text.isEmpty() && (text.startsWith(" ") || text.startsWith("\t"))) {
         myContext.buffer.append(text.charAt(0));
         myContext.currentColumn++;
       }
-      for (String s : text.split(" ")) {
 
-        if (!myInsidePre) {
-          s = s.trim();
+      String tailText = (!text.isEmpty() && (text.endsWith(" ") || text.endsWith("\t"))) ? text.substring(text.length() - 1) : null; 
+
+      text = text.trim();
+      if (myInsidePre && text.contains("\n")) {
+        boolean addLf = false;
+        for (String s : text.split("\n")) {
+          if (addLf) {
+            newLine();
+            if (myContext.currentRow >= myContext.rows) {
+              return false;
+            }
+          }
+          else {
+            addLf = true;
+          }
+          addText(s);
+          if (myContext.currentRow >= myContext.rows) {
+            return false;
+          }
         }
-        
+        return myContext.currentRow < myContext.rows;
+      }
+      
+      for (String s : text.split(" ")) {
+        s = s.trim();
         if (s.length() <= 0) {
           continue;
         }
@@ -435,9 +425,9 @@ public class DocPreviewUtil {
         }
         myScheduleNewLine = true;
       }
-      if (text.endsWith(" ")) {
-        myContext.buffer.append(" ");
-        myContext.currentColumn++;
+      if (tailText != null) {
+        myContext.buffer.append(tailText);
+        myContext.currentColumn += tailText.length();
       }
       return true;
     }
