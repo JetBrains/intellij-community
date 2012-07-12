@@ -83,12 +83,13 @@ public class StatementParser {
         while (true) {
           final IElementType type = builder.getTokenType();
           if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(type) || ElementType.MODIFIER_BIT_SET.contains(type) ||
-              type == JavaTokenType.IDENTIFIER || type == JavaTokenType.LT || type == JavaTokenType.GT ||
+              (type == JavaTokenType.IDENTIFIER && list.size() > 0) || type == JavaTokenType.LT || type == JavaTokenType.GT ||
               type == JavaTokenType.GTGT || type == JavaTokenType.GTGTGT || type == JavaTokenType.COMMA ||
               type == JavaTokenType.DOT || type == JavaTokenType.EXTENDS_KEYWORD || type == JavaTokenType.IMPLEMENTS_KEYWORD) {
             list.add(type);
             builder.advanceLexer();
-          } else {
+          }
+          else {
             break;
           }
         }
