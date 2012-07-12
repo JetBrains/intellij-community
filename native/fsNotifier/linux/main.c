@@ -250,6 +250,7 @@ static bool update_roots(array* new_roots) {
 
   unregister_roots();
   if (array_size(new_roots) == 0) {
+    output("UNWATCHEABLE\n/\n#\n");
     return true;
   }
   else if (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0) {  // refuse to watch entire tree
