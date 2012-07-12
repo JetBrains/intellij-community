@@ -12,21 +12,31 @@ import org.jetbrains.annotations.NotNull;
  * @author oleg
  */
 public abstract class IndentationParser implements PsiParser {
+  @NotNull
   private final IElementType myEolTokenType;
+  @NotNull
   private final IElementType myIndentTokenType;
+  @NotNull
   private final IElementType myBlockElementType;
+  @NotNull
+  private final IElementType myDocumentType;
 
-  public IndentationParser(final IElementType blockElementType,
-                           final IElementType eolTokenType,
-                           final IElementType indentTokenType) {
+  public IndentationParser(
+    @NotNull IElementType documentType,
+    @NotNull final IElementType blockElementType,
+    @NotNull final IElementType eolTokenType,
+    @NotNull final IElementType indentTokenType)
+  {
+    myDocumentType = documentType;
     myBlockElementType = blockElementType;
     myEolTokenType = eolTokenType;
     myIndentTokenType = indentTokenType;
   }
 
   @NotNull
-  public ASTNode parse(final IElementType root, final PsiBuilder builder) {
+  public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
     final PsiBuilder.Marker fileMarker = builder.mark();
+    final PsiBuilder.Marker documentMarker = builder.mark();
 
     final Stack<Pair<Integer, PsiBuilder.Marker>> stack = new Stack<Pair<Integer, PsiBuilder.Marker>>();
     stack.push(Pair.create(0, builder.mark()));
@@ -61,7 +71,7 @@ public abstract class IndentationParser implements PsiParser {
               startLineMarker = null;
             }
             // Close indentation blocks
-            while (!stack.isEmpty() && currentIndent < stack.peek().first){
+            while (!stack.isEmpty() && currentIndent < stack.peek().first) {
               stack.pop().second.done(myBlockElementType);
             }
 
@@ -93,23 +103,18 @@ public abstract class IndentationParser implements PsiParser {
       stack.pop().second.done(myBlockElementType);
     }
 
-    return buildTree(fileMarker, builder, root);
-  }
-
-  protected ASTNode buildTree(final PsiBuilder.Marker fileMarker,
-                              final PsiBuilder builder,
-                              final IElementType root) {
+    documentMarker.done(myDocumentType);
     fileMarker.done(root);
     return builder.getTreeBuilt();
   }
 
-  protected void advanceLexer(PsiBuilder builder) {
+  protected void advanceLexer(@NotNull PsiBuilder builder) {
     builder.advanceLexer();
   }
 
-  private void passEOLsAndIndents(final PsiBuilder builder) {
+  private void passEOLsAndIndents(@NotNull final PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
-    while (tokenType == myEolTokenType || tokenType == myIndentTokenType){
+    while (tokenType == myEolTokenType || tokenType == myIndentTokenType) {
       builder.advanceLexer();
       tokenType = builder.getTokenType();
     }
