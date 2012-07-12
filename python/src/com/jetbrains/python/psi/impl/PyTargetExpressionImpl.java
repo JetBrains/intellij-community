@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyTargetReference;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
@@ -108,6 +109,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         return null;
       }
       if (!context.maySwitchToAST(this)) {
+        final PsiElement value = getStub() != null ? findAssignedValueByStub() : findAssignedValue();
+        if (value instanceof PyTypedElement) {
+          return ((PyTypedElement)value).getType(context);
+        }
         return null;
       }
       PyType type = getTypeFromDocString(this);
@@ -389,6 +394,35 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       return null;
     }
     return PyQualifiedName.fromExpression(findAssignedValue());
+  }
+
+  @Nullable
+  public PsiElement findAssignedValueByStub() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null && stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
+      final PyQualifiedName initializer = stub.getInitializer();
+      // TODO: Support qualified stub initializers
+      if (initializer != null && initializer.getComponentCount() == 1) {
+        final String name = initializer.getLastComponent();
+        if (name != null) {
+          final PsiElement parent = getParentByStub();
+          if (parent instanceof PyFile) {
+            return ((PyFile)parent).getElementNamed(name);
+          }
+          else if (parent instanceof PyClass) {
+            final PyType type = ((PyClass)parent).getType(TypeEvalContext.fastStubOnly(null));
+            if (type != null) {
+              final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
+                                                                                    PyResolveContext.noImplicits());
+              if (results != null && !results.isEmpty()) {
+                return results.get(0).getElement();
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Override

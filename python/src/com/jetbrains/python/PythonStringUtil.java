@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -178,9 +179,9 @@ public class PythonStringUtil {
    */
   public static String replaceLastSuffix(String s, String separator, String newElementName) {
 
-    Character quote = null;
+    Pair<String, String> quotes = null;
     if (isQuoted(s)) {
-      quote = s.charAt(0);
+      quotes = getQuotes(s);
       s = removeQuotes(s);
     }
 
@@ -189,14 +190,26 @@ public class PythonStringUtil {
       s += separator;
     }
     s += newElementName;
-    if (quote != null) {
-      s = quote.charValue() + s + quote.charValue();
+    if (quotes != null) {
+      s = quotes.first + s + quotes.second;
     }
     return s;
   }
 
-  private static String removeQuotes(String text) {
-    return text.substring(1, text.length() - 1);
+
+  /**
+   * Handles unicode and raw strings
+   *
+   * @param text
+   * @return text with quotes and unicode/raw prefix removed (e.g. ur'string' -> string )
+   */
+  private static String removeQuotes(@NotNull String text) {
+    Pair<String, String> quotes = getQuotes(text);
+    if (quotes == null) {
+      return text;
+    }
+
+    return text.substring(quotes.first.length(), text.length() - quotes.second.length());
   }
 
   public static TextRange lastSuffixTextRange(@NotNull String text, String separator) {
@@ -206,17 +219,67 @@ public class PythonStringUtil {
     return TextRange.from(offset + 1, length);
   }
 
+
+  /**
+   * Handles unicode and raw strings
+   *
+   * @param text
+   * @return false if no quotes found, true otherwise
+   *         sdfs -> false
+   *         ur'x' -> true
+   *         "string" -> true
+   */
+
   public static boolean isQuoted(@Nullable String text) {
     if (text == null) {
       return false;
     }
-    if (text.startsWith("u") || text.startsWith("r")) {
+    if (text.toLowerCase().startsWith("u")) {
       text = text.substring(1);
     }
+
+    assert text != null;
+    if (text.toLowerCase().startsWith("r")) {
+      text = text.substring(1);
+    }
+
+    assert text != null;
     if (text.length() > 1 && text.charAt(0) == text.charAt(text.length() - 1) && (text.charAt(0) == '\'' || text.charAt(0) == '"')) {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Handles unicode and raw strings
+   *
+   * @param text
+   * @return open and close quote (including raw/unicode prefixes), null if no quotes present in string
+   *         'string' -> (', ')
+   *         UR"unicode raw string" -> (UR", ")
+   */
+  @Nullable
+  public static Pair<String, String> getQuotes(@NotNull String text) {
+    String first = "";
+
+    if (text.toLowerCase().startsWith("u")) {
+      first += text.substring(0, 1);
+      text = text.substring(1);
+    }
+
+    if (text.toLowerCase().startsWith("r")) {
+      first += text.substring(0, 1);
+      text = text.substring(1);
+    }
+
+    int last = text.length() - 1;
+
+    if (text.length() > 2 && (text.charAt(0) == '\'' || text.charAt(0) == '"') && (text.charAt(last) == '\'' || text.charAt(last) == '"')) {
+      return Pair.create(first + text.substring(0, 1), text.substring(last));
+    }
+    else {
+      return null;
+    }
   }
 
   @Nullable
@@ -320,23 +383,14 @@ public class PythonStringUtil {
   }
 
   public static String stripQuotesAroundValue(String text) {
-    if (isRawOrUnicode(text)) {
-      text = text.substring(1);
-    }
-
-
-    return StringUtil.stripQuotesAroundValue(text);
-  }
-
-  public static boolean isRawOrUnicode(String text) {
-    return isUnicodeString(text) || isRawString(text);
-  }
-
-  public static boolean isUnicodeString(String text) {
-    return isStringPrefixedBy(text.toLowerCase(), "u");
+    return removeQuotes(text);
   }
 
   public static boolean isRawString(String text) {
+    text = text.toLowerCase();
+    if (text.startsWith("u")) {
+      text = text.substring(1);
+    }
     return isStringPrefixedBy(text.toLowerCase(), "r");
   }
 

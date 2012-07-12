@@ -9,6 +9,7 @@ import com.intellij.facet.FacetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -57,7 +58,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
       public void contentsChanged(VirtualFileEvent event) {
-        if (event.getFile() == getScript()) {
+        if (Comparing.equal(event.getFile(), getScript())) {
           updatePaths();
           attachLibrary(module);
         }

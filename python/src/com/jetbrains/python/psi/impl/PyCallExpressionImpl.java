@@ -169,7 +169,8 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
       else {
         final PyType type = context.getType(callee);
         if (type instanceof PyCallableType) {
-          return ((PyCallableType) type).getCallType();
+          final PyQualifiedExpression callSite = callee instanceof PyQualifiedExpression ? (PyQualifiedExpression)callee : null;
+          return ((PyCallableType) type).getCallType(context, callSite);
         }
         return null;
       }
