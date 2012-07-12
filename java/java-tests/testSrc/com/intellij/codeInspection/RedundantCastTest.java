@@ -94,4 +94,5 @@ public class RedundantCastTest extends InspectionTestCase {
   public void testPrimitiveInsideSynchronized() throws Exception { doTest(); }
 
   public void testInConditionalPreserveResolve() throws Exception { doTest();}
+  public void testArrayAccess() throws Exception { doTest();}
 }
