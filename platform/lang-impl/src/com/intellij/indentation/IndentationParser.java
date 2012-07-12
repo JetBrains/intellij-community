@@ -72,14 +72,14 @@ public abstract class IndentationParser implements PsiParser {
             }
             // Close indentation blocks
             while (!stack.isEmpty() && currentIndent < stack.peek().first) {
-              stack.pop().second.done(myBlockElementType);
+              closeBlock(builder, stack.pop().second);
             }
 
             if (!stack.isEmpty()) {
               final Pair<Integer, PsiBuilder.Marker> pair = stack.peek();
               if (currentIndent >= pair.first) {
                 if (currentIndent == pair.first) {
-                  stack.pop().second.done(myBlockElementType);
+                  closeBlock(builder, stack.pop().second);
                 }
                 passEOLsAndIndents(builder);
                 stack.push(Pair.create(currentIndent, builder.mark()));
@@ -98,12 +98,16 @@ public abstract class IndentationParser implements PsiParser {
       startLineMarker.drop();
     }
     while (!stack.isEmpty()){
-      stack.pop().second.done(myBlockElementType);
+      closeBlock(builder, stack.pop().second);
     }
 
     documentMarker.done(myDocumentType);
     fileMarker.done(root);
     return builder.getTreeBuilt();
+  }
+
+  protected void closeBlock(@NotNull PsiBuilder builder, @NotNull PsiBuilder.Marker marker) {
+    marker.done(myBlockElementType);
   }
 
   protected void advanceLexer(@NotNull PsiBuilder builder) {
