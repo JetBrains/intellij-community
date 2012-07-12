@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,10 @@ class Foo {{
 }}
 '''
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) == """Bar
- java.util.List&lt;java.lang.String&gt; foo (java.lang.String param)"""
+    assertEquals (
+            '<a href="psi_element://Bar">Bar</a><br/> <a href="psi_element://java.util.List">List</a>&lt;java.lang.String&gt; foo (java.lang.String param)',
+            CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
+    )
   }
 
   public void testGenericField() {
@@ -45,8 +47,9 @@ class Foo {{
 }}
 '''
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) == """Bar
- java.lang.Integer field"""
+    assertEquals(
+            '<a href="psi_element://Bar">Bar</a><br/> java.lang.Integer field',
+            CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
+    )
   }
-
 }

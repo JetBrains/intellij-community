@@ -85,8 +85,7 @@ import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
 
-  private static final int ourQuickDocRowsNumber         = getIntProperty("quick.doc.desired.rows.number", 2);
-  private static final int ourQuickDocSymbolsInRowNumber = getIntProperty("quick.doc.desired.symbols.in.row.number", 80);
+  private static final int ourQuickDocRowsNumber         = getIntProperty("quick.doc.desired.rows.number", 1);
 
   private final TextAttributes  ourReferenceAttributes;
   private       HighlightersSet myHighlighter;
@@ -264,7 +263,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     if (result != null) {
       String fullText = documentationProvider.generateDoc(element, atPointer);
       String qName = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
-      String text = DocPreviewUtil.buildPreview(result, qName, fullText, ourQuickDocRowsNumber, ourQuickDocSymbolsInRowNumber);
+      String text = DocPreviewUtil.buildPreview(result, qName, fullText, ourQuickDocRowsNumber);
       return new DocInfo(text, documentationProvider, atPointer);
     }
     return DocInfo.EMPTY;
