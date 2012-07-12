@@ -84,7 +84,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     for (T t : map.keySet()) {
       weights.put(t, String.valueOf(getWeight(t)));
     }
-    if (new HashSet<String>(weights.values()).size() > 1 || ApplicationManager.getApplication().isUnitTestMode() || true) {
+    if (new HashSet<String>(weights.values()).size() > 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       for (T t : map.keySet()) {
         final StringBuilder builder = map.get(t);
         if (builder.length() > 0) {
