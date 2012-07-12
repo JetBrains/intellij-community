@@ -48,6 +48,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -579,6 +580,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties) {
+    if (!ReadonlyStatusHandler.ensureFilesWritable(getProject(), myFile)) {
+      return false;
+    }
     try {
       myPSIChangeListener.stop();
       operation.run();
@@ -596,6 +600,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected void execute(List<EditOperation> operations) {
+    if (!ReadonlyStatusHandler.ensureFilesWritable(getProject(), myFile)) {
+      return;
+    }
     try {
       myPSIChangeListener.stop();
       for (EditOperation operation : operations) {
