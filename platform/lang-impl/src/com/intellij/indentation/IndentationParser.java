@@ -77,12 +77,10 @@ public abstract class IndentationParser implements PsiParser {
 
             if (!stack.isEmpty()) {
               final Pair<Integer, PsiBuilder.Marker> pair = stack.peek();
-              if (currentIndent == pair.first) {
-                stack.pop().second.done(myBlockElementType);
-                passEOLsAndIndents(builder);
-                stack.push(Pair.create(currentIndent, builder.mark()));
-              }
-              if (currentIndent > pair.first) {
+              if (currentIndent >= pair.first) {
+                if (currentIndent == pair.first) {
+                  stack.pop().second.done(myBlockElementType);
+                }
                 passEOLsAndIndents(builder);
                 stack.push(Pair.create(currentIndent, builder.mark()));
               }
