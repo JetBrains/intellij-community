@@ -155,6 +155,13 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
                   isReturnTypeChanged = true;
                 }
               }
+
+              for (int i = 0, length = Math.min(newParms.length, oldParameterNames.length); i < length; i++) {
+                ParameterInfoImpl parm = newParms[i];
+                if (parm.getName().equals(oldParameterNames[i]) && parm.getTypeText().equals(oldParameterTypes[i])) {
+                  parm.oldParameterIndex = i;
+                }
+              }
             }
           };
         javaChangeInfo.setSuperMethod(getSuperMethod());
