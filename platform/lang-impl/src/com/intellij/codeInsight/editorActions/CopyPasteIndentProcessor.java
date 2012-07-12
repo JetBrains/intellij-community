@@ -138,16 +138,17 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
         // don't indent first line if there's any text before it
         final String textBeforeFirstLine = document.getText(new TextRange(startLineStart, bounds.getStartOffset()));
 
+        final int caretOffset = editor.getCaretModel().getOffset();
+        int realCaretColumn = caretOffset - document.getLineStartOffset(document.getLineNumber(caretOffset));
+
         //insert on top level, doesn't need indent
-        if (caretColumn == 0 && !pastedText.startsWith(" "))
+        if (realCaretColumn == 0 && !pastedText.startsWith(" "))
           return;
 
         if (textBeforeFirstLine.trim().length() == 0) {
           EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
         }
 
-        final int caretOffset = editor.getCaretModel().getOffset();
-        int realCaretColumn = caretOffset - document.getLineStartOffset(document.getLineNumber(caretOffset));
 
         final List<String> strings = StringUtil.split(pastedText, "\n");
         if (realCaretColumn >= value.getIndent() && !strings.isEmpty() &&
