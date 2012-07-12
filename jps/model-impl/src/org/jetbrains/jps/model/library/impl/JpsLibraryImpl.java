@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl, JpsProjectImpl> implements JpsLibrary {
+public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl> implements JpsLibrary {
   private static final JpsElementCollectionKind<JpsLibraryRoot> LIBRARY_ROOTS_COLLECTION =
     new JpsElementCollectionKind<JpsLibraryRoot>(JpsLibraryRootKind.INSTANCE);
   private static final JpsTypedDataKind<JpsLibraryType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsLibraryType<?>>();
