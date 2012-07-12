@@ -5,6 +5,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.StringEscapesTokenTypes;
@@ -57,14 +58,15 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   }
 
   private static TextAttributesKey _copy(String name, TextAttributesKey src) {
-    return TextAttributesKey.createTextAttributesKey(name, src.getDefaultAttributes().clone());
+    return TextAttributesKeyDefaults.createTextAttributesKey(name, TextAttributesKeyDefaults.getDefaultAttributes(src).clone());
   }
 
   public static final TextAttributesKey PY_KEYWORD = _copy("PY.KEYWORD", KEYWORD);
 
   public static final TextAttributesKey PY_BYTE_STRING = _copy("PY.STRING.B", STRING);
-  public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKey.createTextAttributesKey(
-    "PY.STRING.U", new TextAttributes(new Color(0, 128, 128), null, null, null, STRING.getDefaultAttributes().getFontType())
+  public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKeyDefaults.createTextAttributesKey(
+    "PY.STRING.U",
+    new TextAttributes(new Color(0, 128, 128), null, null, null, TextAttributesKeyDefaults.getDefaultAttributes(STRING).getFontType())
   );
   public static final TextAttributesKey PY_NUMBER = _copy("PY.NUMBER", NUMBER);
 
@@ -86,32 +88,33 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PY_DOC_COMMENT_TAG = _copy("PY.DOC_COMMENT_TAG", DOC_COMMENT_TAG);
 
-  public static final TextAttributesKey PY_DECORATOR = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PY_DECORATOR = TextAttributesKeyDefaults.createTextAttributesKey(
     "PY.DECORATOR", new TextAttributes(Color.blue.darker(), null, null, null, Font.PLAIN)
   );
 
-  public static final TextAttributesKey PY_CLASS_DEFINITION = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PY_CLASS_DEFINITION = TextAttributesKeyDefaults.createTextAttributesKey(
     "PY.CLASS_DEFINITION", new TextAttributes(Color.black, null, null, null, Font.BOLD)
   );
 
-  public static final TextAttributesKey PY_FUNC_DEFINITION = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PY_FUNC_DEFINITION = TextAttributesKeyDefaults.createTextAttributesKey(
     "PY.FUNC_DEFINITION", new TextAttributes(Color.black, null, null, null, Font.BOLD)
   );
 
-  public static final TextAttributesKey PY_PREDEFINED_DEFINITION = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PY_PREDEFINED_DEFINITION = TextAttributesKeyDefaults.createTextAttributesKey(
     "PY.PREDEFINED_DEFINITION", new TextAttributes(Color.magenta.darker(), null, null, null, Font.BOLD)
   );
 
-  public static final TextAttributesKey PY_PREDEFINED_USAGE = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PY_PREDEFINED_USAGE = TextAttributesKeyDefaults.createTextAttributesKey(
     "PY.PREDEFINED_USAGE", new TextAttributes(Color.magenta.darker(), null, null, null, Font.PLAIN)
   );
 
-  public static final TextAttributesKey PY_BUILTIN_NAME = TextAttributesKey.createTextAttributesKey(
-    "PY.BUILTIN_NAME", new TextAttributes(KEYWORD.getDefaultAttributes().getForegroundColor(), null, null, null, Font.PLAIN)
+  public static final TextAttributesKey PY_BUILTIN_NAME = TextAttributesKeyDefaults.createTextAttributesKey(
+    "PY.BUILTIN_NAME",
+    new TextAttributes(TextAttributesKeyDefaults.getDefaultAttributes(KEYWORD).getForegroundColor(), null, null, null, Font.PLAIN)
   );
   
   public static final TextAttributesKey PY_PARAMETER =_copy("PY.PARAMETER", CodeInsightColors.PARAMETER_ATTRIBUTES);
-  public static final TextAttributesKey PY_SELF_PARAMETER = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey PY_SELF_PARAMETER = TextAttributesKeyDefaults.createTextAttributesKey(
     "PY.SELF_PARAMETER", new TextAttributes(new Color(148, 85, 141), null, null, null, Font.PLAIN));
 
   public static final TextAttributesKey PY_VALID_STRING_ESCAPE = _copy("PY.VALID_STRING_ESCAPE", VALID_STRING_ESCAPE);
