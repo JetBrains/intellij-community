@@ -45,17 +45,16 @@ public class MsgCommandContainer {
     PsiBuilder.Marker marker = builder.mark();
     try {
       MsgCommand command = getCommand(builder.getTokenType());
-      command.parse(builder);
-      //if (result) {
+      boolean result = command.parse(builder);
+      if (result) {
         marker.done(command.getCompositeElement());
-      //}
-      //else {
-      //  marker.error("String for " + command.getName() + " is not specified");
-      //}
-      //return result;
-      return true;
+      }
+      else {
+        marker.error("String for " + command.getName() + " is not specified");
+      }
+      return result;
     }
-    catch (Exception e) {
+    catch (UnknownCommandException e) {
       marker.error(e.getMessage());
       builder.advanceLexer();
       return false;

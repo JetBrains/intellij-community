@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.DummyJpsElementProperties;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsElementProperties;
@@ -36,18 +37,19 @@ public class JpsLibraryTableLoader {
 
   public static JpsLibrary loadLibrary(Element libraryElement, String name) {
     String typeId = libraryElement.getAttributeValue("type");
-    final JpsLibraryType<?> type = getLibraryType(typeId);
-    JpsLibrary library = createLibrary(name, type, libraryElement.getChild("properties"));
+    final JpsLibraryPropertiesLoader<?> loader = getLibraryPropertiesLoader(typeId);
+    JpsLibrary library = createLibrary(name, loader, libraryElement.getChild("properties"));
 
     MultiMap<JpsOrderRootType, String> jarDirectories = new MultiMap<JpsOrderRootType, String>();
     MultiMap<JpsOrderRootType, String> recursiveJarDirectories = new MultiMap<JpsOrderRootType, String>();
     for (Element jarDirectory : JDOMUtil.getChildren(libraryElement, "jarDirectory")) {
       String url = jarDirectory.getAttributeValue("url");
-      String rootType = jarDirectory.getAttributeValue("type");
+      String rootTypeId = jarDirectory.getAttributeValue("type");
+      final JpsOrderRootType rootType = rootTypeId != null ? getRootType(rootTypeId) : JpsOrderRootType.COMPILED;
       boolean recursive = Boolean.parseBoolean(jarDirectory.getAttributeValue("recursive"));
-      jarDirectories.putValue(getRootType(rootType), url);
+      jarDirectories.putValue(rootType, url);
       if (recursive) {
-        recursiveJarDirectories.putValue(getRootType(rootType), url);
+        recursiveJarDirectories.putValue(rootType, url);
       }
     }
     for (Element rootsElement : JDOMUtil.getChildren(libraryElement)) {
@@ -71,19 +73,9 @@ public class JpsLibraryTableLoader {
     return library;
   }
 
-  private static <P extends JpsElementProperties> JpsLibrary createLibrary(String name,
-                                                                           JpsLibraryType<P> type, final Element propertiesElement) {
-    return JpsElementFactory.getInstance().createLibrary(name, type, loadProperties(type, propertiesElement));
-  }
-
-  private static <P extends JpsElementProperties> P loadProperties(JpsLibraryType<P> type, Element propertiesElement) {
-    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
-      final P properties = extension.loadLibraryProperties(type, propertiesElement);
-      if (properties != null) {
-        return properties;
-      }
-    }
-    return (P)DummyJpsElementProperties.INSTANCE;
+  private static <P extends JpsElementProperties> JpsLibrary createLibrary(String name, JpsLibraryPropertiesLoader<P> loader,
+                                                                           final Element propertiesElement) {
+    return JpsElementFactory.getInstance().createLibrary(name, loader.getType(), loader.loadProperties(propertiesElement));
   }
 
   private static JpsOrderRootType getRootType(String rootTypeId) {
@@ -100,15 +92,21 @@ public class JpsLibraryTableLoader {
     return JpsOrderRootType.COMPILED;
   }
 
-  private static JpsLibraryType<?> getLibraryType(String typeId) {
+  private static JpsLibraryPropertiesLoader<?> getLibraryPropertiesLoader(@Nullable String typeId) {
     if (typeId != null) {
       for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
-        final JpsLibraryType<?> type = extension.getLibraryType(typeId);
-        if (type != null) {
-          return type;
+        for (JpsLibraryPropertiesLoader<?> loader : extension.getLibraryPropertiesLoaders()) {
+          if (loader.getTypeId().equals(typeId)) {
+            return loader;
+          }
         }
       }
     }
-    return JpsJavaLibraryType.INSTANCE;
+    return new JpsLibraryPropertiesLoader<DummyJpsElementProperties>(JpsJavaLibraryType.INSTANCE, null) {
+      @Override
+      public DummyJpsElementProperties loadProperties(@Nullable Element propertiesElement) {
+        return DummyJpsElementProperties.INSTANCE;
+      }
+    };
   }
 }

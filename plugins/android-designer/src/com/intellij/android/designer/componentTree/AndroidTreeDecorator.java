@@ -24,6 +24,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -89,8 +90,21 @@ public final class AndroidTreeDecorator implements TreeComponentDecorator {
     }
   }
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.android.designer.componentTree");
+
   @Nullable
   private static String getPropertyValue(RadComponent component, String name) {
+    if (component.getProperties() == null) {
+      throw new NullPointerException("Component " +
+                                     component +
+                                     ", " +
+                                     component.getLayout() +
+                                     ", " +
+                                     component.getMetaModel().getTag() +
+                                     ", " +
+                                     component.getMetaModel().getTarget() +
+                                     " without properties");
+    }
     Property property = PropertyTable.findProperty(component.getProperties(), name);
     if (property != null) {
       try {

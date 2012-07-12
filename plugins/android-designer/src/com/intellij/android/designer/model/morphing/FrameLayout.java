@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.morphing;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.*;
 import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.android.designer.model.layout.grid.RadGridLayout;
@@ -89,11 +90,11 @@ public class FrameLayout {
         for (RadComponent rowComponent : myNewComponent.getChildren()) {
           for (RadComponent cellComponent : rowComponent.getChildren()) {
             XmlTag childTag = ((RadViewComponent)cellComponent).getTag();
-            ModelParser.deleteAttribute(childTag, "android:layout_gravity");
+            ModelParser.deleteAttribute(childTag, "layout_gravity");
 
             Integer column = cellComponent.extractClientProperty(COLUMN_KEY);
             if (column != null) {
-              childTag.setAttribute("android:layout_column", column.toString());
+              childTag.setAttribute("layout_column", SdkConstants.NS_RESOURCES, column.toString());
             }
           }
         }
@@ -133,15 +134,15 @@ public class FrameLayout {
       @Override
       protected void convertTag() {
         XmlTag tag = myNewComponent.getTag();
-        tag.setAttribute("android:rowCount", "3");
-        tag.setAttribute("android:columnCount", "3");
+        tag.setAttribute("rowCount", SdkConstants.NS_RESOURCES, "3");
+        tag.setAttribute("columnCount", SdkConstants.NS_RESOURCES, "3");
 
         for (RadComponent childComponent : myNewComponent.getChildren()) {
           XmlTag childTag = ((RadViewComponent)childComponent).getTag();
           Pair<Gravity, Gravity> sides = Gravity.getSides(childComponent);
-          ModelParser.deleteAttribute(childTag, "android:layout_gravity");
-          childTag.setAttribute("android:layout_row", getRowIndexValue(sides.second));
-          childTag.setAttribute("android:layout_column", getColumnIndexValue(sides.first));
+          ModelParser.deleteAttribute(childTag, "layout_gravity");
+          childTag.setAttribute("layout_row", SdkConstants.NS_RESOURCES, getRowIndexValue(sides.second));
+          childTag.setAttribute("layout_column", SdkConstants.NS_RESOURCES, getColumnIndexValue(sides.first));
         }
       }
     }.result();

@@ -619,7 +619,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         List children = e.getChildren(ELEMENT_FILETYPE);
         for (final Object aChildren : children) {
           Element element = (Element)aChildren;
-          loadFileType(element, true, null, false);
+          loadFileType(element, true, null, false, null);
         }
       }
       else if (ELEMENT_IGNOREFILES.equals(e.getName())) {
@@ -878,11 +878,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private FileType loadFileType(final ReadFileType readFileType) {
     return loadFileType(readFileType.getElement(), false, mySchemesManager.isShared(readFileType) ? readFileType.getExternalInfo() : null,
-                        true);
+                        true, readFileType.getExternalInfo().getCurrentFileName());
   }
 
 
-  private FileType loadFileType(Element typeElement, boolean isDefaults, final ExternalInfo info, boolean ignoreExisting) {
+  private FileType loadFileType(Element typeElement, boolean isDefaults, final ExternalInfo info, boolean ignoreExisting, String fileName) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
     String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue(ATTRIBUTE_ICON);
@@ -914,7 +914,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
     else {
-      type = loadCustomFile(typeElement, info);
+      type = loadCustomFile(typeElement, info, fileName);
       if (type instanceof UserFileType) {
         setFileTypeAttributes(fileTypeName, fileTypeDescr, iconPath, (UserFileType)type);
       }
@@ -954,7 +954,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return StringUtil.join(list, FileTypeConsumer.EXTENSION_DELIMITER);
   }
 
-  private static FileType loadCustomFile(final Element typeElement, ExternalInfo info) {
+  private static FileType loadCustomFile(final Element typeElement, ExternalInfo info, String fileName) {
     FileType type = null;
 
     Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
@@ -963,6 +963,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       if (table != null) {
         if (info == null) {
           type = new AbstractFileType(table);
+          ((AbstractFileType)type).getExternalInfo().setCurrentFileName(fileName);
         }
         else {
           type = new ImportedFileType(table, info);

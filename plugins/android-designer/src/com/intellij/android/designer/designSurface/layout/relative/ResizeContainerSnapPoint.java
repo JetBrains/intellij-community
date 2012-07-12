@@ -70,24 +70,24 @@ public class ResizeContainerSnapPoint extends ResizeSnapPoint {
         XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
 
         if (mySide == Side.top) {
-          ModelParser.deleteAttribute(tag, "android:layout_alignTop");
-          ModelParser.deleteAttribute(tag, "android:layout_below");
-          ModelParser.deleteAttribute(tag, "android:layout_marginTop");
+          ModelParser.deleteAttribute(tag, "layout_alignTop");
+          ModelParser.deleteAttribute(tag, "layout_below");
+          ModelParser.deleteAttribute(tag, "layout_marginTop");
         }
         else if (mySide == Side.bottom) {
-          ModelParser.deleteAttribute(tag, "android:layout_alignBottom");
-          ModelParser.deleteAttribute(tag, "android:layout_above");
-          ModelParser.deleteAttribute(tag, "android:layout_marginBottom");
+          ModelParser.deleteAttribute(tag, "layout_alignBottom");
+          ModelParser.deleteAttribute(tag, "layout_above");
+          ModelParser.deleteAttribute(tag, "layout_marginBottom");
         }
         else if (mySide == Side.left) {
-          ModelParser.deleteAttribute(tag, "android:layout_alignLeft");
-          ModelParser.deleteAttribute(tag, "android:layout_toRightOf");
-          ModelParser.deleteAttribute(tag, "android:layout_marginLeft");
+          ModelParser.deleteAttribute(tag, "layout_alignLeft");
+          ModelParser.deleteAttribute(tag, "layout_toRightOf");
+          ModelParser.deleteAttribute(tag, "layout_marginLeft");
         }
         else if (mySide == Side.right) {
-          ModelParser.deleteAttribute(tag, "android:layout_alignRight");
-          ModelParser.deleteAttribute(tag, "android:layout_toLeftOf");
-          ModelParser.deleteAttribute(tag, "android:layout_marginRight");
+          ModelParser.deleteAttribute(tag, "layout_alignRight");
+          ModelParser.deleteAttribute(tag, "layout_toLeftOf");
+          ModelParser.deleteAttribute(tag, "layout_marginRight");
         }
       }
     });

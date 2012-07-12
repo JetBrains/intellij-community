@@ -276,13 +276,12 @@ public class RelativeLayoutOperation extends AbstractEditOperation {
   }
 
   private static final String[] ATTRIBUTES =
-    {"android:layout_toLeftOf", "android:layout_toRightOf", "android:layout_above", "android:layout_below", "android:layout_alignBaseline",
-      "android:layout_alignLeft", "android:layout_alignTop", "android:layout_alignRight", "android:layout_alignBottom",
-      "android:layout_alignParentLeft", "android:layout_alignParentTop", "android:layout_alignParentRight",
-      "android:layout_alignParentBottom", "android:layout_centerInParent", "android:layout_centerHorizontal",
-      "android:layout_centerVertical", "android:layout_margin", "android:layout_marginLeft", "android:layout_marginTop",
-      "android:layout_marginRight",
-      "android:layout_marginBottom", "android:layout_marginStart", "android:layout_marginEnd"};
+    {"layout_toLeftOf", "layout_toRightOf", "layout_above", "layout_below", "layout_alignBaseline",
+      "layout_alignLeft", "layout_alignTop", "layout_alignRight", "layout_alignBottom",
+      "layout_alignParentLeft", "layout_alignParentTop", "layout_alignParentRight",
+      "layout_alignParentBottom", "layout_centerInParent", "layout_centerHorizontal",
+      "layout_centerVertical", "layout_margin", "layout_marginLeft", "layout_marginTop",
+      "layout_marginRight", "layout_marginBottom", "layout_marginStart", "layout_marginEnd"};
 
   private static void clear(RadViewComponent component) {
     XmlTag tag = component.getTag();

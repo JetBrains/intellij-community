@@ -104,20 +104,20 @@ public class ResizeComponentSnapPoint extends ResizeSnapPoint {
         XmlTag tag = ((RadViewComponent)components.get(0)).getTag();
 
         if (mySide == Side.top) {
-          ModelParser.deleteAttribute(tag, "android:layout_alignParentTop");
-          ModelParser.deleteAttribute(tag, "android:layout_marginTop");
+          ModelParser.deleteAttribute(tag, "layout_alignParentTop");
+          ModelParser.deleteAttribute(tag, "layout_marginTop");
         }
         else if (mySide == Side.bottom) {
-          ModelParser.deleteAttribute(tag, "android:layout_alignParentBottom");
-          ModelParser.deleteAttribute(tag, "android:layout_marginBottom");
+          ModelParser.deleteAttribute(tag, "layout_alignParentBottom");
+          ModelParser.deleteAttribute(tag, "layout_marginBottom");
         }
         else if (mySide == Side.left) {
-          ModelParser.deleteAttribute(tag, "android:layout_alignParentLeft");
-          ModelParser.deleteAttribute(tag, "android:layout_marginLeft");
+          ModelParser.deleteAttribute(tag, "layout_alignParentLeft");
+          ModelParser.deleteAttribute(tag, "layout_marginLeft");
         }
         else if (mySide == Side.right) {
-          ModelParser.deleteAttribute(tag, "android:layout_alignParentRight");
-          ModelParser.deleteAttribute(tag, "android:layout_marginRight");
+          ModelParser.deleteAttribute(tag, "layout_alignParentRight");
+          ModelParser.deleteAttribute(tag, "layout_marginRight");
         }
       }
     });

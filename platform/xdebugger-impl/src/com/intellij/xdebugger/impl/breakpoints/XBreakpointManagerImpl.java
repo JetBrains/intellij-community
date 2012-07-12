@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,7 +85,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
         XBreakpointBase<?, ?, ?>[] breakpoints = getAllBreakpoints();
         for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
           XSourcePosition position = breakpoint.getSourcePosition();
-          if (position != null && position.getFile() == file) {
+          if (position != null && Comparing.equal(position.getFile(), file)) {
             fireBreakpointChanged(breakpoint);
           }
         }

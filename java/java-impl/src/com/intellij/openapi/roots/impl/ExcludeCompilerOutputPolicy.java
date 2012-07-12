@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -53,7 +54,8 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
   @Override
   public boolean isExcludeRootForModule(final Module module, final VirtualFile excludeRoot) {
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-    return compilerModuleExtension.getCompilerOutputPath() == excludeRoot || compilerModuleExtension.getCompilerOutputPathForTests() == excludeRoot;
+    return Comparing.equal(compilerModuleExtension.getCompilerOutputPath(), excludeRoot) ||
+           Comparing.equal(compilerModuleExtension.getCompilerOutputPathForTests(), excludeRoot);
   }
 
   @Override
@@ -87,7 +89,7 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
 
   private static boolean isEqualWithFileOrUrl(VirtualFile f, VirtualFile fileToCompareWith, String url) {
     if (fileToCompareWith != null) {
-      if (fileToCompareWith == f) return true;
+      if (Comparing.equal(fileToCompareWith, f)) return true;
     }
     else if (url != null) {
       if (FileUtil.pathsEqual(url, f.getUrl())) return true;

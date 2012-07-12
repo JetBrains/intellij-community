@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
@@ -67,7 +68,7 @@ public class VFileMoveEvent extends VFileEvent {
 
   @Override
   public boolean isValid() {
-    return myFile.isValid() && myFile.getParent() == myOldParent && myOldParent.isValid();
+    return myFile.isValid() && Comparing.equal(myFile.getParent(), myOldParent) && myOldParent.isValid();
   }
 
   public boolean equals(final Object o) {

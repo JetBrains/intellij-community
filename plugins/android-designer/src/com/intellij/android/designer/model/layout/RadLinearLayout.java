@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.layout;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.LinearLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.actions.LayoutMarginOperation;
@@ -61,7 +62,7 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
   }
 
   public boolean isHorizontal() {
-    return !"vertical".equals(((RadViewComponent)myContainer).getTag().getAttributeValue("android:orientation"));
+    return !"vertical".equals(((RadViewComponent)myContainer).getTag().getAttributeValue("orientation", SdkConstants.NS_RESOURCES));
   }
 
   @Override
@@ -307,18 +308,19 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     final boolean horizontal = isHorizontal();
     RadViewComponent firstComponent = components.get(0);
     boolean single = components.size() == 1;
-    String layoutWidth = single ? firstComponent.getTag().getAttributeValue("android:layout_width") : "wrap_content";
-    String layoutHeight = single ? firstComponent.getTag().getAttributeValue("android:layout_height") : "wrap_content";
-    String layoutGravity = firstComponent.getTag().getAttributeValue("android:layout_gravity");
+    String layoutWidth = single ? firstComponent.getTag().getAttributeValue("layout_width", SdkConstants.NS_RESOURCES) : "wrap_content";
+    String layoutHeight = single ? firstComponent.getTag().getAttributeValue("layout_height", SdkConstants.NS_RESOURCES) : "wrap_content";
+    String layoutGravity = firstComponent.getTag().getAttributeValue("layout_gravity", SdkConstants.NS_RESOURCES);
 
     if (horizontal) {
       for (RadViewComponent component : components.subList(1, components.size())) {
-        String height = component.getTag().getAttributeValue("android:layout_height");
+        String height = component.getTag().getAttributeValue("layout_height", SdkConstants.NS_RESOURCES);
         if ("fill_parent".equals(height) || "match_parent".equals(height)) {
           layoutHeight = "fill_parent";
           layoutGravity = null;
         }
-        if (layoutGravity != null && layoutGravity.equals(component.getTag().getAttributeValue("android:layout_gravity"))) {
+        if (layoutGravity != null &&
+            layoutGravity.equals(component.getTag().getAttributeValue("layout_gravity", SdkConstants.NS_RESOURCES))) {
 
         }
       }
@@ -333,7 +335,7 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            newParent.getTag().setAttribute("android:orientation", horizontal ? "horizontal" : "vertical");
+            newParent.getTag().setAttribute("orientation", SdkConstants.NS_RESOURCES, horizontal ? "horizontal" : "vertical");
           }
         });
       }
@@ -343,7 +345,7 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
         @Override
         public void run() {
           for (RadViewComponent component : components) {
-            ModelParser.deleteAttribute(component.getTag(), "android:layout_gravity");
+            ModelParser.deleteAttribute(component.getTag(), "layout_gravity");
           }
         }
       });

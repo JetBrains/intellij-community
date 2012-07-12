@@ -17,6 +17,7 @@ package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -147,14 +148,14 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public int compare(VirtualFile file1, VirtualFile file2) {
     VirtualFile r1 = getFileRoot(file1);
     VirtualFile r2 = getFileRoot(file2);
-    if (r1 == r2) return 0;
+    if (Comparing.equal(r1, r2)) return 0;
 
     if (r1 == null) return -1;
     if (r2 == null) return 1;
 
     for (VirtualFile root : myRoots) {
-      if (r1 == root) return 1;
-      if (r2 == root) return -1;
+      if (Comparing.equal(r1, root)) return 1;
+      if (Comparing.equal(r2, root)) return -1;
     }
     return 0;
   }

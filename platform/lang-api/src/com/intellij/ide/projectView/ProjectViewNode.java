@@ -18,6 +18,7 @@ package com.intellij.ide.projectView;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -189,7 +190,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
       public boolean value(final VirtualFile virtualFile) {
         return contains(virtualFile)
                // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
-               && (getValue() instanceof PsiElement && PsiUtilBase.getVirtualFile((PsiElement)getValue()) == virtualFile ||
+               && (getValue() instanceof PsiElement && Comparing.equal(PsiUtilBase.getVirtualFile((PsiElement)getValue()), virtualFile) ||
                    someChildContainsFile(virtualFile));
       }
     });

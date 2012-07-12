@@ -23,6 +23,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -43,7 +44,7 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
   public Collection<AbstractTreeNode> modify(final AbstractTreeNode parent, final Collection<AbstractTreeNode> children, final ViewSettings settings) {
     if (parent instanceof PsiDirectoryNode) {
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
-      if (vFile != null && ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile) == vFile) {
+      if (vFile != null && Comparing.equal(ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
         final Collection<AbstractTreeNode> moduleChildren = ((PsiDirectoryNode) parent).getChildren();
         Collection<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
         for (AbstractTreeNode moduleChild : moduleChildren) {

@@ -336,7 +336,10 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
           }
         });
       }
-      myBrowser.addToolbarAction(new RollbackDialogAction());
+      RollbackDialogAction rollback = new RollbackDialogAction();
+      EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, myBrowser);
+      myBrowser.addToolbarAction(rollback);
+
       final EditSourceInCommitAction editSourceAction = new EditSourceInCommitAction(dialogWrapper);
       editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
       myBrowser.addToolbarAction(editSourceAction);

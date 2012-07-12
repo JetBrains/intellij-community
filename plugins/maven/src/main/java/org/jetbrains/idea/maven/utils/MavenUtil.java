@@ -37,6 +37,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -318,7 +319,7 @@ public class MavenUtil {
         VirtualFile modulePath = file.getParent();
         VirtualFile parentModulePath = parentFile.getParent();
 
-        if (modulePath.getParent() != parentModulePath) {
+        if (!Comparing.equal(modulePath.getParent(), parentModulePath)) {
           String relativePath = VfsUtil.getPath(file, parentModulePath, '/');
           if (relativePath != null) {
             if (relativePath.endsWith("/")) relativePath = relativePath.substring(0, relativePath.length() - 1);

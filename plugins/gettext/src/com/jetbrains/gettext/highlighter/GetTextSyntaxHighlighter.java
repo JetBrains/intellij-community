@@ -3,7 +3,6 @@ package com.jetbrains.gettext.highlighter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.gettext.GetTextLexer;
 import com.jetbrains.gettext.GetTextTokenTypes;
@@ -34,9 +33,9 @@ public class GetTextSyntaxHighlighter extends SyntaxHighlighterBase {
     fillMap(keys1, GetTextTokenTypes.KEYWORDS, GetTextHighlighterData.KEYWORD);
     fillMap(keys1, GetTextTokenTypes.STRING_LITERALS, GetTextHighlighterData.STRING);
     fillMap(keys1, GetTextTokenTypes.BRACES, GetTextHighlighterData.BRACES);
-    keys1.put(GetTextTokenTypes.NUMBER, GetTextHighlighterData.TRANSLATED_NUMBER);
+    fillMap(keys1, GetTextTokenTypes.NUMBERS, GetTextHighlighterData.NUMBER);
     keys1.put(GetTextTokenTypes.DOTS, GetTextHighlighterData.DOTS);
-    keys1.put(TokenType.BAD_CHARACTER, GetTextHighlighterData.BAD_CHARACTER);
+    keys1.put(GetTextTokenTypes.BAD_CHARACTER, GetTextHighlighterData.KEYWORD);
 
   }
 

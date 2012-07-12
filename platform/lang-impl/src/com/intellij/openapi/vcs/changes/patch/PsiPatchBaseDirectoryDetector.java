@@ -17,6 +17,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -47,7 +48,7 @@ public class PsiPatchBaseDirectoryDetector extends PatchBaseDirectoryDetector {
     if (psiFiles.length == 1) {
       PsiDirectory parent = psiFiles [0].getContainingDirectory();
       for(int i=nameComponents.length-2; i >= 0; i--) {
-        if (!parent.getName().equals(nameComponents [i]) || parent.getVirtualFile() == myProject.getBaseDir()) {
+        if (!parent.getName().equals(nameComponents[i]) || Comparing.equal(parent.getVirtualFile(), myProject.getBaseDir())) {
           return new Result(parent.getVirtualFile().getPresentableUrl(), i+1);
         }
         parent = parent.getParentDirectory();

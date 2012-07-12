@@ -23,6 +23,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -84,7 +85,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
               if (orderEntry instanceof ModuleSourceOrderEntry) {
                 for(ContentEntry e: ((ModuleSourceOrderEntry)orderEntry).getRootModel().getContentEntries()) {
                   for(SourceFolder sf:e.getSourceFolders()) {
-                    if (sf.getFile() == root) {
+                    if (Comparing.equal(sf.getFile(), root)) {
                       String s = sf.getPackagePrefix();
                       if (s.length() > 0) {
                         path = s + "." + path;

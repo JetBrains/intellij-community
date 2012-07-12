@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -398,6 +398,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
+    if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(RelativePoint.fromScreen(me.getLocationOnScreen()))) {
+      return false;
+    }
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
@@ -441,7 +444,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return true;
   }
 
-  private void hideCurrentNow(boolean animationEnabled) {
+  public void hideCurrentNow(boolean animationEnabled) {
     if (myCurrentTipUi != null) {
       myCurrentTipUi.setAnimationEnabled(animationEnabled);
       myCurrentTipUi.hide();

@@ -26,10 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -767,7 +764,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       @Override
       public boolean process(VirtualFile file) {
-        if (file == fileToIgnoreOccurencesInVirtualFile) return true;
+        if (Comparing.equal(file, fileToIgnoreOccurencesInVirtualFile)) return true;
         if (!index.shouldBeFound(scope, file)) return true;
         final int value = count.incrementAndGet();
         return value < 10;

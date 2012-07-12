@@ -360,14 +360,20 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     }
     if (!containerSet.contains(container)) {
       containerSet.add(container);
+      String placesDescription;
+      if (containerSet.size() == 1) {
+        placesDescription = RefactoringUIUtil.getDescription(container, true);
+      } else {
+        placesDescription = "<ol><li>" + StringUtil.join(containerSet, new Function<PsiElement, String>() {
+          @Override
+          public String fun(PsiElement element) {
+            return RefactoringUIUtil.getDescription(element, true);
+          }
+        }, "</li><li>") + "</li></ol>";
+      }
       String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
                                                  RefactoringUIUtil.getDescription(resolved, true),
-                                                 StringUtil.join(containerSet, new Function<PsiElement, String>() {
-                                                   @Override
-                                                   public String fun(PsiElement element) {
-                                                     return RefactoringUIUtil.getDescription(element, true);
-                                                   }
-                                                 }, ", "));
+                                                 placesDescription);
       conflicts.put(resolved, Collections.singletonList(message));
     }
   }

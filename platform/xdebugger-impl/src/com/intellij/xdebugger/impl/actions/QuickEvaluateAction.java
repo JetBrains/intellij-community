@@ -56,7 +56,7 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
     }
 
     public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
-      return myHandler.isEnabled(project);
+      return myHandler.isEnabled(project) && (event == null || event.getInputEvent()== null || !event.getInputEvent().isAltDown());
     }
   }
 }

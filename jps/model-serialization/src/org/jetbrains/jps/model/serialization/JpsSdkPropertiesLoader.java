@@ -8,22 +8,11 @@ import org.jetbrains.jps.model.library.JpsSdkType;
 /**
  * @author nik
  */
-public abstract class JpsSdkPropertiesLoader<P extends JpsSdkProperties> {
-  private final String myTypeId;
-  private final JpsSdkType<P> myType;
+public abstract class JpsSdkPropertiesLoader<P extends JpsSdkProperties> extends JpsElementPropertiesLoader<P, JpsSdkType<P>> {
 
   protected JpsSdkPropertiesLoader(String typeId, JpsSdkType<P> type) {
-    myTypeId = typeId;
-    myType = type;
+    super(type, typeId);
   }
 
   public abstract P loadProperties(String homePath, String version, @Nullable Element propertiesElement);
-
-  public String getTypeId() {
-    return myTypeId;
-  }
-
-  public JpsSdkType<P> getType() {
-    return myType;
-  }
 }

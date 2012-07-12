@@ -50,15 +50,14 @@ public class IndexingStamp {
     private Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
         try {
-          if (stream.available() > 0) {
-            long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
-            while(stream.available() > 0) {
-              ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
-              if (id != null) {
-                long stamp = IndexInfrastructure.getIndexCreationStamp(id);
-                if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
-                if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
-              }
+
+          long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
+          while(stream.available() > 0) {
+            ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
+            if (id != null) {
+              long stamp = IndexInfrastructure.getIndexCreationStamp(id);
+              if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<ID<?, ?>>(5, 0.98f);
+              if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
             }
           }
         }
@@ -69,7 +68,7 @@ public class IndexingStamp {
     }
 
     private void writeToStream(final DataOutputStream stream) throws IOException {
-      if (myIndexStamps != null) {
+      if (myIndexStamps != null && !myIndexStamps.isEmpty()) {
         final long[] dominatingIndexStamp = new long[1];
         myIndexStamps.forEachEntry(
           new TObjectLongProcedure<ID<?, ?>>() {
@@ -93,6 +92,8 @@ public class IndexingStamp {
             }
           }
         });
+      } else {
+        DataInputOutputUtil.writeTIME(stream, DataInputOutputUtil.timeBase);
       }
     }
 

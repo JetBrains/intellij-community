@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.DecorationLayer;
@@ -143,16 +144,16 @@ public class LayoutMarginOperation implements EditOperation {
       public void run() {
         XmlTag tag = myComponent.getTag();
 
-        XmlAttribute margin = tag.getAttribute("android:layout_margin");
+        XmlAttribute margin = tag.getAttribute("layout_margin", SdkConstants.NS_RESOURCES);
         if (margin != null) {
           String value = margin.getValue();
           margin.delete();
 
           if (!StringUtil.isEmpty(value)) {
-            tag.setAttribute("android:layout_marginLeft", value);
-            tag.setAttribute("android:layout_marginRight", value);
-            tag.setAttribute("android:layout_marginTop", value);
-            tag.setAttribute("android:layout_marginBottom", value);
+            tag.setAttribute("layout_marginLeft", SdkConstants.NS_RESOURCES, value);
+            tag.setAttribute("layout_marginRight", SdkConstants.NS_RESOURCES, value);
+            tag.setAttribute("layout_marginTop", SdkConstants.NS_RESOURCES, value);
+            tag.setAttribute("layout_marginBottom", SdkConstants.NS_RESOURCES, value);
           }
         }
 
@@ -161,16 +162,16 @@ public class LayoutMarginOperation implements EditOperation {
         int direction = myContext.getResizeDirection();
 
         if (direction == Position.WEST) { // left
-          setValue(tag, "android:layout_marginLeft", myMargins.x - moveDelta.x);
+          setValue(tag, "layout_marginLeft", myMargins.x - moveDelta.x);
         }
         else if (direction == Position.EAST) { // right
-          setValue(tag, "android:layout_marginRight", myMargins.width + sizeDelta.width);
+          setValue(tag, "layout_marginRight", myMargins.width + sizeDelta.width);
         }
         else if (direction == Position.NORTH) { // top
-          setValue(tag, "android:layout_marginTop", myMargins.y - moveDelta.y);
+          setValue(tag, "layout_marginTop", myMargins.y - moveDelta.y);
         }
         else if (direction == Position.SOUTH) { // bottom
-          setValue(tag, "android:layout_marginBottom", myMargins.height + sizeDelta.height);
+          setValue(tag, "layout_marginBottom", myMargins.height + sizeDelta.height);
         }
       }
     });
@@ -181,7 +182,7 @@ public class LayoutMarginOperation implements EditOperation {
       ModelParser.deleteAttribute(tag, name);
     }
     else {
-      tag.setAttribute(name, Integer.toString(value) + "dp");
+      tag.setAttribute(name, SdkConstants.NS_RESOURCES, Integer.toString(value) + "dp");
     }
   }
 

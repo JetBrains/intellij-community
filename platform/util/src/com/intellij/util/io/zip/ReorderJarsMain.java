@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 23-Apr-2009
- */
 package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,25 +25,26 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * @author anna
+ * @since 23-Apr-2009
+ */
+@SuppressWarnings("CallToPrintStackTrace")
 public class ReorderJarsMain {
-  private ReorderJarsMain() {
-  }
+  private ReorderJarsMain() { }
 
   public static void main(String[] args) {
-    final String orderTxtPath = args[0];
-    final String jarsPath = args[1];
-    final String destinationHomePath = args[2];
-    final String libPath = args.length > 3 ? args[3] : null;
-
     try {
-      final Map<String, List<String>> toReorder = getOrder(new File(orderTxtPath));
+      final String orderTxtPath = args[0];
+      final String jarsPath = args[1];
+      final String destinationPath = args[2];
+      final String libPath = args.length > 3 ? args[3] : null;
 
+      final Map<String, List<String>> toReorder = getOrder(new File(orderTxtPath));
       final Set<String> ignoredJars = libPath == null ? Collections.<String>emptySet() : loadIgnoredJars(libPath);
 
       for (String jarUrl : toReorder.keySet()) {
-
         if (ignoredJars.contains(StringUtil.trimStart(jarUrl, "/lib/"))) continue;
-
         if (jarUrl.startsWith("/lib/ant")) continue;
 
         final File jarFile = new File(jarsPath, jarUrl);
@@ -64,16 +60,16 @@ public class ReorderJarsMain {
             if (orderedEntries.contains(o1.getName())) {
               return orderedEntries.contains(o2.getName()) ? orderedEntries.indexOf(o1.getName()) - orderedEntries.indexOf(o2.getName()) : -1;
             }
-            if (orderedEntries.contains(o2.getName())) return 1;
-            return 0;
+            else {
+              return orderedEntries.contains(o2.getName()) ? 1 : 0;
+            }
           }
         });
-
 
         final File tempJarFile = FileUtil.createTempFile("__reorder__", "__reorder__");
         final JBZipFile file = new JBZipFile(tempJarFile);
 
-        JBZipEntry sizeEntry = file.getOrCreateEntry(JarMemoryLoader.SIZE_ENTRY);
+        final JBZipEntry sizeEntry = file.getOrCreateEntry(JarMemoryLoader.SIZE_ENTRY);
         sizeEntry.setData(ZipShort.getBytes(orderedEntries.size()));
 
         for (JBZipEntry entry : entries) {
@@ -82,14 +78,24 @@ public class ReorderJarsMain {
         }
         file.close();
 
-        final File resultJarFile = new File(destinationHomePath, jarUrl);
-        resultJarFile.getParentFile().mkdirs();
-        FileUtil.rename(tempJarFile, resultJarFile);
+        final File resultJarFile = new File(destinationPath, jarUrl);
+        final File resultDir = resultJarFile.getParentFile();
+        if (!resultDir.isDirectory() && !resultDir.mkdirs()) {
+          throw new IOException("Cannot create: " + resultDir);
+        }
+        try {
+          FileUtil.rename(tempJarFile, resultJarFile);
+        }
+        catch (Exception e) {
+          FileUtil.delete(resultJarFile);
+          throw e;
+        }
         FileUtil.delete(tempJarFile);
       }
     }
-    catch (IOException e) {
-      e.printStackTrace();
+    catch (Throwable t) {
+      t.printStackTrace();
+      System.exit(1);
     }
   }
 
@@ -119,5 +125,4 @@ public class ReorderJarsMain {
     }
     return entriesOrder;
   }
-
 }

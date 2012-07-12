@@ -38,7 +38,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -518,12 +518,17 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   @Override
   public final Module getModule() {
     if (myModule.isDisposed()) {
-      myModule = ModuleUtil.findModuleForFile(myFile, myProject);
+      myModule = findModule(myProject, myFile);
       if (myModule == null) {
         throw new IllegalArgumentException("No module for file " + myFile + " in project " + myProject);
       }
     }
     return myModule;
+  }
+
+  @Nullable
+  protected Module findModule(Project project, VirtualFile file) {
+    return ModuleUtilCore.findModuleForFile(file, project);
   }
 
   public final DesignerEditor getEditor() {

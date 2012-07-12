@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,7 +28,10 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.pointers.*;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -41,11 +45,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ModificationTracker, BulkFileListener {
+public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements ApplicationComponent, ModificationTracker, BulkFileListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
-  private static final TempFileSystem TEMP_FILE_SYSTEM = TempFileSystem.getInstance();
-  private static final LocalFileSystem LOCAL_FILE_SYSTEM = LocalFileSystem.getInstance();
-  private static final JarFileSystem JAR_FILE_SYSTEM = JarFileSystem.getInstance();
+  private final TempFileSystem TEMP_FILE_SYSTEM;
+  private final LocalFileSystem LOCAL_FILE_SYSTEM;
+  private final JarFileSystem JAR_FILE_SYSTEM;
   private long myVfsModificationCounter;
   // guarded by this
   private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = new LinkedHashMap<VirtualFilePointerListener, FilePointerPartNode>();
@@ -67,16 +71,37 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   };
 
-  VirtualFilePointerManagerImpl(@NotNull VirtualFileManagerEx virtualFileManagerEx, @NotNull MessageBus bus) {
+  VirtualFilePointerManagerImpl(@NotNull VirtualFileManagerEx virtualFileManagerEx,
+                                @NotNull MessageBus bus,
+                                @NotNull TempFileSystem tempFileSystem,
+                                @NotNull LocalFileSystem localFileSystem,
+                                @NotNull JarFileSystem jarFileSystem) {
     myVirtualFileManager = virtualFileManagerEx;
     myBus = bus;
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
+    TEMP_FILE_SYSTEM = tempFileSystem;
+    LOCAL_FILE_SYSTEM = localFileSystem;
+    JAR_FILE_SYSTEM = jarFileSystem;
   }
 
 
   @Override
   public long getModificationCount() {
     return myVfsModificationCounter;
+  }
+
+  @Override
+  public void initComponent() {
+  }
+
+  @Override
+  public void disposeComponent() {
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "VirtualFilePointerManager";
   }
 
   private static class EventDescriptor {

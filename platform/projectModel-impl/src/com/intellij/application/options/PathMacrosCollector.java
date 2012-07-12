@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroMap;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,7 @@ import java.util.regex.Pattern;
  *         Date: Dec 6, 2004
  */
 public class PathMacrosCollector extends PathMacroMap {
+  public static final ExtensionPointName<PathMacroFilter> MACRO_FILTER_EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.pathMacroFilter");
   public static final Pattern MACRO_PATTERN = Pattern.compile("\\$([\\w\\-\\.]+?)\\$");
 
   private final Matcher myMatcher;
@@ -47,7 +49,7 @@ public class PathMacrosCollector extends PathMacroMap {
 
   @NotNull
   public static Set<String> getMacroNames(@NotNull final Element e) {
-    return getMacroNames(e, new CompositePathMacroFilter(Extensions.getExtensions(PathMacroFilter.EP_NAME)),
+    return getMacroNames(e, new CompositePathMacroFilter(Extensions.getExtensions(MACRO_FILTER_EXTENSION_POINT_NAME)),
                          PathMacros.getInstance());
   }
 

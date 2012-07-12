@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -498,7 +499,7 @@ public class RenderUtil {
                 final String filePath = FileUtil.toSystemIndependentName(fileWrapper.getOsLocation());
                 vFile = LocalFileSystem.getInstance().findFileByPath(filePath);
 
-                if (vFile != null && vFile == layoutXmlFile && layoutXmlFileText != null) {
+                if (vFile != null && Comparing.equal(vFile, layoutXmlFile) && layoutXmlFileText != null) {
                   resFolder.processFile(new MyFileWrapper(layoutXmlFileText, childRes), ResourceDeltaKind.ADDED, scanningContext);
                 }
                 else {

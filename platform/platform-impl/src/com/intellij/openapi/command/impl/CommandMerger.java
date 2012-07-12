@@ -231,6 +231,14 @@ public class CommandMerger {
     return !myCurrentActions.isEmpty();
   }
 
+  public boolean isPhysical() {
+    if (myAllAffectedDocuments.isEmpty()) return false;
+    for (DocumentReference each : myAllAffectedDocuments) {
+      if (each.getFile() == null) return false;
+    }
+    return true;
+  }
+
   public boolean isUndoAvailable(@NotNull Collection<DocumentReference> refs) {
     if (hasNonUndoableActions()) {
       return false;

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -175,6 +176,6 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return super.contains(file) || isArchive() && PathUtil.getLocalFile(file) == getVirtualFile();
+    return super.contains(file) || isArchive() && Comparing.equal(PathUtil.getLocalFile(file), getVirtualFile());
   }
 }

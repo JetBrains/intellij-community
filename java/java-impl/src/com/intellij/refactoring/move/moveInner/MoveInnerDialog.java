@@ -205,7 +205,7 @@ public class MoveInnerDialog extends RefactoringDialog {
             final PsiDirectory[] directories = oldPackage.getDirectories();
             final VirtualFile root = projectRootManager.getFileIndex().getContentRootForFile(psiDirectory.getVirtualFile());
             for(PsiDirectory dir: directories) {
-              if (projectRootManager.getFileIndex().getContentRootForFile(dir.getVirtualFile()) == root) {
+              if (Comparing.equal(projectRootManager.getFileIndex().getContentRootForFile(dir.getVirtualFile()), root)) {
                 initialDir = dir;
               }
             }

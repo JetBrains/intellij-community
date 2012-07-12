@@ -47,14 +47,9 @@ public class RefCountHolder {
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
   private final Map<PsiElement,Boolean> myPossiblyDuplicateElements = new ConcurrentHashMap<PsiElement, Boolean>();
-  private final AtomicReference<State> myState = new AtomicReference<State>(State.VIRGIN);
-
-  private enum State {
-    VIRGIN,                       // just created or cleared
-    BEING_WRITTEN_BY_GHP,         // general highlighting pass is storing references during analysis
-    READY,                        // may be used for highlighting unused stuff
-    BEING_USED_BY_PHP,            // post highlighting pass is retrieving info
-  }
+  private final AtomicReference<DaemonProgressIndicator> myState = new AtomicReference<DaemonProgressIndicator>(VIRGIN);
+  private static final DaemonProgressIndicator VIRGIN = new DaemonProgressIndicator(); // just created or cleared
+  private static final DaemonProgressIndicator READY = new DaemonProgressIndicator();
 
   private static class HolderReference extends SoftReference<RefCountHolder> {
     @SuppressWarnings("UnusedDeclaration")
@@ -122,20 +117,19 @@ public class RefCountHolder {
   }
 
   private void clear() {
-    assertIsAnalyzing();
-    myLocalRefsMap.clear();
+    synchronized (myLocalRefsMap) {
+      myLocalRefsMap.clear();
+    }
     myImportStatements.clear();
     myDclsUsedMap.clear();
     myPossiblyDuplicateElements.clear();
   }
 
   public void registerLocallyReferenced(@NotNull PsiNamedElement result) {
-    assertIsAnalyzing();
     myDclsUsedMap.put(result,Boolean.TRUE);
   }
 
   public void registerReference(@NotNull PsiJavaReference ref, @NotNull JavaResolveResult resolveResult) {
-    assertIsAnalyzing();
     PsiElement refElement = resolveResult.getElement();
     PsiFile psiFile = refElement == null ? null : refElement.getContainingFile();
     if (psiFile != null) psiFile = (PsiFile)psiFile.getNavigationElement(); // look at navigation elements because all references resolve into Cls elements when highlighting library source
@@ -154,7 +148,6 @@ public class RefCountHolder {
   }
 
   public boolean isRedundant(@NotNull PsiImportStatementBase importStatement) {
-    assertIsRetrieving();
     return !myImportStatements.containsValue(importStatement);
   }
 
@@ -167,7 +160,6 @@ public class RefCountHolder {
   }
 
   private void removeInvalidRefs() {
-    assertIsAnalyzing();
     synchronized (myLocalRefsMap) {
       for(Iterator<PsiReference> iterator = myLocalRefsMap.keySet().iterator(); iterator.hasNext();){
         PsiReference ref = iterator.next();
@@ -197,8 +189,10 @@ public class RefCountHolder {
   }
 
   public boolean isReferenced(PsiNamedElement element) {
-    assertIsRetrieving();
-    List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiReference> array;
+    synchronized (myLocalRefsMap) {
+      array = myLocalRefsMap.getKeysByValue(element);
+    }
     if (array != null && !array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
 
     Boolean usedStatus = myDclsUsedMap.get(element);
@@ -235,9 +229,11 @@ public class RefCountHolder {
   }
 
   public boolean isReferencedForRead(@NotNull PsiElement element) {
-    assertIsRetrieving();
     LOG.assertTrue(element instanceof PsiVariable);
-    List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiReference> array;
+    synchronized (myLocalRefsMap) {
+      array = myLocalRefsMap.getKeysByValue(element);
+    }
     if (array == null) return false;
     for (PsiReference ref : array) {
       PsiElement refElement = ref.getElement();
@@ -257,9 +253,11 @@ public class RefCountHolder {
   }
 
   public boolean isReferencedForWrite(@NotNull PsiElement element) {
-    assertIsRetrieving();
     LOG.assertTrue(element instanceof PsiVariable);
-    List<PsiReference> array = myLocalRefsMap.getKeysByValue(element);
+    List<PsiReference> array;
+    synchronized (myLocalRefsMap) {
+      array = myLocalRefsMap.getKeysByValue(element);
+    }
     if (array == null) return false;
     for (PsiReference ref : array) {
       final PsiElement refElement = ref.getElement();
@@ -273,14 +271,14 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean analyze(@NotNull PsiFile file, TextRange dirtyScope, @NotNull Runnable analyze) {
-    State old = myState.get();
-    myState.compareAndSet(State.READY, State.VIRGIN);
-    if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
-      log("a: failed to change " + old + "->" + State.BEING_WRITTEN_BY_GHP);
+  public boolean analyze(@NotNull PsiFile file, TextRange dirtyScope, @NotNull Runnable analyze, @NotNull DaemonProgressIndicator indicator) {
+    DaemonProgressIndicator old = myState.get();
+    if (old != VIRGIN && old != READY) return false;
+    if (!myState.compareAndSet(old, indicator)) {
+      log("a: failed to change " + old + "->" + indicator);
       return false;
     }
-    log("a: changed " + old + "->" + State.BEING_WRITTEN_BY_GHP);
+    log("a: changed " + old + "->" + indicator);
     boolean finished = false;
     try {
       if (dirtyScope != null) {
@@ -296,9 +294,9 @@ public class RefCountHolder {
       finished = true;
     }
     finally {
-      boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, finished ? State.READY : State.VIRGIN);
+      boolean set = myState.compareAndSet(indicator, finished ? READY : VIRGIN);
       assert set : myState.get();
-      log("a: changed back " + State.BEING_WRITTEN_BY_GHP + "->" + (finished ? State.READY : State.VIRGIN));
+      log("a: changed back " + indicator + "->" + (finished ? READY : VIRGIN));
     }
     return true;
   }
@@ -307,31 +305,21 @@ public class RefCountHolder {
     //System.err.println("RFC: "+s);
   }
 
-  public boolean retrieveUnusedReferencesInfo(@NotNull Runnable analyze) {
-    State old = myState.get();
-    if (!myState.compareAndSet(State.READY, State.BEING_USED_BY_PHP)) {
-      log("r: failed to change " + old + "->" + State.BEING_USED_BY_PHP);
+  public boolean retrieveUnusedReferencesInfo(@NotNull DaemonProgressIndicator indicator, @NotNull Runnable analyze) {
+    DaemonProgressIndicator old = myState.get();
+    if (!myState.compareAndSet(READY, indicator)) {
+      log("r: failed to change " + old + "->" + indicator);
       return false;
     }
-    log("r: changed " + old + "->" + State.BEING_USED_BY_PHP);
+    log("r: changed " + old + "->" + indicator);
     try {
       analyze.run();
     }
     finally {
-      boolean set = myState.compareAndSet(State.BEING_USED_BY_PHP, State.READY);
+      boolean set = myState.compareAndSet(indicator, READY);
       assert set : myState.get();
-      log("r: changed back " + State.BEING_USED_BY_PHP + "->" + State.READY);
+      log("r: changed back " + indicator + "->" + READY);
     }
     return  true;
   }
-
-  private void assertIsAnalyzing() {
-    State state = myState.get();
-    assert state == State.BEING_WRITTEN_BY_GHP : state;
-  }
-  private void assertIsRetrieving() {
-    State state = myState.get();
-    assert state == State.BEING_USED_BY_PHP : state;
-  }
-
 }

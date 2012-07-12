@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
     VirtualFile vFile = node.getVf();
-    if (vFile != null && vFile == index.getContentRootForFile(vFile)) {
+    if (vFile != null && Comparing.equal(vFile, index.getContentRootForFile(vFile))) {
       Module module = index.getModuleForFile(vFile);
       return getNodeForModule(module, rootNode);
     }

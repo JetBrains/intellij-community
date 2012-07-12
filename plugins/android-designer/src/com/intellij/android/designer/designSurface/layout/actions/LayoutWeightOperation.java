@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
@@ -42,7 +43,7 @@ public class LayoutWeightOperation extends LayoutMarginOperation {
     super.setComponent(component);
 
     try {
-      myWeight = Float.parseFloat(myComponent.getTag().getAttributeValue("android:layout_weight"));
+      myWeight = Float.parseFloat(myComponent.getTag().getAttributeValue("layout_weight", SdkConstants.NS_RESOURCES));
     }
     catch (Throwable e) {
       myWeight = 0;
@@ -98,10 +99,10 @@ public class LayoutWeightOperation extends LayoutMarginOperation {
   private void setWeight(int value) {
     float weight = myWeight + value / 100f;
     if (weight <= 0) {
-      ModelParser.deleteAttribute(myComponent, "android:layout_weight");
+      ModelParser.deleteAttribute(myComponent, "layout_weight");
     }
     else {
-      myComponent.getTag().setAttribute("android:layout_weight", FORMAT.format(weight).replace(',', '.'));
+      myComponent.getTag().setAttribute("layout_weight", SdkConstants.NS_RESOURCES, FORMAT.format(weight).replace(',', '.'));
     }
   }
 

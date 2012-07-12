@@ -22,6 +22,7 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.InvalidDataException;
@@ -40,7 +41,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   public TextAttributes getAttributes(TextAttributesKey key) {
     if (key == null) return null;
     TextAttributes attrs = myAttributesMap.get(key);
-    return attrs != null ? attrs : key.getDefaultAttributes();
+    return attrs != null ? attrs : TextAttributesKeyDefaults.getDefaultAttributes(key);
   }
 
   @Override

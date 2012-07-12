@@ -122,7 +122,7 @@ public class EditorWindow {
   public void closeAllExcept(final VirtualFile selectedFile) {
     final VirtualFile[] files = getFiles();
     for (final VirtualFile file : files) {
-      if (file != selectedFile && !isFilePinned(file)) {
+      if (!Comparing.equal(file, selectedFile) && !isFilePinned(file)) {
         closeFile(file);
       }
     }
@@ -1090,7 +1090,7 @@ public class EditorWindow {
           if (fileCanBeClosed(file, fileToIgnore)) {
             boolean found = false;
             for (int j = 0; j != histFiles.length; j++) {
-              if (histFiles[j] == file) {
+              if (Comparing.equal(histFiles[j], file)) {
                 found = true;
                 break;
               }
@@ -1146,7 +1146,7 @@ public class EditorWindow {
           if (fileCanBeClosed(file, fileToIgnore)) {
             boolean found = false;
             for (int j = 0; j != histFiles.length; j++) {
-              if (histFiles[j] == file) {
+              if (Comparing.equal(histFiles[j], file)) {
                 found = true;
                 break;
               }

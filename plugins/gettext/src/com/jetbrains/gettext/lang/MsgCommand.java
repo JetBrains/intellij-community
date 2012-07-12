@@ -13,16 +13,14 @@ public abstract class MsgCommand {
 
   public abstract IElementType getCompositeElement();
 
-  public void parse(PsiBuilder builder) throws CommandFormatException {
+  public boolean parse(PsiBuilder builder) {
     builder.advanceLexer();
     int count = 0;
     while (builder.getTokenType() == GetTextTokenTypes.STRING) {
       checkString(builder);
       count++;
     }
-    if (count == 0) {
-      throw new CommandFormatException("String for " + getName() + " is not specified");
-    }
+    return count > 0;
   }
 
   private static void checkString(PsiBuilder builder) {
@@ -54,15 +52,8 @@ public abstract class MsgCommand {
       exists = true;
       return true;
     }
-    else if (isMultiple()) {
-      return true;
-    }
-    return false;
+    return isMultiple();
   }
 
   public abstract String getName();
-
-  public int getCount() {
-    return exists ? 1 : 0;
-  }
 }

@@ -91,7 +91,10 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     }
 
     myUpdateRenderer = false;
-    myResourceDepends = AndroidFacet.getInstance(myDesigner.getModule()).getLocalResourceManager().getAllResourceDirs();
+
+    if (!myDesigner.getProject().isDisposed()) {
+      myResourceDepends = AndroidFacet.getInstance(myDesigner.getModule()).getLocalResourceManager().getAllResourceDirs();
+    }
   }
 
   public void addRequest() {

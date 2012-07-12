@@ -194,7 +194,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected boolean notSameFile(@Nullable VirtualFile file, PsiFile containingFile) {
-    return getTopLevelVirtualFile(containingFile.getViewProvider()) != file;
+    return !Comparing.equal(getTopLevelVirtualFile(containingFile.getViewProvider()), file);
   }
 
   protected SearchScope getReferencesSearchScope(VirtualFile file) {

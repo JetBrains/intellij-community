@@ -233,7 +233,6 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       public void run() {
         try {
           final VirtualFile virtualFile = file.getVirtualFile();
-          System.out.println("Changing file text: psiFile= " + file + "; vFile= " + virtualFile);
           VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), barText);
         }
         catch (IOException e) {

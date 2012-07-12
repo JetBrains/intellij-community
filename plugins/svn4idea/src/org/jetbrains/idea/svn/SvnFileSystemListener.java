@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -529,7 +530,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   private boolean isPendingAdd(final Project project, final VirtualFile dir) {
     final Collection<AddedFileInfo> addedFileInfos = myAddedFiles.get(project);
     for(AddedFileInfo i: addedFileInfos) {
-      if (i.myDir == dir.getParent() && i.myName.equals(dir.getName())) {
+      if (Comparing.equal(i.myDir, dir.getParent()) && i.myName.equals(dir.getName())) {
         return true;
       }
     }

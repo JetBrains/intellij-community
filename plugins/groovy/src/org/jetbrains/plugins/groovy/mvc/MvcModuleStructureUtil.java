@@ -70,7 +70,7 @@ public class MvcModuleStructureUtil {
   @Nullable
   public static ContentEntry findContentEntry(ModuleRootModel rootModel, VirtualFile root) {
     for (ContentEntry entry : rootModel.getContentEntries()) {
-      if (entry.getFile() == root) {
+      if (Comparing.equal(entry.getFile(), root)) {
         return entry;
       }
     }
@@ -147,7 +147,7 @@ public class MvcModuleStructureUtil {
         public void consume(ContentEntry contentEntry) {
           SourceFolder[] folders = contentEntry.getSourceFolders();
           for (SourceFolder folder : folders) {
-            if (folder.getFile() == file) {
+            if (Comparing.equal(folder.getFile(), file)) {
               contentEntry.removeSourceFolder(folder);
             }
           }
@@ -218,7 +218,7 @@ public class MvcModuleStructureUtil {
           @Override
           public void consume(ContentEntry entry) {
             for (SourceFolder folder : entry.getSourceFolders()) {
-              if (folder.getFile() == src) {
+              if (Comparing.equal(folder.getFile(), src)) {
                 entry.removeSourceFolder(folder);
                 entry.addSourceFolder(src, isTest, "");
                 break;
@@ -795,7 +795,7 @@ public class MvcModuleStructureUtil {
           }
           else {
             for (int i = 1; i < contentRoots.length; i++) {
-              if (parent != contentRoots[i].getParent()) {
+              if (!Comparing.equal(parent, contentRoots[i].getParent())) {
                 parent = null;
                 break;
               }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
 
   @Override
   public void visitAnnotationArrayInitializer(final PsiArrayInitializerMemberValue initializer) {
+    if (PsiUtil.isLanguageLevel7OrHigher(initializer)) return;
     final PsiElement lastElement = PsiTreeUtil.skipSiblingsBackward(initializer.getLastChild(), PsiWhiteSpace.class, PsiComment.class);
     if (lastElement != null && PsiUtil.isJavaToken(lastElement, JavaTokenType.COMMA)) {
       final String message = InspectionsBundle.message("inspection.compiler.javac.quirks.anno.array.comma.problem");
@@ -46,6 +47,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
 
   @Override
   public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+    if (PsiUtil.isLanguageLevel7OrHigher(expression)) return;
     final PsiTypeElement type = expression.getCastType();
     if (type != null) {
       type.accept(new JavaRecursiveElementWalkingVisitor() {

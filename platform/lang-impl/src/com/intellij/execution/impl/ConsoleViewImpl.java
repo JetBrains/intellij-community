@@ -656,6 +656,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           }
           if (strings.length > 0) {
             document.insertString(document.getTextLength(), strings[strings.length - 1]);
+            myContentSize -= strings.length - 1;
           }
         }
         finally {
@@ -1574,8 +1575,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    * replace text
    *
    * @param s     text for replace
-   * @param start relativly to all document text
-   * @param end   relativly to all document text
+   * @param start relatively to all document text
+   * @param end   relatively to all document text
    */
   private void replaceUserText(final String s, int start, int end) {
     if (start == end) {

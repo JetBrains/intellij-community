@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -314,7 +315,7 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
       final VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
       VirtualFile parent = vFile.getParent();
       final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper();
-      while (parent != null && parent != root) {
+      while (parent != null && !Comparing.equal(parent, root)) {
         if (!nameHelper.isIdentifier(parent.getName())) return false;
         parent = parent.getParent();
       }
@@ -332,7 +333,7 @@ public abstract class JavaFileManagerBase implements JavaFileManager, Disposable
       final ProjectFileIndex fileIndex = rootManager.getFileIndex();
       for (final VirtualFile sourceRoot : sourceRoots) {
         final String packageName = fileIndex.getPackageNameByDirectory(sourceRoot);
-        if (packageName != null && packageName.length() > 0) {
+        if (packageName != null && !packageName.isEmpty()) {
           names.add(packageName);
         }
       }

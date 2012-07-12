@@ -387,7 +387,7 @@ public class EditorsSplitters extends JPanel {
     final VirtualFile currentFile = getCurrentFile();
     if (currentFile != null) {
       for (int i = 0; i != virtualFiles.length; ++i) {
-        if (virtualFiles[i] == currentFile) {
+        if (Comparing.equal(virtualFiles[i], currentFile)) {
           virtualFiles[i] = virtualFiles[0];
           virtualFiles[0] = currentFile;
           break;
@@ -572,7 +572,7 @@ public class EditorsSplitters extends JPanel {
     for (int i = 0; i != windows.length; ++i) {
       final VirtualFile[] files = windows[i].getFiles();
       for (final VirtualFile fileAt : files) {
-        if (fileAt != file) {
+        if (!Comparing.equal(fileAt, file)) {
           return fileAt;
         }
       }

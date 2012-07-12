@@ -16,15 +16,26 @@
 package com.intellij.codeInsight.lookup;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 public abstract class LookupElementWeigher {
   private final String myId;
+  private final boolean myNegated;
+
+  protected LookupElementWeigher(String id, boolean negated) {
+    myId = id;
+    myNegated = negated;
+  }
 
   protected LookupElementWeigher(String id) {
-    myId = id;
+    this(id, false);
+  }
+
+  public boolean isNegated() {
+    return myNegated;
   }
 
   @Override
@@ -32,7 +43,7 @@ public abstract class LookupElementWeigher {
     return myId;
   }
 
-  @NotNull
+  @Nullable
   public abstract Comparable weigh(@NotNull LookupElement element);
 
 }

@@ -108,6 +108,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return new ChangesBrowserNode(userObject);
   }
 
+  @Override
   public void insert(MutableTreeNode newChild, int childIndex) {
     super.insert(newChild, childIndex);
     myCount = -1;
@@ -233,6 +234,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return userObject == null ? "" : userObject.toString();
   }
 
+  @Override
   public T getUserObject() {
     //noinspection unchecked
     return (T) userObject;

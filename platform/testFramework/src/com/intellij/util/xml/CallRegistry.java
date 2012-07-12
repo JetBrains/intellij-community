@@ -2,33 +2,34 @@ package com.intellij.util.xml;
 
 import junit.framework.Assert;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author peter
  */
 public class CallRegistry<T> {
   private int mySize;
-  private final StringBuilder myExpected = new StringBuilder();
-  private final StringBuilder myActual = new StringBuilder();
+  private final List<String> myExpected = new ArrayList<String>();
+  private final List<String> myActual = new ArrayList<String>();
 
   public void putActual(T o) {
-    myActual.append(o);
-    myActual.append("\n");
+    myActual.add(o.toString());
     mySize++;
   }
 
   public void putExpected(T o) {
-    myExpected.append(o);
-    myExpected.append("\n");
+    myExpected.add(o.toString());
   }
 
   public void clear() {
     mySize = 0;
-    myExpected.setLength(0);
-    myActual.setLength(0);
+    myExpected.clear();
+    myActual.clear();
   }
 
   public void assertResultsAndClear() {
-    Assert.assertEquals(myExpected.toString(), myActual.toString());
+    Assert.assertTrue(myActual.toString() + " " + myExpected.toString(), myActual.containsAll(myExpected));
     clear();
   }
 

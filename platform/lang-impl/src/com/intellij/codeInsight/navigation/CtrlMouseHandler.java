@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
@@ -39,6 +40,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
@@ -73,6 +75,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -80,13 +84,18 @@ import java.util.Collections;
 import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
-  private final TextAttributes ourReferenceAttributes;
-  private HighlightersSet myHighlighter;
-  @JdkConstants.InputEventMask private int myStoredModifiers = 0;
-  private TooltipProvider myTooltipProvider = null;
+
+  private static final int ourQuickDocRowsNumber         = getIntProperty("quick.doc.desired.rows.number", 2);
+  private static final int ourQuickDocSymbolsInRowNumber = getIntProperty("quick.doc.desired.symbols.in.row.number", 80);
+
+  private final TextAttributes  ourReferenceAttributes;
+  private       HighlightersSet myHighlighter;
+  @JdkConstants.InputEventMask private int             myStoredModifiers = 0;
+  private                              TooltipProvider myTooltipProvider = null;
   private final FileEditorManager myFileEditorManager;
 
   private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
+
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyPressed(final KeyEvent e) {
       handleKey(e);
@@ -182,7 +191,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   };
 
   private static final TextAttributesKey CTRL_CLICKABLE_ATTRIBUTES_KEY =
-    TextAttributesKey
+    TextAttributesKeyDefaults
       .createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(Color.blue, null, Color.blue, EffectType.LINE_UNDERSCORE, 0));
 
   public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager,
@@ -202,6 +211,20 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   @NotNull
   public String getComponentName() {
     return "CtrlMouseHandler";
+  }
+
+  private static int getIntProperty(@NotNull String propertyName, int defaultValue) {
+    String valueAsString = System.getProperty(propertyName);
+    if (valueAsString == null) {
+      return defaultValue;
+    }
+
+    try {
+      return Integer.parseInt(valueAsString);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
   }
 
   private static BrowseMode getBrowseMode(@JdkConstants.InputEventMask int modifiers) {
@@ -228,15 +251,30 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return false;
   }
 
+  @Nullable
   @TestOnly
   public static String getInfo(PsiElement element, PsiElement atPointer) {
-    return generateInfo(element, atPointer);
+    return generateInfo(element, atPointer).text;
+  }
+
+  @NotNull
+  private static DocInfo generateInfo(PsiElement element, PsiElement atPointer) {
+    final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
+    String result = doGenerateInfo(element, atPointer, documentationProvider);
+    if (result != null) {
+      String fullText = documentationProvider.generateDoc(element, atPointer);
+      String qName = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
+      String text = DocPreviewUtil.buildPreview(result, qName, fullText, ourQuickDocRowsNumber, ourQuickDocSymbolsInRowNumber);
+      return new DocInfo(text, documentationProvider, atPointer);
+    }
+    return DocInfo.EMPTY;
   }
 
   @Nullable
-  private static String generateInfo(PsiElement element, PsiElement atPointer) {
-    final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
-
+  private static String doGenerateInfo(@NotNull PsiElement element,
+                                       @NotNull PsiElement atPointer,
+                                       @NotNull DocumentationProvider documentationProvider)
+  {
     String info = documentationProvider.getQuickNavigateInfo(element, atPointer);
     if (info != null) {
       return info;
@@ -301,8 +339,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       return myRanges;
     }
 
-    @Nullable
-    public abstract String getInfo();
+    @NotNull
+    public abstract DocInfo getInfo();
 
     public abstract boolean isValid(Document document);
 
@@ -333,8 +371,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       myTargetElement = targetElement;
     }
 
-    @Nullable
-    public String getInfo() {
+    @NotNull
+    public DocInfo getInfo() {
       AccessToken token = ReadAction.start();
       try {
         return generateInfo(myTargetElement, myElementAtPointer);
@@ -362,9 +400,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public InfoMultiple(@NotNull final PsiElement elementAtPointer) {
       super(elementAtPointer);
     }
-
-    public String getInfo() {
-      return CodeInsightBundle.message("multiple.implementations.tooltip");
+    
+    @NotNull
+    public DocInfo getInfo() {
+      return new DocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null, null);
     }
 
     public boolean isValid(Document document) {
@@ -561,21 +600,26 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       }
 
-      if (info.isValid(myEditor.getDocument())) {
-        myHighlighter = installHighlighterSet(info, myEditor);
-
-        String text = info.getInfo();
-
-        if (text == null) return;
-
-        JComponent label = HintUtil.createInformationLabel(text);
-        final LightweightHint hint = new LightweightHint(label);
-        final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-        Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
-        hintManager.showEditorHint(hint, myEditor, p,
-                                   HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                                   0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, HintManager.ABOVE).setContentActive(false));
+      if (!info.isValid(myEditor.getDocument())) {
+        return;
       }
+      
+      myHighlighter = installHighlighterSet(info, myEditor);
+
+      DocInfo docInfo = info.getInfo();
+
+      if (docInfo.text == null) return;
+      
+      HyperlinkListener listener = (docInfo.docProvider == null || docInfo.context == null)
+                                   ? null
+                                   : new QuickDocHyperlinkListener(myProject, docInfo.docProvider, docInfo.context);
+      JComponent label = HintUtil.createInformationLabel(docInfo.text, listener);
+      final LightweightHint hint = new LightweightHint(label);
+      final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+      Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
+      hintManager.showEditorHint(hint, myEditor, p,
+                                 HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
+                                 0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, HintManager.ABOVE).setContentActive(false));
     }
 
   }
@@ -627,6 +671,54 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public Info getStoredInfo() {
       return myStoredInfo;
+    }
+  }
+  
+  private static class DocInfo {
+
+    public static final DocInfo EMPTY = new DocInfo(null, null, null);
+
+    @Nullable public final String                text;
+    @Nullable public final DocumentationProvider docProvider;
+    @Nullable public final PsiElement            context;
+
+    DocInfo(@Nullable String text, @Nullable DocumentationProvider provider, @Nullable PsiElement context) {
+      this.text = text;
+      docProvider = provider;
+      this.context = context;
+    }
+  }
+
+  private static class QuickDocHyperlinkListener implements HyperlinkListener {
+
+    @NotNull private final Project               myProject;
+    @NotNull private final DocumentationProvider myProvider;
+    @NotNull private final PsiElement            myContext;
+
+    QuickDocHyperlinkListener(@NotNull Project project, @NotNull DocumentationProvider provider, @NotNull PsiElement context) {
+      myProject = project;
+      myProvider = provider;
+      myContext = context;
+    }
+
+    @Override
+    public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
+      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+        return;
+      }
+
+      String description = e.getDescription();
+      if (StringUtil.isEmpty(description) || !description.startsWith(DocumentationManager.PSI_ELEMENT_PROTOCOL)) {
+        return;
+      }
+
+      String elementName = e.getDescription().substring(DocumentationManager.PSI_ELEMENT_PROTOCOL.length());
+      
+      final PsiElement targetElement = myProvider.getDocumentationElementForLink(PsiManager.getInstance(myProject), elementName, myContext);
+      if (targetElement != null) {
+        ApplicationManager.getApplication().getComponent(IdeTooltipManager.class).hideCurrentNow(false);
+        DocumentationManager.getInstance(myProject).showJavaDocInfo(targetElement, myContext, true, null);
+      }
     }
   }
 }
