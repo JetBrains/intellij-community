@@ -133,7 +133,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         TextRange dirtyScope = document == null ? file.getTextRange() : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        success = indicator instanceof DaemonProgressIndicator && refCountHolder.analyze(file, dirtyScope, action, (DaemonProgressIndicator)indicator);
+        success = indicator != null && refCountHolder.analyze(file, dirtyScope, action, indicator);
       }
       else {
         myRefCountHolder = null;
