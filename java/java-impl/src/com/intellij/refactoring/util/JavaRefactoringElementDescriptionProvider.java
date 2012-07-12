@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {

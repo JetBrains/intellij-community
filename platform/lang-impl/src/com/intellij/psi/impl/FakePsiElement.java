@@ -20,7 +20,6 @@ import com.intellij.extapi.psi.PsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;

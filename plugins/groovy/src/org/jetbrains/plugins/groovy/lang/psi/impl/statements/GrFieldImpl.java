@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
-import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;

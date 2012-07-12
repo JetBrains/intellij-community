@@ -18,6 +18,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -483,7 +484,7 @@ public class CodeStyleImportsPanel extends JPanel {
           append("                                               <blank line>", SimpleTextAttributes.LINK_ATTRIBUTES);
         }
         else {
-          TextAttributes attributes = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes();
+          TextAttributes attributes = TextAttributesKeyDefaults.getDefaultAttributes(SyntaxHighlighterColors.KEYWORD);
           append("import", SimpleTextAttributes.fromTextAttributes(attributes));
           if (entry.isStatic()) {
             append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);

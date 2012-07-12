@@ -27,6 +27,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -159,7 +160,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
                                                           ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
                 DialogWrapper.OK_EXIT_CODE) {
               for (String level : levels) {
-                final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
+                final TextAttributes textAttributes = TextAttributesKeyDefaults.getDefaultAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES);
                 HighlightInfoType.HighlightInfoTypeImpl info
                   = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50), TextAttributesKey.createTextAttributesKey(level));
                 myProfileManager.getOwnSeverityRegistrar()

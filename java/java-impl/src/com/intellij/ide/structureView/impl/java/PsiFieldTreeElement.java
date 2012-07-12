@@ -17,7 +17,6 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
