@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.navigation;
 
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +106,7 @@ public class DocPreviewUtil {
 
     final Context context = new Context(desiredRowsNumber);
     
-    int columnsPerRow = parseHeader(header, headerWithLinks, context);
+    int columnsPerRow = parseHeader(header, headerWithLinks, qName, context);
     process(docText, new BodyCallback(context, qName, columnsPerRow));
     
     //region Add closing tags
@@ -118,11 +118,18 @@ public class DocPreviewUtil {
     return context.buffer.toString();
   }
 
-  private static int parseHeader(@NotNull String headerTemplate, @NotNull String headerWithLinks, @NotNull Context context) {
+  private static int parseHeader(@NotNull String headerTemplate,
+                                 @NotNull String headerWithLinks,
+                                 @Nullable String qName,
+                                 @NotNull Context context)
+  {
 
     //region Build links info.
     Map<String/*qName*/, String/*address*/> links = new HashMap<String, String>();
     process(headerWithLinks, new LinksCollector(links));
+    if (qName != null) {
+      links.put(qName, DocumentationManager.PSI_ELEMENT_PROTOCOL + qName);
+    }
     //endregion
 
 
@@ -294,11 +301,11 @@ public class DocPreviewUtil {
   
   private static class MaxColumnCalculator implements Callback {
 
-    private static final TObjectIntHashMap<String> SUBSTITUTIONS = new TObjectIntHashMap<String>();
+    private static final Map<String, String> SUBSTITUTIONS = new HashMap<String, String>();
     static {
-      SUBSTITUTIONS.put("&lt;", 1);
-      SUBSTITUTIONS.put("&gt;", 1);
-      SUBSTITUTIONS.put("&nbsp;", 1);
+      SUBSTITUTIONS.put("&lt;", "<");
+      SUBSTITUTIONS.put("&gt;", ">");
+      SUBSTITUTIONS.put("&nbsp;", " ");
     }
 
     public  int maxColumn;
@@ -324,11 +331,10 @@ public class DocPreviewUtil {
 
     @Override
     public boolean onText(@NotNull String text) {
-      int length = text.length();
-      if (SUBSTITUTIONS.containsKey(text)) {
-        length = SUBSTITUTIONS.get(text);
+      for (Map.Entry<String, String> entry : SUBSTITUTIONS.entrySet()) {
+        text = text.replace(entry.getKey(), entry.getValue());
       }
-      myCurrentColumn += length;
+      myCurrentColumn += text.length();
       maxColumn = Math.max(maxColumn, myCurrentColumn);
       return true;
     }
@@ -339,7 +345,7 @@ public class DocPreviewUtil {
     @NotNull protected final Context myContext;
     private                  boolean myScheduleNewLine;
     private                  boolean myInsidePre;
-    private                  boolean myDocAdded;
+    private                  boolean myDocStarted;
     private                  int     myCurrentRow;
     private                  int     myCurrentColumn;
     @Nullable private        String  myQName;
@@ -473,9 +479,9 @@ public class DocPreviewUtil {
     }
 
     private boolean addText(@NotNull String text, boolean countColumns) {
-      if (!myDocAdded) {
+      if (!myDocStarted) {
         myContext.buffer.append("<br/>");
-        myDocAdded = true;
+        myDocStarted = true;
       }
 
       if (!countColumns) {
