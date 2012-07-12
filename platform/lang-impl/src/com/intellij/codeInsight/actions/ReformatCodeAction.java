@@ -16,236 +16,279 @@
 
 package com.intellij.codeInsight.actions;
 
-import com.intellij.CommonBundle;
+import com.intellij.application.options.editor.EditorOptions;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.lang.LanguageImportStatements;
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.lang.LanguageFormatting;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.ui.OptionsDialog;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import javax.swing.event.HyperlinkEvent;
+import java.util.ArrayList;
 
-public class LayoutCodeDialog extends DialogWrapper {
-  private final           PsiFile      myFile;
-  @Nullable private final PsiDirectory myDirectory;
-  private final           Boolean      myTextSelected;
+public class ReformatCodeAction extends AnAction implements DumbAware {
+  private static final @NonNls String HELP_ID = "editing.codeReformatting";
 
-  private JRadioButton myRbFile;
-  private JRadioButton myRbSelectedText;
-  private JRadioButton myRbDirectory;
-  private JCheckBox    myCbIncludeSubdirs;
-  private JCheckBox    myCbOptimizeImports;
-  private JCheckBox    myCbOnlyVcsChangedRegions;
-  private JCheckBox    myDoNotAskMeCheckBox;
+  public void actionPerformed(AnActionEvent event) {
+    DataContext dataContext = event.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
+    }
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (files == null) {
+      return;
+    }
 
-  private final String myHelpId;
+    PsiFile file = null;
+    final PsiDirectory dir;
+    boolean hasSelection = false;
 
-  public LayoutCodeDialog(@NotNull Project project,
-                          @NotNull String title,
-                          @Nullable PsiFile file,
-                          @Nullable PsiDirectory directory,
-                          Boolean isTextSelected,
-                          final String helpId) {
-    super(project, true);
-    myFile = file;
-    myDirectory = directory;
-    myTextSelected = isTextSelected;
+    if (editor != null){
+      file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null) return;
+      dir = file.getContainingDirectory();
+      hasSelection = editor.getSelectionModel().hasSelection();
+    }
+    else if (areFiles(files)) {
+      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
+      if (!operationStatus.hasReadonlyFiles()) {
+        final ReformatFilesDialog reformatFilesDialog = new ReformatFilesDialog(project, files);
+        reformatFilesDialog.show();
+        if (!reformatFilesDialog.isOK()) return;
+        if (reformatFilesDialog.optimizeImports() && !DumbService.getInstance(project).isDumb()) {
+          new ReformatAndOptimizeImportsProcessor(
+            project, convertToPsiFiles(files, project), reformatFilesDialog.isProcessOnlyChangedText()
+          ).run();
+        }
+        else {
+          new ReformatCodeProcessor(project, convertToPsiFiles(files, project), null, reformatFilesDialog.isProcessOnlyChangedText()).run();
+        }
+      }
 
-    setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
-    setTitle(title);
-    init();
-    myHelpId = helpId;
-  }
-
-  protected void init() {
-    super.init();
-
-    if (myTextSelected == Boolean.TRUE) {
-      myRbSelectedText.setSelected(true);
+      return;
     }
     else {
-      if (myFile != null) {
-        myRbFile.setSelected(true);
+      Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
+      Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
+
+      if (projectContext != null || moduleContext != null) {
+        final String text;
+        if (moduleContext != null) {
+          text = CodeInsightBundle.message("process.scope.module", moduleContext.getModuleFilePath());
+        }
+        else {
+          text = CodeInsightBundle.message("process.scope.project", project.getPresentableUrl());
+        }
+
+        LayoutProjectCodeDialog dialog
+          = new LayoutProjectCodeDialog(project, moduleContext, CodeInsightBundle.message("process.reformat.code"), text, true);
+        dialog.show();
+        if (!dialog.isOK()) return;
+        if (dialog.isOptimizeImports() && !DumbService.getInstance(project).isDumb()) {
+          if (moduleContext != null) {
+            new ReformatAndOptimizeImportsProcessor(project, moduleContext, dialog.isProcessOnlyChangedText()).run();
+          }
+          else {
+            new ReformatAndOptimizeImportsProcessor(project, dialog.isProcessOnlyChangedText()).run();
+          }
+        }
+        else {
+          if (moduleContext != null) {
+            new ReformatCodeProcessor(project, moduleContext, dialog.isProcessOnlyChangedText()).run();
+          }
+          else {
+            new ReformatCodeProcessor(project, dialog.isProcessOnlyChangedText()).run();
+          }
+        }
+        return;
+      }
+
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (element == null) return;
+      if (element instanceof PsiDirectoryContainer) {
+        dir = ((PsiDirectoryContainer)element).getDirectories()[0];
+      }
+      else if (element instanceof PsiDirectory) {
+        dir = (PsiDirectory)element;
       }
       else {
-        myRbDirectory.setSelected(true);
+        file = element.getContainingFile();
+        if (file == null) return;
+        dir = file.getContainingDirectory();
       }
     }
 
-    myCbIncludeSubdirs.setSelected(true);
-    myCbOptimizeImports.setSelected(PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, false));
+    boolean optimizeImports = ReformatFilesDialog.isOptmizeImportsOptionOn();
+    boolean processWholeFile = false;
+    boolean processChangedTextOnly = false;
+    final boolean showDialog = EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG;
+    if (showDialog || (file == null && dir != null)) {
+      final LayoutCodeDialog dialog = new LayoutCodeDialog(project, CodeInsightBundle.message("process.reformat.code"), file, dir,
+                                                           hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
+      dialog.show();
+      if (!dialog.isOK()) return;
+      final boolean showDialogAtFuture = !dialog.isDoNotAskMe();
+      EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = showDialogAtFuture;
+      updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
+      optimizeImports = dialog.isOptimizeImports();
+      processWholeFile = dialog.isProcessWholeFile();
+      processChangedTextOnly = dialog.isProcessOnlyChangedText();
 
-    ItemListener listener = new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        updateState();
-      }
-    };
-    myRbFile.addItemListener(listener);
-    myRbSelectedText.addItemListener(listener);
-    myRbDirectory.addItemListener(listener);
-    myCbIncludeSubdirs.addItemListener(listener);
-
-    updateState();
-  }
-
-  private void updateState() {
-    myCbIncludeSubdirs.setEnabled(myRbDirectory.isSelected());
-    myCbOptimizeImports.setEnabled(
-      !myRbSelectedText.isSelected() &&
-      !(myFile != null && LanguageImportStatements.INSTANCE.forFile(myFile).isEmpty() && myRbFile.isSelected()));
-
-    final boolean canTargetVcsChanges = canTargetVcsRegions();
-    myCbOnlyVcsChangedRegions.setEnabled(canTargetVcsChanges);
-    myCbOnlyVcsChangedRegions.setSelected(
-      canTargetVcsChanges && PropertiesComponent.getInstance().getBoolean(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, false)
-    );
-
-    myDoNotAskMeCheckBox.setEnabled(!myRbDirectory.isSelected());
-    myRbDirectory.setEnabled(!myDoNotAskMeCheckBox.isSelected());
-  }
-
-  protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(4, 8, 8, 0));
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.gridy = 0;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridwidth = 3;
-    gbConstraints.gridheight = 1;
-    gbConstraints.weightx = 1;
-
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
-
-    myRbFile = new JRadioButton(CodeInsightBundle.message("process.scope.file",
-                                                          (myFile != null ? "'" + myFile.getVirtualFile().getPresentableUrl() + "'" : "")));
-    panel.add(myRbFile, gbConstraints);
-
-    myRbSelectedText = new JRadioButton(CodeInsightBundle.message("reformat.option.selected.text"));
-    if (myTextSelected != null) {
-      gbConstraints.gridy++;
-      gbConstraints.insets = new Insets(0, 0, 0, 0);
-      panel.add(myRbSelectedText, gbConstraints);
-    }
-
-    myRbDirectory = new JRadioButton();
-    myCbIncludeSubdirs = new JCheckBox(CodeInsightBundle.message("reformat.option.include.subdirectories"));
-    if (myDirectory != null) {
-      myRbDirectory.setText(CodeInsightBundle.message("reformat.option.all.files.in.directory",
-                                                      myDirectory.getVirtualFile().getPresentableUrl()));
-      gbConstraints.gridy++;
-      gbConstraints.insets = new Insets(0, 0, 0, 0);
-      panel.add(myRbDirectory, gbConstraints);
-
-      if (myDirectory.getSubdirectories().length > 0) {
-        gbConstraints.gridy++;
-        gbConstraints.insets = new Insets(0, 20, 0, 0);
-        panel.add(myCbIncludeSubdirs, gbConstraints);
+      if (dialog.isProcessDirectory()){
+        if (optimizeImports) {
+          new ReformatAndOptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories(), processChangedTextOnly).run();
+        }
+        else {
+          new ReformatCodeProcessor(project, dir, dialog.isIncludeSubdirectories(), processChangedTextOnly).run();
+        }
+        return;
       }
     }
 
-    myCbOptimizeImports = new JCheckBox(CodeInsightBundle.message("reformat.option.optimize.imports"));
-    if (myTextSelected != null && LanguageImportStatements.INSTANCE.hasAnyExtensions()) {
-      gbConstraints.gridy++;
-      gbConstraints.insets = new Insets(0, 0, 0, 0);
-      panel.add(myCbOptimizeImports, gbConstraints);
+    final TextRange range;
+    if (!processWholeFile && editor != null && editor.getSelectionModel().hasSelection()){
+      range = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+    }
+    else{
+      range = null;
     }
 
-    myCbOnlyVcsChangedRegions = new JCheckBox(CodeInsightBundle.message("reformat.option.vcs.changed.region"));
-    gbConstraints.gridy++;
-    panel.add(myCbOnlyVcsChangedRegions, gbConstraints);
-
-    ButtonGroup buttonGroup = new ButtonGroup();
-    buttonGroup.add(myRbFile);
-    buttonGroup.add(myRbSelectedText);
-    buttonGroup.add(myRbDirectory);
-
-    myRbFile.setEnabled(myFile != null);
-    myRbSelectedText.setEnabled(myTextSelected == Boolean.TRUE);
-
-    return panel;
-  }
-
-  @Override
-  protected JComponent createSouthPanel() {
-    JComponent southPanel = super.createSouthPanel();
-    myDoNotAskMeCheckBox = new JCheckBox(CommonBundle.message("dialog.options.do.not.show"));
-    myDoNotAskMeCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updateState();
+    if (optimizeImports && range == null) {
+      if (file != null || dir == null) {
+        new ReformatAndOptimizeImportsProcessor(project, file, processChangedTextOnly).run();
       }
-    });
-    return OptionsDialog.addDoNotShowCheckBox(southPanel, myDoNotAskMeCheckBox);
-  }
-
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpId);
-  }
-
-  public boolean isProcessSelectedText() {
-    return myRbSelectedText.isSelected();
-  }
-
-  public boolean isProcessWholeFile() {
-    return myRbFile.isSelected();
-  }
-
-  public boolean isProcessDirectory() {
-    return myRbDirectory.isSelected();
-  }
-
-  public boolean isIncludeSubdirectories() {
-    return myCbIncludeSubdirs.isSelected();
-  }
-
-  public boolean isOptimizeImports() {
-    return myCbOptimizeImports.isSelected();
-  }
-
-  public boolean isProcessOnlyChangedText() {
-    return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected();
-  }
-
-  boolean isDoNotAskMe() {
-    return myDoNotAskMeCheckBox.isEnabled() && myDoNotAskMeCheckBox.isSelected();
-  }
-
-  protected void doOKAction() {
-    super.doOKAction();
-    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.OPTIMIZE_IMPORTS_KEY, Boolean.toString(isOptimizeImports()));
-    PropertiesComponent.getInstance().setValue(LayoutCodeConstants.PROCESS_CHANGED_TEXT_KEY, Boolean.toString(isProcessOnlyChangedText()));
-  }
-
-  private boolean canTargetVcsRegions() {
-    if (isProcessSelectedText()) {
-      return false;
-    }
-
-    if (isProcessWholeFile()) {
-      return FormatChangedTextUtil.hasChanges(myFile);
-    }
-
-    if (isProcessDirectory()) {
-      if (myDirectory == null) {
-        return false;
+      else {
+        new ReformatAndOptimizeImportsProcessor(project, dir, true, processChangedTextOnly).run();
       }
-      return FormatChangedTextUtil.hasChanges(myDirectory);
     }
-    return false;
+    else {
+      new ReformatCodeProcessor(project, file, range, processChangedTextOnly).run();
+    }
+  }
+
+  public static void updateShowDialogSetting(LayoutCodeDialog dialog, String title) {
+    if (dialog.isDoNotAskMe()) {
+      Notifications.Bus.notify(new Notification("Reformat Code", title,
+                                                "<html>You can re-enable the dialog on the <a href=''>IDE Settings -> Editor</a> pane</html>",
+                                                NotificationType.INFORMATION, new NotificationListener() {
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+            IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
+            util.editConfigurable((JFrame)ideFrame, new EditorOptions());
+          }
+        }
+      }));
+    }
+  }
+
+  public static PsiFile[] convertToPsiFiles(final VirtualFile[] files,Project project) {
+    final PsiManager manager = PsiManager.getInstance(project);
+    final ArrayList<PsiFile> result = new ArrayList<PsiFile>();
+    for (VirtualFile virtualFile : files) {
+      final PsiFile psiFile = manager.findFile(virtualFile);
+      if (psiFile != null) result.add(psiFile);
+    }
+    return PsiUtilCore.toPsiFileArray(result);
+  }
+
+  public void update(AnActionEvent event){
+    Presentation presentation = event.getPresentation();
+    DataContext dataContext = event.getDataContext();
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null){
+      presentation.setEnabled(false);
+      return;
+    }
+
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+
+    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+
+    if (editor != null){
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null || file.getVirtualFile() == null) {
+        presentation.setEnabled(false);
+        return;
+      }
+
+      if (LanguageFormatting.INSTANCE.forContext(file)  != null) {
+        presentation.setEnabled(true);
+        return;
+      }
+    }
+    else if (files!= null && areFiles(files)) {
+      boolean anyFormatters = false;
+      for (VirtualFile virtualFile : files) {
+        if (virtualFile.isDirectory()) {
+          presentation.setEnabled(false);
+          return;
+        }
+        final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+        if (psiFile == null) {
+          presentation.setEnabled(false);
+          return;
+        }
+        final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(psiFile);
+        if (builder != null) {
+          anyFormatters = true;
+        }
+      }
+      if (!anyFormatters) {
+        presentation.setEnabled(false);
+        return;
+      }
+    }
+    else if (files != null && files.length == 1) {
+      // skip. Both directories and single files are supported.
+    }
+    else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
+             PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      if (element == null) {
+        presentation.setEnabled(false);
+        return;
+      }
+      if (!(element instanceof PsiDirectory)) {
+        PsiFile file = element.getContainingFile();
+        if (file == null || LanguageFormatting.INSTANCE.forContext(file) == null) {
+          presentation.setEnabled(false);
+          return;
+        }
+      }
+    }
+    presentation.setEnabled(true);
+  }
+
+  public static boolean areFiles(final VirtualFile[] files) {
+    if (files == null) return false;
+    if (files.length < 2) return false;
+    for (VirtualFile virtualFile : files) {
+      if (virtualFile.isDirectory()) return false;
+    }
+    return true;
   }
 }
