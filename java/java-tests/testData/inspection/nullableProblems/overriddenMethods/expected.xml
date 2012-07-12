@@ -2,42 +2,42 @@
 <problems>
 <problem>
   <file>Test.java</file>
-  <line>17</line>
+  <line>18</line>
   <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
   <description>Not annotated method overrides method annotated with @NotNull</description>
 </problem>
 
 <problem>
   <file>Test.java</file>
-  <line>17</line>
+  <line>18</line>
   <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
   <description>Not annotated parameter overrides @NotNull parameter</description>
 </problem>
 
 <problem>
   <file>Test.java</file>
-  <line>4</line>
+  <line>5</line>
   <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
   <description>Overridden methods are not annotated</description>
 </problem>
 
 <problem>
   <file>Test.java</file>
-  <line>5</line>
+  <line>6</line>
   <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
   <description>Overridden method parameters are not annotated</description>
 </problem>
 
 <problem>
   <file>Test.java</file>
-  <line>11</line>
+  <line>12</line>
   <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
   <description>Not annotated method overrides method annotated with @NotNull</description>
 </problem>
 
 <problem>
   <file>Test.java</file>
-  <line>11</line>
+  <line>12</line>
   <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">@NotNull/@Nullable problems</problem_class>
   <description>Not annotated parameter overrides @NotNull parameter</description>
 </problem></problems>
