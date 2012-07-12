@@ -64,6 +64,7 @@ public abstract class TestBase extends UsefulTestCase {
   protected void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
+    super.tearDown();
   }
 
   protected String getTestFileName() {

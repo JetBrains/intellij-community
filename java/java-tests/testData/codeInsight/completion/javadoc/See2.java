@@ -1,7 +1,7 @@
 class C{
     
     /**
-     * @see #n<caret>
+     * @see #not<caret>
      *
      * @since
      */

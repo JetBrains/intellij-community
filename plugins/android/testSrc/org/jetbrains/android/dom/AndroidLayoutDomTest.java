@@ -2,6 +2,7 @@ package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -27,6 +28,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     myFixture.copyFileToProject(SdkConstants.FN_ANDROID_MANIFEST_XML, SdkConstants.FN_ANDROID_MANIFEST_XML);
 
     // copy mock fragment, because it is not included to old android.jar

@@ -15,13 +15,17 @@
  */
 package org.intellij.lang.xpath;
 
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+
 public class XPath2CompletionTest extends TestBase {
 
   public void testCastInsert() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doXPathCompletion();
   }
 
   public void testTreatInsert() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doXPathCompletion();
   }
 

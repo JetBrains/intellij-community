@@ -17,6 +17,7 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,6 +47,7 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
   }
 
   public void testPreferenceChildrenCompletion() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     toTestCompletion("pref2.xml", "pref2_after.xml");
   }
 

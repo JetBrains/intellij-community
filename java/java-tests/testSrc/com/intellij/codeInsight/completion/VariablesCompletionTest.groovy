@@ -5,9 +5,16 @@ import com.intellij.JavaTestUtil
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public static final String FILE_PREFIX = "/codeInsight/completion/variables/";
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+  }
 
   @Override
   protected String getBasePath() {

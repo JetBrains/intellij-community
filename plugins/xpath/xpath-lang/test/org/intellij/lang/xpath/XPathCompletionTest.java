@@ -15,9 +15,16 @@
  */
 package org.intellij.lang.xpath;
 
-public class XPathCompletionTest extends TestBase {
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 
-    public void testAxis() throws Throwable {
+public class XPathCompletionTest extends TestBase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+  }
+
+  public void testAxis() throws Throwable {
         doXPathCompletion("ancestor", "ancestor-or-self", "attribute");
     }
 

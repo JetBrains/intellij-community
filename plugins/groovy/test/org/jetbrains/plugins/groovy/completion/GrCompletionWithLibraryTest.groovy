@@ -26,6 +26,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 /**
  * @author Maxim.Medvedev
@@ -40,6 +41,12 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
       modifiableModel.commit();
     }
   };
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+  }
 
   @NotNull
   @Override

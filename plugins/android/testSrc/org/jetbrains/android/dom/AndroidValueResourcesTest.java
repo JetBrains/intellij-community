@@ -17,6 +17,7 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -81,6 +82,7 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   }
 
   public void testAttrFormatCompletion() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     toTestCompletion("attrs1.xml", "attrs1_after.xml");
   }
 

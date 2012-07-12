@@ -54,7 +54,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNamesInMethod1() throws Exception {
     configureByFile("MethodTagName1.java");
-    assertStringItems("see", "serialData", "since");
+    assertStringItems("see", "serialData", "since", "class", "throws");
   }
 
   public void testParamValueCompletion() throws Exception {

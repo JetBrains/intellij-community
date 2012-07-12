@@ -15,6 +15,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.SdkHomeConfigurable.SdkHomeBean
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 /**
  * @author peter
@@ -60,6 +61,7 @@ public class StandaloneGantTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testDep() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     checkVariants """
 target(aaa: "") {
     dep<caret>

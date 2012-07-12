@@ -1,6 +1,7 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import org.jetbrains.android.inspections.AndroidElementNotAllowedInspection;
 import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
 
@@ -22,6 +23,7 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   }
 
   public void testAttributeNameCompletion2() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doTestCompletionVariants("an2.xml", "debuggable", "description");
   }
 
@@ -115,6 +117,7 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   }
 
   public void testActivityCompletion3() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
     copyFileToProject("MyActivity1.java", "src/p1/p2/p3/MyActivity1.java");
     doTestCompletion(false);
