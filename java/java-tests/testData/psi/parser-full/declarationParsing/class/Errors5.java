@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.java.parser.statementParsing;
-
-import com.intellij.lang.java.parser.JavaParsingTestCase;
-
-public class AssertParsingTest extends JavaParsingTestCase {
-  public AssertParsingTest() {
-    super("parser-full/statementParsing/assert");
+private static class My extends JComponent {
+  private My(Map<String, List<Object>> param) {
+    setBorder(null);
+    param
+    list();
   }
-
-  public void testNormal1() { doTest(true); }
-  public void testNormal2() { doTest(true); }
 }
