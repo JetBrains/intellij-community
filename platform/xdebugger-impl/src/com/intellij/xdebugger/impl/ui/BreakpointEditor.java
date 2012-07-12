@@ -40,7 +40,7 @@ public class BreakpointEditor {
   }
 
   private void createUIComponents() {
-    myShowMoreOptionsLink = new LinkLabel("View Breakpoints...", null, new LinkListener() {
+    myShowMoreOptionsLink = new LinkLabel("More", null, new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         if (myDelegate != null) {
