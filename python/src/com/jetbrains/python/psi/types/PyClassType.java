@@ -171,12 +171,6 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
         if (superMember != null) {
           return ResolveResultList.to(superMember);
         }
-
-        superMember = resolveByMembersProviders(new PyClassType(pyClass, isDefinition()), name);
-
-        if (superMember != null) {
-          return ResolveResultList.to(superMember);
-        }
       }
       else {
         final PsiElement element = superClass.getElement();
@@ -200,11 +194,23 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       }
     }
 
-    classMember = resolveByMembersProviders(this, name);
+    classMember = resolveByMembersProviders(this, name);  //ask providers after real class introspection as providers have less priority
 
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
+
+    for (PyClassRef superClass : myClass.iterateAncestors()) {
+      final PyClass pyClass = superClass.getPyClass();
+      if (pyClass != null) {
+        PsiElement superMember = resolveByMembersProviders(new PyClassType(pyClass, isDefinition()), name);
+
+        if (superMember != null) {
+          return ResolveResultList.to(superMember);
+        }
+      }
+    }
+
 
     return Collections.emptyList();
   }
