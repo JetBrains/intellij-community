@@ -28,6 +28,7 @@ import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -74,17 +75,27 @@ public class TableLayoutOperation extends GridOperation {
   @Override
   protected int getMovedIndex(boolean row) {
     RadComponent movedComponent = myContext.getComponents().get(0);
+    List<RadComponent> children = myContainer.getChildren();
 
     if (row) {
-      List<RadComponent> children = myContainer.getChildren();
-
       if (movedComponent.getParent() == myContainer) {
         return children.indexOf(movedComponent);
       }
       return children.indexOf(movedComponent.getParent());
     }
 
-    return RadTableLayoutComponent.getCellIndex(movedComponent);
+    if (movedComponent.getParent() == myContainer) {
+      return 0;
+    }
+
+    int columnIndex = RadTableLayoutComponent.getCellIndex(movedComponent);
+    if (columnIndex != -1) {
+      return columnIndex;
+    }
+
+    int rowIndex = children.indexOf(movedComponent.getParent());
+    RadComponent[] components = getGridInfo().components[rowIndex];
+    return ArrayUtil.indexOf(components, movedComponent);
   }
 
   @Override
@@ -106,7 +117,7 @@ public class TableLayoutOperation extends GridOperation {
         return getSizeInColumn(0, columnCount, movedComponent) == 0;
       }
 
-      int columnIndex = RadTableLayoutComponent.getCellIndex(movedComponent);
+      int columnIndex = getMovedIndex(false);
       int span = RadTableLayoutComponent.getCellSpan(movedComponent);
 
       for (int i = 0; i < span; i++) {

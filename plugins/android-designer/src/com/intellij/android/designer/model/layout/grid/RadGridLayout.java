@@ -222,7 +222,8 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
       boolean[] emptyColumns = gridInfo.emptyColumns;
 
       for (int i = 0; i < lines.length - 1; i++) {
-        components.add(new RadCaptionGridColumn(container,
+        components.add(new RadCaptionGridColumn(mainArea,
+                                                container,
                                                 i,
                                                 lines[i],
                                                 lines[i + 1] - lines[i],
@@ -234,7 +235,8 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
       boolean[] emptyRows = gridInfo.emptyRows;
 
       for (int i = 0; i < lines.length - 1; i++) {
-        components.add(new RadCaptionGridRow(container,
+        components.add(new RadCaptionGridRow(mainArea,
+                                             container,
                                              i,
                                              lines[i],
                                              lines[i + 1] - lines[i],

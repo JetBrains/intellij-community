@@ -18,27 +18,31 @@ package com.intellij.android.designer.model.layout.grid;
 import com.intellij.android.designer.designSurface.layout.GridLayoutOperation;
 import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.grid.RadCaptionRow;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.IGroupDeleteComponent;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> implements IGroupDeleteComponent {
-  public RadCaptionGridRow(RadGridLayoutComponent container, int index, int offset, int width, boolean empty) {
-    super(container, index, offset, width, empty);
+  public RadCaptionGridRow(EditableArea mainArea, RadGridLayoutComponent container, int index, int offset, int width, boolean empty) {
+    super(mainArea, container, index, offset, width, empty);
   }
 
   @Override
   public void delete(List<RadComponent> rows) throws Exception {
+    List<RadComponent> deletedComponents = new ArrayList<RadComponent>();
+
     GridInfo gridInfo = myContainer.getVirtualGridInfo();
     RadComponent[][] components = myContainer.getGridComponents(false);
 
     for (RadComponent row : rows) {
-      delete(gridInfo, components, (RadCaptionGridRow)row);
+      delete(deletedComponents, gridInfo, components, (RadCaptionGridRow)row);
     }
 
     RadComponent[][] newComponents = new RadComponent[components.length - rows.size()][];
@@ -57,9 +61,12 @@ public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> imp
     }
 
     GridLayoutOperation.validateLayoutParams(newComponents);
+
+    deselect(deletedComponents);
   }
 
-  private static void delete(GridInfo gridInfo, RadComponent[][] components, RadCaptionGridRow row) throws Exception {
+  private static void delete(List<RadComponent> deletedComponents, GridInfo gridInfo, RadComponent[][] components, RadCaptionGridRow row)
+    throws Exception {
     if (row.myIndex > 0) {
       GridLayoutOperation.shiftRowSpan(gridInfo, row.myIndex - 1, -1);
     }
@@ -70,6 +77,7 @@ public class RadCaptionGridRow extends RadCaptionRow<RadGridLayoutComponent> imp
         GridInfo.setNull(components, gridInfo.components, cellIndex.y, cellIndex.y + cellIndex.height, cellIndex.x,
                          cellIndex.x + cellIndex.width);
         component.delete();
+        deletedComponents.add(component);
       }
     }
   }

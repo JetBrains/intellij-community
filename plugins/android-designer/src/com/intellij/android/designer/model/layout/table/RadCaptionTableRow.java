@@ -15,59 +15,37 @@
  */
 package com.intellij.android.designer.model.layout.table;
 
-import com.intellij.android.designer.designSurface.layout.CaptionStaticDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.designer.designSurface.StaticDecorator;
+import com.intellij.android.designer.model.grid.RadCaptionRow;
+import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.model.IGroupDeleteComponent;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadVisualComponent;
 
-import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadCaptionTableRow extends RadVisualComponent {
-  private final RadViewComponent myComponent;
-  private final StaticDecorator myDecorator;
-
-  public RadCaptionTableRow(RadViewComponent component) {
-    myComponent = component;
-
-    if (RadTableRowLayout.is(component)) {
-      myDecorator = new CaptionStaticDecorator(this);
-    } else {
-      myDecorator = new CaptionStaticDecorator(this, Color.PINK);
-    }
-
-    setNativeComponent(component.getNativeComponent());
+public class RadCaptionTableRow extends RadCaptionRow<RadViewComponent> implements IGroupDeleteComponent {
+  public RadCaptionTableRow(EditableArea mainArea, RadViewComponent component) {
+    super(mainArea, component, -1, 0, component.getBounds().height, !RadTableRowLayout.is(component));
   }
 
   public RadViewComponent getComponent() {
-    return myComponent;
+    return myContainer;
   }
 
   @Override
-  public Rectangle getBounds() {
-    Rectangle bounds = myComponent.getBounds();
-    return new Rectangle(2, bounds.y, 10, bounds.height);
-  }
+  public void delete(List<RadComponent> rows) throws Exception {
+    List<RadComponent> deletedComponents = new ArrayList<RadComponent>();
 
-  @Override
-  public Rectangle getBounds(Component relativeTo) {
-    Rectangle bounds = super.getBounds(relativeTo);
-    bounds.x = 2;
-    bounds.width = 10;
-    return bounds;
-  }
+    for (RadComponent component : rows) {
+      RadCaptionTableRow row = (RadCaptionTableRow)component;
+      row.myContainer.delete();
+      deletedComponents.add(row.myContainer);
+    }
 
-  @Override
-  public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
-    decorators.add(myDecorator);
-  }
-
-  @Override
-  public void delete() throws Exception {
-    myComponent.delete();
+    deselect(deletedComponents);
   }
 }
