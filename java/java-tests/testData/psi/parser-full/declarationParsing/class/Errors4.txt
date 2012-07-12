@@ -1,4 +1,4 @@
-PsiJavaFile:Errors4.java.txt
+PsiJavaFile:Errors4.java
   PsiImportList
     <empty list>
   PsiClass:OutOfMemoryExceptionDemo
