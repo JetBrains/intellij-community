@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -13,6 +14,7 @@ import java.util.List;
 public class PythonCompletionTest extends PyTestCase {
 
   private void doTest() {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
