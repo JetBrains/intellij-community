@@ -42,6 +42,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -63,6 +64,7 @@ import org.jetbrains.android.uipreview.*;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -492,6 +494,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myPSIChangeListener.dispose();
     super.dispose();
     disposeRenderer();
+  }
+
+  @Override
+  @Nullable
+  protected Module findModule(Project project, VirtualFile file) {
+    Module module = super.findModule(project, file);
+    if (module == null) {
+      module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+        @Override
+        public Module compute() {
+          return ModuleUtilCore.findModuleForPsiElement(myXmlFile);
+        }
+      });
+    }
+    return module;
   }
 
   @Override
