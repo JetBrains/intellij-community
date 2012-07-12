@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
@@ -47,7 +48,7 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
+public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.CreatePropertyFromUsageFix");
   @NonNls private static final String FIELD_VARIABLE = "FIELD_NAME_VARIABLE";
   @NonNls private static final String TYPE_VARIABLE = "FIELD_TYPE_VARIABLE";
@@ -59,7 +60,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     myMethodCall = methodCall;
   }
 
-  private final PsiMethodCallExpression myMethodCall;
+  protected final PsiMethodCallExpression myMethodCall;
 
   @Override
   @NotNull
@@ -98,6 +99,8 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     List<PsiClass> classes = getTargetClasses(myMethodCall);
     if (classes.isEmpty()) return false;
 
+    if (!checkTargetClasses(classes, methodName)) return false;
+    
     for (PsiClass aClass : classes) {
       if (!aClass.isInterface()) {
         setText(getterOrSetter);
@@ -106,6 +109,10 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
     }
 
     return false;
+  }
+
+  protected boolean checkTargetClasses(List<PsiClass> classes, String methodName) {
+    return true;
   }
 
   static class FieldExpression extends Expression {
@@ -266,15 +273,19 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
             PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
             PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
             if (aClass == null) return;
-            if (aClass.findFieldByName(fieldName, true) != null) return;
+            PsiField field = aClass.findFieldByName(fieldName, true);
+            if (field != null){
+              CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field);
+              return;
+            }
             PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
             try {
               PsiType type = factory.createTypeFromText(fieldType, aClass);
               try {
-                PsiField field = factory.createField(fieldName, type);
+                field = factory.createField(fieldName, type);
                 field = (PsiField)aClass.add(field);
                 PsiUtil.setModifierProperty(field, PsiModifier.STATIC, isStatic1);
-                positionCursor(project, field.getContainingFile(), field);
+                CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field);
               }
               catch (IncorrectOperationException e) {
                 LOG.error(e);
@@ -301,6 +312,10 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
         }
       }
     });
+  }
+
+  protected void beforeTemplateFinished(PsiClass aClass, PsiField field) {
+    positionCursor(myMethodCall.getProject(), myMethodCall.getContainingFile(), myMethodCall);
   }
 
   private static String getVariableName(PsiMethodCallExpression methodCall, boolean isStatic) {
