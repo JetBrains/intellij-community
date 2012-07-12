@@ -41,7 +41,8 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
       new JavaWithNotSurrounder(),
       new JavaWithNotInstanceofSurrounder(),
       new JavaWithIfExpressionSurrounder(),
-      new JavaWithIfElseExpressionSurrounder()
+      new JavaWithIfElseExpressionSurrounder(),
+      new JavaWithNullCheckSurrounder()
   };
 
   @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
