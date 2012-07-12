@@ -41,31 +41,20 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     }
     Document document = editor.getDocument();
     int selStartLine = document.getLineNumber(startOffsets[0]);
-    int selEndLine = document.getLineNumber(endOffsets[0]);
-    //if (selStartLine == selEndLine) {
-    //  return null;
-    //}
     // check that selection starts at or before the first non-whitespace character on a line
     for (int offset = startOffsets[0] - 1; offset >= document.getLineStartOffset(selStartLine); offset--) {
       if (!Character.isWhitespace(document.getCharsSequence().charAt(offset))) {
         return null;
       }
     }
-    int minIndent = Integer.MAX_VALUE;
-    int maxIndent = 0;
     int tabSize = CodeStyleFacade.getInstance(file.getProject()).getTabSize(file.getFileType());
-    for (int line = selStartLine; line <= selEndLine; line++) {
-      int start = document.getLineStartOffset(line);
-      int end = document.getLineEndOffset(line);
-      int indent = getIndent(document.getCharsSequence(), start, end, tabSize);
-      if (indent >= 0) {
-        minIndent = Math.min(minIndent, indent);
-        maxIndent = Math.max(minIndent, indent);
-      }
-    }
+    int start = document.getLineStartOffset(selStartLine);
+    int end = document.getLineEndOffset(selStartLine);
+    int minIndent = getIndent(document.getCharsSequence(), start, end, tabSize);
+
     int firstNonSpaceChar = CharArrayUtil.shiftForward(document.getCharsSequence(), startOffsets[0], " \t");
     int firstLineLeadingSpaces = (firstNonSpaceChar <= document.getLineEndOffset(selStartLine)) ? firstNonSpaceChar - startOffsets[0] : 0;
-    return new IndentTransferableData(maxIndent - minIndent, maxIndent, firstLineLeadingSpaces);
+    return new IndentTransferableData(minIndent, 0, firstLineLeadingSpaces);
   }
 
   private static boolean acceptFileType(FileType fileType) {
@@ -149,20 +138,6 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
         // don't indent first line if there's any text before it
         final String textBeforeFirstLine = document.getText(new TextRange(startLineStart, bounds.getStartOffset()));
 
-        //a lot of different indents inside selected
-        final String[] split = StringUtil.trimTrailing(pastedText).split("\n");
-        int firstIndent = 0;
-        int currentIndent;
-        for (String s : split) {
-          currentIndent = s.length() - s.trim().length();
-          if (split[0].equals(s) ) {
-            if (currentIndent == 0)
-              currentIndent = textBeforeFirstLine.length();
-            firstIndent = currentIndent;
-          }
-          if (!StringUtil.isEmptyOrSpaces(s) && firstIndent > currentIndent)
-            return;
-        }
         //insert on top level, doesn't need indent
         if (caretColumn == 0 && !pastedText.startsWith(" "))
           return;
@@ -179,8 +154,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
             StringUtil.isEmptyOrSpaces(strings.get(strings.size()-1))) endLine -=1;
 
         for (int i = startLine+1; i <= endLine; i++) {
-          int indent = value.getFirstLineLeadingSpaces() <= realCaretColumn ||
-                       value.getFirstLineLeadingSpaces() == value.getMaxIndent()? value.getIndent() : -value.getIndent();
+          int indent = realCaretColumn - value.getIndent();
           EditorActionUtil.indentLine(project, editor, i, indent);
         }
         indented.set(Boolean.TRUE);
