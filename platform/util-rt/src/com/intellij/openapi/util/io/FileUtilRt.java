@@ -71,6 +71,7 @@ public class FileUtilRt {
       if (base == null) return null;
     }
 
+    //noinspection FileEqualsUsage
     if (base.equals(file)) return ".";
 
     final String filePath = file.getAbsolutePath();
@@ -94,7 +95,7 @@ public class FileUtilRt {
     String filePathToCompare = caseSensitive ? filePath : filePath.toLowerCase();
     if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) return ".";
     int len = 0;
-    int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
+    int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abc/base" and file="/temp/ab"
     while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
       if (basePath.charAt(len) == separator) {
         lastSeparatorIndex = len;
