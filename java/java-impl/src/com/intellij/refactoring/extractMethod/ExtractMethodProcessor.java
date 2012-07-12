@@ -42,13 +42,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -472,7 +475,8 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
-                                                         myThrownExceptions, myStatic, myCanBeStatic, myCanBeChainedConstructor, myInitialMethodName,
+                                                         myThrownExceptions, myStatic, myCanBeStatic, myCanBeChainedConstructor,
+                                                         suggestInitialMethodName(),
                                                          myRefactoringName, myHelpId, myElements) {
       protected boolean areTypesDirected() {
         return direct;
@@ -483,6 +487,41 @@ public class ExtractMethodProcessor implements MatchProvider {
         return ExtractMethodProcessor.this.isOutputVariable(var);
       }
     };
+  }
+
+  protected String suggestInitialMethodName() {
+    if (StringUtil.isEmpty(myInitialMethodName)) {
+      final String initialMethodName;
+      final JavaCodeStyleManagerImpl codeStyleManager = (JavaCodeStyleManagerImpl)JavaCodeStyleManager.getInstance(myProject);
+      final String[] names = codeStyleManager.suggestVariableName(VariableKind.FIELD, null, myExpression, myReturnType).names;
+      if (names.length > 0) {
+        initialMethodName = codeStyleManager.variableNameToPropertyName(names[0], VariableKind.FIELD);
+      } else {
+        return myInitialMethodName;
+      }
+
+      if (myReturnType != null && !(myReturnType instanceof PsiPrimitiveType)) {
+        return PropertyUtil.suggestGetterName(initialMethodName, myReturnType);
+      } else if (myExpression != null) {
+        if (myExpression instanceof PsiMethodCallExpression) {
+          PsiExpression qualifierExpression = ((PsiMethodCallExpression)myExpression).getMethodExpression().getQualifierExpression();
+          if (qualifierExpression != null && PsiUtil.resolveGenericsClassInType(qualifierExpression.getType()) != myTargetClass) {
+            return initialMethodName;
+          }
+        } else {
+          return initialMethodName;
+        }
+      }
+
+      PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
+      if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+        final String text = prevSibling.getText().trim().replaceAll(" ", "").substring(2);
+        if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(text) && text.length() < 20) {
+          return text;
+        }
+      }
+    }
+    return myInitialMethodName;
   }
 
   public boolean isOutputVariable(PsiVariable var) {
