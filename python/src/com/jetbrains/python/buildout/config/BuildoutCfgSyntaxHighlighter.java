@@ -18,10 +18,9 @@ package com.jetbrains.python.buildout.config;
 
 import com.google.common.collect.Maps;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.buildout.config.lexer.BuildoutCfgFlexLexer;
@@ -43,34 +42,35 @@ public class BuildoutCfgSyntaxHighlighter extends SyntaxHighlighterBase implemen
 
 
   public static final TextAttributesKey BUILDOUT_SECTION_NAME =
-    TextAttributesKey.createTextAttributesKey("BUILDOUT.SECTION_NAME", SyntaxHighlighterColors.NUMBER.getDefaultAttributes().clone());
+    TextAttributesKeyDefaults.createTextAttributesKey("BUILDOUT.SECTION_NAME", TextAttributesKeyDefaults
+      .getDefaultAttributes(SyntaxHighlighterColors.NUMBER).clone());
 
-  public static final TextAttributesKey BUILDOUT_KEY = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey BUILDOUT_KEY = TextAttributesKeyDefaults.createTextAttributesKey(
     "BUILDOUT.KEY",
-    SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+    TextAttributesKeyDefaults.getDefaultAttributes(SyntaxHighlighterColors.KEYWORD)
   );
 
-  public static final TextAttributesKey BUILDOUT_VALUE = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey BUILDOUT_VALUE = TextAttributesKeyDefaults.createTextAttributesKey(
     "BUILDOUT.VALUE",
-    SyntaxHighlighterColors.STRING.getDefaultAttributes()
+    TextAttributesKeyDefaults.getDefaultAttributes(SyntaxHighlighterColors.STRING)
   );
 
-  public static final TextAttributesKey BUILDOUT_COMMENT = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey BUILDOUT_COMMENT = TextAttributesKeyDefaults.createTextAttributesKey(
     "BUILDOUT.LINE_COMMENT",
-    SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
+    TextAttributesKeyDefaults.getDefaultAttributes(SyntaxHighlighterColors.LINE_COMMENT)
   );
 
-  public static final TextAttributesKey BUILDOUT_KEY_VALUE_SEPARATOR = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey BUILDOUT_KEY_VALUE_SEPARATOR = TextAttributesKeyDefaults.createTextAttributesKey(
     "BUILDOUT.KEY_VALUE_SEPARATOR",
-    SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
+    TextAttributesKeyDefaults.getDefaultAttributes(SyntaxHighlighterColors.OPERATION_SIGN)
   );
-  public static final TextAttributesKey BUILDOUT_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey BUILDOUT_VALID_STRING_ESCAPE = TextAttributesKeyDefaults.createTextAttributesKey(
     "BUILDOUT.VALID_STRING_ESCAPE",
-    SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
+    TextAttributesKeyDefaults.getDefaultAttributes(SyntaxHighlighterColors.VALID_STRING_ESCAPE)
   );
-  public static final TextAttributesKey BUILDOUT_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
+  public static final TextAttributesKey BUILDOUT_INVALID_STRING_ESCAPE = TextAttributesKeyDefaults.createTextAttributesKey(
     "BUILDOUT.INVALID_STRING_ESCAPE",
-    SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
+    TextAttributesKeyDefaults.getDefaultAttributes(SyntaxHighlighterColors.INVALID_STRING_ESCAPE)
   );
 
 
