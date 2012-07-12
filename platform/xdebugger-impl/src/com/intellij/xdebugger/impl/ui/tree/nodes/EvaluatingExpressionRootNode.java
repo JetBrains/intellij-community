@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -44,10 +46,10 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
     }
 
     public void computeChildren(@NotNull final XCompositeNode node) {
-      final String resultName = myDialog.getExpression();
       myDialog.startEvaluation(new XEvaluationCallbackBase() {
         public void evaluated(@NotNull final XValue result) {
-          node.addChildren(XValueChildrenList.singleton(resultName, result), true);
+          String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
+          node.addChildren(XValueChildrenList.singleton(name, result), true);
         }
 
         public void errorOccurred(@NotNull final String errorMessage) {
