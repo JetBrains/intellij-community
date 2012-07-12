@@ -18,12 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -38,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
+import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -61,10 +59,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.isImportToJavaOrJavax;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -193,7 +190,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
                                         PsiElement lastParent,
                                         PsiElement place,
                                         PsiScopeProcessor importProcessor,
-                                        GrImportStatement[] importStatements, 
+                                        GrImportStatement[] importStatements,
                                         boolean shouldProcessOnDemand) {
     for (int i = importStatements.length - 1; i >= 0; i--) {
       final GrImportStatement imp = importStatements[i];
@@ -324,11 +321,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   public GrImportStatement addImportForClass(PsiClass aClass) {
     try {
       // Calculating position
-      Project project = aClass.getProject();
-      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
       GrImportStatement importStatement = factory.createImportStatementFromText(aClass.getQualifiedName(), false, false, null);
-      PsiElement anchor = getAnchorToInsertImportAfter();
-      return (GrImportStatement)addAfter(importStatement, anchor);
+      return addImport(importStatement);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -337,81 +332,57 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   @Nullable
-  private PsiElement getAnchorToInsertImportAfter() {
+  private PsiElement getAnchorToInsertImportAfter(GrImportStatement statement) {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
+    final PackageEntry[] entries = layoutTable.getEntries();
+
     GrImportStatement[] importStatements = getImportStatements();
-    if (importStatements.length > 0) {
-      return importStatements[importStatements.length - 1];
-    }
-    else if (getPackageDefinition() != null) {
-      return getPackageDefinition();
-    }
-    else if (getShellComment() != null) {
+    if (importStatements.length == 0) {
+      final GrPackageDefinition definition = getPackageDefinition();
+      if (definition != null) {
+        return definition;
+      }
+
       return getShellComment();
     }
 
-    return null;
-  }
+    final Comparator<GrImportStatement> comparator = GroovyImportOptimizer.getComparator(settings);
 
+    final int idx = getPackageEntryIdx(entries, statement);
+
+    PsiElement anchor = null;
+
+    for (GrImportStatement importStatement : importStatements) {
+      final int i = getPackageEntryIdx(entries, importStatement);
+      if (i < idx) {
+        anchor = importStatement;
+      }
+      else if (i > idx) {
+        break;
+      }
+      else if (comparator.compare(statement, importStatement) > 0) {
+        anchor = importStatement;
+      }
+      else {
+        break;
+      }
+    }
+
+    if (anchor == null) anchor = getPackageDefinition();
+    if (anchor == null) anchor = getShellComment();
+    if (anchor == null && importStatements.length > 0) anchor = importStatements[0].getPrevSibling();
+    return anchor;
+  }
 
   public GrImportStatement addImport(GrImportStatement statement) throws IncorrectOperationException {
-    PsiElement anchor = getAnchorToInsertImportAfter();
+    PsiElement anchor = getAnchorToInsertImportAfter(statement);
     final PsiElement result = addAfter(statement, anchor);
 
-    if (anchor != null) {
-      int lineFeedCount = 0;
-
-      if (isAddLineFeed(statement, anchor)) {
-        lineFeedCount++;
-      }
-      
-      final PsiElement prev = result.getPrevSibling();
-      if (prev instanceof PsiWhiteSpace) {
-        lineFeedCount += StringUtil.getOccurrenceCount(prev.getText(), '\n');
-      }
-      if (lineFeedCount > 0) {
-        getNode().addLeaf(GroovyTokenTypes.mNLS, StringUtil.repeatSymbol('\n', lineFeedCount), result.getNode());
-      }
-      if (prev instanceof PsiWhiteSpace) {
-        prev.delete();
-      }
-    }
-
-    GrImportStatement importStatement = (GrImportStatement)result;
-    PsiElement next = importStatement.getNextSibling();
-    if (next != null) {
-      ASTNode node = next.getNode();
-      if (node != null && GroovyTokenTypes.mNLS == node.getElementType()) {
-        next.replace(GroovyPsiElementFactory.getInstance(statement.getProject()).createLineTerminator(2));
-      }
-    }
-    return importStatement;
-  }
-
-  private static boolean isAddLineFeed(GrImportStatement statement, PsiElement anchor) {
-    if (!(anchor instanceof GrImportStatement)) {
-      return true;
-    }
-
-    final GrImportStatement _anchor = (GrImportStatement)anchor;
-
-    //aliases
-    if (statement.isAliasedImport() || _anchor.isAliasedImport()) {
-      return _anchor.isAliasedImport() ^ statement.isAliasedImport();
-    }
-
-    //static imports
-    if (CodeStyleSettingsManager.getSettings(statement.getProject()).LAYOUT_STATIC_IMPORTS_SEPARATELY) {
-      if (statement.isStatic() || _anchor.isStatic()) {
-        return statement.isStatic() ^ _anchor.isStatic();
-      }
-    }
-
-    //imports to std lib
-    if (isImportToJavaOrJavax(statement) || isImportToJavaOrJavax(_anchor)) {
-      return isImportToJavaOrJavax(statement) ^ isImportToJavaOrJavax(_anchor);
-    }
-
-    return false;
+    final GrImportStatement gImport = (GrImportStatement)result;
+    addLineFeedBefore(gImport);
+    addLineFeedAfter(gImport);
+    return gImport;
   }
 
   public boolean isScript() {

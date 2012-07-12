@@ -1,5 +1,4 @@
-import javax.swing.JFrame
-
+import javax.swing.*
 // preved!
 
 def frame = new JFrame()

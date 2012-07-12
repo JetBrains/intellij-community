@@ -1,5 +1,4 @@
-package b;
-
+package b
 
 class B {
   def fooB(int i) {

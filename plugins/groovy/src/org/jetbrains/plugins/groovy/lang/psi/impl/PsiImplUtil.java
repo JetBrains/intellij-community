@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -65,8 +66,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
@@ -691,15 +690,20 @@ public class PsiImplUtil {
 
     return type;
   }
-  
-  public static boolean isImportToJavaOrJavax(GrImportStatement statement) {
-    final GrCodeReferenceElement ref = statement.getImportReference();
-    if (ref==null) return false;
-    final String text = ref.getText();
-    return text.startsWith("java.") || text.startsWith("javax.");
-  }
 
   public static boolean isWhiteSpace(PsiElement element) {
-    return element != null && TokenSets.WHITE_SPACES_SET.contains(element.getNode().getElementType());
+    return hasElementType(element, TokenSets.WHITE_SPACES_SET);
+  }
+
+  public static boolean hasElementType(PsiElement next, final IElementType type) {
+    if (next == null) return false;
+    final ASTNode astNode = next.getNode();
+    return astNode != null && astNode.getElementType() == type;
+  }
+
+  public static boolean hasElementType(PsiElement next, final TokenSet set) {
+    if (next == null) return false;
+    final ASTNode astNode = next.getNode();
+    return astNode != null && set.contains(astNode.getElementType());
   }
 }
