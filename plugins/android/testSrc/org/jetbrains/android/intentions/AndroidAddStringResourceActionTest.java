@@ -84,6 +84,7 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
   }
 
   public void test11() throws IOException {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doTest(new Runnable() {
       @Override
       public void run() {
