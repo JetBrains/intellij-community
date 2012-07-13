@@ -1,5 +1,6 @@
 package org.jetbrains.ether;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.ether.dependencyView.Mappings;
 
 import java.io.File;
@@ -118,8 +119,9 @@ public class StorageDumper {
     }
     else {
       try {
-        final String outputPath = (oath == null ? "" : oath) + File.separator + "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh:mm:ss)").format(new Date()) + ".log";
+        final File outputPath = new File(oath == null ? "" : oath, "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh-mm-ss)").format(new Date()) + ".log");
         final File dataStorageRoot = new File(path + File.separator + "mappings");
+        FileUtil.createIfDoesntExist(outputPath);
 
         final Mappings mappings = new Mappings(dataStorageRoot, true);
         final PrintStream p = new PrintStream(outputPath);

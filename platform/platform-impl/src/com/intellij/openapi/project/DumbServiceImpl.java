@@ -364,7 +364,7 @@ public class DumbServiceImpl extends DumbService {
                 public void run() {
                   IndexUpdateRunnable nextUpdateRunnable = null;
                   try {
-                    nextUpdateRunnable = myUpdatesQueue.pullFirst();
+                    nextUpdateRunnable = myUpdatesQueue.isEmpty()? null : myUpdatesQueue.pullFirst();
                     if (nextUpdateRunnable == null) {
                       // really terminate the task
                       myActionQueue.offer(NULL_ACTION);
