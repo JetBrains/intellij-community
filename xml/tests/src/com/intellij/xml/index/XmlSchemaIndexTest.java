@@ -18,6 +18,8 @@ import java.util.List;
  */
 public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
 
+  private static final String NS = "http://java.jb.com/xml/ns/javaee";
+
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public XmlSchemaIndexTest() {
     IdeaTestCase.initPlatformPrefix();
@@ -48,7 +50,7 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
   public void testXsdNamespaceBuilder() throws Exception {
     VirtualFile file = myFixture.copyFileToProject("web-app_2_5.xsd");
     final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
-    assertEquals("http://java.sun.com/xml/ns/javaee", builder.getNamespace());
+    assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
     assertEquals(Arrays.asList("web-app"), builder.getTags());
   }
@@ -82,23 +84,23 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
     myFixture.copyDirectoryToProject("", "");
 
     final List<IndexedRelevantResource<String, XsdNamespaceBuilder>> files =
-      XmlNamespaceIndex.getResourcesByNamespace("http://java.sun.com/xml/ns/javaee",
+      XmlNamespaceIndex.getResourcesByNamespace(NS,
                                                 getProject(),
                                                 myModule);
     assertEquals(2, files.size());
 
     IndexedRelevantResource<String, XsdNamespaceBuilder>
-      resource = XmlNamespaceIndex.guessSchema("http://java.sun.com/xml/ns/javaee", "web-app", "3.0", myModule);
+      resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "3.0", myModule);
     assertNotNull(resource);
     XsdNamespaceBuilder builder = resource.getValue();
-    assertEquals("http://java.sun.com/xml/ns/javaee", builder.getNamespace());
+    assertEquals(NS, builder.getNamespace());
     assertEquals("3.0", builder.getVersion());
     assertEquals(Arrays.asList("web-app"), builder.getTags());
 
-    resource = XmlNamespaceIndex.guessSchema("http://java.sun.com/xml/ns/javaee", "web-app", "2.5", myModule);
+    resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "2.5", myModule);
     assertNotNull(resource);
     builder = resource.getValue();
-    assertEquals("http://java.sun.com/xml/ns/javaee", builder.getNamespace());
+    assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
     assertEquals(Arrays.asList("web-app"), builder.getTags());
   }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns="http://www.w3.org/2001/XMLSchema"
-            targetNamespace="http://java.sun.com/xml/ns/javaee"
-            xmlns:javaee="http://java.sun.com/xml/ns/javaee"
+            targetNamespace="http://java.jb.com/xml/ns/javaee"
+            xmlns:javaee="http://java.jb.com/xml/ns/javaee"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             elementFormDefault="qualified"
             attributeFormDefault="unqualified"
