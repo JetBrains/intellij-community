@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,13 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.StringLenComparator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -69,42 +72,41 @@ public class VcsRootIterator {
     });
   }
 
-  public static boolean iterateVfUnderVcsRoot(Project project, VirtualFile file, Processor<VirtualFile> processor) {
-    final MyRootIterator rootIterator = new MyRootIterator(project, file, null, processor, null);
-    return rootIterator.iterate();
-  }
-
   private static class MyRootFilter {
     private final VirtualFile myRoot;
     private final String myVcsName;
 
     // virtual file URLs
-    private final List<String> myExcludedByOtherVcss;
+    private final List<String> myExcludedByOthers;
 
     private MyRootFilter(final VirtualFile root, final String vcsName) {
       myRoot = root;
       myVcsName = vcsName;
 
-      myExcludedByOtherVcss = new LinkedList<String>();
+      myExcludedByOthers = new LinkedList<String>();
     }
 
     private void init(final VcsRoot[] allRoots) {
       final String ourPath = myRoot.getUrl();
 
       for (VcsRoot root : allRoots) {
-        if (Comparing.equal(root.getVcs().getName(), myVcsName)) continue;
-        final String url = root.getPath().getUrl();
-        if (url.startsWith(ourPath)) {
-          myExcludedByOtherVcss.add(url);
+        final AbstractVcs vcs = root.getVcs();
+        if (vcs == null || Comparing.equal(vcs.getName(), myVcsName)) continue;
+        final VirtualFile path = root.getPath();
+        if (path != null) {
+          final String url = path.getUrl();
+          if (url.startsWith(ourPath)) {
+            myExcludedByOthers.add(url);
+          }
         }
       }
 
-      Collections.sort(myExcludedByOtherVcss, StringLenComparator.getDescendingInstance());
+      Collections.sort(myExcludedByOthers, StringLenComparator.getDescendingInstance());
     }
 
     public boolean accept(final VirtualFile vf) {
       final String url = vf.getUrl();
-      for (String excludedByOtherVcs : myExcludedByOtherVcss) {
+      for (String excludedByOtherVcs : myExcludedByOthers) {
         // use the fact that they are sorted
         if (url.length() > excludedByOtherVcs.length()) return true;
         if (url.startsWith(excludedByOtherVcs)) return false;
@@ -113,11 +115,22 @@ public class VcsRootIterator {
     }
   }
 
-  public static boolean iterateVcsRoot(final Project project, final VirtualFile root, final Processor<FilePath> processor) {
+  public static boolean iterateVfUnderVcsRoot(final Project project,
+                                              final VirtualFile root,
+                                              final Processor<VirtualFile> processor) {
+    final MyRootIterator rootIterator = new MyRootIterator(project, root, null, processor, null);
+    return rootIterator.iterate();
+  }
+
+  public static boolean iterateVcsRoot(final Project project,
+                                       final VirtualFile root,
+                                       final Processor<FilePath> processor) {
     return iterateVcsRoot(project, root, processor, null);
   }
 
-  public static boolean iterateVcsRoot(final Project project, final VirtualFile root, final Processor<FilePath> processor,
+  public static boolean iterateVcsRoot(final Project project,
+                                       final VirtualFile root,
+                                       final Processor<FilePath> processor,
                                        @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
     final MyRootIterator rootIterator = new MyRootIterator(project, root, processor, null, directoryFilter);
     return rootIterator.iterate();
@@ -125,54 +138,64 @@ public class VcsRootIterator {
 
   private static class MyRootIterator {
     private final Project myProject;
-    private final Processor<FilePath> myProcessor;
-    private final Processor<VirtualFile> myVfProcessor;
+    private final Processor<FilePath> myPathProcessor;
+    private final Processor<VirtualFile> myFileProcessor;
     @Nullable private final PairProcessor<VirtualFile, VirtualFile[]> myDirectoryFilter;
-    private final LinkedList<VirtualFile> myQueue;
+    private final VirtualFile myRoot;
     private final MyRootFilter myRootPresentFilter;
     private final FileIndexFacade myExcludedFileIndex;
 
-    private MyRootIterator(final Project project, final VirtualFile root, final Processor<FilePath> processor, final Processor<VirtualFile> vfProcessor,
+    private MyRootIterator(final Project project,
+                           final VirtualFile root,
+                           @Nullable final Processor<FilePath> pathProcessor,
+                           @Nullable final Processor<VirtualFile> fileProcessor,
                            @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
       myProject = project;
-      myProcessor = processor;
-      myVfProcessor = vfProcessor;
+      myPathProcessor = pathProcessor;
+      myFileProcessor = fileProcessor;
       myDirectoryFilter = directoryFilter;
+      myRoot = root;
 
       final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
       final AbstractVcs vcs = plVcsManager.getVcsFor(root);
       myRootPresentFilter = (vcs == null) ? null : new MyRootFilter(root, vcs.getName());
       myExcludedFileIndex = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
-
-      myQueue = new LinkedList<VirtualFile>();
-      myQueue.add(root);
     }
 
     public boolean iterate() {
-      while (! myQueue.isEmpty()) {
-        final VirtualFile current = myQueue.removeFirst();
-        if (myProject.isDisposed() || !process(current)) return false;
+      class StopIterationException extends RuntimeException { }
 
-        if (current.isDirectory()) {
-          final VirtualFile[] files = current.getChildren();
-          if (myDirectoryFilter != null && ! myDirectoryFilter.process(current, files)) continue;
+      try {
+        VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor(false) {
+          @Override
+          public boolean visitFile(@NotNull VirtualFile file) {
+            if (myRootPresentFilter != null && !myRootPresentFilter.accept(file)) return false;
+            if (isExcluded(myExcludedFileIndex, file)) return false;
 
-          for (VirtualFile child : files) {
-            if (myRootPresentFilter != null && (! myRootPresentFilter.accept(child))) continue;
-            if (isExcluded(myExcludedFileIndex, child)) continue;
-            myQueue.add(child);
+            if (myProject.isDisposed() || !process(file)) throw new StopIterationException();
+
+            final VirtualFile[] files = file.getChildren();
+            if (myDirectoryFilter != null && !myDirectoryFilter.process(file, files)) return false;
+
+            return true;
           }
-        }
+        });
       }
+      catch (StopIterationException e) {
+        return false;
+      }
+
       return true;
     }
 
     private boolean process(VirtualFile current) {
-      if (myProcessor != null) {
-        return myProcessor.process(new FilePathImpl(current));
-      } else {
-        return myVfProcessor.process(current);
+      if (myPathProcessor != null) {
+        return myPathProcessor.process(new FilePathImpl(current));
       }
+      else if (myFileProcessor != null) {
+        return myFileProcessor.process(current);
+      }
+      return false;
     }
   }
 }

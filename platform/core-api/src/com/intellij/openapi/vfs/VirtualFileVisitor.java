@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,24 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/31/11
+ * @since 31.10.2011
  */
 public abstract class VirtualFileVisitor {
+  private final boolean myFollowSymLinks;
+
+  protected VirtualFileVisitor() {
+    this(true);
+  }
+
+  protected VirtualFileVisitor(boolean followSymLinks) {
+    myFollowSymLinks = followSymLinks;
+  }
+
+  public boolean followSymLinks() {
+    return myFollowSymLinks;
+  }
 
   public abstract boolean visitFile(@NotNull VirtualFile file);
 
-  public void afterChildrenVisited(@NotNull VirtualFile file) {}
+  public void afterChildrenVisited(@NotNull VirtualFile file) { }
 }
