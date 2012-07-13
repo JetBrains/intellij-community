@@ -104,10 +104,10 @@ implements <a href="psi_element://java.io.Serializable"><code>java.io.Serializab
 '''
     
     def expected = '''\
-java.lang<br/> public final class <a href="psi_element://java.lang.String">String</a> extends Object<br/> implements <a href="psi_element://java.io.Serializable">Serializable</a>, <a href="psi_element://java.lang.Comparable">Comparable</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt;, <a href="psi_element://java.lang.CharSequence">CharSequence</a><br/>The <code>String</code> class represents character strings. All string <br/>literals in Java programs, such as <code>"abc"</code>, are implemented as <br/>instances of this class. <br/>Strings are constant; their values cannot be changed after <br/>they are created. String buffers support mutable strings. <br/>Because String objects are immutable they can be shared. For <br/>example: <br/>String str = "abc"; <br/>is equivalent to: <br/>char data[] = {'a', 'b', 'c'}; <a href='psi_element://java.lang.String'>...</a>\
+java.lang<br/> public final class <a href="psi_element://java.lang.String">String</a> extends Object<br/> implements <a href="psi_element://java.io.Serializable">Serializable</a>, <a href="psi_element://java.lang.Comparable">Comparable</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt;, <a href="psi_element://java.lang.CharSequence">CharSequence</a>\
 '''
 
-    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText, 10)
+    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
     assertTrue(actual.endsWith(expected)) // Can't check for equals() because jdk name might differ on different machines.
   }
 
@@ -123,9 +123,9 @@ Bar
 '''
     
     def expected = '''\
-<a href="psi_element://Bar">Bar</a><br/> <a href="psi_element://java.util.List">List</a>&lt;java.lang.String&gt; foo (java.lang.String param)\
+<a href="psi_element://Bar">Bar</a><br/> <a href="psi_element://java.util.List">List</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt; foo (<a href="psi_element://java.lang.String">String</a> param)\
 '''
-    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText, 2)
+    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
     assertEquals(expected, actual)
   }
 }
