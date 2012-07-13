@@ -32,24 +32,24 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   public static final String PY_TEST_NAME = PyBundle.message("runcfg.pytest.display_name");
   public static final String PYTHONS_ATTEST_NAME = PyBundle.message("runcfg.attest.display_name");
 
-  private String myProjectConfiguration;
+  private String myTestRunner;
   private Project myProject;
 
   public PythonTestConfigurationsModel(final List items, final Object selection, Project project) {
     super(items, selection);
     myProject = project;
-    myProjectConfiguration = TestRunnerService.getInstance(myProject).getProjectConfiguration();
+    myTestRunner = TestRunnerService.getInstance(myProject).getProjectConfiguration();
   }
   public void reset() {
-    setSelectedItem(myProjectConfiguration);
+    setSelectedItem(myTestRunner);
   }
 
   public void apply() {
-    myProjectConfiguration = (String)getSelectedItem();
-    TestRunnerService.getInstance(myProject).setProjectConfiguration(myProjectConfiguration);
+    myTestRunner = (String)getSelectedItem();
+    TestRunnerService.getInstance(myProject).setProjectConfiguration(myTestRunner);
   }
 
-  public Object getProjectConfiguration() {
-    return myProjectConfiguration;
+  public Object getTestRunner() {
+    return myTestRunner;
   }
 }

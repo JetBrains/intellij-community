@@ -17,6 +17,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -39,9 +40,9 @@ import java.util.Map;
 public class VFSTestFrameworkListener implements ApplicationComponent, PersistentStateComponent<VFSTestFrameworkListener> {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.testing.VFSTestFrameworkListener");
-  private static final String PYTESTSEARCHER = "pycharm/finders/find_pytest.py";
-  private static final String NOSETESTSEARCHER = "pycharm/finders/find_nosetest.py";
-  private static final String ATTESTSEARCHER = "pycharm/finders/find_attest.py";
+  public static final String PYTESTSEARCHER = "pycharm/finders/find_pytest.py";
+  public static final String NOSETESTSEARCHER = "pycharm/finders/find_nosetest.py";
+  public static final String ATTESTSEARCHER = "pycharm/finders/find_attest.py";
 
   private static final MergingUpdateQueue myQueue = new MergingUpdateQueue("TestFrameworkChecker", 5000, true, null);
 
@@ -58,23 +59,23 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
           VirtualFile vFile = event.getFile();
           if (vFile == null) continue;
           String path = vFile.getUrl().toLowerCase();
-          boolean containsNose = path.contains("nose");
-          boolean containsPy = path.contains("py-1") || path.contains("pytest");
-          boolean containsAt = path.contains("attest");
+          boolean containsNose = path.contains(PyNames.NOSE_TEST);
+          boolean containsPy = path.contains("py-1") || path.contains(PyNames.PY_TEST);
+          boolean containsAt = path.contains(PyNames.AT_TEST);
           if (!containsAt && !containsNose && !containsPy) continue;
           SDKLOOP:
           for (Sdk sdk : PythonSdkType.getAllSdks()) {
             for (String root : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
               if (vFile.getUrl().contains(root)) {
                 if (containsNose) {
-                  updateTestFrameworks(sdk.getHomePath(), NOSETESTSEARCHER, "nose");
+                  updateTestFrameworks(sdk.getHomePath(), NOSETESTSEARCHER, PyNames.NOSE_TEST);
                   break SDKLOOP;
                 }
                 else if (containsPy) {
-                  updateTestFrameworks(sdk.getHomePath(), PYTESTSEARCHER, "pytest");
+                  updateTestFrameworks(sdk.getHomePath(), PYTESTSEARCHER, PyNames.PY_TEST);
                   break SDKLOOP;
                 } else {
-                  updateTestFrameworks(sdk.getHomePath(), ATTESTSEARCHER, "attest");
+                  updateTestFrameworks(sdk.getHomePath(), ATTESTSEARCHER, PyNames.AT_TEST);
                   break SDKLOOP;
                 }
               }
@@ -86,9 +87,9 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   }
 
   public void updateAllTestFrameworks(final String sdkHome) {
-    updateTestFrameworks(sdkHome, PYTESTSEARCHER, "pytest");
-    updateTestFrameworks(sdkHome, NOSETESTSEARCHER, "nose");
-    updateTestFrameworks(sdkHome, ATTESTSEARCHER, "attest");
+    updateTestFrameworks(sdkHome, PYTESTSEARCHER, PyNames.PY_TEST);
+    updateTestFrameworks(sdkHome, NOSETESTSEARCHER, PyNames.NOSE_TEST);
+    updateTestFrameworks(sdkHome, ATTESTSEARCHER, PyNames.AT_TEST);
     myQueue.flush();
   }
 
@@ -162,7 +163,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   public boolean isPyTestInstalled(final String sdkHome) {
     Boolean isInstalled = SDK_TO_PYTEST.get(sdkHome);
     if (isInstalled == null) {
-      updateTestFrameworks(sdkHome, PYTESTSEARCHER, "pytest");
+      updateTestFrameworks(sdkHome, PYTESTSEARCHER, PyNames.PY_TEST);
       return true;
     }
     return isInstalled;
@@ -175,7 +176,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   public boolean isNoseTestInstalled(final String sdkHome) {
     Boolean isInstalled = SDK_TO_NOSETEST.get(sdkHome);
     if (isInstalled == null) {
-      updateTestFrameworks(sdkHome, NOSETESTSEARCHER, "nose");
+      updateTestFrameworks(sdkHome, NOSETESTSEARCHER, PyNames.NOSE_TEST);
       return true;
     }
     return isInstalled;
@@ -188,18 +189,18 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   public boolean isAtTestInstalled(final String sdkHome) {
     Boolean isInstalled = SDK_TO_ATTEST.get(sdkHome);
     if (isInstalled == null) {
-      updateTestFrameworks(sdkHome, ATTESTSEARCHER, "attest");
+      updateTestFrameworks(sdkHome, ATTESTSEARCHER, PyNames.AT_TEST);
       return true;
     }
     return isInstalled;
   }
 
   public void testInstalled(boolean installed, String sdkHome, String name) {
-    if (name.equals("nose"))
+    if (name.equals(PyNames.NOSE_TEST))
       noseTestInstalled(installed, sdkHome);
-    else if (name.equals("pytest"))
+    else if (name.equals(PyNames.PY_TEST))
       pyTestInstalled(installed, sdkHome);
-    else if (name.equals("attest"))
+    else if (name.equals(PyNames.AT_TEST))
       atTestInstalled(installed, sdkHome);
   }
 }

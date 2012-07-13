@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.packaging.*;
@@ -93,19 +94,19 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
           if (PythonTestConfigurationsModel.PY_TEST_NAME.equals(selectedItem)) {
             if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk.getHomePath())) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "py.test"),
-                                          createQuickFix(sdk, facetErrorPanel, "pytest"));
+                                          createQuickFix(sdk, facetErrorPanel, PyNames.PY_TEST));
             }
           }
           else if (PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME.equals(selectedItem)) {
             if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk.getHomePath())) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"),
-                                          createQuickFix(sdk, facetErrorPanel, "nose"));
+                                          createQuickFix(sdk, facetErrorPanel, PyNames.NOSE_TEST));
             }
           }
           else if (PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME.equals(selectedItem)) {
             if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdk.getHomePath())) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "attest"),
-                                          createQuickFix(sdk, facetErrorPanel, "attest"));
+                                          createQuickFix(sdk, facetErrorPanel, PyNames.AT_TEST));
             }
           }
         }
@@ -166,7 +167,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
 
   @Override
   public boolean isModified() {
-    if (myTestRunnerComboBox.getSelectedItem() != myModel.getProjectConfiguration()) {
+    if (myTestRunnerComboBox.getSelectedItem() != myModel.getTestRunner()) {
       return true;
     }
     if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
@@ -197,7 +198,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
 
   @Override
   public void reset() {
-    myTestRunnerComboBox.setSelectedItem(myModel.getProjectConfiguration());
+    myTestRunnerComboBox.setSelectedItem(myModel.getTestRunner());
     myTestRunnerComboBox.repaint();
     myModel.reset();
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
