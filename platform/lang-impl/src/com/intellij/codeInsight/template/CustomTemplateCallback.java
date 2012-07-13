@@ -114,7 +114,9 @@ public class CustomTemplateCallback {
   }
 
   public void startTemplate(Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
-    template.setToReformat(!myInInjectedFragment);
+    if(myInInjectedFragment) {
+      template.setToReformat(false);
+    }
     myTemplateManager.startTemplate(myEditor, template, false, predefinedValues, listener);
   }
 

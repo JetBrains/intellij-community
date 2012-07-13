@@ -36,6 +36,7 @@ public class LiveTemplateBuilder {
   private final List<VarOccurence> myVariableOccurences = new ArrayList<VarOccurence>();
   private final List<Marker> myMarkers = new ArrayList<Marker>();
   private String myLastEndVarName;
+  private boolean myIsToReformat = false;
 
   public CharSequence getText() {
     return myText;
@@ -123,6 +124,7 @@ public class LiveTemplateBuilder {
       last = occurence.myOffset;
     }
     template.addTextSegment(myText.substring(last));
+    template.setToReformat(myIsToReformat);
     return template;
   }
 
@@ -215,6 +217,7 @@ public class LiveTemplateBuilder {
   }*/
 
   public int insertTemplate(int offset, TemplateImpl template, Map<String, String> predefinedVarValues) {
+    myIsToReformat = myText.length() > 0 || template.isToReformat();
     removeEndVarAtOffset(offset);
 
     String text = template.getTemplateText();
@@ -299,17 +302,6 @@ public class LiveTemplateBuilder {
         }
       }
     }
-  }
-
-  private boolean isInEmptyText(int offset) {
-    if (offset >= myText.length()) {
-      return false;
-    }
-    char c = myText.charAt(offset++);
-    while (Character.isWhitespace(c) && offset < myText.length()) {
-      c = myText.charAt(offset++);
-    }
-    return c == '<' || c == '"';
   }
 
   private boolean hasVarAtOffset(int offset) {
