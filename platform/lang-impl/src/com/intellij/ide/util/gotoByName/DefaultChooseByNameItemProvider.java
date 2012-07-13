@@ -64,6 +64,10 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String[] names = base.getNames(everywhere);
     getNamesByPattern(base, names, cancelled, namesList, namePattern,
                       modifiedNamePattern != null ? NameUtil.MatchingCaseSensitivity.ALL : NameUtil.MatchingCaseSensitivity.NONE);
+
+    if (modifiedNamePattern != null && namesList.isEmpty()) {
+      getNamesByPattern(base, names, cancelled, namesList, namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    }
     if (cancelled.compute()) {
       throw new ProcessCanceledException();
     }
