@@ -104,7 +104,8 @@ public class AbstractRerunFailedTestsAction extends AnAction {
                                                         profile.getProject(),
                                                         myEnvironment.getRunnerSettings(),
                                                         myEnvironment.getConfigurationSettings(),
-                                                        null));
+                                                        null,
+                                                        myEnvironment.getRunnerAndConfigurationSettings()));
     }
     catch (ExecutionException e1) {
       LOG.error(e1);
