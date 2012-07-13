@@ -93,10 +93,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   public static final DataKey<Pair<PsiElement /* documentation anchor */, PsiElement /* element under mouse */>>
     ELEMENT_UNDER_MOUSE_INFO_KEY = DataKey.create("ElementUnderMouseInfo");
 
-  private static final AnAction[] ourTooltipActions     = {
+  private static final AnAction[] ourTooltipActions = {
     new ShowQuickDocFromTooltipAction(), new ShowQuickDocAtPinnedWindowFromTooltipAction()
   };
-  private static final int        ourQuickDocRowsNumber = getIntProperty("quick.doc.desired.rows.number", 1);
 
   private final TextAttributes  ourReferenceAttributes;
   private       HighlightersSet myHighlighter;
@@ -233,20 +232,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return "CtrlMouseHandler";
   }
 
-  private static int getIntProperty(@NotNull String propertyName, int defaultValue) {
-    String valueAsString = System.getProperty(propertyName);
-    if (valueAsString == null) {
-      return defaultValue;
-    }
-
-    try {
-      return Integer.parseInt(valueAsString);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
-  }
-
   private static BrowseMode getBrowseMode(@JdkConstants.InputEventMask int modifiers) {
     if (modifiers != 0) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
@@ -284,7 +269,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     if (result != null) {
       String fullText = documentationProvider.generateDoc(element, atPointer);
       String qName = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
-      String text = DocPreviewUtil.buildPreview(result, qName, fullText, ourQuickDocRowsNumber);
+      String text = DocPreviewUtil.buildPreview(result, qName, fullText);
       return new DocInfo(text, documentationProvider, element);
     }
     return DocInfo.EMPTY;
