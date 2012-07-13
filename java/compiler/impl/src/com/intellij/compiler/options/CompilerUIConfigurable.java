@@ -15,7 +15,10 @@
  */
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.*;
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.MalformedPatternException;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
@@ -113,7 +116,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          CompileServerManager.getInstance().sendReloadRequest(myProject);
           BuildManager.getInstance().clearState(myProject);
         }
       });
@@ -121,7 +123,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     else {
       // use old make
       if (wasUsingExternalMake) {
-        CompileServerManager.getInstance().shutdownServer();
         monitor.watchProject(myProject);
         monitor.scanSourcesForCompilableFiles(myProject);
         if (!myProject.isDefault()) {

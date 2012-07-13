@@ -4,9 +4,6 @@
       <implementation-class>com.intellij.compiler.impl.TranslatingCompilerFilesMonitor</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.compiler.CompileServerManager</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.compiler.server.BuildManager</implementation-class>
     </component>
   </application-components>

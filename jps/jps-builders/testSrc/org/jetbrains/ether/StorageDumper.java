@@ -1,20 +1,11 @@
 package org.jetbrains.ether;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.ether.dependencyView.Mappings;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.Sdk;
-import org.jetbrains.jps.idea.IdeaProjectLoader;
-import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import java.io.File;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.

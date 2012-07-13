@@ -17,9 +17,10 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 
-import com.intellij.compiler.CompileServerManager
+
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
@@ -676,7 +677,6 @@ public class Main {
     final ExcludedEntriesConfiguration configuration =
       ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration()
     configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, testRootDisposable))
-    CompileServerManager.instance.shutdownServer()
   }
 
   public void "test make stub-level error and correct it"() {
@@ -758,19 +758,12 @@ string
 
     @Override
     protected void tearDown() {
-      File systemRoot = CompileServerManager.getInstance().getCompileServerSystemRoot()
+      File systemRoot = BuildManager.getInstance().getBuildSystemDirectory()
       try {
         super.tearDown()
       }
       finally {
-        File[] files = systemRoot.listFiles()
-        if (files != null) {
-          for (File file : files) {
-            if (file.isDirectory()) {
-              FileUtil.delete(file);
-            }
-          }
-        }
+        FileUtil.delete(systemRoot);
       }
     }
   }

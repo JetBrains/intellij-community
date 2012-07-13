@@ -24,6 +24,8 @@ import org.jetbrains.jps.Project;
 import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.artifacts.Artifact;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
@@ -32,8 +34,6 @@ import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.server.ClasspathBootstrap;
-import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.*;
 import java.util.Collections;

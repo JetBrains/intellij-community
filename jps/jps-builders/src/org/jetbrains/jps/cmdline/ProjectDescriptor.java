@@ -1,4 +1,4 @@
-package org.jetbrains.jps.server;
+package org.jetbrains.jps.cmdline;
 
 import org.jetbrains.jps.JavaSdk;
 import org.jetbrains.jps.Module;

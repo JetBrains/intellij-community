@@ -79,8 +79,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
-import org.jetbrains.jps.server.ClasspathBootstrap;
-import org.jetbrains.jps.server.Server;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 
 import javax.tools.*;
 import java.io.File;
@@ -103,7 +102,7 @@ public class BuildManager implements ApplicationComponent{
   private static final String SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
-  private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
+  private static final int MAKE_TRIGGER_DELAY = 3 * 1000 + 500/*3.5 seconds*/;
   private final boolean IS_UNIT_TEST_MODE;
 
   private final File mySystemDirectory;
@@ -853,7 +852,7 @@ public class BuildManager implements ApplicationComponent{
     if (!logConfig.exists()) {
       FileUtil.createIfDoesntExist(logConfig);
       try {
-        final InputStream in = Server.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
+        final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
         if (in != null) {
           try {
             final FileOutputStream out = new FileOutputStream(logConfig);

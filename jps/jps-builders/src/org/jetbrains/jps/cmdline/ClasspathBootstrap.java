@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.server;
+package org.jetbrains.jps.cmdline;
 
 import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.MacroExpander;
-import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.javac.JavacServer;
 
 import javax.tools.*;
@@ -43,7 +42,7 @@ import java.util.*;
  *         Date: 9/12/11
  */
 public class ClasspathBootstrap {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.server.ClasspathBootstrap");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.ClasspathBootstrap");
 
   private static class OptimizedFileManagerClassHolder {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";

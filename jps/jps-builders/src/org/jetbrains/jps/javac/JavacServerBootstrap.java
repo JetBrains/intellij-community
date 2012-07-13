@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.jps.server.ClasspathBootstrap;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 
 import java.io.File;
 import java.util.ArrayList;

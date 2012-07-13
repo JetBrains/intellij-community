@@ -13,6 +13,7 @@ import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.*;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
@@ -22,7 +23,6 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.javac.OutputFileObject;
-import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import java.io.File;
 import java.io.IOException;

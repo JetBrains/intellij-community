@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ProcessorConfigProfile;
@@ -96,7 +95,6 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
     config.setModuleProcessorProfiles(myMainPanel.getModuleProfiles());
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        CompileServerManager.getInstance().sendReloadRequest(myProject);
         BuildManager.getInstance().clearState(myProject);
       }
     });
