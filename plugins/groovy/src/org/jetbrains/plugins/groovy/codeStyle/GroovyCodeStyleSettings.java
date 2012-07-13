@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.formatter;
+package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
+import com.intellij.psi.codeStyle.PackageEntryTable;
 
 /**
  * @author Max Medvedev
@@ -46,7 +48,31 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_WITHIN_LIST_OR_MAP = false;
   public boolean ALIGN_NAMED_ARGS_IN_MAP = false;
 
+  //imports
+  public boolean USE_FQ_CLASS_NAMES = false;
+  public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
+  public boolean USE_SINGLE_CLASS_IMPORTS = true;
+  public boolean INSERT_INNER_CLASS_IMPORTS = false;
+  public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
+  public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND=3;
+  public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
+  public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+  public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+
+  private void initImportsByDefault() {
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));
+    PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "javax.swing", false));
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+    IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "javax", true));
+    IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+    IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+  }
+
   public GroovyCodeStyleSettings(CodeStyleSettings container) {
     super("GroovyCodeStyleSettings", container);
+
+    initImportsByDefault();
   }
 }

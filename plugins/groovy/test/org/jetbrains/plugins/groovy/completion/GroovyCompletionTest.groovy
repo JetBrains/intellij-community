@@ -23,7 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
