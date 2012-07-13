@@ -54,7 +54,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String modifiedNamePattern = null;
 
     if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
-      modifiedNamePattern = "*" + namePattern + "*";
+      modifiedNamePattern = "*" + namePattern + (namePattern.endsWith(" ") ? "" : "*");
     }
 
     boolean empty = namePattern.isEmpty() || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
