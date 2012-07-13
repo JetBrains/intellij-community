@@ -47,6 +47,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
@@ -490,7 +491,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }, myProject.getDisposed(), 200);
 
-  private final Set<TextRange> emptyActionRegistered = Collections.synchronizedSet(new THashSet<TextRange>());
+  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<Pair<TextRange, String>>());
 
   private void addDescriptorIncrementally(@NotNull final ProblemDescriptor descriptor,
                                           @NotNull final LocalInspectionToolWrapper tool,
@@ -569,7 +570,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
-    Set<TextRange> emptyActionRegistered = new THashSet<TextRange>();
+    Set<Pair<TextRange, String>> emptyActionRegistered = new THashSet<Pair<TextRange, String>>();
 
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
       indicator.checkCanceled();
@@ -593,7 +594,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void createHighlightsForDescriptor(List<HighlightInfo> outInfos,
-                                             Set<TextRange> emptyActionRegistered,
+                                             Set<Pair<TextRange, String>> emptyActionRegistered,
                                              InjectedLanguageManager ilManager,
                                              PsiFile file,
                                              Document documentRange,
@@ -633,7 +634,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private HighlightInfo createHighlightInfo(@NotNull ProblemDescriptor descriptor,
                                             @NotNull LocalInspectionToolWrapper tool,
                                             @NotNull HighlightInfoType level,
-                                            @NotNull Set<TextRange> emptyActionRegistered,
+                                            @NotNull Set<Pair<TextRange, String>> emptyActionRegistered,
                                             @NotNull PsiElement element) {
     @NonNls String message = ProblemDescriptionNode.renderDescriptionMessage(descriptor, element);
 
@@ -665,7 +666,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private static void registerQuickFixes(final LocalInspectionToolWrapper tool,
                                          final ProblemDescriptor descriptor,
                                          @NotNull HighlightInfo highlightInfo,
-                                         final Set<TextRange> emptyActionRegistered) {
+                                         final Set<Pair<TextRange,String>> emptyActionRegistered) {
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     boolean needEmptyAction = true;
     final QuickFix[] fixes = descriptor.getFixes();
@@ -685,7 +686,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (((ProblemDescriptorImpl)descriptor).getEnforcedTextAttributes() != null) {
       needEmptyAction = false;
     }
-    if (needEmptyAction && emptyActionRegistered.add(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset))) {
+    if (needEmptyAction && emptyActionRegistered.add(Pair.create(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset), tool.getShortName()))) {
       EmptyIntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());
       QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, key);
     }
