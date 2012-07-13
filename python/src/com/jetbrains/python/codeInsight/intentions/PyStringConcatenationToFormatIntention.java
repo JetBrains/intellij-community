@@ -50,6 +50,9 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     }
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(element);
     for (PyExpression expression: expressions) {
+      if (expression == null) {
+        return false;
+      }
       final boolean isStringLiteral = expression instanceof PyStringLiteralExpression;
       final boolean isStringReference = PyTypeChecker.match(cache.getStringType(LanguageLevel.forElement(expression)),
                                                             expression.getType(TypeEvalContext.fast()), TypeEvalContext.fast());
