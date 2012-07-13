@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -49,7 +48,7 @@ public class CodeStyleImportsPanel extends JPanel {
   private JPanel myPackagesPanel;
   private JPanel myImportsLayoutPanel;
   private JPanel myWholePanel;
-  private final ImportLayoutPanel myImportLayoutPanel;
+  private ImportLayoutPanel myImportLayoutPanel;
 
   public CodeStyleImportsPanel(CodeStyleSettings settings) {
     mySettings = settings;
@@ -59,6 +58,11 @@ public class CodeStyleImportsPanel extends JPanel {
 
     myGeneralPanel.add(createGeneralOptionsPanel(), BorderLayout.CENTER);
     myJSPPanel.add(createJspImportLayoutPanel(), BorderLayout.CENTER);
+    createImportPanel();
+    createPackagePanel();
+  }
+
+  private void createImportPanel() {
     myImportLayoutPanel = new ImportLayoutPanel() {
       @Override
       public void refresh() {
@@ -67,7 +71,11 @@ public class CodeStyleImportsPanel extends JPanel {
       }
     };
     myImportsLayoutPanel.add(myImportLayoutPanel, BorderLayout.CENTER);
-    myPackagesPanel.add(createPackagesPanel(), BorderLayout.CENTER);
+  }
+
+  private void createPackagePanel() {
+    myPackageTable = ImportLayoutPanel.createTableForPackageEntries(myPackageList, myImportLayoutPanel);
+    myPackagesPanel.add(PackagePanel.createPackagesPanel(myPackageTable, myPackageList), BorderLayout.CENTER);
   }
 
   private JPanel createJspImportLayoutPanel() {
@@ -145,56 +153,11 @@ public class CodeStyleImportsPanel extends JPanel {
     return group.createPanel();
   }
 
-  private JPanel createPackagesPanel() {
-    myPackageTable = ImportLayoutPanel.createTableForPackageEntries(myPackageList, myImportLayoutPanel);
-    JPanel panel = ToolbarDecorator.createDecorator(myPackageTable)
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          addPackageToPackages();
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeEntryFromPackages();
-        }
-      }).disableUpDownActions().setPreferredSize(new Dimension(-1, 150)).createPanel();
-
-    UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.packages.to.use.import.with"), false));
-
-    return panel;
-  }
-
   private void refreshTable(final JBTable table, final PackageEntryTable packageTable) {
     AbstractTableModel model = (AbstractTableModel)table.getModel();
     table.createDefaultColumnsFromModel();
     model.fireTableDataChanged();
     ImportLayoutPanel.resizeColumns(packageTable, table, myImportLayoutPanel.areStaticImportsEnabled());
-  }
-
-  private void addPackageToPackages() {
-    int selected = myPackageTable.getSelectedRow() + 1;
-    if (selected < 0) {
-      selected = myPackageList.getEntryCount();
-    }
-    PackageEntry entry = new PackageEntry(false, "", true);
-    myPackageList.insertEntryAt(entry, selected);
-    ImportLayoutPanel.refreshTableModel(selected, myPackageTable);
-  }
-
-  private void removeEntryFromPackages() {
-    int selected = myPackageTable.getSelectedRow();
-    if (selected < 0) return;
-    TableUtil.stopEditing(myPackageTable);
-    myPackageList.removeEntryAt(selected);
-    AbstractTableModel model = (AbstractTableModel)myPackageTable.getModel();
-    model.fireTableRowsDeleted(selected, selected);
-    if (selected >= myPackageList.getEntryCount()) {
-      selected--;
-    }
-    if (selected >= 0) {
-      myPackageTable.setRowSelectionInterval(selected, selected);
-    }
   }
 
   public void reset(CodeStyleSettings settings) {
