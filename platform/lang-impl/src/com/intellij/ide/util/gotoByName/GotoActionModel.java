@@ -58,12 +58,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
   private Pattern myCompiledPattern;
   private final PatternMatcher myMatcher = new Perl5Matcher();
-
+  
   private Map<AnAction, String> myActionsMap = new TreeMap<AnAction, String>(new Comparator<AnAction>() {
     @Override
     public int compare(AnAction o1, AnAction o2) {
-      final int result = Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
-      return result == 0 ? Comparing.compare(getActionId(o1), getActionId(o2)) : result;
+      return Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText());
     }
   });
   private final SearchableOptionsRegistrar myIndex;
@@ -377,7 +376,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     }
   }
 
-  @Nullable
   protected Project getProject() {
     return myProject;
   }
