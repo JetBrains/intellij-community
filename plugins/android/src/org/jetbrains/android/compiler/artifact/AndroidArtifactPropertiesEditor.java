@@ -1,14 +1,10 @@
 package org.jetbrains.android.compiler.artifact;
 
 import com.android.annotations.NonNull;
-import com.intellij.CommonBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -20,7 +16,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
-import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.android.util.AndroidUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,19 +24,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidArtifactPropertiesEditor extends ArtifactPropertiesEditor {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.artifact.AndroidApplicationArtifactProperties");
-
+public class AndroidArtifactPropertiesEditor extends ArtifactPropertiesEditor implements ApkSigningSettingsForm {
   private final AndroidApplicationArtifactProperties myProperties;
 
   private JPanel myPanel;
@@ -84,58 +72,7 @@ public class AndroidArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myReleaseUnsignedRadio.addActionListener(listener);
     myReleaseSignedRadio.addActionListener(listener);
 
-    myLoadKeyStoreButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final String defaultPath = getKeyStorePath();
-        final VirtualFile defaultFile = LocalFileSystem.getInstance().findFileByPath(defaultPath);
-        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-        final VirtualFile file = FileChooser.chooseFile(descriptor, myPanel, project, defaultFile);
-        if (file != null) {
-          myKeyStorePathField.setText(FileUtil.toSystemDependentName(file.getPath()));
-        }
-      }
-    });
-
-    myCreateKeyStoreButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final NewKeyStoreDialog dialog = new NewKeyStoreDialog(project, myKeyStorePathField.getText());
-        dialog.show();
-
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          myKeyStorePathField.setText(dialog.getKeyStorePath());
-          myKeyStorePasswordField.setText(String.valueOf(dialog.getKeyStorePassword()));
-          myKeyAliasField.setText(dialog.getKeyAlias());
-          myKeyPasswordField.setText(String.valueOf(dialog.getKeyPassword()));
-        }
-      }
-    });
-
-    myKeyAliasField.getButton().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final List<String> keys = loadExistingKeys();
-        if (keys == null) {
-          return;
-        }
-        final ChooseKeyDialog dialog =
-          new ChooseKeyDialog(project, getKeyStorePath(), myKeyStorePasswordField.getPassword(), keys, getKeyAlias());
-        dialog.show();
-
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          final String chosenKey = dialog.getChosenKey();
-          if (chosenKey != null) {
-            myKeyAliasField.setText(chosenKey);
-          }
-
-          final char[] password = dialog.getChosenKeyPassword();
-          if (password != null) {
-            myKeyPasswordField.setText(String.valueOf(password));
-          }
-        }
-      }
-    });
+    AndroidUiUtil.initSigningSettingsForm(project, this);
 
     myProGuardCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -168,49 +105,6 @@ public class AndroidArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   private String getKeyStorePath() {
     return myKeyStorePathField.getText().trim();
-  }
-
-  @Nullable
-  private List<String> loadExistingKeys() {
-    final String errorPrefix = "Cannot load key store: ";
-    InputStream is = null;
-    try {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      is = new FileInputStream(new File(getKeyStorePath()));
-      final KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-      keyStore.load(is, myKeyStorePasswordField.getPassword());
-      return AndroidUtils.toList(keyStore.aliases());
-    }
-    catch (KeyStoreException e) {
-      Messages.showErrorDialog(myPanel, errorPrefix + e.getMessage(), CommonBundle.getErrorTitle());
-      return null;
-    }
-    catch (FileNotFoundException e) {
-      Messages.showErrorDialog(myPanel, errorPrefix + e.getMessage(), CommonBundle.getErrorTitle());
-      return null;
-    }
-    catch (CertificateException e) {
-      Messages.showErrorDialog(myPanel, errorPrefix + e.getMessage(), CommonBundle.getErrorTitle());
-      return null;
-    }
-    catch (NoSuchAlgorithmException e) {
-      Messages.showErrorDialog(myPanel, errorPrefix + e.getMessage(), CommonBundle.getErrorTitle());
-      return null;
-    }
-    catch (IOException e) {
-      Messages.showErrorDialog(myPanel, errorPrefix + e.getMessage(), CommonBundle.getErrorTitle());
-      return null;
-    }
-    finally {
-      if (is != null) {
-        try {
-          is.close();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-      }
-    }
   }
 
   @Override
@@ -320,5 +214,40 @@ public class AndroidArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   @NotNull
   private String getKeyPassword() {
     return String.valueOf(myKeyPasswordField.getPassword());
+  }
+
+  @Override
+  public JButton getLoadKeyStoreButton() {
+    return myLoadKeyStoreButton;
+  }
+
+  @Override
+  public JTextField getKeyStorePathField() {
+    return myKeyStorePathField;
+  }
+
+  @Override
+  public JPanel getPanel() {
+    return myPanel;
+  }
+
+  @Override
+  public JButton getCreateKeyStoreButton() {
+    return myCreateKeyStoreButton;
+  }
+
+  @Override
+  public JPasswordField getKeyStorePasswordField() {
+    return myKeyStorePasswordField;
+  }
+
+  @Override
+  public TextFieldWithBrowseButton getKeyAliasField() {
+    return myKeyAliasField;
+  }
+
+  @Override
+  public JPasswordField getKeyPasswordField() {
+    return myKeyPasswordField;
   }
 }
