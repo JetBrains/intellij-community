@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -65,18 +66,16 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
     final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName("bean", project);
     assertEquals(1, files.size());
 
-    final Collection<VirtualFile> files1 = XmlTagNamesIndex.getFilesByTagName("schema", project);
+    final Collection<VirtualFile> files1 = XmlTagNamesIndex.getFilesByTagName("web-app", project);
     assertEquals(files1.toString(), 2, files1.size());
 
-    Collection<String> names = ContainerUtil.map(files1, new Function<VirtualFile, String>() {
+    List<String> names = new ArrayList<String>(ContainerUtil.map(files1, new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile virtualFile) {
         return virtualFile.getName();
       }
-    });
-    List<String> expected = Arrays.asList("XMLSchema.xsd", "XMLSchema.xsd");
-    names.removeAll(expected);
-    assertTrue(files1.toString(), names.isEmpty());
+    }));
+    assertEquals(Arrays.asList("web-app_3_0.xsd", "web-app_2_5.xsd"), names);
   }
 
   public void testNamespaceIndex() {
