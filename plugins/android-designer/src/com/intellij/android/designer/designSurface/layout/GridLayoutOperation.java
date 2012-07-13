@@ -133,7 +133,9 @@ public class GridLayoutOperation extends GridOperation {
 
     if (myContext.isMove()) {
       Rectangle cellInfo = RadGridLayoutComponent.getCellInfo(editComponent);
-      components[cellInfo.y][cellInfo.x] = null;
+      if (cellInfo.y < components.length && cellInfo.x < components[cellInfo.y].length) {
+        components[cellInfo.y][cellInfo.x] = null;
+      }
       RadGridLayoutComponent.clearCellSpans(editComponent);
     }
 

@@ -213,7 +213,7 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
   @NotNull
   @Override
   public List<RadComponent> getCaptionChildren(EditableArea mainArea, boolean horizontal) {
-    RadGridLayoutComponent container = (RadGridLayoutComponent)myContainer;
+    RadGridLayoutComponent container = getGridComponent();
     GridInfo gridInfo = container.getGridInfo();
     List<RadComponent> components = new ArrayList<RadComponent>();
 
@@ -247,6 +247,10 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
     return components;
   }
 
+  private RadGridLayoutComponent getGridComponent() {
+    return (RadGridLayoutComponent)myContainer;
+  }
+
   private RadLayout myCaptionColumnLayout;
   private RadLayout myCaptionRowLayout;
 
@@ -259,8 +263,7 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
           @Override
           public EditOperation processChildOperation(OperationContext context) {
             if (context.isMove()) {
-              return new GridHorizontalCaptionOperation((RadGridLayoutComponent)RadGridLayout.this.myContainer,
-                                                        myContainer, context, mainArea);
+              return new GridHorizontalCaptionOperation(getGridComponent(), myContainer, context, mainArea);
             }
             return null;
           }
@@ -274,8 +277,7 @@ public class RadGridLayout extends RadViewLayoutWithData implements ILayoutDecor
         @Override
         public EditOperation processChildOperation(OperationContext context) {
           if (context.isMove()) {
-            return new GridVerticalCaptionOperation((RadGridLayoutComponent)RadGridLayout.this.myContainer,
-                                                    myContainer, context, mainArea);
+            return new GridVerticalCaptionOperation(getGridComponent(), myContainer, context, mainArea);
           }
           return null;
         }

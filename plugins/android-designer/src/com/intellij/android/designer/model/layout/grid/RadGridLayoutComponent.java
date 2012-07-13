@@ -193,13 +193,15 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
       Rectangle cellInfo = getCellInfo(child);
 
       if (fillSpans) {
-        for (int row = 0; row < cellInfo.height; row++) {
-          for (int column = 0; column < cellInfo.width; column++) {
-            components[cellInfo.y + row][cellInfo.x + column] = child;
+        int rowEnd = Math.min(cellInfo.y + cellInfo.height, gridInfo.rowCount);
+        int columnEnd = Math.min(cellInfo.x + cellInfo.width, gridInfo.columnCount);
+        for (int row = cellInfo.y; row < rowEnd; row++) {
+          for (int column = cellInfo.x; column < columnEnd; column++) {
+            components[row][column] = child;
           }
         }
       }
-      else {
+      else if (cellInfo.y < gridInfo.rowCount && cellInfo.x < gridInfo.columnCount) {
         components[cellInfo.y][cellInfo.x] = child;
       }
     }
