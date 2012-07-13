@@ -20,6 +20,8 @@ import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -137,6 +139,11 @@ public class ExtractIncludeDialog extends DialogWrapper {
 
     if (isFileExist(directoryName, targetFileName)) {
       Messages.showErrorDialog(project, RefactoringBundle.message("file.already.exist", targetFileName), RefactoringBundle.message("file.already.exist.title"));
+      return;
+    }
+
+    final FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(targetFileName);
+    if (type == null) {
       return;
     }
 
