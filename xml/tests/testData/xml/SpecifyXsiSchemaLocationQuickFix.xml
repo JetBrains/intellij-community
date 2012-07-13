@@ -1,2 +1,2 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app xmlns="<error>http://java.sun.<caret>com/xml/ns/j2ee</error>"/>
+<web-app xmlns="http://java.sun.co<caret>m/xml/ns/j2ee" version="2.4"/>

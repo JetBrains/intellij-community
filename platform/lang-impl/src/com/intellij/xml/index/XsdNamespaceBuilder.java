@@ -16,31 +16,31 @@
 
 package com.intellij.xml.index;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
+public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implements Comparable<XsdNamespaceBuilder> {
 
-  @Nullable
   public static String computeNamespace(final InputStream is) {
-    return computeNamespace(new InputStreamReader(is));
+    return computeNamespace(new InputStreamReader(is)).getNamespace();
   }
 
-  @Nullable
-  public static String computeNamespace(final Reader reader) {
+  public static XsdNamespaceBuilder computeNamespace(final Reader reader) {
     try {
       final XsdNamespaceBuilder builder = new XsdNamespaceBuilder();
       NanoXmlUtil.parse(reader, builder);
-      return builder.myNamespace;
+      return builder;
     }
     finally {
       try {
@@ -54,25 +54,82 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
     }
   }
 
+  private String myCurrentTag;
+
+  private int myCurrentDepth;
   private String myNamespace;
 
+  private String myVersion;
+  private List<String> myTags = new ArrayList<String>();
+  private List<String> myAttributes = new ArrayList<String>();
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
       throws Exception {
 
-    if ( !"http://www.w3.org/2001/XMLSchema".equals(nsURI) || !name.equals("schema")) {
-      stop();
+    if (myCurrentDepth < 2 && "http://www.w3.org/2001/XMLSchema".equals(nsURI)) {
+      myCurrentTag = name;
     }
+    myCurrentDepth++;
+  }
+
+  @Override
+  public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
+    myCurrentDepth--;
+    myCurrentTag = null;
   }
 
   public void addAttribute(@NonNls final String key, final String nsPrefix, final String nsURI, final String value, final String type)
       throws Exception {
-    if (key.equals("targetNamespace")) {
-      myNamespace = value;
-      stop();
+    if ("schema".equals(myCurrentTag)) {
+      if ("targetNamespace".equals(key)) {
+        myNamespace = value;
+      }
+      else if ("version".equals(key)) {
+        myVersion = value;
+      }
+    }
+    else if ("element".equals(myCurrentTag) && "name".equals(key)) {
+      myTags.add(value);
     }
   }
 
-  public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
-    stop();
+  @Override
+  public int compareTo(XsdNamespaceBuilder o) {
+    return Comparing.compare(myNamespace, o.myNamespace);
+  }
+
+  public int getRating(String tagName, String version) {
+    int rate = 0;
+    if (tagName != null && myTags.contains(tagName)) {
+      rate |= 0x02;
+    }
+    if (Comparing.equal(version, myVersion)) {
+      rate |= 0x01;
+    }
+    return rate;
+  }
+
+  private XsdNamespaceBuilder() {
+  }
+
+  public XsdNamespaceBuilder(String namespace, String version, List<String> tags) {
+    myNamespace = namespace;
+    myVersion = version;
+    myTags = tags;
+  }
+
+  public String getNamespace() {
+    return myNamespace;
+  }
+
+  public String getVersion() {
+    return myVersion;
+  }
+
+  public List<String> getTags() {
+    return myTags;
+  }
+
+  public List<String> getAttributes() {
+    return myAttributes;
   }
 }

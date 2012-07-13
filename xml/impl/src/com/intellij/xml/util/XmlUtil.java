@@ -67,6 +67,7 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
+import com.intellij.xml.index.XsdNamespaceBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,11 +252,12 @@ public class XmlUtil {
   }
 
   public static Collection<XmlFile> findNSFilesByURI(String namespace, final Project project, Module module) {
-    final List<IndexedRelevantResource<String,String>> resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
+    final List<IndexedRelevantResource<String,XsdNamespaceBuilder>>
+      resources = XmlNamespaceIndex.getResourcesByNamespace(namespace, project, module);
     final PsiManager psiManager = PsiManager.getInstance(project);
-    return ContainerUtil.mapNotNull(resources, new NullableFunction<IndexedRelevantResource<String, String>, XmlFile>() {
-      public XmlFile fun(IndexedRelevantResource<String, String> stringStringIndexedRelevantResource) {
-        PsiFile file = psiManager.findFile(stringStringIndexedRelevantResource.getFile());
+    return ContainerUtil.mapNotNull(resources, new NullableFunction<IndexedRelevantResource<String, XsdNamespaceBuilder>, XmlFile>() {
+      public XmlFile fun(IndexedRelevantResource<String, XsdNamespaceBuilder> resource) {
+        PsiFile file = psiManager.findFile(resource.getFile());
         return file instanceof XmlFile ? (XmlFile)file : null;
       }
     });

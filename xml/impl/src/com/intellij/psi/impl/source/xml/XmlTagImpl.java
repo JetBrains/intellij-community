@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.*;
@@ -58,6 +59,9 @@ import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
+import com.intellij.xml.index.IndexedRelevantResource;
+import com.intellij.xml.index.XmlNamespaceIndex;
+import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
@@ -335,7 +339,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
           return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
         }
 
-        XmlFile currentFile = retrieveFile(fileLocation, version);
+        XmlFile currentFile = retrieveFile(fileLocation, version, namespace);
         if (currentFile == null) {
           final XmlDocument document = XmlUtil.getContainingFile(XmlTagImpl.this).getDocument();
           if (document != null) {
@@ -392,16 +396,21 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   @Nullable
-  private XmlFile retrieveFile(final String fileLocation, String version) {
+  private XmlFile retrieveFile(final String fileLocation, final String version, String namespace) {
     final String targetNs = XmlUtil.getTargetSchemaNsFromTag(this);
     if (fileLocation.equals(targetNs)) {
       return null;
     }
-    else {
-      final XmlFile file = XmlUtil.getContainingFile(this);
-      final PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(fileLocation, file, version);
-      return psiFile instanceof XmlFile ? (XmlFile)psiFile : null;
+
+    final XmlFile file = XmlUtil.getContainingFile(this);
+    final PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(fileLocation, file, version);
+    if (psiFile instanceof XmlFile) {
+      return (XmlFile)psiFile;
     }
+
+    IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
+      XmlNamespaceIndex.guessSchema(namespace, myLocalName, version, ModuleUtilCore.findModuleForPsiElement(file));
+    return resource == null ? null : (XmlFile)file.getManager().findFile(resource.getFile());
   }
 
   @Nullable
