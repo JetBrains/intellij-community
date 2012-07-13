@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 
@@ -21,6 +22,7 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   private void doTest() {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
