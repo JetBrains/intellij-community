@@ -634,16 +634,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testXHtmlValidation2() throws Exception {
-    disableHtmlSupport();
-    try {
-      configureByFile(getFullRelativeTestName());
-      XmlFile descriptorFile = ((XmlFile)getFile()).getRootTag().getDescriptor().getNSDescriptor().getDescriptorFile();
-      assertEquals("xhtml1-transitional.xsd", descriptorFile.getVirtualFile().getName());
-      doDoTest(true, true, true);
-    }
-    finally {
-      enableHtmlSupport();
-    }
+    configureByFile(getFullRelativeTestName());
+    doDoTest(true, true, true);
   }
 
   public void testXHtmlValidation3() throws Exception {
@@ -700,12 +692,12 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testComplexSchemaValidation() throws Exception {
-    disableHtmlSupport();
+//    disableHtmlSupport();
     try {
       doTest(getFullRelativeTestName(), false, false);
     }
     finally {
-      enableHtmlSupport();
+//      enableHtmlSupport();
     }
   }
 
