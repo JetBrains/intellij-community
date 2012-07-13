@@ -289,6 +289,9 @@ class ApkStep extends ExportSignedPackageWizardStep {
 
   @Override
   public void _commit(boolean finishChosen) throws CommitStepException {
+    if (!finishChosen) {
+      return;
+    }
     final String apkPath = myApkPathField.getText().trim();
     if (apkPath.length() == 0) {
       throw new CommitStepException(AndroidBundle.message("android.extract.package.specify.apk.path.error"));
