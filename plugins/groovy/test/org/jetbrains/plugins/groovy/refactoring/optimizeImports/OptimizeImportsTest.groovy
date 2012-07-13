@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 
 /**
  * @author ilyas
@@ -183,8 +184,8 @@ class Fooxx <caret>{
 
   private void doTest() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
-    settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings)
+    settings.getCustomSettings(GroovyCodeStyleSettings.class).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
     try {
       myFixture.configureByFile(getTestName(false) + ".groovy");
 

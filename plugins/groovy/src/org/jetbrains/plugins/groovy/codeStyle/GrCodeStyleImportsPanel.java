@@ -18,12 +18,10 @@ package org.jetbrains.plugins.groovy.codeStyle;
 import com.intellij.application.options.ImportLayoutPanel;
 import com.intellij.application.options.PackagePanel;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -42,7 +40,6 @@ public class GrCodeStyleImportsPanel extends JPanel {
   private final PackageEntryTable myPackageList = new PackageEntryTable();
 
   private JBTable myPackageTable;
-  private final CodeStyleSettings mySettings;
 
   private JPanel myGeneralPanel;
   private JPanel myPackagesPanel;
@@ -50,8 +47,7 @@ public class GrCodeStyleImportsPanel extends JPanel {
   private JPanel myWholePanel;
   private ImportLayoutPanel myImportLayoutPanel;
 
-  public GrCodeStyleImportsPanel(CodeStyleSettings settings) {
-    mySettings = settings;
+  public GrCodeStyleImportsPanel() {
     setLayout(new BorderLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
     add(myWholePanel, BorderLayout.CENTER);
@@ -118,8 +114,7 @@ public class GrCodeStyleImportsPanel extends JPanel {
     ImportLayoutPanel.resizeColumns(packageTable, table, myImportLayoutPanel.areStaticImportsEnabled());
   }
 
-  public void reset(CodeStyleSettings _settings) {
-    final GroovyCodeStyleSettings settings = _settings.getCustomSettings(GroovyCodeStyleSettings.class);
+  public void reset(GroovyCodeStyleSettings settings) {
     myCbUseFQClassNames.setSelected(settings.USE_FQ_CLASS_NAMES);
     myCbUseFQClassNamesInJavaDoc.setSelected(settings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
     myCbUseSingleClassImports.setSelected(settings.USE_SINGLE_CLASS_IMPORTS);
@@ -147,14 +142,8 @@ public class GrCodeStyleImportsPanel extends JPanel {
     }
   }
 
-  public void reset() {
-    reset(mySettings);
-  }
-
-  public void apply(CodeStyleSettings _settings) {
+  public void apply(GroovyCodeStyleSettings settings) {
     stopTableEditing();
-
-    final GroovyCodeStyleSettings settings = _settings.getCustomSettings(GroovyCodeStyleSettings.class);
 
     settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = myImportLayoutPanel.areStaticImportsEnabled();
     settings.USE_FQ_CLASS_NAMES = myCbUseFQClassNames.isSelected();
@@ -182,16 +171,12 @@ public class GrCodeStyleImportsPanel extends JPanel {
     settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(myPackageList);
   }
 
-  public void apply() {
-    apply(mySettings);
-  }
-
   private void stopTableEditing() {
     TableUtil.stopEditing(myImportLayoutPanel.getImportLayoutTable());
     TableUtil.stopEditing(myPackageTable);
   }
 
-  public boolean isModified(CodeStyleSettings settings) {
+  public boolean isModified(GroovyCodeStyleSettings settings) {
     boolean isModified = isModified(myImportLayoutPanel.getCbLayoutStaticImportsSeparately(), settings.LAYOUT_STATIC_IMPORTS_SEPARATELY);
     isModified |= isModified(myCbUseFQClassNames, settings.USE_FQ_CLASS_NAMES);
     isModified |= isModified(myCbUseFQClassNamesInJavaDoc, settings.USE_FQ_CLASS_NAMES_IN_JAVADOC);
@@ -204,10 +189,6 @@ public class GrCodeStyleImportsPanel extends JPanel {
     isModified |= isModified(myPackageList, settings.PACKAGES_TO_USE_IMPORT_ON_DEMAND);
 
     return isModified;
-  }
-
-  public boolean isModified() {
-    return isModified(mySettings);
   }
 
   private static boolean isModified(JTextField textField, int value) {

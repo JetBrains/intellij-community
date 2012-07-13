@@ -29,6 +29,7 @@ import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -257,7 +258,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                                         Map<String, String> aliased,
                                         final Map<String, String> annotations) {
       final Project project = myFile.getProject();
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+      final GroovyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class);
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
       TObjectIntHashMap<String> packageCountMap = new TObjectIntHashMap<String>();
@@ -376,7 +377,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     return !StringUtil.isEmptyOrSpaces(anImport.getAnnotationList().getText());
   }
 
-  public static Comparator<GrImportStatement> getComparator(final CodeStyleSettings settings) {
+  public static Comparator<GrImportStatement> getComparator(final GroovyCodeStyleSettings settings) {
     return new Comparator<GrImportStatement>() {
       public int compare(GrImportStatement statement1, GrImportStatement statement2) {
         if (settings.LAYOUT_STATIC_IMPORTS_SEPARATELY) {
