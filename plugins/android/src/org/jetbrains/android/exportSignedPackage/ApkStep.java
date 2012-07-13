@@ -18,6 +18,9 @@ package org.jetbrains.android.exportSignedPackage;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ApplicationManager;
@@ -248,10 +251,23 @@ class ApkStep extends ExportSignedPackageWizardStep {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         String title = AndroidBundle.message("android.export.package.wizard.title");
+        final Project project = myWizard.getProject();
+
         if (!runZipAlign) {
-          Messages.showWarningDialog(myWizard.getProject(), AndroidBundle.message("cannot.find.zip.align"), title);
+          Messages.showWarningDialog(project, AndroidBundle.message("cannot.find.zip.align"), title);
         }
-        Messages.showInfoMessage(myWizard.getProject(), AndroidBundle.message("android.export.package.success.message", apkPath), title);
+        final File apkFile = new File(apkPath);
+
+        if (ShowFilePathAction.isSupported()) {
+          if (Messages.showOkCancelDialog(project, AndroidBundle.message("android.export.package.success.message", apkFile.getName()),
+                                          title, RevealFileAction.getActionName(), IdeBundle.message("action.close"),
+                                          Messages.getInformationIcon()) == Messages.OK) {
+            ShowFilePathAction.openFile(apkFile);
+          }
+        }
+        else {
+          Messages.showInfoMessage(project, AndroidBundle.message("android.export.package.success.message", apkFile), title);
+        }
       }
     }, ModalityState.NON_MODAL);
   }
