@@ -180,8 +180,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return myCloseOnSneeze;
   }
 
-  public boolean hasDockedDocWindow() {
-    return myToolWindow != null;
+  public boolean hasActiveDockedDocWindow() {
+    return myToolWindow != null && myToolWindow.isVisible();
   }
   
   public void setAllowContentUpdateFromContext(boolean allow) {

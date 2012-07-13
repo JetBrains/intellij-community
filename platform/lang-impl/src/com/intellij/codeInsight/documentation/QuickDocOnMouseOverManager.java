@@ -301,7 +301,7 @@ public class QuickDocOnMouseOverManager {
       
       // We don't want to show a quick doc control if there is an active hint (e.g. the mouse is under an invalid element
       // and corresponding error info is shown).
-      if (!info.docManager.hasDockedDocWindow() && myHintManager.hasShownHintsThatWillHideByOtherHint(false)) {
+      if (!info.docManager.hasActiveDockedDocWindow() && myHintManager.hasShownHintsThatWillHideByOtherHint(false)) {
         myAlarm.addRequest(this, EditorSettingsExternalizable.getInstance().getQuickDocOnMouseOverElementDelayMillis());
         return;
       }

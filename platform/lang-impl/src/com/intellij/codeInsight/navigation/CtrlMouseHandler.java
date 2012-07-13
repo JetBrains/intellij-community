@@ -32,7 +32,9 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -85,13 +87,14 @@ import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
 
-  private static final int ourQuickDocRowsNumber         = getIntProperty("quick.doc.desired.rows.number", 1);
+  private static final int    ourQuickDocRowsNumber = getIntProperty("quick.doc.desired.rows.number", 1);
 
   private final TextAttributes  ourReferenceAttributes;
   private       HighlightersSet myHighlighter;
   @JdkConstants.InputEventMask private int             myStoredModifiers = 0;
   private                              TooltipProvider myTooltipProvider = null;
-  private final FileEditorManager myFileEditorManager;
+  private final FileEditorManager    myFileEditorManager;
+  private final DocumentationManager myDocumentationManager;
 
   private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
@@ -194,17 +197,26 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       .createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(Color.blue, null, Color.blue, EffectType.LINE_UNDERSCORE, 0));
 
   public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager,
-                          FileEditorManager fileEditorManager) {
+                          FileEditorManager fileEditorManager, @NotNull DocumentationManager documentationManager,
+                          @NotNull final EditorFactory editorFactory)
+  {
     super(project);
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
-        EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+        EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
         eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
+        eventMulticaster.addCaretListener(new CaretListener() {
+          @Override
+          public void caretPositionChanged(CaretEvent e) {
+            myDocumentationManager.setAllowContentUpdateFromContext(true);
+          }
+        }, project);
       }
     });
     ourReferenceAttributes = colorsManager.getGlobalScheme().getAttributes(CTRL_CLICKABLE_ATTRIBUTES_KEY);
     myFileEditorManager = fileEditorManager;
+    myDocumentationManager = documentationManager;
   }
 
   @NotNull
@@ -343,6 +355,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public abstract boolean isValid(Document document);
 
+    public abstract void showDocInfo(@NotNull DocumentationManager docManager);
+
     protected boolean rangesAreCorrect(Document document) {
       final TextRange docRange = new TextRange(0, document.getTextLength());
       for (TextRange range : getRanges()) {
@@ -392,6 +406,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       return rangesAreCorrect(document);
     }
+
+    @Override
+    public void showDocInfo(@NotNull DocumentationManager docManager) {
+      docManager.showJavaDocInfo(myTargetElement, myElementAtPointer, true, null);
+      docManager.setAllowContentUpdateFromContext(false);
+    }
   }
 
   private static class InfoMultiple extends Info {
@@ -407,6 +427,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public boolean isValid(Document document) {
       return rangesAreCorrect(document);
+    }
+
+    @Override
+    public void showDocInfo(@NotNull DocumentationManager docManager) {
+      // Do nothing
     }
   }
 
@@ -608,10 +633,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       DocInfo docInfo = info.getInfo();
 
       if (docInfo.text == null) return;
+
+      if (myDocumentationManager.hasActiveDockedDocWindow()) {
+        info.showDocInfo(myDocumentationManager);
+      }
       
       HyperlinkListener listener = (docInfo.docProvider == null || docInfo.context == null)
                                    ? null
-                                   : new QuickDocHyperlinkListener(myProject, docInfo.docProvider, docInfo.context);
+                                   : new QuickDocHyperlinkListener(myProject, myDocumentationManager, docInfo.docProvider, docInfo.context);
       JComponent label = HintUtil.createInformationLabel(docInfo.text, listener);
       final LightweightHint hint = new LightweightHint(label);
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
@@ -691,11 +720,17 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private static class QuickDocHyperlinkListener implements HyperlinkListener {
 
     @NotNull private final Project               myProject;
+    @NotNull private final DocumentationManager  myDocumentationManager;
     @NotNull private final DocumentationProvider myProvider;
     @NotNull private final PsiElement            myContext;
 
-    QuickDocHyperlinkListener(@NotNull Project project, @NotNull DocumentationProvider provider, @NotNull PsiElement context) {
+    QuickDocHyperlinkListener(@NotNull Project project,
+                              @NotNull DocumentationManager manager,
+                              @NotNull DocumentationProvider provider,
+                              @NotNull PsiElement context)
+    {
       myProject = project;
+      myDocumentationManager = manager;
       myProvider = provider;
       myContext = context;
     }
@@ -712,11 +747,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
 
       String elementName = e.getDescription().substring(DocumentationManager.PSI_ELEMENT_PROTOCOL.length());
-      
+
       final PsiElement targetElement = myProvider.getDocumentationElementForLink(PsiManager.getInstance(myProject), elementName, myContext);
       if (targetElement != null) {
         ApplicationManager.getApplication().getComponent(IdeTooltipManager.class).hideCurrentNow(false);
-        DocumentationManager.getInstance(myProject).showJavaDocInfo(targetElement, myContext, true, null);
+        myDocumentationManager.showJavaDocInfo(targetElement, myContext, true, null);
       }
     }
   }
