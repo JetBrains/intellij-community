@@ -31,11 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.MacroExpander;
+import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.javac.JavacServer;
 
-import javax.tools.JavaCompiler;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 
@@ -87,8 +86,10 @@ public class ClasspathBootstrap {
 
   public static List<File> getBuildProcessApplicationClasspath() {
     final Set<File> cp = new LinkedHashSet<File>();
-    cp.add(getResourcePath(Server.class));
-    for (String path : PathManager.getUtilClassPath()) { cp.add(new File(path)); } // util
+    cp.add(getResourcePath(BuildMain.class));
+    for (String path : PathManager.getUtilClassPath()) { // util
+      cp.add(new File(path));
+    }
     cp.add(getResourcePath(Message.class)); // protobuf
     cp.add(getResourcePath(Version.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
