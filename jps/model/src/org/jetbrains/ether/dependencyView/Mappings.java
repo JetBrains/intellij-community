@@ -557,7 +557,7 @@ public class Mappings {
 
       final int fileName = myClassToSourceFile.get(className);
 
-      if (fileName < 0) {
+      if (fileName <= 0) {
         debug("No source file detected for class ", className);
         debug("End of affectSubclasses");
         return;
@@ -1710,7 +1710,7 @@ public class Mappings {
 
         final int fileName = myClassToSourceFile.get(c.myName);
 
-        if (fileName != 0) {
+        if (fileName > 0) {
           myDelta.myChangedFiles.add(fileName);
         }
 
@@ -1769,7 +1769,7 @@ public class Mappings {
         public boolean execute(final int depClass) {
           final int depFile = myClassToSourceFile.get(depClass);
 
-          if (depFile != 0) {
+          if (depFile > 0) {
             final File theFile = new File(myContext.getValue(depFile));
 
             if (myAffectedFiles.contains(theFile) || myCompiledFiles.contains(theFile)) {
@@ -2159,11 +2159,10 @@ public class Mappings {
 
               final ClassRepr repr = getReprByName(rootClassName);
 
-              if (repr != null && fileName != 0) {
+              if (repr != null && fileName > 0) {
                 if (repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
                   mySourceFileToClasses.put(fileName, repr);
                 }
-                ;
               }
             }
           }
@@ -2277,9 +2276,9 @@ public class Mappings {
     assert (myChangedClasses != null && myChangedFiles != null);
     myChangedClasses.add(it);
 
-    final Integer file = myClassToSourceFile.get(it);
+    final int file = myClassToSourceFile.get(it);
 
-    if (file != null) {
+    if (file > 0) {
       myChangedFiles.add(file);
     }
   }
