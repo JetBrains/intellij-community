@@ -897,7 +897,7 @@ public class IncProjectBuilder {
     fsState.clearContextRoundData(context);
     fsState.clearContextChunk(context);
 
-    if (!Utils.ERRORS_DETECTED_KEY.get(context, Boolean.FALSE) && !context.getCancelStatus().isCanceled()) {
+    if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
       boolean marked = false;
       for (Module module : chunk.getModules()) {
         if (context.isMake()) {

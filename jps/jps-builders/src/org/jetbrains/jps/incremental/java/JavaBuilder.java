@@ -106,7 +106,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           out.setTemp(isTemp);
-          if (!isTemp && out.getKind() == JavaFileObject.Kind.CLASS) {
+          if (!isTemp && out.getKind() == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(context)) {
             final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
             if (callback != null) {
               final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());

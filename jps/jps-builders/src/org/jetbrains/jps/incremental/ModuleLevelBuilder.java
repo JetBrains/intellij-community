@@ -64,7 +64,7 @@ public abstract class ModuleLevelBuilder extends Builder {
    * @throws Exception
    */
   public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws IOException {
-    if (Utils.ERRORS_DETECTED_KEY.get(context, Boolean.FALSE)) {
+    if (Utils.errorsDetected(context)) {
       return false;
     }
     try {
