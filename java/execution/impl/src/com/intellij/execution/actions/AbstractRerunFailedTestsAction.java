@@ -69,7 +69,7 @@ public class AbstractRerunFailedTestsAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isActive(e));
+    e.getPresentation().setEnabled(isActive(e) && !getModel().isRunning());
   }
 
   private boolean isActive(AnActionEvent e) {
@@ -92,7 +92,6 @@ public class AbstractRerunFailedTestsAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
     boolean isDebug = myConsoleProperties.isDebug();
     final MyRunProfile profile = getRunProfile();
     try {
@@ -104,7 +103,7 @@ public class AbstractRerunFailedTestsAction extends AnAction {
                                                         profile.getProject(),
                                                         myEnvironment.getRunnerSettings(),
                                                         myEnvironment.getConfigurationSettings(),
-                                                        null,
+                                                        myEnvironment.getContentToReuse(),
                                                         myEnvironment.getRunnerAndConfigurationSettings()));
     }
     catch (ExecutionException e1) {
