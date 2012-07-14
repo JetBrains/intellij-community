@@ -5,13 +5,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IntInlineKeyDescriptor;
-import gnu.trove.*;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIntProcedure;
+import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.Opcodes;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
@@ -116,10 +120,8 @@ public class Mappings {
       myClassToSourceFile = new IntIntTransientMaplet();
     }
     else {
-      myClassToSubclasses =
-        new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES), INT_KEY_DESCRIPTOR);
-      myClassToClassDependency =
-        new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), INT_KEY_DESCRIPTOR);
+      myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES), INT_KEY_DESCRIPTOR);
+      myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), INT_KEY_DESCRIPTOR);
       mySourceFileToClasses = new IntObjectPersistentMultiMaplet<ClassRepr>(
         DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), INT_KEY_DESCRIPTOR, ClassRepr.externalizer(myContext),
         ourClassSetConstructor
@@ -188,7 +190,11 @@ public class Mappings {
   }
 
   private static class Option<X> {
-    final X myValue;
+    static final Option<Boolean> TRUE = new Option<Boolean>(Boolean.TRUE);
+    static final Option<Boolean> FALSE = new Option<Boolean>(Boolean.FALSE);
+    static final Option<Boolean> UNKNOWN = new Option<Boolean>();
+
+    private final X myValue;
 
     Option(final X value) {
       this.myValue = value;
@@ -198,15 +204,11 @@ public class Mappings {
       myValue = null;
     }
 
-    boolean isNone() {
-      return myValue == null;
-    }
-
-    boolean isValue() {
+    public boolean isDefined() {
       return myValue != null;
     }
 
-    X value() {
+    public X value() {
       return myValue;
     }
   }
@@ -323,7 +325,7 @@ public class Mappings {
 
           for (int i = 0; i < than.myArgumentTypes.length; i++) {
             final Option<Boolean> subtypeOf = isSubtypeOf(than.myArgumentTypes[i], m.myArgumentTypes[i]);
-            if (subtypeOf.isValue() && !subtypeOf.value()) {
+            if (subtypeOf.isDefined() && !subtypeOf.value()) {
               return false;
             }
           }
@@ -471,7 +473,7 @@ public class Mappings {
 
     Option<Boolean> isInheritorOf(final int who, final int whom) {
       if (who == whom) {
-        return new Option<Boolean>(true);
+        return Option.TRUE;
       }
 
       final ClassRepr repr = reprByName(who);
@@ -479,22 +481,22 @@ public class Mappings {
       if (repr != null) {
         for (int s : repr.getSupers()) {
           final Option<Boolean> inheritorOf = isInheritorOf(s, whom);
-          if (inheritorOf.isValue() && inheritorOf.value()) {
+          if (inheritorOf.isDefined() && inheritorOf.value()) {
             return inheritorOf;
           }
         }
       }
 
-      return new Option<Boolean>();
+      return Option.UNKNOWN;
     }
 
     Option<Boolean> isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
       if (who.equals(whom)) {
-        return new Option<Boolean>(true);
+        return Option.TRUE;
       }
 
       if (who instanceof TypeRepr.PrimitiveType || whom instanceof TypeRepr.PrimitiveType) {
-        return new Option<Boolean>(false);
+        return Option.FALSE;
       }
 
       if (who instanceof TypeRepr.ArrayType) {
@@ -505,17 +507,17 @@ public class Mappings {
         final String descr = whom.getDescr(myContext);
 
         if (descr.equals("Ljava/lang/Cloneable") || descr.equals("Ljava/lang/Object") || descr.equals("Ljava/io/Serializable")) {
-          return new Option<Boolean>(true);
+          return Option.TRUE;
         }
 
-        return new Option<Boolean>(false);
+        return Option.FALSE;
       }
 
       if (whom instanceof TypeRepr.ClassType) {
         return isInheritorOf(((TypeRepr.ClassType)who).myClassName, ((TypeRepr.ClassType)whom).myClassName);
       }
 
-      return new Option<Boolean>(false);
+      return Option.FALSE;
     }
 
     boolean methodVisible(final int className, final MethodRepr m) {
@@ -596,13 +598,13 @@ public class Mappings {
     }
 
     void affectFieldUsages(final FieldRepr field,
-                           final TIntHashSet subclasses,
+                           final TIntHashSet classes,
                            final UsageRepr.Usage rootUsage,
                            final Set<UsageRepr.Usage> affectedUsages,
                            final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
 
-      subclasses.forEach(new TIntProcedure() {
+      classes.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int p) {
           final TIntHashSet deps = myClassToClassDependency.get(p);
@@ -612,8 +614,7 @@ public class Mappings {
           }
 
           debug("Affect field usage referenced of class ", p);
-          affectedUsages
-            .add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
+          affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
           return true;
         }
       });
@@ -647,12 +648,11 @@ public class Mappings {
       }
     }
 
-    void affectAll(final int className, final Collection<File> affectedFiles, final DependentFilesFilter filter) {
-      final TIntHashSet dependants = myClassToClassDependency.get(className);
-
-      if (dependants != null) {
-        final int sourceFile = myClassToSourceFile.get(className);
-        if (sourceFile > 0) {
+    void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
+      final int sourceFile = myClassToSourceFile.get(className);
+      if (sourceFile > 0) {
+        final TIntHashSet dependants = myClassToClassDependency.get(className);
+        if (dependants != null) {
           dependants.forEach(new TIntProcedure() {
             @Override
             public boolean execute(int depClass) {
@@ -699,7 +699,7 @@ public class Mappings {
       @Override
       public boolean checkResidence(final int residence) {
         final Option<Boolean> inheritorOf = isInheritorOf(residence, rootClass);
-        return inheritorOf.isNone() || !inheritorOf.value() || super.checkResidence(residence);
+        return !inheritorOf.isDefined() || !inheritorOf.value() || super.checkResidence(residence);
       }
     }
 
@@ -772,7 +772,7 @@ public class Mappings {
   private boolean incrementalDecision(final int owner,
                                       final Proto member,
                                       final Collection<File> affectedFiles,
-                                      final DependentFilesFilter filter) {
+                                      @Nullable final DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
     final Util self = new Util(this);
 
@@ -812,7 +812,7 @@ public class Mappings {
         if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
           final String f = myContext.getValue(fileName);
           final File file = new File(f);
-          if (filter.accept(file)) {
+          if (filter == null || filter.accept(file)) {
             debug("Adding: ", f);
             affectedFiles.add(file);
           }
@@ -842,6 +842,7 @@ public class Mappings {
     final Collection<File> myFilesToCompile;
     final Collection<File> myCompiledFiles;
     final Collection<File> myAffectedFiles;
+    @Nullable
     final DependentFilesFilter myFilter;
     @Nullable final Callbacks.ConstantAffectionResolver myConstantSearch;
     final DelayedWorks myDelayedWorks;
@@ -1056,8 +1057,7 @@ public class Mappings {
             if (m.myArgumentTypes.length > 0) {
               propagated = myUpdated.propagateMethodAccess(m.myName, it.myName);
               debug("Conservative case on overriding methods, affecting method usages");
-              myUpdated
-                .affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.myName), state.myAffectedUsages, state.myDependants);
+              myUpdated.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.myName), state.myAffectedUsages, state.myDependants);
             }
           }
         }
@@ -1086,46 +1086,42 @@ public class Mappings {
             final ClassRepr cc = p.second;
 
             if (cc == myMockClass) {
+              continue;
+            }
+            final Option<Boolean> inheritorOf = mySelf.isInheritorOf(cc.myName, it.myName);
+            final boolean isInheritor = inheritorOf.isDefined() && inheritorOf.value();
 
+            debug("Method: ", mm.myName);
+            debug("Class : ", cc.myName);
+
+            if (overrides.satisfy(mm) && isInheritor) {
+              debug("Current method overrides that found");
+
+              final int file = myClassToSourceFile.get(cc.myName);
+
+              if (file > 0) {
+                final String f = myContext.getValue(file);
+                debug("Affecting file ", f);
+                myAffectedFiles.add(new File(f));
+              }
             }
             else {
-              final Option<Boolean> inheritorOf = mySelf.isInheritorOf(cc.myName, it.myName);
+              debug("Current method does not override that found");
 
-              debug("Method: ", mm.myName);
-              debug("Class : ", cc.myName);
+              final TIntHashSet yetPropagated = mySelf.propagateMethodAccess(mm.myName, it.myName);
 
-              if (overrides.satisfy(mm) && inheritorOf.isValue() && inheritorOf.value()) {
-                debug("Current method overrides that found");
+              if (isInheritor) {
+                final TIntHashSet deps = myClassToClassDependency.get(cc.myName);
 
-                final int file = myClassToSourceFile.get(cc.myName);
-
-                if (file > 0) {
-                  final String f = myContext.getValue(file);
-                  debug("Affecting file ", f);
-                  myAffectedFiles.add(new File(f));
-                }
-              }
-              else {
-                debug("Current method does not override that found");
-
-                final TIntHashSet yetPropagated = mySelf.propagateMethodAccess(mm.myName, it.myName);
-
-                if (inheritorOf.isValue() && inheritorOf.value()) {
-                  final TIntHashSet deps = myClassToClassDependency.get(cc.myName);
-
-                  if (deps != null) {
-                    addAll(state.myDependants, deps);
-                  }
-
-                  myUpdated
-                    .affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.myName), state.myAffectedUsages,
-                                        state.myDependants);
+                if (deps != null) {
+                  addAll(state.myDependants, deps);
                 }
 
-                debug("Affecting method usages for that found");
-                myUpdated
-                  .affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, it.myName), state.myAffectedUsages, state.myDependants);
+                myUpdated.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.myName), state.myAffectedUsages, state.myDependants);
               }
+
+              debug("Affecting method usages for that found");
+              myUpdated.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, it.myName), state.myAffectedUsages, state.myDependants);
             }
           }
 
@@ -1750,7 +1746,7 @@ public class Mappings {
                   final String f = myContext.getValue(fName);
                   final File theFile = new File(f);
 
-                  if (myFilter.accept(theFile)) {
+                  if (myFilter == null || myFilter.accept(theFile)) {
                     debug("Adding dependent file ", f);
                     myAffectedFiles.add(theFile);
                   }
@@ -2108,18 +2104,16 @@ public class Mappings {
           final int classFileNameS = myContext.get(classFileName);
           final Pair<ClassRepr, Set<UsageRepr.Usage>> result = new ClassfileAnalyzer(myContext).analyze(classFileNameS, cr);
           final ClassRepr repr = result.first;
-          final Set<UsageRepr.Usage> localUsages = result.second;
-
-          final int sourceFileNameS = myContext.get(sourceFileName);
-
           if (repr != null) {
+            final Set<UsageRepr.Usage> localUsages = result.second;
+            final int sourceFileNameS = myContext.get(sourceFileName);
             final int className = repr.myName;
 
-            myClassToSourceFile.put(repr.myName, sourceFileNameS);
+            myClassToSourceFile.put(className, sourceFileNameS);
             mySourceFileToClasses.put(sourceFileNameS, repr);
 
             for (final int s : repr.getSupers()) {
-              myClassToSubclasses.put(s, repr.myName);
+              myClassToSubclasses.put(s, className);
             }
 
             for (final UsageRepr.Usage u : localUsages) {
@@ -2328,7 +2322,7 @@ public class Mappings {
       myClassToSubclasses,
       myClassToClassDependency,
       mySourceFileToClasses,
-      myClassToSourceFile
+      myClassToSourceFile,
     };
 
     final String[] info = {
@@ -2348,6 +2342,39 @@ public class Mappings {
 
       stream.print("End Of ");
       stream.println(info[i]);
+    }
+  }
+
+  public void toStream(File outputRoot) {
+    final Streamable[] data = {
+      myClassToSubclasses,
+      myClassToClassDependency,
+      mySourceFileToClasses,
+      myClassToSourceFile,
+    };
+
+    final String[] info = {
+      "ClassToSubclasses",
+      "ClassToClassDependency",
+      "SourceFileToClasses",
+      "ClassToSourceFile",
+    };
+
+    for (int i = 0; i < data.length; i++) {
+      final File file = new File(outputRoot, info[i]);
+      FileUtil.createIfDoesntExist(file);
+      try {
+        final PrintStream stream = new PrintStream(file);
+        try {
+          data[i].toStream(myContext, stream);
+        }
+        finally {
+          stream.close();
+        }
+      }
+      catch (FileNotFoundException e) {
+        e.printStackTrace();
+      }
     }
   }
 }
