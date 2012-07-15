@@ -375,7 +375,7 @@ public class Mappings {
       return result;
     }
 
-    Collection<Pair<MethodRepr, ClassRepr>> findOverridenMethods(final MethodRepr m, final ClassRepr c) {
+    Collection<Pair<MethodRepr, ClassRepr>> findOverriddenMethods(final MethodRepr m, final ClassRepr c) {
       return findOverridenMethods(m, c, false);
     }
 
@@ -424,7 +424,7 @@ public class Mappings {
       return result;
     }
 
-    Collection<Pair<FieldRepr, ClassRepr>> findOverridenFields(final FieldRepr f, final ClassRepr c) {
+    Collection<Pair<FieldRepr, ClassRepr>> findOverriddenFields(final FieldRepr f, final ClassRepr c) {
       final Set<Pair<FieldRepr, ClassRepr>> result = new HashSet<Pair<FieldRepr, ClassRepr>>();
 
       new Object() {
@@ -459,6 +459,7 @@ public class Mappings {
       return result;
     }
 
+    @Nullable
     ClassRepr reprByName(final int name) {
       if (myDelta != null) {
         final ClassRepr r = myDelta.getReprByName(name);
@@ -528,7 +529,7 @@ public class Mappings {
           return true;
         }
 
-        return findOverridenMethods(m, r).size() > 0;
+        return findOverriddenMethods(m, r).size() > 0;
       }
 
       return false;
@@ -542,7 +543,7 @@ public class Mappings {
           return true;
         }
 
-        return findOverridenFields(field, r).size() > 0;
+        return findOverriddenFields(field, r).size() > 0;
       }
 
       return true;
@@ -1045,15 +1046,14 @@ public class Mappings {
 
     private void processAddedMethods(final DiffState state, final ClassRepr.Diff diff, final ClassRepr it) {
       debug("Processing added methods: ");
+      if (it.isAnnotation()) {
+        debug("Class is annotation, skipping method analysis");
+        return;
+      }
       final TIntHashSet affectedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+      Ref<ClassRepr> oldItRef = null;
       for (final MethodRepr m : diff.methods().added()) {
         debug("Method: ", m.name);
-
-        if (it.isAnnotation()) {
-          debug("Class is annotation, skipping method analysis");
-          continue;
-        }
-
         if ((it.access & Opcodes.ACC_INTERFACE) > 0 ||
             (it.access & Opcodes.ACC_ABSTRACT) > 0 ||
             (m.access & Opcodes.ACC_ABSTRACT) > 0) {
@@ -1064,9 +1064,12 @@ public class Mappings {
         TIntHashSet propagated = null;
 
         if ((m.access & Opcodes.ACC_PRIVATE) == 0 && m.name != myInitName) {
-          final ClassRepr oldIt = getReprByName(it.name);
+          if (oldItRef == null) {
+            oldItRef = new Ref<ClassRepr>(getReprByName(it.name)); // lazy init
+          }
+          final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt != null && mySelf.findOverridenMethods(m, oldIt).size() > 0) {
+          if (oldIt != null && mySelf.findOverriddenMethods(m, oldIt).size() > 0) {
 
           }
           else {
@@ -1178,7 +1181,7 @@ public class Mappings {
       for (final MethodRepr m : diff.methods().removed()) {
         debug("Method ", m.name);
 
-        final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myUpdated.findOverridenMethods(m, it);
+        final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myUpdated.findOverriddenMethods(m, it);
         final TIntHashSet propagated = myUpdated.propagateMethodAccess(m.name, it.name);
 
         if (overridenMethods.size() == 0) {
@@ -1220,7 +1223,7 @@ public class Mappings {
                 final ClassRepr s = myUpdated.reprByName(p);
 
                 if (s != null) {
-                  final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myUpdated.findOverridenMethods(m, s);
+                  final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myUpdated.findOverriddenMethods(m, s);
 
                   overridenInS.addAll(overridenMethods);
 
@@ -1412,7 +1415,7 @@ public class Mappings {
           });
         }
 
-        final Collection<Pair<FieldRepr, ClassRepr>> overridden = myUpdated.findOverridenFields(f, classRepr);
+        final Collection<Pair<FieldRepr, ClassRepr>> overridden = myUpdated.findOverriddenFields(f, classRepr);
 
         for (final Pair<FieldRepr, ClassRepr> p : overridden) {
           final FieldRepr ff = p.first;
@@ -1885,6 +1888,7 @@ public class Mappings {
           final DiffState state = new DiffState(Difference.make(pastClasses, classes));
 
           if (!processChangedClasses(state) && !myEasyMode) {
+            // turning non-incremental
             return false;
           }
 
@@ -2149,35 +2153,38 @@ public class Mappings {
 
       @Override
       public void registerImports(final String className, final Collection<String> imports, Collection<String> staticImports) {
+        final List<String> allImports = new ArrayList<String>();
+        for (String anImport : imports) {
+          if (!anImport.endsWith("*")) {
+            allImports.add(anImport); // filter out wildcard imports
+          }
+        }
         for (final String s : staticImports) {
           int i = s.length() - 1;
           for (; s.charAt(i) != '.'; i--) ;
-          imports.add(s.substring(0, i));
+          final String anImport = s.substring(0, i);
+          if (!anImport.endsWith("*")) {
+            allImports.add(anImport); // filter out wildcard imports
+          }
         }
 
-        addPostPass(new PostPass() {
-          public void perform() {
-            final int rootClassName = myContext.get(className.replace(".", "/"));
-            final int fileName = myClassToSourceFile.get(rootClassName);
+        if (!allImports.isEmpty()) {
+          addPostPass(new PostPass() {
+            public void perform() {
+              final int rootClassName = myContext.get(className.replace(".", "/"));
+              final int fileName = myClassToSourceFile.get(rootClassName);
+              final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
 
-            for (final String i : imports) {
-              if (i.endsWith("*")) {
-                continue; // filter out wildcard imports
-              }
-              final int iname = myContext.get(i.replace(".", "/"));
-
-              myClassToClassDependency.put(iname, rootClassName);
-
-              final ClassRepr repr = getReprByName(rootClassName);
-
-              if (repr != null && fileName > 0) {
-                if (repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
+              for (final String i : allImports) {
+                final int iname = myContext.get(i.replace(".", "/"));
+                myClassToClassDependency.put(iname, rootClassName);
+                if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
                   mySourceFileToClasses.put(fileName, repr);
                 }
               }
             }
-          }
-        });
+          });
+        }
       }
     };
   }
