@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.intellij.facet.impl;
+package org.jetbrains.jps.model.serialization.facet;
 
-import com.intellij.facet.FacetManagerImpl;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -29,24 +28,24 @@ import java.util.ArrayList;
 /**
  * @author nik
 */
-@Tag(FacetManagerImpl.FACET_ELEMENT)
+@Tag(JpsFacetLoader.FACET_ELEMENT)
 public class FacetState {
   private String myFacetType;
   private String myName;
   private Element myConfiguration;
   private List<FacetState> mySubFacets = new ArrayList<FacetState>();
 
-  @Attribute(FacetManagerImpl.TYPE_ATTRIBUTE)
+  @Attribute(JpsFacetLoader.TYPE_ATTRIBUTE)
   public String getFacetType() {
     return myFacetType;
   }
 
-  @Attribute(FacetManagerImpl.NAME_ATTRIBUTE)
+  @Attribute(JpsFacetLoader.NAME_ATTRIBUTE)
   public String getName() {
     return myName;
   }
 
-  @Tag(FacetManagerImpl.CONFIGURATION_ELEMENT)
+  @Tag(JpsFacetLoader.CONFIGURATION_ELEMENT)
   public Element getConfiguration() {
     return myConfiguration;
   }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.facet.impl;
+package org.jetbrains.jps.model.serialization.facet;
 
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
