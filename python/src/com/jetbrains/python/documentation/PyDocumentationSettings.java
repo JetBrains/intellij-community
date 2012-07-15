@@ -22,7 +22,7 @@ import java.util.List;
       }
 )
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
-  public String myDocStringFormat = DocStringFormat.PLAIN;
+  public String myDocStringFormat = "";
 
   public boolean isEpydocFormat(PsiFile file) {
     return isFormat(file, DocStringFormat.EPYTEXT);
@@ -56,6 +56,10 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
 
   public void setFormat(String format) {
     myDocStringFormat = format;
+  }
+
+  public String getFormat() {
+    return myDocStringFormat;
   }
 
   @Override
