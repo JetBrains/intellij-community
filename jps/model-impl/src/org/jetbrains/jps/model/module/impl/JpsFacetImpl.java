@@ -44,6 +44,11 @@ public class JpsFacetImpl extends JpsNamedCompositeElementBase<JpsFacetImpl> imp
   }
 
   @Override
+  public <P extends JpsElementProperties> P getProperties(@NotNull JpsFacetType<P> type) {
+    return myContainer.getChild(TYPED_DATA_KIND).getProperties(type);
+  }
+
+  @Override
   public void setParentFacet(@NotNull JpsFacet facet) {
     myContainer.setChild(PARENT_FACET_REFERENCE, facet.createReference());
   }
