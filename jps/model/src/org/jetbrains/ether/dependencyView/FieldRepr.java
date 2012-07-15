@@ -34,12 +34,12 @@ class FieldRepr extends ProtoMember {
 
     final FieldRepr fieldRepr = (FieldRepr)o;
 
-    return myName == fieldRepr.myName;
+    return name == fieldRepr.name;
   }
 
   @Override
   public int hashCode() {
-    return 31 * myName;
+    return 31 * name;
   }
 
   public static DataExternalizer<FieldRepr> externalizer(final DependencyContext context) {
@@ -57,10 +57,10 @@ class FieldRepr extends ProtoMember {
   }
 
   public UsageRepr.Usage createUsage(final DependencyContext context, final int owner) {
-    return UsageRepr.createFieldUsage(context, myName, owner, context.get(myType.getDescr(context)));
+    return UsageRepr.createFieldUsage(context, name, owner, context.get(myType.getDescr(context)));
   }
 
   public UsageRepr.Usage createAssignUsage(final DependencyContext context, final int owner) {
-    return UsageRepr.createFieldAssignUsage(context, myName, owner, context.get(myType.getDescr(context)));
+    return UsageRepr.createFieldAssignUsage(context, name, owner, context.get(myType.getDescr(context)));
   }
 }
