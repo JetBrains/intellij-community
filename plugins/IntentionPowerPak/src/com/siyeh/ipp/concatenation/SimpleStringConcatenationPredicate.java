@@ -21,7 +21,6 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class SimpleStringConcatenationPredicate implements PsiElementPredicate {
 
@@ -36,10 +35,7 @@ class SimpleStringConcatenationPredicate implements PsiElementPredicate {
     if (!ConcatenationUtils.isConcatenation(element)) {
       return false;
     }
-    if (excludeConcatenationsInsideAnnotations && isInsideAnnotation(element)) {
-      return false;
-    }
-    return !ErrorUtil.containsError(element);
+    return !(excludeConcatenationsInsideAnnotations && isInsideAnnotation(element));
   }
 
   private static boolean isInsideAnnotation(PsiElement element) {
