@@ -229,7 +229,11 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       }
     }
 
-    if (visualColumnToRestore < 0 && editor != null) {
+    if (editor == null) {
+      return;
+    }
+    
+    if (visualColumnToRestore < 0) {
       editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
       return;
     }
