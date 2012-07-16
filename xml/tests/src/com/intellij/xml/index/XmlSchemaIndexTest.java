@@ -9,10 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -75,7 +72,8 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
         return virtualFile.getName();
       }
     }));
-    assertEquals(Arrays.asList("web-app_3_0.xsd", "web-app_2_5.xsd"), names);
+    Collections.sort(names);
+    assertEquals(Arrays.asList("web-app_2_5.xsd", "web-app_3_0.xsd"), names);
   }
 
   public void testNamespaceIndex() {
