@@ -342,10 +342,12 @@ public class ExternalDocumentValidator {
       if ("ANT".equals(lang.getID())) return;
     }
 
-    final XmlTag rootTag = document != null ? document.getRootTag() : null;
+    final XmlTag rootTag = document.getRootTag();
     if (rootTag == null) return;
 
-    if (XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
+    String namespace = rootTag.getNamespace();
+    // todo: remove this dirty fix
+    if (XmlUtil.ANT_URI.equals(namespace) || "urn:ui:com.google.gwt.uibinder".equals(namespace)) return;
 
     final Project project = document.getProject();
 
