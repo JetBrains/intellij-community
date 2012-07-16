@@ -107,6 +107,11 @@ public class PyNames {
 
   public static final String PASS = "pass";
 
+  public static final String NOSE_TEST = "nose";
+  public static final String PY_TEST = "pytest";
+  public static final String AT_TEST = "attest";
+
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */

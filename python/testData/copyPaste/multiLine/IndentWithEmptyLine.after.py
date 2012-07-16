@@ -6,4 +6,3 @@ def foo():
                 b = 1
 
             graph.clear = 0.1
-        <caret>

@@ -411,6 +411,7 @@
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
     <postStartupActivity implementation="com.jetbrains.python.packaging.PyPIPackagesUpdater"/>
+    <postStartupActivity implementation="com.jetbrains.python.testing.PyTestRunnerUpdater"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.DjangoTemplateReferenceLineMarkerProvider"/>
