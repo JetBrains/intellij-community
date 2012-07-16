@@ -1883,6 +1883,17 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testDtdAutodetection() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "nuancevoicexml-2-0.xml"),
+        getVirtualFile(BASE_PATH + "nuancevoicexml-2-0.dtd")
+      },
+      true,
+      false
+    );
+  }
+
   public void testSchemaWithXmlId() throws Exception {
     final String testName = getTestName(false);
 

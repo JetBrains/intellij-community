@@ -34,6 +34,8 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.impl.dtd.XmlAttributeDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -134,6 +136,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       return refs.toArray(new PsiReference[refs.size()]);
     }
 
+
     if (isUrlText(s, element.getProject()) ||
         (parent instanceof XmlAttribute &&
           ( ((XmlAttribute)parent).isNamespaceDeclaration() ||
@@ -141,6 +144,13 @@ public class URIReferenceProvider extends PsiReferenceProvider {
           )
          )
       ) {
+      if (parent instanceof XmlAttribute) {
+        XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+        // no namespaces in DTD-based schemas
+        if (descriptor instanceof XmlAttributeDescriptorImpl) {
+          return PsiReference.EMPTY_ARRAY;
+        }
+      }
       if (!s.startsWith(XmlUtil.TAG_DIR_NS_PREFIX)) {
         boolean namespaceSoftRef = parent instanceof XmlAttribute &&
           NAMESPACE_ATTR_NAME.equals(((XmlAttribute)parent).getName()) &&
@@ -148,7 +158,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
         if (!namespaceSoftRef && parent instanceof XmlAttribute && ((XmlAttribute)parent).isNamespaceDeclaration()) {
           namespaceSoftRef = parent.getContainingFile().getContext() != null;
         }
-        return getUrlReference(element, namespaceSoftRef);
+        return new URLReference[] { new URLReference(element, null, namespaceSoftRef)};
       }
     }
 
@@ -170,9 +180,4 @@ public class URIReferenceProvider extends PsiReferenceProvider {
     if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
     return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;
   }
-
-  private static URLReference[] getUrlReference(final PsiElement element, boolean soft) {
-    return new URLReference[] { new URLReference(element, null, soft)};
-  }
-
 }
