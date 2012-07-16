@@ -169,10 +169,32 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     private final JComponent myComponent;
     private final int myWidth;
 
-    public TextIcon(IdeNotificationArea component, String str) {
+    public TextIcon(JComponent component, @NotNull String str) {
       myStr = str;
       myComponent = component;
       myWidth = myComponent.getFontMetrics(calcFont()).stringWidth(myStr) + 1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof TextIcon)) return false;
+
+      TextIcon icon = (TextIcon)o;
+
+      if (myWidth != icon.myWidth) return false;
+      if (!myComponent.equals(icon.myComponent)) return false;
+      if (!myStr.equals(icon.myStr)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myStr.hashCode();
+      result = 31 * result + myComponent.hashCode();
+      result = 31 * result + myWidth;
+      return result;
     }
 
     @Override
