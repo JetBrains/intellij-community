@@ -1,21 +1,7 @@
-package com.siyeh.igtest.initialization;
+package com.siyeh.igtest.initialization.this_escaped_in_constructor;
 
 import java.util.ArrayList;
 import java.util.List;
-
-class Testing
-{
-    Object boom;
-
-    public static boolean  foo(Object val)
-    {
-        return true;
-    }
-
-    public static boolean foo(Object o1, Object o2) {
-        return false;
-    }
-}
 
 public class ThisEscapedInConstructorInspection{
     private boolean foo = Testing.foo(ThisEscapedInConstructorInspection.this, this);
@@ -39,4 +25,17 @@ public class ThisEscapedInConstructorInspection{
         NoEscape(Object o) {
         }
     }
+}
+class Testing
+{
+  Object boom;
+
+  public static boolean  foo(Object val)
+  {
+    return true;
+  }
+
+  public static boolean foo(Object o1, Object o2) {
+    return false;
+  }
 }
