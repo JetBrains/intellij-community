@@ -1,11 +1,14 @@
 package com.intellij.xml.index;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,6 +17,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
+@SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
 
   private static final String NS = "http://java.jb.com/xml/ns/javaee";
@@ -62,9 +66,11 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
     assertTrue(tags.size() > 26);
     final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName("bean", project);
     assertEquals(1, files.size());
+    Module module = ModuleUtilCore.findModuleForFile(files.iterator().next(), project);
+    assert module != null;
+    final Collection<VirtualFile> files1 = FileBasedIndex.getInstance().getContainingFiles(XmlTagNamesIndex.NAME, "web-app", module.getModuleContentScope());
 
-    final Collection<VirtualFile> files1 = XmlTagNamesIndex.getFilesByTagName("web-app", project);
-    assertEquals(files1.toString(), 2, files1.size());
+    assertEquals(new ArrayList<VirtualFile>(files1).toString(), 2, files1.size());
 
     List<String> names = new ArrayList<String>(ContainerUtil.map(files1, new Function<VirtualFile, String>() {
       @Override
