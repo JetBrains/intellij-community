@@ -83,7 +83,7 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor<Folding
   public void processTransferableData(final Project project,
                                       final Editor editor,
                                       final RangeMarker bounds,
-                                      int caretColumn,
+                                      int caretOffset,
                                       Ref<Boolean> indented,
                                       final FoldingTransferableData value) {
     final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);

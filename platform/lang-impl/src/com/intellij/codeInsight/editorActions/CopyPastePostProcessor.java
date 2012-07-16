@@ -41,7 +41,7 @@ public interface CopyPastePostProcessor<T extends TextBlockTransferableData> {
   void processTransferableData(final Project project,
                                final Editor editor,
                                final RangeMarker bounds,
-                               int caretColumn,
+                               int caretOffset,
                                Ref<Boolean> indented,
                                final T value);
 }

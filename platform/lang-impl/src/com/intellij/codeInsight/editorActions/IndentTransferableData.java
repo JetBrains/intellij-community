@@ -11,26 +11,15 @@ import java.io.Serializable;
 public class IndentTransferableData implements TextBlockTransferableData, Serializable {
   private static @NonNls DataFlavor ourFlavor;
 
-  private final int myIndent;
-  private final int myMaxIndent;
-  private final int myFirstLineLeadingSpaces;
+  private final int myOffset;
 
-  public IndentTransferableData(int indent, int maxIndent, int firstLineLeadingSpaces) {
-    myIndent = indent;
-    myMaxIndent = maxIndent;
-    myFirstLineLeadingSpaces = firstLineLeadingSpaces;
+  public IndentTransferableData(int offset) {
+    myOffset = offset;
   }
 
-  public int getIndent() {
-    return myIndent;
-  }
 
-  public int getMaxIndent() {
-    return myMaxIndent;
-  }
-
-  public int getFirstLineLeadingSpaces() {
-    return myFirstLineLeadingSpaces;
+  public int getOffset() {
+    return myOffset;
   }
 
   public DataFlavor getFlavor() {
@@ -66,6 +55,6 @@ public class IndentTransferableData implements TextBlockTransferableData, Serial
   }
 
   protected IndentTransferableData clone() {
-    return new IndentTransferableData(myIndent, myMaxIndent, myFirstLineLeadingSpaces);
+    return new IndentTransferableData(myOffset);
   }
 }

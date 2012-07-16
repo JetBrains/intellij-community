@@ -227,7 +227,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       final Ref<Boolean> indented = new Ref<Boolean>(Boolean.FALSE);
       for(Map.Entry<CopyPastePostProcessor, TextBlockTransferableData> e: extraData.entrySet()) {
         //noinspection unchecked
-        e.getKey().processTransferableData(project, editor, bounds, col, indented, e.getValue());
+        e.getKey().processTransferableData(project, editor, bounds, offset, indented, e.getValue());
       }
 
       boolean pastedTextContainsWhiteSpacesOnly = 
