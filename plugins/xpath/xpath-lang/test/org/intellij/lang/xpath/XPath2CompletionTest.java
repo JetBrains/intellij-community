@@ -15,23 +15,19 @@
  */
 package org.intellij.lang.xpath;
 
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-
 public class XPath2CompletionTest extends TestBase {
 
   public void testCastInsert() throws Throwable {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-    doXPathCompletion();
+    final String name = getTestFileName();
+    myFixture.testCompletion(name + ".xpath2", name + "_after.xpath2");
   }
 
   public void testTreatInsert() throws Throwable {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-    doXPathCompletion();
-  }
-
-  private void doXPathCompletion() throws Throwable {
     final String name = getTestFileName();
-    myFixture.testCompletion(name + ".xpath2", name + "_after.xpath2");
+    myFixture.configureByFile(name + ".xpath2");
+    myFixture.completeBasic();
+    myFixture.type('\n');
+    myFixture.checkResultByFile(name + "_after.xpath2");
   }
 
   @Override
