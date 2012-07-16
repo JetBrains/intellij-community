@@ -1,0 +1,8 @@
+<!DOCTYPE tag [
+<!ELEMENT tag (#PCDATA)>
+<!ATTLIST tag
+    attr1 CDATA #REQUIRED
+    attr2 CDATA #REQUIRED>
+]>
+
+<tag attr1="" a<caret>/>
