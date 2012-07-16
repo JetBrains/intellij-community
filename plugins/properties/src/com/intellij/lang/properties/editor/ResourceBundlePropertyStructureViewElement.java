@@ -27,7 +27,6 @@ import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformIcons;
@@ -46,7 +45,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   static {
     TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
     textAttributes.setForegroundColor(Color.red);
-    INCOMPLETE_PROPERTY_KEY = TextAttributesKeyDefaults.createTextAttributesKey("INCOMPLETE_PROPERTY_KEY", textAttributes);
+    INCOMPLETE_PROPERTY_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_PROPERTY_KEY", textAttributes);
 
   }
   public ResourceBundlePropertyStructureViewElement(final Project project, final ResourceBundle resourceBundle, String propertyName) {

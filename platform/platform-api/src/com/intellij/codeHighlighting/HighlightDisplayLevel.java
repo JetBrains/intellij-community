@@ -111,7 +111,7 @@ public class HighlightDisplayLevel {
       return createIconByMask(globalScheme.getAttributes(key).getErrorStripeColor());
     }
 
-    return createIconByMask(TextAttributesKeyDefaults.getDefaultAttributes(key).getErrorStripeColor());
+    return createIconByMask(key.getDefaultAttributes().getErrorStripeColor());
   }
 
   public static Icon createIconByMask(final Color renderColor) {

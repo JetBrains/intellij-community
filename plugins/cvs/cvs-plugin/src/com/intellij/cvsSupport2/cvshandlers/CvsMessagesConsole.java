@@ -22,10 +22,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.EditorAdapter;
 
 import java.awt.*;
-import java.text.MessageFormat;
 
 /**
  * author: lesya
