@@ -66,8 +66,8 @@ static void main_loop();
 static bool read_input();
 static bool update_roots(array* new_roots);
 static void unregister_roots();
-static bool register_roots(array* new_roots, array* unwatchable);
-static bool unwatchable_mounts(array* mounts);
+static bool register_roots(array* new_roots, array* unwatchable, array* mounts);
+static array* unwatchable_mounts();
 static void inotify_callback(char* path, int event);
 static void output(const char* format, ...);
 
@@ -249,6 +249,7 @@ static bool update_roots(array* new_roots) {
   userlog(LOG_INFO, "updating roots (curr:%d, new:%d)", array_size(roots), array_size(new_roots));
 
   unregister_roots();
+
   if (array_size(new_roots) == 0) {
     output("UNWATCHEABLE\n#\n");
     array_delete(new_roots);
@@ -261,17 +262,16 @@ static bool update_roots(array* new_roots) {
     return true;
   }
 
+  array* mounts = unwatchable_mounts();
+  if (mounts == NULL) {
+    return false;
+  }
+
   array* unwatchable = array_create(20);
-  CHECK_NULL(unwatchable, false);
-  if (!unwatchable_mounts(unwatchable)) {
+  if (!register_roots(new_roots, unwatchable, mounts)) {
     return false;
   }
 
-  if (!register_roots(new_roots, unwatchable)) {
-    return false;
-  }
-
-  // todo: sort/optimize list
   output("UNWATCHEABLE\n");
   for (int i=0; i<array_size(unwatchable); i++) {
     char* s = array_get(unwatchable, i);
@@ -281,6 +281,7 @@ static bool update_roots(array* new_roots) {
   output("#\n");
 
   array_delete_vs_data(unwatchable);
+  array_delete_vs_data(mounts);
   array_delete(new_roots);
 
   return true;
@@ -298,11 +299,29 @@ static void unregister_roots() {
 }
 
 
-static bool register_roots(array* new_roots, array* unwatchable) {
+static bool register_roots(array* new_roots, array* unwatchable, array* mounts) {
   for (int i=0; i<array_size(new_roots); i++) {
     char* new_root = array_get(new_roots, i);
     userlog(LOG_INFO, "registering root: %s", new_root);
+
+    char* root = new_root;
+    if (*root == '|') ++root;
+    char* skip = NULL;
+    for (int j=0; j<array_size(mounts); j++) {
+      char* mount = array_get(mounts, j);
+      if (strncmp(mount, root, strlen(mount)) == 0) {
+        skip = root;
+        break;
+      }
+    }
+    if (skip != NULL) {
+      CHECK_NULL(array_push(unwatchable, skip), false);
+      continue;
+    }
+
+    // todo: consider a mount point under a watch root
     int id = watch(new_root, unwatchable);
+
     if (id == ERR_ABORT) {
       return false;
     }
@@ -327,6 +346,7 @@ static bool register_roots(array* new_roots, array* unwatchable) {
   return true;
 }
 
+
 static bool is_watchable(const char* dev, const char* mnt, const char* fs) {
   // don't watch special and network filesystems
   return !(strncmp(mnt, "/dev", 4) == 0 || strncmp(mnt, "/proc", 5) == 0 || strncmp(mnt, "/sys", 4) == 0 ||
@@ -335,15 +355,18 @@ static bool is_watchable(const char* dev, const char* mnt, const char* fs) {
 
 #define MTAB_DELIMS " \t"
 
-static bool unwatchable_mounts(array* mounts) {
+static array* unwatchable_mounts() {
   FILE* mtab = fopen("/etc/mtab", "r");
   if (mtab == NULL) {
     mtab = fopen("/proc/mounts", "r");
   }
   if (mtab == NULL) {
     userlog(LOG_ERR, "neither /etc/mtab nor /proc/mounts can be read");
-    return false;
+    return NULL;
   }
+
+  array* mounts = array_create(20);
+  CHECK_NULL(mounts, NULL);
 
   char* line;
   while ((line = read_line(mtab)) != NULL) {
@@ -354,16 +377,16 @@ static bool unwatchable_mounts(array* mounts) {
 
     if (dev == NULL || point == NULL || fs == NULL) {
       userlog(LOG_ERR, "can't parse mount line");
-      return false;
+      return NULL;
     }
 
     if (!is_watchable(dev, point, fs)) {
-      CHECK_NULL(array_push(mounts, strdup(point)), false);
+      CHECK_NULL(array_push(mounts, strdup(point)), NULL);
     }
   }
 
   fclose(mtab);
-  return true;
+  return mounts;
 }
 
 
