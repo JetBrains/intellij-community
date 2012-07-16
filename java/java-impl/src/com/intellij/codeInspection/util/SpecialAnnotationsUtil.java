@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.util;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -31,6 +32,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -216,7 +218,8 @@ public class SpecialAnnotationsUtil {
       for (PsiAnnotation psiAnnotation : psiAnnotations) {
         @NonNls final String name = psiAnnotation.getQualifiedName();
         if (name == null) continue;
-        if (name.startsWith("java.") || name.startsWith("javax.") || name.startsWith("org.jetbrains.")) continue;
+        if (name.startsWith("java.") || name.startsWith("javax.") || 
+            (name.startsWith("org.jetbrains.") && !AnnotationUtil.isJetbrainsAnnotation(StringUtil.getShortName(name)))) continue;
         if (!processor.process(name)) break;
       }
     }
