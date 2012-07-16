@@ -78,7 +78,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   }
 
   @Nullable
-  public PsiFile resolve(final String baseSystemId, final String _systemId) {
+  public PsiFile resolve(@Nullable final String baseSystemId, final String _systemId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + _systemId + "," + super.toString() + "')");
     }
@@ -102,16 +102,14 @@ public class XmlResourceResolver implements XMLEntityResolver {
           baseFile = resolve(null,baseSystemId);
 
           if (baseFile == null) {
-            if (myFile != null) {
               // Find relative to myFile
-              File workingFile = new File("");
-              String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
-              String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
-              vFile = UriUtil.findRelativeFile(id, null);
-            }
+            File workingFile = new File("");
+            String workingDir = workingFile.getAbsoluteFile().getAbsolutePath().replace(File.separatorChar, '/');
+            String id = StringUtil.replace(baseSystemId, workingDir, myFile.getVirtualFile().getParent().getPath());
+            vFile = UriUtil.findRelative(id, myFile);
 
             if (vFile == null) {
-              vFile = UriUtil.findRelativeFile(baseSystemId, null);
+              vFile = UriUtil.findRelative(baseSystemId, myFile);
 
               if (vFile == null) {
                 try {
