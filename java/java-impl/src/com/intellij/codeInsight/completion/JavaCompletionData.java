@@ -142,7 +142,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       END_OF_BLOCK,
       new PatternFilter(psiElement().afterLeaf(
         or(
-          psiElement().withoutText(".").inside(psiElement(PsiModifierList.class)),
+          psiElement().withoutText(".").inside(psiElement(PsiModifierList.class).withParent(not(psiElement(PsiParameter.class)))),
           psiElement().isNull())))
     ),
     new PatternFilter(not(psiElement().afterLeaf("@"))));

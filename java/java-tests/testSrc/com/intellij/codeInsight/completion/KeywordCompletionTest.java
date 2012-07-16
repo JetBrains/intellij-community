@@ -101,6 +101,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }
+  public void testFinalAfterParameterAnno() throws Exception { doTest(2, "final", "float", "class"); }
 
   public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
