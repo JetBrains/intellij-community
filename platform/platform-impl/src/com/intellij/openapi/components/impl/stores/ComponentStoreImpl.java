@@ -189,9 +189,9 @@ abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   private void doAddComponent(String componentName, Object component) {
-    if (myComponents.containsKey(componentName)) {
-      LOG.error("Conflicting component name '" + componentName  + "': "
-                + myComponents.get(componentName).getClass() + " and " + component.getClass());
+    Object existing = myComponents.get(componentName);
+    if (existing != null && existing != component) {
+      LOG.error("Conflicting component name '" + componentName + "': " + existing.getClass() + " and " + component.getClass());
     }
     myComponents.put(componentName, component);
   }

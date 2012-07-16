@@ -45,7 +45,7 @@ import java.util.*;
 
 public class FileWatcherTest extends PlatformLangTestCase {
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
-  private static final int NATIVE_PROCESS_DELAY = 10 * INTER_RESPONSE_DELAY;  // time to wait for a native watcher response
+  private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
@@ -57,6 +57,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private final Runnable myNotifier = new Runnable() {
     @Override
     public void run() {
+      LOG.debug("-- (event, expected=" + myAccept + ")");
       if (!myAccept) return;
       synchronized (myAlarm) {
         myAlarm.cancelAllRequests();
@@ -74,6 +75,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   };
   private final Object myWaiter = new Object();
+  private int myTimeout = NATIVE_PROCESS_DELAY;
   private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
 
   @Override
@@ -226,8 +228,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
       assertEvent(VFileContentChangeEvent.class, watchedFile.getAbsolutePath());
 
       myAccept = true;
-      FileUtil.writeToFile(unwatchedFile, "new content");
-      assertEvent(VFileEvent.class);
+      try {
+        myTimeout = 10 * INTER_RESPONSE_DELAY;
+        FileUtil.writeToFile(unwatchedFile, "new content");
+        assertEvent(VFileEvent.class);
+      }
+      finally {
+        myTimeout = NATIVE_PROCESS_DELAY;
+      }
     }
     finally {
       unwatch(request);
@@ -544,10 +552,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
       action.run();
     }
 
+    int timeout = myTimeout;
     synchronized (myWaiter) {
       try {
         //noinspection WaitNotInLoop
-        myWaiter.wait(NATIVE_PROCESS_DELAY);
+        myWaiter.wait(timeout);
       }
       catch (InterruptedException e) {
         LOG.warn(e);

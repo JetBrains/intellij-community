@@ -58,7 +58,6 @@ import javax.swing.event.HyperlinkEvent;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -311,6 +310,7 @@ public class EventLog implements Notifications {
     text = StringUtil.replace(text, "&nbsp;", " ");
     text = StringUtil.replace(text, "&raquo;", ">>");
     text = StringUtil.replace(text, "&laquo;", "<<");
+    text = StringUtil.replace(text, "&hellip;", "...");
     document.insertString(document.getTextLength(), StringUtil.unescapeXml(text));
   }
 
