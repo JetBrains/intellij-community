@@ -185,12 +185,20 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testMethodUsedInJavadoc() throws Exception {
+    doTestConflict("Inlined method is used in javadoc");
+  }
+
+  public void testNotAStatement() throws Exception {
+    doTestConflict("Inlined result won't be a valid statement");
+  }
+
+  private void doTestConflict(final String conflict) throws Exception {
     try {
       doTest();
       fail("Conflict was not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Inlined method is used in javadoc", e.getMessage());
+      assertEquals(conflict, e.getMessage());
     }
   }
 
