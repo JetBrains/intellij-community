@@ -19,7 +19,6 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -53,25 +52,23 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private LocalFileSystem myFileSystem;
   private MessageBusConnection myConnection;
   private volatile boolean myAccept = false;
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Alarm myAlarm;
   private final Runnable myNotifier = new Runnable() {
     @Override
     public void run() {
       LOG.debug("-- (event, expected=" + myAccept + ")");
       if (!myAccept) return;
-      synchronized (myAlarm) {
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            myAccept = false;
-            LOG.debug("** waiting finished");
-            synchronized (myWaiter) {
-              myWaiter.notifyAll();
-            }
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          myAccept = false;
+          LOG.debug("** waiting finished");
+          synchronized (myWaiter) {
+            myWaiter.notifyAll();
           }
-        }, INTER_RESPONSE_DELAY);
-      }
+        }
+      }, INTER_RESPONSE_DELAY);
     }
   };
   private final Object myWaiter = new Object();
@@ -84,8 +81,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
     super.setUp();
 
-    Disposer.register(getProject(), myAlarm);
-
+    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getProject());
     myWatcher = FileWatcher.getInstance();
     assertNotNull(myWatcher);
     assertFalse(myWatcher.isOperational());
