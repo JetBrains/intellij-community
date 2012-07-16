@@ -46,9 +46,10 @@ import java.util.List;
 public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAction {
   @NonNls private static final String XMLNS_XSI_ATTR_NAME = "xmlns:xsi";
   @NonNls private static final String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
+  public static final String KEY = "add.xsi.schema.location.for.external.resource";
 
   protected String getQuickFixKeyId() {
-    return "add.xsi.schema.location.for.external.resource";
+    return KEY;
   }
 
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
@@ -92,6 +93,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
 
     CodeStyleManager.getInstance(file.getProject()).reformat(tag);
 
+    @SuppressWarnings("ConstantConditions")
     final TextRange range = tag.getAttribute(XSI_SCHEMA_LOCATION_ATTR_NAME).getValueElement().getTextRange();
     final TextRange textRange = new TextRange(range.getEndOffset() - offset - 1, range.getEndOffset() - 1);
     editor.getCaretModel().moveToOffset(textRange.getStartOffset());
@@ -105,8 +107,10 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
     XmlAttributeValue value = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
     if (value == null) return false;
     XmlAttribute attribute = PsiTreeUtil.getParentOfType(value, XmlAttribute.class);
-    if (attribute == null || !"xmlns".equals(attribute.getLocalName())) return false;
-    setText(XmlBundle.message(getQuickFixKeyId()));
-    return true;
+    if (attribute != null && attribute.isNamespaceDeclaration()) {
+      setText(XmlBundle.message(getQuickFixKeyId()));
+      return true;
+    }
+    return false;
   }
 }
