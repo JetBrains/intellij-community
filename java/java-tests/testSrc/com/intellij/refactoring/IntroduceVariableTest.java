@@ -163,6 +163,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
   }
 
+  public void testInsideForLoop() throws Exception {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
   public void testDuplicateGenericExpressions() throws Exception {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Foo2<? extends Runnable>"));
   }

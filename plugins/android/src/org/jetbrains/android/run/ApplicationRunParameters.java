@@ -23,10 +23,10 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 
@@ -43,14 +43,19 @@ import java.awt.event.ActionListener;
  * To change this template use File | Settings | File Templates.
  */
 class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRunConfiguration> {
-  private TextFieldWithBrowseButton myActivityField;
+  private EditorTextFieldWithBrowseButton myActivityField;
   private JRadioButton myLaunchDefaultButton;
   private JRadioButton myLaunchCustomButton;
   private JPanel myPanel;
   private JRadioButton myDoNothingButton;
   private JCheckBox myDeployAndInstallCheckBox;
+  private final Project myProject;
+  private final ConfigurationModuleSelector myModuleSelector;
 
   ApplicationRunParameters(final Project project, final ConfigurationModuleSelector moduleSelector) {
+    myProject = project;
+    myModuleSelector = moduleSelector;
+
     myActivityField.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (!project.isInitialized()) {
@@ -129,5 +134,11 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
 
   @Override
   public void setAnchor(JComponent anchor) {
+  }
+
+  private void createUIComponents() {
+    myActivityField = new EditorTextFieldWithBrowseButton(myProject, true,
+                                                          new AndroidClassVisibilityChecker(myProject, myModuleSelector,
+                                                                                            AndroidUtils.ACTIVITY_BASE_CLASS_NAME));
   }
 }

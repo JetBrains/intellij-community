@@ -33,6 +33,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 public class HintUtil {
   public static final Color INFORMATION_COLOR = new Color(253, 254, 226);
@@ -49,10 +52,13 @@ public class HintUtil {
   }
 
   public static JComponent createInformationLabel(@NotNull String text) {
-    return createInformationLabel(text, null);
+    return createInformationLabel(text, null, null);
   }
-  
-  public static JComponent createInformationLabel(@NotNull String text, @Nullable HyperlinkListener listener) {
+
+  public static JComponent createInformationLabel(@NotNull String text,
+                                                  @Nullable HyperlinkListener hyperlinkListener,
+                                                  @Nullable MouseListener mouseListener)
+  {
     HintHint hintHint = new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
 
     HintLabel label = new HintLabel();
@@ -67,8 +73,11 @@ public class HintUtil {
       label.setOpaque(true);
     }
 
-    if (listener != null) {
-      label.myPane.addHyperlinkListener(listener);
+    if (hyperlinkListener != null) {
+      label.myPane.addHyperlinkListener(hyperlinkListener);
+    }
+    if (mouseListener != null) {
+      label.myPane.addMouseListener(mouseListener);
     }
 
     return label;

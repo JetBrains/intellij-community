@@ -203,6 +203,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return ((PsiManagerEx)myPsiManager).getFileManager().findFile(virtualFile);
   }
 
+  @Nullable
   @Override
   public Document getDocument(@NotNull PsiFile file) {
     if (file instanceof PsiBinaryFile) return null;

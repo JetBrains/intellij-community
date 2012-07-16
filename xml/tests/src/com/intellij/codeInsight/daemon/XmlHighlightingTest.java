@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
@@ -59,7 +60,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.*;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings({"HardCodedStringLiteral", "ConstantConditions"})
 public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/xml/";
 
@@ -634,13 +635,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testXHtmlValidation2() throws Exception {
-    disableHtmlSupport();
-    try {
-      doTest();
-    }
-    finally {
-      enableHtmlSupport();
-    }
+    configureByFile(getFullRelativeTestName());
+    doDoTest(true, true, true);
   }
 
   public void testXHtmlValidation3() throws Exception {
@@ -697,12 +693,12 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testComplexSchemaValidation() throws Exception {
-    disableHtmlSupport();
+//    disableHtmlSupport();
     try {
       doTest(getFullRelativeTestName(), false, false);
     }
     finally {
-      enableHtmlSupport();
+//      enableHtmlSupport();
     }
   }
 
@@ -1198,10 +1194,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testSpecifyXsiSchemaLocationQuickFix() throws Exception {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     final String testName = getTestName(false);
-    final String actionName = XmlBundle.message("add.xsi.schema.location.for.external.resource");
+    final String actionName = XmlBundle.message(AddXsiSchemaLocationForExtResourceAction.KEY);
     doTestWithQuickFix(BASE_PATH + testName, actionName, true);
     doTestWithQuickFix(BASE_PATH + testName + "2", actionName, true);
     doTestWithQuickFix(BASE_PATH + testName + "3", actionName, true);
+    doTestWithQuickFix(BASE_PATH + testName + "4", actionName, true);
   }
 
   public void testHighlightingWithConditionalSectionsInDtd() throws Exception {

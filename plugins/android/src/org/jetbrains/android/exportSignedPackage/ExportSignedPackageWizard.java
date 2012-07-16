@@ -25,10 +25,8 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -40,12 +38,8 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
   private final Project myProject;
 
   private AndroidFacet myFacet;
-  private KeyStore myKeystore;
   private PrivateKey myPrivateKey;
   private X509Certificate myCertificate;
-  private String myKeystoreLocation;
-  private char[] myKeystorePassword;
-  private List<String> myKeyAliasList;
 
   private boolean mySigned;
 
@@ -63,8 +57,6 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
     }
     if (signed) {
       addStep(new KeystoreStep(this));
-      addStep(new InitialKeyStep(this));
-      addStep(new NewKeyStep(this));
     }
     addStep(new ApkStep(this));
     init();
@@ -99,19 +91,6 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
 
   @Override
   protected int getNextStep(int stepIndex) {
-    ExportSignedPackageWizardStep step = mySteps.get(stepIndex);
-    if (step instanceof KeystoreStep) {
-      if (((KeystoreStep)step).isCreateNewKeystore()) {
-        // skip InitialKeyStep
-        stepIndex++;
-      }
-    }
-    else if (step instanceof InitialKeyStep) {
-      if (!((InitialKeyStep)step).isCreateNewKey()) {
-        // skip NewKeyStep
-        stepIndex++;
-      }
-    }
     int result = super.getNextStep(stepIndex);
     if (result != myCurrentStep) {
       mySteps.get(result).setPreviousStepIndex(myCurrentStep);
@@ -161,39 +140,12 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
     return null;
   }
 
-  public void setKeystore(@NotNull KeyStore keystore) {
-    myKeystore = keystore;
-  }
-
-  @Nullable
-  public KeyStore getKeystore() {
-    return myKeystore;
-  }
-
   public Project getProject() {
     return myProject;
   }
 
   public void setFacet(@NotNull AndroidFacet facet) {
     myFacet = facet;
-  }
-
-  public void setKeystoreLocation(@NotNull String location) {
-    myKeystoreLocation = location;
-  }
-
-  public void setKeystorePassword(@NotNull char[] password) {
-    myKeystorePassword = password;
-  }
-
-  @Nullable
-  public String getKeystoreLocation() {
-    return myKeystoreLocation;
-  }
-
-  @Nullable
-  public char[] getKeystorePassword() {
-    return myKeystorePassword;
   }
 
   public AndroidFacet getFacet() {
@@ -214,13 +166,5 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
 
   public X509Certificate getCertificate() {
     return myCertificate;
-  }
-
-  public List<String> getKeyAliasList() {
-    return myKeyAliasList;
-  }
-
-  public void setKeyAliasList(List<String> keyAliasList) {
-    myKeyAliasList = keyAliasList;
   }
 }

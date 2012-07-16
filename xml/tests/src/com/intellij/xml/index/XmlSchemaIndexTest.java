@@ -1,21 +1,23 @@
 package com.intellij.xml.index;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndex;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
+@SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
 
   private static final String NS = "http://java.jb.com/xml/ns/javaee";
@@ -64,19 +66,20 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
     assertTrue(tags.size() > 26);
     final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName("bean", project);
     assertEquals(1, files.size());
+    Module module = ModuleUtilCore.findModuleForFile(files.iterator().next(), project);
+    assert module != null;
+    final Collection<VirtualFile> files1 = FileBasedIndex.getInstance().getContainingFiles(XmlTagNamesIndex.NAME, "web-app", module.getModuleContentScope());
 
-    final Collection<VirtualFile> files1 = XmlTagNamesIndex.getFilesByTagName("schema", project);
-    assertEquals(files1.toString(), 2, files1.size());
+    assertEquals(new ArrayList<VirtualFile>(files1).toString(), 2, files1.size());
 
-    Collection<String> names = ContainerUtil.map(files1, new Function<VirtualFile, String>() {
+    List<String> names = new ArrayList<String>(ContainerUtil.map(files1, new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile virtualFile) {
         return virtualFile.getName();
       }
-    });
-    List<String> expected = Arrays.asList("XMLSchema.xsd", "XMLSchema.xsd");
-    names.removeAll(expected);
-    assertTrue(files1.toString(), names.isEmpty());
+    }));
+    Collections.sort(names);
+    assertEquals(Arrays.asList("web-app_2_5.xsd", "web-app_3_0.xsd"), names);
   }
 
   public void testNamespaceIndex() {

@@ -2,7 +2,6 @@ package org.jetbrains.android.exportSignedPackage;
 
 import com.android.jarutils.DebugKeyProvider;
 import com.android.jarutils.KeystoreHelper;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -184,7 +183,6 @@ public abstract class NewKeyForm {
         }
         throw new CommitStepException(AndroidBundle.message("android.cannot.create.new.key.error"));
       }
-      PropertiesComponent.getInstance(getProject()).setValue(KeystoreStep.DEFAULT_KEYSTORE_LOCATION, keystoreLocation);
       loadKeystoreAndKey(keystoreLocation, keystorePassword, keyAlias, keyPassword);
     }
     finally {
@@ -229,7 +227,6 @@ public abstract class NewKeyForm {
       if (privateKey == null || certificate == null) {
         throw new CommitStepException(AndroidBundle.message("android.extract.package.cannot.find.key.error", keyAlias));
       }
-      PropertiesComponent.getInstance(getProject()).setValue(InitialKeyStep.DEFAULT_KEY_ALIAS, keyAlias);
       myPrivateKey = privateKey;
       myCertificate = (X509Certificate)certificate;
     }

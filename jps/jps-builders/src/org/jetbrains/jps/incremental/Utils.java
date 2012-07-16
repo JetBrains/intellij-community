@@ -134,4 +134,8 @@ public class Utils {
     final Map<String, Collection<String>> removed = REMOVED_SOURCES_KEY.get(context);
     return removed != null && !removed.isEmpty();
   }
+
+  public static boolean errorsDetected(CompileContext context) {
+    return ERRORS_DETECTED_KEY.get(context, Boolean.FALSE);
+  }
 }

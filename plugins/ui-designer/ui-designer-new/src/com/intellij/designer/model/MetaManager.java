@@ -130,11 +130,7 @@ public abstract class MetaManager {
 
     Element palette = element.getChild("palette");
     if (palette != null) {
-      meta.setPaletteItem(
-        new DefaultPaletteItem(palette.getAttributeValue("title"),
-                               palette.getAttributeValue("icon"),
-                               palette.getAttributeValue("tooltip"),
-                               palette.getAttributeValue("version")));
+      meta.setPaletteItem(createPaletteItem(palette));
     }
 
     Element creation = element.getChild("creation");
@@ -165,6 +161,13 @@ public abstract class MetaManager {
 
   protected MetaModel createModel(Class<RadComponent> model, String target, String tag) throws Exception {
     return new MetaModel(model, target, tag);
+  }
+
+  protected DefaultPaletteItem createPaletteItem(Element palette) {
+    return new DefaultPaletteItem(palette.getAttributeValue("title"),
+                                  palette.getAttributeValue("icon"),
+                                  palette.getAttributeValue("tooltip"),
+                                  palette.getAttributeValue("version"));
   }
 
   protected void loadProperties(MetaModel meta, Element properties) throws Exception {

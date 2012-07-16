@@ -40,13 +40,14 @@ public class ExecutionEnvironment extends UserDataHolderBase {
 
   @Nullable private RunnerSettings myRunnerSettings;
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
-  @Nullable private RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
+  @Nullable private final RunnerAndConfigurationSettings myRunnerAndConfigurationSettings;
   @Nullable private final RunContentDescriptor myContentToReuse;
 
   @TestOnly
   public ExecutionEnvironment() {
     myProject = null;
     myContentToReuse = null;
+    myRunnerAndConfigurationSettings = null;
   }
 
   public ExecutionEnvironment(@NotNull final ProgramRunner runner,

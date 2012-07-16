@@ -9,6 +9,7 @@ public class JoinConcatenatedStringLiteralsIntentionTest extends IPPTestCase {
     public void testNonString() { doTest(); }
     public void testNonString2() { doTest(); }
     public void testNotAvailable() { assertIntentionNotAvailable(); }
+    public void testKeepCommentsAndWhitespace() { doTest(); }
 
     @Override
     protected String getIntentionName() {

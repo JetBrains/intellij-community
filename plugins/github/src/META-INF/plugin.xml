@@ -14,6 +14,7 @@
     <applicationService serviceInterface="org.jetbrains.plugins.github.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.GithubSettings"/>
     <applicationConfigurable instance="org.jetbrains.plugins.github.ui.GitHubSettingsConfigurable"/>
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.ui.GithubAnnotationGutterActionProvider" />
   </extensions>
 
   <actions>
@@ -28,7 +29,7 @@
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
-    <action id="Github.Open.Commit.In.Browser" class="org.jetbrains.plugins.github.GithubShowCommitInBrowserAction">
+    <action id="Github.Open.Commit.In.Browser" class="org.jetbrains.plugins.github.GithubShowCommitInBrowserFromLogAction">
       <add-to-group group-id="Git.LogContextMenu" />
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">

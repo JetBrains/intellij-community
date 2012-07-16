@@ -57,6 +57,8 @@ import java.awt.event.MouseEvent;
 
 public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
 
+  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
+
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private RegistryValue myIsEnabled;
 
@@ -64,8 +66,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private Component myQueuedComponent;
 
   private BalloonImpl myCurrentTipUi;
-  private MouseEvent myCurrentEvent;
-  private boolean myCurrentTipIsCentered;
+  private MouseEvent  myCurrentEvent;
+  private boolean     myCurrentTipIsCentered;
 
   private Runnable myHideRunnable;
 
@@ -75,12 +77,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   private final Alarm myAlarm = new Alarm();
 
-  private int myX;
-  private int myY;
+  private int           myX;
+  private int           myY;
   private RegistryValue myMode;
 
   private IdeTooltip myCurrentTooltip;
-  private Runnable myShowRequest;
+  private Runnable   myShowRequest;
   private IdeTooltip myQueuedTooltip;
 
 
@@ -341,7 +343,11 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }, tooltip.getDismissDelay());
   }
-
+  
+  @Nullable
+  public IdeTooltip getCurrentTooltip() {
+    return myCurrentTooltip;
+  }
 
   public Color getTextForeground(boolean awtTooltip) {
     return useGraphite(awtTooltip) ? Color.white : UIUtil.getToolTipForeground();

@@ -40,7 +40,7 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
     return FileBasedIndex.getInstance().getAllKeys(NAME, project);
   }
 
-  private static final ID<String,Void> NAME = ID.create("XmlTagNames");
+  static final ID<String,Void> NAME = ID.create("XmlTagNames");
 
   @Override
   @NotNull

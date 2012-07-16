@@ -92,10 +92,10 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> i
     }
   }
 
-  @Override
   @NotNull
-  public JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<?> type) {
-    return myContainer.getChild(JpsFacetKind.COLLECTION_KIND).addChild(new JpsFacetImpl(type, name));
+  @Override
+  public <P extends JpsElementProperties> JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties) {
+    return myContainer.getChild(JpsFacetKind.COLLECTION_KIND).addChild(new JpsFacetImpl(type, name, properties));
   }
 
   @NotNull

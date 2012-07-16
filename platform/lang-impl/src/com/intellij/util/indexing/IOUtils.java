@@ -31,9 +31,14 @@ public class IOUtils {
   private static volatile boolean canUseSnappy;
   static {
     try {
-      Field impl = Snappy.class.getDeclaredField("impl");
-      impl.setAccessible(true);
-      canUseSnappy = impl.get(null) != null && System.getProperty("idea.no.snappy") == null;
+      if (System.getProperty("idea.no.snappy") == null) { // if enabled
+        Field impl = Snappy.class.getDeclaredField("impl");
+        impl.setAccessible(true);
+        canUseSnappy = impl.get(null) != null;
+      }
+      else {
+        canUseSnappy = false;
+      }
     }
     catch (Throwable e) {}
   }

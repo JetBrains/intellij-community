@@ -152,7 +152,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static InputStream byteStreamSkippingBOM(@NotNull byte[] buf, @NotNull VirtualFile file) throws IOException {
-    BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
     return inputStreamSkippingBOM(stream, file);
   }
 
@@ -176,22 +176,22 @@ public class VfsUtilCore {
 
   private static void visitChildrenRecursively(@NotNull VirtualFile file,
                                                @NotNull VirtualFileVisitor visitor,
-                                               @Nullable Set<VirtualFile> visitedSymlinks) {
-
+                                               @Nullable Set<VirtualFile> visitedSymLinks) {
     if (!file.isValid()) return;
     if (!visitor.visitFile(file)) return;
     if (file.isSymLink()) {
-      if (visitedSymlinks == null) {
-        visitedSymlinks = new HashSet<VirtualFile>();
+      if (!visitor.followSymLinks()) return;
+      if (visitedSymLinks == null) {
+        visitedSymLinks = new HashSet<VirtualFile>();
       }
-      if (!visitedSymlinks.add(file)) {
+      if (!visitedSymLinks.add(file)) {
         visitor.afterChildrenVisited(file);
         return;
       }
     }
     VirtualFile[] children = file.getChildren();
     for (VirtualFile child : children) {
-      visitChildrenRecursively(child, visitor, visitedSymlinks);
+      visitChildrenRecursively(child, visitor, visitedSymLinks);
     }
     visitor.afterChildrenVisited(file);
   }

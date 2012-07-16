@@ -124,7 +124,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls String... filePaths);
 
-  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls VirtualFile... files);
+  long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls VirtualFile... files);
 
   /**
    * Check highlighting of file already loaded by configure* methods
@@ -145,7 +145,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @return highlighting duration in milliseconds
    */
-  long testHighlighting(@NonNls String... filePaths);
+  long testHighlighting(@TestDataFile @NonNls String... filePaths);
 
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, VirtualFile file);
   HighlightTestInfo testFile(@NonNls @NotNull String... filePath);
@@ -290,7 +290,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return gutter renderer at the caret position.
    */
   @Nullable
-  GutterIconRenderer findGutter(@NonNls String filePath);
+  GutterIconRenderer findGutter(@TestDataFile @NonNls String filePath);
 
   PsiManager getPsiManager();
 

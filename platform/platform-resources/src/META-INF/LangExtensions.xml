@@ -734,9 +734,6 @@
                       serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
   <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
   
-  <applicationService serviceImplementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager"/>
-  <postStartupActivity implementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverStartupActivity"/>
-  
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
 
   <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor"/>

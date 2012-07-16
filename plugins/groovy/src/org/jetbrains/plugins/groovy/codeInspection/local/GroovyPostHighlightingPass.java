@@ -117,12 +117,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       public void visitElement(PsiElement element) {
         if (element instanceof GrReferenceElement) {
           for (GroovyResolveResult result : ((GrReferenceElement)element).multiResolve(true)) {
-            GroovyPsiElement context = result.getCurrentFileResolveContext();
             PsiElement resolved = result.getElement();
-            if (context instanceof GrImportStatement) {
-              GrImportStatement importStatement = (GrImportStatement)context;
-              unusedImports.remove(importStatement);
-            }
             if (resolved instanceof GrParameter && resolved.getContainingFile() == myFile) {
               usedParams.put((GrParameter)resolved, Boolean.TRUE);
             }
@@ -159,6 +154,10 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
               }
             }
           }
+        }
+
+        for (GrImportStatement used : GroovyImportOptimizer.findUsedImports(myFile)) {
+          unusedImports.remove(used);
         }
 
         super.visitElement(element);
