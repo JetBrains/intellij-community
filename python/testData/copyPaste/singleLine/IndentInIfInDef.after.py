@@ -3,4 +3,3 @@ def f(self):
     if True:
         b = 2
         x = 1
-        <caret>

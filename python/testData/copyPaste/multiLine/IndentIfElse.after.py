@@ -4,4 +4,3 @@ def f():
         print(0.1)
     else:
         print(0.1)
-        <caret>

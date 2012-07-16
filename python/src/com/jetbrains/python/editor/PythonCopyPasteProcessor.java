@@ -7,14 +7,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStatementList;
 
 import java.util.List;
 
@@ -42,51 +41,61 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final Document document = editor.getDocument();
     String newText = text;
 
-    if (file instanceof PyFile && (StringUtil.startsWithWhitespace(text) || StringUtil.endsWithLineBreak(text) ||
-                                   StringUtil.splitByLines(text).length > 1)) {
-      if (text.endsWith("\n")) text = text.substring(0, text.length() - 1);
+    if (file instanceof PyFile) {
       final int caretOffset = caretModel.getOffset();
-      int caretColumn = caretModel.getLogicalPosition().column;
-      final PsiElement element = PsiUtilCore.getElementAtOffset(file, caretOffset-1);
       final int lineNumber = document.getLineNumber(caretOffset);
-      final int offset = getLineStartSafeOffset(document, lineNumber);
-      final PsiElement element1 = PsiUtilCore.getElementAtOffset(file, offset);
-      boolean moved = false;
-      if (element instanceof PsiWhiteSpace && element == element1) {
-        PyStatementList statementList = PsiTreeUtil
-          .findElementOfClassAtOffset(file, element.getTextOffset() - 1, PyStatementList.class, false);
-        // Caret beyond actual indent -- move to the actual offset
-        if (statementList != null) {
-          final PsiElement lastChild = statementList.getLastChild();
-          if (lastChild != null) {
-            final PsiElement whiteSpace = lastChild.getPrevSibling();
-            if (whiteSpace instanceof PsiWhiteSpace) {
-              int relatedOffset = whiteSpace.getTextRange().getEndOffset();
-              final int indent = relatedOffset - getLineStartSafeOffset(document, document.getLineNumber(relatedOffset));
-              if (caretColumn > indent && document.getTextLength() > offset + indent) {
-                caretModel.moveToOffset(offset + indent);
-                moved = true;
-              }
+      final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
+
+      final List<String> strings = StringUtil.split(text, "\n");
+      if (StringUtil.countChars(text, '\n') > 0 || StringUtil.startsWithWhitespace(text)) { //2, 3, 4 case from doc
+        final PsiElement element = PsiUtilCore.getElementAtOffset(file, caretOffset - 1);
+
+        caretModel.moveToOffset(lineStartOffset);
+        String spaceString;
+        int indent = 0;
+
+        //calculate indent to normalize text
+        if (strings.size() > 0) {
+          spaceString = strings.get(0);   // insert single line
+          indent = StringUtil.findFirst(spaceString, CharFilter.NOT_WHITESPACE_FILTER);
+          if (indent < 0)
+            indent = StringUtil.isEmptyOrSpaces(spaceString) ? spaceString.length() : 0;
+
+          if (!StringUtil.startsWithWhitespace(spaceString) && strings.size() > 1) {    // insert multi-line
+            spaceString = strings.get(1);
+            indent = StringUtil.findFirst(spaceString, CharFilter.NOT_WHITESPACE_FILTER);
+            if (indent < 0)
+              indent = StringUtil.isEmptyOrSpaces(spaceString) ? spaceString.length() : 0;
+
+            final String trimmed = StringUtil.trimLeading(strings.get(0));    //decrease indent if needed
+            if (trimmed.startsWith("def ") || trimmed.startsWith("if ") || trimmed.startsWith("try:") ||
+                trimmed.startsWith("class ") || trimmed.startsWith("for ") || trimmed.startsWith("elif ") ||
+                trimmed.startsWith("else:") || trimmed.startsWith("except") || trimmed.startsWith("while ")) {
+              indent = StringUtil.findFirst(spaceString, CharFilter.NOT_WHITESPACE_FILTER) / 2;
+              if (indent < 0) indent = 0;
             }
           }
         }
 
-        final List<String> strings = StringUtil.split(element.getText(), "\n");
-        //user already prepared place to paste to and we just want to indent right
-        if (StringUtil.countChars(element.getText(), '\n') > 2) {
-          newText = text + " ";
-          if (caretOffset == offset && !strings.isEmpty() && !(element.getParent() instanceof PyFile)) {
-            newText = strings.get(strings.size()-1) + newText;
-          }
+        if (!StringUtil.isEmptyOrSpaces(text))    // do not process empty lines
+          text = StringUtil.trimTrailing(text);
+
+        if (!StringUtil.startsWithWhitespace(text)) {   // add missed whitespaces
+          if (indent > 0)
+            newText = StringUtil.repeat(" ", indent) + text;
+          else
+            newText = new String(text);
         }
         else {
-          newText = text + "\n";
-          if (!strings.isEmpty())
-            newText += strings.get(strings.size()-1);
-          //pasted text'll be the only one statement in block
-          if (!element.getText().endsWith("\n") && !moved)
-            caretModel.moveToOffset(element.getTextRange().getEndOffset());
+          newText = new String(text);   // to indent correctly (see PasteHandler)
         }
+
+        if (element instanceof PsiWhiteSpace &&
+            (StringUtil.countChars(element.getText(), '\n') <= 2 && !StringUtil.isEmptyOrSpaces(text))) {
+          newText += "\n";
+        }
+        else
+          newText = new String(text);      //user already prepared place to paste to and we just want to indent right
       }
     }
     return newText;

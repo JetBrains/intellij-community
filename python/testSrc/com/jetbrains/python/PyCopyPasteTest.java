@@ -187,6 +187,18 @@ public class PyCopyPasteTest extends PyTestCase {
     doTestMultiLine();
   }
 
+  public void testTheSamePlace() {    //PY-6907
+    doTest();
+  }
+
+  public void testWhitespace() {    //PY-6966
+    doTest();
+  }
+
+  public void testUnfinishedCompound() {    //PY-6965
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(false);
 
@@ -194,7 +206,7 @@ public class PyCopyPasteTest extends PyTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
     myFixture.configureByFile("copyPaste/" + name + ".dst.py");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
-    myFixture.checkResultByFile("copyPaste/" + name + ".after.py");
+    myFixture.checkResultByFile("copyPaste/" + name + ".after.py", true);
   }
 
   private void doTestSingleLine() {
@@ -204,7 +216,7 @@ public class PyCopyPasteTest extends PyTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
     myFixture.configureByFile("copyPaste/singleLine/" + name + ".dst.py");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
-    myFixture.checkResultByFile("copyPaste/singleLine/" + name + ".after.py");
+    myFixture.checkResultByFile("copyPaste/singleLine/" + name + ".after.py", true);
   }
 
   private void doTestMultiLine() {
@@ -214,6 +226,6 @@ public class PyCopyPasteTest extends PyTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
     myFixture.configureByFile("copyPaste/multiLine/" + name + ".dst.py");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
-    myFixture.checkResultByFile("copyPaste/multiLine/" + name + ".after.py");
+    myFixture.checkResultByFile("copyPaste/multiLine/" + name + ".after.py", true);
   }
 }
