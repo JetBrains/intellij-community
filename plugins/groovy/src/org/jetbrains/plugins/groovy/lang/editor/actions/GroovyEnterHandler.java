@@ -43,7 +43,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
-import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;

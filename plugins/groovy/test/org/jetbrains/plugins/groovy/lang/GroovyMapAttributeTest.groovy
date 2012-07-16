@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.plugins.groovy.completion.GrCompletionWithLibraryTest
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 /**
  * @author Sergey Evdokimov
@@ -238,6 +239,7 @@ class Aaa {
   }
 
   public void testConstructorInJavaClass() {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     myFixture.addFileToProject("Ccc.java", """
 public class Ccc {
   private String sss1

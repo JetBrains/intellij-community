@@ -180,8 +180,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return myCloseOnSneeze;
   }
 
-  public boolean hasDockedDocWindow() {
-    return myToolWindow != null;
+  public boolean hasActiveDockedDocWindow() {
+    return myToolWindow != null && myToolWindow.isVisible();
   }
   
   public void setAllowContentUpdateFromContext(boolean allow) {
@@ -325,7 +325,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     doShowJavaDocInfo(element, requestFocus, updateProcessor, originalElement, autoupdate, null);
   }
 
-  private void doShowJavaDocInfo(final PsiElement element,
+  private void doShowJavaDocInfo(@NotNull final PsiElement element,
                                  boolean requestFocus,
                                  PopupUpdateProcessor updateProcessor,
                                  final PsiElement originalElement,
@@ -339,23 +339,23 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return;
     }
     else if (myToolWindow != null) {
-      final Content content = myToolWindow.getContentManager().getSelectedContent();
-      if (content != null) {
-        final DocumentationComponent component = (DocumentationComponent)content.getComponent();
-        if (component.getElement() != element) {
-          content.setDisplayName(getTitle(element, true));
-          fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
-          if (!myToolWindow.isVisible()) myToolWindow.show(null);
-          return;
-        }
-        else {
-          if (element != null && !allowReuse) {
-            restorePopupBehavior();
-          }
-          else {
-            return;
+      if (allowReuse) {
+        final Content content = myToolWindow.getContentManager().getSelectedContent();
+        if (content != null) {
+          final DocumentationComponent component = (DocumentationComponent)content.getComponent();
+          if (component.getElement() != element) {
+            content.setDisplayName(getTitle(element, true));
+            fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
           }
         }
+
+        if (!myToolWindow.isVisible()) {
+          myToolWindow.show(null);
+        }
+        return;
+      }
+      else {
+        restorePopupBehavior();
       }
     }
 

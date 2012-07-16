@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -47,9 +48,9 @@ public class RefCountHolder {
   private final Map<PsiNamedElement, Boolean> myDclsUsedMap = new ConcurrentHashMap<PsiNamedElement, Boolean>();
   private final Map<PsiReference, PsiImportStatementBase> myImportStatements = new ConcurrentHashMap<PsiReference, PsiImportStatementBase>();
   private final Map<PsiElement,Boolean> myPossiblyDuplicateElements = new ConcurrentHashMap<PsiElement, Boolean>();
-  private final AtomicReference<DaemonProgressIndicator> myState = new AtomicReference<DaemonProgressIndicator>(VIRGIN);
-  private static final DaemonProgressIndicator VIRGIN = new DaemonProgressIndicator(); // just created or cleared
-  private static final DaemonProgressIndicator READY = new DaemonProgressIndicator();
+  private final AtomicReference<ProgressIndicator> myState = new AtomicReference<ProgressIndicator>(VIRGIN);
+  private static final ProgressIndicator VIRGIN = new DaemonProgressIndicator(); // just created or cleared
+  private static final ProgressIndicator READY = new DaemonProgressIndicator();
 
   private static class HolderReference extends SoftReference<RefCountHolder> {
     @SuppressWarnings("UnusedDeclaration")
@@ -271,8 +272,8 @@ public class RefCountHolder {
     return false;
   }
 
-  public boolean analyze(@NotNull PsiFile file, TextRange dirtyScope, @NotNull Runnable analyze, @NotNull DaemonProgressIndicator indicator) {
-    DaemonProgressIndicator old = myState.get();
+  public boolean analyze(@NotNull PsiFile file, TextRange dirtyScope, @NotNull Runnable analyze, @NotNull ProgressIndicator indicator) {
+    ProgressIndicator old = myState.get();
     if (old != VIRGIN && old != READY) return false;
     if (!myState.compareAndSet(old, indicator)) {
       log("a: failed to change " + old + "->" + indicator);
@@ -305,8 +306,8 @@ public class RefCountHolder {
     //System.err.println("RFC: "+s);
   }
 
-  public boolean retrieveUnusedReferencesInfo(@NotNull DaemonProgressIndicator indicator, @NotNull Runnable analyze) {
-    DaemonProgressIndicator old = myState.get();
+  public boolean retrieveUnusedReferencesInfo(@NotNull ProgressIndicator indicator, @NotNull Runnable analyze) {
+    ProgressIndicator old = myState.get();
     if (!myState.compareAndSet(READY, indicator)) {
       log("r: failed to change " + old + "->" + indicator);
       return false;

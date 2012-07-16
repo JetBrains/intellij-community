@@ -388,4 +388,36 @@ public class GithubUtil {
     }
     return repoInfo;
   }
+
+  @NotNull
+  static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
+    remoteUrl = removeEndingDotGit(remoteUrl);
+    if (remoteUrl.startsWith("http")) {
+      return remoteUrl;
+    }
+    if (remoteUrl.startsWith("git://")) {
+      return "https" + remoteUrl.substring(3);
+    }
+    return convertFromSshToHttp(remoteUrl);
+  }
+
+  @NotNull
+  private static String convertFromSshToHttp(@NotNull String remoteUrl) {
+    // Format: git@github.com:account/repository
+    int indexOfAt = remoteUrl.indexOf("@");
+    if (indexOfAt < 0) {
+      throw new IllegalStateException("Invalid remote Github SSH url: " + remoteUrl);
+    }
+    String withoutPrefix = remoteUrl.substring(indexOfAt + 1, remoteUrl.length());
+    return "https://" + withoutPrefix.replace(':', '/');
+  }
+
+  @NotNull
+  private static String removeEndingDotGit(@NotNull String url) {
+    final String DOT_GIT = ".git";
+    if (url.endsWith(DOT_GIT)) {
+      return url.substring(0, url.length() - DOT_GIT.length());
+    }
+    return url;
+  }
 }

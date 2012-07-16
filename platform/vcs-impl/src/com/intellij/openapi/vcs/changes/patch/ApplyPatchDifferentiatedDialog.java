@@ -141,6 +141,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           myCommitLegendPanel.update();
         }
       }, new MyChangeNodeDecorator());
+    myChangesTreeList.setDoubleClickHandler(new Runnable() {
+      @Override
+      public void run() {
+        new MyShowDiff().showDiff();
+      }
+    });
 
     myUpdater = new MyUpdater();
     myPatchFile = new TextFieldWithBrowseButton();
@@ -944,6 +950,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     public void actionPerformed(AnActionEvent e) {
+      showDiff();
+    }
+
+    private void showDiff() {
       if (ChangeListManager.getInstance(myProject).isFreezedWithNotification(null)) return;
       if (myPatches.isEmpty() || (! myContainBasedChanges)) return;
       final List<FilePatchInProgress.PatchChange> changes = getAllChanges();

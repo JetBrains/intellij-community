@@ -141,7 +141,7 @@ public class IndexingStamp {
   }
 
   public static long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
-    synchronized (file) {
+    synchronized (myTimestampsCache) {
       Timestamps stamp = createOrGetTimeStamp(file);
       if (stamp != null) return stamp.get(indexName);
       return 0;
@@ -172,7 +172,7 @@ public class IndexingStamp {
   }
 
   public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
-    synchronized (file) {
+    synchronized (myTimestampsCache) {
       try {
         Timestamps stamp = createOrGetTimeStamp(file);
         if (stamp != null) stamp.set(indexName, indexCreationStamp);
@@ -195,7 +195,7 @@ public class IndexingStamp {
 
       if (files != null) {
         for(VirtualFile file:files) {
-          synchronized (file) {
+          synchronized (myTimestampsCache) {
             Timestamps timestamp = myTimestampsCache.remove(file);
             if (timestamp == null) continue;
             synchronized (myTimestampsCache) {

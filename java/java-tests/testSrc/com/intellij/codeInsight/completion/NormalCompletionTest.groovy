@@ -28,11 +28,18 @@ import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.*
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
+  }
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
   }
 
   public void testSimple() throws Exception {
@@ -156,6 +163,10 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
     assert "add" == presentation.itemText
+    assert "(int index, String element)" == presentation.tailText
+    assert "void" == presentation.typeText
+
+    presentation = renderElement(myItems[1])
     assert "(String o)" == presentation.tailText
     assert "boolean" == presentation.typeText
 

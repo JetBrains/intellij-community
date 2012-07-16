@@ -167,7 +167,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   }
 
   @Nullable
-  private static PsiAssignmentExpression searchAssignmentExpression(@NotNull PsiElement anchor) {
+  private static PsiAssignmentExpression searchAssignmentExpression(@Nullable PsiElement anchor) {
     if (!(anchor instanceof PsiExpressionStatement)) {
       return null;
     }
@@ -226,6 +226,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     return getName();
   }
 
+  @Nullable
   private static PsiElement getAnchorElement(PsiCodeBlock anchorBlock, @NotNull PsiElement firstElement) {
     PsiElement element = firstElement;
     while (element != null && element.getParent() != anchorBlock) {

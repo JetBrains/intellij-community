@@ -196,7 +196,7 @@ public class ContainerUtilRt {
   @NotNull
   public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
     final int length = array.length;
-    if (length < ARRAY_COPY_THRESHOLD) {
+    if (length < ARRAY_COPY_THRESHOLD && array.length >= collection.size()) {
       for (int i = 0; i < collection.size(); i++) {
         array[i] = collection.get(i);
       }

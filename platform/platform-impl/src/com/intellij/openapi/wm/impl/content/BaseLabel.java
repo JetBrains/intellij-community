@@ -25,7 +25,7 @@ import com.intellij.util.ui.WatermarkIcon;
 import javax.swing.*;
 import java.awt.*;
 
-class BaseLabel extends JLabel {
+public class BaseLabel extends JLabel {
 
   protected static final int TAB_SHIFT = 1;
   private static final Color DEFAULT_ACTIVE_FORE = Color.black;
@@ -52,14 +52,18 @@ class BaseLabel extends JLabel {
   }
 
   private void updateFont() {
-    Font f = UIUtil.getLabelFont();
-    Font baseFont = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
+    Font baseFont = getLabelFont();
     if (myBold) {
       setFont(baseFont.deriveFont(Font.BOLD));
     }
     else {
       setFont(baseFont);
     }
+  }
+
+  public static Font getLabelFont() {
+    Font f = UIUtil.getLabelFont();
+    return f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
   }
 
   public void setActiveFg(final Color fg) {

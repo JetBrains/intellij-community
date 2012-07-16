@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -21,6 +22,11 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+  }
 
   @Override
   protected String getBasePath() {

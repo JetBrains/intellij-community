@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model.grid;
 
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.designSurface.EditableArea;
 
 import java.awt.*;
 
@@ -23,8 +24,8 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public abstract class RadCaptionColumn<T extends RadViewComponent> extends RadCaptionComponent<T> {
-  public RadCaptionColumn(T container, int index, int offset, int width, boolean empty) {
-    super(container, index, offset, width, empty);
+  public RadCaptionColumn(EditableArea mainArea, T container, int index, int offset, int width, boolean empty) {
+    super(mainArea, container, index, offset, width, empty);
   }
 
   @Override

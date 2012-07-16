@@ -97,8 +97,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
-import org.jetbrains.jps.api.JpsRemoteProto;
-import org.jetbrains.jps.api.JpsServerResponseHandler;
 import org.jetbrains.jps.api.RequestFuture;
 
 import javax.swing.*;
@@ -450,184 +448,90 @@ public class CompileDriver {
 
     final MessageBus messageBus = myProject.getMessageBus();
 
-    if (!CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
-      final CompileServerManager csManager = CompileServerManager.getInstance();
-      csManager.cancelAutoMakeTasks(myProject);
-      return csManager.submitCompilationTask(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths,
-                                             builderParams, new JpsServerResponseHandler() {
+    final BuildManager buildManager = BuildManager.getInstance();
+    buildManager.cancelAutoMakeTasks(myProject);
+    return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new DefaultMessageHandler(myProject) {
+      @Override
+      public void sessionTerminated() {
+        notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
+      }
 
-        @Override
-        public void handleCompileMessage(JpsRemoteProto.Message.Response.CompileMessage compilerMessage) {
-          final JpsRemoteProto.Message.Response.CompileMessage.Kind kind = compilerMessage.getKind();
-          //System.out.println(compilerMessage.getText());
-          if (kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.PROGRESS) {
-            final ProgressIndicator indicator = compileContext.getProgressIndicator();
-            indicator.setText(compilerMessage.getText());
-            if (compilerMessage.hasDone()) {
-              indicator.setFraction(compilerMessage.getDone());
+      @Override
+      public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
+        final String trace = failure.getStacktrace();
+        if (trace != null) {
+          LOG.info(trace);
+          System.out.println(trace);
+        }
+        compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, ExitStatus.ERRORS);
+      }
+
+      @Override
+      protected void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
+        final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
+        //System.out.println(compilerMessage.getText());
+        if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
+          final ProgressIndicator indicator = compileContext.getProgressIndicator();
+          indicator.setText(message.getText());
+          if (message.hasDone()) {
+            indicator.setFraction(message.getDone());
+          }
+        }
+        else {
+          final CompilerMessageCategory category = kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
+            : kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
+
+          String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
+          if (sourceFilePath != null) {
+            sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
+          }
+          final long line = message.hasLine() ? message.getLine() : -1;
+          final long column = message.hasColumn() ? message.getColumn() : -1;
+          final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
+          compileContext.addMessage(
+            category, message.getText(), srcUrl, (int)line, (int)column
+          );
+        }
+      }
+
+      @Override
+      protected void handleBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
+        final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type eventType = event.getEventType();
+        switch (eventType) {
+          case FILES_GENERATED:
+            final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
+            final CompilationStatusListener publisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
+            for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
+              final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
+              final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
+              publisher.fileGenerated(root, relativePath);
             }
-          }
-          else {
-            final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
-              : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
-
-            String sourceFilePath = compilerMessage.hasSourceFilePath() ? compilerMessage.getSourceFilePath() : null;
-            if (sourceFilePath != null) {
-              sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
+            break;
+          case BUILD_COMPLETED:
+            ExitStatus status = ExitStatus.SUCCESS;
+            if (event.hasCompletionStatus()) {
+              final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus = event.getCompletionStatus();
+              switch(completionStatus) {
+                case CANCELED:
+                  status = ExitStatus.CANCELLED;
+                  break;
+                case ERRORS:
+                  status = ExitStatus.ERRORS;
+                  break;
+                case SUCCESS:
+                  status = ExitStatus.SUCCESS;
+                  break;
+                case UP_TO_DATE:
+                  status = ExitStatus.UP_TO_DATE;
+                  break;
+              }
             }
-            final long line = compilerMessage.hasLine() ? compilerMessage.getLine() : -1;
-            final long column = compilerMessage.hasColumn() ? compilerMessage.getColumn() : -1;
-            final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
-            compileContext.addMessage(
-              category, compilerMessage.getText(), srcUrl, (int)line, (int)column
-            );
-          }
+            compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
+            break;
         }
-
-        @Override
-        public boolean handleBuildEvent(JpsRemoteProto.Message.Response.BuildEvent event) {
-          final JpsRemoteProto.Message.Response.BuildEvent.Type eventType = event.getEventType();
-          switch (eventType) {
-            case BUILD_STARTED:
-              //compileContext.getProgressIndicator().setText("Compilation started");
-              break;
-            case FILES_GENERATED:
-              final List<JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
-              final CompilationStatusListener publisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
-              for (JpsRemoteProto.Message.Response.BuildEvent.GeneratedFile generatedFile : generated) {
-                final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
-                final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
-                publisher.fileGenerated(root, relativePath);
-              }
-              break;
-            case BUILD_COMPLETED:
-              ExitStatus status = ExitStatus.SUCCESS;
-              if (event.hasCompletionStatus()) {
-                final JpsRemoteProto.Message.Response.BuildEvent.Status completionStatus = event.getCompletionStatus();
-                switch(completionStatus) {
-                  case CANCELED:
-                    status = ExitStatus.CANCELLED;
-                    break;
-                  case ERRORS:
-                    status = ExitStatus.ERRORS;
-                    break;
-                  case SUCCESS:
-                    status = ExitStatus.SUCCESS;
-                    break;
-                  case UP_TO_DATE:
-                    status = ExitStatus.UP_TO_DATE;
-                    break;
-                }
-              }
-              compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
-              break;
-          }
-          return eventType == JpsRemoteProto.Message.Response.BuildEvent.Type.BUILD_COMPLETED;
-        }
-
-        @Override
-        public void handleFailure(JpsRemoteProto.Message.Failure failure) {
-          compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
-          final String trace = failure.getStacktrace();
-          if (trace != null) {
-            LOG.info(trace);
-            System.out.println(trace);
-          }
-          compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, ExitStatus.ERRORS);
-        }
-
-        @Override
-        public void sessionTerminated() {
-          notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext, ExitStatus.SUCCESS));
-        }
-      });
-    }
-    else {
-      final BuildManager buildManager = BuildManager.getInstance();
-      buildManager.cancelAutoMakeTasks(myProject);
-      return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new DefaultMessageHandler(myProject) {
-        @Override
-        public void sessionTerminated() {
-          notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
-        }
-
-        @Override
-        public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-          compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
-          final String trace = failure.getStacktrace();
-          if (trace != null) {
-            LOG.info(trace);
-            System.out.println(trace);
-          }
-          compileContext.putUserData(COMPILE_SERVER_BUILD_STATUS, ExitStatus.ERRORS);
-        }
-
-        @Override
-        protected void handleCompileMessage(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
-          final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
-          //System.out.println(compilerMessage.getText());
-          if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
-            final ProgressIndicator indicator = compileContext.getProgressIndicator();
-            indicator.setText(message.getText());
-            if (message.hasDone()) {
-              indicator.setFraction(message.getDone());
-            }
-          }
-          else {
-            final CompilerMessageCategory category = kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
-              : kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
-
-            String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
-            if (sourceFilePath != null) {
-              sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
-            }
-            final long line = message.hasLine() ? message.getLine() : -1;
-            final long column = message.hasColumn() ? message.getColumn() : -1;
-            final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
-            compileContext.addMessage(
-              category, message.getText(), srcUrl, (int)line, (int)column
-            );
-          }
-        }
-
-        @Override
-        protected void handleBuildEvent(CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
-          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type eventType = event.getEventType();
-          switch (eventType) {
-            case FILES_GENERATED:
-              final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
-              final CompilationStatusListener publisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
-              for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
-                final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
-                final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
-                publisher.fileGenerated(root, relativePath);
-              }
-              break;
-            case BUILD_COMPLETED:
-              ExitStatus status = ExitStatus.SUCCESS;
-              if (event.hasCompletionStatus()) {
-                final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus = event.getCompletionStatus();
-                switch(completionStatus) {
-                  case CANCELED:
-                    status = ExitStatus.CANCELLED;
-                    break;
-                  case ERRORS:
-                    status = ExitStatus.ERRORS;
-                    break;
-                  case SUCCESS:
-                    status = ExitStatus.SUCCESS;
-                    break;
-                  case UP_TO_DATE:
-                    status = ExitStatus.UP_TO_DATE;
-                    break;
-                }
-              }
-              compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
-              break;
-          }
-        }
-      });
-    }
+      }
+    });
   }
 
 
@@ -685,7 +589,7 @@ public class CompileDriver {
           }
           final long start = System.currentTimeMillis();
           try {
-            LOG.info("COMPILATION STARTED " + (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild() ? "(BUILD PROCESS)" : "(COMPILE SERVER)"));
+            LOG.info("COMPILATION STARTED (BUILD PROCESS)");
             if (message != null) {
               compileContext.addMessage(message);
             }
@@ -711,7 +615,7 @@ public class CompileDriver {
           finally {
             final long finish = System.currentTimeMillis();
             CompilerUtil.logDuration(
-              "\tCOMPILATION FINISHED " + (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild() ? "(BUILD PROCESS)" : "(COMPILE SERVER)") + "; Errors: " +
+              "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
               compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
               "; warnings: " +
               compileContext.getMessageCount(CompilerMessageCategory.WARNING),

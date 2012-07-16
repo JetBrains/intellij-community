@@ -85,6 +85,11 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     return myActions;
   }
 
+  @NotNull
+  public List<AnAction> getActions() {
+    return myActions;
+  }
+
   public void addSourceSwitchListener(final Consumer<AnnotationSource> listener) {
     mySwitchAction.addSourceSwitchListener(listener);
   }

@@ -429,4 +429,24 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      }
    }
 
+   public void testAutoImportDoNotBreakCode() throws Throwable {
+     @NonNls String text = "package x; class S {{ S.<caret>\n Runnable r; }}";
+     configureByText(StdFileTypes.JAVA, text);
+
+     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+     boolean opt = CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY;
+     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+     CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = true;
+     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+     try {
+       List<HighlightInfo> errs = highlightErrors();
+       assertEquals(1, errs.size());
+     }
+     finally {
+        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+        CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = opt;
+     }
+   }
+
 }

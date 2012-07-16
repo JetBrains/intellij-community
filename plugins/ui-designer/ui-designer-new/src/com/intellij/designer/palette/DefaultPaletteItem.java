@@ -23,14 +23,14 @@ import javax.swing.*;
 /**
  * @author Alexander Lobas
  */
-public final class DefaultPaletteItem implements PaletteItem {
+public class DefaultPaletteItem implements PaletteItem {
   private final String myTitle;
   private final String myIconPath;
   private Icon myIcon;
   private final String myTooltip;
   private final String myVersion;
 
-  private MetaModel myMetaModel;
+  protected MetaModel myMetaModel;
 
   public DefaultPaletteItem(String title, String iconPath, String tooltip, String version) {
     myTitle = title;

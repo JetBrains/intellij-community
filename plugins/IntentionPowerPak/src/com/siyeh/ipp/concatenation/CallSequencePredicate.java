@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class CallSequencePredicate implements PsiElementPredicate {
+class CallSequencePredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {

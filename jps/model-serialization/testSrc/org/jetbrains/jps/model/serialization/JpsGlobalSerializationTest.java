@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
   public void testLoadSdks() throws IOException {
-    JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), getTestDataPath("config/options"));
+    JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), getTestDataFileAbsolutePath("jps/model-serialization/testData/config/options"));
     final List<JpsLibrary> libraries = myModel.getGlobal().getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
     assertEquals("Gant", libraries.get(0).getName());

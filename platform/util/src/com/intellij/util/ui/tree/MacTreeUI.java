@@ -274,7 +274,7 @@ public class MacTreeUI extends BasicTreeUI {
         }
       }
       else {
-        Color bg = tree.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground();
+        Color bg = tree.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
         if (!selected) {
           bg = background;
         }

@@ -143,7 +143,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myInLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
 
     myRefCountHolder = RefCountHolder.endUsing(myFile);
-    if (myRefCountHolder == null || !myRefCountHolder.retrieveUnusedReferencesInfo((DaemonProgressIndicator)progress, new Runnable() {
+    if (myRefCountHolder == null || !myRefCountHolder.retrieveUnusedReferencesInfo(progress, new Runnable() {
       @Override
       public void run() {
         boolean errorFound = collectHighlights(elementSet, highlights, progress);

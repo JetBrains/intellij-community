@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG;
 
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import org.intellij.plugins.testUtil.CopyFile;
 
 /**
@@ -24,6 +25,12 @@ import org.intellij.plugins.testUtil.CopyFile;
  * Date: 22.08.2007
  */
 public class RncCompletionTest extends HighlightingTestBase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+  }
+
   public String getTestDataPath() {
     return "completion/rnc";
   }

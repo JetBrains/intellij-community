@@ -72,6 +72,7 @@ public abstract class PsiDocumentManager {
    * @param file the file for which the document is requested.
    * @return the document instance, or <code>null</code> if the file is binary or has no associated document.
    */
+  @Nullable
   public abstract Document getDocument(@NotNull PsiFile file);
 
   /**

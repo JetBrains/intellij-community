@@ -33,17 +33,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.WeighingComparable;
-import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,16 +63,6 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private final CompletionLocation myLocation;
-  @SuppressWarnings("unchecked")
-  private final Map<LookupElement, Comparable> mySortingWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
-  private final TreeMap<LookupElement, Object> mySortedByWeight = new TreeMap<LookupElement, Object>(new Comparator<LookupElement>() {
-    @Override
-    public int compare(LookupElement o1, LookupElement o2) {
-      //noinspection unchecked
-      return mySortingWeights.get(o1).compareTo(mySortingWeights.get(o2));
-    }
-  });
-
   private final CompletionParameters myParameters;
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
@@ -133,22 +118,6 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
-    WeighingComparable<LookupElement,CompletionLocation> w = WeighingService.weigh(CompletionService.SORTING_KEY, element, myLocation);
-    w.force();
-    mySortingWeights.put(element, w);
-
-    Object old = mySortedByWeight.put(element, element);
-    if (old != null) {
-      List<LookupElement> list = new SmartList<LookupElement>();
-      if (old instanceof List) {
-        list.addAll((List<LookupElement>)old);
-      } else {
-        list.add((LookupElement)old);
-      }
-      list.add(element);
-      mySortedByWeight.put(element, list);
-    }
-
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
@@ -168,29 +137,13 @@ public class CompletionLookupArranger extends LookupArranger {
   @Override
   public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
     List<LookupElement> items = matchingItems(lookup);
-    if (isAlphaSorted()) {
-      Collections.sort(items, new Comparator<LookupElement>() {
-        public int compare(LookupElement o1, LookupElement o2) {
-          String invariant = PRESENTATION_INVARIANT.get(o1);
-          assert invariant != null;
-          return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
-        }
-      });
-    } else {
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>(items);
-      items.clear();
-      for (Object o : mySortedByWeight.values()) {
-        if (o instanceof LookupElement && set.contains(o)) {
-          items.add((LookupElement)o);
-        } else if (o instanceof List) {
-          for (LookupElement item : (List<LookupElement>)o) {
-            if (set.contains(item)) {
-              items.add(item);
-            }
-          }
-        }
+    Collections.sort(items, new Comparator<LookupElement>() {
+      public int compare(LookupElement o1, LookupElement o2) {
+        String invariant = PRESENTATION_INVARIANT.get(o1);
+        assert invariant != null;
+        return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
       }
-    }
+    });
 
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(items);
 

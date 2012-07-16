@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -207,12 +208,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
       new AnnotationPresentation(highlighting, switcher, editorGutter, gutters,
                                  additionalActions.toArray(new AnAction[additionalActions.size()]));
 
-    for (AnAction action : additionalActions) {
-      if (action instanceof LineNumberListener) {
-         presentation.addLineNumberListener((LineNumberListener)action);
-      }
-    }
-
     final Map<String, Color> bgColorMap = Registry.is("vcs.show.colored.annotations") ? computeBgColors(fileAnnotation) : null;
     final Map<String, Integer> historyIds = Registry.is("vcs.show.history.numbers") ? computeLineNumbers(fileAnnotation) : null;
 
@@ -248,8 +243,16 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     gutters.add(new HighlightedAdditionalColumn(fileAnnotation, editor, null, presentation, highlighting, bgColorMap));
     final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter);
     presentation.addAction(actionGroup, 1);
-    presentation.addAction(new ShowHideAdditionalInfoAction(gutters, editorGutter, actionGroup));
     gutters.add(new ExtraFieldGutter(fileAnnotation, editor, presentation, bgColorMap, actionGroup));
+
+    presentation.addAction(new ShowHideAdditionalInfoAction(gutters, editorGutter, actionGroup));
+    addActionsFromExtensions(presentation, fileAnnotation);
+
+    for (AnAction action : presentation.getActions()) {
+      if (action instanceof LineNumberListener) {
+         presentation.addLineNumberListener((LineNumberListener)action);
+      }
+    }
 
     for (AnnotationFieldGutter gutter : gutters) {
       final AnnotationGutterLineConvertorProxy proxy = new AnnotationGutterLineConvertorProxy(getUpToDateLineNumber, gutter);
@@ -260,6 +263,16 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         editor.getGutter().registerTextAnnotation(proxy);
       }
       annotations.add(gutter);
+    }
+  }
+
+  private static void addActionsFromExtensions(@NotNull AnnotationPresentation presentation, @NotNull FileAnnotation fileAnnotation) {
+    AnnotationGutterActionProvider[] extensions = AnnotationGutterActionProvider.EP_NAME.getExtensions();
+    if (extensions.length > 0) {
+      presentation.addAction(new Separator());
+    }
+    for (AnnotationGutterActionProvider provider : extensions) {
+      presentation.addAction(provider.createAction(fileAnnotation));
     }
   }
 

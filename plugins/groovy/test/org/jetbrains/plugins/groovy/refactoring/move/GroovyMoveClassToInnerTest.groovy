@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 
 /**
  * @author Max Medvedev
@@ -48,13 +49,27 @@ public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   }
 
   public void testInsertInnerClassImport() throws Exception {
-    CodeStyleSettingsManager.getSettings(myFixture.project).INSERT_INNER_CLASS_IMPORTS = true;
-    doTest("pack2.A", "pack1.Class1");
+    final settings = CodeStyleSettingsManager.getSettings(myFixture.project).getCustomSettings(GroovyCodeStyleSettings.class)
+    def oldValue = settings.INSERT_INNER_CLASS_IMPORTS
+    settings.INSERT_INNER_CLASS_IMPORTS = true;
+    try {
+      doTest("pack2.A", "pack1.Class1");
+    }
+    finally {
+      settings.INSERT_INNER_CLASS_IMPORTS = oldValue
+    }
   }
 
   public void testSimultaneousMove() throws Exception {
-    CodeStyleSettingsManager.instance.currentSettings.INSERT_INNER_CLASS_IMPORTS = false
-    doTest("pack2.A", "pack1.Class1", "pack0.Class0");
+    final settings = CodeStyleSettingsManager.instance.currentSettings.getCustomSettings(GroovyCodeStyleSettings.class)
+    final oldValue = settings.INSERT_INNER_CLASS_IMPORTS
+    settings.INSERT_INNER_CLASS_IMPORTS = false
+    try {
+      doTest("pack2.A", "pack1.Class1", "pack0.Class0");
+    }
+    finally {
+      settings.INSERT_INNER_CLASS_IMPORTS = oldValue
+    }
   }
 
   public void testMoveMultiple1() throws Exception {

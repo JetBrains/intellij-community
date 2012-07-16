@@ -93,18 +93,19 @@ public class ValidateXmlActionHandler {
     myErrorReporter = errorReporter;
   }
 
+  @Nullable
   public VirtualFile getFile(String publicId, String systemId) {
     if (publicId == null) {
       if (systemId != null) {
         final String path = myXmlResourceResolver.getPathByPublicId(systemId);
-        if (path != null) return UriUtil.findRelativeFile(path,null);
+        if (path != null) return UriUtil.findRelative(path, myFile);
         final PsiFile file = myXmlResourceResolver.resolve(null, systemId);
         if (file != null) return file.getVirtualFile();
       }
       return myFile.getVirtualFile();
     }
     final String path = myXmlResourceResolver.getPathByPublicId(publicId);
-    if (path != null) return UriUtil.findRelativeFile(path,null);
+    if (path != null) return UriUtil.findRelative(path, myFile);
     return null;
   }
 

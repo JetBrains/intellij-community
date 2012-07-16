@@ -39,6 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.FList;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -113,7 +114,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
     final Object o;
     try {
-      o = new SampleObjectGenerator().createValue(aClass);
+      o = new SampleObjectGenerator().createValue(aClass, FList.<Type>emptyList());
     }
     catch (Exception e) {
       Messages.showErrorDialog(project, "Cannot generate class '" + className + "': " + e.getMessage(), CommonBundle.getErrorTitle());
@@ -137,9 +138,11 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
   private static class SampleObjectGenerator {
     private int myNum;
-    
+
     @Nullable
-    public Object createValue(Type type) throws Exception {
+    public Object createValue(Type type, final FList<Type> types) throws Exception {
+      if (types.contains(type)) return null;
+      FList<Type> processedTypes = types.prepend(type);
       final Class<?> valueClass = type instanceof Class ? (Class<Object>)type : (Class<Object>)((ParameterizedType)type).getRawType();
       if (String.class.isAssignableFrom(valueClass)) {
         return "value" + (myNum++);
@@ -162,24 +165,27 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
         return constants[(myNum++) % constants.length];
       }
       else if (Collection.class.isAssignableFrom(valueClass) && type instanceof ParameterizedType) {
-        return createCollection(valueClass, (ParameterizedType)type);
+        return createCollection(valueClass, (ParameterizedType)type, processedTypes);
       }
       else if (Map.class.isAssignableFrom(valueClass) && type instanceof ParameterizedType) {
-        return createMap((ParameterizedType)type);
+        return createMap((ParameterizedType)type, processedTypes);
       }
       else if (valueClass.isArray()) {
-        return createArray(valueClass);
+        return createArray(valueClass, processedTypes);
+      }
+      else if (Element.class.isAssignableFrom(valueClass)) {
+        return new Element("customElement" + (myNum++)).setAttribute("attribute", "value" + (myNum++)).addContent(new Element("child" + (myNum++)));
       }
       else {
-        return createObject(valueClass);
+        return createObject(valueClass, processedTypes);
       }
     }
 
-    public Object createObject(Class<?> aClass) throws Exception {
+    public Object createObject(Class<?> aClass, FList<Type> processedTypes) throws Exception {
       final Object o = aClass.newInstance();
       for (Accessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
         final Type type = accessor.getGenericType();
-        Object value = createValue(type);
+        Object value = createValue(type, processedTypes);
         if (value != null) {
           accessor.write(o, value);
         }
@@ -188,21 +194,21 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     }
 
     @Nullable
-    private Object createArray(Class<?> valueClass) throws Exception {
+    private Object createArray(Class<?> valueClass, FList<Type> processedTypes) throws Exception {
       final Object[] array = (Object[])Array.newInstance(valueClass.getComponentType(), 2);
       for (int i = 0; i < array.length; i++) {
-        array[i] = createValue(valueClass.getComponentType());
+        array[i] = createValue(valueClass.getComponentType(), processedTypes);
       }
       return array;
     }
 
-    private Object createMap(ParameterizedType type) throws Exception {
+    private Object createMap(ParameterizedType type, FList<Type> processedTypes) throws Exception {
       Type keyType = type.getActualTypeArguments()[0];
       Type valueType = type.getActualTypeArguments()[0];
       final HashMap<Object, Object> map = new HashMap<Object, Object>();
       for (int i = 0; i < 2; i++) {
-        Object key = createValue(keyType);
-        Object value = createValue(valueType);
+        Object key = createValue(keyType, processedTypes);
+        Object value = createValue(valueType, processedTypes);
         if (key != null && value != null) {
           map.put(key, value);
         }
@@ -211,7 +217,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     }
 
     @Nullable
-    private Object createCollection(Class<?> aClass, ParameterizedType genericType) throws Exception {
+    private Object createCollection(Class<?> aClass, ParameterizedType genericType, FList<Type> processedTypes) throws Exception {
       final Type elementClass = genericType.getActualTypeArguments()[0];
       Collection<Object> o;
       if (List.class.isAssignableFrom(aClass)) {
@@ -224,7 +230,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
         return null;
       }
       for (int i = 0; i < 2; i++) {
-        final Object item = createValue(elementClass);
+        final Object item = createValue(elementClass, processedTypes);
         if (item != null) {
           o.add(item);
         }

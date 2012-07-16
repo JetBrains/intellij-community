@@ -230,6 +230,11 @@ public class TestProxy extends AbstractTestProxy {
     return !isInProgress() && inProgress;
   }
 
+  @Override
+  public boolean isIgnored() {
+    return resultMessage != null && MessageHelper.SKIPPED_TEST == resultMessage.getResult();
+  }
+
   public boolean isTearDownFailure() {
     for (TestProxy result : results) {
       if (result.isTearDownFailure()) return true;

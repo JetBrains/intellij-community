@@ -19,6 +19,7 @@ package com.intellij.codeInsight.navigation;
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertTrue
 
 /**
  * @author Denis Zhdanov
@@ -103,10 +104,28 @@ implements <a href="psi_element://java.io.Serializable"><code>java.io.Serializab
 '''
     
     def expected = '''\
-[&lt; 1.7 &gt;] java.lang<PRE>public final class java.lang.String<br/>extends <a href="psi_element://java.lang.Object"><code>Object</code></a><br/>implements <a href="psi_element://java.io.Serializable"><code>java.io.Serializable</code></a>, <a href="psi_element://java.lang.Comparable"><code>java.lang.Comparable</code></a>&lt;<a href="psi_element://java.lang.String"><code>java.lang.String<br/></code></a>&gt;, <a href="psi_element://java.lang.CharSequence"><code>java.lang.CharSequence</code></a></PRE><br/>The <code>String</code> class represents character strings. All string literals<br/>in Java programs, such as <code>"abc"</code>, are implemented as instances<br/><a href='psi_element://java.lang.String'>&lt;more&gt;</a>\
+java.lang<br/> public final class <a href="psi_element://java.lang.String">String</a> extends Object<br/> implements <a href="psi_element://java.io.Serializable">Serializable</a>, <a href="psi_element://java.lang.Comparable">Comparable</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt;, <a href="psi_element://java.lang.CharSequence">CharSequence</a>\
 '''
 
-    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText, 2, 60)
+    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
+    assertTrue(actual.endsWith(expected)) // Can't check for equals() because jdk name might differ on different machines.
+  }
+
+  @Test
+  void fieldTypeSubstitution() {
+    def header = '''\
+Bar
+ java.util.List&lt;java.lang.String&gt; foo (java.lang.String param)\
+'''
+    
+    def fullText = '''\
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://Bar"><code>Bar</code></a></b></small><PRE><a href="psi_element://java.util.List"><code>java.util.List</code></a>&lt;T&gt;&nbsp;<b>foo</b>(T&nbsp;param)</PRE></body></html>\
+'''
+    
+    def expected = '''\
+<a href="psi_element://Bar">Bar</a><br/> <a href="psi_element://java.util.List">List</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt; foo (<a href="psi_element://java.lang.String">String</a> param)\
+'''
+    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
     assertEquals(expected, actual)
   }
 }

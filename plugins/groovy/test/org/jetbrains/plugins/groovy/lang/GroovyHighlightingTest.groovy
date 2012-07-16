@@ -44,16 +44,14 @@ import org.jetbrains.plugins.groovy.codeInspection.confusing.*
  * @author peter
  */
 public class GroovyHighlightingTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() {
-    return TestUtils.testDataPath + 'highlighting/';
-  }
 
-  public void testDuplicateClosurePrivateVariable() throws Throwable {
+  final String basePath = TestUtils.testDataPath + 'highlighting/'
+
+  public void testDuplicateClosurePrivateVariable() {
     doTest();
   }
 
-  public void testClosureRedefiningVariable() throws Throwable {
+  public void testClosureRedefiningVariable() {
     doTest();
   }
 
@@ -62,128 +60,128 @@ public class GroovyHighlightingTest extends LightGroovyTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".groovy");
   }
 
-  public void testCircularInheritance() throws Throwable {
+  public void testCircularInheritance() {
     doTest();
   }
 
-  public void testEmptyTupleType() throws Throwable {
+  public void testEmptyTupleType() {
     doTest();
   }
 
-  public void testMapDeclaration() throws Throwable {
+  public void testMapDeclaration() {
     doTest();
   }
 
-  public void testShouldntImplementGroovyObjectMethods() throws Throwable {
+  public void testShouldntImplementGroovyObjectMethods() {
     addGroovyObject();
     myFixture.addFileToProject("Foo.groovy", "class Foo {}");
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
   }
 
-  public void testJavaClassImplementingGroovyInterface() throws Throwable {
+  public void testJavaClassImplementingGroovyInterface() {
     addGroovyObject();
     myFixture.addFileToProject("Foo.groovy", "interface Foo {}");
     myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
   }
 
-  public void testDuplicateFields() throws Throwable {
+  public void testDuplicateFields() {
     doTest();
   }
 
-  public void testNoDuplicationThroughClosureBorder() throws Throwable {
+  public void testNoDuplicationThroughClosureBorder() {
     myFixture.addClass("package groovy.lang; public interface Closure {}");
     doTest();
   }
 
-  public void testRecursiveMethodTypeInference() throws Throwable {
+  public void testRecursiveMethodTypeInference() {
     doTest();
   }
 
-  public void testSuperClassNotExists() throws Exception {
+  public void testSuperClassNotExists() {
     doTest();
   }
-  public void testDontSimplifyString() throws Throwable { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
+  public void testDontSimplifyString() { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
 
-  public void testRawMethodAccess() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
+  public void testRawMethodAccess() { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testRawFieldAccess() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
+  public void testRawFieldAccess() { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testRawArrayStyleAccess() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
+  public void testRawArrayStyleAccess() { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testRawArrayStyleAccessToMap() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
+  public void testRawArrayStyleAccessToMap() { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testRawArrayStyleAccessToList() throws Throwable { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
+  public void testRawArrayStyleAccessToList() { doTest(new GroovyUncheckedAssignmentOfMemberOfRawTypeInspection()); }
 
-  public void testIncompatibleTypesAssignments() throws Throwable { doTest(new GroovyAssignabilityCheckInspection()); }
+  public void testIncompatibleTypesAssignments() { doTest(new GroovyAssignabilityCheckInspection()); }
 
-  public void testAnonymousClassConstructor() throws Throwable {doTest();}
-  public void testAnonymousClassAbstractMethod() throws Throwable {doTest();}
-  public void testAnonymousClassStaticMethod() throws Throwable {doTest();}
-  public void testAnonymousClassShoudImplementMethods() throws Throwable {doTest();}
-  public void testAnonymousClassShouldImplementSubstitutedMethod() throws Exception {doTest();}
+  public void testAnonymousClassConstructor() {doTest();}
+  public void testAnonymousClassAbstractMethod() {doTest();}
+  public void testAnonymousClassStaticMethod() {doTest();}
+  public void testAnonymousClassShoudImplementMethods() {doTest();}
+  public void testAnonymousClassShouldImplementSubstitutedMethod() {doTest();}
 
-  public void testDefaultMapConstructorNamedArgs() throws Throwable {
+  public void testDefaultMapConstructorNamedArgs() {
     doTest(new GroovyConstructorNamedArgumentsInspection(), new GroovyAssignabilityCheckInspection());
   }
-  public void testDefaultMapConstructorNamedArgsError() throws Throwable {
+  public void testDefaultMapConstructorNamedArgsError() {
     doTest(new GroovyConstructorNamedArgumentsInspection(), new GroovyAssignabilityCheckInspection());
   }
-  public void testDefaultMapConstructorWhenDefConstructorExists() throws Throwable {
+  public void testDefaultMapConstructorWhenDefConstructorExists() {
     doTest(new GroovyConstructorNamedArgumentsInspection(), new GroovyAssignabilityCheckInspection());
   }
 
-  public void testSingleAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
-  public void testUnusedAllocationInClosure() throws Throwable {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
+  public void testSingleAllocationInClosure() {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
+  public void testUnusedAllocationInClosure() {doTest(new GroovyResultOfObjectAllocationIgnoredInspection());}
 
-  public void testUnresolvedLhsAssignment() throws Throwable { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testUnresolvedLhsAssignment() { doTest(new GroovyUnresolvedAccessInspection()); }
 
-  public void testUnresolvedMethodCallWithTwoDeclarations() throws Throwable{
+  public void testUnresolvedMethodCallWithTwoDeclarations() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
-  public void testUnresolvedAccess() throws Exception { doTest(new GroovyUnresolvedAccessInspection()); }
-  public void testBooleanProperties() throws Exception { doTest(new GroovyUnresolvedAccessInspection()); }
-  public void testUntypedAccess() throws Exception { doTest(new GroovyUntypedAccessInspection()); }
+  public void testUnresolvedAccess() { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testBooleanProperties() { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()); }
 
-  public void testUnassigned1() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
-  public void testUnassigned2() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
-  public void testUnassigned3() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
-  public void testUnassigned4() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
-  public void testUnassignedTryFinally() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassigned1() { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassigned2() { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassigned3() { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassigned4() { doTest(new UnassignedVariableAccessInspection()); }
+  public void testUnassignedTryFinally() { doTest(new UnassignedVariableAccessInspection()); }
 
-  public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testDefinitionUsedInSwitchCase() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testDuplicateInnerClass() throws Throwable{doTest();}
+  public void testUnusedVariable() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInClosure() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInClosure2() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInSwitchCase() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testDuplicateInnerClass() {doTest();}
 
-  public void testThisInStaticContext() throws Throwable {doTest();}
-  public void testLocalVariableInStaticContext() throws Exception {doTest();}
+  public void testThisInStaticContext() {doTest();}
+  public void testLocalVariableInStaticContext() {doTest();}
 
-  public void testModifiersInPackageAndImportStatements() throws Throwable {
+  public void testModifiersInPackageAndImportStatements() {
     myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/"+getTestName(false)+".groovy");
     myFixture.testHighlighting(true, false, false, "x/"+getTestName(false)+".groovy");
   }
 
-  public void testBreakOutside() throws Exception {doTest();}
-  public void testUndefinedLabel() throws Exception {doTest();}
-  public void testUsedLabel() throws Exception {doTest(new GroovyLabeledStatementInspection());}
+  public void testBreakOutside() {doTest();}
+  public void testUndefinedLabel() {doTest();}
+  public void testUsedLabel() {doTest(new GroovyLabeledStatementInspection());}
 
-  public void testNestedMethods() throws Throwable {
+  public void testNestedMethods() {
     doTest();
   }
 
-  public void testRawOverridedMethod() throws Exception {doTest();}
+  public void testRawOverridedMethod() {doTest();}
 
-  public void testFQNJavaClassesUsages() throws Exception {
+  public void testFQNJavaClassesUsages() {
     doTest();
   }
 
-  public void testGstringAssignableToString() throws Exception {doTest();}
-  public void testGstringAssignableToStringInClosureParameter() throws Exception{doTest();}
-  public void testEverythingAssignableToString() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testGstringAssignableToString() {doTest();}
+  public void testGstringAssignableToStringInClosureParameter() {doTest();}
+  public void testEverythingAssignableToString() {doTest(new GroovyAssignabilityCheckInspection());}
 
-  public void testEachOverRange() throws Exception {doTest();}
+  public void testEachOverRange() {doTest();}
 
   public void testEllipsisParam() {
     myFixture.configureByText('a.groovy', '''\
@@ -195,86 +193,86 @@ class A {
     myFixture.checkHighlighting(true, false, false)
   }
 
-  public void testMethodCallWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
-  public void testClosureWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
-  public void testClosureCallMethodWithInapplicableArguments() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testMethodCallWithDefaultParameters() {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testClosureWithDefaultParameters() {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testClosureCallMethodWithInapplicableArguments() {doTest(new GroovyAssignabilityCheckInspection());}
   public void testCallIsNotApplicable() {doTest(new GroovyAssignabilityCheckInspection());}
   public void testPathCallIsNotApplicable() {doTest(new GroovyAssignabilityCheckInspection());}
 
-  public void testOverlyLongMethodInspection() throws Exception {
+  public void testOverlyLongMethodInspection() {
     doTest(new GroovyOverlyLongMethodInspection());
   }
 
-  public void testStringAndGStringUpperBound() throws Exception {doTest();}
+  public void testStringAndGStringUpperBound() {doTest();}
 
-  public void testWithMethod() throws Exception {doTest();}
-  public void testByteArrayArgument() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testWithMethod() {doTest();}
+  public void testByteArrayArgument() {doTest(new GroovyAssignabilityCheckInspection());}
 
-  public void testForLoopWithNestedEndlessLoop() throws Exception {doTest(new UnassignedVariableAccessInspection());}
-  public void testPrefixIncrementCfa() throws Exception {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());}
-  public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testForLoopWithNestedEndlessLoop() {doTest(new UnassignedVariableAccessInspection());}
+  public void testPrefixIncrementCfa() {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());}
+  public void testIfIncrementElseReturn() {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
 
-  public void testArrayLikeAccess() throws Exception {doTest();}
+  public void testArrayLikeAccess() {doTest();}
 
-  public void testSetInitializing() throws Exception {doTest();}
+  public void testSetInitializing() {doTest();}
 
-  public void testEmptyTupleAssignability() throws Exception {doTest();}
+  public void testEmptyTupleAssignability() {doTest();}
 
-  public void testGrDefFieldsArePrivateInJavaCode() throws Exception {
+  public void testGrDefFieldsArePrivateInJavaCode() {
     myFixture.configureByText("X.groovy", "public class X{def x=5}");
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 
-  public void testSuperConstructorInvocation() throws Exception {doTest();}
+  public void testSuperConstructorInvocation() {doTest();}
 
-  public void testDuplicateMapKeys() throws Exception {doTest();}
+  public void testDuplicateMapKeys() {doTest();}
 
-  public void testIndexPropertyAccess() throws Exception {doTest();}
+  public void testIndexPropertyAccess() {doTest();}
 
-  public void testPropertyAndFieldDeclaration() throws Exception {doTest();}
+  public void testPropertyAndFieldDeclaration() {doTest();}
 
-  public void testGenericsMethodUsage() throws Exception {doTest();}
+  public void testGenericsMethodUsage() {doTest();}
 
-  public void testWildcardInExtendsList() throws Exception {doTest();}
+  public void testWildcardInExtendsList() {doTest();}
 
-  public void testOverrideAnnotation() throws Exception {doTest();}
+  public void testOverrideAnnotation() {doTest();}
 
-  public void testClosureCallWithTupleTypeArgument() throws Exception {doTest();}
+  public void testClosureCallWithTupleTypeArgument() {doTest();}
 
-  public void testMethodDuplicates() throws Exception {doTest();}
+  public void testMethodDuplicates() {doTest();}
 
-  public void testPutValueToEmptyMap() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
-  public void testPutIncorrectValueToMap() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testPutValueToEmptyMap() {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testPutIncorrectValueToMap() {doTest(new GroovyAssignabilityCheckInspection());}
 
-  public void testAmbiguousCodeBlock() throws Exception {doTest();}
-  public void testAmbiguousCodeBlockInMethodCall() throws Exception {doTest();}
-  public void testNotAmbiguousClosableBlock() throws Exception {doTest();}
-  public void testDuplicateParameterInClosableBlock() throws Exception {doTest();}
+  public void testAmbiguousCodeBlock() {doTest();}
+  public void testAmbiguousCodeBlockInMethodCall() {doTest();}
+  public void testNotAmbiguousClosableBlock() {doTest();}
+  public void testDuplicateParameterInClosableBlock() {doTest();}
 
-  public void testCyclicInheritance() throws Exception {doTest();}
+  public void testCyclicInheritance() {doTest();}
 
-  public void testNoDefaultConstructor() throws Exception {doTest();}
+  public void testNoDefaultConstructor() {doTest();}
 
-  public void testTupleTypeAssignments() throws Exception{doTest(new GroovyAssignabilityCheckInspection());}
+  public void testTupleTypeAssignments() {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testInaccessibleConstructorCall() {
     doTest(new GroovyAccessibilityInspection());
   }
 
-  public void testSignatureIsNotApplicableToList() throws Exception {
+  public void testSignatureIsNotApplicableToList() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
-  public void testInheritConstructorsAnnotation() throws Exception {
+  public void testInheritConstructorsAnnotation() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
   public void testCollectionAssignments() {doTest(new GroovyAssignabilityCheckInspection()); }
   public void testReturnAssignability() {doTest(new GroovyAssignabilityCheckInspection()); }
 
-  public void testNumberDuplicatesInMaps() throws Exception {doTest();}
+  public void testNumberDuplicatesInMaps() {doTest();}
 
-  public void testMapNotAcceptedAsStringParameter()  {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testMapNotAcceptedAsStringParameter() {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testBuiltInTypeInstantiation() {doTest();}
 
@@ -372,11 +370,11 @@ class A {
     doTest();
   }
 
-  public void testTupleConstructorAttributes() throws Exception {
+  public void testTupleConstructorAttributes() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
-  public void testCanonicalConstructorApplicability() throws Exception {
+  public void testCanonicalConstructorApplicability() {
     myFixture.addClass("package groovy.transform; public @interface Canonical {}");
     doTest(new GroovyAssignabilityCheckInspection());
   }
@@ -438,11 +436,11 @@ class A {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
-  public void testPassingCollectionSubtractionIntoGenericMethod() throws Exception {
+  public void testPassingCollectionSubtractionIntoGenericMethod() {
     doTest(new GroovyAssignabilityCheckInspection(), new GroovyUnresolvedAccessInspection());
   }
 
-  public void testBuilderMembersAreNotUnresolved() throws Exception {
+  public void testBuilderMembersAreNotUnresolved() {
     doTest(new GroovyUnresolvedAccessInspection());
   }
 
@@ -505,7 +503,7 @@ class Bar {{
     myFixture.checkHighlighting(false, false, false)
   }
 
-  public void testInheritConstructorsFromJava() throws Exception {
+  public void testInheritConstructorsFromJava() {
     myFixture.addFileToProject "a.groovy", '''
 class Person {
   Person(String first, String last) { }
@@ -528,7 +526,7 @@ class Bar {{
     myFixture.checkHighlighting(false, false, false)
   }
 
-  public void testDiamondTypeInferenceSOE() throws Exception {
+  public void testDiamondTypeInferenceSOE() {
     myFixture.configureByText 'a.groovy', ''' Map<Integer, String> a; a[2] = [:] '''
     myFixture.enableInspections(new GroovyAssignabilityCheckInspection())
     myFixture.checkHighlighting(false, false, false)
@@ -721,14 +719,14 @@ import static java.lang.annotation.ElementType.*
 @interface Ann {}
 ''')
 
-    myFixture.configureByText('_.groovy', '''
+    myFixture.configureByText('_.groovy', '''\
 @<error descr="'@Ann' not applicable to type">Ann</error>
 class C {
   @Ann
   def foo
 
   def ar() {
-    @Ann
+    @<error descr="'@Ann' not applicable to local variable">Ann</error>
     def x
   }
 }''')
@@ -746,10 +744,34 @@ import static java.lang.annotation.ElementType.*
 @interface Ann {}
 ''')
 
-    myFixture.configureByText('_.groovy', '''
+    myFixture.configureByText('_.groovy', '''\
 @Ann
 class C {
   @Ann
+  def foo
+
+  def ar() {
+    @<error descr="'@Ann' not applicable to local variable">Ann</error>
+    def x
+  }
+}''')
+    myFixture.testHighlighting(true, false, false)
+  }
+
+  public void testTargetAnnotationInsideGroovy3() {
+    myFixture.addFileToProject('Ann.groovy', '''
+import java.lang.annotation.Target
+
+import static java.lang.annotation.ElementType.*
+
+@Target(LOCAL_VARIABLE)
+@interface Ann {}
+''')
+
+    myFixture.configureByText('_.groovy', '''\
+@<error descr="'@Ann' not applicable to type">Ann</error>
+class C {
+  @<error descr="'@Ann' not applicable to field">Ann</error>
   def foo
 
   def ar() {
@@ -759,6 +781,7 @@ class C {
 }''')
     myFixture.testHighlighting(true, false, false)
   }
+
 
   public void testNonInferrableArgsOfDefParams() {
     myFixture.configureByText('_.groovy', '''\
@@ -1184,5 +1207,41 @@ test2() {
     var.toUpperCase()
 }
 """, GrReassignedInClosureLocalVarInspection)
+  }
+
+  void testOverrideForVars() {
+    testHighlighting('''\
+class S {
+  @<error descr="'@Override' not applicable to field">Override</error> def foo;
+
+  def bar() {
+   @<error descr="'@Override' not applicable to local variable">Override</error> def x
+  }
+}''')
+  }
+
+  void testUnusedImportToList() {
+    myFixture.addClass('''package java.awt; public class Component{}''')
+    testHighlighting('''\
+import java.awt.Component
+<warning descr="Unused import">import java.util.List</warning>
+
+print Component
+print List
+''')
+  }
+
+  void testUsedImportToList() {
+    myFixture.addClass('''package java.awt; public class Component{}''')
+    myFixture.addClass('''package java.awt; public class List{}''')
+    myFixture.addClass('''package java.util.concurrent; public class ConcurrentHashMap{}''')
+    testHighlighting('''\
+import java.awt.*
+import java.util.List
+<warning descr="Unused import">import java.util.concurrent.ConcurrentHashMap</warning>
+
+print Component
+print List
+''')
   }
 }

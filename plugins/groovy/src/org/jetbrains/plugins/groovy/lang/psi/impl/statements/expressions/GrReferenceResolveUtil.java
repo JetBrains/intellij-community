@@ -237,8 +237,12 @@ public class GrReferenceResolveUtil {
     final GrMember member = PsiTreeUtil.getParentOfType(ref, GrMember.class);
     if (member == null) {
       final PsiFile file = ref.getContainingFile();
-      assert file instanceof GroovyFileBase && ((GroovyFileBase)file).isScript();
-      containingClass = ((GroovyFileBase)file).getScriptClass();
+      if (file instanceof GroovyFileBase && ((GroovyFileBase)file).isScript()) {
+        containingClass = ((GroovyFileBase)file).getScriptClass();
+      }
+      else {
+        return null;
+      }
     }
     else if (member instanceof GrMethod) {
       if (!member.hasModifierProperty(PsiModifier.STATIC)) {

@@ -459,15 +459,8 @@
            order="after stats"/>
   <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="proximity"
            order="after prefix"/>
-
-  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher$Negative" id="sPriority"
-           order="first"/>
-  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="sGrouping"
-           order="after sPriority"/>
-  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupStringWeigher" id="sLookupString"
-           order="after sGrouping"/>
-  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher$Negative"
-           id="sProximity" order="after sLookupString"/>
+  <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="grouping"
+           order="last"/>
 
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionContributor" id="default"
                           order="last"/>
@@ -733,9 +726,6 @@
   <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
                       serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
   <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
-  
-  <applicationService serviceImplementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager"/>
-  <postStartupActivity implementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverStartupActivity"/>
   
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
 

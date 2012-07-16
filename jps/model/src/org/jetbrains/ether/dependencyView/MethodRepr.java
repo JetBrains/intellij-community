@@ -159,7 +159,7 @@ class MethodRepr extends ProtoMember {
       @Override
       public boolean satisfy(MethodRepr that) {
         if (me == that) return true;
-        return me.myName == that.myName && Arrays.equals(me.myArgumentTypes, that.myArgumentTypes);
+        return me.name == that.name && Arrays.equals(me.myArgumentTypes, that.myArgumentTypes);
       }
     };
   }
@@ -171,12 +171,12 @@ class MethodRepr extends ProtoMember {
 
     final MethodRepr that = (MethodRepr)o;
 
-    return myName == that.myName && myType.equals(that.myType) && Arrays.equals(myArgumentTypes, that.myArgumentTypes);
+    return name == that.name && myType.equals(that.myType) && Arrays.equals(myArgumentTypes, that.myArgumentTypes);
   }
 
   @Override
   public int hashCode() {
-    return 31 * (31 * Arrays.hashCode(myArgumentTypes) + myType.hashCode()) + myName;
+    return 31 * (31 * Arrays.hashCode(myArgumentTypes) + myType.hashCode()) + name;
   }
 
   private String getDescr(final DependencyContext context) {
@@ -195,11 +195,11 @@ class MethodRepr extends ProtoMember {
   }
 
   public UsageRepr.Usage createUsage(final DependencyContext context, final int owner) {
-    return UsageRepr.createMethodUsage(context, myName, owner, getDescr(context));
+    return UsageRepr.createMethodUsage(context, name, owner, getDescr(context));
   }
 
   public UsageRepr.Usage createMetaUsage(final DependencyContext context, final int owner) {
-    return UsageRepr.createMetaMethodUsage(context, myName, owner, getDescr(context));
+    return UsageRepr.createMetaMethodUsage(context, name, owner, getDescr(context));
   }
 
   @Override

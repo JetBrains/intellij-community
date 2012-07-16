@@ -1,5 +1,4 @@
-import javax.swing.JDialog
-import javax.swing.JTable
+import javax.swing.*
 
 def table = new JTable()
 def dialog = new JDialog()

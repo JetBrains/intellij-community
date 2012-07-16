@@ -29,6 +29,8 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.api.SequentialTaskExecutor;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -37,7 +39,6 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
-import org.jetbrains.jps.server.ProjectDescriptor;
 
 import javax.tools.*;
 import java.io.*;
@@ -105,7 +106,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           out.setTemp(isTemp);
-          if (!isTemp && out.getKind() == JavaFileObject.Kind.CLASS) {
+          if (!isTemp && out.getKind() == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(context)) {
             final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
             if (callback != null) {
               final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
@@ -123,7 +124,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public JavaBuilder(Executor tasksExecutor) {
     super(BuilderCategory.TRANSLATOR);
-    myTaskRunner = tasksExecutor;
+    myTaskRunner = new SequentialTaskExecutor(tasksExecutor);
     //add here class processors in the sequence they should be executed
   }
 

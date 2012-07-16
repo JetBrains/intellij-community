@@ -1427,6 +1427,34 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.layout.grid.RadGridLayoutComponent"
+        layout="com.intellij.android.designer.model.layout.grid.RadGridLayout"
+        class="android.support.v7.widget.GridLayout"
+        tag="android.support.v7.widget.GridLayout">
+
+    <properties inplace="rowCount columnCount orientation "
+                important="orientation rowCount columnCount useDefaultMargins alignmentMode rowOrderPreserved columnOrderPreserved"
+                top="rowCount columnCount"
+                expert="layout:gravity.clip layout:gravity.start layout:gravity.end"
+        />
+
+    <morphing to="TableLayout RelativeLayout"/>
+
+    <palette title="v7.GridLayout" icon="/com/intellij/android/designer/icons/GridLayout.png"
+             version="Android version: 2.1"
+             tooltip="A layout that places its children in a rectangular grid."/>
+
+    <creation>
+      <![CDATA[
+          <android.support.v7.widget.GridLayout
+            xmlns:grid="http://schemas.android.com/apk/res-auto"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </android.support.v7.widget.GridLayout>
+      ]]>
+    </creation>
+  </meta>
+
   <meta model="com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent"
         layout="com.intellij.android.designer.model.layout.relative.RadRelativeLayout"
         class="android.widget.RelativeLayout"
@@ -1465,6 +1493,7 @@
       <item tag="TableLayout"/>
       <item tag="TableRow"/>
       <item tag="GridLayout"/>
+      <!-- <item tag="android.support.v7.widget.GridLayout"/> -->
       <item tag="RelativeLayout"/>
     </group>
     <group name="Widgets">

@@ -17,20 +17,23 @@ package com.intellij.android.designer.model.layout.table;
 
 import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.grid.RadCaptionColumn;
+import com.intellij.designer.designSurface.EditableArea;
+import com.intellij.designer.model.IGroupDeleteComponent;
 import com.intellij.designer.model.RadComponent;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadCaptionTableColumn extends RadCaptionColumn<RadTableLayoutComponent> {
-  public RadCaptionTableColumn(RadTableLayoutComponent container, int index, int offset, int width, boolean empty) {
-    super(container, index, offset, width, empty);
+public class RadCaptionTableColumn extends RadCaptionColumn<RadTableLayoutComponent> implements IGroupDeleteComponent {
+  public RadCaptionTableColumn(EditableArea mainArea, RadTableLayoutComponent container, int index, int offset, int width, boolean empty) {
+    super(mainArea, container, index, offset, width, empty);
   }
 
-  @Override
-  public void delete() throws Exception {
+  private void deleteColumn(List<RadComponent> deletedComponents) throws Exception {
     GridInfo info = myContainer.getVirtualGridInfo();
     RadComponent[][] components = info.components;
 
@@ -51,22 +54,56 @@ public class RadCaptionTableColumn extends RadCaptionColumn<RadTableLayoutCompon
 
           RadComponent parent = component.getParent();
           component.delete();
+          deletedComponents.add(component);
+
           if (parent.getChildren().isEmpty()) {
             parent.delete();
-          }
-        }
-      }
-
-      for (int i = nextIndex; i < rowComponents.length; i++) {
-        RadComponent cellComponent = rowComponents[i];
-        if (cellComponent != null) {
-          RadTableLayoutComponent.setCellIndex(cellComponent, i - 1);
-
-          while (i + 1 < rowComponents.length && cellComponent == rowComponents[i + 1]) {
-            i++;
+            deletedComponents.add(parent);
           }
         }
       }
     }
+  }
+
+  @Override
+  public void delete(List<RadComponent> columns) throws Exception {
+    List<RadComponent> deletedComponents = new ArrayList<RadComponent>();
+
+    RadComponent[][] components = myContainer.getGridComponents(false);
+
+    for (RadComponent component : columns) {
+      RadCaptionTableColumn column = (RadCaptionTableColumn)component;
+      column.deleteColumn(deletedComponents);
+    }
+
+    for (int i = 0; i < components.length; i++) {
+      RadComponent[] rowComponents = components[i];
+      RadComponent[] newRowComponents = new RadComponent[rowComponents.length - columns.size()];
+      components[i] = newRowComponents;
+
+      for (int j = 0, index = 0; j < rowComponents.length; j++) {
+        boolean add = true;
+        for (RadComponent column : columns) {
+          if (j == ((RadCaptionTableColumn)column).myIndex) {
+            add = false;
+            break;
+          }
+        }
+        if (add) {
+          newRowComponents[index++] = rowComponents[j];
+        }
+      }
+    }
+
+    for (RadComponent[] rowComponents : components) {
+      for (int j = 0; j < rowComponents.length; j++) {
+        RadComponent cellComponent = rowComponents[j];
+        if (cellComponent != null) {
+          RadTableLayoutComponent.setCellIndex(cellComponent, j);
+        }
+      }
+    }
+
+    deselect(deletedComponents);
   }
 }

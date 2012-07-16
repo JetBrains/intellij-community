@@ -72,6 +72,12 @@ public abstract class Filter<T extends AbstractTestProxy> {
     }
   };
 
+  public static final Filter IGNORED = new Filter() {
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.isIgnored();
+    }
+  };
+
   public static final Filter NOT_PASSED = new Filter() {
     public boolean shouldAccept(final AbstractTestProxy test) {
       return !test.isPassed();

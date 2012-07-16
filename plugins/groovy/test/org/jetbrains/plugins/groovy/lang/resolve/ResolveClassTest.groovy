@@ -261,6 +261,20 @@ public class X{
     assertNotNull(resolve("a.groovy"))
   }
 
+  void testOnDemandJavaAwtVsJavUtilList() {
+    myFixture.addClass('''package java.awt; public class Component{}''')
+    myFixture.addClass('''package java.awt; public class List{}''')
+    myFixture.configureByText('_.groovy', ''''\
+import java.awt.*
+import java.util.List
+
+print Component
+print Li<caret>st
+''')
+    def target = myFixture.getFile().findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+    assertEquals('java.util.List', target.getQualifiedName())
+  }
+
   private void doTest() {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }

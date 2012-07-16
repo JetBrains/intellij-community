@@ -152,6 +152,11 @@ public class SMTestProxy extends AbstractTestProxy {
     return myState.wasTerminated();
   }
 
+  @Override
+  public boolean isIgnored() {
+    return myState.getMagnitude() == TestStateInfo.Magnitude.SKIPPED_INDEX;
+  }
+
   public boolean isPassed() {
     return myState.getMagnitude() == TestStateInfo.Magnitude.SKIPPED_INDEX ||
            myState.getMagnitude() == TestStateInfo.Magnitude.COMPLETE_INDEX ||

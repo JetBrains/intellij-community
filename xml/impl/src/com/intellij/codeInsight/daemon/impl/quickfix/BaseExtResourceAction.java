@@ -79,11 +79,8 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
   public static String findUri(PsiFile file, int offset) {
     PsiReference currentRef = file.getViewProvider().findReferenceAt(offset, file.getLanguage());
     if (currentRef == null) currentRef = file.getViewProvider().findReferenceAt(offset);
-    if (( currentRef instanceof URLReference ||
-          currentRef instanceof URIReferenceProvider.DependentNSReference
-        ) &&
-        currentRef.resolve() == null
-       ) {
+    if (currentRef instanceof URLReference ||
+        currentRef instanceof URIReferenceProvider.DependentNSReference) {
       return currentRef.getCanonicalText();
     }
     return null;

@@ -160,7 +160,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   private String initJdomExternalizable(@NotNull JDOMExternalizable component) {
     final String componentName = ComponentManagerImpl.getComponentName(component);
 
-    myComponents.put(componentName, component);
+    doAddComponent(componentName, component);
 
     if (optimizeTestLoading()) return componentName;
 
@@ -186,6 +186,14 @@ abstract class ComponentStoreImpl implements IComponentStore {
     validateUnusedMacros(componentName, true);
 
     return componentName;
+  }
+
+  private void doAddComponent(String componentName, Object component) {
+    Object existing = myComponents.get(componentName);
+    if (existing != null && existing != component) {
+      LOG.error("Conflicting component name '" + componentName + "': " + existing.getClass() + " and " + component.getClass());
+    }
+    myComponents.put(componentName, component);
   }
 
   private void loadJdomDefaults(@NotNull final Object component, final String componentName) {
@@ -250,7 +258,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
       roamingManager.setRoamingType(name, roamingTypeFromComponent);
     }
 
-    myComponents.put(name, component);
+    doAddComponent(name, component);
     if (optimizeTestLoading()) return name;
 
     Class<T> stateClass = getComponentStateClass(component);

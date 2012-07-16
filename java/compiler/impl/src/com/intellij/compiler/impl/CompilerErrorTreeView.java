@@ -17,9 +17,11 @@ package com.intellij.compiler.impl;
 
 import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
 import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
-import com.intellij.compiler.*;
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.HelpID;
 import com.intellij.compiler.options.CompilerConfigurable;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.*;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -105,16 +107,6 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
         ExcludeEntryDescription description = new ExcludeEntryDescription(file, false, true, myProject);
         ((CompilerConfigurationImpl) CompilerConfiguration.getInstance(myProject)).getExcludedEntriesConfiguration().addExcludeEntryDescription(description);
         FileStatusManager.getInstance(myProject).fileStatusesChanged();
-        final Project project = myProject;
-        SwingUtilities.invokeLater(new Runnable() { // this will cause jps compile server to reload project configuration
-          public void run() {
-            if (!project.isDisposed()) {
-              project.save();
-              CompileServerManager.getInstance().sendReloadRequest(project);
-              BuildManager.getInstance().clearState(project);
-            }
-          }
-        });
       }
     }
 

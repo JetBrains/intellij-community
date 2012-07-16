@@ -12,12 +12,12 @@ import org.jetbrains.jps.model.module.JpsModule;
 public class JpsFacetTest extends JpsModelTestCase {
   public void testAddFacet() {
     final JpsModule m = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
-    m.addFacet("f", MY_FACET_TYPE);
+    m.addFacet("f", MY_FACET_TYPE, DummyJpsElementProperties.INSTANCE);
     assertEquals("f", assertOneElement(m.getFacets()).getName());
   }
 
   public void testCreateReferenceByFacet() {
-    final JpsFacet facet = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE).addFacet("f", MY_FACET_TYPE);
+    final JpsFacet facet = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE).addFacet("f", MY_FACET_TYPE, DummyJpsElementProperties.INSTANCE);
     final JpsElementReference<JpsFacet> reference = facet.createReference().asExternal(myModel);
     assertSame(facet, reference.resolve());
   }

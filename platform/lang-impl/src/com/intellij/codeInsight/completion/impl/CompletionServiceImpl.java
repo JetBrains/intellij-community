@@ -27,6 +27,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -309,17 +310,25 @@ public class CompletionServiceImpl extends CompletionService{
     private final CompletionLocation myLocation;
 
     public PreferStartMatching(CompletionLocation location) {
-      super("startMatching");
+      super("middleMatching");
       myLocation = location;
     }
 
     @Override
     public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-      return new ComparingClassifier<LookupElement>(next, "startMatching") {
+      return new ComparingClassifier<LookupElement>(next, "middleMatching") {
         @NotNull
         @Override
         public Comparable getWeight(LookupElement element) {
-          PrefixMatcher itemMatcher = myLocation.getCompletionParameters().getLookup().itemMatcher(element);
+          Lookup lookup = myLocation.getCompletionParameters().getLookup();
+          PrefixMatcher itemMatcher = lookup.itemMatcher(element);
+          String prefix = itemMatcher.getPrefix();
+          if (StringUtil.isEmpty(prefix)) {
+            String pattern = lookup.itemPattern(element);
+            if (!pattern.equals(prefix)) {
+              itemMatcher = itemMatcher.cloneWithPrefix(pattern);
+            }
+          }
           for (String ls : element.getAllLookupStrings()) {
             if (itemMatcher.isStartMatch(ls)) {
               return false;

@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -63,6 +64,8 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   public abstract GrThisReferenceExpression createThisExpression(PsiManager manager, PsiClass psiClass);
 
   public abstract GrBlockStatement createBlockStatementFromText(String text, @Nullable PsiElement context);
+
+  public abstract GrModifierList createModifierList(String text);
 
   public static GroovyPsiElementFactory getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiElementFactory.class);

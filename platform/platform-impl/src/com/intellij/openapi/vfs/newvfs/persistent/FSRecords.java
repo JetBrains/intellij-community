@@ -854,9 +854,14 @@ public class FSRecords implements Forceable {
     getRecords().putInt(HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
 
     int parent = id;
+    int depth = 10000;
     while (parent != 0) {
       setModCount(parent, count);
       parent = getParent(parent);
+      if (depth -- == 0) {
+        LOG.error("Cyclic parent child relation? file: " + getName(id));
+        return;
+      }
     }
   }
 

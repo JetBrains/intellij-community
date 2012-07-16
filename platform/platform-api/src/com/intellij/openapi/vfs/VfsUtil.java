@@ -664,4 +664,10 @@ public class VfsUtil extends VfsUtilCore {
     final String path = SystemProperties.getUserHome();
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
+
+  @NotNull
+  public static VirtualFile[] getChildren(@NotNull VirtualFile dir) {
+    VirtualFile[] children = dir.getChildren();
+    return children == null ? VirtualFile.EMPTY_ARRAY : children;
+  }
 }

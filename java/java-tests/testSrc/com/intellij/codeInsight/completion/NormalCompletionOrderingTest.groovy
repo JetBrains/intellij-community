@@ -191,14 +191,6 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals("Foooo.Bar", presentation.getItemText());*/
   }
 
-  public void testClassInCallOfItsMethod() throws Throwable {
-    myFixture.addClass("package foo; public interface Foo {}");
-    myFixture.addClass("package bar; public interface Foo {}");
-
-    checkPreferredItems(0, "Foo", "Foo");
-    assertEquals("foo.Foo", ((JavaPsiClassReferenceElement)getLookup().getCurrentItem()).getQualifiedName());
-  }
-
   public void testDeclaredMembersGoFirst() throws Exception {
     invokeCompletion(getTestName(false) + ".java");
     assertStringItems("fromThis", "overridden", "fromSuper", "equals", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait",

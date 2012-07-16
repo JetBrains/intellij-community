@@ -51,9 +51,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   public Iterable<T> classify(Iterable<T> source, ProcessingContext context) {
     List<T> nulls = null;
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
-    int count = 0;
     for (T t : myNext.classify(source, context)) {
-      count++;
       final Comparable weight = getWeight(t);
       if (weight == null) {
         if (nulls == null) nulls = new SmartList<T>();
@@ -67,15 +65,45 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
       }
     }
 
-    ArrayList<T> result = new ArrayList<T>(count);
-    Collection<List<T>> values = myNegated ? map.descendingMap().values() : map.values();
-    for (List<T> value : values) {
-      result.addAll(value);
-    }
-    if (nulls != null) {
-      result.addAll(nulls);
-    }
-    return result;
+    final Collection<List<T>> values = myNegated ? map.descendingMap().values() : map.values();
+    final List<T> lastGroup = nulls == null ? Collections.<T>emptyList() : nulls;
+
+    return new Iterable<T>() {
+
+      @Override
+      public Iterator<T> iterator() {
+        return new Iterator<T>() {
+          private Iterator<List<T>> valuesIterator = values.iterator();
+          private Iterator<T> groupIterator = Collections.<T>emptyList().iterator();
+          private boolean passedLast;
+
+          @Override
+          public boolean hasNext() {
+            while (!groupIterator.hasNext() && valuesIterator.hasNext()) {
+              groupIterator = valuesIterator.next().iterator();
+            }
+            if (!groupIterator.hasNext() && !valuesIterator.hasNext() && !passedLast) {
+              passedLast = true;
+              groupIterator = lastGroup.iterator();
+            }
+            return groupIterator.hasNext();
+          }
+
+          @Override
+          public T next() {
+            if (!hasNext()) {
+              throw new AssertionError();
+            }
+            return groupIterator.next();
+          }
+
+          @Override
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
   }
 
   @Override
@@ -84,7 +112,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     for (T t : map.keySet()) {
       weights.put(t, String.valueOf(getWeight(t)));
     }
-    if (new HashSet<String>(weights.values()).size() > 1 || ApplicationManager.getApplication().isUnitTestMode() || true) {
+    if (new HashSet<String>(weights.values()).size() > 1 || ApplicationManager.getApplication().isUnitTestMode()) {
       for (T t : map.keySet()) {
         final StringBuilder builder = map.get(t);
         if (builder.length() > 0) {

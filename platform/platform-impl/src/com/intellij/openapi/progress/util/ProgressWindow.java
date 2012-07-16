@@ -411,10 +411,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     private JProgressBar myProgressBar;
     private boolean myRepaintedFlag = true;
-    private       TitlePanel    myTitlePanel;
-    private       DialogWrapper myPopup;
-    private final Window        myParentWindow;
-    private       Point         myLastClicked;
+    private TitlePanel myTitlePanel;
+    private JPanel myInnerPanel;
+    private DialogWrapper myPopup;
+    private final Window myParentWindow;
+    private Point myLastClicked;
 
     public MyDialog(boolean shouldShowBackground, Project project, String cancelText) {
       Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
@@ -437,7 +438,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       if (UIUtil.isUnderAquaLookAndFeel()) {
         UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
       }
-      myProgressBar.setPreferredSize(new Dimension(UIUtil.isUnderAquaLookAndFeel() ? 350 : 450, -1));
+      myInnerPanel.setPreferredSize(new Dimension(UIUtil.isUnderAquaLookAndFeel() ? 350 : 450, -1));
 
       myCancelButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {

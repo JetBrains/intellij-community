@@ -12,6 +12,7 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.facet.JpsFacetLoader;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
@@ -134,6 +135,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final JpsModulePropertiesLoader<?> loader = getModulePropertiesLoader(typeId);
     final JpsModule module = createModule(name, moduleRoot, loader);
     JpsModuleLoader.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"));
+    JpsFacetLoader.loadFacets(module, findComponent(moduleRoot, "FacetManager"));
     return module;
   }
 

@@ -17,7 +17,8 @@
 package org.jetbrains.plugins.groovy.compiler;
 
 
-import com.intellij.compiler.CompileServerManager
+
+import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -138,17 +139,12 @@ class A {
 
     @Override
     protected void tearDown() {
-      File systemRoot = CompileServerManager.getInstance().getCompileServerSystemRoot()
+      File systemRoot = BuildManager.getInstance().getBuildSystemDirectory()
       try {
         super.tearDown()
       }
       finally {
-        File[] files = systemRoot.listFiles()
-        if (files != null) {
-          for (File file : files) {
-            FileUtil.delete(file);
-          }
-        }
+        FileUtil.delete(systemRoot);
       }
     }
   }

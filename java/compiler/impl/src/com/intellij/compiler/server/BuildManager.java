@@ -79,8 +79,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
-import org.jetbrains.jps.server.ClasspathBootstrap;
-import org.jetbrains.jps.server.Server;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 
 import javax.tools.*;
 import java.io.File;
@@ -103,7 +102,7 @@ public class BuildManager implements ApplicationComponent{
   private static final String SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
-  private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
+  private static final int MAKE_TRIGGER_DELAY = 3 * 1000 + 500/*3.5 seconds*/;
   private final boolean IS_UNIT_TEST_MODE;
 
   private final File mySystemDirectory;
@@ -260,34 +259,32 @@ public class BuildManager implements ApplicationComponent{
     if (IS_UNIT_TEST_MODE || PowerSaveMode.isEnabled()) {
       return;
     }
-    if (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
-      addMakeRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (!myAutoMakeInProgress.getAndSet(true)) {
-            try {
-              ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    runAutoMake();
-                  }
-                  finally {
-                    myAutoMakeInProgress.set(false);
-                  }
+    addMakeRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (!myAutoMakeInProgress.getAndSet(true)) {
+          try {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  runAutoMake();
                 }
-              });
-            }
-            catch (RejectedExecutionException ignored) {
-              // we were shut down
-            }
+                finally {
+                  myAutoMakeInProgress.set(false);
+                }
+              }
+            });
           }
-          else {
-            addMakeRequest(this);
+          catch (RejectedExecutionException ignored) {
+            // we were shut down
           }
         }
-      });
-    }
+        else {
+          addMakeRequest(this);
+        }
+      }
+    });
   }
 
   private void addMakeRequest(Runnable runnable) {
@@ -748,6 +745,7 @@ public class BuildManager implements ApplicationComponent{
     if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
+    cmdLine.addParameter("-Djdt.compiler.useSingleThread=true"); // always run eclipse compiler in single-threaded mode
 
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
     if (shouldGenerateIndex != null) {
@@ -853,7 +851,7 @@ public class BuildManager implements ApplicationComponent{
     if (!logConfig.exists()) {
       FileUtil.createIfDoesntExist(logConfig);
       try {
-        final InputStream in = Server.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
+        final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
         if (in != null) {
           try {
             final FileOutputStream out = new FileOutputStream(logConfig);
@@ -949,6 +947,7 @@ public class BuildManager implements ApplicationComponent{
           scheduleAutoMake();
         }
       });
+      scheduleAutoMake(); // run automake on project opening
     }
 
     @Override

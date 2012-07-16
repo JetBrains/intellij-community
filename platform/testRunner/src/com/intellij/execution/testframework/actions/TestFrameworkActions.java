@@ -33,11 +33,26 @@ public class TestFrameworkActions {
     final TestConsoleProperties properties = model.getProperties();
     final TestFrameworkPropertyListener<Boolean> hidePropertyListener = new TestFrameworkPropertyListener<Boolean>() {
         public void onChanged(final Boolean value) {
-          final boolean shouldFilter = TestConsoleProperties.HIDE_PASSED_TESTS.value(properties);
-          model.setFilter(shouldFilter ? Filter.NOT_PASSED.or(Filter.DEFECT) : Filter.NO_FILTER);
+          model.setFilter(getFilter(properties));
         }
       };
     addPropertyListener(TestConsoleProperties.HIDE_PASSED_TESTS, hidePropertyListener, model, true);
+
+    final TestFrameworkPropertyListener<Boolean> ignorePropertyListener = new TestFrameworkPropertyListener<Boolean>() {
+      public void onChanged(final Boolean value) {
+        model.setFilter(getFilter(properties));
+      }
+    };
+    addPropertyListener(TestConsoleProperties.HIDE_IGNORED_TEST, ignorePropertyListener, model, true);
+  }
+
+  private static Filter getFilter(TestConsoleProperties properties) {
+    final boolean shouldFilterPassed = TestConsoleProperties.HIDE_PASSED_TESTS.value(properties);
+    final Filter hidePassedFilter = shouldFilterPassed ? Filter.NOT_PASSED.or(Filter.DEFECT) : Filter.NO_FILTER;
+
+    final boolean shouldFilterIgnored = TestConsoleProperties.HIDE_IGNORED_TEST.value(properties);
+    final Filter hideIgnoredFilter = shouldFilterIgnored ? Filter.IGNORED.not() : Filter.NO_FILTER;
+    return hidePassedFilter.and(hideIgnoredFilter);
   }
 
   public static void addPropertyListener(final AbstractProperty<Boolean> property,

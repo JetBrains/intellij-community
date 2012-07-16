@@ -497,6 +497,7 @@ public class HighlightMethodUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromSuperFix(methodCall));
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromThisFix(methodCall));
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreatePropertyFromUsageFix(methodCall));
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateGetterSetterPropertyFromUsageFix(methodCall));
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
     CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange);

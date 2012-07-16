@@ -23,7 +23,7 @@ package com.intellij.spellchecker;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 
@@ -43,7 +43,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
     attributes.setEffectColor(new Color(0, 128, 0));
 
     result.add(new HighlightInfoType.HighlightInfoTypeImpl(TYPO,
-               TextAttributesKeyDefaults.createTextAttributesKey("TYPO", attributes)));
+               TextAttributesKey.createTextAttributesKey("TYPO", attributes)));
     return result;
   }
 

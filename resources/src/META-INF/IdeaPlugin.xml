@@ -896,9 +896,6 @@
     <statistician key="proximity" implementationClass="com.intellij.codeInsight.completion.JavaProximityStatistician"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.JavaCompletionStatistician"/>
 
-    <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PreferLessParametersWeigher" id="lessParams"
-             order="after sLookupString, before sProximity"/>
-
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>
 
 

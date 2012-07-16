@@ -38,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -199,8 +198,7 @@ public class GroovyExtractChooser {
       return findStatementsInRange(file, startOffset, endOffset, true);
     }
 
-    PsiElement parent = expr.getParent();
-    if (expr.getParent() instanceof GrMethodCallExpression || parent instanceof GrIndexProperty) {
+    if (expr.getParent() instanceof GrMethodCallExpression) {
       expr = ((GrExpression)expr.getParent());
     }
     return new PsiElement[]{expr};

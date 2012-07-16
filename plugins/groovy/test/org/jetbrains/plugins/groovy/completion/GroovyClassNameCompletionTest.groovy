@@ -193,9 +193,9 @@ abcme<caret>x""")
     assert presentation.tailText == "() in Foo (foo)"
 
     myFixture.type('\t')
-    myFixture.checkResult """
-import static foo.Foo.anotherMethod
+    myFixture.checkResult """\
 import static foo.Foo.abcMethod
+import static foo.Foo.anotherMethod
 
 anotherMethod()
 abcMethod()<caret>"""

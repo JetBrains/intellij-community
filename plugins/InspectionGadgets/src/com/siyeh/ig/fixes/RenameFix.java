@@ -21,10 +21,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
@@ -71,12 +71,10 @@ public class RenameFix extends InspectionGadgetsFix {
     final PsiElement nameIdentifier = descriptor.getPsiElement();
     final PsiElement elementToRename = nameIdentifier.getParent();
     if (m_targetName == null) {
-      final RefactoringActionHandlerFactory factory =
-        RefactoringActionHandlerFactory.getInstance();
-      final RefactoringActionHandler renameHandler =
-        factory.createRenameHandler();
       final DataManager dataManager = DataManager.getInstance();
       final DataContext dataContext = dataManager.getDataContext();
+      final RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
+      if (renameHandler == null) return;
       Runnable runnable = new Runnable() {
         public void run() {
           renameHandler.invoke(project, new PsiElement[]{elementToRename},

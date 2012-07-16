@@ -631,6 +631,11 @@ public class UIUtil {
     return isUnderDarcula() ? Gray._52 : UNFOCUSED_SELECTION_COLOR;
   }
 
+  public static Color getTreeUnfocusedSelectionBackground() {
+    Color background = getTreeTextBackground();
+    return ColorUtil.isDark(background) ? Gray._30 : UNFOCUSED_SELECTION_COLOR;
+  }
+
   public static Color getTextFieldForeground() {
     return UIManager.getColor("TextField.foreground");
   }

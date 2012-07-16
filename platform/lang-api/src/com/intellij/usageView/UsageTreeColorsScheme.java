@@ -22,9 +22,13 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.ui.ColorUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.*;
 
 public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable{
   private EditorColorsScheme myColorsScheme;
@@ -51,7 +55,13 @@ public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable
 
   public void readExternal(Element element) throws InvalidDataException {
     if (myColorsScheme == null){
-      myColorsScheme = (EditorColorsScheme) myEditorColorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME).clone();
+      Color color = UIUtil.getTreeTextBackground();
+      if (color != null && ColorUtil.isDark(color)) {
+        myColorsScheme = (EditorColorsScheme)myEditorColorsManager.getGlobalScheme().clone();
+      }
+      else {
+        myColorsScheme = (EditorColorsScheme)myEditorColorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME).clone();
+      }
     }
     myColorsScheme.readExternal(element);
   }

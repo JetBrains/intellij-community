@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.server.ProjectDescriptor;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 
 /**
  * @author Eugene Zhuravlev

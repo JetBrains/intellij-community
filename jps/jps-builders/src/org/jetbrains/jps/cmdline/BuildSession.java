@@ -29,7 +29,6 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.*;
 import java.util.*;

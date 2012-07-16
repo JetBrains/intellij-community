@@ -442,7 +442,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         }
         finally {
           // access to our MultiMap should be synchronized
-          synchronized (vfile) {
+          synchronized (filesInProcessing) {
             // put evaluated executor to all queues
             for (LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>> queue : filesInProcessing.remove(fileUrl)) {
               queue.offer(Pair.create(vfile, executor));
@@ -453,7 +453,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     };
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (vfile) { //ensure that only one thread calculates dsl executor
+    synchronized (filesInProcessing) { //ensure that only one thread calculates dsl executor
       final boolean isNewRequest = !filesInProcessing.containsKey(fileUrl);
       filesInProcessing.putValue(fileUrl, queue);
       if (isNewRequest) {

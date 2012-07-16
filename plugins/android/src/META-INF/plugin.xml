@@ -53,6 +53,9 @@
     <action id="Android.RunDraw9Patch" class="org.jetbrains.android.actions.AndroidRunDraw9PatchAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
+    <action id="Android.GenerateSignedApk" class="org.jetbrains.android.actions.GenerateSignedApkAction">
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+    </action>
     <action id="Android.ExportSignedPackage" class="org.jetbrains.android.actions.ExportSignedPackageAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
@@ -197,6 +200,8 @@
     <referencesSearch implementation="org.jetbrains.android.AndroidReferenceSearchExecutor"/>
     <projectService serviceInterface="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"
                     serviceImplementation="org.jetbrains.android.compiler.AndroidDexCompilerConfiguration"/>
+    <projectService serviceInterface="org.jetbrains.android.exportSignedPackage.GenerateSignedApkSettings"
+                    serviceImplementation="org.jetbrains.android.exportSignedPackage.GenerateSignedApkSettings"/>
     <compilerSettingsFactory implementation="org.jetbrains.android.compiler.AndroidDexCompilerSettingsFactory"/>
     <problemFileHighlightFilter implementation="org.jetbrains.android.AndroidProblemFileHighlightingFilter"/>
     <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.android.AndroidDocumentationProvider" order="first"/>

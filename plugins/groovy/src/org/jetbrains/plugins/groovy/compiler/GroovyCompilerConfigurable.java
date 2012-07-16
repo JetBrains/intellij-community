@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -46,6 +47,8 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
   private JTextField myHeapSize;
   private JPanel myMainPanel;
   private JPanel myExcludesPanel;
+  private JBCheckBox myInvokeDynamicSupportCB;
+
   private final ExcludedEntriesConfigurable myExcludes;
   private final GroovyCompilerConfiguration myConfig;
 
@@ -102,16 +105,19 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
 
   public boolean isModified() {
     return !Comparing.equal(myConfig.getHeapSize(), myHeapSize.getText()) ||
+           myInvokeDynamicSupportCB.isSelected() != myConfig.isInvokeDynamic() ||
            myExcludes.isModified();
   }
 
   public void apply() throws ConfigurationException {
     myExcludes.apply();
     myConfig.setHeapSize(myHeapSize.getText());
+    myConfig.setInvokeDynamic(myInvokeDynamicSupportCB.isSelected());
   }
 
   public void reset() {
     myHeapSize.setText(myConfig.getHeapSize());
+    myInvokeDynamicSupportCB.setSelected(myConfig.isInvokeDynamic());
     myExcludes.reset();
   }
 

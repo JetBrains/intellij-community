@@ -16,21 +16,21 @@ import java.io.PrintStream;
  * To change this template use File | Settings | File Templates.
  */
 class Proto implements RW.Savable, Streamable {
-  public final int myAccess;
-  public final int mySignature;
-  public final int myName;
+  public final int access;
+  public final int signature;
+  public final int name;
 
   protected Proto(final int access, final int signature, final int name) {
-    this.myAccess = access;
-    this.mySignature = signature;
-    this.myName = name;
+    this.access = access;
+    this.signature = signature;
+    this.name = name;
   }
 
   protected Proto(final DataInput in) {
     try {
-      myAccess = in.readInt();
-      mySignature = in.readInt();
-      myName = in.readInt();
+      access = in.readInt();
+      signature = in.readInt();
+      name = in.readInt();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -40,9 +40,9 @@ class Proto implements RW.Savable, Streamable {
   @Override
   public void save(final DataOutput out) {
     try {
-      out.writeInt(myAccess);
-      out.writeInt(mySignature);
-      out.writeInt(myName);
+      out.writeInt(access);
+      out.writeInt(signature);
+      out.writeInt(name);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -52,11 +52,11 @@ class Proto implements RW.Savable, Streamable {
   public Difference difference(final Proto past) {
     int diff = Difference.NONE;
 
-    if (past.myAccess != myAccess) {
+    if (past.access != access) {
       diff |= Difference.ACCESS;
     }
 
-    if (past.mySignature != mySignature) {
+    if (past.signature != signature) {
       diff |= Difference.SIGNATURE;
     }
 
@@ -75,20 +75,20 @@ class Proto implements RW.Savable, Streamable {
 
       @Override
       public int addedModifiers() {
-        return ~past.myAccess & myAccess;
+        return ~past.access & access;
       }
 
       @Override
       public int removedModifiers() {
-        return ~myAccess & past.myAccess;
+        return ~access & past.access;
       }
 
       @Override
       public boolean packageLocalOn() {
-        return ((past.myAccess & Opcodes.ACC_PRIVATE) != 0 ||
-                (past.myAccess & Opcodes.ACC_PUBLIC) != 0 ||
-                (past.myAccess & Opcodes.ACC_PROTECTED) != 0) &&
-               Difference.isPackageLocal(myAccess);
+        return ((past.access & Opcodes.ACC_PRIVATE) != 0 ||
+                (past.access & Opcodes.ACC_PUBLIC) != 0 ||
+                (past.access & Opcodes.ACC_PROTECTED) != 0) &&
+               Difference.isPackageLocal(access);
       }
 
       @Override
@@ -98,7 +98,7 @@ class Proto implements RW.Savable, Streamable {
 
       @Override
       public boolean weakedAccess() {
-        return Difference.weakerAccess(past.myAccess, myAccess);
+        return Difference.weakerAccess(past.access, access);
       }
     };
   }
@@ -108,25 +108,25 @@ class Proto implements RW.Savable, Streamable {
 
     if (this instanceof ClassRepr) {
       stream.print("    Class ");
-      stream.println(context.getValue(myName));
+      stream.println(context.getValue(name));
     }
 
     if (this instanceof MethodRepr) {
       stream.print("        Method ");
-      stream.println(context.getValue(myName));
+      stream.println(context.getValue(name));
     }
 
     if (this instanceof FieldRepr) {
       stream.print("        Field ");
-      stream.println(context.getValue(myName));
+      stream.println(context.getValue(name));
     }
 
     stream.print(d);
     stream.print("Access     : ");
-    stream.println(myAccess);
+    stream.println(access);
 
     stream.print(d);
     stream.print("Signature  : ");
-    stream.println(context.getValue(mySignature));
+    stream.println(context.getValue(signature));
   }
 }

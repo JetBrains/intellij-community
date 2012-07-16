@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -94,6 +95,12 @@ public abstract class ComponentEditableArea implements EditableArea {
   @Override
   public void setSelection(@NotNull List<RadComponent> components) {
     mySelection = new ArrayList<RadComponent>(components);
+    fireSelectionChanged();
+  }
+
+  @Override
+  public void deselect(@NotNull Collection<RadComponent> components) {
+    mySelection.removeAll(components);
     fireSelectionChanged();
   }
 

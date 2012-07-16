@@ -42,7 +42,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       @NonNls final String extension = file.getExtension();
-      return extension != null && extension.equals("xsd");
+      return "xsd".equals(extension) || "dtd".equals(extension);
     }
   };
 
@@ -87,10 +87,8 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
           }
           for (OrderEntry orderEntry : orderEntries) {
             Module ownerModule = orderEntry.getOwnerModule();
-            if (ownerModule != null) {
-              if (ownerModule.equals(module)) {
-                return true;
-              }
+            if (ownerModule.equals(module)) {
+              return true;
             }
           }
         }

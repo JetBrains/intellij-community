@@ -31,12 +31,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import java.io.File;
 import java.io.IOException;
