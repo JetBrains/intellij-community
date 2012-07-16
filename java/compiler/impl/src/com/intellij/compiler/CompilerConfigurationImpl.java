@@ -197,10 +197,11 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       removeWildcardPatterns();
     }
     try {
-      addWildcardResourcePattern("!?*.form");
       addWildcardResourcePattern("!?*.java");
+      addWildcardResourcePattern("!?*.form");
       addWildcardResourcePattern("!?*.class");
       addWildcardResourcePattern("!?*.groovy");
+      addWildcardResourcePattern("!?*.scala");
       addWildcardResourcePattern("!?*.flex");
       addWildcardResourcePattern("!?*.kt");
     }
