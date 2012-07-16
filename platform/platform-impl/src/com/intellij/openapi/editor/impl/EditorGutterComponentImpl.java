@@ -295,7 +295,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       doPaintFoldingTree((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
     }
     else {
-      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width -1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
+      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width - 1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
     }
   }
 
@@ -561,7 +561,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     });
 
     myLineMarkerAreaWidth = myIconsAreaWidth + FREE_PAINTERS_AREA_WIDTH +
-                            (isFoldingOutlineShown() ? 0 : getFoldingAnchorWidth() / 2);
+                            (isFoldingOutlineShown() ? getFoldingAnchorWidth() / 2 : 0);
   }
 
   private void paintGutterRenderers(final Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
