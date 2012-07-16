@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.popup.util.DetailView;
+import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.util.IconUtil;
@@ -65,6 +66,7 @@ public class BreakpointMasterDetailPopupBuilder {
   private boolean myIsViewer;
 
   private boolean myPlainView = false;
+  private JBPopup myPopup;
 
   public boolean isPlainView() {
     return myPlainView;
@@ -119,8 +121,13 @@ public class BreakpointMasterDetailPopupBuilder {
     }
     myPopupBuilder.setCancelOnWindowDeactivation(false);
 
+    DetailViewImpl view = null;
     if (myDetailView != null) {
       myPopupBuilder.setDetailView(myDetailView);
+    } else {
+      view = new DetailViewImpl(myProject);
+
+      myPopupBuilder.setDetailView(view);
     }
     myPopupBuilder.setAddDetailViewToEast(myAddDetailViewToEast);
 
@@ -205,20 +212,29 @@ public class BreakpointMasterDetailPopupBuilder {
       myPopupBuilder.setMinSize(new Dimension(-1, 700));
     }
 
-    final JBPopup popup = myPopupBuilder.setCloseOnEnter(false).createMasterDetailPopup();
+    myPopup = myPopupBuilder.setCloseOnEnter(false).createMasterDetailPopup();
+
+    if (view != null) {
+      view.setDoneRunnable(new Runnable() {
+        @Override
+        public void run() {
+          myPopup.cancel();
+        }
+      }, myPopup.getContent());
+    }
 
     myTreeController.setDelegate(new BreakpointItemsTreeController.BreakpointItemsTreeDelegate() {
       @Override
       public void execute(BreakpointItem item) {
         if (myCallback != null) {
-          myCallback.breakpointChosen(myProject, item, popup, true);
+          myCallback.breakpointChosen(myProject, item, myPopup, true);
         }
       }
     });
 
     initSelection(myBreakpointItems);
 
-    popup.addListener(new JBPopupListener() {
+    myPopup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
         //To change body of implemented methods use File | Settings | File Templates.
@@ -232,7 +248,7 @@ public class BreakpointMasterDetailPopupBuilder {
       }
     });
 
-    return popup;
+    return myPopup;
   }
 
   void initSelection(Collection<BreakpointItem> breakpoints) {
