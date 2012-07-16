@@ -83,9 +83,9 @@ public class RadRelativeLayoutComponent extends RadViewContainer {
     return idToComponent.get(parseIdValue(tag.getAttributeValue(attribute, SdkConstants.NS_RESOURCES)));
   }
 
-  private static String parseIdValue(String idValue) {
+  public static String parseIdValue(String idValue) {
     if (!StringUtil.isEmpty(idValue)) {
-      if (idValue.startsWith("@id/")) {
+      if (idValue.startsWith("@android:id/")) {
         return idValue;
       }
       return idValue.substring(idValue.indexOf('/') + 1);
