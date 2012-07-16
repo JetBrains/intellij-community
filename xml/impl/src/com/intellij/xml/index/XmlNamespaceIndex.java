@@ -16,8 +16,11 @@
 package com.intellij.xml.index;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -149,5 +152,16 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
           return i == 0 ? o1.compareTo(o2) : i;
         }
       });
+  }
+
+  @Nullable
+  public static XmlFile guessSchema(String namespace,
+                                    @Nullable final String tagName,
+                                    @Nullable final String version,
+                                    PsiFile file) {
+
+    IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
+      guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
+    return resource == null ? null : (XmlFile)file.getManager().findFile(resource.getFile());
   }
 }
