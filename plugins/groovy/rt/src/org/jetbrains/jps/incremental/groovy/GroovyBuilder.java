@@ -208,11 +208,13 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws IOException {
+    final ResourcePatterns patterns = ResourcePatterns.KEY.get(context);
+    assert patterns != null;
     final List<File> toCompile = new ArrayList<File>();
     FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
       public boolean apply(Module module, File file, String sourceRoot) throws IOException {
         final String path = file.getPath();
-        if (isGroovyFile(path)) { //todo file type check
+        if (isGroovyFile(path) && !patterns.isResourceFile(file, sourceRoot)) { //todo file type check
           toCompile.add(file);
         }
         return true;
