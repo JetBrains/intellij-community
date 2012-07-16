@@ -20,7 +20,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -61,7 +60,7 @@ import java.util.*;
  * @author cdr
  * @since Nov 13, 2002
  */
-public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighPriorityAction {
+public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, HighPriorityAction*/ {
   final PsiMethod myTargetMethod;
   final PsiExpression[] myExpressions;
   final PsiSubstitutor mySubstitutor;
