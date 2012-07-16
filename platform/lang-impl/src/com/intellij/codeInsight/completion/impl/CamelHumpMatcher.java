@@ -93,7 +93,13 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return myPrefix;
   }
 
+  /**
+   * In an ideal world, all tests would use the same settings as production, i.e. middle matching.
+   * If you see a usage of this method which can be easily removed (i.e. it's easy to make a test pass without it
+   * by modifying test expectations slightly), please do it
+   */
   @TestOnly
+  @Deprecated
   public static void forceStartMatching(Disposable parent) {
     ourForceStartMatching = true;
     Disposer.register(parent, new Disposable() {
