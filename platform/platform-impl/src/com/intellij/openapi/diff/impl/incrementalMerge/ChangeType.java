@@ -38,7 +38,6 @@ public class ChangeType {
   private final boolean myApplied;
 
   private static final EmptyRangeLineSeparatorRenderer EMPTY_RANGE_LINE_SEPARATOR_RENDERER = new EmptyRangeLineSeparatorRenderer();
-  private final LineSeparatorRenderer myStandardLineSeparatorRenderer = new StandardLineSeparatorRenderer();
 
   private ChangeType(TextDiffType diffType, boolean applied) {
     myApplied = applied;
@@ -81,7 +80,7 @@ public class ChangeType {
   }
 
   @Nullable
-  private RangeHighlighter addBlock(String text, ChangeSide changeSide, ChangeHighlighterHolder markup, TextDiffType diffType) {
+  private RangeHighlighter addBlock(String text, ChangeSide changeSide, final ChangeHighlighterHolder markup, TextDiffType diffType) {
     EditorColorsScheme colorScheme = markup.getEditor().getColorsScheme();
     Color separatorColor = getSeparatorColor(diffType.getLegendColor(colorScheme));
 
@@ -90,10 +89,23 @@ public class ChangeType {
     int end = start + length;
     RangeHighlighter highlighter = markup.addRangeHighlighter(start, end, LAYER, diffType, HighlighterTargetArea.EXACT_RANGE, myApplied);
 
+    LineSeparatorRenderer lineSeparatorRenderer = new LineSeparatorRenderer() {
+      @Override
+      public void drawLine(Graphics g, int x1, int x2, int y) {
+        Graphics2D g2 = (Graphics2D)g;
+        if (myApplied) {
+          UIUtil.drawBoldDottedLine(g2, x1, x2, y, null, myDiffType.getPolygonColor(markup.getEditor()), false);
+        }
+        else {
+          UIUtil.drawDottedLine(g2, x1, y, x2, y, null, g2.getColor());
+        }
+      }
+    };
+
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
       highlighter.setLineSeparatorColor(separatorColor);
-      highlighter.setLineSeparatorRenderer(myStandardLineSeparatorRenderer);
+      highlighter.setLineSeparatorRenderer(lineSeparatorRenderer);
     }
 
     if (text.charAt(length - 1) == '\n') {
@@ -104,7 +116,7 @@ public class ChangeType {
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
       highlighter.setLineSeparatorColor(separatorColor);
-      highlighter.setLineSeparatorRenderer(myStandardLineSeparatorRenderer);
+      highlighter.setLineSeparatorRenderer(lineSeparatorRenderer);
     }
     return highlighter;
   }
@@ -154,22 +166,6 @@ public class ChangeType {
     public void drawLine(Graphics g, int x1, int x2, int y) {
       g.drawLine(x1, y, x2, y);
       g.drawLine(x1, y + 1, x2, y + 1);
-    }
-  }
-
-  /**
-   * Draws standard separators around an ordinary change which contains some non-empty text range.
-   */
-  private class StandardLineSeparatorRenderer implements LineSeparatorRenderer {
-    @Override
-    public void drawLine(Graphics g, int x1, int x2, int y) {
-      Graphics2D g2 = (Graphics2D) g;
-      if (myApplied) {
-        UIUtil.drawBoldDottedLine(g2, x1, x2, y, g2.getBackground(), g2.getColor(), false);
-      }
-      else {
-        UIUtil.drawDottedLine(g2, x1, y, x2, y, g2.getBackground(), g2.getColor());
-      }
     }
   }
 }
